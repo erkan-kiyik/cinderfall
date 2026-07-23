@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  UNPAID
+}
+
+enum AnalysisType {
+  PROFILE
+  ATS
+  SKILLS
+}
+
+enum HistoryAction {
+  PROFILE_ANALYSIS
+  ATS_CHECK
+  HEADLINE_GENERATION
+  ABOUT_GENERATION
+  EXPERIENCE_OPTIMIZATION
+  SKILLS_ANALYSIS
+  POST_GENERATION
+  COACH_MESSAGE
+  TOOLKIT_GENERATION
+}
+
+/// Application user, synced from Supabase Auth (id = auth.users.id)
+model User {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  plan      Plan     @default(FREE)
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile      Profile?
+  analyses     Analysis[]
+  posts        Post[]
+  subscription Subscription?
+  usage        Usage[]
+  payments     Payment[]
+  settings     Setting?
+  history      History[]
+
+  @@map("users")
+}
+
+/// The user's LinkedIn profile data (latest imported / pasted version)
+model Profile {
+  id             String   @id @default(cuid())
+  userId         String   @unique @db.Uuid
+  headline       String?
+  about          String?  @db.Text
+  experience     Json?
+  education      Json?
+  skills         String[]
+  certifications Json?
+  projects       Json?
+  rawText        String?  @db.Text
+  lastScore      Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+/// A stored AI analysis result (profile analysis, ATS check, skills analysis)
+model Analysis {
+  id           String       @id @default(cuid())
+  userId       String       @db.Uuid
+  type         AnalysisType
+  overallScore Int?
+  scores       Json?
+  result       Json
+  inputSummary String?
+  createdAt    DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+  @@map("analyses")
+}
+
+/// A generated LinkedIn post
+model Post {
+  id              String   @id @default(cuid())
+  userId          String   @db.Uuid
+  topic           String
+  content         Json
+  engagementScore Int?
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("posts")
+}
+
+/// Stripe subscription state, kept in sync via webhooks
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique @db.Uuid
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus @default(INCOMPLETE)
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+/// Daily usage counters used to enforce plan limits
+model Usage {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  date      DateTime @db.Date
+  metric    String
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, metric])
+  @@map("usage")
+}
+
+/// Payment records from Stripe invoices
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String   @db.Uuid
+  stripeInvoiceId String   @unique
+  amount          Int
+  currency        String   @default("usd")
+  status          String
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("payments")
+}
+
+/// Per-user preferences
+model Setting {
+  id             String   @id @default(cuid())
+  userId         String   @unique @db.Uuid
+  emailReports   Boolean  @default(true)
+  marketingEmails Boolean @default(false)
+  language       String   @default("en")
+  targetRole     String?
+  industry       String?
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("settings")
+}
+
+/// Activity history / audit trail for every AI action
+model History {
+  id        String        @id @default(cuid())
+  userId    String        @db.Uuid
+  action    HistoryAction
+  title     String
+  meta      Json?
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("history")
+}
