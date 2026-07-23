@@ -707,9 +707,9 @@ class Game {
     lightG.globalCompositeOperation = 'source-over';
     const gsy = (vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom) * dpr;
     const amb = lightG.createLinearGradient(0, 0, 0, Math.max(gsy, 1));
-    amb.addColorStop(0, 'rgb(138,144,164)');
-    amb.addColorStop(0.72, 'rgb(158,155,158)');
-    amb.addColorStop(1, 'rgb(182,170,156)');
+    amb.addColorStop(0, 'rgb(182,188,206)');
+    amb.addColorStop(0.72, 'rgb(204,201,204)');
+    amb.addColorStop(1, 'rgb(224,214,200)');
     lightG.fillStyle = amb;
     lightG.fillRect(0, 0, lightCv.width, lightCv.height);
     lightG.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -789,13 +789,13 @@ class Game {
     ctx.fillRect(0, 0, vw, vh);
     // cool shadow tint
     ctx.globalCompositeOperation = 'soft-light';
-    ctx.fillStyle = 'rgba(48,68,116,0.10)';
+    ctx.fillStyle = 'rgba(48,68,116,0.06)';
     ctx.fillRect(0, 0, vw, vh);
     // vignette — softer, larger falloff
     ctx.globalCompositeOperation = 'source-over';
     const v = ctx.createRadialGradient(vw / 2, vh * 0.46, Math.min(vw, vh) * 0.5, vw / 2, vh / 2, Math.max(vw, vh) * 0.78);
     v.addColorStop(0, 'rgba(5,6,10,0)');
-    v.addColorStop(1, 'rgba(4,5,9,0.3)');
+    v.addColorStop(1, 'rgba(4,5,9,0.16)');
     ctx.fillStyle = v;
     ctx.fillRect(0, 0, vw, vh);
     // film grain — subtle; skipped on weaker quality tiers (a canvas-wide

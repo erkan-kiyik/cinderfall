@@ -46,6 +46,10 @@ jobs:
         working-directory: mobile
         run: npm run assets
 
+      - name: Patch Android theme (dark, edge-to-edge)
+        working-directory: mobile
+        run: node ./scripts/patch-android-theme.mjs
+
       - name: Sync Capacitor
         working-directory: mobile
         run: npx cap sync android
