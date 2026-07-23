@@ -4,7 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <title>CINDERFALL // SECTOR 9</title>
-<link rel="stylesheet" href="/game/css/style.css">
+<meta name="description" content="CINDERFALL — a hand-painted 2D tactical shooter. Infiltrate Sector 9, use cover and silent takedowns, and survive an endless procedurally-generated campaign.">
+<!-- PWA / mobile app chrome (relative paths so the same build serves at
+     /game on the web and at the root inside a Capacitor/TWA wrapper) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0c0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CINDERFALL">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div id="app">
@@ -148,6 +160,13 @@
         <button class="home-tab" data-tab="loadout"><span class="tab-ico">◈</span>LOADOUT</button>
         <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span>CRATES</button>
       </nav>
+      <div class="home-legal">
+        <a href="legal/privacy.html" target="_blank" rel="noopener">Privacy</a>
+        <span>·</span>
+        <a href="legal/terms.html" target="_blank" rel="noopener">Terms</a>
+        <span>·</span>
+        <span class="build-tag">CINDERFALL v1.0</span>
+      </div>
     </div>
 
     <!-- Crate reveal overlay (CS-style horizontal reel) -->
@@ -211,6 +230,6 @@
   <div id="intro-skip">CLICK OR PRESS ANY KEY TO SKIP</div>
   <div id="scene-fade"></div>
 </div>
-<script type="module" src="/game/js/main.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

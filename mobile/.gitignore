@@ -1,0 +1,8 @@
+# Capacitor-generated native projects — regenerated with `npm run add:android`
+# / `add:ios`. Kept out of version control; only the config + www source live here.
+/android/
+/ios/
+/www/
+/node_modules/
+package-lock.json
+.DS_Store

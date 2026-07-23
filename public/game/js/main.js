@@ -896,3 +896,12 @@ function frame(now) {
 }
 
 boot();
+
+// Register the service worker for offline play + faster repeat loads. Guarded
+// to secure http(s) contexts (never file://, and harmless if unsupported) and
+// deferred to idle so it never competes with first-load asset painting.
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is best-effort */ });
+  });
+}

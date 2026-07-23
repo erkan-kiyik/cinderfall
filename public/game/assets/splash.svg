@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2732" height="2732" viewBox="0 0 2732 2732" role="img" aria-label="CINDERFALL splash screen">
+  <defs>
+    <radialGradient id="sbg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#1c2331"/>
+      <stop offset="60%" stop-color="#10141a"/>
+      <stop offset="100%" stop-color="#07090c"/>
+    </radialGradient>
+    <linearGradient id="samber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8c17d"/>
+      <stop offset="100%" stop-color="#c8934c"/>
+    </linearGradient>
+    <linearGradient id="sflame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe9c4"/>
+      <stop offset="45%" stop-color="#e8b45e"/>
+      <stop offset="100%" stop-color="#b4652a"/>
+    </linearGradient>
+    <radialGradient id="sglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffb85c" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffb85c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="2732" height="2732" fill="url(#sbg)"/>
+
+  <g transform="translate(1366 1140)">
+    <circle cx="0" cy="0" r="360" fill="url(#sglow)"/>
+    <g fill="none" stroke="url(#samber)" stroke-linejoin="round">
+      <path d="M0 -300 L260 -150 L260 150 L0 300 L-260 150 L-260 -150 Z" stroke-width="24"/>
+    </g>
+    <path d="M0 -170
+             c 58 76 98 130 98 206
+             a 98 98 0 0 1 -196 0
+             c 0 -40 18 -72 44 -98
+             c 5 36 22 54 50 66
+             c -18 -66 -32 -116 4 -174 Z"
+          fill="url(#sflame)"/>
+  </g>
+
+  <text x="1366" y="1760" text-anchor="middle" font-family="Bahnschrift, 'Arial Narrow', sans-serif"
+        font-size="200" font-weight="700" letter-spacing="28" fill="#edeae2">CINDERFALL</text>
+  <text x="1366" y="1858" text-anchor="middle" font-family="Bahnschrift, 'Arial Narrow', sans-serif"
+        font-size="62" font-weight="600" letter-spacing="44" fill="#d6a95c">SECTOR 9</text>
+</svg>

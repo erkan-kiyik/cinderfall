@@ -1,0 +1,26 @@
+{
+  "name": "CINDERFALL // Sector 9",
+  "short_name": "CINDERFALL",
+  "description": "A hand-painted 2D tactical shooter. Infiltrate Sector 9, use cover and stealth takedowns, and survive an endless procedurally-generated campaign.",
+  "id": "/game/",
+  "start_url": ".",
+  "scope": ".",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#07090c",
+  "theme_color": "#0a0c0f",
+  "categories": ["games", "action"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "assets/screenshot-1.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "Firefight in Sector 9" },
+    { "src": "assets/screenshot-2.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide", "label": "Operator loadout" }
+  ]
+}

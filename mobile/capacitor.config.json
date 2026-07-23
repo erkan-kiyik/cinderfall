@@ -1,0 +1,32 @@
+{
+  "appId": "com.cinderfall.sector9",
+  "appName": "CINDERFALL",
+  "webDir": "www",
+  "backgroundColor": "#07090c",
+  "loggingBehavior": "none",
+  "android": {
+    "backgroundColor": "#07090c",
+    "allowMixedContent": false
+  },
+  "ios": {
+    "backgroundColor": "#07090c",
+    "contentInset": "always",
+    "limitsNavigationsToAppBoundDomains": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 900,
+      "launchAutoHide": true,
+      "backgroundColor": "#07090c",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "overlaysWebView": true,
+      "style": "DARK",
+      "backgroundColor": "#00000000"
+    }
+  }
+}
