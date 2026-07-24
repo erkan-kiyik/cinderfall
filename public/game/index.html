@@ -24,41 +24,44 @@
 
   <!-- In-game HUD (DOM for crisp text) -->
   <div id="hud" class="hidden">
-    <div class="hud-top">
-      <div class="objective">
+    <!-- TOP LEFT — vitals -->
+    <div class="hud-tl glass">
+      <div class="vital-row">
+        <span class="vital-ico">HP</span>
+        <div class="bar"><div id="hp-fill" class="bar-fill hp"></div></div>
+      </div>
+      <div class="vital-row">
+        <span class="vital-ico">ST</span>
+        <div class="bar slim"><div id="st-fill" class="bar-fill st"></div></div>
+      </div>
+      <div class="vital-row hidden" id="armor-row">
+        <span class="vital-ico">AR</span>
+        <div class="bar slim"><div id="armor-fill" class="bar-fill armor"></div></div>
+      </div>
+    </div>
+
+    <!-- TOP CENTER — objective, progression, threat -->
+    <div class="hud-tc">
+      <div class="objective glass">
         <span class="obj-label">OBJECTIVE</span>
         <span id="obj-text">ELIMINATE ALL HOSTILES</span>
         <span id="obj-count">0 / 0</span>
         <span id="stage-label" class="stage-label">STAGE 1</span>
       </div>
-      <div id="det-bar" class="det-bar">
+      <div class="prog-row glass">
+        <span id="lvl-label" class="lvl-label">LVL 1</span>
+        <div class="bar xp-track"><div id="xp-fill" class="bar-fill xp"></div></div>
+        <span id="hud-tokens" class="hud-tokens">◈ 0</span>
+      </div>
+      <div id="det-bar" class="det-bar glass">
         <span class="det-ico">THREAT</span>
         <div class="bar det-track"><div id="det-fill" class="bar-fill det"></div></div>
         <span id="det-label" class="det-label">HIDDEN</span>
       </div>
     </div>
-    <div id="notify" class="notify"></div>
-    <div class="hud-bl">
-      <div class="callsign">SGT. "VANDAL" &nbsp;//&nbsp; 3RD RECON</div>
-      <div class="bar-row">
-        <span class="bar-ico">HP</span>
-        <div class="bar"><div id="hp-fill" class="bar-fill hp"></div></div>
-      </div>
-      <div class="bar-row">
-        <span class="bar-ico">ST</span>
-        <div class="bar slim"><div id="st-fill" class="bar-fill st"></div></div>
-      </div>
-      <div class="bar-row hidden" id="armor-row">
-        <span class="bar-ico">AR</span>
-        <div class="bar slim"><div id="armor-fill" class="bar-fill armor"></div></div>
-      </div>
-      <div class="xp-row">
-        <span id="lvl-label" class="lvl-label">LVL 1</span>
-        <div class="bar xp-track"><div id="xp-fill" class="bar-fill xp"></div></div>
-        <span id="hud-tokens" class="hud-tokens">◈ 0</span>
-      </div>
-    </div>
-    <div class="hud-br">
+
+    <!-- TOP RIGHT — weapon + ammo -->
+    <div class="hud-tr glass">
       <div id="weapon-name">VK-77 "VANDAL"</div>
       <div class="ammo-row">
         <span id="ammo-mag">30</span>
@@ -74,6 +77,8 @@
         <span id="slot-4" class="slot hidden"><canvas id="slot-4-icon" class="slot-icon"></canvas>4 SMG</span>
       </div>
     </div>
+
+    <div id="notify" class="notify"></div>
     <div id="dmg-left" class="dmg-dir left"></div>
     <div id="dmg-right" class="dmg-dir right"></div>
     <div id="dmg-omni" class="dmg-dir omni"></div>

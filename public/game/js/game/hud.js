@@ -151,12 +151,17 @@ export class Hud {
     if (state !== this._lastDetState) {
       this._lastDetState = state;
       this.el.detLabel.textContent = DET_LABEL[state] || 'HIDDEN';
-      // prefixed so the state name never collides with the generic .hidden
-      // utility class (the "no threat" state is literally named 'hidden')
-      this.el.detBar.className = `det-bar det-${state}`;
-      this.el.detBar.classList.remove('pulse');
-      void this.el.detBar.offsetWidth;
-      this.el.detBar.classList.add('pulse');
+      // The threat bar only appears once an enemy is actually aware of the
+      // player; in the safe 'hidden' state it fades out (via .det-visible /
+      // the CSS opacity transition) so it never clutters stealth play.
+      // 'det-' prefix keeps the state name off the generic .hidden utility.
+      const visible = state !== 'hidden';
+      this.el.detBar.className = `det-bar glass det-${state}${visible ? ' det-visible' : ''}`;
+      if (visible) {
+        this.el.detBar.classList.remove('pulse');
+        void this.el.detBar.offsetWidth;
+        this.el.detBar.classList.add('pulse');
+      }
     }
   }
 
