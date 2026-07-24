@@ -15,7 +15,7 @@ const DET_LABEL = {
 export class Hud {
   constructor() {
     this.el = {
-      hud: $('hud'), loading: $('loading'), menu: $('menu'),
+      hud: $('hud'), loading: $('loading'), splash: $('splash'), menu: $('menu'),
       pause: $('pause'), end: $('end'),
       loadFill: $('load-fill'), loadLabel: $('load-label'),
       hpFill: $('hp-fill'), stFill: $('st-fill'), armorFill: $('armor-fill'),
@@ -60,9 +60,10 @@ export class Hud {
     if (label) this.el.loadLabel.textContent = label;
   }
 
-  // 'loading' | 'menu' | 'play' | 'pause' | 'end'
+  // 'loading' | 'splash' | 'menu' | 'play' | 'pause' | 'end'
   show(state) {
     this.el.loading.classList.toggle('hidden', state !== 'loading');
+    this.el.splash.classList.toggle('hidden', state !== 'splash');
     this.el.menu.classList.toggle('hidden', state !== 'menu');
     this.el.pause.classList.toggle('hidden', state !== 'pause');
     this.el.end.classList.toggle('hidden', state !== 'end');

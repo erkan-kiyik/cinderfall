@@ -184,7 +184,20 @@ async function boot() {
   hud.setLoad(1, 'READY');
   await raf();
   if (DEMO) game.deploy();
-  else { hud.show('menu'); game.state = 'menu'; game.metaUI.refresh(); }
+  else {
+    // Show splash screen first
+    hud.show('splash');
+    game.state = 'menu';
+    const splash = document.getElementById('splash');
+    const dismissSplash = () => {
+      splash.classList.add('hidden');
+      setTimeout(() => { splash.style.display = 'none'; hud.show('menu'); game.metaUI.refresh(); }, 200);
+    };
+    splash.addEventListener('click', dismissSplash);
+    splash.addEventListener('touchend', dismissSplash);
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => { if (!splash.classList.contains('hidden')) dismissSplash(); }, 5000);
+  }
   requestAnimationFrame(frame);
 }
 
