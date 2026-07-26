@@ -55,9 +55,10 @@ export const CATALOG = [
     apply: { type: 'operator', variant: 'nomad' } },
 ];
 
-// ---- weapon loadout: pick which weapon fills each arsenal slot. Weapons are
-// freely selectable (granted at boot), not crate loot. `arsenal` names the
-// slot in Player.arsenal the choice writes into. Rarity/tag are cosmetic.
+// ---- weapon loadout: pick which weapon fills each arsenal slot. Only the
+// starter three (below) are owned from the start — every other weapon is
+// crate loot, same as cosmetics. `arsenal` names the slot in Player.arsenal
+// the choice writes into. Rarity/tag are cosmetic.
 export const WEAPON_SLOTS = [
   {
     key: 'wpn_primary', label: 'PRIMARY', arsenal: 'rifle',
@@ -85,18 +86,40 @@ const WEAPON_META = {
   emp: ['epic', 'ENERGY'], quantum: ['epic', 'ENERGY'], gravity: ['epic', 'ENERGY'],
 };
 
-// Every weapon id that can be selected (granted as owned at boot).
+// Every weapon id that can be selected.
 export const ALL_WEAPON_IDS = [...new Set(WEAPON_SLOTS.flatMap((s) => s.ids))];
 
+// Owned from the very start — everything else unlocks from crates (tokens
+// or a rewarded ad). These match Player's built-in default arsenal, so a
+// fresh save is always playable even with nothing else unlocked yet.
+export const STARTER_WEAPON_IDS = ['rifle', 'pistol', 'smg'];
+
 // Synthetic loadout "items" for the weapon pickers (name resolved from the
-// live weapon defs at render time).
+// live weapon defs at render time). A weapon can appear in more than one
+// slot's id list (most energy weapons fill both PRIMARY and SPECIAL); each
+// slot gets its own pickable entry, but ownership is granted for every
+// variant together (see weaponVariantIds) so unlocking a gun frees it up
+// everywhere it's eligible, not just the slot the crate happened to roll.
 const WEAPON_ITEMS = ALL_WEAPON_IDS.flatMap((id) =>
   WEAPON_SLOTS.filter((s) => s.ids.includes(id)).map((s) => ({
-    id: `${s.key}:${id}`, weaponId: id, slot: s.key, always: true, kind: 'Weapon',
+    id: `${s.key}:${id}`, weaponId: id, slot: s.key, kind: 'Weapon',
     rarity: (WEAPON_META[id] || ['common'])[0], tag: (WEAPON_META[id] || [])[1],
     apply: { type: 'weaponBody', weapon: id },
   }))
 );
+
+// All per-slot item ids sharing a given weapon id (e.g. 'plasma' →
+// ['wpn_primary:plasma', 'wpn_special:plasma']) — granted together on unlock.
+export const weaponVariantIds = (weaponId) =>
+  WEAPON_ITEMS.filter((i) => i.weaponId === weaponId).map((i) => i.id);
+
+// One representative crate-loot entry per non-starter weapon id (dedupes
+// weapons that occupy multiple slots so they don't get an inflated drop
+// weight), combined with the cosmetic catalog for crate rolls.
+const LOOT_WEAPON_ITEMS = ALL_WEAPON_IDS
+  .filter((id) => !STARTER_WEAPON_IDS.includes(id))
+  .map((id) => WEAPON_ITEMS.find((i) => i.weaponId === id));
+export const LOOT_POOL = [...CATALOG, ...LOOT_WEAPON_ITEMS];
 
 const BY_ID = Object.fromEntries([...CATALOG, ...WEAPON_ITEMS].map((i) => [i.id, i]));
 export const itemById = (id) => BY_ID[id] || null;
@@ -115,8 +138,9 @@ export const LOADOUT_SLOTS = [
   { key: 'knifeFinish', label: 'BLADE' },
 ];
 
-// Weighted rarity pick, then a uniform item of that rarity. Falls back to a
-// lower rarity if a tier happens to be empty. Returns a catalog item.
+// Weighted rarity pick, then a uniform item of that rarity, drawn from the
+// combined cosmetics + weapons loot pool. Falls back to a lower rarity if a
+// tier happens to be empty. Returns a catalog/weapon item.
 export function rollCrate(rng = Math.random) {
   const order = ['legendary', 'epic', 'rare', 'common'];
   const total = Object.values(RARITY).reduce((s, r) => s + r.weight, 0);
@@ -128,10 +152,10 @@ export function rollCrate(rng = Math.random) {
   }
   // resolve to a concrete item; step down rarities if empty
   for (let i = order.indexOf(chosen); i < order.length; i++) {
-    const pool = CATALOG.filter((it) => it.rarity === order[i]);
+    const pool = LOOT_POOL.filter((it) => it.rarity === order[i]);
     if (pool.length) return pool[Math.floor(rng() * pool.length)];
   }
-  return CATALOG[0];
+  return LOOT_POOL[0];
 }
 
 // Applies the player's saved loadout to a freshly-built Player. `assets` is

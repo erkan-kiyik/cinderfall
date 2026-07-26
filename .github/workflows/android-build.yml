@@ -50,6 +50,10 @@ jobs:
         working-directory: mobile
         run: node ./scripts/patch-android-theme.mjs
 
+      - name: Patch Android manifest (AdMob test App ID)
+        working-directory: mobile
+        run: node ./scripts/patch-android-admob.mjs
+
       - name: Sync Capacitor
         working-directory: mobile
         run: npx cap sync android

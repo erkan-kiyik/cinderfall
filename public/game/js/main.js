@@ -18,7 +18,7 @@ import { Player } from './game/player.js';
 import { Enemy, getGlobalDetection } from './game/enemy.js';
 import { Hud } from './game/hud.js';
 import { Progression, UNLOCKS } from './game/progression.js';
-import { applyLoadout, ALL_WEAPON_IDS } from './game/meta.js';
+import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
 import { TouchControls } from './engine/touch.js';
 
@@ -166,9 +166,6 @@ async function boot() {
   await raf();
   game = new Game();
   if (DEMO) window.__game = game;  // scripted-screenshot / test hook only
-
-  // every weapon is freely selectable in the loadout (not crate loot)
-  for (const id of ALL_WEAPON_IDS) if (!game.progression.owns(id)) game.progression.grant(id);
 
   // meta screens (loadout / crates) + on-screen controls
   game.metaUI = new MetaUI({

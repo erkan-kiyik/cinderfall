@@ -4,8 +4,10 @@
 
 import {
   CATALOG, RARITY, CRATE_COST, DUPLICATE_REFUND, LOADOUT_SLOTS,
-  rollCrate, itemsForSlot, itemById,
+  rollCrate, itemsForSlot, itemById, weaponVariantIds, LOOT_POOL,
 } from './meta.js';
+import { AD_CRATE_DAILY_LIMIT } from './progression.js';
+import { watchRewardedAd } from '../engine/ads.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -26,7 +28,7 @@ export class MetaUI {
     if (item.weaponId && this.weapons[item.weaponId]) return this.weapons[item.weaponId].name;
     return item.name;
   }
-  itemOwned(item) { return !item || item.always || this.p.owns(item.id); }
+  itemOwned(item) { return !item || this.p.owns(item.id); }
 
   mount() {
     // bottom tabs
@@ -34,6 +36,7 @@ export class MetaUI {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
     });
     $('btn-open-crate').addEventListener('click', () => this.openCrate());
+    $('btn-watch-ad').addEventListener('click', () => this.openCrateWithAd());
     $('reveal-done').addEventListener('click', () => this.closeReveal());
     $('crate-cost').textContent = String(CRATE_COST);
     this.refresh();
@@ -45,6 +48,15 @@ export class MetaUI {
     this.renderLoadoutChips();
     this.renderLoadout();
     this.renderCollection();
+    this.renderAdButton();
+  }
+
+  renderAdButton() {
+    const btn = $('btn-watch-ad');
+    if (!btn) return;
+    const left = this.p.adCratesRemaining();
+    btn.querySelector('.ad-remaining').textContent = left > 0 ? `${left}/${AD_CRATE_DAILY_LIMIT} LEFT TODAY` : 'COME BACK TOMORROW';
+    btn.disabled = left <= 0;
   }
 
   switchTab(name) {
@@ -138,8 +150,7 @@ export class MetaUI {
 
     if (!locked) {
       card.addEventListener('click', () => {
-        if (item && item.always) { this.p.data.loadout[slotKey] = item.id; this.p.save(); }
-        else this.p.equip(slotKey, item ? item.id : null);
+        this.p.equip(slotKey, item ? item.id : null);
         if (this.audio) this.audio.equip ? this.audio.equip() : this.audio.ui();
         this.renderLoadout();
         this.renderLoadoutChips();
@@ -177,11 +188,11 @@ export class MetaUI {
     $('collection-count').textContent = `${owned} / ${CATALOG.length}`;
   }
 
-  // ---- crate open: spend, roll, spin the reel, reveal ----
-  openCrate() {
+  // ---- crate open: spend (tokens or a watched ad), roll, spin, reveal ----
+  openCrate({ free = false } = {}) {
     if (this.busy) return;
     const msg = $('crate-msg');
-    if (this.p.tokens < CRATE_COST) {
+    if (!free && this.p.tokens < CRATE_COST) {
       msg.textContent = 'NOT ENOUGH TOKENS — ELIMINATE HOSTILES TO EARN MORE';
       msg.classList.add('warn');
       return;
@@ -189,7 +200,7 @@ export class MetaUI {
     msg.classList.remove('warn');
     msg.textContent = '';
     this.busy = true;
-    this.p.spendTokens(CRATE_COST);
+    if (!free) this.p.spendTokens(CRATE_COST);
     this.p.data.cratesOpened++;
     this.renderTokens();
     if (this.audio) this.audio.ui();
@@ -198,9 +209,37 @@ export class MetaUI {
     const isDup = this.p.owns(drop.id);
     let refund = 0;
     if (isDup) { refund = Math.round(CRATE_COST * DUPLICATE_REFUND); this.p.addTokens(refund); }
+    else if (drop.weaponId) { for (const vid of weaponVariantIds(drop.weaponId)) this.p.grant(vid); }
     else this.p.grant(drop.id);
 
     this.playCaseOpen(() => this.spinReel(drop, () => this.showReveal(drop, isDup, refund)));
+  }
+
+  // Free crate paid for by finishing a rewarded ad instead of tokens.
+  openCrateWithAd() {
+    if (this.busy) return;
+    const msg = $('crate-msg');
+    if (this.p.adCratesRemaining() <= 0) {
+      msg.textContent = 'DAILY AD LIMIT REACHED — COME BACK TOMORROW';
+      msg.classList.add('warn');
+      return;
+    }
+    msg.classList.remove('warn');
+    msg.textContent = 'LOADING AD…';
+    this.busy = true;
+    watchRewardedAd(
+      () => {
+        this.p.recordAdCrateWatch();
+        this.renderAdButton();
+        this.busy = false;
+        msg.textContent = '';
+        this.openCrate({ free: true });
+      },
+      () => {
+        this.busy = false;
+        msg.textContent = '';
+      }
+    );
   }
 
   // Plays a short "case cracks open" beat on the static crate display — lid
@@ -232,7 +271,7 @@ export class MetaUI {
     const WIN_INDEX = 44;
     const total = 52;
     for (let i = 0; i < total; i++) {
-      const item = i === WIN_INDEX ? winner : CATALOG[Math.floor(Math.random() * CATALOG.length)];
+      const item = i === WIN_INDEX ? winner : LOOT_POOL[Math.floor(Math.random() * LOOT_POOL.length)];
       const rarity = RARITY[item.rarity];
       const cell = document.createElement('div');
       cell.className = 'reel-cell';

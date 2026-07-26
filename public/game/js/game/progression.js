@@ -2,6 +2,8 @@
 // Stored in localStorage so it survives reloads; falls back to an in-memory
 // object if storage is unavailable (private browsing, sandboxed iframe).
 
+import { STARTER_WEAPON_IDS, weaponVariantIds } from './meta.js';
+
 const KEY = 'cinderfall.progress.v1';
 // Separate key for the in-progress run snapshot (stage + operator vitals), so
 // a reload / tab-close resumes exactly where the operator left off instead of
@@ -25,6 +27,14 @@ export const UNLOCKS = [
   { level: 10, id: 'rifleFinishCinder', label: 'VK-77 FINISH — CINDER', kind: 'finish' },
 ];
 
+// Only the starter loadout is owned on a fresh save — every other weapon
+// and cosmetic is crate loot, unlocked with tokens or a rewarded ad.
+function starterInventory() {
+  const inv = {};
+  for (const id of STARTER_WEAPON_IDS) for (const vid of weaponVariantIds(id)) inv[vid] = true;
+  return inv;
+}
+
 function defaultProgress() {
   return {
     level: 1, xp: 0,
@@ -35,9 +45,10 @@ function defaultProgress() {
     tokens: 0,          // "Coins" — earned in combat
     gems: 25,           // premium currency
     energy: 20, energyMax: 20,   // play resource
-    inventory: {},   // itemId -> true once owned (crate drops)
+    inventory: starterInventory(),   // itemId -> true once owned (crate drops)
     loadout: {},     // slotKey -> itemId currently equipped
     cratesOpened: 0,
+    adCrateDay: 0, adCratesToday: 0,   // rewarded-ad free crates, capped per day
     // live-service meta
     missions: null, missionDay: 0,     // regenerated daily
     weekly: null, missionWeek: 0,
@@ -49,6 +60,9 @@ function defaultProgress() {
 // Tokens awarded per kill (headshots pay a premium).
 export const TOKENS_PER_KILL = 8;
 export const TOKENS_PER_HEADSHOT = 14;
+
+// Free crates earned by watching a rewarded ad, capped per calendar day.
+export const AD_CRATE_DAILY_LIMIT = 5;
 
 // Battle-pass: XP per tier and the reward table.
 export const BP_XP_PER_TIER = 1000;
@@ -184,6 +198,23 @@ export class Progression {
   }
 
   equipped(slotKey) { return this.data.loadout[slotKey] || null; }
+
+  // ---- rewarded-ad free crates ----
+  _rolloverAdCrateDay() {
+    const day = Math.floor(Date.now() / 86400000);
+    if (this.data.adCrateDay !== day) { this.data.adCrateDay = day; this.data.adCratesToday = 0; }
+  }
+
+  adCratesRemaining() {
+    this._rolloverAdCrateDay();
+    return Math.max(0, AD_CRATE_DAILY_LIMIT - this.data.adCratesToday);
+  }
+
+  recordAdCrateWatch() {
+    this._rolloverAdCrateDay();
+    this.data.adCratesToday++;
+    this.save();
+  }
 
   recordShots(shots, hits) {
     this.data.shotsTotal += shots;
