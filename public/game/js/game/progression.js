@@ -48,6 +48,7 @@ function defaultProgress() {
     inventory: starterInventory(),   // itemId -> true once owned (crate drops)
     loadout: {},     // slotKey -> itemId currently equipped
     cratesOpened: 0,
+    bossesDefeated: 0,
     adCrateDay: 0, adCratesToday: 0,   // rewarded-ad free crates, capped per day
     // live-service meta
     missions: null, missionDay: 0,     // regenerated daily
@@ -76,6 +77,10 @@ function defaultProgress() {
 // Tokens awarded per kill (headshots pay a premium).
 export const TOKENS_PER_KILL = 8;
 export const TOKENS_PER_HEADSHOT = 14;
+
+// Bonus reward on top of the regular kill payout for downing a boss.
+export const BOSS_KILL_TOKEN_BONUS = 250;
+export const BOSS_KILL_DIAMOND_BONUS = 5;
 
 // Free crates earned by watching a rewarded ad, capped per calendar day.
 export const AD_CRATE_DAILY_LIMIT = 5;
@@ -195,6 +200,15 @@ export class Progression {
     this.data.totalKills++;
     if (headshot) this.data.totalHeadshots++;
     return this.addTokens(headshot ? TOKENS_PER_HEADSHOT : TOKENS_PER_KILL);
+  }
+
+  // Boss kills already count as a regular recordKill (called first) — this
+  // layers the bonus reward + lifetime tally on top.
+  recordBossKill() {
+    this.data.bossesDefeated++;
+    this.addTokens(BOSS_KILL_TOKEN_BONUS);
+    this.addGems(BOSS_KILL_DIAMOND_BONUS);
+    this.save();
   }
 
   // ---- token economy ----

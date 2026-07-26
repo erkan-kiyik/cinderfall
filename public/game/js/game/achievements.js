@@ -19,6 +19,7 @@ export const ACHIEVEMENTS = [
   { id: 'attention_span', tier: 'easy', name: 'ATTENTION SPAN',  desc: 'Watch 10 rewarded ads.',                   icon: 'play',    stat: 'totalAdsWatched', goal: 10 },
   { id: 'getting_started', tier: 'easy', name: 'GETTING STARTED', desc: 'Reach operator level 5.',                 icon: 'star',    stat: 'level', goal: 5 },
   { id: 'first_streak',  tier: 'easy', name: 'ON A ROLL',        desc: 'Land a 3-kill streak without going down.', icon: 'fire',    stat: 'longestKillStreak', goal: 3 },
+  { id: 'boss_slayer',   tier: 'easy', name: 'BOSS SLAYER',      desc: 'Defeat your first boss.',                  icon: 'crown',   stat: 'bossesDefeated', goal: 1 },
 
   // ---- MEDIUM ----
   { id: 'centurion',     tier: 'medium', name: 'CENTURION',       desc: 'Eliminate 100 hostiles.',                  icon: 'skull',   stat: 'totalKills', goal: 100 },
@@ -43,6 +44,7 @@ export const ACHIEVEMENTS = [
   { id: 'ad_veteran',    tier: 'hard', name: 'AD VETERAN',        desc: 'Watch 500 rewarded ads.',                 icon: 'play',    stat: 'totalAdsWatched', goal: 500 },
   { id: 'marathon',      tier: 'hard', name: 'MARATHON OPERATOR', desc: 'Play for 5 hours total.',                 icon: 'clock',   stat: 'totalPlaytimeMs', goal: 5 * 3600000 },
   { id: 'sector9_legend', tier: 'hard', name: 'SECTOR 9 LEGEND',  desc: 'Reach operator level 20.',                icon: 'star',    stat: 'level', goal: 20 },
+  { id: 'boss_hunter',   tier: 'hard', name: 'BOSS HUNTER',       desc: 'Defeat 10 bosses.',                       icon: 'crown',   stat: 'bossesDefeated', goal: 10 },
 ];
 
 // Resolves an achievement's `stat` key against live Progression data —
@@ -161,6 +163,14 @@ export function drawAchievementIcon(g, kind, w, h, color) {
       g.beginPath(); g.arc(0, 0, r * 0.85, 0, Math.PI * 2); g.stroke();
       g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -r * 0.5); g.stroke();
       g.beginPath(); g.moveTo(0, 0); g.lineTo(r * 0.4, r * 0.15); g.stroke();
+      break;
+    case 'crown':
+      g.beginPath();
+      g.moveTo(-r * 0.85, r * 0.5);
+      g.lineTo(-r * 0.85, -r * 0.1); g.lineTo(-r * 0.45, r * 0.15);
+      g.lineTo(0, -r * 0.75); g.lineTo(r * 0.45, r * 0.15);
+      g.lineTo(r * 0.85, -r * 0.1); g.lineTo(r * 0.85, r * 0.5);
+      g.closePath(); g.fill();
       break;
     default:
       g.beginPath(); g.arc(0, 0, r * 0.7, 0, Math.PI * 2); g.fill();

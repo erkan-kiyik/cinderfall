@@ -31,6 +31,8 @@ export class Enemy {
 
     this.hp = 100; this.maxHp = 100;
     this.difficulty = 0;          // set by Game from the current stage
+    this.dmgMul = 1;              // damage multiplier (Boss overrides)
+    this.hitboxScale = 1;         // player hit-detection box scale (Boss overrides)
     this.state = 'patrol';
     this.patrolMin = patrolMin; this.patrolMax = patrolMax;
     this.waitT = rand(0, 2);
@@ -168,7 +170,7 @@ export class Enemy {
   }
 
   meleeShove(player) {
-    const dmg = 9 + this.difficulty * 1.4;
+    const dmg = (9 + this.difficulty * 1.4) * this.dmgMul;
     player.hurt(dmg, this.facing, this.x);
     player.vx += this.facing * 260;
     this.vx -= this.facing * 90;
@@ -336,7 +338,8 @@ export class Enemy {
         this.facing = Math.sign(dx) || this.facing;
 
         // retreat trigger when badly hurt (probabilistic so squads don't all flee at once)
-        if (this.hp < this.maxHp * 0.28 && rand() < dt * 0.7) {
+        // — a boss stands its ground no matter how hurt
+        if (!this.isBoss && this.hp < this.maxHp * 0.28 && rand() < dt * 0.7) {
           this.state = 'retreat'; this.retreatT = 0; this.coverTarget = null;
         } else {
           // point-blank shove
@@ -489,7 +492,7 @@ export class Enemy {
     const hy = mzl.y + (ey - mzl.y) * bestT;
 
     if (hitPlayer) {
-      player.hurt(7 + rand(0, 5) | 0, Math.sign(ex - mzl.x), this.x);
+      player.hurt(((7 + rand(0, 5) | 0) * this.dmgMul) | 0, Math.sign(ex - mzl.x), this.x);
     } else if (wHit) {
       this.fx.impactWall(hx, hy, wHit.nx, wHit.ny);
     }
@@ -509,6 +512,70 @@ export class Enemy {
 
   draw(g) {
     drawSoldier(g, this.parts, this.shadow, this, { wpn: this.wpn, ws: this.ws });
+  }
+}
+
+// ---------------------------------------------------------------- Boss
+// A heavyweight variant of the same AI above — the patrol/suspicious/
+// alert/combat state machine, awareness, cover-seeking and fire control
+// are all inherited untouched. A boss just never retreats (see the
+// isBoss guard in the combat state), hits harder (dmgMul), reads as
+// visibly bigger (visualScale + a matching hitboxScale so it's fairly
+// hittable across its larger silhouette — see the hitboxScale reads in
+// player.js's hitscanShot/beamShot and fx.js's projectile hit test),
+// and periodically ground-slams for a readable AOE "special attack"
+// beat. Spawned solo on every 5th stage — see spawnEnemiesForStage()
+// in main.js — so the regular squad encounters are untouched.
+export const BOSS_NAMES = ['WARLORD KESTREL', 'THE FOREMAN', 'IRON SERGEANT', 'THE COLLECTOR', 'WARDEN VESK', 'BLACKOUT PRIME'];
+export const BOSS_STAGE_INTERVAL = 5;
+
+export class Boss extends Enemy {
+  constructor(parts, shadow, rifle, world, fx, audio, x, patrolMin, patrolMax, stage) {
+    super(parts, shadow, rifle, world, fx, audio, x, patrolMin, patrolMax);
+    this.isBoss = true;
+    const tier = Math.max(0, Math.floor(stage / BOSS_STAGE_INTERVAL) - 1);
+    this.name = BOSS_NAMES[tier % BOSS_NAMES.length];
+    this.visualScale = 1.5;
+    this.hitboxScale = 1.32;
+    this.dmgMul = 1.6;
+    this.difficulty = clamp(Math.floor(stage / 3), 3, 10);
+    this.maxHp = 420 + stage * 55;
+    this.hp = this.maxHp;
+    this.slamCd = rand(3.5, 5);
+  }
+
+  update(dt, player, game) {
+    super.update(dt, player, game);
+    if (this.deadT > 0) return;
+    // periodic close-range ground slam: knockback + AOE damage, telegraphed
+    // by the light flash so it reads as a distinct "special attack" beat
+    // rather than just more gunfire
+    this.slamCd -= dt;
+    if (this.slamCd <= 0 && player && player.deadT <= 0 &&
+        (this.state === 'combat' || this.state === 'alert') && Math.abs(player.x - this.x) < 170) {
+      this.slamCd = rand(5.5, 8);
+      this.groundSlam(player);
+    }
+  }
+
+  groundSlam(player) {
+    this.fx.addLight(this.x, this.y - 30, 160, [255, 100, 60], 0.65, 0.2);
+    this.audio.hitFlesh();
+    if (Math.abs(player.x - this.x) < 180) {
+      const dir = Math.sign(player.x - this.x) || this.facing;
+      player.hurt(16 + this.difficulty, dir, this.x);
+      player.vx += dir * 320;
+    }
+  }
+
+  draw(g) {
+    g.save();
+    g.filter = 'hue-rotate(-16deg) saturate(1.35) brightness(0.94)';
+    g.translate(this.x, this.y);
+    g.scale(this.visualScale, this.visualScale);
+    g.translate(-this.x, -this.y);
+    drawSoldier(g, this.parts, this.shadow, this, { wpn: this.wpn, ws: this.ws });
+    g.restore();
   }
 }
 

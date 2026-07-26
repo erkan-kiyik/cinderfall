@@ -15,7 +15,7 @@ import { buildWeapons } from './art/weapons.js';
 import { World, GROUND_Y, MAP_W } from './game/world.js';
 import { FX } from './game/fx.js';
 import { Player } from './game/player.js';
-import { Enemy, getGlobalDetection } from './game/enemy.js';
+import { Enemy, Boss, BOSS_STAGE_INTERVAL, getGlobalDetection } from './game/enemy.js';
 import { Hud } from './game/hud.js';
 import { Progression, UNLOCKS } from './game/progression.js';
 import { applyLoadout } from './game/meta.js';
@@ -232,6 +232,7 @@ class Game {
     this._playtimeAccumMs = 0;
     this.currentKillStreak = 0;
     this.comboCount = 0; this.comboTimer = 0;
+    this.isBossStage = false;
     this.reset();
     hud.bind({
       deploy: () => { audio.resume(); audio.ui(); this.deploy(); },
@@ -256,14 +257,26 @@ class Game {
 
   spawnEnemiesForStage() {
     const diff = clamp(this.stage - 1, 0, 8);
-    this.enemies = this.world.enemySpawns.map((s) => {
-      const e = new Enemy(assets.phantom, assets.shadow, assets.weapons.rifle, this.world, this.fx, audio, s.x, s.min, s.max);
-      e.y = s.y;
-      e.difficulty = diff;
-      e.maxHp = 100 + Math.min(60, diff * 5);
-      e.hp = e.maxHp;
-      return e;
-    });
+    this.isBossStage = this.stage > 0 && this.stage % BOSS_STAGE_INTERVAL === 0;
+    if (this.isBossStage) {
+      // one heavyweight encounter in place of the regular squad — spawned at
+      // the map's middle spawn point (a reasonable, already-clear patrol lane)
+      // so no map/world-generation code needs to know bosses exist
+      const spawns = this.world.enemySpawns;
+      const mid = spawns[Math.floor(spawns.length / 2)] || { x: MAP_W * 0.55, y: GROUND_Y, min: MAP_W * 0.4, max: MAP_W * 0.75 };
+      const boss = new Boss(assets.phantom, assets.shadow, assets.weapons.rifle, this.world, this.fx, audio, mid.x, mid.min, mid.max, this.stage);
+      boss.y = mid.y;
+      this.enemies = [boss];
+    } else {
+      this.enemies = this.world.enemySpawns.map((s) => {
+        const e = new Enemy(assets.phantom, assets.shadow, assets.weapons.rifle, this.world, this.fx, audio, s.x, s.min, s.max);
+        e.y = s.y;
+        e.difficulty = diff;
+        e.maxHp = 100 + Math.min(60, diff * 5);
+        e.hp = e.maxHp;
+        return e;
+      });
+    }
   }
 
   // Re-applies every unlock the player has already earned (across sessions)
@@ -297,7 +310,7 @@ class Game {
     return true;
   }
 
-  onPlayerHit(headshot, killed) {
+  onPlayerHit(headshot, killed, enemy) {
     if (!killed) return;
     this.progression.recordKill(headshot);   // also awards tokens
     this.progression.addBpXp(headshot ? 20 : 12);   // battle-pass progress (currency system stays intact even though the shop UI is gone)
@@ -305,6 +318,7 @@ class Game {
     const res = this.progression.addXp(10 + (headshot ? 15 : 0));
     this.handleLevelUp(res);
     this.registerKill();
+    if (enemy && enemy.isBoss) this.onBossDefeated(enemy);
   }
 
   // Silent takedown reward: counts as an elimination, with a small bonus for
@@ -316,6 +330,17 @@ class Game {
     const res = this.progression.addXp(14);
     this.handleLevelUp(res);
     this.registerKill();
+    if (enemy && enemy.isBoss) this.onBossDefeated(enemy);
+  }
+
+  // Bonus payout + a distinct toast on top of the regular kill reward —
+  // boss stages otherwise play through the exact same reward path as any
+  // other elimination.
+  onBossDefeated(boss) {
+    this.progression.recordBossKill();
+    hud.setTokens(this.progression.tokens);
+    hud.showBoss(false);
+    hud.notify(`BOSS DEFEATED — ${boss.name}`);
   }
 
   // Stats page: kill streak (kills since the operator last went down) and
@@ -383,6 +408,8 @@ class Game {
     hud.setStage(this.stage);
     hud.setProgress(this.progression.data.level, this.progression.xpProgress());
     hud.setTokens(this.progression.tokens);
+    if (this.isBossStage) { hud.showBoss(true, this.enemies[0].name); hud.setBossHp(this.enemies[0].hp / this.enemies[0].maxHp); }
+    else hud.showBoss(false);
   }
 
   // Called when every hostile in the current stage is down: the campaign is
@@ -403,7 +430,15 @@ class Game {
     hud.setStage(this.stage);
     const res = this.progression.addXp(50 + this.stage * 5);
     const leveled = this.handleLevelUp(res);
-    if (!leveled) hud.notify(`STAGE ${this.stage} — HOSTILES INBOUND`);
+    if (this.isBossStage) {
+      const boss = this.enemies[0];
+      hud.showBoss(true, boss.name);
+      hud.setBossHp(1);
+      if (!leveled) hud.notify(`⚠ BOSS INCOMING — ${boss.name}`);
+    } else {
+      hud.showBoss(false);
+      if (!leveled) hud.notify(`STAGE ${this.stage} — HOSTILES INBOUND`);
+    }
     this.snapshotRun();   // checkpoint the new stage so a reload resumes here
   }
 
@@ -604,6 +639,11 @@ class Game {
 
     const kills = this.enemies.filter((e) => e.deadT > 0).length;
     hud.setObjective(kills, this.enemies.length);
+    if (this.isBossStage) {
+      const boss = this.enemies[0];
+      if (boss.deadT > 0) hud.showBoss(false);
+      else hud.setBossHp(boss.hp / boss.maxHp);
+    }
 
     const det = getGlobalDetection(this.enemies);
     hud.setDetection(det.state, det.value);

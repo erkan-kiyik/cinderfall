@@ -552,12 +552,13 @@ export class Player {
     let hitEnemy = null;
     for (const e of enemies) {
       if (e.deadT > 0) continue;
-      const t = segVsBox(mzl.x, mzl.y, ex - mzl.x, ey - mzl.y, e.x - 13, e.y - 134, 26, 134);
+      const hs = e.hitboxScale || 1;
+      const t = segVsBox(mzl.x, mzl.y, ex - mzl.x, ey - mzl.y, e.x - 13 * hs, e.y - 134 * hs, 26 * hs, 134 * hs);
       if (t !== null && t < bestT) { bestT = t; hitEnemy = e; }
     }
     const hx = mzl.x + (ex - mzl.x) * bestT, hy = mzl.y + (ey - mzl.y) * bestT;
     if (hitEnemy) {
-      const headshot = hy < hitEnemy.y - 108;
+      const headshot = hy < hitEnemy.y - 108 * (hitEnemy.hitboxScale || 1);
       const d = dmg * (headshot ? 1.9 : 1);
       this.hits++;
       if (headshot) this.headshots++;
@@ -566,7 +567,7 @@ export class Player {
       this.fx.blood(hx, hy, Math.sign(ex - mzl.x));
       this.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
       if (killed) this.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');
-      if (game && game.onPlayerHit) game.onPlayerHit(headshot, killed);
+      if (game && game.onPlayerHit) game.onPlayerHit(headshot, killed, hitEnemy);
     } else if (wHit && wHit.tag === 'barrel') {
       game.damageBarrel(wHit.ref, dmg);
       this.fx.impactWall(hx, hy, wHit.nx, wHit.ny);
@@ -585,13 +586,14 @@ export class Player {
     let hitEnemy = null;
     for (const e of enemies) {
       if (e.deadT > 0) continue;
-      const t = segVsBox(mzl.x, mzl.y, ex - mzl.x, ey - mzl.y, e.x - 13, e.y - 134, 26, 134);
+      const hs = e.hitboxScale || 1;
+      const t = segVsBox(mzl.x, mzl.y, ex - mzl.x, ey - mzl.y, e.x - 13 * hs, e.y - 134 * hs, 26 * hs, 134 * hs);
       if (t !== null && t < bestT) { bestT = t; hitEnemy = e; }
     }
     const hx = mzl.x + (ex - mzl.x) * bestT, hy = mzl.y + (ey - mzl.y) * bestT;
     const col = wpn.beam.color;
     if (hitEnemy) {
-      const headshot = hy < hitEnemy.y - 108;
+      const headshot = hy < hitEnemy.y - 108 * (hitEnemy.hitboxScale || 1);
       const d = dmg * (headshot ? 1.7 : 1);
       this.hits++;
       if (headshot) this.headshots++;
@@ -600,7 +602,7 @@ export class Player {
       this.fx.energyImpact(hx, hy, col, 0);
       this.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
       if (killed) this.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');
-      if (game && game.onPlayerHit) game.onPlayerHit(headshot, killed);
+      if (game && game.onPlayerHit) game.onPlayerHit(headshot, killed, hitEnemy);
     } else if (wHit) {
       if (wHit.tag === 'barrel') game.damageBarrel(wHit.ref, dmg);
       this.fx.energyImpact(hx, hy, col, 0);
@@ -736,7 +738,7 @@ export class Player {
         this.fx.blood(e.x - this.facing * 6, e.y - 92, this.facing);
         this.hud.hitmark(killed ? 'kill' : 'hit');
         if (killed) this.hud.notify('HOSTILE ELIMINATED — MELEE');
-        if (game && game.onPlayerHit) game.onPlayerHit(false, killed);
+        if (game && game.onPlayerHit) game.onPlayerHit(false, killed, e);
         hit = true;
       }
     }

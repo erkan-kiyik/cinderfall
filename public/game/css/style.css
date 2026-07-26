@@ -172,6 +172,26 @@ html, body {
 @keyframes det-flash { 50% { opacity: 0.6; } }
 @keyframes det-pulse { 0% { transform: scale(1.06); } 100% { transform: scale(1); } }
 
+/* ---------- boss health bar: appears only during a boss encounter ---------- */
+.boss-bar {
+  position: absolute;
+  top: calc(var(--hud-pad) + env(safe-area-inset-top) + 122px);
+  left: 50%; transform: translateX(-50%);
+  width: min(300px, 60vw); padding: 6px 14px;
+  display: flex; flex-direction: column; gap: 4px; align-items: center;
+  opacity: 0; transition: opacity 0.3s var(--ease-out);
+}
+.boss-bar:not(.hidden) { opacity: 1; }
+.boss-bar-name { font-size: 10px; letter-spacing: 0.2em; font-weight: 700; color: #ff5c46; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+/* .bar's flex:1 assumes a row-flex parent (it controls width there); inside
+   .boss-bar's column layout that same flex:1 controls height instead and
+   collapses the track to 0 — flex:none neutralizes it so the explicit
+   width/height below apply as plain block sizing. Doubled selector
+   (.bar.boss-hp-track) beats .bar's own specificity regardless of source
+   order, since .bar is declared later in this file. */
+.bar.boss-hp-track { flex: none; width: 100%; height: 6px; padding: 0; }
+.bar-fill.boss-hp { background: linear-gradient(90deg, #7a1a12, #ff5c46); box-shadow: 0 0 6px rgba(255,92,70,0.5); }
+
 .notify {
   position: absolute; top: 22%; left: 50%; transform: translateX(-50%);
   font-size: 12px; letter-spacing: 0.28em; color: var(--amber);

@@ -36,6 +36,7 @@ export class Hud {
       cineBars: $('cine-bars'), introKicker: $('intro-kicker'), introLine: $('intro-line'),
       introSkip: $('intro-skip'), sceneFade: $('scene-fade'),
       graphicsTier: $('graphics-tier'),
+      bossBar: $('boss-bar'), bossName: $('boss-name'), bossHpFill: $('boss-hp-fill'),
     };
     this._lastAmmo = null;
     this._lastDetState = null;
@@ -55,6 +56,16 @@ export class Hud {
 
   setGraphicsTier(name) {
     if (this.el.graphicsTier) this.el.graphicsTier.textContent = name;
+  }
+
+  // Boss encounter health bar — hidden the rest of the time.
+  showBoss(on, name) {
+    this.el.bossBar.classList.toggle('hidden', !on);
+    if (on && name) this.el.bossName.textContent = name;
+  }
+
+  setBossHp(frac) {
+    this.el.bossHpFill.style.width = `${Math.max(0, Math.round(frac * 100))}%`;
   }
 
   setLoad(p, label) {
