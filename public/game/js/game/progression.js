@@ -54,6 +54,11 @@ function defaultProgress() {
     weekly: null, missionWeek: 0,
     bpXp: 0, bpClaimed: {},            // battle pass
     lastLogin: 0, loginStreak: 0,
+    firstPlayed: Date.now(),           // for "new player" store offers
+    // premium store
+    diamondAdDay: 0, diamondAdWatched: 0, diamondAdGrantedToday: 0, lastDiamondAdAt: 0,
+    purchases: [],        // { id, diamonds, priceTL, ts } — receipt log, newest last
+    boughtBundles: {},    // bundleId -> true, one-time bundles can't be rebought
   };
 }
 
@@ -63,6 +68,15 @@ export const TOKENS_PER_HEADSHOT = 14;
 
 // Free crates earned by watching a rewarded ad, capped per calendar day.
 export const AD_CRATE_DAILY_LIMIT = 5;
+
+// Free Diamonds: every 10 rewarded ads watched grants 1 Diamond, capped at
+// 5 Diamonds/day (so at most 50 ad-watches count per day). A short cooldown
+// between watches, plus only ever crediting a watch through the ad
+// provider's actual reward callback (never a bare button click), is the
+// exploit guard — there's no backend here to validate server-side.
+export const DIAMOND_AD_WATCHES_PER_DIAMOND = 10;
+export const DIAMOND_AD_DAILY_CAP = 5;
+export const DIAMOND_AD_COOLDOWN_MS = 12000;
 
 // Battle-pass: XP per tier and the reward table.
 export const BP_XP_PER_TIER = 1000;
@@ -245,13 +259,77 @@ export class Progression {
   useEnergy(n = 1) { if (this.data.energy < n) return false; this.data.energy -= n; this.save(); return true; }
   refillEnergy() { this.data.energy = this.data.energyMax; this.save(); }
 
-  // Applies a reward object { coins, gems, energy, item } from missions / BP.
+  // ---- Diamonds — the store-facing name for the same premium currency as
+  // `gems` above (never surfaced to players before the store existed, so
+  // there's no legacy save data to migrate). ----
+  get diamonds() { return this.data.gems; }
+  addDiamonds(n) { return this.addGems(n); }
+  spendDiamonds(n) { return this.spendGems(n); }
+
+  // Records a completed (real or simulated) IAP receipt and grants the pack.
+  recordPurchase(pkg) {
+    this.addDiamonds(pkg.diamonds);
+    this.data.purchases.push({ id: pkg.id, diamonds: pkg.diamonds, priceTL: pkg.priceTL, ts: Date.now() });
+    this.save();
+  }
+
+  boughtBundle(id) { return !!this.data.boughtBundles[id]; }
+  recordBundlePurchase(bundle) {
+    this.data.boughtBundles[bundle.id] = true;
+    this.grantReward(bundle.grant);
+  }
+
+  // ---- Diamonds from ads: 10 watches → 1 Diamond, capped 5/day ----
+  _rolloverDiamondAdDay() {
+    const day = Math.floor(Date.now() / 86400000);
+    if (this.data.diamondAdDay !== day) {
+      this.data.diamondAdDay = day;
+      this.data.diamondAdWatched = 0;
+      this.data.diamondAdGrantedToday = 0;
+    }
+  }
+
+  diamondAdProgress() {
+    this._rolloverDiamondAdDay();
+    const inCycle = this.data.diamondAdWatched % DIAMOND_AD_WATCHES_PER_DIAMOND;
+    const cooldownLeft = Math.max(0, DIAMOND_AD_COOLDOWN_MS - (Date.now() - this.data.lastDiamondAdAt));
+    return {
+      watched: inCycle, required: DIAMOND_AD_WATCHES_PER_DIAMOND,
+      grantedToday: this.data.diamondAdGrantedToday, dailyCap: DIAMOND_AD_DAILY_CAP,
+      capped: this.data.diamondAdGrantedToday >= DIAMOND_AD_DAILY_CAP,
+      cooldownMs: cooldownLeft,
+    };
+  }
+
+  // Call only from the ad provider's actual reward callback. Returns
+  // { watched, required, diamondGranted } so the caller can react/toast.
+  recordDiamondAdWatch() {
+    this._rolloverDiamondAdDay();
+    const now = Date.now();
+    if (now - this.data.lastDiamondAdAt < DIAMOND_AD_COOLDOWN_MS) return { rejected: 'cooldown' };
+    if (this.data.diamondAdGrantedToday >= DIAMOND_AD_DAILY_CAP) return { rejected: 'cap' };
+    this.data.lastDiamondAdAt = now;
+    this.data.diamondAdWatched++;
+    let diamondGranted = false;
+    if (this.data.diamondAdWatched % DIAMOND_AD_WATCHES_PER_DIAMOND === 0) {
+      this.data.diamondAdGrantedToday++;
+      this.addDiamonds(1);
+      diamondGranted = true;
+    }
+    this.save();
+    return { ...this.diamondAdProgress(), diamondGranted };
+  }
+
+  // Applies a reward object { coins, gems, energy, item, items } from
+  // missions / BP / store bundles. `items` (array) covers bundles that
+  // grant more than one cosmetic; `item` (single id) covers everything else.
   grantReward(r) {
     if (!r) return;
     if (r.coins) this.data.tokens += r.coins;
     if (r.gems) this.data.gems += r.gems;
     if (r.energy) this.data.energy = Math.min(this.data.energyMax, this.data.energy + r.energy);
     if (r.item) this.data.inventory[r.item] = true;
+    if (r.items) for (const id of r.items) this.data.inventory[id] = true;
     this.save();
   }
 

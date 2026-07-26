@@ -103,7 +103,10 @@
     <div class="home">
       <header class="home-top">
         <div class="home-brand">CINDERFALL<span>SECTOR 9</span></div>
-        <div class="token-pill"><span class="token-ico">◈</span><span id="token-count">0</span></div>
+        <div class="pill-row">
+          <div class="token-pill"><span class="token-ico">◈</span><span id="token-count">0</span></div>
+          <div class="token-pill diamond-pill"><span class="token-ico diamond-ico">◆</span><span id="diamond-count">0</span></div>
+        </div>
       </header>
 
       <main class="home-body">
@@ -159,12 +162,45 @@
             <div id="collection-grid" class="collection-grid"></div>
           </div>
         </section>
+
+        <!-- STORE -->
+        <section id="tab-store" class="home-panel">
+          <h2 class="panel-title">PREMIUM STORE</h2>
+          <div id="store-cats" class="store-cats"></div>
+
+          <div id="store-section-diamonds" class="store-section">
+            <div class="store-section-head">BUY DIAMONDS</div>
+            <div id="diamond-packages" class="diamond-grid"></div>
+          </div>
+
+          <div id="store-section-free" class="store-section">
+            <div class="store-section-head">FREE DIAMONDS</div>
+            <div class="free-diamonds-card">
+              <div class="free-diamonds-desc">Watch 10 rewarded ads to earn 1 Diamond — up to 5 Diamonds a day.</div>
+              <div class="ad-progress-track"><div id="diamond-ad-fill" class="ad-progress-fill"></div></div>
+              <div class="ad-progress-label">ADS WATCHED: <span id="diamond-ad-count">0</span> / 10</div>
+              <button id="btn-watch-ad-diamond" class="btn secondary">▶ WATCH AD</button>
+              <div id="diamond-ad-status" class="ad-status"></div>
+            </div>
+          </div>
+
+          <div id="store-section-offers" class="store-section">
+            <div class="store-section-head">SPECIAL OFFERS</div>
+            <div id="bundle-list" class="bundle-list"></div>
+          </div>
+
+          <div id="store-section-items" class="store-section">
+            <div class="store-section-head" id="store-items-head">FEATURED</div>
+            <div id="store-item-grid" class="collection-grid"></div>
+          </div>
+        </section>
       </main>
 
       <nav class="home-tabs">
         <button class="home-tab active" data-tab="play"><span class="tab-ico">▶</span>PLAY</button>
         <button class="home-tab" data-tab="loadout"><span class="tab-ico">◈</span>LOADOUT</button>
         <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span>CRATES</button>
+        <button class="home-tab" data-tab="store"><span class="tab-ico">◆</span>STORE</button>
       </nav>
       <div class="home-legal">
         <a href="legal/privacy.html" target="_blank" rel="noopener">Privacy</a>

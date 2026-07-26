@@ -586,6 +586,7 @@ export function buildWeapons() {
     urban: paintRifleBody('ranger', { rec: '#3c4750', poly: '#2b3640' }),
     cinder: paintRifleBody('ranger', { rec: '#4a2e26', poly: '#38221c' }),
     arc: paintRifleBody('ranger', { rec: '#123742', poly: '#0c2731' }),   // ARC-9 energy
+    inferno: paintRifleBody('ranger', { rec: '#5c1418', poly: '#3d0d10' }),   // mythic store finish
   };
   const pistolBody = paintPistolBody();
   const pistolFinishes = {
@@ -599,6 +600,7 @@ export function buildWeapons() {
     default: knifeBody,
     ravage: paintKnifeBowie(),
     volt: paintKnife({ blade: '#38e0ff' }),   // VOLT EDGE energy blade
+    eventide: paintKnife({ blade: '#f2f6ff' }),   // ultra-limited event finish
   };
   const smgBody = paintSmgBody();
   const smgFinishes = {

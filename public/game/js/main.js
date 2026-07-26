@@ -20,6 +20,7 @@ import { Hud } from './game/hud.js';
 import { Progression, UNLOCKS } from './game/progression.js';
 import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
+import { StoreUI } from './game/storeui.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
 
@@ -176,13 +177,16 @@ async function boot() {
     audio,
   });
   game.metaUI.mount();
+  game.storeUI = new StoreUI({ progression: game.progression, previewItem, audio });
+  game.storeUI.mount();
+  document.querySelector('[data-tab="store"]').addEventListener('click', () => game.storeUI.refresh());
   game.touch = new TouchControls(input, { force: params.has('touch') });
   game.touch.mount();
 
   hud.setLoad(1, 'READY');
   await raf();
   if (DEMO) game.deploy();
-  else { hud.show('menu'); game.state = 'menu'; game.metaUI.refresh(); }
+  else { hud.show('menu'); game.state = 'menu'; game.metaUI.refresh(); game.storeUI.refresh(); }
   requestAnimationFrame(frame);
 }
 
@@ -471,6 +475,7 @@ class Game {
     hud.show(s);
     if (s === 'play') this.snapshotRun();   // checkpoint as soon as play begins
     if (s === 'menu' && this.metaUI) this.metaUI.refresh();
+    if (s === 'menu' && this.storeUI) this.storeUI.refresh();
     if (this.touch) this.touch.setVisible(s === 'play');
   }
 

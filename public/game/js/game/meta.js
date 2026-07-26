@@ -9,6 +9,16 @@ export const RARITY = {
   rare:      { key: 'rare',      label: 'RARE',      color: '#4a90d9', glow: 'rgba(74,144,217,0.7)',  weight: 27 },
   epic:      { key: 'epic',      label: 'EPIC',      color: '#a55cd6', glow: 'rgba(165,92,214,0.7)', weight: 11 },
   legendary: { key: 'legendary', label: 'LEGENDARY', color: '#e0a13a', glow: 'rgba(224,161,58,0.85)', weight: 4 },
+  // Diamond-store-only tiers — never rolled from a crate (rollCrate only
+  // walks common/rare/epic/legendary), so `weight` here is just documentation.
+  mythic:       { key: 'mythic',       label: 'MYTHIC',        color: '#e0446e', glow: 'rgba(224,68,110,0.85)', weight: 0 },
+  ultraLimited: { key: 'ultraLimited', label: 'ULTRA LIMITED', color: '#4ee0d6', glow: 'rgba(78,224,214,0.9)',  weight: 0 },
+};
+
+// Diamond price by rarity for the direct-purchase store (crate-only
+// "common" tier has no store price — it's never worth spending Diamonds on).
+export const RARITY_DIAMOND_PRICE = {
+  rare: 15, epic: 30, legendary: 50, mythic: 80, ultraLimited: 120,
 };
 
 // Crate cost in tokens.
@@ -53,6 +63,13 @@ export const CATALOG = [
     apply: { type: 'operator', variant: 'phantom' } },
   { id: 'op_nomad',   name: 'NOMAD OPERATOR',     slot: 'operator', rarity: 'rare', kind: 'Operator',
     apply: { type: 'operator', variant: 'nomad' } },
+
+  // -- Diamond-store exclusives: never drop from a crate (storeOnly), sold
+  // directly for Diamonds at their rarity's RARITY_DIAMOND_PRICE. --
+  { id: 'rifle_inferno', name: 'VK-77 · INFERNO', slot: 'rifleFinish', rarity: 'mythic', kind: 'Rifle Skin', tag: 'MYTHIC',
+    storeOnly: true, apply: { type: 'finish', weapon: 'rifle', finish: 'inferno' } },
+  { id: 'knife_eventide', name: 'EVENTIDE — SECTOR 9 LAUNCH BLADE', slot: 'knifeFinish', rarity: 'ultraLimited', kind: 'Energy Blade', tag: 'EVENT',
+    storeOnly: true, retiredAfter: Date.UTC(2026, 7, 9), apply: { type: 'finish', weapon: 'knife', finish: 'eventide' } },
 ];
 
 // ---- weapon loadout: pick which weapon fills each arsenal slot. Only the
@@ -119,7 +136,8 @@ export const weaponVariantIds = (weaponId) =>
 const LOOT_WEAPON_ITEMS = ALL_WEAPON_IDS
   .filter((id) => !STARTER_WEAPON_IDS.includes(id))
   .map((id) => WEAPON_ITEMS.find((i) => i.weaponId === id));
-export const LOOT_POOL = [...CATALOG, ...LOOT_WEAPON_ITEMS];
+// storeOnly cosmetics (Diamond-store exclusives) never enter crate loot.
+export const LOOT_POOL = [...CATALOG.filter((i) => !i.storeOnly), ...LOOT_WEAPON_ITEMS];
 
 const BY_ID = Object.fromEntries([...CATALOG, ...WEAPON_ITEMS].map((i) => [i.id, i]));
 export const itemById = (id) => BY_ID[id] || null;
