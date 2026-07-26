@@ -59,6 +59,17 @@ function defaultProgress() {
     diamondAdDay: 0, diamondAdWatched: 0, diamondAdGrantedToday: 0, lastDiamondAdAt: 0,
     purchases: [],        // { id, diamonds, priceTL, ts } — receipt log, newest last
     boughtBundles: {},    // bundleId -> true, one-time bundles can't be rebought
+    // ---- stats page: lifetime counters (never decrease, unlike balances) ----
+    totalPlaytimeMs: 0,
+    lifetimeCoinsEarned: 0, lifetimeDiamondsEarned: 0,
+    totalAdsWatched: 0,           // unified across every ad type (crate/revive/diamond)
+    totalMissionsCompleted: 0,
+    highestCombo: 0, longestKillStreak: 0,
+    weaponShots: {},               // weaponId -> lifetime shots fired
+    // ---- achievements ----
+    achievements: {},              // achId -> { claimed: true }
+    // ---- ad-watch -> TL cashout ----
+    adTLRewardsClaimed: 0,
   };
 }
 
@@ -77,6 +88,10 @@ export const AD_CRATE_DAILY_LIMIT = 5;
 export const DIAMOND_AD_WATCHES_PER_DIAMOND = 10;
 export const DIAMOND_AD_DAILY_CAP = 5;
 export const DIAMOND_AD_COOLDOWN_MS = 12000;
+
+// Ads watched per 10 TL cashout reward, and the reward amount itself.
+export const AD_TL_REWARD_THRESHOLD = 1000;
+export const AD_TL_REWARD_AMOUNT_TL = 10;
 
 // Battle-pass: XP per tier and the reward table.
 export const BP_XP_PER_TIER = 1000;
@@ -179,15 +194,16 @@ export class Progression {
   recordKill(headshot) {
     this.data.totalKills++;
     if (headshot) this.data.totalHeadshots++;
-    this.data.tokens += headshot ? TOKENS_PER_HEADSHOT : TOKENS_PER_KILL;
-    this.save();
-    return this.data.tokens;
+    return this.addTokens(headshot ? TOKENS_PER_HEADSHOT : TOKENS_PER_KILL);
   }
 
   // ---- token economy ----
   get tokens() { return this.data.tokens; }
 
-  addTokens(n) { this.data.tokens += n; this.save(); return this.data.tokens; }
+  // Every Coin gain routes through here so lifetimeCoinsEarned (stats page)
+  // always matches, regardless of source (kills, duplicate-crate refunds,
+  // missions, battle pass).
+  addTokens(n) { this.data.tokens += n; this.data.lifetimeCoinsEarned += n; this.save(); return this.data.tokens; }
 
   // Attempts to spend `n`; returns true and deducts on success, false if broke.
   spendTokens(n) {
@@ -227,6 +243,7 @@ export class Progression {
   recordAdCrateWatch() {
     this._rolloverAdCrateDay();
     this.data.adCratesToday++;
+    this.data.totalAdsWatched++;
     this.save();
   }
 
@@ -254,7 +271,9 @@ export class Progression {
   get energy() { return this.data.energy; }
   get energyMax() { return this.data.energyMax; }
 
-  addGems(n) { this.data.gems += n; this.save(); return this.data.gems; }
+  // Every Diamond gain routes through here (mirrors addTokens) so
+  // lifetimeDiamondsEarned always matches, regardless of source.
+  addGems(n) { this.data.gems += n; this.data.lifetimeDiamondsEarned += n; this.save(); return this.data.gems; }
   spendGems(n) { if (this.data.gems < n) return false; this.data.gems -= n; this.save(); return true; }
   useEnergy(n = 1) { if (this.data.energy < n) return false; this.data.energy -= n; this.save(); return true; }
   refillEnergy() { this.data.energy = this.data.energyMax; this.save(); }
@@ -310,6 +329,7 @@ export class Progression {
     if (this.data.diamondAdGrantedToday >= DIAMOND_AD_DAILY_CAP) return { rejected: 'cap' };
     this.data.lastDiamondAdAt = now;
     this.data.diamondAdWatched++;
+    this.data.totalAdsWatched++;
     let diamondGranted = false;
     if (this.data.diamondAdWatched % DIAMOND_AD_WATCHES_PER_DIAMOND === 0) {
       this.data.diamondAdGrantedToday++;
@@ -325,8 +345,8 @@ export class Progression {
   // grant more than one cosmetic; `item` (single id) covers everything else.
   grantReward(r) {
     if (!r) return;
-    if (r.coins) this.data.tokens += r.coins;
-    if (r.gems) this.data.gems += r.gems;
+    if (r.coins) this.data.tokens += r.coins, this.data.lifetimeCoinsEarned += r.coins;
+    if (r.gems) this.data.gems += r.gems, this.data.lifetimeDiamondsEarned += r.gems;
     if (r.energy) this.data.energy = Math.min(this.data.energyMax, this.data.energy + r.energy);
     if (r.item) this.data.inventory[r.item] = true;
     if (r.items) for (const id of r.items) this.data.inventory[id] = true;
@@ -406,8 +426,62 @@ export class Progression {
     const m = (this.data[list] || [])[index];
     if (!m || m.claimed || this.missionProgress(m) < m.goal) return null;
     m.claimed = true;
+    this.data.totalMissionsCompleted++;
     this.grantReward(m.reward);
     return m;
+  }
+
+  // ---- stats page ----
+  // Playtime accumulates in-memory on the caller (Game) during play and is
+  // flushed here periodically — never per-frame, to keep this a cheap,
+  // infrequent localStorage write like every other stat here.
+  addPlaytime(ms) { if (ms > 0) { this.data.totalPlaytimeMs += ms; this.save(); } }
+
+  // Every rewarded-ad watch (crate/revive/Diamond — any type) feeds this one
+  // counter, which also drives the ad-watch -> TL cashout below.
+  recordAdWatched() { this.data.totalAdsWatched++; this.save(); }
+
+  // Weapon shot counts accumulate per-run in memory (Game) and flush once at
+  // run end via this, exactly like the existing recordShots(shots, hits) —
+  // never per-shot, which would hit localStorage tens of times a second on
+  // full-auto weapons.
+  recordWeaponShots(shotsByWeapon) {
+    for (const [id, n] of Object.entries(shotsByWeapon)) {
+      this.data.weaponShots[id] = (this.data.weaponShots[id] || 0) + n;
+    }
+    this.save();
+  }
+  mostUsedWeapon() {
+    const entries = Object.entries(this.data.weaponShots);
+    if (!entries.length) return null;
+    return entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+  }
+  weaponsUsedCount() { return Object.keys(this.data.weaponShots).length; }
+
+  // Combo (kills in quick succession) and kill streak (kills since the last
+  // time the operator went down) — both just record new highs; the live
+  // counters themselves live on Game (per-run/per-life state).
+  recordCombo(n) { if (n > this.data.highestCombo) { this.data.highestCombo = n; this.save(); } }
+  recordKillStreak(n) { if (n > this.data.longestKillStreak) { this.data.longestKillStreak = n; this.save(); } }
+
+  // ---- achievements ----
+  achievementClaimed(id) { return !!this.data.achievements[id]; }
+  claimAchievement(id) {
+    if (this.data.achievements[id]) return false;
+    this.data.achievements[id] = { claimed: true, ts: Date.now() };
+    this.addDiamonds(1);
+    return true;
+  }
+
+  // ---- ad-watch -> TL cashout (see engine/cashout.js for the payout side) ----
+  adTLRewardsAvailable() {
+    return Math.floor(this.data.totalAdsWatched / AD_TL_REWARD_THRESHOLD) - this.data.adTLRewardsClaimed;
+  }
+  claimAdTLReward() {
+    if (this.adTLRewardsAvailable() <= 0) return false;
+    this.data.adTLRewardsClaimed++;
+    this.save();
+    return true;
   }
 }
 

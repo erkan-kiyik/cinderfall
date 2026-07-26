@@ -21,6 +21,7 @@ import { Progression, UNLOCKS } from './game/progression.js';
 import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
 import { StoreUI } from './game/storeui.js';
+import { StatsUI } from './game/statsui.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
 
@@ -29,6 +30,9 @@ const ctx = canvas.getContext('2d');
 const hud = new Hud();
 const params = new URLSearchParams(location.search);
 const DEMO = params.has('demo');
+// Stats page: a kill within this many seconds of the last one extends the
+// combo; longer than this and the next kill starts a fresh combo of 1.
+const COMBO_WINDOW = 4.0;
 
 let vw = 0, vh = 0, dpr = 1;
 let lightCv, lightG, glowCv, glowG, grainCv;
@@ -180,13 +184,16 @@ async function boot() {
   game.storeUI = new StoreUI({ progression: game.progression, previewItem, audio });
   game.storeUI.mount();
   document.querySelector('[data-tab="store"]').addEventListener('click', () => game.storeUI.refresh());
+  game.statsUI = new StatsUI({ progression: game.progression, weapons: assets.weapons, audio });
+  game.statsUI.mount();
+  document.querySelector('[data-tab="stats"]').addEventListener('click', () => game.statsUI.refresh());
   game.touch = new TouchControls(input, { force: params.has('touch') });
   game.touch.mount();
 
   hud.setLoad(1, 'READY');
   await raf();
   if (DEMO) game.deploy();
-  else { hud.show('menu'); game.state = 'menu'; game.metaUI.refresh(); game.storeUI.refresh(); }
+  else { hud.show('menu'); game.state = 'menu'; game.metaUI.refresh(); game.storeUI.refresh(); game.statsUI.refresh(); }
   requestAnimationFrame(frame);
 }
 
@@ -218,6 +225,13 @@ class Game {
     this.introEnding = false;
     this.reviveOffered = false;   // one watch-ad continue per deploy
     this._reviveTimer = null;
+    // ---- stats page: all in-memory, flushed to Progression in batches
+    // (never per-shot/per-frame) so tracking never touches localStorage at
+    // a frequency that could cost a frame ----
+    this._weaponShotsThisRun = {};
+    this._playtimeAccumMs = 0;
+    this.currentKillStreak = 0;
+    this.comboCount = 0; this.comboTimer = 0;
     this.reset();
     hud.bind({
       deploy: () => { audio.resume(); audio.ui(); this.deploy(); },
@@ -290,6 +304,7 @@ class Game {
     hud.setTokens(this.progression.tokens);
     const res = this.progression.addXp(10 + (headshot ? 15 : 0));
     this.handleLevelUp(res);
+    this.registerKill();
   }
 
   // Silent takedown reward: counts as an elimination, with a small bonus for
@@ -300,6 +315,27 @@ class Game {
     hud.setTokens(this.progression.tokens);
     const res = this.progression.addXp(14);
     this.handleLevelUp(res);
+    this.registerKill();
+  }
+
+  // Stats page: kill streak (kills since the operator last went down) and
+  // combo (kills landed within COMBO_WINDOW of each other) — both just
+  // record new personal bests; the live counters reset via resetKillStreak
+  // (on death) and the comboTimer countdown in update() (on a lull).
+  registerKill() {
+    this.currentKillStreak++;
+    this.progression.recordKillStreak(this.currentKillStreak);
+    this.comboCount = this.comboTimer > 0 ? this.comboCount + 1 : 1;
+    this.comboTimer = COMBO_WINDOW;
+    this.progression.recordCombo(this.comboCount);
+  }
+
+  resetKillStreak() { this.currentKillStreak = 0; }
+
+  // Called by Player.fire() every trigger pull — in-memory only, flushed to
+  // Progression in one batch at run end (see finish()).
+  recordWeaponShot(weaponId) {
+    this._weaponShotsThisRun[weaponId] = (this._weaponShotsThisRun[weaponId] || 0) + 1;
   }
 
   // Persist the live mission state so a reload continues from here.
@@ -321,6 +357,7 @@ class Game {
     this.world.regenerate(this.stage);
     this.player = new Player(assets.ranger, assets.shadow, assets.weapons, this.world, this.fx, this.cam, audio, hud);
     this.player.x = 260; this.player.y = GROUND_Y;
+    this.player.onDeath = () => this.resetKillStreak();
     this.applyAllUnlocks();
     applyLoadout(this.player, this.progression, assets);   // equipped crate cosmetics win
     if (resume) {
@@ -338,6 +375,8 @@ class Game {
     this.reviveOffered = false;
     if (this._reviveTimer) { clearInterval(this._reviveTimer); this._reviveTimer = null; }
     hud.showRevive(false);
+    this._weaponShotsThisRun = {};
+    this.currentKillStreak = 0; this.comboCount = 0; this.comboTimer = 0;
     this.startTime = this.time;
     this.cam.follow(this.player.x, this.player.y - 60, 0, 0, true);
     hud.setObjective(0, this.enemies.length);
@@ -476,6 +515,7 @@ class Game {
     if (s === 'play') this.snapshotRun();   // checkpoint as soon as play begins
     if (s === 'menu' && this.metaUI) this.metaUI.refresh();
     if (s === 'menu' && this.storeUI) this.storeUI.refresh();
+    if (s === 'menu' && this.statsUI) this.statsUI.refresh();
     if (this.touch) this.touch.setVisible(s === 'play');
   }
 
@@ -605,7 +645,14 @@ class Game {
       // lightweight periodic checkpoint — "save & continue" per spec: state
       // is captured frequently so a reload/close always resumes in place
       this._autosaveT += dt;
-      if (this._autosaveT > 4) { this._autosaveT = 0; this.snapshotRun(); }
+      this._playtimeAccumMs += dt * 1000;
+      if (this.comboTimer > 0) this.comboTimer -= dt;
+      if (this._autosaveT > 4) {
+        this._autosaveT = 0;
+        this.snapshotRun();
+        this.progression.addPlaytime(this._playtimeAccumMs);
+        this._playtimeAccumMs = 0;
+      }
     }
     input.endFrame();
   }
@@ -628,7 +675,10 @@ class Game {
   reviveViaAd() {
     if (this._reviveTimer) { clearInterval(this._reviveTimer); this._reviveTimer = null; }
     hud.showRevive(false);
-    watchRewardedAd(() => this.doRevive(), () => this.declineRevive());
+    watchRewardedAd(
+      () => { this.progression.recordAdWatched(); this.doRevive(); },
+      () => this.declineRevive()
+    );
   }
 
   doRevive() {
@@ -654,6 +704,10 @@ class Game {
     const t = Math.round(this.time - this.startTime);
     this.progression.recordShots(p.shots, p.hits);
     this.progression.recordRun(this.stage, t);
+    this.progression.recordWeaponShots(this._weaponShotsThisRun);
+    this._weaponShotsThisRun = {};
+    this.progression.addPlaytime(this._playtimeAccumMs);
+    this._playtimeAccumMs = 0;
     this.progression.clearRun();   // the run is over — nothing to resume
     hud.end([
       `STAGE REACHED — ${this.stage}`,

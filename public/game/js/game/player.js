@@ -35,6 +35,7 @@ export class Player {
     this.stealth = null;          // active takedown timeline
     this.stealthTarget = null;    // hostile that can currently be taken down
     this.hurtT = 0; this.deadT = 0;
+    this.onDeath = null;          // optional hook set by Game (stats: kill-streak reset)
 
     this.hp = 100; this.maxHp = 100;
     this.armor = 0; this.maxArmor = 0;
@@ -510,6 +511,9 @@ export class Player {
     const { wpn, ws } = cur;
     cur.mag--;
     this.shots++;
+    // in-memory only (no I/O) — flushed to Progression once at run end via
+    // Game.finish(), so a full-auto weapon never triggers per-shot writes
+    if (game) game.recordWeaponShot(wpn.id);
     this.fireCd = 60 / wpn.rpm;
     this.lastShotT = this.time;
 
@@ -763,6 +767,7 @@ export class Player {
       this.hp = 0;
       this.deadT = 0.001;
       this.cam.addTrauma(0.7);
+      if (this.onDeath) this.onDeath();
     }
   }
 

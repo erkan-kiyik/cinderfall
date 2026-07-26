@@ -194,6 +194,32 @@
             <div id="store-item-grid" class="collection-grid"></div>
           </div>
         </section>
+
+        <!-- STATS -->
+        <section id="tab-stats" class="home-panel">
+          <h2 class="panel-title">STATISTICS</h2>
+          <div class="store-cats">
+            <button class="store-cat-chip stats-subtab active" data-section="overview">OVERVIEW</button>
+            <button class="store-cat-chip stats-subtab" data-section="achievements">ACHIEVEMENTS</button>
+          </div>
+
+          <div id="stats-overview" class="store-section">
+            <div id="stats-grid" class="stats-grid"></div>
+
+            <div class="store-section-head">AD WATCH REWARD</div>
+            <div class="free-diamonds-card">
+              <div class="free-diamonds-desc">Watch <span id="ad-tl-threshold">1,000</span> rewarded ads to earn <span id="ad-tl-amount">10</span> TL — counts every ad watched anywhere in the game.</div>
+              <div class="ad-progress-track"><div id="ad-tl-fill" class="ad-progress-fill"></div></div>
+              <div class="ad-progress-label" id="ad-tl-progress-label">0 / 1,000 ADS WATCHED</div>
+              <button id="btn-claim-ad-tl" class="btn primary" disabled>CLAIM 10 TL</button>
+              <div id="ad-tl-status" class="ad-status"></div>
+            </div>
+          </div>
+
+          <div id="stats-achievements" class="store-section hidden">
+            <div id="achievements-list"></div>
+          </div>
+        </section>
       </main>
 
       <nav class="home-tabs">
@@ -201,6 +227,7 @@
         <button class="home-tab" data-tab="loadout"><span class="tab-ico">◈</span>LOADOUT</button>
         <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span>CRATES</button>
         <button class="home-tab" data-tab="store"><span class="tab-ico">◆</span>STORE</button>
+        <button class="home-tab" data-tab="stats"><span class="tab-ico">◉</span>STATS</button>
       </nav>
       <div class="home-legal">
         <a href="legal/privacy.html" target="_blank" rel="noopener">Privacy</a>
