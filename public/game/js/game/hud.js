@@ -16,7 +16,7 @@ export class Hud {
   constructor() {
     this.el = {
       hud: $('hud'), loading: $('loading'), menu: $('menu'),
-      pause: $('pause'), end: $('end'),
+      pause: $('pause'), end: $('end'), revive: $('revive'), reviveCount: $('revive-count'),
       loadFill: $('load-fill'), loadLabel: $('load-label'),
       hpFill: $('hp-fill'), stFill: $('st-fill'), armorFill: $('armor-fill'),
       armorRow: $('armor-row'),
@@ -49,6 +49,8 @@ export class Hud {
     $('btn-redeploy').onclick = h.restart;
     $('btn-menu').onclick = h.quit;
     if (h.graphics) $('btn-graphics').onclick = h.graphics;
+    if (h.watchAdRevive) $('btn-revive-ad').onclick = h.watchAdRevive;
+    if (h.skipRevive) $('btn-revive-skip').onclick = h.skipRevive;
   }
 
   setGraphicsTier(name) {
@@ -60,13 +62,26 @@ export class Hud {
     if (label) this.el.loadLabel.textContent = label;
   }
 
-  // 'loading' | 'menu' | 'play' | 'pause' | 'end'
+  // 'loading' | 'menu' | 'play' | 'pause' | 'revive' | 'end'
   show(state) {
     this.el.loading.classList.toggle('hidden', state !== 'loading');
     this.el.menu.classList.toggle('hidden', state !== 'menu');
     this.el.pause.classList.toggle('hidden', state !== 'pause');
     this.el.end.classList.toggle('hidden', state !== 'end');
-    this.el.hud.classList.toggle('hidden', !(state === 'play' || state === 'pause'));
+    // 'revive' keeps the live #hud visible (dimmed) behind its overlay,
+    // same as 'pause' — only 'menu'/'loading'/'end' hide it outright.
+    this.el.hud.classList.toggle('hidden', !(state === 'play' || state === 'pause' || state === 'revive'));
+  }
+
+  // Revive prompt overlays on top of the live #hud (unlike menu/pause/end,
+  // it doesn't route through show() — the vitals/ammo readout stay visible
+  // behind it while the world is frozen).
+  showRevive(on) {
+    this.el.revive.classList.toggle('hidden', !on);
+  }
+
+  setReviveCountdown(n) {
+    this.el.reviveCount.textContent = n > 0 ? `${n}s` : '';
   }
 
   // Draws a small preview of a weapon's painted body sprite into a slot's

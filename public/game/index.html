@@ -202,6 +202,19 @@
     </div>
   </div>
 
+  <!-- Revive prompt: shown right after going down, before the run ends —
+       watching the ad gets the operator back up on the same stage, so the
+       run/streak isn't broken by one bad fight. -->
+  <div id="revive" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div class="title-small" style="color:var(--red)">OPERATOR DOWN</div>
+      <div class="revive-sub">Watch a short video to get back up — stage and progress carry on.</div>
+      <button id="btn-revive-ad" class="btn secondary big">▶ WATCH AD — CONTINUE</button>
+      <div id="revive-count" class="revive-count"></div>
+      <button id="btn-revive-skip" class="btn quiet">NO THANKS</button>
+    </div>
+  </div>
+
   <!-- End screens -->
   <div id="end" class="overlay dim hidden">
     <div class="ov-inner">

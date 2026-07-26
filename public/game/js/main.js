@@ -21,6 +21,7 @@ import { Progression, UNLOCKS } from './game/progression.js';
 import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
 import { TouchControls } from './engine/touch.js';
+import { watchRewardedAd } from './engine/ads.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -211,6 +212,8 @@ class Game {
     this.introShown = DEMO;
     this.introBeats = new Set();
     this.introEnding = false;
+    this.reviveOffered = false;   // one watch-ad continue per deploy
+    this._reviveTimer = null;
     this.reset();
     hud.bind({
       deploy: () => { audio.resume(); audio.ui(); this.deploy(); },
@@ -226,6 +229,8 @@ class Game {
         resize();
         hud.setGraphicsTier(quality.preset.name);
       },
+      watchAdRevive: () => { audio.ui(); this.reviveViaAd(); },
+      skipRevive: () => { audio.ui(); this.declineRevive(); },
     });
     hud.setGraphicsTier(quality.preset.name);
     canvas.addEventListener('mousedown', () => audio.resume(), { once: true });
@@ -326,6 +331,9 @@ class Game {
     this.fx.tracers.length = 0; this.fx.lights.length = 0; this.fx.slashes.length = 0;
     this.chainQueue.length = 0;
     this.endDelay = 0;
+    this.reviveOffered = false;
+    if (this._reviveTimer) { clearInterval(this._reviveTimer); this._reviveTimer = null; }
+    hud.showRevive(false);
     this.startTime = this.time;
     this.cam.follow(this.player.x, this.player.y - 60, 0, 0, true);
     hud.setObjective(0, this.enemies.length);
@@ -510,6 +518,7 @@ class Game {
       else if (this.state === 'pause') this.setState('play');
     }
     if (this.state === 'pause') { input.endFrame(); return; }
+    if (this.state === 'revive') { input.endFrame(); return; }
 
     this.world.update(dt);
     this.fx.update(dt);
@@ -577,7 +586,13 @@ class Game {
     if (this.state === 'play') {
       if (p.deadT > 0) {
         this.endDelay += dt;
-        if (this.endDelay > 2.4) this.finish();
+        // one chance to watch an ad and get back up before the run ends —
+        // offerRevive() moves to the 'revive' state, which freezes update()
+        // (see the early-return above), so this only ever fires once.
+        if (!this.reviveOffered && this.endDelay > 1.2) {
+          this.reviveOffered = true;
+          this.offerRevive();
+        }
       } else if (this.enemies.length > 0 && kills === this.enemies.length) {
         this.endDelay += dt;
         if (this.endDelay > 1.6) this.nextStage();
@@ -588,6 +603,44 @@ class Game {
       if (this._autosaveT > 4) { this._autosaveT = 0; this.snapshotRun(); }
     }
     input.endFrame();
+  }
+
+  // ---- revive: one watch-an-ad continue per deploy, offered right after
+  // going down. Accepting keeps the stage/kills/loadout exactly as they
+  // were — only HP resets — so the run's streak of stages isn't broken.
+  offerRevive() {
+    this.setState('revive');
+    hud.showRevive(true);
+    let secs = 6;
+    hud.setReviveCountdown(secs);
+    this._reviveTimer = setInterval(() => {
+      secs--;
+      hud.setReviveCountdown(secs);
+      if (secs <= 0) { clearInterval(this._reviveTimer); this._reviveTimer = null; this.declineRevive(); }
+    }, 1000);
+  }
+
+  reviveViaAd() {
+    if (this._reviveTimer) { clearInterval(this._reviveTimer); this._reviveTimer = null; }
+    hud.showRevive(false);
+    watchRewardedAd(() => this.doRevive(), () => this.declineRevive());
+  }
+
+  doRevive() {
+    const p = this.player;
+    p.deadT = 0; p.hp = Math.round(p.maxHp * 0.6);
+    p.hurtT = 0; p.stunT = 0;
+    this.endDelay = 0;
+    hud.showRevive(false);
+    this.setState('play');
+    this.snapshotRun();
+    hud.notify('BACK IN THE FIGHT');
+  }
+
+  declineRevive() {
+    if (this._reviveTimer) { clearInterval(this._reviveTimer); this._reviveTimer = null; }
+    hud.showRevive(false);
+    this.finish();
   }
 
   finish() {

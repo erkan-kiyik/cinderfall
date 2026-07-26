@@ -358,6 +358,11 @@ html, body {
 
 .end-detail { font-size: 13px; letter-spacing: 0.22em; color: var(--ink-dim); margin-bottom: 30px; line-height: 2; }
 
+/* ---------- Revive prompt (watch-ad continue) ---------- */
+#revive { z-index: 21; }   /* above #hud (10), below the ad overlay (70) */
+.revive-sub { font-size: 12px; letter-spacing: 0.06em; color: var(--ink-dim); max-width: 320px; margin: var(--s3) auto var(--s8); line-height: 1.6; }
+.revive-count { font-size: 11px; letter-spacing: 0.14em; color: var(--ink-dim); margin-top: var(--s3); min-height: 16px; }
+
 /* ---------- Deploy cinematic ---------- */
 .cine-bars { position: absolute; inset: 0; z-index: 22; pointer-events: none; }
 .cine-bar {
