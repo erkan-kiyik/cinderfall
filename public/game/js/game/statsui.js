@@ -6,6 +6,7 @@
 import { ACHIEVEMENTS, TIERS, achievementProgress, drawAchievementIcon } from './achievements.js';
 import { AD_TL_REWARD_THRESHOLD, AD_TL_REWARD_AMOUNT_TL } from './progression.js';
 import { getCashoutProvider } from '../engine/cashout.js';
+import { playCurrencyGain, animateCount } from './currencyfx.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -24,7 +25,7 @@ const STAT_FIELDS = [
   { key: 'headshots',  label: 'HEADSHOTS',               icon: 'target', value: (p) => p.data.totalHeadshots.toLocaleString() },
   { key: 'combo',      label: 'HIGHEST COMBO',           icon: 'bolt',   value: (p) => String(p.data.highestCombo) },
   { key: 'streak',     label: 'LONGEST KILL STREAK',     icon: 'fire',   value: (p) => String(p.data.longestKillStreak) },
-  { key: 'coins',      label: 'LIFETIME COINS EARNED',   icon: 'coin',   value: (p) => p.data.lifetimeCoinsEarned.toLocaleString() },
+  { key: 'coins',      label: 'LIFETIME PARA EARNED',    icon: 'coin',   value: (p) => p.data.lifetimeCoinsEarned.toLocaleString() },
   { key: 'diamonds',   label: 'LIFETIME DIAMONDS EARNED', icon: 'diamond', value: (p) => p.data.lifetimeDiamondsEarned.toLocaleString() },
   { key: 'ads',        label: 'ADS WATCHED',             icon: 'play',   value: (p) => p.data.totalAdsWatched.toLocaleString() },
   { key: 'missions',   label: 'MISSIONS COMPLETED',      icon: 'flag',   value: (p) => String(p.data.totalMissionsCompleted) },
@@ -173,7 +174,7 @@ export class StatsUI {
     } else if (prog.unlocked) {
       const btn = document.createElement('button');
       btn.className = 'btn primary achievement-claim-btn';
-      btn.textContent = '◆ CLAIM +1 DIAMOND';
+      btn.textContent = 'CLAIM +1 DIAMOND';
       btn.addEventListener('click', () => this.claimAchievement(ach.id));
       card.appendChild(btn);
     }
@@ -190,14 +191,13 @@ export class StatsUI {
   }
 
   claimAchievement(id) {
+    const before = this.p.diamonds;
     if (!this.p.claimAchievement(id)) return;
-    if (this.audio && this.audio.levelUp) this.audio.levelUp();
     this.renderAchievements();
     this.renderOverview();
     const diamondCount = $('diamond-count');
-    if (diamondCount) diamondCount.textContent = String(this.p.diamonds);
-    const diamondPill = document.querySelector('.diamond-pill');
-    if (diamondPill) { diamondPill.classList.remove('bump'); void diamondPill.offsetWidth; diamondPill.classList.add('bump'); }
+    if (diamondCount) animateCount(diamondCount, before, this.p.diamonds);
+    playCurrencyGain(document.querySelector('.diamond-pill'), 'diamond', this.audio);
   }
 
   renderAdTLCard() {

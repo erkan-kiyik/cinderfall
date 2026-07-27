@@ -8,6 +8,7 @@ import {
 } from './meta.js';
 import { AD_CRATE_DAILY_LIMIT } from './progression.js';
 import { watchRewardedAd } from '../engine/ads.js';
+import { playCurrencyGain, animateCount } from './currencyfx.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -66,7 +67,13 @@ export class MetaUI {
   }
 
   renderTokens() {
-    $('token-count').textContent = String(this.p.tokens);
+    const el = $('token-count');
+    const n = this.p.tokens;
+    const prev = this._lastTokenCount;
+    this._lastTokenCount = n;
+    if (prev == null || n <= prev) { el.textContent = String(n); return; }   // init / spend: snap
+    animateCount(el, prev, n);
+    playCurrencyGain(document.querySelector('.token-pill'), 'para', this.audio);
   }
 
   // Compact equipped-gear summary shown on the PLAY tab.
@@ -193,7 +200,7 @@ export class MetaUI {
     if (this.busy) return;
     const msg = $('crate-msg');
     if (!free && this.p.tokens < CRATE_COST) {
-      msg.textContent = 'NOT ENOUGH TOKENS — ELIMINATE HOSTILES TO EARN MORE';
+      msg.textContent = 'NOT ENOUGH PARA — ELIMINATE HOSTILES TO EARN MORE';
       msg.classList.add('warn');
       return;
     }
@@ -319,7 +326,7 @@ export class MetaUI {
     $('reveal-name').textContent = item.name;
     $('reveal-kind').textContent = item.kind + (item.tag ? ` · ${item.tag}` : '');
     const status = $('reveal-status');
-    if (isDup) { status.textContent = `DUPLICATE — +${refund} ◈ REFUNDED`; status.style.color = 'var(--ink-dim)'; }
+    if (isDup) { status.textContent = `DUPLICATE — +${refund} PARA REFUNDED`; status.style.color = 'var(--ink-dim)'; }
     else { status.textContent = 'NEW — ADDED TO COLLECTION'; status.style.color = rarity.color; }
     card.classList.remove('hidden');
     $('reveal-done').classList.remove('hidden');

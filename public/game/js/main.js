@@ -24,10 +24,12 @@ import { StoreUI } from './game/storeui.js';
 import { StatsUI } from './game/statsui.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
+import { mountCurrencyIcons } from './art/currency.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const hud = new Hud();
+mountCurrencyIcons(document);   // paint the static header-pill / HUD currency icons
 const params = new URLSearchParams(location.search);
 const DEMO = params.has('demo');
 // Stats page: a kill within this many seconds of the last one extends the

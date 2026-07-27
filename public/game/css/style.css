@@ -146,7 +146,13 @@ html, body {
 .prog-row { display: flex; align-items: center; gap: var(--s2); padding: 4px 10px; width: 100%; }
 .lvl-label { font-size: 9px; letter-spacing: 0.14em; color: var(--amber-dim); width: 38px; white-space: nowrap; }
 .xp-track { flex: 1; height: 4px; }
-.hud-tokens { font-size: 10px; letter-spacing: 0.1em; color: var(--amber); white-space: nowrap; }
+.hud-tokens { display: flex; align-items: center; gap: 4px; font-size: 10px; letter-spacing: 0.1em; color: var(--amber); white-space: nowrap; }
+
+/* ---- shared currency icon canvases (header pills, HUD readout, crate cost) ---- */
+.cur-icon { display: inline-block; flex: none; vertical-align: middle; }
+.cur-icon.cur-para { filter: drop-shadow(0 0 3px rgba(224,189,119,0.35)); }
+.cur-icon.cur-diamond { filter: drop-shadow(0 0 4px rgba(111,212,236,0.5)); }
+.hud-tokens-ico { width: 16px; height: 16px; }
 
 /* ---------- detection / threat meter: compact, shows only when aware ---------- */
 .det-bar {
@@ -472,15 +478,41 @@ html, body {
   box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.06);
   transition: box-shadow var(--dur-2) var(--ease), transform var(--dur-1) var(--ease-out);
 }
-.token-ico {
-  color: var(--amber-bright); text-shadow: 0 0 8px rgba(214,69,58,0.55);
-  filter: drop-shadow(0 0 2px rgba(255,120,96,0.4));
-}
+.token-pill .cur-icon { width: 20px; height: 20px; }
 .diamond-pill { color: #6fd4ec; box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 12px rgba(78,196,224,0.12); }
-.diamond-ico { color: #6fd4ec; text-shadow: 0 0 8px rgba(78,196,224,0.65); filter: drop-shadow(0 0 2px rgba(111,212,236,0.4)); }
-/* small pulse whenever a balance updates — toggled briefly via JS */
-.token-pill.bump { animation: pill-bump 0.4s var(--ease-out); }
-@keyframes pill-bump { 0% { transform: scale(1); } 35% { transform: scale(1.12); } 100% { transform: scale(1); } }
+/* scale pulse + glow flash whenever a balance updates — toggled briefly via JS,
+   shared by any currency readout (header pills, HUD tokens strip) */
+.bump { animation: pill-bump 0.4s var(--ease-out); }
+@keyframes pill-bump { 0% { transform: scale(1); } 35% { transform: scale(1.16); } 100% { transform: scale(1); } }
+.cur-flash { animation: cur-flash-glow 0.55s var(--ease-out); }
+@keyframes cur-flash-glow {
+  0% { filter: drop-shadow(0 0 0 rgba(255,214,122,0)); }
+  28% { filter: drop-shadow(0 0 10px rgba(255,214,122,0.85)); }
+  100% { filter: drop-shadow(0 0 0 rgba(255,214,122,0)); }
+}
+
+/* ---- currency collection burst: a handful of compositor-only particles
+   fanning out from the pill/icon that just gained a balance (see
+   game/currencyfx.js). Fixed-position screen-space overlay, cheap on mobile. ---- */
+#currency-fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+.cur-fx-particle {
+  position: fixed; width: 6px; height: 6px; border-radius: 50%; margin: -3px 0 0 -3px;
+  box-shadow: 0 0 6px currentColor;
+  animation: cur-fx-fly 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes cur-fx-fly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+.cur-fx-lightburst {
+  position: fixed; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(160,225,255,0.9), rgba(90,200,255,0.4) 40%, rgba(90,200,255,0) 70%);
+  animation: cur-fx-burst 0.5s ease-out forwards;
+}
+@keyframes cur-fx-burst {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(7); opacity: 0; }
+}
 
 .home-body { flex: 1 1 auto; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; }
 .home-panel {

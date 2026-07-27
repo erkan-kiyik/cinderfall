@@ -4,6 +4,8 @@
 // screens.
 
 import { drawSprite } from '../art/paint.js';
+import { audio } from '../engine/audio.js';
+import { playCurrencyGain, animateCount } from './currencyfx.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -30,7 +32,7 @@ export class Hud {
       stealthPrompt: $('stealth-prompt'),
       dmgLeft: $('dmg-left'), dmgRight: $('dmg-right'), dmgOmni: $('dmg-omni'),
       detBar: $('det-bar'), detFill: $('det-fill'), detLabel: $('det-label'),
-      xpFill: $('xp-fill'), lvlLabel: $('lvl-label'), hudTokens: $('hud-tokens'),
+      xpFill: $('xp-fill'), lvlLabel: $('lvl-label'), hudTokens: $('hud-tokens'), hudTokensVal: $('hud-tokens-val'),
       notify: $('notify'),
       endTitle: $('end-title'), endDetail: $('end-detail'),
       cineBars: $('cine-bars'), introKicker: $('intro-kicker'), introLine: $('intro-line'),
@@ -197,7 +199,13 @@ export class Hud {
   }
 
   setTokens(n) {
-    if (this.el.hudTokens) this.el.hudTokens.textContent = `◈ ${n}`;
+    const valEl = this.el.hudTokensVal;
+    if (!valEl) return;
+    const prev = this._lastTokens;
+    this._lastTokens = n;
+    if (prev == null || n <= prev) { valEl.textContent = String(n); return; }   // init / spend: snap, no fanfare
+    animateCount(valEl, prev, n);
+    playCurrencyGain(this.el.hudTokens, 'para', audio);
   }
 
   // Energy weapons: shows heat (yellow→red, flashes when overheated) or, for

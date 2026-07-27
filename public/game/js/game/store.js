@@ -28,7 +28,7 @@ export const diamondPackageById = (id) => DIAMOND_PACKAGES.find((p) => p.id === 
 export const BUNDLES = [
   {
     id: 'bundle_starter', name: 'STARTER BUNDLE', badge: null,
-    contents: ['20 Diamonds', 'Exclusive Weapon Skin', '500 Coins'],
+    contents: ['20 Diamonds', 'Exclusive Weapon Skin', '500 Para'],
     priceTL: 39, originalTL: 69,
     grant: { gems: 20, coins: 500, item: 'rifle_cinder' },
     availability: 'always', oneTime: true,
@@ -48,7 +48,7 @@ export const BUNDLES = [
   },
   {
     id: 'bundle_newplayer', name: 'NEW PLAYER BUNDLE', badge: 'NEW',
-    contents: ['30 Diamonds', '300 Coins', 'Rare Rifle Skin'],
+    contents: ['30 Diamonds', '300 Para', 'Rare Rifle Skin'],
     priceTL: 19, originalTL: 49,
     grant: { gems: 30, coins: 300, item: 'rifle_urban' },
     availability: 'newPlayer', days: 7, oneTime: true,

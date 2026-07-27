@@ -101,13 +101,13 @@ export const AD_TL_REWARD_AMOUNT_TL = 10;
 // Battle-pass: XP per tier and the reward table.
 export const BP_XP_PER_TIER = 1000;
 export const BP_TIERS = [
-  { tier: 1, reward: { coins: 150 }, label: '150 COINS' },
+  { tier: 1, reward: { coins: 150 }, label: '150 PARA' },
   { tier: 2, reward: { gems: 10 }, label: '10 GEMS', premium: true },
   { tier: 3, reward: { item: 'rifle_urban' }, label: 'VK-77 URBAN' },
-  { tier: 4, reward: { coins: 250 }, label: '250 COINS' },
+  { tier: 4, reward: { coins: 250 }, label: '250 PARA' },
   { tier: 5, reward: { energy: 10 }, label: '+10 ENERGY' },
   { tier: 6, reward: { item: 'op_nomad' }, label: 'NOMAD SKIN', premium: true },
-  { tier: 7, reward: { coins: 400 }, label: '400 COINS' },
+  { tier: 7, reward: { coins: 400 }, label: '400 PARA' },
   { tier: 8, reward: { gems: 25 }, label: '25 GEMS', premium: true },
   { tier: 9, reward: { item: 'pistol_gold' }, label: 'C-9 GILDED' },
   { tier: 10, reward: { item: 'rifle_arc' }, label: 'ARC-9 PULSE', premium: true },

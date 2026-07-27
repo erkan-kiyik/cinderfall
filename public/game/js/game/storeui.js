@@ -10,6 +10,8 @@ import {
 } from './store.js';
 import { watchRewardedAd } from '../engine/ads.js';
 import { getPaymentProvider } from '../engine/payments.js';
+import { paintDiamond, setupHiDpi } from '../art/currency.js';
+import { playCurrencyGain, animateCount } from './currencyfx.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,40 +25,12 @@ function isRetired(item) {
   return item.retiredAfter != null && Date.now() > item.retiredAfter;
 }
 
-// Small canvas gem icon, sized up for pricier packages — kept in-house
-// (canvas paint) rather than an image asset, matching how every other icon
-// in this game is procedurally drawn.
+// Package gem art — delegates to the shared currency.js Diamond painter
+// (same asset used everywhere else) so every Diamond in the game reads as
+// the same icon; `scale` just makes pricier packages' gem visibly bigger.
 function drawDiamondArt(cv, scale = 1) {
-  const g = cv.getContext('2d');
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = cv.clientWidth || 90, h = cv.clientHeight || 56;
-  cv.width = w * dpr; cv.height = h * dpr;
-  g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  g.clearRect(0, 0, w, h);
-  const cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.36 * scale;
-  g.save();
-  g.translate(cx, cy);
-  g.beginPath();
-  g.moveTo(0, -r);
-  g.lineTo(r * 0.82, -r * 0.28);
-  g.lineTo(r * 0.52, r * 0.86);
-  g.lineTo(-r * 0.52, r * 0.86);
-  g.lineTo(-r * 0.82, -r * 0.28);
-  g.closePath();
-  const grad = g.createLinearGradient(0, -r, 0, r);
-  grad.addColorStop(0, '#bdf3ff');
-  grad.addColorStop(0.45, '#4ec4e0');
-  grad.addColorStop(1, '#1c6f86');
-  g.fillStyle = grad;
-  g.shadowColor = 'rgba(78,196,224,0.7)';
-  g.shadowBlur = 10;
-  g.fill();
-  g.shadowBlur = 0;
-  // facet lines
-  g.strokeStyle = 'rgba(255,255,255,0.5)'; g.lineWidth = 0.8;
-  g.beginPath(); g.moveTo(0, -r); g.lineTo(0, r * 0.86); g.stroke();
-  g.beginPath(); g.moveTo(-r * 0.82, -r * 0.28); g.lineTo(0, -r); g.lineTo(r * 0.82, -r * 0.28); g.stroke();
-  g.restore();
+  const { g, w, h } = setupHiDpi(cv);
+  paintDiamond(g, w, h, scale);
 }
 
 export class StoreUI {
@@ -88,7 +62,13 @@ export class StoreUI {
 
   renderDiamondBalance() {
     const el = $('diamond-count');
-    if (el) el.textContent = String(this.p.diamonds);
+    if (!el) return;
+    const n = this.p.diamonds;
+    const prev = this._lastDiamondCount;
+    this._lastDiamondCount = n;
+    if (prev == null || n <= prev) { el.textContent = String(n); return; }   // init / spend: snap
+    animateCount(el, prev, n);
+    playCurrencyGain(document.querySelector('.diamond-pill'), 'diamond', this.audio);
   }
 
   // ---- category chips ----

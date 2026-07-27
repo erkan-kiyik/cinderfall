@@ -51,7 +51,7 @@
       <div class="prog-row glass">
         <span id="lvl-label" class="lvl-label">LVL 1</span>
         <div class="bar xp-track"><div id="xp-fill" class="bar-fill xp"></div></div>
-        <span id="hud-tokens" class="hud-tokens">◈ 0</span>
+        <span id="hud-tokens" class="hud-tokens"><canvas class="cur-icon cur-para hud-tokens-ico" width="16" height="16"></canvas><span id="hud-tokens-val">0</span></span>
       </div>
       <div id="det-bar" class="det-bar glass">
         <span class="det-ico">THREAT</span>
@@ -110,8 +110,8 @@
       <header class="home-top">
         <div class="home-brand">CINDERFALL<span>SECTOR 9</span></div>
         <div class="pill-row">
-          <div class="token-pill"><span class="token-ico">◈</span><span id="token-count">0</span></div>
-          <div class="token-pill diamond-pill"><span class="token-ico diamond-ico">◆</span><span id="diamond-count">0</span></div>
+          <div class="token-pill"><canvas class="cur-icon cur-para" width="20" height="20"></canvas><span id="token-count">0</span></div>
+          <div class="token-pill diamond-pill"><canvas class="cur-icon cur-diamond" width="20" height="20"></canvas><span id="diamond-count">0</span></div>
         </div>
       </header>
 
@@ -159,7 +159,7 @@
               <div id="crate-burst" class="crate-burst"></div>
               <span class="crate-mark">◈</span>
             </div>
-            <button id="btn-open-crate" class="btn primary big">OPEN — <span id="crate-cost">120</span> ◈</button>
+            <button id="btn-open-crate" class="btn primary big">OPEN — <span id="crate-cost">120</span> <canvas class="cur-icon cur-para" width="16" height="16"></canvas></button>
             <button id="btn-watch-ad" class="btn secondary big">▶ WATCH AD — FREE CRATE<span class="ad-remaining"></span></button>
             <div id="crate-msg" class="crate-msg"></div>
           </div>

@@ -28,7 +28,7 @@ export const ACHIEVEMENTS = [
   { id: 'unstoppable',   tier: 'medium', name: 'UNSTOPPABLE',     desc: 'Reach a 10-kill streak without going down.', icon: 'fire',  stat: 'longestKillStreak', goal: 10 },
   { id: 'deep_cover',    tier: 'medium', name: 'DEEP COVER',      desc: 'Reach stage 10 in a single run.',          icon: 'flag',    stat: 'longestSurvivalStage', goal: 10 },
   { id: 'crate_collector', tier: 'medium', name: 'CRATE COLLECTOR', desc: 'Open 25 supply crates.',                 icon: 'crate',   stat: 'cratesOpened', goal: 25 },
-  { id: 'big_spender',   tier: 'medium', name: 'COMING UP COINS', desc: 'Earn 5,000 lifetime Coins.',               icon: 'coin',    stat: 'lifetimeCoinsEarned', goal: 5000 },
+  { id: 'big_spender',   tier: 'medium', name: 'STACKING PARA',   desc: 'Earn 5,000 lifetime Para.',                icon: 'coin',    stat: 'lifetimeCoinsEarned', goal: 5000 },
   { id: 'gem_hunter',    tier: 'medium', name: 'GEM HUNTER',      desc: 'Earn 50 lifetime Diamonds.',               icon: 'diamond', stat: 'lifetimeDiamondsEarned', goal: 50 },
   { id: 'arsenal',       tier: 'medium', name: 'ARSENAL',         desc: 'Fire 5 different weapons.',                icon: 'guns',    stat: 'weaponsUsedCount', goal: 5 },
   { id: 'ad_regular',    tier: 'medium', name: 'AD REGULAR',      desc: 'Watch 100 rewarded ads.',                  icon: 'play',    stat: 'totalAdsWatched', goal: 100 },
@@ -141,12 +141,9 @@ export function drawAchievementIcon(g, kind, w, h, color) {
       g.lineTo(-r * 0.55, -r * 0.3); g.closePath(); g.fill();
       break;
     case 'coin':
-      g.lineWidth = r * 0.14;
       g.beginPath(); g.arc(0, 0, r * 0.85, 0, Math.PI * 2); g.fill();
-      g.fillStyle = 'rgba(0,0,0,0.35)';
-      g.font = `700 ${r}px var(--font, sans-serif)`;
-      g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText('$', 0, r * 0.06);
+      g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = Math.max(1, r * 0.1);
+      g.beginPath(); g.arc(0, 0, r * 0.52, 0, Math.PI * 2); g.stroke();
       break;
     case 'diamond':
       g.beginPath();

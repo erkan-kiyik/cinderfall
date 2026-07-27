@@ -221,6 +221,20 @@ class AudioSys {
     this._tone({ freq: 880, dur: 0.22, gain: 0.16, type: 'triangle', t0: 0.2 });
   }
 
+  // short metallic clink — Para (soft currency) gained
+  coinGain() {
+    this._tone({ freq: 1100, dur: 0.045, gain: 0.11, type: 'square' });
+    this._tone({ freq: 1500, dur: 0.05, gain: 0.09, type: 'triangle', t0: 0.02 });
+    this._tone({ freq: 2200, dur: 0.06, gain: 0.05, type: 'sine', t0: 0.03 });
+  }
+
+  // bright crystalline chime — Diamond (premium currency) gained
+  gemGain() {
+    this._tone({ freq: 1400, dur: 0.09, gain: 0.1, type: 'sine' });
+    this._tone({ freq: 1866, dur: 0.11, gain: 0.09, type: 'sine', t0: 0.05 });
+    this._tone({ freq: 2489, dur: 0.16, gain: 0.09, type: 'triangle', t0: 0.1 });
+  }
+
   startAmbience() {
     if (!this.ctx || this.ambientOn) return;
     this.ambientOn = true;
