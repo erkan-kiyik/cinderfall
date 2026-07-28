@@ -235,14 +235,6 @@ class AudioSys {
     this._tone({ freq: 2489, dur: 0.16, gain: 0.09, type: 'triangle', t0: 0.1 });
   }
 
-  // triumphant ascending fanfare — a personal trophy record just got broken
-  record() {
-    this._tone({ freq: 523, dur: 0.11, gain: 0.15, type: 'triangle' });
-    this._tone({ freq: 659, dur: 0.11, gain: 0.14, type: 'triangle', t0: 0.09 });
-    this._tone({ freq: 784, dur: 0.13, gain: 0.14, type: 'triangle', t0: 0.18 });
-    this._tone({ freq: 1047, dur: 0.26, gain: 0.15, type: 'sine', t0: 0.28 });
-  }
-
   startAmbience() {
     if (!this.ctx || this.ambientOn) return;
     this.ambientOn = true;

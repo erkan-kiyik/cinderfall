@@ -50,12 +50,6 @@ export class MetaUI {
     this.renderLoadout();
     this.renderCollection();
     this.renderAdButton();
-    this.renderBestTrophies();
-  }
-
-  renderBestTrophies() {
-    const el = $('best-trophies-val');
-    if (el) el.textContent = String(this.p.data.bestTrophies);
   }
 
   renderAdButton() {

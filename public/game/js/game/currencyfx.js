@@ -17,15 +17,14 @@ function getLayer() {
 
 const PARA_COLORS = ['#e0bd77', '#b7d47f', '#f6e7ba'];
 const DIAMOND_COLORS = ['#8fe0ff', '#bdf3ff', '#5fd0ee'];
-const TROPHY_COLORS = ['#f2c14e', '#fff0c2', '#c9922f'];
 
 function spawnBurst(el, kind) {
   if (!el || !el.getBoundingClientRect) return;
   const rect = el.getBoundingClientRect();
   if (!rect.width && !rect.height) return;
   const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-  const colors = kind === 'diamond' ? DIAMOND_COLORS : kind === 'trophy' ? TROPHY_COLORS : PARA_COLORS;
-  const count = kind === 'diamond' ? 8 : kind === 'trophy' ? 7 : 6;
+  const colors = kind === 'diamond' ? DIAMOND_COLORS : PARA_COLORS;
+  const count = kind === 'diamond' ? 8 : 6;
   const layer = getLayer();
   for (let i = 0; i < count; i++) {
     const p = document.createElement('span');
@@ -54,9 +53,9 @@ function spawnBurst(el, kind) {
 }
 
 // Triggers the full "gained" feedback on a pill/readout element. `kind` is
-// 'para', 'diamond', or 'trophy'. `audio`, if passed, plays the matching
-// collection chime (coinGain / gemGain / record). Safe to call rapidly — the
-// reflow trick makes the CSS animation restart cleanly even mid-flight.
+// 'para' or 'diamond'. `audio`, if passed, plays the matching collection
+// chime (coinGain / gemGain). Safe to call rapidly — the reflow trick makes
+// the CSS animation restart cleanly even mid-flight.
 export function playCurrencyGain(el, kind, audio) {
   if (!el) return;
   el.classList.remove('bump', 'cur-flash');
@@ -65,7 +64,6 @@ export function playCurrencyGain(el, kind, audio) {
   spawnBurst(el, kind);
   if (audio) {
     if (kind === 'diamond') { if (audio.gemGain) audio.gemGain(); }
-    else if (kind === 'trophy') { if (audio.record) audio.record(); }
     else if (audio.coinGain) audio.coinGain();
   }
 }

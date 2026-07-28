@@ -129,8 +129,6 @@ html, body {
 
 .vital-row { display: flex; align-items: center; gap: 8px; }
 .vital-ico { font-size: 9px; letter-spacing: 0.14em; color: var(--amber-dim); width: 16px; }
-.trophy-row { font-size: 12px; font-weight: 700; color: #f2c14e; letter-spacing: 0.04em; }
-.cur-icon.cur-trophy { filter: drop-shadow(0 0 3px rgba(242,193,78,0.5)); }
 
 .objective {
   display: flex; gap: var(--s3); align-items: baseline; justify-content: center;
@@ -391,7 +389,6 @@ html, body {
 .controls-grid span:nth-child(even) { color: var(--ink-dim); }
 
 .end-detail { font-size: 13px; letter-spacing: 0.22em; color: var(--ink-dim); margin-bottom: 30px; line-height: 2; }
-.end-new-best { color: #f2c14e; font-weight: 700; text-shadow: 0 0 8px rgba(242,193,78,0.6); }
 
 /* ---------- Revive prompt (watch-ad continue) ---------- */
 #revive { z-index: 21; }   /* above #hud (10), below the ad overlay (70) */
@@ -532,11 +529,6 @@ html, body {
 .hero-title {
   font-size: clamp(52px, 13vw, 92px); font-weight: 700; letter-spacing: 0.1em; color: var(--ink);
   text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5); margin-bottom: var(--s5);
-}
-.best-trophies {
-  display: flex; align-items: center; gap: 6px; margin-bottom: var(--s6);
-  font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #f2c14e;
-  text-shadow: 0 0 10px rgba(242,193,78,0.4);
 }
 .loadout-chips { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: center; margin-bottom: var(--s8); max-width: 480px; }
 .loadout-chips .chip {

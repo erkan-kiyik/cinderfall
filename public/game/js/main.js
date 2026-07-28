@@ -17,10 +17,7 @@ import { FX } from './game/fx.js';
 import { Player } from './game/player.js';
 import { Enemy, Boss, BOSS_STAGE_INTERVAL, getGlobalDetection } from './game/enemy.js';
 import { Hud } from './game/hud.js';
-import {
-  Progression, UNLOCKS, TROPHIES_PER_KILL, TROPHIES_PER_HEADSHOT_BONUS,
-  TROPHIES_PER_STEALTH_BONUS, TROPHIES_PER_BOSS_BONUS,
-} from './game/progression.js';
+import { Progression, UNLOCKS } from './game/progression.js';
 import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
 import { StoreUI } from './game/storeui.js';
@@ -28,13 +25,11 @@ import { StatsUI } from './game/statsui.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
 import { mountCurrencyIcons } from './art/currency.js';
-import { mountTrophyIcons } from './art/trophy.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const hud = new Hud();
 mountCurrencyIcons(document);   // paint the static header-pill / HUD currency icons
-mountTrophyIcons(document);
 const params = new URLSearchParams(location.search);
 const DEMO = params.has('demo');
 // Stats page: a kill within this many seconds of the last one extends the
@@ -322,7 +317,6 @@ class Game {
     this.progression.recordKill(headshot);   // also awards tokens
     this.progression.addBpXp(headshot ? 20 : 12);   // battle-pass progress (currency system stays intact even though the shop UI is gone)
     hud.setTokens(this.progression.tokens);
-    this.addTrophies(TROPHIES_PER_KILL + (headshot ? TROPHIES_PER_HEADSHOT_BONUS : 0));
     const res = this.progression.addXp(10 + (headshot ? 15 : 0));
     this.handleLevelUp(res);
     this.registerKill();
@@ -335,7 +329,6 @@ class Game {
     this.progression.recordKill(false);
     this.progression.addBpXp(16);
     hud.setTokens(this.progression.tokens);
-    this.addTrophies(TROPHIES_PER_KILL + TROPHIES_PER_STEALTH_BONUS);
     const res = this.progression.addXp(14);
     this.handleLevelUp(res);
     this.registerKill();
@@ -348,24 +341,8 @@ class Game {
   onBossDefeated(boss) {
     this.progression.recordBossKill();
     hud.setTokens(this.progression.tokens);
-    this.addTrophies(TROPHIES_PER_BOSS_BONUS);
     hud.showBoss(false);
     hud.notify(`BOSS DEFEATED — ${boss.name}`);
-  }
-
-  // Trophies are a per-run score with no currency value — just something to
-  // chase against your own best (see progression.recordRunTrophies). Awarded
-  // alongside every kill; the live HUD number just counts up, but the first
-  // time a run's total passes the previous best it gets a one-off celebration
-  // (not on every kill after that — that would just be noise).
-  addTrophies(n) {
-    this.runTrophies += n;
-    hud.setTrophies(this.runTrophies);
-    if (!this._trophyRecordBroken && this.runTrophies > this._trophyRecordAtStart) {
-      this._trophyRecordBroken = true;
-      hud.celebrateTrophyRecord();
-      hud.notify('NEW TROPHY RECORD!');
-    }
   }
 
   // Stats page: kill streak (kills since the operator last went down) and
@@ -427,10 +404,6 @@ class Game {
     hud.showRevive(false);
     this._weaponShotsThisRun = {};
     this.currentKillStreak = 0; this.comboCount = 0; this.comboTimer = 0;
-    this.runTrophies = 0;
-    this._trophyRecordAtStart = this.progression.data.bestTrophies;
-    this._trophyRecordBroken = false;
-    hud.setTrophies(0);
     this.startTime = this.time;
     this.cam.follow(this.player.x, this.player.y - 60, 0, 0, true);
     hud.setObjective(0, this.enemies.length);
@@ -778,14 +751,12 @@ class Game {
     this.progression.addPlaytime(this._playtimeAccumMs);
     this._playtimeAccumMs = 0;
     this.progression.clearRun();   // the run is over — nothing to resume
-    const newBest = this.progression.recordRunTrophies(this.runTrophies);
     hud.end([
       `STAGE REACHED — ${this.stage}`,
       `HOSTILES ELIMINATED — ${p.kills} &nbsp;(${p.headshots} HEADSHOTS)`,
       `ACCURACY — ${acc}%`,
       `MISSION TIME — ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`,
       `OPERATOR LEVEL — ${this.progression.data.level}`,
-      `TROPHIES — ${this.runTrophies} ${newBest ? '<span class="end-new-best">NEW BEST</span>' : `(BEST ${this.progression.data.bestTrophies})`}`,
     ].join('<br>'));
     this.setState('end');
   }
