@@ -33,6 +33,7 @@ export class Hud {
       dmgLeft: $('dmg-left'), dmgRight: $('dmg-right'), dmgOmni: $('dmg-omni'),
       detBar: $('det-bar'), detFill: $('det-fill'), detLabel: $('det-label'),
       xpFill: $('xp-fill'), lvlLabel: $('lvl-label'), hudTokens: $('hud-tokens'), hudTokensVal: $('hud-tokens-val'),
+      hudTrophies: $('hud-trophies'), hudTrophiesVal: $('hud-trophies-val'),
       notify: $('notify'),
       endTitle: $('end-title'), endDetail: $('end-detail'),
       cineBars: $('cine-bars'), introKicker: $('intro-kicker'), introLine: $('intro-line'),
@@ -206,6 +207,24 @@ export class Hud {
     if (prev == null || n <= prev) { valEl.textContent = String(n); return; }   // init / spend: snap, no fanfare
     animateCount(valEl, prev, n);
     playCurrencyGain(this.el.hudTokens, 'para', audio);
+  }
+
+  // Live per-run trophy readout — just an eased count-up, no burst/sound
+  // (this fires on every kill, so celebrating each tick would be noise;
+  // see celebrateTrophyRecord for the one-off moment that deserves fanfare).
+  setTrophies(n) {
+    const valEl = this.el.hudTrophiesVal;
+    if (!valEl) return;
+    const prev = this._lastTrophies;
+    this._lastTrophies = n;
+    if (prev == null || n <= prev) { valEl.textContent = String(n); return; }
+    animateCount(valEl, prev, n);
+  }
+
+  // The one moment worth celebrating: this run's trophy count has just
+  // passed the player's all-time best. Fired once per run at most.
+  celebrateTrophyRecord() {
+    playCurrencyGain(this.el.hudTrophies, 'trophy', audio);
   }
 
   // Energy weapons: shows heat (yellow→red, flashes when overheated) or, for

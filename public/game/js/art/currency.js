@@ -6,7 +6,7 @@
 // these are modeled on; this file adds the material rendering (gradients,
 // facet highlights, shadows, sheen) on top of that fixed shape.
 
-function roundRect(g, x, y, w, h, r) {
+export function roundRect(g, x, y, w, h, r) {
   g.beginPath();
   g.moveTo(x + r, y);
   g.arcTo(x + w, y, x + w, y + h, r);

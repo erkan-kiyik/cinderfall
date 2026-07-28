@@ -71,6 +71,8 @@ function defaultProgress() {
     achievements: {},              // achId -> { claimed: true }
     // ---- ad-watch -> TL cashout ----
     adTLRewardsClaimed: 0,
+    // ---- trophies: a per-run score chased against your own best ----
+    bestTrophies: 0,
   };
 }
 
@@ -81,6 +83,13 @@ export const TOKENS_PER_HEADSHOT = 14;
 // Bonus reward on top of the regular kill payout for downing a boss.
 export const BOSS_KILL_TOKEN_BONUS = 250;
 export const BOSS_KILL_DIAMOND_BONUS = 5;
+
+// Trophy points: a per-run score (no currency value, purely a personal best
+// to chase) awarded alongside the regular token/XP reward on every kill.
+export const TROPHIES_PER_KILL = 10;
+export const TROPHIES_PER_HEADSHOT_BONUS = 5;
+export const TROPHIES_PER_STEALTH_BONUS = 8;
+export const TROPHIES_PER_BOSS_BONUS = 150;
 
 // Free crates earned by watching a rewarded ad, capped per calendar day.
 export const AD_CRATE_DAILY_LIMIT = 5;
@@ -477,6 +486,15 @@ export class Progression {
   // counters themselves live on Game (per-run/per-life state).
   recordCombo(n) { if (n > this.data.highestCombo) { this.data.highestCombo = n; this.save(); } }
   recordKillStreak(n) { if (n > this.data.longestKillStreak) { this.data.longestKillStreak = n; this.save(); } }
+
+  // Persists a run's final trophy score as the new best if it beat the old
+  // one. Returns true when it did, so the caller can show a "NEW BEST" beat.
+  recordRunTrophies(n) {
+    if (n <= this.data.bestTrophies) return false;
+    this.data.bestTrophies = n;
+    this.save();
+    return true;
+  }
 
   // ---- achievements ----
   achievementClaimed(id) { return !!this.data.achievements[id]; }
