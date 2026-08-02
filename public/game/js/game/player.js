@@ -18,6 +18,13 @@ const gaitNoise = makeNoise1D(2291);
 // Seconds of sustained sprinting to reach full forward pitch, and to unwind
 // it again. Asymmetric on purpose: a runner leans in faster than they
 // straighten back up.
+// Carry-stance timing. RELAX_DELAY is how long after the last shot the weapon
+// starts to come down; RELAX_IN/OUT are the ease durations in each direction.
+const RELAX_DELAY = 1.15;
+const RELAX_IN = 0.85;
+const RELAX_OUT = 0.12;
+const RELAX_MAX_SPEED = 40;
+
 const SPRINT_LEAN_RAMP = 1.35;
 const SPRINT_LEAN_DECAY = 2.1;
 const SPRINT_LEAN_MAX = 0.14;
@@ -121,6 +128,16 @@ export class Player {
 
     this.hp = 100; this.maxHp = 100;
     this.armor = 0; this.maxArmor = 0;
+    // ---- perk modifiers ----
+    // Neutral defaults so the player is fully playable with nothing equipped;
+    // applyPerks() (game/meta.js) overwrites these from the loadout.
+    this.perks = {};
+    this.moveMul = 1;      // top speed multiplier
+    this.reloadMul = 1;    // <1 = faster reload
+    this.recoilMul = 1;    // <1 = less kick
+    this.dmgMul = 1;       // outgoing damage multiplier
+    this.stealthMul = 1;   // <1 = enemies gain awareness slower
+    this.luckMul = 1;      // loot roll multiplier
     this.stamina = 100; this.sprinting = false; this.sprintBlend = 0;
     this.kills = 0; this.headshots = 0; this.shots = 0; this.hits = 0;
     this.lastHurtT = -99; this.lastShotT = -99;
@@ -214,7 +231,7 @@ export class Player {
     this.sprinting = wantSprint;
     this.sprintBlend = damp(this.sprintBlend, wantSprint ? 1 : 0, 9, dt);
     const crouchMul = lerp(1, 0.5, this.crouchHold);
-    const top = lerp(RUN, SPRINT, this.sprintBlend) * stunMul * crouchMul;
+    const top = lerp(RUN, SPRINT, this.sprintBlend) * stunMul * crouchMul * this.moveMul;
     const target = mx * top;
     // Hard reversal: cutting from a run into the opposite direction throws the
     // operator's weight against the turn before it catches. Rate-limited so
@@ -504,6 +521,23 @@ export class Player {
     ws.recoilRot += ws.recoilRotVel * dt * 40;
     ws.flashT = Math.max(0, ws.flashT - dt * 14);
     ws.boltBack = Math.max(0, ws.boltBack - dt * 9);
+
+    // ---- carry stance ----
+    // A soldier does not stand at a two-handed ready grip indefinitely; the
+    // support hand comes off and the muzzle drops the moment nothing needs
+    // shooting. `relax` drives that: 0 = weapon up in both hands, 1 = carried
+    // one-handed at the side. It falls away far faster than it builds, so
+    // bringing the weapon back on target is instant while settling into a
+    // relaxed carry takes a beat — which is how the real motion reads.
+    const holdingFire = input && input.mouse && input.mouse.down;
+    const idle = !holdingFire
+      && this.time - (ws.lastFireT || -99) > RELAX_DELAY
+      && Math.abs(this.vx) < RELAX_MAX_SPEED
+      && ws.magHand !== true;
+    ws.relax = clamp(
+      (ws.relax || 0) + (idle ? dt / RELAX_IN : -dt / RELAX_OUT),
+      0, 1,
+    );
     ws.slideBack = Math.max(0, ws.slideBack - dt * 10);
     // Energy-weapon vibration envelope: emitters don't buck like a cartridge
     // gun, they hum. This decays much faster than the recoil spring and is
@@ -744,14 +778,14 @@ export class Player {
       for (let i = 0; i < n; i++) {
         this.fx.spawnProjectile(mzl.x, mzl.y, shotAng(), {
           color: pj.color, radius: pj.radius, speed: pj.speed * (0.85 + 0.4 * chargeMul),
-          dmg: wpn.dmg * chargeMul, headMul: pj.headMul || 1.6,
+          dmg: wpn.dmg * chargeMul * this.dmgMul, headMul: pj.headMul || 1.6,
           blast: (pj.blast || 0) * chargeMul, pierce: pj.pierce || 0, life: pj.life || 1.6,
         });
       }
     } else if (mode === 'beam') {
-      for (let i = 0; i < n; i++) this.beamShot(mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul);
+      for (let i = 0; i < n; i++) this.beamShot(mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul * this.dmgMul);
     } else {
-      for (let i = 0; i < n; i++) this.hitscanShot(mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul);
+      for (let i = 0; i < n; i++) this.hitscanShot(mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul * this.dmgMul);
     }
 
     this.presentShot(cur, mzl, ejl, baseAng, chargeMul);
@@ -844,14 +878,16 @@ export class Player {
     // Anything without a declared feel keeps the original conventional curve.
     const feel = RECOIL_FEEL[wpn.recoilFeel] || RECOIL_FEEL.standard;
     const spread = SPREAD_MODEL[wpn.recoilFeel] || SPREAD_MODEL.standard;
-    ws.recoilVel += wpn.recoilKick * 2.1 * patMul * chargeMul * feel.kick;
-    ws.recoilRotVel -= wpn.recoilRot * 18 * patMul * chargeMul * feel.climb;
+    // recoilMul is the equipped perk block's recoil-control bonus (1 = none).
+    const rm = this.recoilMul;
+    ws.recoilVel += wpn.recoilKick * 2.1 * patMul * chargeMul * feel.kick * rm;
+    ws.recoilRotVel -= wpn.recoilRot * 18 * patMul * chargeMul * feel.climb * rm;
     if (feel.vibe) ws.vibe = Math.min(1, (ws.vibe || 0) + feel.vibe * chargeMul);
     if (wpn.bolt) ws.boltBack = 1;
     if (wpn.slide) ws.slideBack = 1;
     this.recoilAccum = Math.min(0.05, this.recoilAccum + 0.008 * spread.bloom);
-    this.cam.recoil(wpn.camKick * chargeMul * feel.kick);
-    this.cam.addTrauma(wpn.camTrauma * chargeMul * feel.shake);
+    this.cam.recoil(wpn.camKick * chargeMul * feel.kick * rm);
+    this.cam.addTrauma(wpn.camTrauma * chargeMul * feel.shake * rm);
     if (wpn.heatPerShot) {
       ws.heat = Math.min(1, ws.heat + wpn.heatPerShot);
       if (ws.heat >= 1) { ws.overheated = true; if (this.audio.overheat) this.audio.overheat(); }

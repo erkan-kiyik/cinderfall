@@ -673,6 +673,132 @@ function paintParticleThrower(finish) {
 
 // ---- GAUSS RAILGUN: two long parallel rails with a capacitor bank slung
 // underneath. Reads as a linear accelerator — nothing about it is a rifle. ----
+// ---- boss heavy weapons ----
+// The two silhouettes that belong to bosses. They are deliberately oversized
+// and top-heavy — a boss should be readable as a boss from its outline alone,
+// before a single shot is fired, and an infantry rifle never did that.
+
+// Rotary minigun: six-barrel cluster on a rotor, ammo drum slung underneath,
+// spade grips at the rear. Nothing else in the arsenal has a barrel cluster,
+// so the read is instant even in silhouette.
+function paintMinigun(finish) {
+  const rec = (finish && finish.rec) || '#33383e';
+  const poly = (finish && finish.poly) || '#22262b';
+  return makeSprite(74, 30, 22, 15, (g) => {
+    g.translate(22, 15);
+
+    // ammo drum hanging below the receiver
+    g.fillStyle = metal(g, 2, 13, shade(rec, -0.2));
+    rr(g, -12, 1.5, 20, 12, 3.4); g.fill();
+    g.strokeStyle = 'rgba(8,9,12,0.55)'; g.lineWidth = 0.9;
+    for (let i = 1; i < 4; i++) {
+      g.beginPath(); g.moveTo(-12 + i * 5, 2.2); g.lineTo(-12 + i * 5, 12.8); g.stroke();
+    }
+    // feed chute from drum up into the receiver
+    g.fillStyle = shade(rec, -0.32);
+    g.beginPath();
+    g.moveTo(4, 2.2); g.lineTo(10, -3.4); g.lineTo(13, -1.2); g.lineTo(7.5, 3.6);
+    g.closePath(); g.fill();
+
+    // spade grips at the rear
+    g.fillStyle = poly;
+    rr(g, -20, -7.5, 4.2, 15, 1.6); g.fill();
+    g.fillStyle = shade(poly, -0.2);
+    rr(g, -21.5, -8.5, 7, 3.4, 1.2); g.fill();
+    rr(g, -21.5, 5.4, 7, 3.4, 1.2); g.fill();
+
+    // receiver housing
+    g.fillStyle = metal(g, -8, 3, rec);
+    rr(g, -16, -8, 24, 11, 2.6); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.10)';
+    g.fillRect(-16, -8, 24, 1.5);
+
+    // rotor face
+    g.fillStyle = shade(rec, -0.28);
+    g.beginPath(); g.arc(9, -2.5, 7.4, 0, Math.PI * 2); g.fill();
+    g.fillStyle = shade(rec, 0.16);
+    g.beginPath(); g.arc(9, -2.5, 3.1, 0, Math.PI * 2); g.fill();
+
+    // six barrels on the rotor, drawn back-to-front so the near ones overlap
+    const BARREL_L = 30;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + 0.35;
+      const oy = Math.sin(a) * 4.6;
+      const depth = (Math.cos(a) + 1) / 2;            // 0 far … 1 near
+      const shadeAmt = -0.34 + depth * 0.34;
+      g.fillStyle = metal(g, -2.6 + oy, 1.6 + oy, shade(rec, shadeAmt));
+      rr(g, 9, -3.6 + oy, BARREL_L, 2.5, 1.1); g.fill();
+      // muzzle crown
+      g.fillStyle = shade(rec, shadeAmt - 0.2);
+      rr(g, 9 + BARREL_L - 3, -4.1 + oy, 3.4, 3.5, 1); g.fill();
+    }
+
+    // barrel clamp ring near the muzzle end
+    g.fillStyle = shade(rec, -0.1);
+    rr(g, 9 + BARREL_L - 12, -6.4, 3.4, 9.4, 1.2); g.fill();
+  });
+}
+
+// Shoulder-fired rocket launcher: fat smooth-bore tube, blast cone at the
+// rear, optic on a rail, forward grip. Reads long and hollow — the opposite
+// of the minigun's dense cluster.
+function paintRocketLauncher(finish) {
+  const rec = (finish && finish.rec) || '#3d4237';
+  const poly = (finish && finish.poly) || '#262a22';
+  return makeSprite(80, 26, 24, 13, (g) => {
+    g.translate(24, 13);
+
+    // main tube
+    g.fillStyle = metal(g, -6.5, 5.5, rec);
+    rr(g, -18, -6.5, 50, 12, 5.4); g.fill();
+    // top highlight + lower shadow so the tube reads round
+    g.fillStyle = 'rgba(255,255,255,0.12)';
+    rr(g, -16, -6.2, 45, 2.2, 1.1); g.fill();
+    g.fillStyle = 'rgba(6,8,12,0.35)';
+    rr(g, -16, 3.4, 45, 2.2, 1.1); g.fill();
+
+    // rear blast cone
+    g.fillStyle = metal(g, -9, 8, shade(rec, -0.24));
+    g.beginPath();
+    g.moveTo(-18, -6.5); g.lineTo(-26, -9.5);
+    g.lineTo(-26, 9.5); g.lineTo(-18, 6.5);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(6,8,12,0.75)';
+    g.beginPath(); g.ellipse(-25.4, 0, 1.8, 8.6, 0, 0, Math.PI * 2); g.fill();
+
+    // warhead protruding from the muzzle
+    g.fillStyle = '#6d4a2c';
+    rr(g, 30, -4.6, 9, 9, 2.2); g.fill();
+    g.fillStyle = '#8a5f38';
+    g.beginPath();
+    g.moveTo(39, -4.6); g.lineTo(47, 0); g.lineTo(39, 4.6);
+    g.closePath(); g.fill();
+    // warning band
+    g.fillStyle = 'rgba(210,60,50,0.85)';
+    g.fillRect(31.5, -4.6, 2.4, 9);
+
+    // optic on a short rail
+    g.fillStyle = shade(rec, -0.35);
+    g.fillRect(2, -9.6, 14, 3.2);
+    g.fillStyle = metal(g, -14, -9, shade(rec, 0.08));
+    rr(g, 4, -14.4, 10, 5.2, 1.6); g.fill();
+    g.fillStyle = 'rgba(120,200,255,0.5)';
+    rr(g, 12.4, -13.4, 1.8, 3.2, 0.7); g.fill();
+
+    // pistol grip + trigger guard
+    g.fillStyle = poly;
+    g.beginPath();
+    g.moveTo(-6, 5.5); g.lineTo(1.5, 5.5); g.lineTo(-0.5, 16); g.lineTo(-7, 16);
+    g.closePath(); g.fill();
+    g.strokeStyle = shade(poly, -0.25); g.lineWidth = 1.6;
+    g.beginPath(); g.arc(-1.5, 8.4, 4.2, 0.1, Math.PI * 0.95); g.stroke();
+
+    // forward grip under the tube
+    g.fillStyle = shade(poly, 0.06);
+    rr(g, 16, 5.5, 4.6, 9, 1.8); g.fill();
+  });
+}
+
 function paintRailgun(finish) {
   const rec = (finish && finish.rec) || '#2e3238';
   const poly = (finish && finish.poly) || '#202429';
@@ -997,6 +1123,27 @@ export function buildWeapons() {
       auto: true, rpm: 820, dmg: 24, spread: 0.032,
       recoilKick: 1.9, recoilRot: 0.03, camKick: 1.0, camTrauma: 0.05, muzzleBig: 1.35,
       magSize: 100, reserve: 200, reloadT: 3.8, reloadEmptyT: 4.4, shotSound: 'rifle',
+    },
+    // ------- boss heavy weapons -------
+    // Only ever wielded by bosses, and only obtainable as a 1/1000 Boss
+    // Redeemable (see game/loot.js). Both are tuned well above the craftable
+    // ceiling on purpose — that is what makes the drop worth chasing.
+    minigun: {
+      ...R, id: 'minigun', recoilFeel: 'heavy', name: 'ANNIHILATOR', body: paintMinigun(),
+      auto: true, rpm: 1400, dmg: 26, spread: 0.055,
+      recoilKick: 1.1, recoilRot: 0.012, camKick: 0.7, camTrauma: 0.075, muzzleBig: 1.6,
+      magSize: 250, reserve: 500, reloadT: 5.2, reloadEmptyT: 6.0, shotSound: 'rifle',
+      mag: null, bolt: null,
+      tracerColor: [255, 214, 150], tracerWidth: 2.2,
+    },
+    rocket: {
+      ...R, id: 'rocket', recoilFeel: 'heavy', name: 'SIEGEBREAKER', body: paintRocketLauncher(),
+      auto: false, rpm: 42, dmg: 210, spread: 0.004,
+      fireMode: 'projectile',
+      projectile: { speed: 900, radius: 6, explode: 96, headMul: 1.2, color: [255, 170, 90] },
+      recoilKick: 3.6, recoilRot: 0.055, camKick: 2.8, camTrauma: 0.16, muzzleBig: 2.0,
+      magSize: 1, reserve: 12, reloadT: 3.2, reloadEmptyT: 3.6, shotSound: 'rifle',
+      mag: null, bolt: null,
     },
     sniper: {
       ...R, id: 'sniper', recoilFeel: 'heavy', name: 'LRS-1 "TALON"', body: rifleSkin('#2a2e33', '#20242a'),

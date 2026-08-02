@@ -1,9 +1,14 @@
-// Background paintings: dusk sky with low sun, drifting cloud bank, far
-// industrial skyline dissolved in haze, and a mid-distance factory line with
-// lit windows. Each layer is a wide painted strip that tiles horizontally and
-// scrolls at its own parallax rate.
+// Background paintings: a sky ramp, a drifting cloud bank, and a single
+// contiguous wall of New York-style tenement apartments.
+//
+// There used to be three building layers here — a hazed industrial skyline, a
+// factory line with cooling towers and gasometers, and a neon block band. All
+// of that is gone. The sector reads as a city street now, so the backdrop is
+// exactly one thing: apartments, joined shoulder to shoulder the way a real
+// Manhattan block is, with no gap, no factory and no horizon clutter behind
+// them.
 
-import { makeCanvas, lingrad, radgrad, shade, mix, withA, COL } from './paint.js';
+import { makeCanvas, lingrad, radgrad, shade, mix, withA } from './paint.js';
 import { makeRng } from '../engine/math.js';
 import { device } from '../engine/device.js';
 
@@ -15,19 +20,13 @@ const SKY_W = 1600, SKY_H = 900;
 // it here rather than per frame matters — a runtime canvas `filter` on
 // full-screen layers would be one of the most expensive steps in the render
 // loop, and none of this ever changes once painted.
-//
-// The net effect is that everything behind the play surface reads as a dim,
-// hazy backdrop, leaving the characters as the only high-contrast, in-focus
-// subjects on screen.
 export const DEPTH_GRADE = {
   sky:    { brightness: 0.78, saturate: 0.82 },                        // stretched, never tiled — no blur to gain
   clouds: { brightness: 0.70, saturate: 0.62, blur: 2.6, wrap: true },
-  far:    { brightness: 0.56, saturate: 0.42, blur: 3.6, wrap: true },  // furthest: flattest + softest
-  mid:    { brightness: 0.68, saturate: 0.60, blur: 1.7, wrap: true },
-  // Nearest parallax band. It sits closest to the play surface, so it keeps
+  // The one building layer. It sits closest to the play surface, so it keeps
   // the most contrast and stays sharp — but it is still graded down enough
   // that the characters in front of it remain the brightest thing on screen.
-  near:   { brightness: 0.60, saturate: 0.70, blur: 0.6, wrap: true },
+  city:   { brightness: 0.62, saturate: 0.72, blur: 0.5, wrap: true },
 };
 
 // Applies a depth grade to a finished layer, in place.
@@ -79,15 +78,16 @@ export function buildBackground() {
   const bg = {
     sky: paintSky(),
     clouds: paintClouds(),
-    far: paintFar(),
-    mid: paintMid(),
-    near: paintNear(),
+    city: paintCityBlock(),
   };
   for (const layer of Object.keys(DEPTH_GRADE)) depthTreat(bg[layer], DEPTH_GRADE[layer]);
   return bg;
 }
 
 // ---------------- sky ----------------
+// Painted at dusk. The live time-of-day tint is applied at draw time over the
+// whole parallax stack (see engine/daycycle.js + World.drawBackground), so
+// this bake stays neutral enough to sit under any hour.
 function paintSky() {
   const { cv, g } = makeCanvas(SKY_W, SKY_H);
   // vertical dusk ramp
@@ -215,413 +215,196 @@ function paintClouds() {
   return cv;
 }
 
-// ---------------- far skyline ----------------
-function paintFar() {
-  const W = 2048, H = 620;
-  const { cv, g } = makeCanvas(W, H);
-  const rng = makeRng(919);
-  const hazeA = mix(COL.haze, '#b58a68', 0.45);
-  const hazeB = mix(COL.haze, '#6a7086', 0.4);
+// =====================================================================
+//                    NYC TENEMENT BLOCK (the only building layer)
+// =====================================================================
+// A real Manhattan block is one unbroken wall of masonry: party walls shared
+// between neighbours, no alley, no sky between buildings. Heights and facade
+// colours change at every property line, and that stepped roofline plus the
+// vertical seam is the entire silhouette. So this is painted as a contiguous
+// run — `x += bw` with no gap — and the variation comes from the buildings
+// themselves rather than from spacing.
 
-  // two depth rows of silhouettes
-  for (let row = 0; row < 2; row++) {
-    const col = row === 0 ? withA(hazeA, 0.5) : withA(hazeB, 0.72);
-    const baseY = H - 40 - row * 8;
-    const top = row === 0 ? 320 : 230;
-    g.fillStyle = col;
-    let x = row * 90;
-    while (x < W + 140) {
-      const bw = rng.range(70, 190);
-      const bh = rng.range(60, top);
-      g.fillRect(x, baseY - bh, bw, bh + 40);
-      // rooftop clutter: tanks, masts, AC
-      if (rng.chance(0.6)) g.fillRect(x + bw * 0.2, baseY - bh - 12, bw * 0.18, 12);
-      if (rng.chance(0.5)) {
-        g.fillRect(x + bw * 0.65, baseY - bh - 26, 3, 26);
-        g.fillRect(x + bw * 0.65 - 4, baseY - bh - 26, 11, 3);
-      }
-      // smokestack cluster occasionally
-      if (rng.chance(0.3)) {
-        const sw = rng.range(14, 22);
-        g.fillRect(x + bw + 6, baseY - bh - rng.range(50, 120), sw, bh + 160);
-      }
-      x += bw + rng.range(24, 90);
-    }
-  }
-  // haze wash at base so it sits into the atmosphere
-  g.fillStyle = lingrad(g, 0, H - 240, 0, H, [
-    [0, 'rgba(200,150,110,0)'],
-    [1, 'rgba(206,150,106,0.4)'],
-  ]);
-  g.fillRect(0, 0, W, H);
-  return cv;
-}
-
-// ---- industrial landmark silhouettes (drawn into the mid layer) ----------
-
-// Hyperboloid cooling tower: characteristic waisted profile, vertical ribbing,
-// a lit rim at the mouth and a faint standing steam wisp.
-function coolingTower(g, cx, baseY, h, w, col) {
-  const topY = baseY - h;
-  const waistY = topY + h * 0.62;
-  const rTop = w * 0.5, rWaist = w * 0.34, rBase = w * 0.5;
-  const profile = (side) => {
-    g.beginPath();
-    g.moveTo(cx - side * rBase, baseY);
-    g.quadraticCurveTo(cx - side * rWaist * 0.7, (baseY + waistY) / 2, cx - side * rWaist, waistY);
-    g.quadraticCurveTo(cx - side * rTop * 0.9, (waistY + topY) / 2, cx - side * rTop, topY);
-  };
-  g.fillStyle = lingrad(g, cx - rBase, 0, cx + rBase, 0, [
-    [0, shade(col, -0.28)], [0.4, shade(col, 0.08)], [0.6, col], [1, shade(col, -0.34)],
-  ]);
-  g.beginPath();
-  profile(1);
-  g.lineTo(cx + rTop, topY);
-  g.quadraticCurveTo(cx + rWaist * 0.9, (waistY + topY) / 2, cx + rWaist, waistY);
-  g.quadraticCurveTo(cx + rBase * 0.7, (baseY + waistY) / 2, cx + rBase, baseY);
-  g.closePath(); g.fill();
-  // vertical ribbing
-  g.strokeStyle = 'rgba(0,0,0,0.14)'; g.lineWidth = 1.5;
-  for (let i = -3; i <= 3; i++) {
-    const fx = i / 3;
-    g.beginPath();
-    g.moveTo(cx + fx * rBase, baseY);
-    g.quadraticCurveTo(cx + fx * rWaist * 0.85, waistY, cx + fx * rTop, topY);
-    g.stroke();
-  }
-  // lit mouth rim + shadowed throat
-  g.fillStyle = shade(col, 0.22);
-  g.beginPath(); g.ellipse(cx, topY, rTop, rTop * 0.16, 0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(10,10,14,0.55)';
-  g.beginPath(); g.ellipse(cx, topY + 2, rTop * 0.8, rTop * 0.12, 0, 0, Math.PI * 2); g.fill();
-  // standing steam
-  g.fillStyle = 'rgba(200,204,210,0.10)';
-  for (let s = 0; s < 5; s++) {
-    g.beginPath();
-    g.arc(cx + Math.sin(s * 1.7) * rTop * 0.4, topY - 20 - s * 26, rTop * (0.55 - s * 0.05), 0, Math.PI * 2);
-    g.fill();
-  }
-}
-
-// Telescopic gasometer: banded cylinder in an external lattice guide frame.
-function gasHolder(g, cx, baseY, h, w, col) {
-  const topY = baseY - h, r = w * 0.5;
-  g.fillStyle = lingrad(g, cx - r, 0, cx + r, 0, [
-    [0, shade(col, -0.3)], [0.45, col], [1, shade(col, -0.36)],
-  ]);
-  rrRect(g, cx - r, topY + 14, w, h - 14, 4); g.fill();
-  // domed crown
-  g.beginPath(); g.ellipse(cx, topY + 14, r, 16, 0, Math.PI, 0); g.fill();
-  // telescopic bands
-  g.strokeStyle = 'rgba(0,0,0,0.22)'; g.lineWidth = 2;
-  for (let i = 1; i < 4; i++) {
-    const yy = topY + 14 + (h - 14) * (i / 4);
-    g.beginPath(); g.moveTo(cx - r, yy); g.lineTo(cx + r, yy); g.stroke();
-  }
-  // external lattice guide columns
-  g.strokeStyle = 'rgba(40,40,50,0.85)'; g.lineWidth = 3;
-  for (const s of [-1, 1]) {
-    g.beginPath(); g.moveTo(cx + s * (r + 6), baseY); g.lineTo(cx + s * (r + 6), topY - 8); g.stroke();
-  }
-  g.lineWidth = 1.4; g.strokeStyle = 'rgba(40,40,50,0.6)';
-  for (let i = 0; i < 7; i++) {
-    const yy = topY - 8 + (h) * (i / 7);
-    g.beginPath(); g.moveTo(cx - r - 6, yy); g.lineTo(cx + r + 6, yy + 18); g.stroke();
-  }
-}
-
-// Tower crane: mast + horizontal jib + counter-jib with a hanging load line.
-function towerCrane(g, x, topY, h) {
-  g.fillStyle = '#2e2d38';
-  g.fillRect(x, topY, 7, h);                       // mast
-  g.fillRect(x - 130, topY - 6, 300, 7);           // jib + counter-jib
-  g.fillStyle = '#26252f';
-  g.fillRect(x - 150, topY - 20, 26, 20);          // counterweight
-  g.strokeStyle = 'rgba(46,45,56,0.9)'; g.lineWidth = 2;
-  for (let i = 0; i < 9; i++) {                     // jib lattice
-    g.beginPath(); g.moveTo(x + 10 + i * 18, topY - 5); g.lineTo(x + 20 + i * 18, topY + 8); g.stroke();
-  }
-  // hoist line + hook
-  g.fillStyle = '#2e2d38';
-  g.fillRect(x + 120, topY, 1.6, 60);
-  g.fillRect(x + 116, topY + 60, 10, 6);
-  // mast bracing
-  g.strokeStyle = 'rgba(46,45,56,0.8)'; g.lineWidth = 1.6;
-  for (let i = 0; i < Math.floor(h / 26); i++) {
-    g.beginPath(); g.moveTo(x, topY + i * 26); g.lineTo(x + 7, topY + (i + 1) * 26); g.stroke();
-  }
-}
-
-// small rounded-rect helper (kept local to avoid touching shared paint utils)
-function rrRect(g, x, y, w, h, r) {
-  g.beginPath();
-  g.moveTo(x + r, y);
-  g.arcTo(x + w, y, x + w, y + h, r);
-  g.arcTo(x + w, y + h, x, y + h, r);
-  g.arcTo(x, y + h, x, y, r);
-  g.arcTo(x, y, x + w, y, r);
-  g.closePath();
-}
-
-// ---------------- mid factory line ----------------
-function paintMid() {
-  const W = 2048, H = 760;
-  const { cv, g } = makeCanvas(W, H);
-  const rng = makeRng(1213);
-  const baseY = H - 10;
-
-  const bodyCol = (t) => mix('#3f3e48', '#5b4f4c', t);
-
-  let x = -40;
-  while (x < W + 100) {
-    const bw = rng.range(150, 320);
-    const bh = rng.range(180, 420);
-    const t = rng();
-    const col = bodyCol(t * 0.6);
-    // main mass with vertical gradient (sky glow rims the top)
-    g.fillStyle = lingrad(g, 0, baseY - bh, 0, baseY, [
-      [0, shade(col, 0.16)],
-      [0.2, col],
-      [1, shade(col, -0.4)],
-    ]);
-    g.fillRect(x, baseY - bh, bw, bh);
-    // sawtooth factory roof or parapet
-    if (rng.chance(0.5)) {
-      g.fillStyle = shade(col, 0.1);
-      const teeth = Math.floor(bw / 46);
-      for (let i = 0; i < teeth; i++) {
-        const tx = x + i * 46;
-        g.beginPath();
-        g.moveTo(tx, baseY - bh);
-        g.lineTo(tx + 30, baseY - bh - 26);
-        g.lineTo(tx + 30, baseY - bh);
-        g.closePath(); g.fill();
-        // glazed north face catching sky
-        g.fillStyle = withA('#c8935e', 0.5);
-        g.beginPath();
-        g.moveTo(tx + 30, baseY - bh - 25);
-        g.lineTo(tx + 44, baseY - bh);
-        g.lineTo(tx + 30, baseY - bh);
-        g.closePath(); g.fill();
-        g.fillStyle = shade(col, 0.1);
-      }
-    } else {
-      g.fillStyle = shade(col, -0.25);
-      g.fillRect(x - 3, baseY - bh - 8, bw + 6, 8);
-    }
-    // window grid — a scatter of warm lit cells
-    const cols = Math.floor(bw / 34), rows = Math.floor(bh / 60);
-    for (let cxi = 0; cxi < cols; cxi++) {
-      for (let ry = 0; ry < rows; ry++) {
-        const wx = x + 12 + cxi * 34, wy = baseY - bh + 22 + ry * 60;
-        if (rng.chance(0.32)) {
-          g.fillStyle = withA(rng.chance(0.8) ? '#e8a45e' : '#c8d2e0', rng.range(0.35, 0.8));
-          g.fillRect(wx, wy, 16, 22);
-          g.fillStyle = 'rgba(20,16,14,0.5)';
-          g.fillRect(wx + 7, wy, 1.4, 22);
-          g.fillRect(wx, wy + 10, 16, 1.4);
-        } else {
-          g.fillStyle = 'rgba(16,17,24,0.55)';
-          g.fillRect(wx, wy, 16, 22);
-        }
-      }
-    }
-    // rooftop water tank / stack
-    if (rng.chance(0.45)) {
-      g.fillStyle = shade(col, -0.14);
-      const tw = rng.range(26, 40);
-      g.fillRect(x + bw * 0.55, baseY - bh - 34, tw, 34);
-      g.beginPath();
-      g.moveTo(x + bw * 0.55 - 3, baseY - bh - 34);
-      g.lineTo(x + bw * 0.55 + tw / 2, baseY - bh - 48);
-      g.lineTo(x + bw * 0.55 + tw + 3, baseY - bh - 34);
-      g.closePath(); g.fill();
-    }
-    if (rng.chance(0.4)) {
-      const sw = rng.range(16, 24);
-      const sh = rng.range(80, 170);
-      g.fillStyle = lingrad(g, x + bw + 10, 0, x + bw + 10 + sw, 0, [
-        [0, shade(col, 0.1)], [0.5, shade(col, -0.1)], [1, shade(col, -0.4)],
-      ]);
-      g.fillRect(x + bw + 10, baseY - bh - sh, sw, bh + sh);
-      // banding
-      g.fillStyle = 'rgba(200,120,80,0.35)';
-      g.fillRect(x + bw + 10, baseY - bh - sh + 14, sw, 5);
-      g.fillStyle = 'rgba(230,230,235,0.2)';
-      g.fillRect(x + bw + 10, baseY - bh - sh + 26, sw, 5);
-    }
-    x += bw + rng.range(30, 110);
-  }
-
-  // gantry crane silhouette
-  const gx = W * 0.32, gy = baseY - 320;
-  g.fillStyle = '#33323c';
-  g.fillRect(gx, gy, 8, 320);
-  g.fillRect(gx + 210, gy, 8, 320);
-  g.fillRect(gx - 40, gy, 320, 10);
-  g.fillRect(gx - 40, gy + 10, 6, 26);
-  // cable + hook
-  g.fillRect(gx + 120, gy + 10, 2.4, 74);
-  g.fillRect(gx + 114, gy + 84, 14, 8);
-  // truss cross-bracing
-  g.strokeStyle = 'rgba(60,58,70,0.9)'; g.lineWidth = 3;
-  for (let i = 0; i < 6; i++) {
-    g.beginPath();
-    g.moveTo(gx - 40 + i * 54, gy + 10);
-    g.lineTo(gx + 14 + i * 54, gy);
-    g.stroke();
-  }
-
-  // ---- landmark structures: cooling towers, a gasometer, tower crane ----
-  // Placed by hand at spread positions (not a uniform loop) so the skyline
-  // has recognisable, non-repeating silhouettes.
-  coolingTower(g, W * 0.08, baseY, 300, 150, bodyCol(0.35));
-  coolingTower(g, W * 0.86, baseY, 250, 128, bodyCol(0.5));
-  gasHolder(g, W * 0.58, baseY, 168, 150, bodyCol(0.42));
-  towerCrane(g, W * 0.7, baseY - 250, 250);
-
-  // atmosphere: haze wash rising from the base
-  g.fillStyle = lingrad(g, 0, H - 380, 0, H, [
-    [0, 'rgba(190,140,100,0)'],
-    [0.7, 'rgba(186,136,98,0.22)'],
-    [1, 'rgba(178,132,100,0.42)'],
-  ]);
-  g.fillRect(0, 0, W, H);
-  return cv;
-}
-
-// ---------------- near neon city ----------------
-// The closest parallax band, and the layer that replaced the world-space
-// building facades that used to stand directly behind the player. Those were
-// full-detail brick walls a few metres behind the action and they flattened
-// every fight into a corridor; this reads as a city the street runs through
-// instead of a wall the street runs along.
-//
-// Deliberately kept to silhouette + light: block masses, a scatter of lit
-// windows, and neon signage. No brick texture, no door furniture — nothing
-// that competes for attention with an operator standing in front of it.
+// Brick / brownstone / limestone palette, the range a NYC block actually runs.
+const FACADE_COLS = [
+  '#5a3b32',  // red brick
+  '#4a3129',  // dark brick
+  '#6b4a3a',  // brownstone
+  '#3f3a3d',  // soot-grey brick
+  '#6d6153',  // limestone
+  '#54413a',  // faded red
+];
 
 const NEON = ['#ff4d6d', '#3fd2ff', '#b26bff', '#ffd166', '#39e6a0'];
 
-// ---- realistic apartment detail helpers ----
-// Each of these is a small piece of real architecture. Individually they're
-// cheap; together they're what separates "a lit box" from "a building people
-// live in", which is the whole point of this layer.
+// ---- facade helpers ----
 
-// Vertical panel joints and a fine grain over the render.
-function facadeTexture(g, x, y, w, h, col, rng) {
+// Brick coursing plus grime. Horizontal courses read as masonry where the old
+// vertical panel joints read as a curtain-wall office block, which is exactly
+// the wrong building type for this street.
+function brickCourses(g, x, y, w, h, col, rng) {
   g.save();
   g.beginPath(); g.rect(x, y, w, h); g.clip();
-  g.strokeStyle = 'rgba(6,8,13,0.16)'; g.lineWidth = 1;
-  for (let jx = x + 18; jx < x + w; jx += 26) {
-    g.beginPath(); g.moveTo(jx, y); g.lineTo(jx, y + h); g.stroke();
-  }
-  // horizontal floor-slab lines, fainter than the balcony bands
-  g.strokeStyle = 'rgba(6,8,13,0.11)';
-  for (let jy = y + 46; jy < y + h; jy += 46) {
+  // mortar courses
+  g.strokeStyle = withA(shade(col, 0.22), 0.16);
+  g.lineWidth = 1;
+  for (let jy = y + 5; jy < y + h; jy += 7) {
     g.beginPath(); g.moveTo(x, jy); g.lineTo(x + w, jy); g.stroke();
   }
-  // weathering: a few damp streaks running down from the parapet
-  g.fillStyle = 'rgba(6,8,13,0.10)';
-  for (let i = 0; i < 4; i++) {
+  // broken vertical joints, offset course to course so it reads as bond
+  g.strokeStyle = withA(shade(col, 0.16), 0.10);
+  for (let jy = y + 5, row = 0; jy < y + h; jy += 7, row++) {
+    const off = (row % 2) * 7;
+    for (let jx = x + off; jx < x + w; jx += 14) {
+      g.beginPath(); g.moveTo(jx, jy); g.lineTo(jx, jy + 7); g.stroke();
+    }
+  }
+  // soot washing down from the cornice, heavier at the top
+  g.fillStyle = 'rgba(6,8,13,0.13)';
+  for (let i = 0; i < 6; i++) {
     const sx = x + rng() * w;
-    g.fillRect(sx, y, rng.range(1.5, 4), rng.range(h * 0.2, h * 0.7));
+    g.fillRect(sx, y, rng.range(2, 6), rng.range(h * 0.15, h * 0.6));
   }
   // grain
-  for (let i = 0; i < 90; i++) {
-    g.fillStyle = rng.chance(0.5) ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.05)';
+  for (let i = 0; i < 110; i++) {
+    g.fillStyle = rng.chance(0.5) ? 'rgba(255,240,220,0.022)' : 'rgba(0,0,0,0.05)';
     g.fillRect(x + rng() * w, y + rng() * h, 1, 1);
   }
   g.restore();
 }
 
-// Wall-mounted air-conditioning box on its bracket.
+// Heavy projecting cornice — the single most recognisable tenement feature,
+// and what makes the roofline read as pre-war brick rather than a flat parapet.
+function cornice(g, x, y, w, col) {
+  // shadow the cornice casts on the wall below it
+  g.fillStyle = 'rgba(6,8,13,0.4)';
+  g.fillRect(x, y + 9, w, 5);
+  // bed mould
+  g.fillStyle = shade(col, 0.1);
+  g.fillRect(x - 3, y + 5, w + 6, 5);
+  // corbel brackets along the underside
+  g.fillStyle = shade(col, -0.12);
+  for (let bx = x + 4; bx < x + w - 4; bx += 15) g.fillRect(bx, y + 9, 5, 4);
+  // crown
+  g.fillStyle = lingrad(g, 0, y - 4, 0, y + 6, [
+    [0, shade(col, 0.3)], [1, shade(col, -0.05)],
+  ]);
+  g.fillRect(x - 5, y - 4, w + 10, 10);
+  // top fillet catching sky
+  g.fillStyle = shade(col, 0.42);
+  g.fillRect(x - 5, y - 4, w + 10, 1.8);
+}
+
+// Stone sill + lintel around an opening. Cheap, but it is the difference
+// between a window and a hole punched in a wall.
+function windowTrim(g, wx, wy, ww, wh, col) {
+  g.fillStyle = shade(col, 0.26);
+  g.fillRect(wx - 2, wy - 3.5, ww + 4, 3.5);       // lintel
+  g.fillStyle = shade(col, 0.34);
+  g.fillRect(wx - 2.5, wy + wh, ww + 5, 3);        // sill, projecting
+  g.fillStyle = 'rgba(6,8,13,0.45)';
+  g.fillRect(wx - 2.5, wy + wh + 3, ww + 5, 1.6);  // sill shadow
+}
+
+// Wall-mounted air-conditioning box on its bracket — sat in the window opening
+// the way they actually are, not bolted to blank wall.
 function acUnit(g, x, y, col) {
-  g.fillStyle = shade(col, 0.24);
-  g.fillRect(x, y, 11, 7);
-  g.fillStyle = 'rgba(6,8,13,0.5)';
-  g.fillRect(x, y + 7, 11, 1.6);            // bracket shadow
+  g.fillStyle = shade(col, 0.2);
+  g.fillRect(x, y, 12, 8);
+  g.fillStyle = 'rgba(6,8,13,0.55)';
+  g.fillRect(x, y + 8, 12, 2);
   g.strokeStyle = 'rgba(6,8,13,0.4)'; g.lineWidth = 0.7;
   for (let i = 1; i < 4; i++) {
-    g.beginPath(); g.moveTo(x + i * 2.7, y + 1); g.lineTo(x + i * 2.7, y + 6); g.stroke();
+    g.beginPath(); g.moveTo(x + i * 3, y + 1.4); g.lineTo(x + i * 3, y + 6.6); g.stroke();
   }
 }
 
 // Zig-zag fire escape: landings joined by angled stair flights, plus the
-// drop-ladder at the bottom.
-function fireEscape(g, x, y, h, rng) {
-  const W = 26;
-  const landingGap = 46;
-  const n = Math.max(2, Math.floor(h / landingGap));
-  g.strokeStyle = 'rgba(8,10,16,0.62)';
-  g.fillStyle = 'rgba(8,10,16,0.62)';
+// drop-ladder at the bottom. On a NYC tenement this runs the full height of
+// the front facade, so it is drawn as a single storey-aligned run.
+function fireEscape(g, x, y, h, floorH, rng) {
+  const W = 30;
+  const n = Math.max(2, Math.round(h / floorH));
+  g.strokeStyle = 'rgba(10,12,18,0.72)';
+  g.fillStyle = 'rgba(10,12,18,0.72)';
   // vertical stringers
-  g.lineWidth = 1.6;
-  g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + n * landingGap); g.stroke();
-  g.beginPath(); g.moveTo(x + W, y); g.lineTo(x + W, y + n * landingGap); g.stroke();
+  g.lineWidth = 1.7;
+  g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + n * floorH); g.stroke();
+  g.beginPath(); g.moveTo(x + W, y); g.lineTo(x + W, y + n * floorH); g.stroke();
   for (let i = 0; i < n; i++) {
-    const ly = y + i * landingGap;
-    // landing deck
-    g.fillRect(x - 2, ly, W + 4, 2.4);
-    // railing uprights
+    const ly = y + i * floorH;
+    g.fillRect(x - 2, ly, W + 4, 2.6);                    // landing deck
     g.lineWidth = 0.9;
-    for (let rx = x; rx <= x + W; rx += 6) {
-      g.beginPath(); g.moveTo(rx, ly); g.lineTo(rx, ly - 10); g.stroke();
+    for (let rx = x; rx <= x + W; rx += 6) {              // railing uprights
+      g.beginPath(); g.moveTo(rx, ly); g.lineTo(rx, ly - 11); g.stroke();
     }
     g.lineWidth = 1.2;
-    g.beginPath(); g.moveTo(x - 2, ly - 10); g.lineTo(x + W + 2, ly - 10); g.stroke();
-    // stair flight down to the next landing, alternating direction
-    if (i < n - 1) {
-      const leftToRight = i % 2 === 0;
-      const x0 = leftToRight ? x + 2 : x + W - 2;
-      const x1 = leftToRight ? x + W - 2 : x + 2;
-      g.lineWidth = 1.6;
-      g.beginPath();
-      g.moveTo(x0, ly + 2.4); g.lineTo(x1, ly + landingGap);
-      g.stroke();
-      // treads
+    g.beginPath(); g.moveTo(x - 2, ly - 11); g.lineTo(x + W + 2, ly - 11); g.stroke();
+    if (i < n - 1) {                                      // stair flight
+      const l2r = i % 2 === 0;
+      const x0 = l2r ? x + 2 : x + W - 2;
+      const x1 = l2r ? x + W - 2 : x + 2;
+      g.lineWidth = 1.7;
+      g.beginPath(); g.moveTo(x0, ly + 2.6); g.lineTo(x1, ly + floorH); g.stroke();
       g.lineWidth = 0.8;
       for (let s = 0.15; s < 1; s += 0.2) {
-        const tx = x0 + (x1 - x0) * s, ty = ly + 2.4 + (landingGap - 2.4) * s;
+        const tx = x0 + (x1 - x0) * s, ty = ly + 2.6 + (floorH - 2.6) * s;
         g.beginPath(); g.moveTo(tx - 2, ty); g.lineTo(tx + 2, ty); g.stroke();
       }
     }
   }
   // drop ladder hanging off the lowest landing
   g.lineWidth = 1.3;
-  const by = y + (n - 1) * landingGap + 2.4;
-  g.beginPath(); g.moveTo(x + 6, by); g.lineTo(x + 6, by + 22); g.stroke();
-  g.beginPath(); g.moveTo(x + 13, by); g.lineTo(x + 13, by + 22); g.stroke();
-  for (let ry = by + 4; ry < by + 22; ry += 5) {
-    g.beginPath(); g.moveTo(x + 6, ry); g.lineTo(x + 13, ry); g.stroke();
+  const by = y + (n - 1) * floorH + 2.6;
+  g.beginPath(); g.moveTo(x + 7, by); g.lineTo(x + 7, by + 26); g.stroke();
+  g.beginPath(); g.moveTo(x + 15, by); g.lineTo(x + 15, by + 26); g.stroke();
+  for (let ry = by + 4; ry < by + 26; ry += 5) {
+    g.beginPath(); g.moveTo(x + 7, ry); g.lineTo(x + 15, ry); g.stroke();
   }
 }
 
 // Rooftop water tank on its stilt frame — the classic tenement roofline.
 function waterTank(g, x, baseY, col, rng) {
-  const w = rng.range(16, 24), h = rng.range(14, 20), legH = rng.range(7, 12);
+  const w = rng.range(20, 30), h = rng.range(18, 26), legH = rng.range(9, 15);
   const y = baseY - legH - h;
-  // stilts
-  g.strokeStyle = 'rgba(8,10,16,0.7)'; g.lineWidth = 1.6;
+  g.strokeStyle = 'rgba(8,10,16,0.75)'; g.lineWidth = 1.8;
   for (const lx of [x + 2, x + w - 2]) {
     g.beginPath(); g.moveTo(lx, y + h); g.lineTo(lx, baseY); g.stroke();
   }
   g.beginPath(); g.moveTo(x + 2, y + h + legH * 0.5); g.lineTo(x + w - 2, y + h + legH * 0.5); g.stroke();
-  // barrel
+  // cedar barrel
   g.fillStyle = lingrad(g, x, y, x + w, y, [
-    [0, shade(col, 0.26)], [0.45, shade(col, 0.08)], [1, shade(col, -0.3)],
+    [0, '#6a4c33'], [0.45, '#8a6644'], [1, '#3f2c1e'],
   ]);
   g.fillRect(x, y, w, h);
-  // banding hoops
-  g.strokeStyle = 'rgba(6,8,13,0.4)'; g.lineWidth = 0.9;
+  // staves
+  g.strokeStyle = 'rgba(20,12,6,0.3)'; g.lineWidth = 0.6;
+  for (let sx = x + 3; sx < x + w; sx += 4) {
+    g.beginPath(); g.moveTo(sx, y); g.lineTo(sx, y + h); g.stroke();
+  }
+  // iron hoops
+  g.strokeStyle = 'rgba(6,8,13,0.5)'; g.lineWidth = 1.1;
   for (let i = 1; i < 3; i++) {
     g.beginPath(); g.moveTo(x, y + (h / 3) * i); g.lineTo(x + w, y + (h / 3) * i); g.stroke();
   }
   // conical lid
-  g.fillStyle = shade(col, -0.18);
+  g.fillStyle = '#2e2823';
   g.beginPath();
-  g.moveTo(x - 1.5, y); g.lineTo(x + w / 2, y - 5.5); g.lineTo(x + w + 1.5, y);
+  g.moveTo(x - 2, y); g.lineTo(x + w / 2, y - 7); g.lineTo(x + w + 2, y);
   g.closePath(); g.fill();
+}
+
+// Roof bulkhead — the stair head-house every walk-up has.
+function bulkhead(g, x, baseY, w, h, col) {
+  g.fillStyle = lingrad(g, x, 0, x + w, 0, [
+    [0, shade(col, -0.1)], [0.5, shade(col, -0.24)], [1, shade(col, -0.4)],
+  ]);
+  g.fillRect(x, baseY - h, w, h);
+  g.fillStyle = shade(col, 0.06);
+  g.fillRect(x - 2, baseY - h - 3, w + 4, 3);
+  // door
+  g.fillStyle = 'rgba(8,10,15,0.6)';
+  g.fillRect(x + w * 0.32, baseY - h * 0.62, w * 0.36, h * 0.62);
 }
 
 function neonSign(g, x, y, w, h, col, rng) {
@@ -635,10 +418,10 @@ function neonSign(g, x, y, w, h, col, rng) {
   g.fillRect(x - w, y - h * 1.6, w * 3, h * 4.2);
   g.restore();
 
+  g.save();
   g.strokeStyle = col;
   g.lineWidth = 2.4;
   g.lineCap = 'round';
-  // vertical strip signs read as hanging shop boards; horizontal as rooftop
   if (h > w) {
     const seg = Math.max(2, Math.floor(h / 13));
     for (let i = 0; i < seg; i++) {
@@ -655,163 +438,226 @@ function neonSign(g, x, y, w, h, col, rng) {
     g.moveTo(x + 3, y + h / 2 - 5); g.lineTo(x + w - 3, y + h / 2 - 5);
     g.stroke();
   }
-  g.restore?.();
+  g.restore();
 }
 
-function paintNear() {
-  const W = 2048, H = 560;
+// Ground-floor storefront: the retail band under every tenement. Gives the
+// bottom of the block a different rhythm from the residential floors above,
+// which is what stops a tall facade reading as one repeating stamp.
+function storefront(g, x, baseY, w, h, col, rng) {
+  // recessed shopfront box
+  g.fillStyle = 'rgba(9,11,16,0.72)';
+  g.fillRect(x, baseY - h, w, h);
+  // pier at each end (the masonry the upper floors actually sit on)
+  g.fillStyle = shade(col, -0.22);
+  g.fillRect(x, baseY - h, 7, h);
+  g.fillRect(x + w - 7, baseY - h, 7, h);
+  // transom + display glass, lit from inside about half the time
+  const open = rng.chance(0.45);
+  if (open) {
+    const tint = rng.chance(0.5) ? '#ffd9a0' : '#bfe6ff';
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    g.fillStyle = radgrad(g, x + w / 2, baseY - h * 0.5, w * 0.8, [
+      [0, withA(tint, 0.30)], [0.6, withA(tint, 0.10)], [1, withA(tint, 0)],
+    ]);
+    g.fillRect(x - 12, baseY - h - 12, w + 24, h + 24);
+    g.restore();
+    g.fillStyle = withA(tint, 0.5);
+    g.fillRect(x + 9, baseY - h + 7, w - 18, h - 20);
+    // mullions across the display window
+    g.fillStyle = 'rgba(10,10,14,0.6)';
+    for (let mx = x + 9 + (w - 18) / 3; mx < x + w - 9; mx += (w - 18) / 3) {
+      g.fillRect(mx, baseY - h + 7, 1.6, h - 20);
+    }
+  } else {
+    // shutter down
+    g.fillStyle = 'rgba(26,28,34,0.9)';
+    g.fillRect(x + 8, baseY - h + 7, w - 16, h - 18);
+    g.strokeStyle = 'rgba(8,9,12,0.5)'; g.lineWidth = 0.8;
+    for (let sy = baseY - h + 9; sy < baseY - 11; sy += 3.4) {
+      g.beginPath(); g.moveTo(x + 8, sy); g.lineTo(x + w - 8, sy); g.stroke();
+    }
+  }
+  // awning over the shopfront
+  if (rng.chance(0.5)) {
+    const aw = w - 6;
+    g.fillStyle = withA(rng.chance(0.5) ? '#7b2f34' : '#2f4f3f', 0.85);
+    g.beginPath();
+    g.moveTo(x + 3, baseY - h + 5);
+    g.lineTo(x + 3 + aw, baseY - h + 5);
+    g.lineTo(x + 3 + aw - 4, baseY - h + 17);
+    g.lineTo(x + 7, baseY - h + 17);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(6,8,13,0.35)';
+    g.fillRect(x + 7, baseY - h + 17, aw - 8, 2);
+  }
+  // stoop steps beside the shop — the other half of a tenement ground floor
+  if (rng.chance(0.4)) {
+    g.fillStyle = shade(col, -0.3);
+    for (let i = 0; i < 4; i++) {
+      g.fillRect(x + w * 0.72, baseY - 4 - i * 4, w * 0.24 - i * 3, 4);
+    }
+  }
+}
+
+// ---------------- the block ----------------
+function paintCityBlock() {
+  const W = 2048, H = 620;
   const { cv, g } = makeCanvas(W, H);
   const rng = makeRng(7731);
   const baseY = H;
 
-  let x = -60;
-  while (x < W + 120) {
-    const bw = rng.range(110, 210);
-    const bh = rng.range(190, 470);
+  // Contiguous run: each building starts exactly where the last one ended.
+  // `x` is never advanced by a gap — that is the whole point of the layer.
+  let x = -70;
+  let prevTop = null;
+  while (x < W + 130) {
+    const bw = rng.range(120, 235);
+    const bh = rng.range(300, 560);
     const top = baseY - bh;
-    // Cool, desaturated concrete — the neon is the only saturated thing in
-    // this layer, which is what makes it read as night-time city.
-    const col = mix('#242833', '#33313f', rng());
+    const col = FACADE_COLS[rng.int(0, FACADE_COLS.length - 1)];
+
+    // storey height drives the window grid, the fire escape landings and the
+    // storefront, so they all line up like a real elevation
+    const floorH = rng.range(44, 54);
+    const shopH = floorH * 1.5;
+
+    // ---- main mass ----
     g.fillStyle = lingrad(g, 0, top, 0, baseY, [
-      [0, shade(col, 0.2)],
-      [0.35, col],
-      [1, shade(col, -0.45)],
+      [0, shade(col, 0.18)],
+      [0.4, col],
+      [1, shade(col, -0.5)],
     ]);
     g.fillRect(x, top, bw, bh);
+    brickCourses(g, x, top, bw, bh, col, rng);
 
-    // ---- facade render texture ----
-    // Vertical panel joints plus a fine speckle. Without this the block is a
-    // flat gradient, which is exactly the "cardboard box" read the realistic
-    // pass is meant to kill.
-    facadeTexture(g, x, top, bw, bh, col, rng);
-
-    // parapet cap, with the coping lip a real building has
-    g.fillStyle = shade(col, -0.3);
-    g.fillRect(x - 4, top - 7, bw + 8, 7);
-    g.fillStyle = shade(col, 0.12);
-    g.fillRect(x - 4, top - 7, bw + 8, 1.6);
-
-    // balcony bands — horizontal shelves with a shadow line under each, so
-    // they read as slabs standing off the wall rather than painted stripes
-    const hasBalconies = rng.chance(0.62);
-    if (hasBalconies) {
-      const bands = Math.floor(bh / 74);
-      for (let i = 1; i <= bands; i++) {
-        const by = top + i * 74;
-        g.fillStyle = shade(col, 0.06);
-        g.fillRect(x - 3, by, bw + 6, 5);
-        g.fillStyle = 'rgba(6,8,13,0.55)';
-        g.fillRect(x - 3, by + 5, bw + 6, 3);
-        // railing uprights along the balcony edge
-        g.fillStyle = 'rgba(10,12,18,0.45)';
-        for (let rx = x + 2; rx < x + bw - 2; rx += 7) g.fillRect(rx, by - 9, 1.2, 9);
+    // ---- party wall ----
+    // Where two buildings meet there is no gap, just a seam: the neighbour's
+    // wall in shadow, and a sliver of light on the near return.
+    if (prevTop !== null) {
+      g.fillStyle = 'rgba(6,8,13,0.5)';
+      g.fillRect(x - 2, top, 3, bh);
+      g.fillStyle = 'rgba(255,240,220,0.05)';
+      g.fillRect(x + 1, top, 1.2, bh);
+      // if this building is taller, its exposed flank rises above the neighbour
+      if (top < prevTop) {
+        g.fillStyle = 'rgba(6,8,13,0.28)';
+        g.fillRect(x, top, 9, prevTop - top);
       }
     }
 
-    // ---- windows, with light actually spilling onto the wall ----
-    const cols = Math.max(1, Math.floor(bw / 30));
-    const rows = Math.max(1, Math.floor(bh / 46));
-    for (let ci = 0; ci < cols; ci++) {
-      for (let ri = 0; ri < rows; ri++) {
-        const wx = x + 9 + ci * 30, wy = top + 16 + ri * 46;
-        if (wx + 13 > x + bw - 4) continue;
-        const lit = rng.chance(0.3);
+    // ---- cornice at the roofline ----
+    cornice(g, x, top, bw, col);
+
+    // ---- residential floors ----
+    // Windows sit in regular bays. `bays` is derived from width so a wide
+    // building gets more windows rather than wider ones.
+    const bays = Math.max(2, Math.round((bw - 20) / 38));
+    const bayW = (bw - 20) / bays;
+    const ww = Math.min(17, bayW * 0.5), wh = floorH * 0.55;
+    const floors = Math.floor((bh - shopH - 18) / floorH);
+
+    for (let f = 0; f < floors; f++) {
+      const wy = top + 18 + f * floorH;
+      for (let b = 0; b < bays; b++) {
+        const wx = x + 10 + b * bayW + (bayW - ww) / 2;
+        const lit = rng.chance(0.34);
         if (lit) {
-          const warm = rng.chance(0.72);
+          const warm = rng.chance(0.76);
           const tint = warm ? '#ffbe6e' : '#9fd4ff';
-          const a = rng.range(0.4, 0.85);
-          // Soft bleed first: a lit room throws light onto the render around
-          // its opening. This is the single detail that stops the windows
-          // reading as stickers on a flat wall.
+          const a = rng.range(0.42, 0.9);
+          // Soft bleed: a lit room throws light onto the brick around its
+          // opening. This is the detail that stops windows reading as
+          // stickers on a flat wall.
           g.save();
           g.globalCompositeOperation = 'lighter';
-          const bleed = radgrad(g, wx + 6.5, wy + 9, 22, [
-            [0, withA(tint, a * 0.30)],
-            [0.5, withA(tint, a * 0.10)],
+          g.fillStyle = radgrad(g, wx + ww / 2, wy + wh / 2, 26, [
+            [0, withA(tint, a * 0.28)],
+            [0.5, withA(tint, a * 0.09)],
             [1, withA(tint, 0)],
           ]);
-          g.fillStyle = bleed;
-          g.fillRect(wx - 16, wy - 13, 45, 44);
+          g.fillRect(wx - 20, wy - 16, ww + 40, wh + 34);
           g.restore();
           g.fillStyle = withA(tint, a);
-          g.fillRect(wx, wy, 13, 18);
-          // mullion + a hint of an interior edge
-          g.fillStyle = 'rgba(20,16,12,0.45)';
-          g.fillRect(wx + 6, wy, 1.2, 18);
-          g.fillStyle = withA(tint, Math.min(1, a + 0.15));
-          g.fillRect(wx, wy + 13, 13, 2);
+          g.fillRect(wx, wy, ww, wh);
+          // double-hung sash: meeting rail across the middle, one mullion
+          g.fillStyle = 'rgba(22,16,10,0.5)';
+          g.fillRect(wx, wy + wh * 0.46, ww, 1.6);
+          g.fillRect(wx + ww / 2 - 0.6, wy, 1.2, wh);
+          // occasional occupant silhouette in the glass
+          if (rng.chance(0.1)) {
+            g.fillStyle = 'rgba(20,14,10,0.55)';
+            g.fillRect(wx + ww * 0.3, wy + wh * 0.2, ww * 0.3, wh * 0.8);
+          }
         } else {
-          // dark glass still catches a little sky at the top
-          g.fillStyle = 'rgba(10,12,18,0.62)';
-          g.fillRect(wx, wy, 13, 18);
-          g.fillStyle = 'rgba(120,140,175,0.10)';
-          g.fillRect(wx, wy, 13, 5);
+          g.fillStyle = 'rgba(10,12,18,0.68)';
+          g.fillRect(wx, wy, ww, wh);
+          g.fillStyle = 'rgba(120,140,175,0.09)';   // sky in dark glass
+          g.fillRect(wx, wy, ww, wh * 0.3);
         }
-        // reveal shadow down one side of every opening
-        g.fillStyle = 'rgba(6,8,13,0.4)';
-        g.fillRect(wx + 13, wy, 1.4, 18);
-
-        // air-conditioning unit bracketed under some windows
-        if (!hasBalconies && rng.chance(0.16) && wy + 26 < baseY - 6) {
-          acUnit(g, wx + 1, wy + 21, col);
-        }
+        windowTrim(g, wx, wy, ww, wh, col);
+        // AC box sitting in the lower sash
+        if (rng.chance(0.15)) acUnit(g, wx + ww * 0.5 - 6, wy + wh - 8, col);
       }
     }
 
-    // ---- fire escape: a zig-zag of landings and stair flights bolted to
-    // one face. Only on taller blocks, and only sometimes, so it stays a
-    // feature rather than wallpaper. ----
-    if (bh > 260 && rng.chance(0.42)) {
-      fireEscape(g, x + bw * (rng.chance(0.5) ? 0.12 : 0.58), top + 46, bh - 70, rng);
+    // ---- fire escape down the front ----
+    // Required by law on NYC walk-ups, so most buildings carry one. Aligned to
+    // the storey height and to a window bay, not floated arbitrarily.
+    if (rng.chance(0.72) && floors >= 3) {
+      const bay = rng.int(0, bays - 1);
+      const fx = x + 10 + bay * bayW + (bayW - 30) / 2;
+      fireEscape(g, fx, top + 18 + floorH * 0.82, floorH * (floors - 1), floorH, rng);
     }
 
-    // neon: a rooftop bar or a tall hanging sign on the facade
-    if (rng.chance(0.5)) {
-      const col2 = NEON[rng.int(0, NEON.length - 1)];
-      if (rng.chance(0.5)) {
-        neonSign(g, x + bw * 0.18, top - 20, bw * 0.64, 11, col2, rng);
-      } else {
-        neonSign(g, x + bw * 0.66, top + 40, 15, rng.range(70, 150), col2, rng);
-      }
-    }
+    // ---- ground-floor storefront ----
+    storefront(g, x + 2, baseY, bw - 4, shopH, col, rng);
 
-    // rooftop aerial / chimney stack
-    if (rng.chance(0.4)) {
-      g.fillStyle = shade(col, -0.35);
-      const sw = rng.range(7, 13);
-      const sh = rng.range(30, 80);
-      g.fillRect(x + bw * 0.72, top - sh, sw, sh);
-      // aviation warning lamp
-      g.fillStyle = 'rgba(255,70,70,0.85)';
-      g.fillRect(x + bw * 0.72 - 1, top - sh - 3, sw + 2, 3);
+    // ---- roofline furniture ----
+    if (rng.chance(0.62)) waterTank(g, x + bw * rng.range(0.12, 0.5), top - 4, col, rng);
+    if (rng.chance(0.5)) bulkhead(g, x + bw * rng.range(0.55, 0.78), top - 4, rng.range(22, 34), rng.range(18, 30), col);
+    if (rng.chance(0.45)) {
+      // brick chimney / vent stack
+      g.fillStyle = shade(col, -0.3);
+      const sw = rng.range(8, 14), sh = rng.range(20, 44);
+      const sx2 = x + bw * rng.range(0.2, 0.85);
+      g.fillRect(sx2, top - 4 - sh, sw, sh);
+      g.fillStyle = shade(col, -0.1);
+      g.fillRect(sx2 - 1.5, top - 4 - sh, sw + 3, 3);
     }
-
-    // rooftop water tank on stilts — the detail that most says "tenement
-    // roofline" rather than "office block"
-    if (rng.chance(0.5)) {
-      waterTank(g, x + bw * rng.range(0.12, 0.44), top - 7, col, rng);
-    }
-
-    // roof-edge aerial mast, thin enough to read as a silhouette
-    if (rng.chance(0.35)) {
-      const mx = x + bw * rng.range(0.78, 0.92);
-      const mh = rng.range(18, 40);
+    if (rng.chance(0.3)) {
+      // roof-edge aerial mast
+      const mx = x + bw * rng.range(0.8, 0.94);
+      const mh = rng.range(20, 44);
       g.strokeStyle = 'rgba(8,10,16,0.7)'; g.lineWidth = 1.4;
-      g.beginPath(); g.moveTo(mx, top - 7); g.lineTo(mx, top - 7 - mh); g.stroke();
+      g.beginPath(); g.moveTo(mx, top - 4); g.lineTo(mx, top - 4 - mh); g.stroke();
       g.lineWidth = 1;
       for (let i = 1; i <= 3; i++) {
-        const ay = top - 7 - (mh / 4) * i;
+        const ay = top - 4 - (mh / 4) * i;
         g.beginPath(); g.moveTo(mx - 5, ay); g.lineTo(mx + 5, ay); g.stroke();
       }
     }
 
-    x += bw + rng.range(14, 58);
+    // ---- neon: a hanging shop blade sign or a rooftop board ----
+    if (rng.chance(0.4)) {
+      const col2 = NEON[rng.int(0, NEON.length - 1)];
+      if (rng.chance(0.45)) {
+        neonSign(g, x + bw * 0.2, top - 22, bw * 0.6, 11, col2, rng);
+      } else {
+        // vertical blade sign hung off the facade above the shopfront
+        neonSign(g, x + bw * rng.range(0.6, 0.82), baseY - shopH - rng.range(80, 150), 15, rng.range(64, 130), col2, rng);
+      }
+    }
+
+    prevTop = top;
+    x += bw;                       // <-- contiguous: no gap between buildings
   }
 
-  // base haze so the layer sits into the street rather than on top of it
-  g.fillStyle = lingrad(g, 0, H - 200, 0, H, [
+  // base haze so the block sits into the street rather than on top of it
+  g.fillStyle = lingrad(g, 0, H - 190, 0, H, [
     [0, 'rgba(120,132,164,0)'],
-    [1, 'rgba(118,130,160,0.34)'],
+    [1, 'rgba(118,130,160,0.3)'],
   ]);
   g.fillRect(0, 0, W, H);
   return cv;

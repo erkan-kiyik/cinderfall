@@ -167,10 +167,15 @@ export function sandbags(scale = 1) {
 }
 
 // ---------------- street lamp ----------------
-export function lamp() {
+// `scale` sizes the whole fixture against the 126px-tall operator. At 1 the
+// lamp was 92px — barely shoulder height on a man, which is what made the
+// street read like a scale model. LAMP_SCALE in world.js is the real size.
+// The lit head sits at (14 * scale, -86 * scale) from the base anchor; light
+// placements must follow it (see LAMP_HEAD_X / LAMP_HEAD_Y).
+export function lamp(scale = 1) {
   const rng = nextRng();
-  // anchor at base; light head at (14, -86) relative to anchor
-  return makeSprite(30, 92, 6, 90, (g) => {
+  return makeSprite(30 * scale, 92 * scale, 6 * scale, 90 * scale, (g) => {
+    g.scale(scale, scale);
     // pole
     g.fillStyle = lingrad(g, 4, 0, 9, 0, [
       [0, '#22252a'], [0.4, '#4e545c'], [1, '#191b1f'],
@@ -197,9 +202,14 @@ export function lamp() {
 }
 
 // ---------------- chain-link fence segment ----------------
-export function fence(w = 70) {
+// Same scale story as lamp(): a 42px fence next to a 126px operator read as
+// knee-high garden edging. At FENCE_SCALE it stands near shoulder height,
+// which is what a real site security fence does. The segment covers
+// `w * scale` on screen — world.js spaces runs by that, not by `w`.
+export function fence(w = 70, scale = 1) {
   const rng = nextRng();
-  return makeSprite(w, 42, w / 2, 41, (g) => {
+  return makeSprite(w * scale, 42 * scale, (w / 2) * scale, 41 * scale, (g) => {
+    g.scale(scale, scale);
     // posts
     for (const x of [1.5, w - 2.5]) {
       g.fillStyle = lingrad(g, x, 0, x + 2, 0, [[0, '#565c64'], [1, '#23262b']]);

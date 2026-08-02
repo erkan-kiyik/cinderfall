@@ -1,3 +1,5 @@
+import { BOSS_DROPS } from './loot.js';
+
 // Meta-economy: item catalog, rarity tiers, crate rolls and loadout apply.
 // Crate drops reuse the game's existing weapon-finish and operator-skin art
 // (baked in weapons.js / soldier.js) plus a couple of new energy finishes,
@@ -22,6 +24,34 @@ export const RARITY = {
 export const RARITY_DIAMOND_PRICE = {
   rare: 15, epic: 30, legendary: 50, mythic: 80, ultraLimited: 120,
 };
+
+// ---- perks ----
+// The passive stats an operator skin can grant. Each entry knows how to
+// render itself, so the loadout UI never hard-codes a stat name and adding a
+// new perk is a one-line change here.
+//   pct   → shown as a percentage bonus
+//   flat  → shown as a raw number
+export const PERK_DEFS = {
+  moveSpeed: { key: 'perk.moveSpeed', label: 'MOVE SPEED', kind: 'pct' },
+  maxHp:     { key: 'perk.maxHp',     label: 'MAX HEALTH', kind: 'flat' },
+  maxArmor:  { key: 'perk.maxArmor',  label: 'ARMOR PLATE', kind: 'flat' },
+  reload:    { key: 'perk.reload',    label: 'RELOAD SPEED', kind: 'pct' },
+  recoil:    { key: 'perk.recoil',    label: 'RECOIL CONTROL', kind: 'pct' },
+  damage:    { key: 'perk.damage',    label: 'DAMAGE', kind: 'pct' },
+  stealth:   { key: 'perk.stealth',   label: 'STEALTH', kind: 'pct' },
+  luck:      { key: 'perk.luck',      label: 'LOOT LUCK', kind: 'pct' },
+};
+
+// Turns a perk object into printable rows: [{ key, label, value }].
+export function describePerk(perk) {
+  if (!perk) return [];
+  return Object.entries(perk).map(([stat, v]) => {
+    const def = PERK_DEFS[stat];
+    if (!def) return null;
+    const value = def.kind === 'pct' ? `+${Math.round(v * 100)}%` : `+${v}`;
+    return { stat, key: def.key, label: def.label, value };
+  }).filter(Boolean);
+}
 
 // Crate cost in tokens.
 export const CRATE_COST = 120;
@@ -63,13 +93,20 @@ export const CATALOG = [
     apply: { type: 'finish', weapon: 'knife', finish: 'volt' } },
 
   // -- operator skins --
+  // Every operator carries a `perk`: a passive that changes how the character
+  // actually plays, not just how they look. Skins are a progression axis now,
+  // so there is a reason to chase one beyond the silhouette.
   { id: 'op_phantom', name: 'PHANTOM OPERATOR',   slot: 'operator', rarity: 'epic', kind: 'Operator',
+    perk: { stealth: 0.25, moveSpeed: 0.05 },
     apply: { type: 'operator', variant: 'phantom' } },
   { id: 'op_nomad',   name: 'NOMAD OPERATOR',     slot: 'operator', rarity: 'rare', kind: 'Operator',
+    perk: { maxHp: 15, reload: 0.10 },
     apply: { type: 'operator', variant: 'nomad' } },
   { id: 'op_viper',   name: 'VIPER OPERATOR',     slot: 'operator', rarity: 'epic', kind: 'Operator', tag: 'STEALTH',
+    perk: { stealth: 0.40, damage: 0.06 },
     apply: { type: 'operator', variant: 'viper' } },
   { id: 'op_arctic',  name: 'ARCTIC OPERATOR',    slot: 'operator', rarity: 'legendary', kind: 'Operator', tag: 'RECON',
+    perk: { maxArmor: 25, recoil: 0.18, moveSpeed: 0.08 },
     apply: { type: 'operator', variant: 'arctic' } },
 
   // -- Diamond-store exclusives: never drop from a crate (storeOnly), sold
@@ -90,7 +127,9 @@ export const WEAPON_SLOTS = [
   {
     key: 'wpn_primary', label: 'PRIMARY', arsenal: 'rifle',
     ids: ['rifle', 'battle', 'lmg', 'sniper', 'plasma', 'pulse', 'particle',
-      'lightning', 'cryo', 'flame', 'eshotgun', 'lasersmg', 'railgun', 'ion', 'emp', 'gravity'],
+      'lightning', 'cryo', 'flame', 'eshotgun', 'lasersmg', 'railgun', 'ion', 'emp', 'gravity',
+      // boss redeemables — never in the crate pool, see LOOT_WEAPON_ITEMS
+      'minigun', 'rocket'],
   },
   {
     key: 'wpn_secondary', label: 'SIDEARM', arsenal: 'pistol',
@@ -111,6 +150,7 @@ const WEAPON_META = {
   cryo: ['rare', 'ENERGY'], flame: ['rare', 'ENERGY'], eshotgun: ['rare', 'ENERGY'],
   lasersmg: ['epic', 'ENERGY'], railgun: ['legendary', 'ENERGY'], ion: ['legendary', 'ENERGY'],
   emp: ['epic', 'ENERGY'], quantum: ['epic', 'ENERGY'], gravity: ['epic', 'ENERGY'],
+  minigun: ['ultraLimited', 'BOSS'], rocket: ['ultraLimited', 'BOSS'],
 };
 
 // Every weapon id that can be selected.
@@ -143,16 +183,17 @@ export const weaponVariantIds = (weaponId) =>
 // One representative crate-loot entry per non-starter weapon id (dedupes
 // weapons that occupy multiple slots so they don't get an inflated drop
 // weight), combined with the cosmetic catalog for crate rolls.
+const BOSS_WEAPON_IDS = ['minigun', 'rocket'];
 const LOOT_WEAPON_ITEMS = ALL_WEAPON_IDS
-  .filter((id) => !STARTER_WEAPON_IDS.includes(id))
+  .filter((id) => !STARTER_WEAPON_IDS.includes(id) && !BOSS_WEAPON_IDS.includes(id))
   .map((id) => WEAPON_ITEMS.find((i) => i.weaponId === id));
 // storeOnly cosmetics (Diamond-store exclusives) never enter crate loot.
 export const LOOT_POOL = [...CATALOG.filter((i) => !i.storeOnly), ...LOOT_WEAPON_ITEMS];
 
-const BY_ID = Object.fromEntries([...CATALOG, ...WEAPON_ITEMS].map((i) => [i.id, i]));
+const ALL_ITEMS = [...CATALOG, ...WEAPON_ITEMS, ...BOSS_DROPS];
+const BY_ID = Object.fromEntries(ALL_ITEMS.map((i) => [i.id, i]));
 export const itemById = (id) => BY_ID[id] || null;
-export const itemsForSlot = (slot) =>
-  [...CATALOG, ...WEAPON_ITEMS].filter((i) => i.slot === slot);
+export const itemsForSlot = (slot) => ALL_ITEMS.filter((i) => i.slot === slot);
 
 // Ordered list of loadout slots for the loadout UI (weapons first).
 export const LOADOUT_SLOTS = [
@@ -188,13 +229,41 @@ export function rollCrate(rng = Math.random) {
 
 // Applies the player's saved loadout to a freshly-built Player. `assets` is
 // the boot asset bag (needs operator atlases + .weapons defs).
+// Folds every equipped item's `perk` block into one set of multipliers and
+// flat bonuses, then writes it onto the player. Perks stack additively across
+// slots — an operator and a boss redeemable both contributing move speed add
+// up rather than one silently winning.
+export function applyPerks(player, perks) {
+  player.perks = perks;
+  player.moveMul = 1 + (perks.moveSpeed || 0);
+  player.reloadMul = 1 / (1 + (perks.reload || 0));       // higher perk = faster
+  player.recoilMul = 1 - Math.min(0.75, perks.recoil || 0);
+  player.dmgMul = 1 + (perks.damage || 0);
+  player.stealthMul = 1 - Math.min(0.8, perks.stealth || 0);
+  player.luckMul = 1 + (perks.luck || 0);
+  if (perks.maxHp) {
+    player.maxHp += perks.maxHp;
+    player.hp = player.maxHp;
+  }
+  if (perks.maxArmor) player.maxArmor = Math.max(player.maxArmor, perks.maxArmor);
+}
+
 export function applyLoadout(player, progression, assets) {
+  // Accumulated across every equipped slot, applied once at the end so the
+  // order items happen to be read in can't change the result.
+  const perks = {};
+  const addPerk = (p) => {
+    if (!p) return;
+    for (const [k, v] of Object.entries(p)) perks[k] = (perks[k] || 0) + v;
+  };
+
   // operator skin
   const opId = progression.equipped('operator');
   if (opId) {
     const item = itemById(opId);
     const parts = item && assets[item.apply.variant];
     if (parts) player.parts = parts;
+    if (item) addPerk(item.perk);
   }
   // weapon finishes (applied before weapon overrides so a chosen weapon wins)
   for (const slot of ['rifleFinish', 'pistolFinish', 'smgFinish', 'knifeFinish']) {
@@ -204,6 +273,7 @@ export function applyLoadout(player, progression, assets) {
     if (item && item.apply.type === 'finish') {
       player.applyFinish(item.apply.weapon, item.apply.finish);
     }
+    if (item) addPerk(item.perk);
   }
   // weapon selection → fill arsenal slots
   let specialAssigned = false;
@@ -218,6 +288,9 @@ export function applyLoadout(player, progression, assets) {
     a.wpn = def;
     if (def.magSize !== undefined) { a.mag = def.magSize; a.reserve = def.reserve; }
     if (slot.key === 'wpn_special') specialAssigned = true;
+    addPerk(item.perk);
   }
   if (specialAssigned) player.smgUnlocked = true;
+
+  applyPerks(player, perks);
 }

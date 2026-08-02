@@ -529,12 +529,19 @@ export class Enemy {
 export const BOSS_NAMES = ['WARLORD KESTREL', 'THE FOREMAN', 'IRON SERGEANT', 'THE COLLECTOR', 'WARDEN VESK', 'BLACKOUT PRIME'];
 export const BOSS_STAGE_INTERVAL = 5;
 
+// Which heavy weapon each boss tier carries. A boss never picks up an
+// infantry rifle — the oversized silhouette is half of what makes the
+// encounter read as a boss fight before the first shot lands. Cycles with the
+// tier so repeat bosses at higher stages still change hands.
+export const BOSS_WEAPONS = ['minigun', 'rocket', 'lmg', 'minigun', 'rocket', 'railgun'];
+
 export class Boss extends Enemy {
   constructor(parts, shadow, rifle, world, fx, audio, x, patrolMin, patrolMax, stage) {
     super(parts, shadow, rifle, world, fx, audio, x, patrolMin, patrolMax);
     this.isBoss = true;
     const tier = Math.max(0, Math.floor(stage / BOSS_STAGE_INTERVAL) - 1);
     this.name = BOSS_NAMES[tier % BOSS_NAMES.length];
+    this.weaponId = BOSS_WEAPONS[tier % BOSS_WEAPONS.length];
     this.visualScale = 1.5;
     this.hitboxScale = 1.32;
     this.dmgMul = 1.6;

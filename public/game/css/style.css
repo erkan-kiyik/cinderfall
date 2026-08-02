@@ -1250,3 +1250,64 @@ html, body {
 .wpn-meter-fill.heat.over { background: #ff3b30; animation: over-flash 0.35s steps(2) infinite; }
 .wpn-meter-fill.charge { background: linear-gradient(90deg, #4aa8d9, #7fe6ff); box-shadow: 0 0 10px rgba(127,230,255,0.7); }
 @keyframes over-flash { 50% { opacity: 0.4; } }
+
+/* ---- level select ---------------------------------------------------- */
+/* Cleared sectors stay replayable (boss farming, loot runs). Cards are
+   borderless like the rest of the item UI — state reads from fill + the
+   accent bar, never from an outline. */
+.level-select {
+  margin: calc(18px * var(--ui-scale)) auto 0;
+  max-width: calc(560px * var(--ui-scale));
+  width: 100%;
+}
+.level-select-title {
+  font-family: var(--font-display);
+  font-size: calc(11px * var(--ui-scale));
+  letter-spacing: 0.18em;
+  color: var(--ink-dim);
+  text-align: center;
+  margin: 0 0 calc(10px * var(--ui-scale));
+  font-weight: 700;
+}
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(62px * var(--ui-scale)), 1fr));
+  gap: calc(7px * var(--ui-scale));
+}
+.level-cell {
+  position: relative;
+  padding: calc(9px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(11px * var(--ui-scale));
+  border: 0;
+  border-radius: calc(9px * var(--ui-scale));
+  background: linear-gradient(180deg, rgba(38,42,52,0.92), rgba(20,23,30,0.94));
+  box-shadow: 0 calc(2px * var(--ui-scale)) calc(10px * var(--ui-scale)) rgba(0,0,0,0.45);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(15px * var(--ui-scale));
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.level-cell:hover:not(:disabled) { transform: translateY(calc(-2px * var(--ui-scale))); }
+.level-cell:disabled { opacity: 0.34; cursor: not-allowed; }
+/* accent bar carries the state, in place of a border */
+.level-cell::after {
+  content: '';
+  position: absolute;
+  left: 24%; right: 24%;
+  bottom: calc(5px * var(--ui-scale));
+  height: calc(2px * var(--ui-scale));
+  border-radius: 2px;
+  background: var(--cell-accent, rgba(140,150,165,0.35));
+}
+.level-cell.cleared { --cell-accent: #4ad07a; }
+.level-cell.boss    { --cell-accent: #e0446e; }
+.level-cell.next    { --cell-accent: var(--amber-bright); }
+.level-cell .level-tag {
+  display: block;
+  font-family: var(--font);
+  font-size: calc(7.5px * var(--ui-scale));
+  letter-spacing: 0.1em;
+  color: var(--ink-dim);
+  margin-top: calc(2px * var(--ui-scale));
+}

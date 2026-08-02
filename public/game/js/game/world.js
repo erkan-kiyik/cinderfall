@@ -9,6 +9,7 @@ import * as env from '../art/environment.js';
 import { buildBackground } from '../art/background.js';
 import { makeCanvas, drawSprite, lingrad, radgrad, rr } from '../art/paint.js';
 import { clamp, rand, randSpread, makeRng } from '../engine/math.js';
+import { gradeAt, pickWeather, START_HOUR } from '../engine/daycycle.js';
 
 export const GROUND_Y = 640;
 // Map width. Stages were clearing in well under a minute at 4600; the wider
@@ -20,6 +21,21 @@ const GRAV = 2400;
 
 // Uniform darkening laid over the parallax stack — see drawBackground().
 export const BG_SCRIM = 'rgba(6,8,13,0.34)';
+
+// ---- prop scale ----
+// The operator stands 126px (see STAND_H in player.js). Street furniture was
+// authored much smaller than that — a 92px lamp and a 42px fence — so the
+// street read as a scale model the character was wading through. These size
+// both against the figure: the fence lands near shoulder height and the lamp
+// at roughly 2.4 body-heights, which is what a residential street lamp does.
+export const LAMP_SCALE = 3.2;
+export const FENCE_SCALE = 2.8;
+// On-screen span of one fence segment, so runs can be butted together.
+export const FENCE_W = 70 * FENCE_SCALE;
+// Lit head offset from the lamp's base anchor, in world units. Every light
+// attached to a lamp has to use these or it detaches from the fixture.
+export const LAMP_HEAD_X = 14 * LAMP_SCALE;
+export const LAMP_HEAD_Y = 86 * LAMP_SCALE;
 
 // Stage 1 is the hand-authored, art-directed encounter layout.
 export const STAGE1_SPAWNS = [
@@ -50,7 +66,6 @@ export class World {
     this.decalTop = GROUND_Y - 300;
     const d = makeCanvas(MAP_W, 380);
     this.decalCv = d.cv; this.decalG = d.g;
-    this.foreground = paintForeground();   // stage-independent atmospheric dressing
 
     this.regenerate(stage);
   }
@@ -65,7 +80,11 @@ export class World {
 
   // ---------------- level (re)generation ----------------
 
-  regenerate(stage) {
+  // `ctx` carries the run state the sector's look depends on:
+  //   { hour, attempts } — see engine/daycycle.js. Weather and the sky wash
+  // are both derived from it, so a stage that has beaten the player back
+  // several times visibly degrades: later hour, worse weather.
+  regenerate(stage, ctx = {}) {
     this.stage = stage;
     this.props = [];
     this.lights = [];
@@ -75,13 +94,23 @@ export class World {
     this.coverSpots = [];
     this.enemySpawns = [];
     this.colliders = this.baseColliders();
-    this.weather = pickWeather(stage);
+    this.setTime(ctx.hour, ctx.attempts, stage);
 
     if (stage <= 1) this.buildLevel();
     else this.buildProceduralLevel(stage);
 
     this.deriveCoverSpots();
     if (this.decalG) this.decalG.clearRect(0, 0, this.decalCv.width, this.decalCv.height);
+  }
+
+  // Re-derives the sky wash and the weather from the clock. Split out from
+  // regenerate() so the hour can shift mid-run (a stage cleared moves it)
+  // without rebuilding the whole level.
+  setTime(hour = START_HOUR, attempts = 0, stage = this.stage) {
+    this.hour = hour;
+    this.dayGrade = gradeAt(hour);
+    this.weather = pickWeather(stage, attempts, hour);
+    return this.dayGrade;
   }
 
   // Cover points: two flanking spots per low obstacle (crates, barrels,
@@ -132,8 +161,8 @@ export class World {
     P(env.sign('sector'), 700);
     P(env.sign('danger'), 2152);
     for (const lx of [560, 1470, 2440, 3420, 4240]) {
-      P(env.lamp(), lx);
-      L(lx + 14, GY - 84, 230, [255, 202, 128], 0.62, lx === 2440 ? 0.5 : 0.04);
+      P(env.lamp(LAMP_SCALE), lx);
+      L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 300, [255, 202, 128], 0.62, lx === 2440 ? 0.5 : 0.04);
     }
     P(env.dock(300, 40), 1100);            // matches collider at 950..1250
     P(env.crate(26, 20), 911);
@@ -159,8 +188,8 @@ export class World {
     P(env.barrel('blue'), 2700);
     P(env.barrel('rust'), 2712, GY - 1);
     P(env.barrel('blue'), 3730);
-    for (const fx of [1720, 1930, 2070]) P(env.fence(70), fx + 35);
-    P(env.fence(70), 4390); P(env.fence(70), 4460);
+    for (const fx of [1720, 1930, 2070]) P(env.fence(70, FENCE_SCALE), fx + FENCE_W / 2);
+    P(env.fence(70, FENCE_SCALE), 4390); P(env.fence(70, FENCE_SCALE), 4390 + FENCE_W - 2);
     P(env.crate(22, 16), 1140, GY - 40);   // crates up on the dock
     P(env.barrel('rust'), 1210, GY - 40);
 
@@ -177,6 +206,15 @@ export class World {
     // (This used to hang off an overhead cable; with the wire system gone the
     // sparks are anchored to the lamp so they read as a shorted fitting.)
     this.emitters.push({ kind: 'sparks', x: 3434, y: GY - 86 });
+    // Civil-war aftermath: barrels burned down to soot along the block. These
+    // are dressing, not hazards — they carry no fire emitter and no light, so
+    // they read as "this fight already happened here" rather than as another
+    // thing to avoid.
+    for (const sx of [1180, 2050, 2860, 3980, 5240, 6180, 6880]) {
+      P(env.barrel('rust'), sx);
+      this.emitters.push({ kind: 'smolder', x: sx, y: GY - 21, rate: 0.55, t: rand(0, 0.5) });
+    }
+
     // industrial smoke sources: rooftop stacks rising over the sector + a
     // couple of ground vents. Hand-placed for the authored opening stage.
     this.emitters.push({ kind: 'chimney', x: 760, y: GY - 260, tint: 'exhaust', rate: 0.3, t: 0 });
@@ -216,8 +254,8 @@ export class World {
     P(env.barrel('blue'), 5620);
     P(env.barrel('rust'), 6120, GY - 40);
     for (const lx of [5080, 6000, 6900]) {
-      P(env.lamp(), lx);
-      L(lx + 14, GY - 84, 230, [255, 202, 128], 0.62, lx === 6000 ? 0.45 : 0.04);
+      P(env.lamp(LAMP_SCALE), lx);
+      L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 300, [255, 202, 128], 0.62, lx === 6000 ? 0.45 : 0.04);
     }
     for (const bx of [5320, 6340]) {
       this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red') });
@@ -302,11 +340,15 @@ export class World {
     // (power poles and the cable runs they carried were removed; the street
     // reads cleaner without a web of wires across the play area)
     for (let lx = 300; lx < mapW - 200; lx += rng.range(760, 980)) {
-      if (rng.chance(0.6)) { P(env.lamp(), lx); L(lx + 14, GY - 84, 220, [255, 202, 128], 0.6, rng.chance(0.25) ? 0.4 : 0.04); }
+      if (rng.chance(0.6)) { P(env.lamp(LAMP_SCALE), lx); L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 290, [255, 202, 128], 0.6, rng.chance(0.25) ? 0.4 : 0.04); }
     }
 
-    // -- fencing near the skyline gap, signage --
-    for (let i = 0; i < rng.int(2, 4); i++) P(env.fence(70), cx * rng.range(0.3, 0.9) + i * 40);
+    // -- fencing, signage --
+    // (`cx` was referenced here and never defined, which threw a ReferenceError
+    // out of level generation for every stage >= 2 — the whole endless campaign
+    // was unreachable. The run is anchored to a seeded position on the map.)
+    const fenceRunX = rng.range(mapW * 0.25, mapW * 0.8);
+    for (let i = 0; i < rng.int(2, 4); i++) P(env.fence(70, FENCE_SCALE), fenceRunX + i * (FENCE_W - 2));
     P(env.sign(rng.pick(['sector', 'danger'])), rng.range(400, mapW - 400));
 
     // -- one hazard emitter (burning barrel or sparking line) per stage --
@@ -318,6 +360,13 @@ export class World {
     }
     if (rng.chance(0.5)) {
       this.emitters.push({ kind: 'sparks', x: rng.range(400, mapW - 400), y: GY - rng.range(110, 160) });
+    }
+    // -- smouldering wrecks: the civil-war signature, scattered every stage --
+    const wrecks = rng.int(4, 8);
+    for (let i = 0; i < wrecks; i++) {
+      const wx = rng.range(300, mapW - 300);
+      P(env.barrel('rust'), wx);
+      this.emitters.push({ kind: 'smolder', x: wx, y: GY - 21, rate: rng.range(0.45, 0.75), t: rng.range(0, 0.6) });
     }
     // -- industrial smoke sources: rooftop stacks (steady columns) + a couple
     //    of ground vents / damaged machinery. Tints vary by source so plumes
@@ -549,24 +598,11 @@ export class World {
     const cs = Math.max(vw / 2048, 0.72);
     tile(this.bg.clouds, -(cam.x * 0.05 + time * 3.5), groundY - 700 * cs, cs * 1.15);
 
-    const fs = Math.max(vw / 2048, 0.72) * 1.02;
-    tile(this.bg.far, -cam.x * 0.12, groundY - this.bg.far.height * fs + 30 * fs, fs);
-
-    // warm haze between far and mid
-    g.fillStyle = lingrad(g, 0, groundY - 320, 0, groundY, [
-      [0, 'rgba(205,150,105,0)'], [1, 'rgba(205,150,105,0.18)'],
-    ]);
-    g.fillRect(0, groundY - 320, vw, 320);
-
-    const ms = Math.max(vw / 2048, 0.72) * 1.06;
-    tile(this.bg.mid, -cam.x * 0.3, groundY - (this.bg.mid.height - 8) * ms, ms);
-
-    // Near neon-city band. Scrolls fastest of the parallax layers (0.55 vs
-    // mid's 0.3), which is what sells the depth gap between it and the
-    // factory line behind. It replaced the world-space facades that used to
-    // stand a few metres behind the player — see art/background.js.
+    // The block of apartments — the one and only building layer. The far
+    // industrial skyline and the mid factory line that used to sit behind it
+    // are gone; nothing stands between this and the sky.
     const ns = Math.max(vw / 2048, 0.72) * 1.04;
-    tile(this.bg.near, -cam.x * 0.55, groundY - (this.bg.near.height - 6) * ns, ns);
+    tile(this.bg.city, -cam.x * 0.42, groundY - (this.bg.city.height - 6) * ns, ns);
 
     // cool fog settling at street level
     g.fillStyle = lingrad(g, 0, groundY - 150, 0, groundY + 30, [
@@ -574,22 +610,11 @@ export class World {
     ]);
     g.fillRect(0, groundY - 150, vw, 190);
 
-    if (this.weather === 'rain') {
-      g.strokeStyle = 'rgba(180,195,215,0.22)';
-      g.lineWidth = 1;
-      const seed = (cam.x * 0.3) % 4000;
-      for (let i = 0; i < 90; i++) {
-        const rx = ((i * 137 + seed * 0.4) % (vw + 200)) - 100;
-        const ry = ((i * 71 + time * 900) % (vh + 100)) - 50;
-        g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx - 6, ry + 22); g.stroke();
-      }
-    }
+    this.drawWeather(g, cam, vw, vh, time);
 
     // Atmospheric fog over the parallax stack: a cool blue-grey body that
-    // thickens toward the horizon, where the far skyline sits. This is the
-    // layer that actually separates the distant factory line from the
-    // foreground building the player fights on — distance reads as colour
-    // temperature, not just as dimness.
+    // thickens toward the horizon. Distance reads as colour temperature here,
+    // not just as dimness.
     g.fillStyle = lingrad(g, 0, groundY - vh, 0, groundY + 40, [
       [0, 'rgba(96,116,150,0.05)'],
       [0.55, 'rgba(112,132,164,0.17)'],
@@ -598,12 +623,54 @@ export class World {
     ]);
     g.fillRect(0, 0, vw, groundY + 40);
 
-    // Final uniform push. The layers are already graded down at bake time
-    // (see DEPTH_GRADE); this guarantees nothing back here competes with the
-    // characters. It lands before the world layer draws, so the street, props
-    // and everyone standing on them are unaffected — only what is truly behind.
-    g.fillStyle = BG_SCRIM;
+    // ---- TimeShift wash ----
+    // The whole backdrop is repainted toward the hour of day. Doing it here,
+    // as one overlay, is what lets the clock move without rebaking a single
+    // parallax layer — see engine/daycycle.js. It lands before the world layer
+    // draws, so the street and everyone on it keep their own value.
+    const grade = this.dayGrade;
+    if (grade && grade.a > 0.001) {
+      const [r, gg, b] = grade.tint;
+      g.fillStyle = `rgba(${r},${gg},${b},${grade.a.toFixed(3)})`;
+      g.fillRect(0, 0, vw, vh);
+    }
+
+    // Final uniform push, scaled by how dark the hour already is — a noon sky
+    // does not need the same knock-down as midnight.
+    const scrim = 0.34 * (grade ? 0.45 + grade.ambient * 0.55 : 1);
+    g.fillStyle = `rgba(6,8,13,${scrim.toFixed(3)})`;
     g.fillRect(0, 0, vw, vh);
+  }
+
+  // Weather pass, drawn over the parallax stack and under the time wash.
+  drawWeather(g, cam, vw, vh, time) {
+    const w = this.weather;
+    if (w === 'clear') return;
+    if (w === 'fog') {
+      g.fillStyle = lingrad(g, 0, vh * 0.2, 0, vh, [
+        [0, 'rgba(150,158,172,0.06)'], [1, 'rgba(158,166,180,0.30)'],
+      ]);
+      g.fillRect(0, 0, vw, vh);
+      return;
+    }
+    if (w === 'rain' || w === 'storm') {
+      const heavy = w === 'storm';
+      g.strokeStyle = heavy ? 'rgba(190,205,225,0.30)' : 'rgba(180,195,215,0.22)';
+      g.lineWidth = 1;
+      const seed = (cam.x * 0.3) % 4000;
+      const drops = heavy ? 190 : 90;
+      const speed = heavy ? 1500 : 900;
+      for (let i = 0; i < drops; i++) {
+        const rx = ((i * 137 + seed * 0.4) % (vw + 200)) - 100;
+        const ry = ((i * 71 + time * speed) % (vh + 100)) - 50;
+        g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx - (heavy ? 10 : 6), ry + (heavy ? 30 : 22)); g.stroke();
+      }
+      if (heavy) {
+        // lightning: a short bright frame on a slow, seeded cadence
+        const flash = Math.sin(time * 0.7) > 0.985 ? 1 : 0;
+        if (flash) { g.fillStyle = 'rgba(200,215,245,0.22)'; g.fillRect(0, 0, vw, vh); }
+      }
+    }
   }
 
   // World-space layers behind entities (call inside camera transform).
@@ -673,18 +740,6 @@ export class World {
     }
   }
 
-  // Foreground silhouettes, parallax > 1 (call with identity transform).
-  drawForeground(g, cam, vw, vh) {
-    const z = cam.zoom;
-    const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
-    const s = Math.max(vw / 1400, 0.8) * 1.1;
-    const w = this.foreground.width * s, h = this.foreground.height * s;
-    let x = ((-cam.x * 1.3 % w) + w) % w - w;
-    g.globalAlpha = 0.7;
-    for (; x < vw; x += w) g.drawImage(this.foreground, x, groundY + 96 - h, w, h);
-    g.globalAlpha = 1;
-  }
-
   getLights() {
     return this.lights;
   }
@@ -692,71 +747,4 @@ export class World {
   update(dt) {
     this.time += dt;
   }
-}
-
-function pickWeather(stage) {
-  if (stage <= 1) return 'clear';
-  const rng = makeRng(stage * 733 + 5);
-  const r = rng();
-  if (r < 0.62) return 'clear';
-  if (r < 0.86) return 'overcast';
-  return 'rain';
-}
-
-// Near-camera foreground: a minimalist industrial platform band along the
-// bottom edge. The two slack cables that used to hang across the top of this
-// layer were removed along with the rest of the wire system — nothing crosses
-// the play area now.
-function paintForeground() {
-  const W = 1400, H = 300;
-  const { cv, g } = makeCanvas(W, H);
-  const rng = makeRng(3131);
-  const ink = (a) => `rgba(7,9,14,${a})`;
-
-  // ---- industrial foreground band ----
-  // The nearest parallax layer, and the one that reads as the sector the
-  // player is fighting inside rather than a street they happen to be on:
-  // catwalk stanchions, handrails and a pipe run passing between the camera
-  // and the action. All flat silhouette — anything with interior detail this
-  // close to camera competes with the characters instead of framing them.
-
-  // pipe run: two parallel lines with periodic flange collars
-  const pipeY = H - 96;
-  g.strokeStyle = ink(0.62); g.lineWidth = 9;
-  g.beginPath(); g.moveTo(-20, pipeY); g.lineTo(W + 20, pipeY); g.stroke();
-  g.strokeStyle = ink(0.42); g.lineWidth = 3;
-  g.beginPath(); g.moveTo(-20, pipeY - 4); g.lineTo(W + 20, pipeY - 4); g.stroke();
-  for (let fx = 40; fx < W; fx += 190) {
-    g.fillStyle = ink(0.72);
-    rr(g, fx, pipeY - 9, 11, 18, 2); g.fill();
-  }
-
-  // catwalk: top rail, mid rail, and stanchions dropping to the deck
-  const railY = H - 58;
-  g.strokeStyle = ink(0.7); g.lineWidth = 5;
-  g.beginPath(); g.moveTo(-20, railY); g.lineTo(W + 20, railY); g.stroke();
-  g.strokeStyle = ink(0.5); g.lineWidth = 3;
-  g.beginPath(); g.moveTo(-20, railY + 17); g.lineTo(W + 20, railY + 17); g.stroke();
-  for (let sx = 26; sx < W; sx += 118) {
-    g.fillStyle = ink(0.75);
-    g.fillRect(sx, railY - 3, 6, 61);
-    // gusset plate at the foot
-    g.beginPath();
-    g.moveTo(sx - 5, H - 2); g.lineTo(sx + 11, H - 2); g.lineTo(sx + 3, H - 20);
-    g.closePath(); g.fill();
-  }
-
-  // deck plate with a grating notch pattern along its lip
-  g.fillStyle = ink(0.82);
-  g.fillRect(-20, H - 14, W + 40, 14);
-  g.fillStyle = ink(0.55);
-  for (let nx = 0; nx < W; nx += 22) g.fillRect(nx, H - 14, 11, 4);
-
-  // low clutter still reads at the very bottom edge
-  for (let i = 0; i < 18; i++) {
-    const tx = rng() * W, ts = rng.range(5, 13);
-    g.fillStyle = ink(rng.range(0.5, 0.78));
-    g.fillRect(tx, H - 14 - ts * 0.7, ts * rng.range(0.9, 2.0), ts);
-  }
-  return cv;
 }

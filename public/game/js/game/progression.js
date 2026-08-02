@@ -3,6 +3,7 @@
 // object if storage is unavailable (private browsing, sandboxed iframe).
 
 import { STARTER_WEAPON_IDS, weaponVariantIds } from './meta.js';
+import { rollBossDrop } from './loot.js';
 
 const KEY = 'cinderfall.progress.v1';
 // Separate key for the in-progress run snapshot (stage + operator vitals), so
@@ -198,6 +199,42 @@ export class Progression {
 
   get totalAttempts() { return this.data.totalAttempts || 0; }
 
+  // ---- checkpoints ----
+  // Dying used to drop the operator all the way back to stage 1, which on a
+  // long campaign threw away every stage they had already beaten. A cleared
+  // stage is banked here instead, and a fresh deployment starts from the last
+  // one banked — so a death costs you the stage you were on, not the run.
+
+  // Highest stage the player has actually finished. 0 = nothing cleared yet.
+  get checkpoint() { return this.data.checkpoint || 0; }
+
+  // The stage a fresh deployment should open on: the one after the last
+  // cleared stage, floored at 1.
+  get resumeStage() { return Math.max(1, this.checkpoint + 1); }
+
+  // Called when a stage is cleared. Only ever moves forward.
+  recordStageCleared(stage) {
+    if (stage > (this.data.checkpoint || 0)) {
+      this.data.checkpoint = stage;
+      this.save();
+    }
+    // Every cleared stage is also replayable from the level select.
+    if (!this.data.stagesCleared) this.data.stagesCleared = {};
+    this.data.stagesCleared[stage] = true;
+    this.save();
+    return this.data.checkpoint;
+  }
+
+  stageCleared(stage) { return !!(this.data.stagesCleared || {})[stage]; }
+
+  // Every stage the player may launch directly from the level select: all
+  // cleared stages plus the next uncleared one (the live frontier).
+  unlockedStages() {
+    const out = [];
+    for (let i = 1; i <= this.resumeStage; i++) out.push(i);
+    return out;
+  }
+
   isUnlocked(id) { return !!this.data.unlocked[id]; }
 
   // Returns { leveledUp, newLevel, newUnlocks[] } for the caller to react to
@@ -242,6 +279,23 @@ export class Progression {
     this.addGems(BOSS_KILL_DIAMOND_BONUS);
     this.save();
   }
+
+  // Rolls the Boss Redeemable table for one boss kill. `luck` is the equipped
+  // perk block's Loot Luck multiplier — it scales the roll, never the pity
+  // counter, so luck helps you win sooner but can't manufacture a guarantee.
+  // Grants and persists the item on a win. Returns the item, or null.
+  rollBossReward(luck = 1) {
+    if (!this.data.bossDropState) this.data.bossDropState = { since: 0 };
+    const state = this.data.bossDropState;
+    const won = rollBossDrop((id) => this.owns(id), state, Math.random, luck);
+    if (won) this.grant(won.id);
+    this.save();
+    return won;
+  }
+
+  // Boss kills banked since the last redeemable — surfaced on the stats page
+  // so the chase is legible rather than invisible.
+  get bossDropDrought() { return (this.data.bossDropState || {}).since || 0; }
 
   // ---- token economy ----
   get tokens() { return this.data.tokens; }

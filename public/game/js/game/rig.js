@@ -114,10 +114,26 @@ export function computePose(ent) {
 
 // ------------------------------------------------------ weapon placement
 
+// How far the muzzle drops, and how far the whole weapon rides down the body,
+// at a fully relaxed one-handed carry (ws.relax === 1). See RELAX_* in
+// player.js for the timing that drives it.
+const RELAX_MUZZLE_DIP = 0.62;   // radians, toward the ground
+const RELAX_DROP_Y = 7.5;        // px, weapon carried lower on the body
+const RELAX_DROP_X = -3.5;       // px, drawn back toward the hip
+
 // Anchor of the weapon (its grip origin) in character-local space.
 export function weaponAnchor(pose, wpn, ws, aim) {
-  const pivot = { x: pose.shoulder.x + 2.2, y: pose.shoulder.y + 2.2 };
-  const ang = aim + ws.rot + ws.recoilRot;
+  const relax = ws.relax || 0;
+  const pivot = {
+    x: pose.shoulder.x + 2.2 + RELAX_DROP_X * relax,
+    y: pose.shoulder.y + 2.2 + RELAX_DROP_Y * relax,
+  };
+  // Muzzle dips toward the ground as the weapon comes off aim. The pose is
+  // built in facing-neutral local space (the horizontal flip happens at draw
+  // time, see g.scale(ent.facing, 1)), so a positive angle is always "down"
+  // here — folding `facing` in would invert the dip when facing left.
+  const dip = RELAX_MUZZLE_DIP * relax;
+  const ang = aim + ws.rot + ws.recoilRot + dip;
   const off = rot2(
     ws.offX - ws.recoil - (wpn.shoulder ? wpn.shoulder.x : 0),
     ws.offY - (wpn.shoulder ? wpn.shoulder.y : 0),
@@ -272,9 +288,26 @@ function drawBody(g, parts, ent, weapon) {
       gripB = weaponPoint(wa, { x: wpn.magPos.x + ws.magOffX, y: wpn.magPos.y + ws.magOffY + 3 });
       handSprB = 'handGrip';
     } else {
-      gripB = weaponPoint(wa, wpn.gripB);
+      // Support hand: on the foregrip when the weapon is up, released and
+      // hanging at the side once the operator relaxes into a one-handed carry.
+      const onGrip = weaponPoint(wa, wpn.gripB);
+      const relax = ws.relax || 0;
+      if (relax > 0.001) {
+        const rest = {
+          x: pose.shoulder.x - 3.5,
+          y: pose.shoulder.y + 31 + pose.breath * 0.5,
+        };
+        gripB = {
+          x: onGrip.x + (rest.x - onGrip.x) * relax,
+          y: onGrip.y + (rest.y - onGrip.y) * relax,
+        };
+        // the released hand opens out of its grip shape as it falls
+        if (relax > 0.55) handSprB = 'handOpen';
+      } else {
+        gripB = onGrip;
+      }
     }
-    handAngB = wa.ang + (weapon.ws.magHand ? 0.5 : 0);
+    handAngB = wa.ang + (weapon.ws.magHand ? 0.5 : 0) + 1.3 * (ws.relax || 0);
   } else if (weaponAlive && weapon.wpn.kind === 'melee') {
     const { wpn, ws } = weapon;
     const reach = ws.knifeReach;

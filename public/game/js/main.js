@@ -17,9 +17,10 @@ import { buildWeapons } from './art/weapons.js';
 import { World, GROUND_Y, MAP_W } from './game/world.js';
 import { FX } from './game/fx.js';
 import { Player } from './game/player.js';
-import { Enemy, Boss, BOSS_STAGE_INTERVAL, getGlobalDetection } from './game/enemy.js';
+import { Enemy, Boss, BOSS_STAGE_INTERVAL, BOSS_WEAPONS, getGlobalDetection } from './game/enemy.js';
 import { Hud } from './game/hud.js';
 import { Progression, UNLOCKS } from './game/progression.js';
+import { DayCycle, formatHour } from './engine/daycycle.js';
 import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
 import { StoreUI } from './game/storeui.js';
@@ -226,6 +227,7 @@ async function boot() {
   else {
     hud.show('menu'); game.state = 'menu';
     game.metaUI.refresh(); game.storeUI.refresh(); game.statsUI.refresh();
+    game.refreshLevelSelect();   // boot sets state directly, bypassing setState()
     game.offerDailyReward();   // lands on the menu, never mid-run
   }
   requestAnimationFrame(frame);
@@ -242,6 +244,8 @@ class Game {
     this.fx = new FX(this.particles, audio, this.cam, this.world);
     this.fx.bindGame(this);   // lets energy projectiles resolve damage
     this.progression = new Progression();
+    // TimeShift clock — advances on death and on stage clear, never on frame time.
+    this.day = new DayCycle();
     this.state = 'menu';
     this.time = 0;
     this.menuPanT = 0;
@@ -250,6 +254,7 @@ class Game {
     this.chainQueue = [];
     this.stage = 1;
     this.pendingResume = null;   // run snapshot to restore on the next reset()
+    this.pendingStage = null;    // explicit stage picked from the level select
     this._autosaveT = 0;
     this._prevDetState = 'hidden';
     // the full walk-in cinematic only plays once per session (and never in
@@ -270,6 +275,15 @@ class Game {
     this.reset();
     hud.bind({
       deploy: () => { audio.resume(); audio.ui(); this.deploy(); },
+      // Level select: launching a specific sector is always a fresh mission
+      // into that stage, so any half-finished run snapshot is discarded first.
+      pickStage: (n) => {
+        audio.resume(); audio.ui();
+        this.progression.clearRun();
+        this.pendingResume = null;
+        this.pendingStage = n;
+        this.deploy();
+      },
       resume: () => { audio.ui(); this.setState('play'); },
       // restart is an explicit fresh mission — discard the resume snapshot
       restart: () => { audio.ui(); this.progression.clearRun(); this.pendingResume = null; this.reset(); this.setState('play'); },
@@ -306,7 +320,11 @@ class Game {
       // so no map/world-generation code needs to know bosses exist
       const spawns = this.world.enemySpawns;
       const mid = spawns[Math.floor(spawns.length / 2)] || { x: MAP_W * 0.55, y: GROUND_Y, min: MAP_W * 0.4, max: MAP_W * 0.75 };
-      const boss = new Boss(assets.phantom, assets.shadow, assets.weapons.rifle, this.world, this.fx, audio, mid.x, mid.min, mid.max, this.stage);
+      // Bosses carry heavy weapons, never an infantry rifle — the weapon id
+      // is chosen by tier in the Boss constructor (see BOSS_WEAPONS).
+      const tier = Math.max(0, Math.floor(this.stage / BOSS_STAGE_INTERVAL) - 1);
+      const bossWpn = assets.weapons[BOSS_WEAPONS[tier % BOSS_WEAPONS.length]] || assets.weapons.rifle;
+      const boss = new Boss(assets.phantom, assets.shadow, bossWpn, this.world, this.fx, audio, mid.x, mid.min, mid.max, this.stage);
       boss.y = mid.y;
       this.enemies = [boss];
     } else {
@@ -383,6 +401,17 @@ class Game {
     hud.setTokens(this.progression.tokens);
     hud.showBoss(false);
     hud.notify(t('notify.bossDown', { name: boss.name }));
+
+    // Boss Redeemable roll — 1/1000, boss kills only. This is the sole way
+    // these items enter a save; nothing in the crate or the Diamond store
+    // can produce one. Loot Luck from the equipped perk block scales it.
+    const drop = this.progression.rollBossReward(this.player ? this.player.luckMul : 1);
+    if (drop) {
+      hud.notify(t('notify.bossDrop', { name: drop.name }));
+      audio.ui();
+      // A drop this rare deserves its own beat rather than a queued toast.
+      if (hud.showBossDrop) hud.showBossDrop(drop);
+    }
   }
 
   // Stats page: kill streak (kills since the operator last went down) and
@@ -405,6 +434,24 @@ class Game {
     this._weaponShotsThisRun[weaponId] = (this._weaponShotsThisRun[weaponId] || 0) + 1;
   }
 
+  // The run state the world's look is derived from — the clock hour and how
+  // many times this stage has beaten the player back. Weather and the sky
+  // wash both come off this (see World.setTime / engine/daycycle.js), so a
+  // stage that has killed you six times looks materially worse than a fresh one.
+  runCtx() {
+    return { hour: this.day.hour, attempts: this.progression.attempts(this.stage) };
+  }
+
+  // Repaints the level-select grid from current progress. Called whenever the
+  // menu is shown, so clearing a stage makes it immediately replayable.
+  refreshLevelSelect() {
+    hud.renderLevelSelect(
+      this.progression.unlockedStages(),
+      (n) => this.progression.stageCleared(n),
+      BOSS_STAGE_INTERVAL,
+    );
+  }
+
   // Persist the live mission state so a reload continues from here.
   snapshotRun() {
     const p = this.player;
@@ -420,8 +467,14 @@ class Game {
   reset() {
     // resume a saved run if one was queued (deploy → CONTINUE), else fresh
     const resume = this.pendingResume; this.pendingResume = null;
-    this.stage = resume ? resume.stage : 1;
-    this.world.regenerate(this.stage);
+    // Stage selection, in priority order:
+    //   1. an explicit level-select pick
+    //   2. a mid-run snapshot being resumed
+    //   3. the checkpoint — the stage after the last one cleared
+    // (3) is what stops a death sending the operator back to stage 1.
+    const picked = this.pendingStage; this.pendingStage = null;
+    this.stage = picked || (resume ? resume.stage : this.progression.resumeStage);
+    this.world.regenerate(this.stage, this.runCtx());
     this.player = new Player(assets.ranger, assets.shadow, assets.weapons, this.world, this.fx, this.cam, audio, hud);
     this.player.x = 260; this.player.y = GROUND_Y;
     this.player.onDeath = () => this.resetKillStreak();
@@ -463,8 +516,12 @@ class Game {
     // Cleared the stage we were on, so its attempt tally resets — the counter
     // only ever measures the wall the player is currently stuck behind.
     this.progression.clearAttempts(this.stage);
+    // Bank the clear so a later death restarts here rather than at stage 1.
+    this.progression.recordStageCleared(this.stage);
+    // Taking ground costs time — the sky walks forward with the campaign.
+    this.day.onStageCleared();
     this.stage++;
-    this.world.regenerate(this.stage);
+    this.world.regenerate(this.stage, this.runCtx());
     this.spawnEnemiesForStage();
     this.player.x = 260; this.player.y = GROUND_Y; this.player.vx = 0; this.player.vy = 0;
     this.player.onGround = false;
@@ -599,6 +656,7 @@ class Game {
     if (s === 'menu' && this.metaUI) this.metaUI.refresh();
     if (s === 'menu' && this.storeUI) this.storeUI.refresh();
     if (s === 'menu' && this.statsUI) this.statsUI.refresh();
+    if (s === 'menu') this.refreshLevelSelect();
     if (this.touch) this.touch.setVisible(s === 'play');
   }
 
@@ -801,6 +859,9 @@ class Game {
     // deployment opens on attempt N+1, and headline that number on the death
     // screen the way a Geometry Dash run does.
     const nextAttempt = this.progression.recordAttempt(this.stage);
+    // TimeShift: every ATTEMPT tick pushes the sector's clock an hour on, so
+    // the sky is a running record of how long this wall has held the player.
+    this.day.onAttempt();
     this.lastRunStats = { stage: this.stage, attempts: nextAttempt - 1, kills: p.kills };
     this.progression.clearRun();   // the run is over — nothing to resume
     hud.end([
@@ -892,6 +953,23 @@ class Game {
           });
           if (Math.random() < 0.4) ventSmoke(this.particles, em.x, em.y - 10, -Math.PI / 2, 'soot', { sizeMul: 0.85 });
         }
+      } else if (em.kind === 'smolder') {
+        // Civil-war dressing: a barrel that has already burned out. No flame
+        // left, just a slow soot column and the odd ember lifting off the rim
+        // — the aftermath of a fight rather than one in progress.
+        if (!onScreen) continue;
+        em.t -= dt * mul;
+        if (em.t <= 0) {
+          em.t = em.rate;
+          ventSmoke(this.particles, em.x, em.y - 6, -Math.PI / 2, 'soot', { sizeMul: 1.25 });
+          if (Math.random() < 0.28) {
+            this.particles.spawn(K.EMBER, {
+              x: em.x + randSpread(6), y: em.y,
+              vx: randSpread(10), vy: -rand(20, 52),
+              life: rand(0.6, 1.5), size: rand(1.1, 2.1), drag: 1.7,
+            });
+          }
+        }
       } else if (em.kind === 'sparks') {
         E.sparks -= dt * mul;
         if (E.sparks <= 0) {
@@ -956,9 +1034,6 @@ class Game {
     this.particles.draw(ctx, true);
     ctx.restore();
     ctx.restore();
-
-    // foreground silhouettes
-    this.world.drawForeground(ctx, this.cam, vw, vh);
 
     this.compositeLighting();
     this.grade();

@@ -62,6 +62,7 @@ export class Hud {
     $('btn-menu').onclick = h.quit;
     if (h.graphics) $('btn-graphics').onclick = h.graphics;
     if (h.language) $('btn-language').onclick = h.language;
+    this._onPickStage = h.pickStage || null;
     if (h.share) $('btn-share').onclick = h.share;
     if (h.shareSend) $('btn-sharecard-send').onclick = h.shareSend;
     if (h.shareClose) $('btn-sharecard-close').onclick = h.shareClose;
@@ -108,6 +109,40 @@ export class Hud {
   }
 
   // Reflects the active language onto the pause-menu toggle.
+  // Level select: one cell per unlocked sector. Cleared stages stay playable
+  // so a player can farm a boss or re-run a layout; the frontier stage (the
+  // one they have not beaten yet) is highlighted. Everything past it is
+  // rendered locked rather than hidden, so the run ahead stays legible.
+  renderLevelSelect(unlocked, isCleared, bossInterval, showAhead = 4) {
+    const grid = $('level-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const frontier = unlocked.length ? unlocked[unlocked.length - 1] : 1;
+    const last = frontier + showAhead;
+    for (let n = 1; n <= last; n++) {
+      const playable = n <= frontier;
+      const cleared = isCleared(n);
+      const isBoss = bossInterval > 0 && n % bossInterval === 0;
+      const cell = document.createElement('button');
+      cell.className = 'level-cell';
+      if (cleared) cell.classList.add('cleared');
+      if (isBoss) cell.classList.add('boss');
+      if (n === frontier && !cleared) cell.classList.add('next');
+      cell.disabled = !playable;
+      cell.textContent = String(n);
+      const tag = document.createElement('span');
+      tag.className = 'level-tag';
+      tag.textContent = !playable ? t('level.locked')
+        : isBoss ? t('level.boss')
+        : cleared ? t('level.cleared') : '';
+      cell.appendChild(tag);
+      if (playable && this._onPickStage) {
+        cell.onclick = () => this._onPickStage(n);
+      }
+      grid.appendChild(cell);
+    }
+  }
+
   setLanguage() {
     const el = $('language-label');
     if (!el) return;

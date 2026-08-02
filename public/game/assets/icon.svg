@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="CINDERFALL app icon">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="78%">
+      <stop offset="0%" stop-color="#232c3c"/>
+      <stop offset="55%" stop-color="#131922"/>
+      <stop offset="100%" stop-color="#0a0c0f"/>
+    </radialGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8c17d"/>
+      <stop offset="100%" stop-color="#c8934c"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe9c4"/>
+      <stop offset="45%" stop-color="#e8b45e"/>
+      <stop offset="100%" stop-color="#b4652a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="52%" r="50%">
+      <stop offset="0%" stop-color="#ffb85c" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffb85c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- full-bleed background (works as maskable: content stays inside the
+       centre safe zone; the OS may round / crop the outer 10%) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- faint accent hairline near the top, echoing the title screen -->
+  <rect x="0" y="0" width="512" height="6" fill="#d6a95c" opacity="0.35"/>
+
+  <!-- soft ember glow behind the emblem -->
+  <circle cx="256" cy="266" r="150" fill="url(#glow)"/>
+
+  <!-- hex badge (military insignia silhouette), within the safe zone -->
+  <g fill="none" stroke="url(#amber)" stroke-linejoin="round">
+    <path d="M256 118 L372 185 L372 319 L256 386 L140 319 L140 185 Z" stroke-width="12"/>
+    <path d="M256 150 L344 201 L344 303 L256 354 L168 303 L168 201 Z" stroke-width="4" opacity="0.55"/>
+  </g>
+
+  <!-- cinder / falling ember flame -->
+  <path d="M256 176
+           c 26 34 44 58 44 92
+           a 44 44 0 0 1 -88 0
+           c 0 -18 8 -32 20 -44
+           c 2 16 10 24 22 30
+           c -8 -30 -14 -52 2 -78 Z"
+        fill="url(#flame)"/>
+  <!-- hot inner core -->
+  <path d="M256 246 c 12 12 18 22 18 34 a 18 18 0 0 1 -36 0 c 0 -14 8 -22 18 -34 Z"
+        fill="#fff3d8" opacity="0.9"/>
+
+  <!-- sector mark -->
+  <text x="256" y="342" text-anchor="middle" font-family="Bahnschrift, 'Arial Narrow', sans-serif"
+        font-size="30" font-weight="700" letter-spacing="6" fill="#e8c17d">SECTOR 9</text>
+</svg>
