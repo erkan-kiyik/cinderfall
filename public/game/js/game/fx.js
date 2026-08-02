@@ -5,6 +5,15 @@ import { K, burstSparks, puffSmoke, kickDust } from '../engine/particles.js';
 import { rand, randSpread, clamp } from '../engine/math.js';
 import { segVsBox } from './player.js';
 
+// Blade trail tuning. TRAIL_LIFE is how long a sampled point survives (the
+// ribbon's length in time), TRAIL_GAP how long without a new sample before the
+// swing is considered over, TRAIL_MAX_PTS a hard cap so a held swing can't
+// grow the buffer without bound.
+const TRAIL_LIFE = 0.16;
+const TRAIL_GAP = 0.05;
+const TRAIL_MAX_PTS = 24;
+const TRAIL_WIDTH = 7;
+
 export class FX {
   constructor(particles, audio, camera, world) {
     this.ps = particles;
@@ -14,6 +23,7 @@ export class FX {
     this.tracers = [];    // {x0,y0,x1,y1,life,age,color,width}
     this.lights = [];     // {x,y,r,c,a,life,age}
     this.slashes = [];    // {x,y,a0,a1,r,life,age,facing}
+    this.trails = [];     // blade motion ribbons — see bladeTrail()
     this.projectiles = []; // energy bolts: {x,y,vx,vy,color,radius,dmg,...}
     this.beams = [];      // {x0,y0,x1,y1,color,width,life,age}
     this.arcs = [];       // electric arcs: {pts,color,life,age}
@@ -111,6 +121,32 @@ export class FX {
 
   slash(x, y, a0, a1, r, facing) {
     this.slashes.push({ x, y, a0, a1, r, life: 0.16, age: 0, facing });
+  }
+
+  // ---- blade trail ----
+  // The single-frame arc wedge above is the *impact* flourish. This is the
+  // motion trail: the blade tip is sampled every frame of the swing and the
+  // samples are drawn as one tapering ribbon, so the attack traces the arc it
+  // actually travelled rather than stamping a fixed shape.
+  //
+  // Points age out individually, which is what gives the ribbon its comet
+  // taper — the newest end is wide and bright, the tail thin and gone.
+  bladeTrail(x, y, color) {
+    let tr = this.trails[this.trails.length - 1];
+    // Start a fresh ribbon if there isn't a live one, or if the last sample
+    // is old enough that this is clearly a new swing rather than a continuation.
+    if (!tr || tr.closed || tr.sinceSample > TRAIL_GAP) {
+      tr = { pts: [], color, sinceSample: 0, closed: false };
+      this.trails.push(tr);
+      if (this.trails.length > 3) this.trails.shift();
+    }
+    tr.sinceSample = 0;
+    tr.color = color;
+    const last = tr.pts[tr.pts.length - 1];
+    // Skip samples that barely moved — they'd bunch up and thicken the head.
+    if (last && Math.hypot(x - last.x, y - last.y) < 2) return;
+    tr.pts.push({ x, y, age: 0 });
+    if (tr.pts.length > TRAIL_MAX_PTS) tr.pts.shift();
   }
 
   explosion(x, y) {
@@ -324,6 +360,15 @@ export class FX {
       const l = this.lights[i];
       if ((l.age += dt) >= l.life) this.lights.splice(i, 1);
     }
+    for (let i = this.trails.length - 1; i >= 0; i--) {
+      const tr = this.trails[i];
+      tr.sinceSample += dt;
+      if (tr.sinceSample > TRAIL_GAP) tr.closed = true;   // swing ended
+      for (let j = tr.pts.length - 1; j >= 0; j--) {
+        if ((tr.pts[j].age += dt) >= TRAIL_LIFE) tr.pts.splice(j, 1);
+      }
+      if (!tr.pts.length) this.trails.splice(i, 1);
+    }
     for (let i = this.slashes.length - 1; i >= 0; i--) {
       const s = this.slashes[i];
       if ((s.age += dt) >= s.life) this.slashes.splice(i, 1);
@@ -407,6 +452,49 @@ export class FX {
         g.beginPath(); g.arc(pr.x, pr.y, rad * 4, 0, Math.PI * 2); g.fill();
         g.fillStyle = 'rgba(255,255,255,0.95)';
         g.beginPath(); g.arc(pr.x, pr.y, rad * 0.6, 0, Math.PI * 2); g.fill();
+      }
+      g.restore();
+    }
+    // blade ribbons, under the impact wedge
+    if (this.trails.length) {
+      g.save();
+      g.globalCompositeOperation = 'lighter';
+      for (const tr of this.trails) {
+        const n = tr.pts.length;
+        if (n < 2) continue;
+        // Build the ribbon as one polygon: walk the sampled path offsetting
+        // perpendicular by a half-width that tapers with each point's age,
+        // then walk back down the other side.
+        const half = (i) => {
+          const a = tr.pts[i].age / TRAIL_LIFE;
+          // newest points are widest; the head also thins slightly so the
+          // ribbon reads as a blade edge rather than a slab
+          const headTaper = i === n - 1 ? 0.55 : 1;
+          return TRAIL_WIDTH * (1 - a) * headTaper;
+        };
+        const norm = (i) => {
+          const p = tr.pts[Math.max(0, i - 1)], q = tr.pts[Math.min(n - 1, i + 1)];
+          const dx = q.x - p.x, dy = q.y - p.y;
+          const d = Math.hypot(dx, dy) || 1;
+          return { x: -dy / d, y: dx / d };
+        };
+        g.beginPath();
+        for (let i = 0; i < n; i++) {
+          const p = tr.pts[i], nv = norm(i), h = half(i);
+          const x = p.x + nv.x * h, y = p.y + nv.y * h;
+          if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+        }
+        for (let i = n - 1; i >= 0; i--) {
+          const p = tr.pts[i], nv = norm(i), h = half(i);
+          g.lineTo(p.x - nv.x * h, p.y - nv.y * h);
+        }
+        g.closePath();
+        const head = tr.pts[n - 1], tail = tr.pts[0];
+        const grad = g.createLinearGradient(tail.x, tail.y, head.x, head.y);
+        grad.addColorStop(0, 'rgba(255,255,255,0)');
+        grad.addColorStop(1, tr.color || 'rgba(226,240,255,0.55)');
+        g.fillStyle = grad;
+        g.fill();
       }
       g.restore();
     }

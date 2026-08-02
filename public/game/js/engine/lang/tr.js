@@ -99,9 +99,9 @@ export const TR = {
   // ---- rarity ----
   'rarity.common': 'YAYGIN',
   'rarity.rare': 'NADİR',
-  'rarity.epic': 'EPİK',
+  'rarity.epic': 'DESTANSI',
   'rarity.legendary': 'EFSANEVİ',
-  'rarity.mythic': 'MİTİK',
+  'rarity.mythic': 'MİSTİK',
   'rarity.ultraLimited': 'ULTRA SINIRLI',
 
   // ---- HUD ----
@@ -156,6 +156,10 @@ export const TR = {
   'share.kills': 'ETKİSİZLEŞTİRME',
   'share.copy': 'KOPYALA',
   'share.copied': 'KOPYALANDI!',
+  'share.cta': 'GEÇEBİLİR MİSİN?',
+  'share.share': 'PAYLAŞ',
+  'share.saved': 'CİHAZA KAYDEDİLDİ',
+  'share.failed': 'PAYLAŞILAMADI',
   'share.close': 'KAPAT',
   'share.body': 'CINDERFALL\'da {attempts} denemede Bölüm {stage}\'e ulaştım. Geçebilirsen gel.',
 

@@ -27,7 +27,8 @@ import { StatsUI } from './game/statsui.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
 import { mountCurrencyIcons } from './art/currency.js';
-import { dailyStatus, claimDaily, shareRun, DAILY_REWARDS } from './game/retention.js';
+import { dailyStatus, claimDaily, DAILY_REWARDS } from './game/retention.js';
+import { paintShareCard, shareCard } from './game/sharecard.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -286,7 +287,9 @@ class Game {
       // Cycles TR ⇄ EN. The static markup is re-filled by i18n itself; the
       // screens that build their labels in JS repaint through onLangChange.
       language: () => { audio.ui(); cycleLang(); hud.setLanguage(); },
-      share: () => { audio.ui(); this.shareResult(); },
+      share: () => { audio.ui(); this.openShareCard(); },
+      shareSend: () => { audio.ui(); this.sendShareCard(); },
+      shareClose: () => { audio.ui(); hud.showShareCard(false); },
       claimDaily: () => { audio.ui(); this.claimDailyReward(); },
     });
     hud.setGraphicsTier(quality.preset.name);
@@ -839,10 +842,20 @@ class Game {
     setTimeout(() => hud.showDaily(false), 900);
   }
 
-  // Shares the run the player just finished. lastRunStats is set by finish().
-  async shareResult() {
+  // Paints and shows the score card for the run that just ended.
+  // lastRunStats is set by finish().
+  openShareCard() {
     const stats = this.lastRunStats || { stage: this.stage, attempts: 0, kills: 0 };
-    const kind = await shareRun(stats);
+    stats.tokens = this.progression.tokens;
+    const cv = hud.shareCanvasEl();
+    if (!cv) return;
+    paintShareCard(cv, stats);
+    hud.showShareCard(true);
+  }
+
+  async sendShareCard() {
+    const stats = this.lastRunStats || { stage: this.stage, attempts: 0, kills: 0 };
+    const kind = await shareCard(hud.shareCanvasEl(), stats);
     hud.setShareResult(kind);
   }
 

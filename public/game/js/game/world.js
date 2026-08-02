@@ -748,16 +748,50 @@ function paintForeground() {
   g.moveTo(-10, 38); g.quadraticCurveTo(W * 0.4, 108, W + 10, 74);
   g.stroke();
 
-  // low curb clutter band along the very bottom
-  for (let i = 0; i < 26; i++) {
-    const tx = rng() * W, ts = rng.range(5, 15);
-    g.fillStyle = ink(rng.range(0.4, 0.7));
-    g.fillRect(tx, H - ts * 0.7, ts * rng.range(0.9, 2.2), ts);
+  // ---- industrial foreground band ----
+  // The nearest parallax layer, and the one that reads as the sector the
+  // player is fighting inside rather than a street they happen to be on:
+  // catwalk stanchions, handrails and a pipe run passing between the camera
+  // and the action. All flat silhouette — anything with interior detail this
+  // close to camera competes with the characters instead of framing them.
+
+  // pipe run: two parallel lines with periodic flange collars
+  const pipeY = H - 96;
+  g.strokeStyle = ink(0.62); g.lineWidth = 9;
+  g.beginPath(); g.moveTo(-20, pipeY); g.lineTo(W + 20, pipeY); g.stroke();
+  g.strokeStyle = ink(0.42); g.lineWidth = 3;
+  g.beginPath(); g.moveTo(-20, pipeY - 4); g.lineTo(W + 20, pipeY - 4); g.stroke();
+  for (let fx = 40; fx < W; fx += 190) {
+    g.fillStyle = ink(0.72);
+    rr(g, fx, pipeY - 9, 11, 18, 2); g.fill();
   }
-  // a couple of squat bollards
-  for (const bx of [230, 890]) {
-    g.fillStyle = ink(0.7);
-    rr(g, bx, H - 34, 13, 34, 4); g.fill();
+
+  // catwalk: top rail, mid rail, and stanchions dropping to the deck
+  const railY = H - 58;
+  g.strokeStyle = ink(0.7); g.lineWidth = 5;
+  g.beginPath(); g.moveTo(-20, railY); g.lineTo(W + 20, railY); g.stroke();
+  g.strokeStyle = ink(0.5); g.lineWidth = 3;
+  g.beginPath(); g.moveTo(-20, railY + 17); g.lineTo(W + 20, railY + 17); g.stroke();
+  for (let sx = 26; sx < W; sx += 118) {
+    g.fillStyle = ink(0.75);
+    g.fillRect(sx, railY - 3, 6, 61);
+    // gusset plate at the foot
+    g.beginPath();
+    g.moveTo(sx - 5, H - 2); g.lineTo(sx + 11, H - 2); g.lineTo(sx + 3, H - 20);
+    g.closePath(); g.fill();
+  }
+
+  // deck plate with a grating notch pattern along its lip
+  g.fillStyle = ink(0.82);
+  g.fillRect(-20, H - 14, W + 40, 14);
+  g.fillStyle = ink(0.55);
+  for (let nx = 0; nx < W; nx += 22) g.fillRect(nx, H - 14, 11, 4);
+
+  // low clutter still reads at the very bottom edge
+  for (let i = 0; i < 18; i++) {
+    const tx = rng() * W, ts = rng.range(5, 13);
+    g.fillStyle = ink(rng.range(0.5, 0.78));
+    g.fillRect(tx, H - 14 - ts * 0.7, ts * rng.range(0.9, 2.0), ts);
   }
   return cv;
 }

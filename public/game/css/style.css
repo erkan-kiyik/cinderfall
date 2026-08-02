@@ -322,6 +322,22 @@ html, body {
   text-shadow: 0 0 14px rgba(255, 92, 70, 0.4);
 }
 
+/* ---------- viral score card ----------
+   The card is painted at a fixed 900x1125 so the shared image is always the
+   same crop; on screen it just scales down to whatever height is free. */
+#sharecard { z-index: 32; background: rgba(4, 5, 8, 0.95); }
+.sharecard-inner {
+  display: flex; flex-direction: column; align-items: center; gap: var(--s4);
+  padding: var(--s5); max-height: 100%;
+}
+.sharecard-canvas {
+  max-height: min(64vh, 560px); max-width: min(88vw, 450px);
+  width: auto; height: auto; border-radius: var(--r3);
+  box-shadow: 0 18px 60px -12px rgba(0, 0, 0, 0.8), 0 0 40px -10px rgba(214, 69, 58, 0.35);
+}
+.sharecard-actions { display: flex; gap: var(--s3); align-items: center; }
+.sharecard-actions .btn { width: auto; min-width: 150px; margin: 0; }
+
 /* Sits above the menu it appears over (both are .overlay at z-index 20).
    .dim's 0.82 backdrop isn't enough to bury a saturated DEPLOY button
    behind it, and this is a modal — it should own the screen while it's up. */

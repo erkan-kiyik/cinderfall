@@ -1,11 +1,8 @@
-// Daily login rewards and the share card.
+// Daily login rewards.
 //
-// Both exist to give a player a reason to come back and a reason to tell
-// someone else. Deliberately kept honest: the streak is real calendar days
-// (not sessions), the share text quotes the player's actual run, and nothing
-// here fabricates a score or nags.
-
-import { t } from '../engine/i18n.js';
+// Exists to give a player a reason to come back. Deliberately kept honest:
+// the streak is real calendar days (not sessions), and nothing here nags.
+// The share flow lives in game/sharecard.js.
 
 const DAILY_KEY = 'cinderfall.daily.v1';
 
@@ -71,37 +68,4 @@ export function claimDaily() {
   const reward = DAILY_REWARDS[st.day - 1];
   save({ lastClaim: dayStamp(), streak: st.streak + 1 });
   return reward;
-}
-
-// ---------------------------------------------------------------- share
-//
-// Builds the text a player sends to a friend. Uses the Web Share API where
-// the platform provides it (every Android WebView the app ships in does),
-// and falls back to the clipboard everywhere else.
-
-export function shareText(stats) {
-  return t('share.body', { stage: stats.stage, attempts: stats.attempts });
-}
-
-// Returns 'shared' | 'copied' | 'failed' so the caller can show the right
-// confirmation. Never throws — a share sheet the user dismisses is a normal
-// outcome, not an error.
-export async function shareRun(stats) {
-  const text = shareText(stats);
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: t('share.title'), text });
-      return 'shared';
-    }
-  } catch (e) {
-    // AbortError = user dismissed the sheet; anything else falls through to
-    // the clipboard path below.
-    if (e && e.name === 'AbortError') return 'shared';
-  }
-  try {
-    await navigator.clipboard.writeText(text);
-    return 'copied';
-  } catch (e) {
-    return 'failed';
-  }
 }

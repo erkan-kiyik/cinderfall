@@ -154,6 +154,10 @@ export const EN = {
   'share.kills': 'ELIMINATIONS',
   'share.copy': 'COPY',
   'share.copied': 'COPIED!',
+  'share.cta': 'CAN YOU BEAT IT?',
+  'share.share': 'SHARE',
+  'share.saved': 'SAVED TO DEVICE',
+  'share.failed': 'COULD NOT SHARE',
   'share.close': 'CLOSE',
   'share.body': 'I reached Stage {stage} in CINDERFALL after {attempts} attempts. Beat that.',
 

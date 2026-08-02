@@ -46,6 +46,7 @@ export class Hud {
       daily: $('daily'), dailySub: $('daily-sub'), dailyTrack: $('daily-track'),
       dailyStreak: $('daily-streak'), dailyClaim: $('btn-daily-claim'),
       shareBtn: $('btn-share'),
+      shareCard: $('sharecard'), shareCanvas: $('sharecard-canvas'),
     };
     this._loreTimers = [];
     this._lastAmmo = null;
@@ -62,6 +63,8 @@ export class Hud {
     if (h.graphics) $('btn-graphics').onclick = h.graphics;
     if (h.language) $('btn-language').onclick = h.language;
     if (h.share) $('btn-share').onclick = h.share;
+    if (h.shareSend) $('btn-sharecard-send').onclick = h.shareSend;
+    if (h.shareClose) $('btn-sharecard-close').onclick = h.shareClose;
     if (h.claimDaily) $('btn-daily-claim').onclick = h.claimDaily;
     if (h.watchAdRevive) $('btn-revive-ad').onclick = h.watchAdRevive;
     if (h.skipRevive) $('btn-revive-skip').onclick = h.skipRevive;
@@ -143,13 +146,23 @@ export class Hud {
     this.el.dailyClaim.textContent = t('daily.claimed');
   }
 
+  // Score-card overlay. The canvas is painted by the caller (sharecard.js)
+  // before this is shown, so the card is already on screen when it fades in.
+  showShareCard(on) {
+    if (this.el.shareCard) this.el.shareCard.classList.toggle('hidden', !on);
+  }
+
+  shareCanvasEl() { return this.el.shareCanvas; }
+
   // Share button feedback: 'shared' | 'copied' | 'failed'
   setShareResult(kind) {
-    const b = this.el.shareBtn;
+    const b = $('btn-sharecard-send');
     if (!b) return;
-    b.textContent = kind === 'failed' ? t('end.share') : t('share.copied');
+    const label = { shared: 'share.share', saved: 'share.saved',
+                    copied: 'share.copied', failed: 'share.failed' }[kind] || 'share.share';
+    b.textContent = t(label);
     clearTimeout(this._shareT);
-    this._shareT = setTimeout(() => { b.textContent = t('end.share'); }, 1800);
+    this._shareT = setTimeout(() => { b.textContent = t('share.share'); }, 1800);
   }
 
   setReviveCountdown(n) {

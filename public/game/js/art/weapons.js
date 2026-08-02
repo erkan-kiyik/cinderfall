@@ -915,7 +915,7 @@ export function buildWeapons() {
       aimHeight: -4.8,
     },
     pistol: {
-      id: 'pistol', name: 'C-9 "CORVID"', slot: 2, kind: 'gun',
+      id: 'pistol', recoilFeel: 'light', name: 'C-9 "CORVID"', slot: 2, kind: 'gun',
       body: pistolBody, finishes: pistolFinishes, finish: 'default',
       slide: paintPistolSlide(), flashes,
       gripA: { x: 0, y: 0.8 },
@@ -933,7 +933,7 @@ export function buildWeapons() {
       aimHeight: -4,
     },
     smg: {
-      id: 'smg', name: 'P-12 "WASP"', slot: 4, kind: 'gun',
+      id: 'smg', recoilFeel: 'light', name: 'P-12 "WASP"', slot: 4, kind: 'gun',
       body: smgBody, finishes: smgFinishes, finish: 'default',
       mag: paintSmgMag(), bolt: paintBolt(),
       flashes,
@@ -956,6 +956,16 @@ export function buildWeapons() {
     knife: {
       id: 'knife', name: 'TALON-7', slot: 3, kind: 'melee',
       body: knifeBody, finishes: knifeFinishes, finish: 'default',
+      // Motion-trail colour per finish (see player.js bladeTrailColor).
+      // Energy blades streak in their own light; steel gets a cool white.
+      trailColors: {
+        default: 'rgba(226,240,255,0.5)',
+        ravage: 'rgba(200,210,225,0.45)',
+        voidedge: 'rgba(178,107,255,0.7)',
+        volt: 'rgba(56,224,255,0.75)',
+        bloodmoon: 'rgba(255,59,92,0.75)',
+        eventide: 'rgba(242,246,255,0.8)',
+      },
       gripA: { x: -2.6, y: 0 },
       dmg: 55, dmgHeavy: 95,
       range: 46, arc: 1.1,

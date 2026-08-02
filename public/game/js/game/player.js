@@ -27,15 +27,41 @@ const SPRINT_LEAN_MAX = 0.14;
 // shudder envelope. A heavy weapon throws the whole frame around; an energy
 // emitter barely climbs but never stops humming while it fires.
 const RECOIL_FEEL = {
-  standard: { kick: 1,    climb: 1,    shake: 1,    vibe: 0 },
-  light:    { kick: 0.82, climb: 0.9,  shake: 0.8,  vibe: 0 },
-  heavy:    { kick: 1.45, climb: 1.5,  shake: 1.7,  vibe: 0 },
-  energy:   { kick: 0.9,  climb: 0.42, shake: 0.85, vibe: 0.55 },
-  beam:     { kick: 0.35, climb: 0.18, shake: 0.5,  vibe: 0.8 },
+  standard: { kick: 1,    climb: 1,    shake: 1,    vibe: 0,    vibeAxis: 'both' },
+  light:    { kick: 0.82, climb: 0.9,  shake: 0.8,  vibe: 0,    vibeAxis: 'both' },
+  heavy:    { kick: 1.45, climb: 1.5,  shake: 1.7,  vibe: 0,    vibeAxis: 'both' },
+  energy:   { kick: 0.9,  climb: 0.42, shake: 0.85, vibe: 0.55, vibeAxis: 'both' },
+  // A particle emitter has no cartridge to buck against, so it does not climb
+  // at all — `climb: 0` is literal. What it does instead is hum: a purely
+  // lateral shudder while the emitter is live.
+  beam:     { kick: 0.35, climb: 0,    shake: 0.5,  vibe: 0.8,  vibeAxis: 'x' },
+};
+
+// Spread models. `bloom` is how fast the cone opens under sustained fire and
+// `recover` how fast it closes again; `moveMul` weights how much movement
+// costs you. A pistol punishes sustained fire hard but forgives instantly; a
+// beam barely blooms at all but never fully tightens either.
+const SPREAD_MODEL = {
+  standard: { bloom: 1,    recover: 1,    moveMul: 1 },
+  light:    { bloom: 1.35, recover: 1.9,  moveMul: 0.9 },   // fast-recovering
+  heavy:    { bloom: 1.5,  recover: 0.62, moveMul: 1.35 },  // punishing to walk with
+  energy:   { bloom: 0.7,  recover: 1.15, moveMul: 0.85 },
+  beam:     { bloom: 0.25, recover: 0.8,  moveMul: 0.6 },   // near-constant cone
 };
 // Energy shudder: how fast it oscillates (rad/s) and how quickly it dies.
 const VIBE_FREQ = 46;
 const VIBE_DECAY = 4.2;
+
+// The rig's knifeReach is in weapon-local units; the blade tip sits a little
+// past it. This converts one to the other for the motion trail.
+const BLADE_TIP_SCALE = 1.32;
+
+// An energy blade should streak in its own colour; plain steel gets a cool
+// white. The finish's emissive colour is the natural source for this.
+function bladeTrailColor(wpn) {
+  const map = wpn.trailColors;
+  return (map && map[wpn.finish]) || 'rgba(226,240,255,0.5)';
+}
 
 // Movement feel: snappier ground acceleration and blends for more responsive
 // controls, without changing top speeds (preserves the existing game balance).
@@ -485,7 +511,10 @@ export class Player {
     ws.vibe = Math.max(0, (ws.vibe || 0) - dt * VIBE_DECAY);
     this.fireCd -= dt;
     // aim-drift bloom recovers faster → tighter sustained accuracy
-    this.recoilAccum = Math.max(0, this.recoilAccum - dt * 0.17);
+    // Recovery rate is per-class too — a sidearm settles almost instantly,
+    // an LMG stays open long after the trigger is released.
+    const spreadModel = SPREAD_MODEL[wpn.recoilFeel] || SPREAD_MODEL.standard;
+    this.recoilAccum = Math.max(0, this.recoilAccum - dt * 0.17 * spreadModel.recover);
     // energy weapons cool between shots; overheat clears once cooled enough
     ws.heat = Math.max(0, ws.heat - dt * (wpn.heatCool || 0.6));
     if (ws.overheated && ws.heat <= 0.2) ws.overheated = false;
@@ -496,10 +525,15 @@ export class Player {
     // live. Frequency is fixed and high enough to read as a buzz at 60fps
     // rather than a wobble; amplitude rides the envelope down.
     if (ws.vibe > 0.001) {
+      const feel = RECOIL_FEEL[wpn.recoilFeel] || RECOIL_FEEL.standard;
       const v = ws.vibe * (wpn.vibeAmp || 1);
-      offY += Math.sin(this.time * VIBE_FREQ) * 0.9 * v;
       offX += Math.sin(this.time * VIBE_FREQ * 1.37) * 0.6 * v;
-      rot += Math.sin(this.time * VIBE_FREQ * 0.83) * 0.012 * v;
+      // A beam emitter shudders laterally only — no vertical component at all,
+      // so the reticle never walks up the screen while it's firing.
+      if (feel.vibeAxis !== 'x') {
+        offY += Math.sin(this.time * VIBE_FREQ) * 0.9 * v;
+        rot += Math.sin(this.time * VIBE_FREQ * 0.83) * 0.012 * v;
+      }
     }
     // idle sway + breathing
     rot += Math.sin(this.breathT * 1.7) * 0.014 * (1 - this.speedNorm);
@@ -662,7 +696,13 @@ export class Player {
     // surface heat / charge to the HUD
     if (this.hud.setWeaponMeter) this.hud.setWeaponMeter(ws.heat, ws.overheated, ws.charge);
 
-    this.visSpread = wpn.spread + this.speedNorm * 0.045 + (this.onGround ? 0 : 0.05) + this.recoilAccum;
+    // Per-class spread model: how much movement costs, and how much the
+    // sustained-fire bloom this weapon has accumulated actually widens it.
+    const sm = SPREAD_MODEL[wpn.recoilFeel] || SPREAD_MODEL.standard;
+    this.visSpread = wpn.spread
+      + this.speedNorm * 0.045 * sm.moveMul
+      + (this.onGround ? 0 : 0.05 * sm.moveMul)
+      + this.recoilAccum * sm.bloom;
     // crouching braces the weapon — tighter cone as a reward for a slow approach
     this.visSpread *= lerp(1, 0.68, this.crouchHold);
     this.applyWs(ws, offX, offY, rot);
@@ -803,12 +843,13 @@ export class Player {
     //            vibration envelope behind, so it reads as powered, not inert
     // Anything without a declared feel keeps the original conventional curve.
     const feel = RECOIL_FEEL[wpn.recoilFeel] || RECOIL_FEEL.standard;
+    const spread = SPREAD_MODEL[wpn.recoilFeel] || SPREAD_MODEL.standard;
     ws.recoilVel += wpn.recoilKick * 2.1 * patMul * chargeMul * feel.kick;
     ws.recoilRotVel -= wpn.recoilRot * 18 * patMul * chargeMul * feel.climb;
     if (feel.vibe) ws.vibe = Math.min(1, (ws.vibe || 0) + feel.vibe * chargeMul);
     if (wpn.bolt) ws.boltBack = 1;
     if (wpn.slide) ws.slideBack = 1;
-    this.recoilAccum = Math.min(0.05, this.recoilAccum + 0.008);
+    this.recoilAccum = Math.min(0.05, this.recoilAccum + 0.008 * spread.bloom);
     this.cam.recoil(wpn.camKick * chargeMul * feel.kick);
     this.cam.addTrauma(wpn.camTrauma * chargeMul * feel.shake);
     if (wpn.heatPerShot) {
@@ -909,6 +950,15 @@ export class Player {
         reach = lerp(TUCK_REACH, REST_REACH, e);
         wrist = lerp(-0.1, 0.34, e);
       }
+      // Feed the blade tip to the motion ribbon every frame of the swing, so
+      // the trail follows the arc the blade actually travelled. Same pivot and
+      // facing convention the impact wedge uses.
+      const tipR = reach * BLADE_TIP_SCALE;
+      this.fx.bladeTrail(
+        this.x + Math.cos(ang) * tipR * this.facing,
+        (this.y - 92) + Math.sin(ang) * tipR,
+        bladeTrailColor(wpn)
+      );
       if (k >= 1) this.slash = null;
     }
 
