@@ -867,8 +867,8 @@ class Game {
     const charOpts = this.characterDrawOpts();
     const halfVis = vw / (2 * this.cam.zoom) + 220;
     const onScreen = (e) => Math.abs(e.x - this.cam.x) < halfVis;
-    for (const e of this.enemies) if (e.deadT > 0 && onScreen(e)) e.draw(ctx, charOpts);
-    for (const e of this.enemies) if (e.deadT <= 0 && onScreen(e)) e.draw(ctx, charOpts);
+    for (const e of this.enemies) if (e.deadT > 0 && onScreen(e)) e.draw(ctx);
+    for (const e of this.enemies) if (e.deadT <= 0 && onScreen(e)) e.draw(ctx);
     if (this.state !== 'menu') this.player.draw(ctx, charOpts);
     this.particles.draw(ctx, false);
     this.fx.draw(ctx);
