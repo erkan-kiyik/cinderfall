@@ -36,6 +36,10 @@ const DEMO = params.has('demo');
 // combo; longer than this and the next kill starts a fresh combo of 1.
 const COMBO_WINDOW = 4.0;
 
+// Character contour colour. Near-black with a trace of the scene's cool
+// shadow tint so it reads as a deep shadow edge rather than a sticker outline.
+const CHAR_OUTLINE_COLOR = 'rgba(6,8,13,0.92)';
+
 let vw = 0, vh = 0, dpr = 1;
 let lightCv, lightG, glowCv, glowG, grainCv;
 let game = null;   // declared early so resize() can safely reference it
@@ -824,9 +828,18 @@ class Game {
     ctx.save();
     this.cam.applyTransform(ctx, vw, vh);
     this.world.drawBack(ctx, this.cam, vw);
-    for (const e of this.enemies) if (e.deadT > 0) e.draw(ctx);
-    for (const e of this.enemies) if (e.deadT <= 0) e.draw(ctx);
-    if (this.state !== 'menu') this.player.draw(ctx);
+
+    // Characters draw last in this layer and carry a contour, so they read as
+    // the foreground subject against the (deliberately dimmed, desaturated)
+    // environment behind them. Off-screen hostiles are skipped outright —
+    // an endless stage can hold far more of them than are ever in frame, and
+    // the contour is the priciest per-character work in the loop.
+    const charOpts = this.characterDrawOpts();
+    const halfVis = vw / (2 * this.cam.zoom) + 220;
+    const onScreen = (e) => Math.abs(e.x - this.cam.x) < halfVis;
+    for (const e of this.enemies) if (e.deadT > 0 && onScreen(e)) e.draw(ctx, charOpts);
+    for (const e of this.enemies) if (e.deadT <= 0 && onScreen(e)) e.draw(ctx, charOpts);
+    if (this.state !== 'menu') this.player.draw(ctx, charOpts);
     this.particles.draw(ctx, false);
     this.fx.draw(ctx);
     ctx.save();
@@ -841,6 +854,18 @@ class Game {
     this.compositeLighting();
     this.grade();
     if (this.state === 'play' && this.player.deadT <= 0) this.crosshair();
+  }
+
+  // Per-frame character draw options (contour colour/width), rebuilt cheaply
+  // each frame so a graphics-tier change takes effect immediately. Returns
+  // null on tiers with the contour disabled, which skips the buffered path.
+  characterDrawOpts() {
+    const px = quality.preset.outlinePx;
+    if (!px) return null;
+    if (!this._charOpts || this._charOpts.outline.px !== px) {
+      this._charOpts = { outline: { color: CHAR_OUTLINE_COLOR, px } };
+    }
+    return this._charOpts;
   }
 
   gatherLights() {

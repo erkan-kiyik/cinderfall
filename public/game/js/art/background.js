@@ -8,13 +8,59 @@ import { makeRng } from '../engine/math.js';
 
 const SKY_W = 1600, SKY_H = 900;
 
+// ---------------- depth grade ----------------
+// Aerial perspective, baked once at boot: the further a parallax layer sits,
+// the more it loses saturation and value and the softer its edges get. Doing
+// it here rather than per frame matters — a runtime canvas `filter` on
+// full-screen layers would be one of the most expensive steps in the render
+// loop, and none of this ever changes once painted.
+//
+// The net effect is that everything behind the play surface reads as a dim,
+// hazy backdrop, leaving the characters as the only high-contrast, in-focus
+// subjects on screen.
+export const DEPTH_GRADE = {
+  sky:    { brightness: 0.78, saturate: 0.82 },                        // stretched, never tiled — no blur to gain
+  clouds: { brightness: 0.70, saturate: 0.62, blur: 2.6, wrap: true },
+  far:    { brightness: 0.56, saturate: 0.42, blur: 3.6, wrap: true },  // furthest: flattest + softest
+  mid:    { brightness: 0.68, saturate: 0.60, blur: 1.7, wrap: true },
+};
+
+// Applies a depth grade to a finished layer, in place.
+// `wrap` matters for the horizontally-tiling layers: a plain blur samples
+// transparency past each edge and leaves a visible dark seam where the tile
+// repeats, so the layer's own left/right neighbours are laid down first and
+// the whole strip is blurred as one, then cropped back to size.
+function depthTreat(cv, { blur = 0, saturate = 1, brightness = 1, wrap = false } = {}) {
+  const W = cv.width, H = cv.height;
+  const pad = blur > 0 ? Math.ceil(blur * 3) : 0;
+  // 1) assemble the source (plus wrap neighbours) unfiltered
+  const src = makeCanvas(W + pad * 2, H + pad * 2);
+  if (wrap && pad) {
+    src.g.drawImage(cv, pad - W, pad);
+    src.g.drawImage(cv, pad + W, pad);
+  }
+  src.g.drawImage(cv, pad, pad);
+  // 2) one filtered pass over the assembled strip
+  const out = makeCanvas(W + pad * 2, H + pad * 2);
+  out.g.filter = `saturate(${saturate}) brightness(${brightness})` + (blur ? ` blur(${blur}px)` : '');
+  out.g.drawImage(src.cv, 0, 0);
+  out.g.filter = 'none';
+  // 3) crop the padding away, back into the original canvas
+  const dst = cv.getContext('2d');
+  dst.setTransform(1, 0, 0, 1, 0, 0);
+  dst.clearRect(0, 0, W, H);
+  dst.drawImage(out.cv, pad, pad, W, H, 0, 0, W, H);
+}
+
 export function buildBackground() {
-  return {
+  const bg = {
     sky: paintSky(),
     clouds: paintClouds(),
     far: paintFar(),
     mid: paintMid(),
   };
+  for (const layer of Object.keys(DEPTH_GRADE)) depthTreat(bg[layer], DEPTH_GRADE[layer]);
+  return bg;
 }
 
 // ---------------- sky ----------------

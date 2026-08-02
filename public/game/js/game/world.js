@@ -14,6 +14,11 @@ export const GROUND_Y = 640;
 export const MAP_W = 4600;
 const GRAV = 2400;
 
+// Uniform darkening laid over the parallax stack — see drawBackground().
+export const BG_SCRIM = 'rgba(6,8,13,0.34)';
+// Lighter pass over the world-space building facades — see drawBack().
+export const FACADE_SCRIM = 'rgba(7,9,14,0.20)';
+
 // Stage 1 is the hand-authored, art-directed encounter layout.
 export const STAGE1_SPAWNS = [
   { x: 1080, min: 980, max: 1225, y: GROUND_Y - 40 },
@@ -543,6 +548,14 @@ export class World {
         g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx - 6, ry + 22); g.stroke();
       }
     }
+
+    // Depth scrim over the whole parallax stack. The layers are already graded
+    // down at bake time (see DEPTH_GRADE); this is the final, uniform push that
+    // guarantees nothing back here competes with the characters for attention.
+    // It lands before the world layer draws, so the street, props and everyone
+    // standing on them are unaffected — only what is genuinely behind.
+    g.fillStyle = BG_SCRIM;
+    g.fillRect(0, 0, vw, vh);
   }
 
   // World-space layers behind entities (call inside camera transform).
@@ -567,6 +580,18 @@ export class World {
       g.quadraticCurveTo((w.x0 + w.x1) / 2, Math.max(w.y0, w.y1) + w.sag, w.x1, w.y1);
       g.stroke();
     }
+    // Second, lighter scrim over the building facades only. They sit directly
+    // behind the characters — the busiest, brightest thing competing with them
+    // — but unlike the parallax stack they're world-space, so they're dimmed
+    // here instead. Everything gameplay-relevant (street, crates, barrels,
+    // pickups, decals) draws after this and keeps its full contrast.
+    // (halfVis is Infinity when culling is disabled, so the scrim gets its own
+    // bounded span rather than reusing it)
+    const scrimHalf = Number.isFinite(halfVis) ? halfVis + 400 : MAP_W;
+    const scrimY = (cam ? cam.y : GROUND_Y) - 1500;
+    g.fillStyle = FACADE_SCRIM;
+    g.fillRect(camX - scrimHalf, scrimY, scrimHalf * 2, 3000);
+
     drawSprite(g, this.ground, -250, GROUND_Y);
     // solid earth below the painted street — never let the sky bleed through
     const under = lingrad(g, 0, GROUND_Y + 82, 0, GROUND_Y + 700, [

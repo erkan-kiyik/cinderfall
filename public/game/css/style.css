@@ -91,8 +91,24 @@ html, body {
 /* ---------- HUD ---------- */
 #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
 
-/* ---------- premium glass HUD: transparent, top-anchored clusters ---------- */
-#hud { --hud-pad: 12px; --hud-gap: 6px; }
+/* ---------- premium glass HUD: transparent, top-anchored clusters ----------
+   Every size below is viewport-relative with a hard floor and ceiling, so the
+   overlay keeps one visual weight from a small phone in landscape up to a
+   desktop window: it can never grow large enough to eat the play area, and
+   never shrink below legibility. Width is the axis that actually constrains
+   this HUD (three clusters share one row), so the relative term tracks vw. */
+#hud {
+  --hud-pad: clamp(8px, 1.5vw, 14px);
+  --hud-gap: clamp(4px, 0.8vw, 7px);
+  --hud-fs: clamp(9px, 1.35vw, 11px);        /* cluster label text */
+  --hud-fs-sm: clamp(8px, 1.15vw, 9px);      /* sub-labels (LVL, THREAT…) */
+  /* Cluster caps chosen so left + centre + right can never sum past the row:
+     24 + 34 + 30 = 88vw, leaving the gaps and the SWAP button's reserved
+     right margin. */
+  --hud-w-l: clamp(112px, 24vw, 190px);
+  --hud-w-c: clamp(150px, 34vw, 250px);
+  --hud-w-r: 30vw;
+}
 
 /* frosted-glass surface shared by every HUD panel — slightly denser than
    before for text contrast, plus a hairline top highlight for depth */
@@ -109,7 +125,7 @@ html, body {
   position: absolute;
   top: calc(var(--hud-pad) + env(safe-area-inset-top));
   left: calc(var(--hud-pad) + env(safe-area-inset-left));
-  width: min(190px, 32vw); padding: 8px 10px;
+  width: var(--hud-w-l); padding: 8px 10px;
   display: flex; flex-direction: column; gap: 5px;
 }
 .hud-tc {
@@ -117,36 +133,40 @@ html, body {
   top: calc(var(--hud-pad) + env(safe-area-inset-top));
   left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: var(--hud-gap);
-  width: min(250px, 44vw);
+  width: var(--hud-w-c);
 }
 .hud-tr {
   position: absolute;
   top: calc(var(--hud-pad) + env(safe-area-inset-top));
   right: calc(58px + env(safe-area-inset-right));
-  padding: 6px 12px 8px; max-width: 40vw;
+  padding: 6px 12px 8px; max-width: var(--hud-w-r);
   display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
 }
 
 .vital-row { display: flex; align-items: center; gap: 8px; }
-.vital-ico { font-size: 9px; letter-spacing: 0.14em; color: var(--amber-dim); width: 16px; }
+.vital-ico { font-size: var(--hud-fs-sm); letter-spacing: 0.14em; color: var(--amber-dim); width: 16px; }
 
+/* max-width + overflow are load-bearing: the row is nowrap, so without them a
+   long objective line pushes past the cluster box and collides with the
+   weapon panel on the right. */
 .objective {
-  display: flex; gap: var(--s3); align-items: baseline; justify-content: center;
+  display: flex; gap: clamp(6px, 1.2vw, 12px); align-items: baseline; justify-content: center;
   border-left: 2px solid var(--amber);
-  padding: 5px 12px; box-sizing: border-box;
-  letter-spacing: 0.14em; font-size: 11px; white-space: nowrap;
+  padding: 5px clamp(7px, 1.2vw, 12px); box-sizing: border-box;
+  max-width: 100%; overflow: hidden;
+  letter-spacing: 0.14em; font-size: var(--hud-fs); white-space: nowrap;
 }
 .obj-label { color: var(--amber); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
 /* the mission-type description is redundant with the live count on the
    compact HUD — hide it to keep the top-centre cluster narrow */
 #obj-text { display: none; }
 #obj-count { color: var(--ink); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
-.stage-label { color: var(--amber-dim); font-weight: 700; padding-left: 10px; border-left: 1px solid var(--line-2); text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+.stage-label { color: var(--amber-dim); font-weight: 700; padding-left: clamp(6px, 1vw, 10px); border-left: 1px solid var(--line-2); text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
 
-.prog-row { display: flex; align-items: center; gap: var(--s2); padding: 4px 10px; width: 100%; }
-.lvl-label { font-size: 9px; letter-spacing: 0.14em; color: var(--amber-dim); width: 38px; white-space: nowrap; }
+.prog-row { display: flex; align-items: center; gap: var(--s2); padding: 4px clamp(6px, 1.1vw, 10px); width: 100%; }
+.lvl-label { font-size: var(--hud-fs-sm); letter-spacing: 0.14em; color: var(--amber-dim); width: 38px; white-space: nowrap; }
 .xp-track { flex: 1; height: 4px; }
-.hud-tokens { display: flex; align-items: center; gap: 4px; font-size: 10px; letter-spacing: 0.1em; color: var(--amber); white-space: nowrap; }
+.hud-tokens { display: flex; align-items: center; gap: 4px; font-size: var(--hud-fs-sm); letter-spacing: 0.1em; color: var(--amber); white-space: nowrap; }
 
 /* ---- shared currency icon canvases (header pills, HUD readout, crate cost) ---- */
 .cur-icon { display: inline-block; flex: none; vertical-align: middle; }
@@ -156,8 +176,8 @@ html, body {
 
 /* ---------- detection / threat meter: compact, shows only when aware ---------- */
 .det-bar {
-  display: flex; gap: var(--s2); align-items: center;
-  padding: 4px 10px; font-size: 9px; letter-spacing: 0.18em;
+  display: flex; gap: var(--s2); align-items: center; max-width: 100%;
+  padding: 4px clamp(6px, 1.1vw, 10px); font-size: var(--hud-fs-sm); letter-spacing: 0.18em;
   --det-color: #7fae6e;
   opacity: 0; transform: translateY(-5px);
   transition: opacity 0.35s var(--ease-out), transform 0.35s var(--ease-out);
@@ -233,11 +253,15 @@ html, body {
 
 /* top-right weapon + ammo readout — a soft drop-shadow keeps every HUD
    number legible over any part of the scene behind the glass panel */
-#weapon-name { font-size: 11px; letter-spacing: 0.2em; color: var(--amber); text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+#weapon-name {
+  font-size: var(--hud-fs); letter-spacing: 0.2em; color: var(--amber);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .ammo-row { line-height: 1; }
-#ammo-mag { font-size: 30px; font-weight: 700; letter-spacing: 0.04em; text-shadow: 0 1px 4px rgba(0,0,0,0.75); }
-.ammo-div { font-size: 16px; color: var(--ink-dim); margin: 0 3px; }
-#ammo-res { font-size: 15px; color: var(--ink-dim); text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+#ammo-mag { font-size: clamp(20px, 3.6vw, 30px); font-weight: 700; letter-spacing: 0.04em; text-shadow: 0 1px 4px rgba(0,0,0,0.75); }
+.ammo-div { font-size: clamp(11px, 2vw, 16px); color: var(--ink-dim); margin: 0 3px; }
+#ammo-res { font-size: clamp(10px, 1.9vw, 15px); color: var(--ink-dim); text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
 #reload-hint {
   font-size: 10px; letter-spacing: 0.28em; color: var(--amber);
   animation: blink 0.7s steps(2) infinite;
@@ -466,8 +490,14 @@ html, body {
   padding-left: calc(var(--s5) + env(safe-area-inset-left));
   padding-right: calc(var(--s5) + env(safe-area-inset-right));
 }
-.home-brand { font-size: 15px; font-weight: 700; letter-spacing: 0.22em; color: var(--ink); display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
-.home-brand span { font-size: 9px; letter-spacing: 0.38em; color: var(--amber-dim); font-weight: 600; }
+/* Header wordmark: relative, capped, and never allowed past ~40% of the row so
+   the currency pills to its right always keep their space. */
+.home-brand {
+  font-size: clamp(12px, 3.4vw, 16px); font-weight: 700; letter-spacing: 0.2em; color: var(--ink);
+  display: flex; flex-direction: column; gap: 2px; line-height: 1.2;
+  max-width: 46%; min-width: 0;
+}
+.home-brand span { font-size: clamp(7px, 1.9vw, 9px); letter-spacing: 0.34em; color: var(--amber-dim); font-weight: 600; }
 .pill-row { display: flex; align-items: center; gap: var(--s2); }
 .token-pill {
   display: flex; align-items: center; gap: var(--s2);
@@ -524,18 +554,25 @@ html, body {
 @keyframes tab-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
 
 /* PLAY */
-.hero { text-align: center; padding: 7vh 0 4vh; display: flex; flex-direction: column; align-items: center; }
-.hero-kicker { font-size: 11px; letter-spacing: 0.4em; color: var(--amber); font-weight: 600; margin-bottom: var(--s3); }
+.hero { text-align: center; padding: 6vh 0 4vh; display: flex; flex-direction: column; align-items: center; }
+.hero-kicker { font-size: clamp(9px, 1.1vw + 6px, 12px); letter-spacing: 0.4em; color: var(--amber); font-weight: 600; margin-bottom: var(--s3); }
+/* Wordmark: relative to the viewport but capped at both ends, and never wider
+   than its column. It tracks whichever axis is scarcer — the old 13vw/92px
+   pair overshot the frame on a narrow phone, and a width-only rule still
+   pushes DEPLOY below the fold on a short landscape screen, so the vh term
+   is what keeps the primary action visible there. */
 .hero-title {
-  font-size: clamp(52px, 13vw, 92px); font-weight: 700; letter-spacing: 0.1em; color: var(--ink);
+  font-size: clamp(30px, min(9.5vw, 11vh), 64px);
+  font-weight: 700; letter-spacing: 0.09em; color: var(--ink);
   text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5); margin-bottom: var(--s5);
+  max-width: 100%; line-height: 1.05;
 }
 .loadout-chips { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: center; margin-bottom: var(--s8); max-width: 480px; }
 .loadout-chips .chip {
   font-size: 10px; letter-spacing: 0.1em; padding: var(--s1) var(--s3); border-radius: var(--r1);
   border: 1px solid var(--line); color: var(--ink-2); background: var(--surface-1);
 }
-.btn.big { width: min(360px, 82vw); padding: var(--s5) 0; font-size: 16px; }
+.btn.big { width: min(360px, 82vw); padding: clamp(13px, 2.6vw, 20px) 0; font-size: clamp(13px, 3.2vw, 17px); }
 .controls-fold { max-width: 420px; margin: var(--s6) auto 0; }
 .controls-fold summary { cursor: pointer; text-align: center; font-size: 11px; letter-spacing: 0.28em; color: var(--amber-dim); list-style: none; padding: var(--s2); transition: color var(--dur-1) var(--ease); }
 .controls-fold summary:hover { color: var(--amber); }
@@ -787,10 +824,11 @@ html, body {
 .home-tab {
   flex: 1; padding: var(--s3) 0 var(--s4); border: none; background: none; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: var(--s1);
-  font-family: var(--font); font-size: 11px; letter-spacing: 0.18em; color: var(--ink-dim);
+  font-family: var(--font); font-size: clamp(8px, 2.4vw, 11px); letter-spacing: 0.14em; color: var(--ink-dim);
+  min-width: 0; overflow: hidden; white-space: nowrap;
   border-top: 2px solid transparent; transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
 }
-.home-tab .tab-ico { font-size: 15px; opacity: 0.9; }
+.home-tab .tab-ico { font-size: clamp(12px, 3.2vw, 15px); opacity: 0.9; }
 .home-tab:hover { color: var(--ink-2); }
 .home-tab.active { color: var(--amber); border-top-color: var(--amber); background: var(--surface-1); }
 .home-tab:focus-visible { outline: none; color: var(--amber); box-shadow: inset 0 0 0 2px rgba(214, 69, 58, 0.3); }
@@ -942,13 +980,33 @@ html, body {
 @media (max-width: 900px) {
   .slots { display: none; }
   .hud-tr { right: calc(56px + env(safe-area-inset-right)); padding: 5px 10px 6px; }
-  .hud-tc { width: min(250px, 48vw); }
-  #ammo-mag { font-size: 26px; }
+}
+/* Narrow viewports: below roughly 620px the three top clusters can no longer
+   all hold their full content in one row, so the centre cluster sheds the
+   parts that are pure decoration — the word OBJECTIVE and the stage chip —
+   and keeps the live count, which is the only thing there the player reads
+   mid-fight. This is what stops the objective row from running into the
+   weapon panel; the width caps alone can't save a nowrap row this tight. */
+@media (max-width: 620px) {
+  #hud { --hud-w-c: clamp(84px, 24vw, 150px); }
+  .obj-label, .stage-label { display: none; }
+  .objective { border-left-width: 2px; padding: 4px 8px; }
+  .lvl-label { width: 30px; }
 }
 /* Short viewports (small phones in landscape): tighten vertical rhythm. */
 @media (max-height: 400px) {
   #hud { --hud-pad: 8px; --hud-gap: 5px; }
   .hud-tl { padding: 6px 9px; gap: 4px; }
+}
+/* Short menu viewports: compress the hero's vertical rhythm so the wordmark,
+   the loadout chips and the DEPLOY button all fit above the fold instead of
+   the primary action falling off the bottom of a landscape phone. */
+@media (max-height: 520px) {
+  .hero { padding: 2.5vh 0 2vh; }
+  .hero-kicker { margin-bottom: var(--s1); letter-spacing: 0.3em; }
+  .hero-title { margin-bottom: var(--s3); }
+  .loadout-chips { margin-bottom: var(--s4); gap: var(--s1); }
+  .loadout-chips .chip { font-size: 9px; padding: 2px var(--s2); }
 }
 
 /* ---- energy weapon heat / charge meter (in-game HUD) ---- */

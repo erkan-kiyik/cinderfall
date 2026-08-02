@@ -6,7 +6,7 @@
 // body layers.
 
 import { BONES } from '../art/soldier.js';
-import { drawSprite } from '../art/paint.js';
+import { drawSprite, makeCanvas } from '../art/paint.js';
 import { ik2, clamp, lerp, easeOutCubic, TAU } from '../engine/math.js';
 
 // Draw a limb sprite stretched between two joints.
@@ -137,16 +137,104 @@ function drawGun(g, wpn, ws, wa) {
 // ent needs: x, y, facing, aimLocal, gaitPhase, speedNorm, onGround, airTime,
 // vy, crouchSpring, breathT, lean, hurtT, deadT.
 // weapon: null | { wpn, ws } — ws is the animation state from the entity.
-export function drawSoldier(g, parts, shadow, ent, weapon) {
+// ---------------------------------------------------------------- outline
+// Characters are the one thing the player has to track instantly, so they get
+// a dark contour that separates them from the facades and parallax behind.
+// The rig is a stack of ~14 overlapping sprites, so the contour can't be
+// stroked per part — every internal seam would show. Instead the whole body is
+// rendered once into a scratch buffer, flattened into a solid silhouette, and
+// stamped around itself before the real pixels go down. The two buffers are
+// reused by every entity in the frame, so nothing is allocated per draw.
+
+// Body bounds in entity-local space (pre-mirror), generous enough to hold the
+// head at full jump extension and a rifle at full forward reach. Symmetric on
+// x so the same box covers both facings.
+const OUTLINE_BOX = { x0: -95, y0: -162, x1: 95, y1: 32 };
+const OUTLINE_DIRS = [
+  [1, 0], [-1, 0], [0, 1], [0, -1],
+  [0.71, 0.71], [-0.71, 0.71], [0.71, -0.71], [-0.71, -0.71],
+];
+const OUTLINE_MAX_PX = 1400;   // refuse absurd buffers (broken zoom / huge DPR)
+
+let obBody = null, obSil = null;   // scratch: rendered body / flattened silhouette
+
+function outlineBuffers(w, h) {
+  if (!obBody || obBody.cv.width < w || obBody.cv.height < h) {
+    obBody = makeCanvas(w, h);
+    obSil = makeCanvas(w, h);
+  }
+}
+
+// Current world→device scale of `g`, so the contour stays a fixed number of
+// screen pixels at any camera zoom, DPR or per-entity scale (the Boss draws
+// itself scaled up) without any of that having to be plumbed through.
+function deviceScale(g) {
+  if (typeof g.getTransform !== 'function') return 1;
+  const m = g.getTransform();
+  return Math.hypot(m.a, m.b) || 1;
+}
+
+function drawBodyOutlined(g, parts, ent, weapon, o) {
+  const { x0, y0, x1, y1 } = OUTLINE_BOX;
+  const bw = x1 - x0, bh = y1 - y0;
+  const s = deviceScale(g);
+  const W = Math.ceil(bw * s), H = Math.ceil(bh * s);
+  if (W < 4 || H < 4 || W > OUTLINE_MAX_PX || H > OUTLINE_MAX_PX) {
+    drawBody(g, parts, ent, weapon);   // out of range — plain draw, never skip the character
+    return;
+  }
+  outlineBuffers(W, H);
+
+  // 1) the body, rendered at final device resolution into the scratch buffer
+  obBody.g.setTransform(1, 0, 0, 1, 0, 0);
+  obBody.g.clearRect(0, 0, W, H);
+  obBody.g.setTransform(s, 0, 0, s, -x0 * s, -y0 * s);
+  drawBody(obBody.g, parts, ent, weapon);
+
+  // 2) flatten it to a solid silhouette (source-in recolours every opaque px)
+  obSil.g.setTransform(1, 0, 0, 1, 0, 0);
+  obSil.g.globalCompositeOperation = 'source-over';
+  obSil.g.clearRect(0, 0, W, H);
+  obSil.g.drawImage(obBody.cv, 0, 0, W, H, 0, 0, W, H);
+  obSil.g.globalCompositeOperation = 'source-in';
+  obSil.g.fillStyle = o.color;
+  obSil.g.fillRect(0, 0, W, H);
+  obSil.g.globalCompositeOperation = 'source-over';
+
+  // 3) stamp the silhouette around the body, then the body over the top
+  const r = o.px / s;   // contour width in world units == o.px on screen
+  for (const d of OUTLINE_DIRS) {
+    g.drawImage(obSil.cv, 0, 0, W, H, x0 + d[0] * r, y0 + d[1] * r, bw, bh);
+  }
+  g.drawImage(obBody.cv, 0, 0, W, H, x0, y0, bw, bh);
+}
+
+export function drawSoldier(g, parts, shadow, ent, weapon, opts = null) {
   g.save();
   g.translate(ent.x, ent.y);
 
-  // contact shadow (before mirroring; fades in the air)
+  // contact shadow (before mirroring; fades in the air). Deliberately outside
+  // the outlined body — it's a ground blob, not part of the character.
   const airK = ent.onGround ? 1 : clamp(1 - ent.airTime * 1.8, 0.25, 1);
   g.globalAlpha = 0.9 * airK;
   drawSprite(g, shadow, 0, 1, 0, 1.15 * airK + 0.25, 1);
   g.globalAlpha = 1;
 
+  // Corpses skip the contour: they rotate and fade out via globalAlpha, which
+  // the buffered path would apply to the scratch canvas instead of the blit,
+  // and a fading body no longer needs to read as a live threat.
+  const o = opts && opts.outline;
+  if (o && ent.deadT <= 0) drawBodyOutlined(g, parts, ent, weapon, o);
+  else drawBody(g, parts, ent, weapon);
+
+  g.restore();
+}
+
+// The rig itself, in entity-local space (caller has already translated to
+// ent.x/ent.y). Split out of drawSoldier so it can be rendered either straight
+// to the screen or into the outline scratch buffer.
+function drawBody(g, parts, ent, weapon) {
+  g.save();
   g.scale(ent.facing, 1);
 
   // death fall: tip backward around the feet, limbs go limp

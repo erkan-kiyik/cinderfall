@@ -773,9 +773,9 @@ export class Player {
     }
   }
 
-  draw(g) {
+  draw(g, opts = null) {
     const cur = this.cur;
-    drawSoldier(g, this.parts, this.shadow, this, { wpn: cur.wpn, ws: cur.ws });
+    drawSoldier(g, this.parts, this.shadow, this, { wpn: cur.wpn, ws: cur.ws }, opts);
   }
 }
 

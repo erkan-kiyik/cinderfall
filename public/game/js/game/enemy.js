@@ -510,8 +510,8 @@ export class Enemy {
     this.fx.casing(ejl.x, ejl.y, this.facing, 4.6);
   }
 
-  draw(g) {
-    drawSoldier(g, this.parts, this.shadow, this, { wpn: this.wpn, ws: this.ws });
+  draw(g, opts = null) {
+    drawSoldier(g, this.parts, this.shadow, this, { wpn: this.wpn, ws: this.ws }, opts);
   }
 }
 
@@ -568,13 +568,13 @@ export class Boss extends Enemy {
     }
   }
 
-  draw(g) {
+  draw(g, opts = null) {
     g.save();
     g.filter = 'hue-rotate(-16deg) saturate(1.35) brightness(0.94)';
     g.translate(this.x, this.y);
     g.scale(this.visualScale, this.visualScale);
     g.translate(-this.x, -this.y);
-    drawSoldier(g, this.parts, this.shadow, this, { wpn: this.wpn, ws: this.ws });
+    drawSoldier(g, this.parts, this.shadow, this, { wpn: this.wpn, ws: this.ws }, opts);
     g.restore();
   }
 }
