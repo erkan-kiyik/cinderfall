@@ -6,7 +6,7 @@
 // body layers.
 
 import { BONES } from '../art/soldier.js';
-import { drawSprite, makeCanvas } from '../art/paint.js';
+import { drawSprite } from '../art/paint.js';
 import { ik2, clamp, lerp, easeOutCubic, TAU } from '../engine/math.js';
 
 // Draw a limb sprite stretched between two joints.
@@ -16,6 +16,16 @@ function drawBone(g, spr, x0, y0, x1, y1, len, sx = 1) {
   const rot = Math.atan2(-dx, dy);
   drawSprite(g, spr, x0, y0, rot, sx, d / len);
 }
+
+// Gait humanisation constants.
+// WEIGHT_BIAS: how much more the body rises over one leg than the other
+// (0 = perfectly symmetric machine gait). PELVIC_LIST: hip drop toward the
+// swinging leg, in world units. STEP_BIAS: stride-length difference between
+// the two legs. All deliberately small — the read should be "a person", not
+// "an injured person".
+const WEIGHT_BIAS = 0.16;
+const PELVIC_LIST = 1.15;
+const STEP_BIAS = 0.12;
 
 const rot2 = (px, py, ang) => {
   const c = Math.cos(ang), s = Math.sin(ang);
@@ -32,17 +42,31 @@ export function computePose(ent) {
   const mv = clamp(sp * 5, 0, 1);
 
   const breath = Math.sin(ent.breathT * 1.8) * (1 - sp * 0.7);
-  const bob = Math.abs(Math.sin(ent.gaitPhase)) * 3.1 * sp * (1 - air);
-  // Weight shifts side to side once per full stride (half the bob's rate), so
-  // the walk cycle isn't a perfectly symmetric up-down piston.
-  const sway = Math.sin(ent.gaitPhase * 0.5) * 1.4 * sp * (1 - air);
+  // Footing irregularity the Player integrates (see gaitNoise there); zero
+  // for entities that don't track it, so hostiles keep the tidy cycle.
+  const noise = (ent.gaitNoise || 0) * (1 - air);
+
+  // Vertical bob. Real gait is not symmetric: the body rises less over the
+  // weaker/trailing leg than the driving one, so alternate strides get
+  // different amplitude. WEIGHT_BIAS is what stops the walk reading as a
+  // two-frame piston loop.
+  const stride = Math.sin(ent.gaitPhase);
+  const strideSide = Math.sin(ent.gaitPhase * 0.5);          // −1..1, one full stride
+  const bobAmp = 3.1 * (1 + WEIGHT_BIAS * strideSide);
+  const bob = Math.abs(stride) * bobAmp * sp * (1 - air) + noise * 0.9;
+
+  // Lateral weight shift once per full stride, plus a pelvic list: the hip
+  // drops toward the swinging leg as the opposite one takes the load, which
+  // is the single strongest "this is a person walking" cue.
+  const sway = strideSide * 1.4 * sp * (1 - air);
+  const pelvicList = strideSide * PELVIC_LIST * sp * (1 - air);
 
   // stumbleLean is a transient the Player adds on top of its damped lean —
   // kept separate so the tilt can't feed back into the damping and linger.
   const lean = ent.lean + (ent.stumbleLean || 0) + air * clamp(ent.vy * 0.00035, -0.12, 0.2);
 
-  const hipX = lean * 13 + sway;
-  const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4 + breath * 0.4;
+  const hipX = lean * 13 + sway + noise * 1.6;
+  const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4 + breath * 0.4 + pelvicList;
 
   const torsoLen = BONES.torso - crouch * 2.5;
   const neck = {
@@ -61,10 +85,15 @@ export function computePose(ent) {
   const liftH = 3.5 + sp * 8;
   for (let i = 0; i < 2; i++) {
     const ph = ent.gaitPhase + (i ? Math.PI : 0);
-    const gx = -Math.cos(ph) * S + hipX * 0.55;
-    const lift = Math.max(0, Math.sin(ph)) * liftH;
+    // One leg takes a marginally longer step and lifts marginally higher than
+    // the other. Nobody's stride is truly even, and the asymmetry is what
+    // keeps a looping cycle from reading as mechanical.
+    const legS = S * (1 + (i ? STEP_BIAS : -STEP_BIAS));
+    const legLift = liftH * (1 + (i ? -STEP_BIAS : STEP_BIAS));
+    const gx = -Math.cos(ph) * legS + hipX * 0.55;
+    const lift = Math.max(0, Math.sin(ph)) * legLift;
     const standX = i ? -4.5 : 5.5;
-    let fx = lerp(standX, gx, mv);
+    let fx = lerp(standX, gx, mv) + noise * 0.8;
     let fy = -lerp(0, lift, mv);
     if (air > 0) {
       // tuck in the air; reach for the ground while falling fast
@@ -142,112 +171,66 @@ function drawGun(g, wpn, ws, wa) {
 // ent needs: x, y, facing, aimLocal, gaitPhase, speedNorm, onGround, airTime,
 // vy, crouchSpring, breathT, lean, hurtT, deadT.
 // weapon: null | { wpn, ws } — ws is the animation state from the entity.
-// ---------------------------------------------------------------- outline
-// Characters are the one thing the player has to track instantly, so they get
-// a dark contour that separates them from the facades and parallax behind.
-// The rig is a stack of ~14 overlapping sprites, so the contour can't be
-// stroked per part — every internal seam would show. Instead the whole body is
-// rendered once into a scratch buffer, flattened into a solid silhouette, and
-// stamped around itself before the real pixels go down. The two buffers are
-// reused by every entity in the frame, so nothing is allocated per draw.
+// ------------------------------------------------------------ ground accent
+// Characters used to be separated from the background by a dark contour
+// stamped around a flattened copy of the whole rig. At any real device scale
+// that stack of offset silhouettes read as a dark slab behind the operator
+// rather than an edge, so it is gone entirely — no scratch buffers, no
+// silhouette layers, nothing drawn behind the body.
+//
+// What replaces it is a single hairline accent under the feet: one tapered
+// stroke that marks where the character is standing. It is the only mark
+// besides the body itself, it never overlaps the sprite, and it costs one
+// path per entity instead of eight full-rig blits.
 
-// Body bounds in entity-local space (pre-mirror), generous enough to hold the
-// head at full jump extension and a rifle at full forward reach, plus the
-// headroom squash & stretch needs at its limits (see SQUASH_LIMIT in
-// player.js — a stretched body reaches ~20% higher than a neutral one, and a
-// squashed one ~20% wider). Symmetric on x so one box covers both facings.
-const OUTLINE_BOX = { x0: -118, y0: -184, x1: 118, y1: 36 };
-const OUTLINE_DIRS = [
-  [1, 0], [-1, 0], [0, 1], [0, -1],
-  [0.71, 0.71], [-0.71, 0.71], [0.71, -0.71], [-0.71, -0.71],
-];
-const OUTLINE_MAX_PX = 1400;   // refuse absurd buffers (broken zoom / huge DPR)
+// Accent geometry in entity-local units. Width is deliberately narrower than
+// the stance so it reads as a marker, not a shadow.
+const ACCENT_W = 17;
 
-let obBody = null, obSil = null;   // scratch: rendered body / flattened silhouette
-
-function outlineBuffers(w, h) {
-  if (!obBody || obBody.cv.width < w || obBody.cv.height < h) {
-    obBody = makeCanvas(w, h);
-    obSil = makeCanvas(w, h);
-  }
-}
-
-// Current world→device scale of `g`, so the contour stays a fixed number of
-// screen pixels at any camera zoom, DPR or per-entity scale (the Boss draws
-// itself scaled up) without any of that having to be plumbed through.
-function deviceScale(g) {
-  if (typeof g.getTransform !== 'function') return 1;
-  const m = g.getTransform();
-  return Math.hypot(m.a, m.b) || 1;
-}
-
-function drawBodyOutlined(g, parts, ent, weapon, o) {
-  const { x0, y0, x1, y1 } = OUTLINE_BOX;
-  const bw = x1 - x0, bh = y1 - y0;
-  const s = deviceScale(g);
-  const W = Math.ceil(bw * s), H = Math.ceil(bh * s);
-  if (W < 4 || H < 4 || W > OUTLINE_MAX_PX || H > OUTLINE_MAX_PX) {
-    drawBody(g, parts, ent, weapon);   // out of range — plain draw, never skip the character
-    return;
-  }
-  outlineBuffers(W, H);
-
-  // 1) the body, rendered at final device resolution into the scratch buffer.
-  //    State is reset explicitly, and the clear covers the whole buffer rather
-  //    than just the W/H window — the buffers are shared and only ever grow, so
-  //    a smaller entity must not be able to pick up a larger one's leftovers.
-  obBody.g.setTransform(1, 0, 0, 1, 0, 0);
-  obBody.g.globalCompositeOperation = 'source-over';
-  obBody.g.globalAlpha = 1;
-  obBody.g.filter = 'none';
-  obBody.g.clearRect(0, 0, obBody.cv.width, obBody.cv.height);
-  obBody.g.setTransform(s, 0, 0, s, -x0 * s, -y0 * s);
-  drawBody(obBody.g, parts, ent, weapon);
-
-  // 2) flatten it to a solid silhouette (source-in recolours every opaque px)
-  obSil.g.setTransform(1, 0, 0, 1, 0, 0);
-  obSil.g.globalCompositeOperation = 'source-over';
-  obSil.g.globalAlpha = 1;
-  obSil.g.filter = 'none';
-  obSil.g.clearRect(0, 0, obSil.cv.width, obSil.cv.height);
-  obSil.g.drawImage(obBody.cv, 0, 0, W, H, 0, 0, W, H);
-  obSil.g.globalCompositeOperation = 'source-in';
-  obSil.g.fillStyle = o.color;
-  obSil.g.fillRect(0, 0, W, H);
-  obSil.g.globalCompositeOperation = 'source-over';
-
-  // 3) stamp the silhouette around the body, then the body over the top
-  const r = o.px / s;   // contour width in world units == o.px on screen
-  for (const d of OUTLINE_DIRS) {
-    g.drawImage(obSil.cv, 0, 0, W, H, x0 + d[0] * r, y0 + d[1] * r, bw, bh);
-  }
-  g.drawImage(obBody.cv, 0, 0, W, H, x0, y0, bw, bh);
+function drawGroundAccent(g, ent, o) {
+  // Fades out as the character leaves the ground — an accent pinned to the
+  // street means nothing while airborne.
+  const air = ent.onGround ? 1 : clamp(1 - ent.airTime * 2.6, 0, 1);
+  if (air <= 0.01) return;
+  const grad = g.createLinearGradient(-ACCENT_W, 0, ACCENT_W, 0);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(0.5, o.color);
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  g.save();
+  g.globalAlpha = air;
+  g.strokeStyle = grad;
+  g.lineWidth = o.px;
+  g.lineCap = 'butt';
+  g.beginPath();
+  g.moveTo(-ACCENT_W, 1.5);
+  g.lineTo(ACCENT_W, 1.5);
+  g.stroke();
+  g.restore();
 }
 
 export function drawSoldier(g, parts, shadow, ent, weapon, opts = null) {
   g.save();
   g.translate(ent.x, ent.y);
 
-  // contact shadow (before mirroring; fades in the air). Deliberately outside
-  // the outlined body — it's a ground blob, not part of the character.
+  // contact shadow (before mirroring; fades in the air)
   const airK = ent.onGround ? 1 : clamp(1 - ent.airTime * 1.8, 0.25, 1);
   g.globalAlpha = 0.9 * airK;
   drawSprite(g, shadow, 0, 1, 0, 1.15 * airK + 0.25, 1);
   g.globalAlpha = 1;
 
-  // Corpses skip the contour: they rotate and fade out via globalAlpha, which
-  // the buffered path would apply to the scratch canvas instead of the blit,
-  // and a fading body no longer needs to read as a live threat.
-  const o = opts && opts.outline;
-  if (o && ent.deadT <= 0) drawBodyOutlined(g, parts, ent, weapon, o);
-  else drawBody(g, parts, ent, weapon);
+  // Position accent, under the body and skipped for corpses (a downed
+  // operator is not a position the player needs marked).
+  const o = opts && opts.accent;
+  if (o && ent.deadT <= 0) drawGroundAccent(g, ent, o);
+
+  drawBody(g, parts, ent, weapon);
 
   g.restore();
 }
 
 // The rig itself, in entity-local space (caller has already translated to
 // ent.x/ent.y). Split out of drawSoldier so it can be rendered either straight
-// to the screen or into the outline scratch buffer.
+// to the screen or, historically, into an offscreen buffer.
 function drawBody(g, parts, ent, weapon) {
   g.save();
   g.scale(ent.facing, 1);

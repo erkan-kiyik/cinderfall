@@ -90,6 +90,40 @@
   * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
 }
 
+/* ============ device-specific render override ============
+   Set by engine/device.js from live capability tests, not UA sniffing. These
+   are the differences that otherwise only surface once the APK is built:
+   the Android WebView the game ships inside does not always implement the
+   same CSS the desktop browser it was developed against does.
+
+   --ui-scale is recomputed on every resize/orientation change from whichever
+   viewport axis is scarcer, so the whole overlay tightens together instead of
+   each cluster drifting on its own on unusual phone aspect ratios. */
+:root { --ui-scale: 1; }
+
+/* Frosted glass degrades to nothing without backdrop-filter — the panels are
+   only ~40% opaque, so on a WebView that ignores the blur the HUD text lands
+   straight on the scene and becomes unreadable. Fall back to an opaque
+   surface instead of a transparent one. */
+html.no-backdrop-filter .glass,
+html.no-backdrop-filter .notify,
+html.no-backdrop-filter .tc-pause {
+  background: rgba(10, 13, 18, 0.88) !important;
+  -webkit-backdrop-filter: none !important;
+          backdrop-filter: none !important;
+}
+
+/* Without env() support the safe-area terms in every inset resolve to 0 and
+   the HUD sits under the status bar / gesture pill. Reserve a fixed margin. */
+html.no-safe-area #hud { --hud-pad: 16px; }
+html.no-safe-area .home-top { padding-top: 20px; }
+html.no-safe-area .home-legal { padding-bottom: 16px; }
+
+/* The packaged app never shows a desktop pointer, and its viewport is the
+   whole screen — no browser chrome to leave room for. */
+html.is-native body { overscroll-behavior: none; }
+html.is-native #game { cursor: none; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* ---------- native-app touch behaviour ----------
@@ -138,10 +172,10 @@ html, body {
    never shrink below legibility. Width is the axis that actually constrains
    this HUD (three clusters share one row), so the relative term tracks vw. */
 #hud {
-  --hud-pad: clamp(8px, 1.5vw, 14px);
-  --hud-gap: clamp(4px, 0.8vw, 7px);
-  --hud-fs: clamp(9px, 1.35vw, 11px);        /* cluster label text */
-  --hud-fs-sm: clamp(8px, 1.15vw, 9px);      /* sub-labels (LVL, THREAT…) */
+  --hud-pad: calc(clamp(8px, 1.5vw, 14px) * var(--ui-scale));
+  --hud-gap: calc(clamp(4px, 0.8vw, 7px) * var(--ui-scale));
+  --hud-fs: calc(clamp(9px, 1.35vw, 11px) * var(--ui-scale));        /* cluster label text */
+  --hud-fs-sm: calc(clamp(8px, 1.15vw, 9px) * var(--ui-scale));      /* sub-labels (LVL, THREAT…) */
   /* Cluster caps chosen so left + centre + right can never sum past the row:
      24 + 34 + 30 = 88vw, leaving the gaps and the SWAP button's reserved
      right margin. */
@@ -252,6 +286,71 @@ html, body {
 @keyframes lore-out {
   from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   to { opacity: 0; transform: translate(-50%, -56%) scale(0.98); }
+}
+
+/* ---------- attempt counter ----------
+   Deliberately quiet during play (it's a running tally, not an alert) and
+   loud inside the briefing card, where it's the first thing a returning
+   player looks for after a death. */
+.attempt-badge {
+  position: absolute;
+  top: calc(var(--hud-pad) + env(safe-area-inset-top) + 84px);
+  left: 50%; transform: translateX(-50%);
+  font-size: calc(clamp(9px, 1.3vw, 11px) * var(--ui-scale));
+  letter-spacing: 0.22em; font-weight: 700;
+  color: rgba(255, 120, 96, 0.62);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none; white-space: nowrap;
+}
+.lore-attempt {
+  margin-top: 10px; padding-top: 9px;
+  border-top: 1px solid rgba(214, 69, 58, 0.28);
+  font-size: clamp(11px, 2vw, 15px); letter-spacing: 0.26em; font-weight: 700;
+  color: var(--amber-bright);
+  text-shadow: 0 0 12px rgba(255, 92, 70, 0.45);
+  animation: attempt-pop 0.5s var(--ease-out);
+}
+@keyframes attempt-pop {
+  0% { opacity: 0; transform: scale(0.86); }
+  60% { transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+/* End screen: the attempt number is the headline stat of a failed run. */
+.end-attempt {
+  font-size: clamp(13px, 2.4vw, 18px); letter-spacing: 0.3em; font-weight: 700;
+  color: var(--amber-bright); margin-bottom: var(--s4);
+  text-shadow: 0 0 14px rgba(255, 92, 70, 0.4);
+}
+
+/* Sits above the menu it appears over (both are .overlay at z-index 20).
+   .dim's 0.82 backdrop isn't enough to bury a saturated DEPLOY button
+   behind it, and this is a modal — it should own the screen while it's up. */
+#daily { z-index: 30; background: rgba(5, 7, 10, 0.97); }
+
+/* ---------- daily login reward ----------
+   A seven-cell track so the player can see the streak they're building and
+   what day 7 is worth — the reason to come back tomorrow rather than a
+   generic "here's some currency" popup. */
+.daily-track {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s2);
+  max-width: 420px; margin: 0 auto var(--s6);
+}
+.daily-cell {
+  padding: var(--s3) 2px; border-radius: var(--r2); text-align: center;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
+  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease);
+}
+.daily-cell-day { font-size: 8px; letter-spacing: 0.1em; color: var(--ink-dim); }
+.daily-cell-amt { font-size: 12px; font-weight: 700; color: var(--ink); margin-top: 3px; }
+.daily-cell.diamond .daily-cell-amt { color: #6fd4ec; }
+.daily-cell.done { opacity: 0.42; }
+.daily-cell.today {
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: var(--sh-2), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 20px -4px rgba(255, 92, 70, 0.6);
+}
+.daily-streak {
+  font-size: 11px; letter-spacing: 0.18em; color: var(--ink-dim); margin-top: var(--s4);
 }
 
 /* ---------- detection / threat meter: compact, shows only when aware ---------- */

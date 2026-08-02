@@ -166,6 +166,38 @@ export class Progression {
 
   hasRun() { return !!this.loadRun(); }
 
+  // ---- attempt counter (Geometry Dash style) ----
+  // Per-stage failure tally, shown at stage start and on the death screen.
+  // It counts how many times the player has died trying to clear this exact
+  // stage, and resets the moment they clear it — so the number always reads
+  // as "how long this wall has held me up", not a lifetime death count.
+
+  attempts(stage) {
+    const a = this.data.attempts || {};
+    return a[stage] || 1;          // the run in progress is attempt #1
+  }
+
+  // Called on death. Returns the number the *next* run will be labelled.
+  recordAttempt(stage) {
+    if (!this.data.attempts) this.data.attempts = {};
+    const next = (this.data.attempts[stage] || 1) + 1;
+    this.data.attempts[stage] = next;
+    // Best-effort lifetime tally for the stats screen / share card.
+    this.data.totalAttempts = (this.data.totalAttempts || 0) + 1;
+    this.save();
+    return next;
+  }
+
+  // Cleared it — the counter has done its job, so it goes back to 1.
+  clearAttempts(stage) {
+    if (this.data.attempts && this.data.attempts[stage]) {
+      delete this.data.attempts[stage];
+      this.save();
+    }
+  }
+
+  get totalAttempts() { return this.data.totalAttempts || 0; }
+
   isUnlocked(id) { return !!this.data.unlocked[id]; }
 
   // Returns { leveledUp, newLevel, newUnlocks[] } for the caller to react to

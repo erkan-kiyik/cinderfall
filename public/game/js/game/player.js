@@ -5,10 +5,36 @@
 // heavy slashes. All transitions are spring- or envelope-blended.
 
 import {
-  clamp, lerp, damp, rand, randSpread, easeOutCubic, easeInOutQuad, TAU,
+  clamp, lerp, damp, rand, randSpread, easeOutCubic, easeInOutQuad, TAU, makeNoise1D,
 } from '../engine/math.js';
 import { newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld } from './rig.js';
 import { drawSoldier } from './rig.js';
+
+// Footing wobble. Seeded and continuous, so the irregularity is repeatable
+// frame to frame (no per-frame jitter) but never lands on the same stride
+// twice — what separates a person walking from a rig cycling two poses.
+const gaitNoise = makeNoise1D(2291);
+// Seconds of sustained sprinting to reach full forward pitch, and to unwind
+// it again. Asymmetric on purpose: a runner leans in faster than they
+// straighten back up.
+const SPRINT_LEAN_RAMP = 1.35;
+const SPRINT_LEAN_DECAY = 2.1;
+const SPRINT_LEAN_MAX = 0.14;
+
+// Recoil signatures by weapon feel. `kick` scales the rearward punch, `climb`
+// the muzzle rise, `shake` the camera trauma, and `vibe` seeds the energy
+// shudder envelope. A heavy weapon throws the whole frame around; an energy
+// emitter barely climbs but never stops humming while it fires.
+const RECOIL_FEEL = {
+  standard: { kick: 1,    climb: 1,    shake: 1,    vibe: 0 },
+  light:    { kick: 0.82, climb: 0.9,  shake: 0.8,  vibe: 0 },
+  heavy:    { kick: 1.45, climb: 1.5,  shake: 1.7,  vibe: 0 },
+  energy:   { kick: 0.9,  climb: 0.42, shake: 0.85, vibe: 0.55 },
+  beam:     { kick: 0.35, climb: 0.18, shake: 0.5,  vibe: 0.8 },
+};
+// Energy shudder: how fast it oscillates (rad/s) and how quickly it dies.
+const VIBE_FREQ = 46;
+const VIBE_DECAY = 4.2;
 
 // Movement feel: snappier ground acceleration and blends for more responsive
 // controls, without changing top speeds (preserves the existing game balance).
@@ -55,6 +81,8 @@ export class Player {
     this.facing = 1;
     this.aimLocal = 0; this.aimSmooth = 0; this.aimWorld = 0;
     this.gaitPhase = 0; this.speedNorm = 0;
+    this.sprintHold = 0;    // integrated sprint time → forward torso pitch
+    this.gaitNoise = 0;     // per-stride footing irregularity, read by the rig
     this.breathT = rand(0, 9); this.lean = 0;
     this.crouchSpring = 0; this.crouchVel = 0;
     this.crouchHold = 0;          // 0..1 held-crouch blend (feeds the rig pose)
@@ -228,7 +256,24 @@ export class Player {
     const sp = Math.abs(this.vx);
     this.gaitPhase += sp * dt / 23;
     this.speedNorm = sp / SPRINT;
-    this.lean = damp(this.lean, (this.vx / SPRINT) * 0.15 * this.facing, 6, dt);
+
+    // Sustained-sprint torso lean. A runner doesn't reach their forward
+    // pitch instantly — it builds over the first seconds of a sprint and
+    // unwinds slowly once they drop back to a jog, so this integrates
+    // sprint time rather than reading sprintBlend directly.
+    this.sprintHold = clamp(
+      this.sprintHold + (this.sprinting ? dt / SPRINT_LEAN_RAMP : -dt / SPRINT_LEAN_DECAY),
+      0, 1
+    );
+    const baseLean = (this.vx / SPRINT) * 0.15 * this.facing;
+    const runLean = this.sprintHold * SPRINT_LEAN_MAX * this.facing;
+    this.lean = damp(this.lean, baseLean + runLean, 6, dt);
+
+    // Footing noise: a slow, seeded wobble that makes each stride land
+    // slightly differently instead of stamping the same two frames forever.
+    // Amplitude scales with speed — a walk is tidy, a sprint gets sloppy.
+    this.gaitNoise = gaitNoise(this.gaitPhase * 0.37) * this.speedNorm;
+
     this.breathT += dt;
 
     // footsteps
@@ -433,6 +478,10 @@ export class Player {
     ws.flashT = Math.max(0, ws.flashT - dt * 14);
     ws.boltBack = Math.max(0, ws.boltBack - dt * 9);
     ws.slideBack = Math.max(0, ws.slideBack - dt * 10);
+    // Energy-weapon vibration envelope: emitters don't buck like a cartridge
+    // gun, they hum. This decays much faster than the recoil spring and is
+    // read below as a high-frequency shudder rather than a single kick.
+    ws.vibe = Math.max(0, (ws.vibe || 0) - dt * VIBE_DECAY);
     this.fireCd -= dt;
     // aim-drift bloom recovers faster → tighter sustained accuracy
     this.recoilAccum = Math.max(0, this.recoilAccum - dt * 0.17);
@@ -442,6 +491,15 @@ export class Player {
 
     // baseline pose modifiers
     let offX = 0, offY = 0, rot = 0;
+    // Energy shudder: a fast oscillation while the vibration envelope is
+    // live. Frequency is fixed and high enough to read as a buzz at 60fps
+    // rather than a wobble; amplitude rides the envelope down.
+    if (ws.vibe > 0.001) {
+      const v = ws.vibe * (wpn.vibeAmp || 1);
+      offY += Math.sin(this.time * VIBE_FREQ) * 0.9 * v;
+      offX += Math.sin(this.time * VIBE_FREQ * 1.37) * 0.6 * v;
+      rot += Math.sin(this.time * VIBE_FREQ * 0.83) * 0.012 * v;
+    }
     // idle sway + breathing
     rot += Math.sin(this.breathT * 1.7) * 0.014 * (1 - this.speedNorm);
     offY += Math.sin(this.breathT * 1.7 + 1) * 0.4;
@@ -733,13 +791,21 @@ export class Player {
     const pat = wpn.recoilPattern;
     const patMul = pat ? pat[ws.shotIndex % pat.length] : 1;
     ws.shotIndex = (ws.shotIndex || 0) + 1;
-    ws.recoilVel += wpn.recoilKick * 2.1 * patMul * chargeMul;
-    ws.recoilRotVel -= wpn.recoilRot * 18 * patMul * chargeMul;
+    // Per-class recoil signature. `recoilFeel` lets a weapon say how its kick
+    // should be shaped rather than just how big it is:
+    //   heavy  — everything amplified, and the muzzle climbs harder
+    //   energy — flatter climb (no cartridge to buck against) but it leaves a
+    //            vibration envelope behind, so it reads as powered, not inert
+    // Anything without a declared feel keeps the original conventional curve.
+    const feel = RECOIL_FEEL[wpn.recoilFeel] || RECOIL_FEEL.standard;
+    ws.recoilVel += wpn.recoilKick * 2.1 * patMul * chargeMul * feel.kick;
+    ws.recoilRotVel -= wpn.recoilRot * 18 * patMul * chargeMul * feel.climb;
+    if (feel.vibe) ws.vibe = Math.min(1, (ws.vibe || 0) + feel.vibe * chargeMul);
     if (wpn.bolt) ws.boltBack = 1;
     if (wpn.slide) ws.slideBack = 1;
     this.recoilAccum = Math.min(0.05, this.recoilAccum + 0.008);
-    this.cam.recoil(wpn.camKick * chargeMul);
-    this.cam.addTrauma(wpn.camTrauma * chargeMul);
+    this.cam.recoil(wpn.camKick * chargeMul * feel.kick);
+    this.cam.addTrauma(wpn.camTrauma * chargeMul * feel.shake);
     if (wpn.heatPerShot) {
       ws.heat = Math.min(1, ws.heat + wpn.heatPerShot);
       if (ws.heat >= 1) { ws.overheated = true; if (this.audio.overheat) this.audio.overheat(); }

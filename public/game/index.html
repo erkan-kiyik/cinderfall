@@ -51,16 +51,21 @@
 
     <!-- Mission briefing — centre screen for a few seconds when a stage opens -->
     <div id="lore" class="lore hidden">
-      <div class="lore-tag">SECTOR 9</div>
-      <div class="lore-title">CINDERFALL DISTRICT</div>
-      <div class="lore-status">STATUS: <b>HOSTILE</b></div>
-      <div class="lore-body">Neutralize enemy forces and secure the perimeter.</div>
+      <div class="lore-tag" data-i18n="lore.tag">SECTOR 9</div>
+      <div class="lore-title" data-i18n="lore.title">CINDERFALL DISTRICT</div>
+      <div class="lore-status"><span data-i18n="lore.statusLabel">STATUS:</span> <b data-i18n="lore.hostile">HOSTILE</b></div>
+      <div class="lore-body" data-i18n="lore.body">Neutralize enemy forces and secure the perimeter.</div>
+      <div id="lore-attempt" class="lore-attempt hidden"></div>
     </div>
+
+    <!-- Attempt counter — pinned under the objective while playing, the way a
+         Geometry Dash run keeps its attempt number on screen -->
+    <div id="attempt-badge" class="attempt-badge hidden"></div>
 
     <!-- TOP CENTER — objective, progression, threat -->
     <div class="hud-tc">
       <div class="objective glass">
-        <span class="obj-label">OBJECTIVE</span>
+        <span class="obj-label" data-i18n="hud.objective">OBJECTIVE</span>
         <span id="obj-text">ELIMINATE ALL HOSTILES</span>
         <span id="obj-count">0 / 0</span>
         <span id="stage-label" class="stage-label">STAGE 1</span>
@@ -70,7 +75,7 @@
         <div class="bar xp-track"><div id="xp-fill" class="bar-fill xp"></div></div>
       </div>
       <div id="det-bar" class="det-bar glass">
-        <span class="det-ico">THREAT</span>
+        <span class="det-ico" data-i18n="hud.threat">THREAT</span>
         <div class="bar det-track"><div id="det-fill" class="bar-fill det"></div></div>
         <span id="det-label" class="det-label">HIDDEN</span>
       </div>
@@ -90,7 +95,7 @@
         <span class="ammo-div">/</span>
         <span id="ammo-res">120</span>
       </div>
-      <div id="reload-hint" class="hidden">RELOADING</div>
+      <div id="reload-hint" class="hidden" data-i18n="hud.reloading">RELOADING</div>
       <div id="wpn-meter" class="wpn-meter hidden"><div id="wpn-meter-fill" class="wpn-meter-fill"></div></div>
       <div class="slots">
         <span id="slot-1" class="slot active"><canvas id="slot-1-icon" class="slot-icon"></canvas>1 RIFLE</span>
@@ -105,10 +110,10 @@
     <div id="dmg-right" class="dmg-dir right"></div>
     <div id="dmg-omni" class="dmg-dir omni"></div>
     <div id="hitmark"></div>
-    <div id="stealth-prompt" class="stealth-prompt">TAKEDOWN — E</div>
+    <div id="stealth-prompt" class="stealth-prompt" data-i18n="hud.takedown">TAKEDOWN — E</div>
     <div id="damage-flash"></div>
     <div id="vignette"></div>
-    <div class="rotate-hint"><span class="ri-icon">⟳</span><span class="ri-text">ROTATE TO LANDSCAPE</span></div>
+    <div class="rotate-hint"><span class="ri-icon">⟳</span><span class="ri-text" data-i18n="hud.rotate">ROTATE TO LANDSCAPE</span></div>
   </div>
 
   <!-- Loading -->
@@ -124,7 +129,7 @@
   <div id="menu" class="overlay hidden">
     <div class="home">
       <header class="home-top">
-        <div class="home-brand">CINDERFALL<span>SECTOR 9</span></div>
+        <div class="home-brand">CINDERFALL<span data-i18n="brand.sub">SECTOR 9</span></div>
         <div class="pill-row">
           <div class="token-pill"><canvas class="cur-icon cur-para" width="20" height="20"></canvas><span id="token-count">0</span></div>
           <div class="token-pill diamond-pill"><canvas class="cur-icon cur-diamond" width="20" height="20"></canvas><span id="diamond-count">0</span></div>
@@ -135,38 +140,38 @@
         <!-- PLAY -->
         <section id="tab-play" class="home-panel active">
           <div class="hero">
-            <div class="hero-kicker">A 2D TACTICAL OPERATION</div>
+            <div class="hero-kicker" data-i18n="play.kicker">A 2D TACTICAL OPERATION</div>
             <h1 class="hero-title">CINDERFALL</h1>
-            <button id="btn-deploy" class="btn primary big">DEPLOY</button>
+            <button id="btn-deploy" class="btn primary big" data-i18n="play.deploy">DEPLOY</button>
           </div>
           <details class="controls-fold">
-            <summary>CONTROLS</summary>
+            <summary data-i18n="play.controls">CONTROLS</summary>
             <div class="controls-grid">
-              <span>A / D</span><span>MOVE</span>
-              <span>C</span><span>CROUCH</span>
-              <span>SPACE</span><span>JUMP</span>
-              <span>SHIFT</span><span>SPRINT</span>
-              <span>MOUSE</span><span>AIM / FIRE</span>
-              <span>R</span><span>RELOAD</span>
-              <span>E</span><span>TAKEDOWN</span>
-              <span>1 / 2 / 3 / 4</span><span>WEAPONS</span>
-              <span>RIGHT-CLICK</span><span>HEAVY MELEE</span>
-              <span>ESC</span><span>PAUSE</span>
+              <span>A / D</span><span data-i18n="ctrl.move">MOVE</span>
+              <span>C</span><span data-i18n="ctrl.crouch">CROUCH</span>
+              <span>SPACE</span><span data-i18n="ctrl.jump">JUMP</span>
+              <span>SHIFT</span><span data-i18n="ctrl.sprint">SPRINT</span>
+              <span>MOUSE</span><span data-i18n="ctrl.aimFire">AIM / FIRE</span>
+              <span>R</span><span data-i18n="ctrl.reload">RELOAD</span>
+              <span>E</span><span data-i18n="ctrl.takedown">TAKEDOWN</span>
+              <span>1 / 2 / 3 / 4</span><span data-i18n="ctrl.weapons">WEAPONS</span>
+              <span>RIGHT-CLICK</span><span data-i18n="ctrl.heavyMelee">HEAVY MELEE</span>
+              <span>ESC</span><span data-i18n="ctrl.pause">PAUSE</span>
             </div>
-            <div class="controls-note">On phones, on-screen controls appear automatically.</div>
+            <div class="controls-note" data-i18n="play.controlsNote">On phones, on-screen controls appear automatically.</div>
           </details>
         </section>
 
         <!-- LOADOUT -->
         <section id="tab-loadout" class="home-panel">
-          <h2 class="panel-title">LOADOUT</h2>
-          <p class="panel-sub">Choose your weapons, then equip skins &amp; operators unlocked from crates.</p>
+          <h2 class="panel-title" data-i18n="loadout.title">LOADOUT</h2>
+          <p class="panel-sub" data-i18n="loadout.sub">Choose your weapons, then equip skins &amp; operators unlocked from crates.</p>
           <div id="loadout-slots" class="loadout-list"></div>
         </section>
 
         <!-- CRATES -->
         <section id="tab-crates" class="home-panel">
-          <h2 class="panel-title">SUPPLY CRATE</h2>
+          <h2 class="panel-title" data-i18n="crates.title">SUPPLY CRATE</h2>
           <div class="crate-hero">
             <div id="crate-box" class="crate-box">
               <div id="crate-lid" class="crate-lid"></div>
@@ -179,34 +184,34 @@
             <div id="crate-msg" class="crate-msg"></div>
           </div>
           <div class="collection">
-            <div class="collection-head">COLLECTION <span id="collection-count"></span></div>
+            <div class="collection-head"><span data-i18n="crates.collection">COLLECTION</span> <span id="collection-count"></span></div>
             <div id="collection-grid" class="collection-grid"></div>
           </div>
         </section>
 
         <!-- STORE -->
         <section id="tab-store" class="home-panel">
-          <h2 class="panel-title">PREMIUM STORE</h2>
+          <h2 class="panel-title" data-i18n="store.title">PREMIUM STORE</h2>
           <div id="store-cats" class="store-cats"></div>
 
           <div id="store-section-diamonds" class="store-section">
-            <div class="store-section-head">BUY DIAMONDS</div>
+            <div class="store-section-head" data-i18n="store.buyDiamonds">BUY DIAMONDS</div>
             <div id="diamond-packages" class="diamond-grid"></div>
           </div>
 
           <div id="store-section-free" class="store-section">
-            <div class="store-section-head">FREE DIAMONDS</div>
+            <div class="store-section-head" data-i18n="store.freeDiamonds">FREE DIAMONDS</div>
             <div class="free-diamonds-card">
-              <div class="free-diamonds-desc">Watch 10 rewarded ads to earn 1 Diamond — up to 5 Diamonds a day.</div>
+              <div class="free-diamonds-desc" data-i18n="store.freeDesc">Watch 10 rewarded ads to earn 1 Diamond — up to 5 Diamonds a day.</div>
               <div class="ad-progress-track"><div id="diamond-ad-fill" class="ad-progress-fill"></div></div>
               <div class="ad-progress-label">ADS WATCHED: <span id="diamond-ad-count">0</span> / 10</div>
-              <button id="btn-watch-ad-diamond" class="btn secondary">▶ WATCH AD</button>
+              <button id="btn-watch-ad-diamond" class="btn secondary" data-i18n="store.watchAd">▶ WATCH AD</button>
               <div id="diamond-ad-status" class="ad-status"></div>
             </div>
           </div>
 
           <div id="store-section-offers" class="store-section">
-            <div class="store-section-head">SPECIAL OFFERS</div>
+            <div class="store-section-head" data-i18n="store.specialOffers">SPECIAL OFFERS</div>
             <div id="bundle-list" class="bundle-list"></div>
           </div>
 
@@ -218,10 +223,10 @@
 
         <!-- STATS -->
         <section id="tab-stats" class="home-panel">
-          <h2 class="panel-title">STATISTICS</h2>
+          <h2 class="panel-title" data-i18n="stats.title">STATISTICS</h2>
           <div class="store-cats">
-            <button class="store-cat-chip stats-subtab active" data-section="overview">OVERVIEW</button>
-            <button class="store-cat-chip stats-subtab" data-section="achievements">ACHIEVEMENTS</button>
+            <button class="store-cat-chip stats-subtab active" data-section="overview" data-i18n="stats.overview">OVERVIEW</button>
+            <button class="store-cat-chip stats-subtab" data-section="achievements" data-i18n="stats.achievements">ACHIEVEMENTS</button>
           </div>
 
           <div id="stats-overview" class="store-section">
@@ -244,16 +249,16 @@
       </main>
 
       <nav class="home-tabs">
-        <button class="home-tab active" data-tab="play"><span class="tab-ico">▶</span>PLAY</button>
-        <button class="home-tab" data-tab="loadout"><span class="tab-ico">◈</span>LOADOUT</button>
-        <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span>CRATES</button>
-        <button class="home-tab" data-tab="store"><span class="tab-ico">◆</span>STORE</button>
-        <button class="home-tab" data-tab="stats"><span class="tab-ico">◉</span>STATS</button>
+        <button class="home-tab active" data-tab="play"><span class="tab-ico">▶</span><span data-i18n="tab.play">PLAY</span></button>
+        <button class="home-tab" data-tab="loadout"><span class="tab-ico">◈</span><span data-i18n="tab.loadout">LOADOUT</span></button>
+        <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span><span data-i18n="tab.crates">CRATES</span></button>
+        <button class="home-tab" data-tab="store"><span class="tab-ico">◆</span><span data-i18n="tab.store">STORE</span></button>
+        <button class="home-tab" data-tab="stats"><span class="tab-ico">◉</span><span data-i18n="tab.stats">STATS</span></button>
       </nav>
       <div class="home-legal">
-        <a href="legal/privacy.html" target="_blank" rel="noopener">Privacy</a>
+        <a href="legal/privacy.html" target="_blank" rel="noopener" data-i18n="legal.privacy">Privacy</a>
         <span>·</span>
-        <a href="legal/terms.html" target="_blank" rel="noopener">Terms</a>
+        <a href="legal/terms.html" target="_blank" rel="noopener" data-i18n="legal.terms">Terms</a>
         <span>·</span>
         <span class="build-tag">CINDERFALL v1.0</span>
       </div>
@@ -275,14 +280,26 @@
     </div>
   </div>
 
+  <!-- Daily login reward — shown once per calendar day on reaching the menu -->
+  <div id="daily" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div class="title-small" data-i18n="daily.title">DAILY REWARD</div>
+      <div id="daily-sub" class="revive-sub"></div>
+      <div id="daily-track" class="daily-track"></div>
+      <button id="btn-daily-claim" class="btn primary" data-i18n="daily.claim">CLAIM</button>
+      <div id="daily-streak" class="daily-streak"></div>
+    </div>
+  </div>
+
   <!-- Pause -->
   <div id="pause" class="overlay dim hidden">
     <div class="ov-inner">
-      <div class="title-small">OPERATION PAUSED</div>
-      <button id="btn-resume" class="btn primary">RESUME</button>
-      <button id="btn-restart" class="btn">RESTART MISSION</button>
-      <button id="btn-quit" class="btn">ABORT TO MENU</button>
-      <button id="btn-graphics" class="btn quiet">GRAPHICS: <span id="graphics-tier">HIGH</span></button>
+      <div class="title-small" data-i18n="pause.title">OPERATION PAUSED</div>
+      <button id="btn-resume" class="btn primary" data-i18n="pause.resume">RESUME</button>
+      <button id="btn-restart" class="btn" data-i18n="pause.restart">RESTART MISSION</button>
+      <button id="btn-quit" class="btn" data-i18n="pause.quit">ABORT TO MENU</button>
+      <button id="btn-graphics" class="btn quiet"><span data-i18n="pause.graphics">GRAPHICS:</span> <span id="graphics-tier">HIGH</span></button>
+      <button id="btn-language" class="btn quiet"><span data-i18n="pause.language">LANGUAGE:</span> <span id="language-label">ENGLISH</span></button>
     </div>
   </div>
 
@@ -291,11 +308,11 @@
        run/streak isn't broken by one bad fight. -->
   <div id="revive" class="overlay dim hidden">
     <div class="ov-inner">
-      <div class="title-small" style="color:var(--red)">OPERATOR DOWN</div>
-      <div class="revive-sub">Watch a short video to get back up — stage and progress carry on.</div>
-      <button id="btn-revive-ad" class="btn secondary big">▶ WATCH AD — CONTINUE</button>
+      <div class="title-small" style="color:var(--red)" data-i18n="revive.title">OPERATOR DOWN</div>
+      <div class="revive-sub" data-i18n="revive.sub">Watch a short video to get back up — stage and progress carry on.</div>
+      <button id="btn-revive-ad" class="btn secondary big" data-i18n="revive.watch">▶ WATCH AD — CONTINUE</button>
       <div id="revive-count" class="revive-count"></div>
-      <button id="btn-revive-skip" class="btn quiet">NO THANKS</button>
+      <button id="btn-revive-skip" class="btn quiet" data-i18n="revive.skip">NO THANKS</button>
     </div>
   </div>
 
@@ -304,8 +321,9 @@
     <div class="ov-inner">
       <div id="end-title" class="title-small">SECTOR CLEARED</div>
       <div id="end-detail" class="end-detail"></div>
-      <button id="btn-redeploy" class="btn primary">REDEPLOY</button>
-      <button id="btn-menu" class="btn">RETURN TO MENU</button>
+      <button id="btn-redeploy" class="btn primary" data-i18n="end.redeploy">REDEPLOY</button>
+      <button id="btn-share" class="btn secondary" data-i18n="end.share">SHARE RESULT</button>
+      <button id="btn-menu" class="btn" data-i18n="end.menu">RETURN TO MENU</button>
     </div>
   </div>
 
@@ -313,12 +331,12 @@
   <div id="touch">
     <div id="tc-move" class="tc-stick left"><div class="tc-nub"></div><div class="tc-label">MOVE</div></div>
     <div id="tc-aim" class="tc-stick right"><div class="tc-nub"></div><div class="tc-label">AIM / FIRE</div></div>
-    <button id="tc-jump" class="tc-btn tc-jump">JUMP</button>
-    <button id="tc-reload" class="tc-btn tc-reload">RELOAD</button>
-    <button id="tc-swap" class="tc-btn tc-swap">SWAP</button>
-    <button id="tc-crouch" class="tc-btn tc-crouch">CROUCH</button>
-    <button id="tc-takedown" class="tc-btn tc-takedown">TAKEDOWN</button>
-    <button id="tc-pause" class="tc-btn tc-pause">PAUSE</button>
+    <button id="tc-jump" class="tc-btn tc-jump" data-i18n="ctrl.jump">JUMP</button>
+    <button id="tc-reload" class="tc-btn tc-reload" data-i18n="ctrl.reload">RELOAD</button>
+    <button id="tc-swap" class="tc-btn tc-swap" data-i18n="ctrl.swap">SWAP</button>
+    <button id="tc-crouch" class="tc-btn tc-crouch" data-i18n="ctrl.crouch">CROUCH</button>
+    <button id="tc-takedown" class="tc-btn tc-takedown" data-i18n="ctrl.takedown">TAKEDOWN</button>
+    <button id="tc-pause" class="tc-btn tc-pause" data-i18n="ctrl.pause">PAUSE</button>
   </div>
 
   <!-- Deploy cinematic: letterbox bars + briefing text, driven by main.js -->
@@ -330,7 +348,7 @@
     <div id="intro-kicker" class="cine-kicker"></div>
     <div id="intro-line" class="cine-line"></div>
   </div>
-  <div id="intro-skip">CLICK OR PRESS ANY KEY TO SKIP</div>
+  <div id="intro-skip" data-i18n="skip.hint">CLICK OR PRESS ANY KEY TO SKIP</div>
   <div id="scene-fade"></div>
 </div>
 <script>

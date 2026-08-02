@@ -11,13 +11,15 @@ import { makeCanvas, drawSprite, lingrad, radgrad, rr } from '../art/paint.js';
 import { clamp, rand, randSpread, makeRng } from '../engine/math.js';
 
 export const GROUND_Y = 640;
-export const MAP_W = 4600;
+// Map width. Stages were clearing in well under a minute at 4600; the wider
+// field gives a run room to breathe (more cover to work, more ground to lose)
+// without changing any of the layout maths, which is all expressed relative
+// to MAP_W.
+export const MAP_W = 7400;
 const GRAV = 2400;
 
 // Uniform darkening laid over the parallax stack — see drawBackground().
 export const BG_SCRIM = 'rgba(6,8,13,0.34)';
-// Lighter pass over the world-space building facades — see drawBack().
-export const FACADE_SCRIM = 'rgba(7,9,14,0.20)';
 
 // Stage 1 is the hand-authored, art-directed encounter layout.
 export const STAGE1_SPAWNS = [
@@ -27,6 +29,13 @@ export const STAGE1_SPAWNS = [
   { x: 2950, min: 2760, max: 3050, y: GROUND_Y },
   { x: 3500, min: 3380, max: 3690, y: GROUND_Y },
   { x: 4080, min: 3960, max: 4140, y: GROUND_Y - 40 },
+  // --- back half, added when MAP_W was widened: the authored stage used to
+  // end around 4400 and would otherwise leave a long empty walk-out ---
+  { x: 4750, min: 4600, max: 4900, y: GROUND_Y },
+  { x: 5320, min: 5180, max: 5480, y: GROUND_Y },
+  { x: 5950, min: 5800, max: 6120, y: GROUND_Y - 40 },
+  { x: 6560, min: 6400, max: 6720, y: GROUND_Y },
+  { x: 7050, min: 6920, max: 7180, y: GROUND_Y },
 ];
 
 export class World {
@@ -59,7 +68,6 @@ export class World {
   regenerate(stage) {
     this.stage = stage;
     this.props = [];
-    this.facades = [];
     this.lights = [];
     this.barrels = [];
     this.wires = [];
@@ -111,22 +119,14 @@ export class World {
       { x: 3848, y: GROUND_Y - 20, w: 26, h: 20 },
     );
 
-    // -- building facades (near background wall) --
-    const facadeDefs = [
-      { x: 20, w: 540, h: 178, brick: false },
-      { x: 620, w: 560, h: 188, brick: false },
-      { x: 1180, w: 520, h: 205, brick: true },
-      // 1700..2170: open gap — fence line with the skyline behind
-      { x: 2170, w: 560, h: 192, brick: false },
-      { x: 2730, w: 600, h: 212, brick: true },
-      { x: 3330, w: 560, h: 182, brick: false },
-      { x: 3890, w: 640, h: 200, brick: true },
-    ];
-    for (const f of facadeDefs) {
-      this.facades.push({ spr: env.facade(f.w, f.h, { brick: f.brick }), x: f.x, y: GY });
-      // baked-in emissives get matching runtime lights: bay lamp + door bulb
-      L(f.x + f.w * 0.42, GY - 56, 95, [255, 196, 120], 0.5, 0.06);
-      L(f.x + f.w - 48, GY - 56, 70, [255, 208, 140], 0.45, 0.03);
+    // Building facades used to stand here, a few metres behind the player.
+    // They walled every fight into a corridor and were the busiest thing on
+    // screen behind the characters; the near neon-city parallax band (see
+    // art/background.js paintNear) carries that depth now, so the street is
+    // left open. A sparse line of warm lamps keeps the ambient light the
+    // facades' baked emissives used to provide.
+    for (let lx = 260; lx < MAP_W; lx += 620) {
+      L(lx, GY - 60, 130, [255, 196, 120], 0.34, 0.05);
     }
 
     // -- street furniture & cover --
@@ -195,10 +195,54 @@ export class World {
     this.emitters.push({ kind: 'vent', x: 1640, y: GY - 34, tint: 'exhaust', dir: 0, rate: 0.7, t: 0.2 });
     this.emitters.push({ kind: 'vent', x: 3120, y: GY - 30, tint: 'dust', dir: Math.PI, rate: 0.85, t: 0.5 });
 
+    // ---- back half (x > 4500) ----
+    // Added when MAP_W was widened. Same vocabulary as the front half —
+    // containers to break sightlines, a dock to fight up onto, barrels to
+    // shoot — so the extended run still reads as one authored space.
+    this.colliders.push(
+      { x: 4820, y: GY - 38, w: 96, h: 38 },               // container
+      { x: 4772, y: GY - 20, w: 26, h: 20 },
+      { x: 5400, y: GY - 13, w: 42, h: 13 },               // sandbags (vault)
+      { x: 5880, y: GY - 40, w: 280, h: 40 },              // third dock
+      { x: 5828, y: GY - 20, w: 26, h: 20 },
+      { x: 6480, y: GY - 38, w: 96, h: 38 },
+      { x: 6528, y: GY - 76, w: 96, h: 38 },               // stacked
+      { x: 6432, y: GY - 20, w: 26, h: 20 },
+      { x: 6980, y: GY - 13, w: 42, h: 13 },
+    );
+    P(env.container('containerBlue', 'VTX-889', 96, 38), 4868);
+    P(env.crate(26, 20), 4785);
+    P(env.sandbags(), 5421);
+    P(env.dock(280, 40), 6020);
+    P(env.crate(26, 20), 5841);
+    P(env.container('containerRed', 'QLR-052', 96, 38), 6528);
+    P(env.container('containerGreen', 'ZBN-771', 96, 38), 6576, GY - 38);
+    P(env.crate(26, 20), 6445);
+    P(env.sandbags(), 7001);
+    P(env.dumpster(), 5150);
+    P(env.tires(), 6250);
+    P(env.rubble(), 4600);
+    P(env.rubble(), 6800);
+    P(env.barrel('blue'), 5620);
+    P(env.barrel('rust'), 6120, GY - 40);
+    for (const lx of [5080, 6000, 6900]) {
+      P(env.lamp(), lx);
+      L(lx + 14, GY - 84, 230, [255, 202, 128], 0.62, lx === 6000 ? 0.45 : 0.04);
+    }
+    for (const bx of [5320, 6340]) {
+      this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red') });
+    }
+    this.emitters.push({ kind: 'chimney', x: 5500, y: GY - 275, tint: 'soot', rate: 0.3, t: 0.45 });
+    this.emitters.push({ kind: 'chimney', x: 6700, y: GY - 245, tint: 'steam', rate: 0.28, t: 0.6 });
+    this.emitters.push({ kind: 'vent', x: 5900, y: GY - 32, tint: 'dust', dir: 0, rate: 0.8, t: 0.35 });
+
     // loot: a couple of resupply crates tucked near cover
     this.pickups.push({ x: 1145, y: GY - 40, kind: 'ammo', alive: true, bob: rand(0, 6) });
     this.pickups.push({ x: 2280, y: GY, kind: 'health', alive: true, bob: rand(0, 6) });
     this.pickups.push({ x: 3590, y: GY, kind: 'armor', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 4900, y: GY, kind: 'ammo', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 5950, y: GY - 40, kind: 'health', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 6600, y: GY, kind: 'ammo', alive: true, bob: rand(0, 6) });
 
     this.enemySpawns = STAGE1_SPAWNS;
   }
@@ -213,23 +257,13 @@ export class World {
     const P = (spr, x, y = GY) => this.props.push({ spr, x, y });
     const L = (x, y, r, c, a, flicker = 0) => this.lights.push({ x, y, r, c, a, flicker, seed: rng.range(0, 100) });
 
-    // -- randomized building line: fills the fixed map width, varying
-    //    facade widths/heights/materials so the skyline reads differently
-    //    each stage. Content is kept within MAP_W — the ground strip, decal
-    //    surface and boundary walls are sized to it once, up front.
+    // Procedural stages used to raise the same near-wall facade line stage 1
+    // had. That layer is gone (the near neon-city parallax band carries the
+    // depth now — see art/background.js), so all that's seeded here is the
+    // warm ambient lamp spacing those facades used to contribute.
     const mapW = MAP_W;
-    let cx = rng.range(10, 90);
-    const gapAt = rng.range(mapW * 0.3, mapW * 0.7); // one open gap to the skyline, like stage 1
-    let gapUsed = false;
-    while (cx < mapW - 420) {
-      const w = rng.range(420, 640);
-      if (!gapUsed && cx >= gapAt) { gapUsed = true; cx += w * 0.7; continue; }
-      const h = rng.range(160, 220);
-      const brick = rng.chance(0.5);
-      this.facades.push({ spr: env.facade(w, h, { brick }), x: cx, y: GY });
-      L(cx + w * rng.range(0.3, 0.55), GY - 56, rng.range(80, 105), [255, 196, 120], rng.range(0.4, 0.55), rng.range(0, 0.08));
-      L(cx + w - 48, GY - 56, rng.range(60, 78), [255, 208, 140], 0.42, 0.03);
-      cx += w + rng.range(-20, 30);
+    for (let lx = rng.range(180, 340); lx < mapW; lx += rng.range(520, 760)) {
+      L(lx, GY - 60, rng.range(110, 150), [255, 196, 120], rng.range(0.28, 0.4), rng.range(0, 0.07));
     }
 
     // -- randomized road cover: crates / containers / barrels / sandbags --
@@ -325,15 +359,17 @@ export class World {
     }
 
     // -- loot: scattered resupply crates, more on higher stages --
-    const lootCount = 2 + Math.min(3, Math.floor(stage / 3));
+    const lootCount = 4 + Math.min(4, Math.floor(stage / 3));
     for (let i = 0; i < lootCount; i++) {
       const kind = rng.pick(['ammo', 'ammo', 'health', 'armor']);
       const lx = clusters.length ? clusters[rng.int(0, clusters.length - 1)] + rng.range(-40, 40) : rng.range(300, mapW - 300);
       this.pickups.push({ x: lx, y: GY, kind, alive: true, bob: rng.range(0, 6) });
     }
 
-    // -- enemy spawns: count + spacing scale with stage difficulty --
-    const enemyCount = Math.min(4 + Math.floor(stage / 2), 10);
+    // -- enemy spawns: count + spacing scale with stage difficulty. The cap
+    //    rose with MAP_W so the longer field stays populated rather than
+    //    turning into a walk between fights. --
+    const enemyCount = Math.min(6 + Math.floor(stage / 2), 16);
     const spacing = (mapW - 700) / enemyCount;
     for (let i = 0; i < enemyCount; i++) {
       const sx = 500 + spacing * i + rng.range(-60, 60);
@@ -538,6 +574,13 @@ export class World {
     const ms = Math.max(vw / 2048, 0.72) * 1.06;
     tile(this.bg.mid, -cam.x * 0.3, groundY - (this.bg.mid.height - 8) * ms, ms);
 
+    // Near neon-city band. Scrolls fastest of the parallax layers (0.55 vs
+    // mid's 0.3), which is what sells the depth gap between it and the
+    // factory line behind. It replaced the world-space facades that used to
+    // stand a few metres behind the player — see art/background.js.
+    const ns = Math.max(vw / 2048, 0.72) * 1.04;
+    tile(this.bg.near, -cam.x * 0.55, groundY - (this.bg.near.height - 6) * ns, ns);
+
     // cool fog settling at street level
     g.fillStyle = lingrad(g, 0, groundY - 150, 0, groundY + 30, [
       [0, 'rgba(150,155,175,0)'], [0.8, 'rgba(150,150,168,0.13)'], [1, 'rgba(150,150,168,0.05)'],
@@ -577,19 +620,18 @@ export class World {
   }
 
   // World-space layers behind entities (call inside camera transform).
-  // cam/vw, when given, cull facades/props/barrels/pickups outside the
-  // visible x-range — endless procedural stages can carry far more of these
-  // than are ever on screen at once, so this cuts real draw-call count
-  // without touching physics/AI (those keep updating regardless of culling).
+  // cam/vw, when given, cull props/barrels/pickups outside the visible
+  // x-range — endless procedural stages can carry far more of these than are
+  // ever on screen at once, so this cuts real draw-call count without
+  // touching physics/AI (those keep updating regardless of culling).
   drawBack(g, cam, vw) {
     const halfVis = cam && vw ? vw / (2 * cam.zoom) + 400 : Infinity;
     const camX = cam ? cam.x : 0;
     const visible = (x) => Math.abs(x - camX) < halfVis;
 
-    for (const f of this.facades) {
-      if (visible(f.x)) drawSprite(g, f.spr, f.x, f.y);
-    }
-    // power cables
+    // power cables — the only world-space structure left behind the action
+    // now that the facade wall is gone, and they read as depth without
+    // blocking anything
     g.strokeStyle = 'rgba(10,12,16,0.5)';
     g.lineWidth = 1.1;
     for (const w of this.wires) {
@@ -598,17 +640,6 @@ export class World {
       g.quadraticCurveTo((w.x0 + w.x1) / 2, Math.max(w.y0, w.y1) + w.sag, w.x1, w.y1);
       g.stroke();
     }
-    // Second, lighter scrim over the building facades only. They sit directly
-    // behind the characters — the busiest, brightest thing competing with them
-    // — but unlike the parallax stack they're world-space, so they're dimmed
-    // here instead. Everything gameplay-relevant (street, crates, barrels,
-    // pickups, decals) draws after this and keeps its full contrast.
-    // (halfVis is Infinity when culling is disabled, so the scrim gets its own
-    // bounded span rather than reusing it)
-    const scrimHalf = Number.isFinite(halfVis) ? halfVis + 400 : MAP_W;
-    const scrimY = (cam ? cam.y : GROUND_Y) - 1500;
-    g.fillStyle = FACADE_SCRIM;
-    g.fillRect(camX - scrimHalf, scrimY, scrimHalf * 2, 3000);
 
     drawSprite(g, this.ground, -250, GROUND_Y);
     // solid earth below the painted street — never let the sky bleed through
@@ -627,7 +658,10 @@ export class World {
       [0.45, 'rgba(5,7,11,0.16)'],
       [1, 'rgba(4,6,10,0.42)'],
     ]);
-    g.fillRect(camX - scrimHalf, GROUND_Y - 4, scrimHalf * 2, 100);
+    // (halfVis is Infinity when culling is disabled, so the falloff band gets
+    // its own bounded span rather than reusing it)
+    const bandHalf = Number.isFinite(halfVis) ? halfVis + 400 : MAP_W;
+    g.fillRect(camX - bandHalf, GROUND_Y - 4, bandHalf * 2, 100);
     for (const p of this.props) { if (visible(p.x)) drawSprite(g, p.spr, p.x, p.y); }
     for (const b of this.barrels) if (b.alive && visible(b.x)) drawSprite(g, b.spr, b.x, b.y);
     this.drawPickups(g, visible);

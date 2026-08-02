@@ -12,6 +12,7 @@ import { watchRewardedAd } from '../engine/ads.js';
 import { getPaymentProvider } from '../engine/payments.js';
 import { paintDiamond, setupHiDpi } from '../art/currency.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
+import { t, onLangChange } from '../engine/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -49,6 +50,7 @@ export class StoreUI {
     this.refresh();
     // countdown labels + ad cooldown/status tick every second
     this._countdownTimer = setInterval(() => { this.renderBundles(); this.renderFreeDiamonds(); }, 1000);
+    onLangChange(() => this.refresh());
   }
 
   refresh() {
@@ -78,7 +80,7 @@ export class StoreUI {
     for (const cat of STORE_CATEGORIES) {
       const chip = document.createElement('button');
       chip.className = 'store-cat-chip' + (cat.key === this.category ? ' active' : '');
-      chip.textContent = cat.label;
+      chip.textContent = t(cat.labelKey);
       chip.addEventListener('click', () => { this.category = cat.key; this.applyCategoryVisibility(); this.renderItemGrid(); this.renderCategories(); if (this.audio) this.audio.ui(); });
       host.appendChild(chip);
     }
@@ -96,11 +98,11 @@ export class StoreUI {
     $('store-section-offers').classList.toggle('hidden', !showOffers);
     $('store-section-items').classList.toggle('hidden', !showItems);
     const headMap = {
-      featured: 'FEATURED', weapons: 'WEAPON SKINS', skins: 'CHARACTER SKINS',
-      knives: 'KNIFE SKINS', limited: 'LIMITED TIME', inventory: 'INVENTORY',
+      featured: 'cat.featured', weapons: 'head.weapons', skins: 'head.skins',
+      knives: 'head.knives', limited: 'head.limited', inventory: 'head.inventory',
     };
     const head = $('store-items-head');
-    if (head) head.textContent = headMap[c] || 'ITEMS';
+    if (head) head.textContent = t(headMap[c] || 'head.items');
   }
 
   // ---- Buy Diamonds: packages ----
@@ -135,7 +137,7 @@ export class StoreUI {
       card.appendChild(price);
       const buyBtn = document.createElement('button');
       buyBtn.className = 'btn primary';
-      buyBtn.textContent = 'BUY';
+      buyBtn.textContent = t('store.buy');
       buyBtn.addEventListener('click', () => this.buyPackage(pkg));
       card.appendChild(buyBtn);
       host.appendChild(card);
@@ -167,15 +169,15 @@ export class StoreUI {
     const btn = $('btn-watch-ad-diamond');
     if (!status || !btn) return;
     if (prog.capped) {
-      status.textContent = 'DAILY LIMIT REACHED — COME BACK TOMORROW';
+      status.textContent = t('store.dailyLimit');
       status.className = 'ad-status warn';
       btn.disabled = true;
     } else if (prog.cooldownMs > 0) {
-      status.textContent = `NEXT AD IN ${Math.ceil(prog.cooldownMs / 1000)}s`;
+      status.textContent = t('store.nextAdIn', { n: Math.ceil(prog.cooldownMs / 1000) });
       status.className = 'ad-status';
       btn.disabled = true;
     } else {
-      status.textContent = `${prog.grantedToday}/${prog.dailyCap} DIAMONDS EARNED TODAY`;
+      status.textContent = t('store.earnedToday', { n: prog.grantedToday, max: prog.dailyCap });
       status.className = 'ad-status ok';
       btn.disabled = false;
     }
@@ -196,7 +198,7 @@ export class StoreUI {
         this.renderDiamondBalance();
         if (res.diamondGranted) {
           const status = $('diamond-ad-status');
-          if (status) { status.textContent = `+1 ${DIAMOND_ICON} DIAMOND EARNED!`; status.className = 'ad-status ok'; }
+          if (status) { status.textContent = t('store.diamondEarned'); status.className = 'ad-status ok'; }
           if (this.audio) this.audio.ui();
         }
       },
@@ -262,7 +264,7 @@ export class StoreUI {
       if (bundle.grant) {
         const buyBtn = document.createElement('button');
         buyBtn.className = 'btn primary';
-        buyBtn.textContent = owned ? 'OWNED' : 'BUY';
+        buyBtn.textContent = owned ? t('item.owned') : t('store.buy');
         buyBtn.disabled = owned;
         buyBtn.addEventListener('click', () => this.buyBundle(bundle));
         foot.appendChild(buyBtn);
@@ -319,14 +321,14 @@ export class StoreUI {
       const r = document.createElement('div');
       r.className = 'item-rarity';
       r.style.color = rarity.color;
-      r.textContent = rarity.label;
+      r.textContent = t(rarity.labelKey);
       card.appendChild(r);
       if (item.retiredAfter) {
-        const t = document.createElement('div');
-        t.className = 'item-tag';
+        const tag = document.createElement('div');
+        tag.className = 'item-tag';
         const daysLeft = Math.max(0, Math.ceil((item.retiredAfter - Date.now()) / 86400000));
-        t.textContent = `RETIRES IN ${daysLeft}D — NEVER RETURNS`;
-        card.appendChild(t);
+        tag.textContent = t('store.retiresIn', { n: daysLeft });
+        card.appendChild(tag);
       }
       if (!owned && price != null && c !== 'inventory') {
         const buyBtn = document.createElement('button');
@@ -338,7 +340,7 @@ export class StoreUI {
       } else if (owned) {
         const owned2 = document.createElement('div');
         owned2.className = 'item-tag';
-        owned2.textContent = 'OWNED';
+        owned2.textContent = t('item.owned');
         card.appendChild(owned2);
       }
       requestAnimationFrame(() => this.previewItem(item, cv));
@@ -352,7 +354,7 @@ export class StoreUI {
     if (this.p.owns(item.id)) return;
     if (!this.p.spendDiamonds(price)) {
       const status = $('diamond-ad-status');
-      if (status) { status.textContent = 'NOT ENOUGH DIAMONDS'; status.className = 'ad-status warn'; }
+      if (status) { status.textContent = t('store.notEnoughDiamonds'); status.className = 'ad-status warn'; }
       return;
     }
     this.p.grant(item.id);

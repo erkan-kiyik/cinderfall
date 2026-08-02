@@ -99,15 +99,17 @@ export function formatCountdown(ms) {
 }
 
 // ---- Store category filter chips ----
+// `labelKey` resolves through i18n at render time; `label` is the English
+// fallback.
 export const STORE_CATEGORIES = [
-  { key: 'featured', label: 'FEATURED' },
-  { key: 'weapons', label: 'WEAPONS' },
-  { key: 'skins', label: 'CHARACTER SKINS' },
-  { key: 'knives', label: 'KNIFE SKINS' },
-  { key: 'bundles', label: 'BUNDLES' },
-  { key: 'offers', label: 'SPECIAL OFFERS' },
-  { key: 'limited', label: 'LIMITED TIME' },
-  { key: 'inventory', label: 'INVENTORY' },
+  { key: 'featured', label: 'FEATURED', labelKey: 'cat.featured' },
+  { key: 'weapons', label: 'WEAPONS', labelKey: 'cat.weapons' },
+  { key: 'skins', label: 'CHARACTER SKINS', labelKey: 'cat.skins' },
+  { key: 'knives', label: 'KNIFE SKINS', labelKey: 'cat.knives' },
+  { key: 'bundles', label: 'BUNDLES', labelKey: 'cat.bundles' },
+  { key: 'offers', label: 'SPECIAL OFFERS', labelKey: 'cat.offers' },
+  { key: 'limited', label: 'LIMITED TIME', labelKey: 'cat.limited' },
+  { key: 'inventory', label: 'INVENTORY', labelKey: 'cat.inventory' },
 ];
 
 // Maps a CATALOG item's `kind`/`slot` to the category chips it belongs to.

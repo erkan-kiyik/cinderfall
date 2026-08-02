@@ -4,15 +4,17 @@
 // so the reward loop ships without a pile of one-off assets. All ownership
 // and equip state lives in Progression (localStorage-backed).
 
+// `labelKey` resolves through i18n at render time; `label` is kept as the
+// English fallback for any caller that hasn't been localized yet.
 export const RARITY = {
-  common:    { key: 'common',    label: 'COMMON',    color: '#8b93a2', glow: 'rgba(139,147,162,0.6)', weight: 58 },
-  rare:      { key: 'rare',      label: 'RARE',      color: '#4a90d9', glow: 'rgba(74,144,217,0.7)',  weight: 27 },
-  epic:      { key: 'epic',      label: 'EPIC',      color: '#a55cd6', glow: 'rgba(165,92,214,0.7)', weight: 11 },
-  legendary: { key: 'legendary', label: 'LEGENDARY', color: '#e0a13a', glow: 'rgba(224,161,58,0.85)', weight: 4 },
+  common:    { key: 'common',    label: 'COMMON',    labelKey: 'rarity.common',    color: '#8b93a2', glow: 'rgba(139,147,162,0.6)', weight: 58 },
+  rare:      { key: 'rare',      label: 'RARE',      labelKey: 'rarity.rare',      color: '#4a90d9', glow: 'rgba(74,144,217,0.7)',  weight: 27 },
+  epic:      { key: 'epic',      label: 'EPIC',      labelKey: 'rarity.epic',      color: '#a55cd6', glow: 'rgba(165,92,214,0.7)', weight: 11 },
+  legendary: { key: 'legendary', label: 'LEGENDARY', labelKey: 'rarity.legendary', color: '#e0a13a', glow: 'rgba(224,161,58,0.85)', weight: 4 },
   // Diamond-store-only tiers — never rolled from a crate (rollCrate only
   // walks common/rare/epic/legendary), so `weight` here is just documentation.
-  mythic:       { key: 'mythic',       label: 'MYTHIC',        color: '#e0446e', glow: 'rgba(224,68,110,0.85)', weight: 0 },
-  ultraLimited: { key: 'ultraLimited', label: 'ULTRA LIMITED', color: '#4ee0d6', glow: 'rgba(78,224,214,0.9)',  weight: 0 },
+  mythic:       { key: 'mythic',       label: 'MYTHIC',        labelKey: 'rarity.mythic',       color: '#e0446e', glow: 'rgba(224,68,110,0.85)', weight: 0 },
+  ultraLimited: { key: 'ultraLimited', label: 'ULTRA LIMITED', labelKey: 'rarity.ultraLimited', color: '#4ee0d6', glow: 'rgba(78,224,214,0.9)',  weight: 0 },
 };
 
 // Diamond price by rarity for the direct-purchase store (crate-only
@@ -154,14 +156,14 @@ export const itemsForSlot = (slot) =>
 
 // Ordered list of loadout slots for the loadout UI (weapons first).
 export const LOADOUT_SLOTS = [
-  { key: 'wpn_primary',  label: 'PRIMARY' },
-  { key: 'wpn_secondary',label: 'SIDEARM' },
-  { key: 'wpn_special',  label: 'SPECIAL' },
-  { key: 'operator',    label: 'OPERATOR' },
-  { key: 'rifleFinish', label: 'RIFLE SKIN' },
-  { key: 'pistolFinish',label: 'PISTOL SKIN' },
-  { key: 'smgFinish',   label: 'SMG SKIN' },
-  { key: 'knifeFinish', label: 'BLADE' },
+  { key: 'wpn_primary',  label: 'PRIMARY',     labelKey: 'slot.primary' },
+  { key: 'wpn_secondary',label: 'SIDEARM',     labelKey: 'slot.sidearm' },
+  { key: 'wpn_special',  label: 'SPECIAL',     labelKey: 'slot.special' },
+  { key: 'operator',    label: 'OPERATOR',     labelKey: 'slot.operator' },
+  { key: 'rifleFinish', label: 'RIFLE SKIN',   labelKey: 'slot.rifleSkin' },
+  { key: 'pistolFinish',label: 'PISTOL SKIN',  labelKey: 'slot.pistolSkin' },
+  { key: 'smgFinish',   label: 'SMG SKIN',     labelKey: 'slot.smgSkin' },
+  { key: 'knifeFinish', label: 'BLADE',        labelKey: 'slot.blade' },
 ];
 
 // Weighted rarity pick, then a uniform item of that rarity, drawn from the

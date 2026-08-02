@@ -9,6 +9,7 @@ import {
 import { AD_CRATE_DAILY_LIMIT } from './progression.js';
 import { watchRewardedAd } from '../engine/ads.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
+import { t, onLangChange } from '../engine/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -25,7 +26,7 @@ export class MetaUI {
 
   // display name for a card's item (weapons resolve to their live def name)
   itemLabel(item) {
-    if (!item) return 'STOCK';
+    if (!item) return t('item.stock');
     if (item.weaponId && this.weapons[item.weaponId]) return this.weapons[item.weaponId].name;
     return item.name;
   }
@@ -40,6 +41,9 @@ export class MetaUI {
     $('btn-watch-ad').addEventListener('click', () => this.openCrateWithAd());
     $('reveal-done').addEventListener('click', () => this.closeReveal());
     $('crate-cost').textContent = String(CRATE_COST);
+    // Labels built here (slot heads, rarity chips, ad button) aren't static
+    // markup, so they need an explicit repaint when the language changes.
+    onLangChange(() => this.refresh());
     this.refresh();
   }
 
@@ -55,7 +59,9 @@ export class MetaUI {
     const btn = $('btn-watch-ad');
     if (!btn) return;
     const left = this.p.adCratesRemaining();
-    btn.querySelector('.ad-remaining').textContent = left > 0 ? `${left}/${AD_CRATE_DAILY_LIMIT} LEFT TODAY` : 'COME BACK TOMORROW';
+    btn.querySelector('.ad-remaining').textContent = left > 0
+      ? t('crates.leftToday', { n: left, max: AD_CRATE_DAILY_LIMIT })
+      : t('crates.comeBack');
     btn.disabled = left <= 0;
   }
 
@@ -87,8 +93,8 @@ export class MetaUI {
       const head = document.createElement('div');
       head.className = 'loadout-slot-head';
       const eqItem = equippedId && itemById(equippedId);
-      head.innerHTML = `<span class="loadout-slot-label">${slot.label}</span>` +
-        `<span class="loadout-slot-equipped">${eqItem ? this.itemLabel(eqItem) : 'STOCK'}</span>`;
+      head.innerHTML = `<span class="loadout-slot-label">${t(slot.labelKey)}</span>` +
+        `<span class="loadout-slot-equipped">${eqItem ? this.itemLabel(eqItem) : t('item.stock')}</span>`;
       box.appendChild(head);
 
       const row = document.createElement('div');
@@ -125,13 +131,13 @@ export class MetaUI {
       const r = document.createElement('div');
       r.className = 'item-rarity';
       r.style.color = rarity.color;
-      r.textContent = locked ? 'LOCKED' : rarity.label;
+      r.textContent = locked ? t('item.locked') : t(rarity.labelKey);
       card.appendChild(r);
       if (item.tag) {
-        const t = document.createElement('div');
-        t.className = 'item-tag';
-        t.textContent = item.tag;
-        card.appendChild(t);
+        const tagEl = document.createElement('div');
+        tagEl.className = 'item-tag';
+        tagEl.textContent = item.tag;
+        card.appendChild(tagEl);
       }
     }
 
@@ -170,7 +176,7 @@ export class MetaUI {
       const r = document.createElement('div');
       r.className = 'item-rarity';
       r.style.color = rarity.color;
-      r.textContent = has ? rarity.label : 'LOCKED';
+      r.textContent = has ? t(rarity.labelKey) : t('item.locked');
       card.appendChild(r);
       grid.appendChild(card);
       requestAnimationFrame(() => this.previewItem(has ? item : null, cv));
@@ -183,7 +189,7 @@ export class MetaUI {
     if (this.busy) return;
     const msg = $('crate-msg');
     if (!free && this.p.tokens < CRATE_COST) {
-      msg.textContent = 'NOT ENOUGH PARA — ELIMINATE HOSTILES TO EARN MORE';
+      msg.textContent = t('crates.notEnough');
       msg.classList.add('warn');
       return;
     }
@@ -210,12 +216,12 @@ export class MetaUI {
     if (this.busy) return;
     const msg = $('crate-msg');
     if (this.p.adCratesRemaining() <= 0) {
-      msg.textContent = 'DAILY AD LIMIT REACHED — COME BACK TOMORROW';
+      msg.textContent = t('crates.adLimit');
       msg.classList.add('warn');
       return;
     }
     msg.classList.remove('warn');
-    msg.textContent = 'LOADING AD…';
+    msg.textContent = t('crates.loadingAd');
     this.busy = true;
     watchRewardedAd(
       () => {
@@ -304,13 +310,13 @@ export class MetaUI {
     const card = $('reveal-card');
     card.style.borderColor = rarity.color;
     card.style.boxShadow = `0 0 40px ${rarity.glow}`;
-    $('reveal-rarity').textContent = rarity.label;
+    $('reveal-rarity').textContent = t(rarity.labelKey);
     $('reveal-rarity').style.color = rarity.color;
     $('reveal-name').textContent = item.name;
     $('reveal-kind').textContent = item.kind + (item.tag ? ` · ${item.tag}` : '');
     const status = $('reveal-status');
-    if (isDup) { status.textContent = `DUPLICATE — +${refund} PARA REFUNDED`; status.style.color = 'var(--ink-dim)'; }
-    else { status.textContent = 'NEW — ADDED TO COLLECTION'; status.style.color = rarity.color; }
+    if (isDup) { status.textContent = t('reveal.duplicate', { n: refund }); status.style.color = 'var(--ink-dim)'; }
+    else { status.textContent = t('reveal.new'); status.style.color = rarity.color; }
     card.classList.remove('hidden');
     $('reveal-done').classList.remove('hidden');
     if (this.audio) {

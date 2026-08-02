@@ -5,6 +5,7 @@
 
 import { makeCanvas, lingrad, radgrad, shade, mix, withA, COL } from './paint.js';
 import { makeRng } from '../engine/math.js';
+import { device } from '../engine/device.js';
 
 const SKY_W = 1600, SKY_H = 900;
 
@@ -23,6 +24,10 @@ export const DEPTH_GRADE = {
   clouds: { brightness: 0.70, saturate: 0.62, blur: 2.6, wrap: true },
   far:    { brightness: 0.56, saturate: 0.42, blur: 3.6, wrap: true },  // furthest: flattest + softest
   mid:    { brightness: 0.68, saturate: 0.60, blur: 1.7, wrap: true },
+  // Nearest parallax band. It sits closest to the play surface, so it keeps
+  // the most contrast and stays sharp — but it is still graded down enough
+  // that the characters in front of it remain the brightest thing on screen.
+  near:   { brightness: 0.60, saturate: 0.70, blur: 0.6, wrap: true },
 };
 
 // Applies a depth grade to a finished layer, in place.
@@ -32,6 +37,24 @@ export const DEPTH_GRADE = {
 // the whole strip is blurred as one, then cropped back to size.
 function depthTreat(cv, { blur = 0, saturate = 1, brightness = 1, wrap = false } = {}) {
   const W = cv.width, H = cv.height;
+  // Where canvas filters aren't implemented (older Android WebViews) the
+  // filter assignment below is a silent no-op, and every parallax layer would
+  // ship at full contrast — the backdrop competing with the characters
+  // instead of receding behind them. Approximate the grade with composite
+  // ops instead: the blur is lost, but the depth ordering survives, which is
+  // what the aerial-perspective read actually depends on.
+  if (!device.canvasFilter) {
+    const g = cv.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = 'saturation';        // pull toward grey
+    g.fillStyle = `hsl(0, ${Math.round(saturate * 100)}%, 50%)`;
+    g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = 'source-atop';       // darken, keeping alpha
+    g.fillStyle = `rgba(0,0,0,${(1 - brightness).toFixed(3)})`;
+    g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = 'source-over';
+    return;
+  }
   const pad = blur > 0 ? Math.ceil(blur * 3) : 0;
   // 1) assemble the source (plus wrap neighbours) unfiltered
   const src = makeCanvas(W + pad * 2, H + pad * 2);
@@ -58,6 +81,7 @@ export function buildBackground() {
     clouds: paintClouds(),
     far: paintFar(),
     mid: paintMid(),
+    near: paintNear(),
   };
   for (const layer of Object.keys(DEPTH_GRADE)) depthTreat(bg[layer], DEPTH_GRADE[layer]);
   return bg;
@@ -461,6 +485,139 @@ function paintMid() {
     [0, 'rgba(190,140,100,0)'],
     [0.7, 'rgba(186,136,98,0.22)'],
     [1, 'rgba(178,132,100,0.42)'],
+  ]);
+  g.fillRect(0, 0, W, H);
+  return cv;
+}
+
+// ---------------- near neon city ----------------
+// The closest parallax band, and the layer that replaced the world-space
+// building facades that used to stand directly behind the player. Those were
+// full-detail brick walls a few metres behind the action and they flattened
+// every fight into a corridor; this reads as a city the street runs through
+// instead of a wall the street runs along.
+//
+// Deliberately kept to silhouette + light: block masses, a scatter of lit
+// windows, and neon signage. No brick texture, no door furniture — nothing
+// that competes for attention with an operator standing in front of it.
+
+const NEON = ['#ff4d6d', '#3fd2ff', '#b26bff', '#ffd166', '#39e6a0'];
+
+function neonSign(g, x, y, w, h, col, rng) {
+  // glow pool first, then the tube itself — cheap two-pass emissive
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  const glow = radgrad(g, x + w / 2, y + h / 2, Math.max(w, h) * 1.6, [
+    [0, withA(col, 0.5)], [0.45, withA(col, 0.16)], [1, withA(col, 0)],
+  ]);
+  g.fillStyle = glow;
+  g.fillRect(x - w, y - h * 1.6, w * 3, h * 4.2);
+  g.restore();
+
+  g.strokeStyle = col;
+  g.lineWidth = 2.4;
+  g.lineCap = 'round';
+  // vertical strip signs read as hanging shop boards; horizontal as rooftop
+  if (h > w) {
+    const seg = Math.max(2, Math.floor(h / 13));
+    for (let i = 0; i < seg; i++) {
+      if (rng.chance(0.22)) continue;                 // dead tubes
+      const sy = y + 5 + i * 13;
+      g.beginPath(); g.moveTo(x + 2, sy); g.lineTo(x + w - 2, sy); g.stroke();
+    }
+  } else {
+    g.beginPath();
+    g.moveTo(x, y + h / 2); g.lineTo(x + w, y + h / 2);
+    g.stroke();
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(x + 3, y + h / 2 - 5); g.lineTo(x + w - 3, y + h / 2 - 5);
+    g.stroke();
+  }
+  g.restore?.();
+}
+
+function paintNear() {
+  const W = 2048, H = 560;
+  const { cv, g } = makeCanvas(W, H);
+  const rng = makeRng(7731);
+  const baseY = H;
+
+  let x = -60;
+  while (x < W + 120) {
+    const bw = rng.range(110, 210);
+    const bh = rng.range(190, 470);
+    const top = baseY - bh;
+    // Cool, desaturated concrete — the neon is the only saturated thing in
+    // this layer, which is what makes it read as night-time city.
+    const col = mix('#242833', '#33313f', rng());
+    g.fillStyle = lingrad(g, 0, top, 0, baseY, [
+      [0, shade(col, 0.2)],
+      [0.35, col],
+      [1, shade(col, -0.45)],
+    ]);
+    g.fillRect(x, top, bw, bh);
+
+    // parapet cap
+    g.fillStyle = shade(col, -0.3);
+    g.fillRect(x - 4, top - 7, bw + 8, 7);
+
+    // balcony bands — a couple of horizontal shelves break up the slab and
+    // instantly say "apartment block" rather than "warehouse"
+    if (rng.chance(0.62)) {
+      g.fillStyle = 'rgba(12,14,20,0.5)';
+      const bands = Math.floor(bh / 74);
+      for (let i = 1; i <= bands; i++) {
+        g.fillRect(x - 3, top + i * 74, bw + 6, 5);
+      }
+    }
+
+    // lit window scatter
+    const cols = Math.max(1, Math.floor(bw / 30));
+    const rows = Math.max(1, Math.floor(bh / 46));
+    for (let ci = 0; ci < cols; ci++) {
+      for (let ri = 0; ri < rows; ri++) {
+        const wx = x + 9 + ci * 30, wy = top + 16 + ri * 46;
+        if (wx + 13 > x + bw - 4) continue;
+        if (rng.chance(0.3)) {
+          const warm = rng.chance(0.72);
+          g.fillStyle = withA(warm ? '#ffbe6e' : '#9fd4ff', rng.range(0.4, 0.85));
+          g.fillRect(wx, wy, 13, 18);
+        } else {
+          g.fillStyle = 'rgba(10,12,18,0.62)';
+          g.fillRect(wx, wy, 13, 18);
+        }
+      }
+    }
+
+    // neon: a rooftop bar or a tall hanging sign on the facade
+    if (rng.chance(0.5)) {
+      const col2 = NEON[rng.int(0, NEON.length - 1)];
+      if (rng.chance(0.5)) {
+        neonSign(g, x + bw * 0.18, top - 20, bw * 0.64, 11, col2, rng);
+      } else {
+        neonSign(g, x + bw * 0.66, top + 40, 15, rng.range(70, 150), col2, rng);
+      }
+    }
+
+    // rooftop aerial / chimney stack
+    if (rng.chance(0.4)) {
+      g.fillStyle = shade(col, -0.35);
+      const sw = rng.range(7, 13);
+      const sh = rng.range(30, 80);
+      g.fillRect(x + bw * 0.72, top - sh, sw, sh);
+      // aviation warning lamp
+      g.fillStyle = 'rgba(255,70,70,0.85)';
+      g.fillRect(x + bw * 0.72 - 1, top - sh - 3, sw + 2, 3);
+    }
+
+    x += bw + rng.range(14, 58);
+  }
+
+  // base haze so the layer sits into the street rather than on top of it
+  g.fillStyle = lingrad(g, 0, H - 200, 0, H, [
+    [0, 'rgba(120,132,164,0)'],
+    [1, 'rgba(118,130,160,0.34)'],
   ]);
   g.fillRect(0, 0, W, H);
   return cv;

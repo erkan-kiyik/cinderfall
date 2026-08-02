@@ -10,6 +10,8 @@ import { audio } from './engine/audio.js';
 import { clamp, damp, lerp, rand, randSpread, makeNoise1D } from './engine/math.js';
 import { makeCanvas, drawSprite, setAssetScale } from './art/paint.js';
 import { quality } from './engine/quality.js';
+import { device, applyDeviceProfile } from './engine/device.js';
+import { t, applyTranslations, cycleLang, getLang, LANGS } from './engine/i18n.js';
 import { buildSoldier, makeShadowSprite } from './art/soldier.js';
 import { buildWeapons } from './art/weapons.js';
 import { World, GROUND_Y, MAP_W } from './game/world.js';
@@ -25,6 +27,7 @@ import { StatsUI } from './game/statsui.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
 import { mountCurrencyIcons } from './art/currency.js';
+import { dailyStatus, claimDaily, shareRun, DAILY_REWARDS } from './game/retention.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -36,11 +39,10 @@ const DEMO = params.has('demo');
 // combo; longer than this and the next kill starts a fresh combo of 1.
 const COMBO_WINDOW = 4.0;
 
-// Character contour colour. A soft, translucent cool-dark tint — just enough
-// to separate the silhouette from a busy background at a glance, without the
-// heavy near-opaque "sticker" line the contour used to draw (that read as a
-// solid dark box around the character on small/compressed screens).
-const CHAR_OUTLINE_COLOR = 'rgba(9,12,19,0.5)';
+// Ground-accent colour: the single hairline under a character's feet that
+// replaced the old stamped contour (see rig.js). Warm accent rather than a
+// dark tint — it reads as a deliberate marker, not a leftover shadow.
+const CHAR_ACCENT_COLOR = 'rgba(255,120,96,0.55)';
 
 // Reticle bloom gains. Measured against the live weapon state: visSpread runs
 // ~0.025 at rest and peaks ~0.115 while spraying on the move, and the recoil
@@ -75,6 +77,8 @@ function resize() {
   canvas.width = vw * dpr; canvas.height = vh * dpr;
   const l = makeCanvas(vw * dpr, vh * dpr); lightCv = l.cv; lightG = l.g;
   const g = makeCanvas(vw * dpr, vh * dpr); glowCv = g.cv; glowG = g.g;
+  // refresh --ui-scale so the DOM overlay tracks the new viewport
+  applyDeviceProfile();
   // keep the framing right across orientation / resize (not mid-cinematic)
   if (game && game.cam && game.state !== 'intro') game.cam.zoom = baseZoom();
 }
@@ -174,6 +178,7 @@ function previewItem(item, cv) {
 }
 
 async function boot() {
+  applyTranslations();          // fill static markup before the first paint
   hud.show('loading');
   // bake sprites at the resolution the chosen quality tier calls for — set
   // once, before the first paint call, since assets are only built here
@@ -217,7 +222,11 @@ async function boot() {
   hud.setLoad(1, 'READY');
   await raf();
   if (DEMO) game.deploy();
-  else { hud.show('menu'); game.state = 'menu'; game.metaUI.refresh(); game.storeUI.refresh(); game.statsUI.refresh(); }
+  else {
+    hud.show('menu'); game.state = 'menu';
+    game.metaUI.refresh(); game.storeUI.refresh(); game.statsUI.refresh();
+    game.offerDailyReward();   // lands on the menu, never mid-run
+  }
   requestAnimationFrame(frame);
 }
 
@@ -274,8 +283,14 @@ class Game {
       },
       watchAdRevive: () => { audio.ui(); this.reviveViaAd(); },
       skipRevive: () => { audio.ui(); this.declineRevive(); },
+      // Cycles TR ⇄ EN. The static markup is re-filled by i18n itself; the
+      // screens that build their labels in JS repaint through onLangChange.
+      language: () => { audio.ui(); cycleLang(); hud.setLanguage(); },
+      share: () => { audio.ui(); this.shareResult(); },
+      claimDaily: () => { audio.ui(); this.claimDailyReward(); },
     });
     hud.setGraphicsTier(quality.preset.name);
+    hud.setLanguage();
     canvas.addEventListener('mousedown', () => audio.resume(), { once: true });
   }
 
@@ -330,7 +345,7 @@ class Game {
     for (const u of res.newUnlocks) this.applyUnlock(u);
     hud.setSlot4Visible(this.player.smgUnlocked);
     const extra = res.newUnlocks.length ? ' — ' + res.newUnlocks.map((u) => u.label).join(', ') : '';
-    hud.notify(`LEVEL UP — ${res.newLevel}${extra}`);
+    hud.notify(t('notify.levelUp', { n: res.newLevel }) + extra);
     return true;
   }
 
@@ -364,7 +379,7 @@ class Game {
     this.progression.recordBossKill();
     hud.setTokens(this.progression.tokens);
     hud.showBoss(false);
-    hud.notify(`BOSS DEFEATED — ${boss.name}`);
+    hud.notify(t('notify.bossDown', { name: boss.name }));
   }
 
   // Stats page: kill streak (kills since the operator last went down) and
@@ -434,6 +449,7 @@ class Game {
     hud.setTokens(this.progression.tokens);
     if (this.isBossStage) { hud.showBoss(true, this.enemies[0].name); hud.setBossHp(this.enemies[0].hp / this.enemies[0].maxHp); }
     else hud.showBoss(false);
+    hud.setAttempt(this.progression.attempts(this.stage));
     hud.showLore(LORE_HOLD);   // mission briefing on entering a fresh deployment
   }
 
@@ -441,6 +457,9 @@ class Game {
   // endless, so this rolls a fresh procedurally-generated stage rather than
   // ending the run. Player health/ammo/XP/unlocks carry over.
   nextStage() {
+    // Cleared the stage we were on, so its attempt tally resets — the counter
+    // only ever measures the wall the player is currently stuck behind.
+    this.progression.clearAttempts(this.stage);
     this.stage++;
     this.world.regenerate(this.stage);
     this.spawnEnemiesForStage();
@@ -453,13 +472,14 @@ class Game {
     this.cam.follow(this.player.x, this.player.y - 60, 0, 0, true);
     hud.setObjective(0, this.enemies.length);
     hud.setStage(this.stage);
+    hud.setAttempt(this.progression.attempts(this.stage));
     const res = this.progression.addXp(50 + this.stage * 5);
     const leveled = this.handleLevelUp(res);
     if (this.isBossStage) {
       const boss = this.enemies[0];
       hud.showBoss(true, boss.name);
       hud.setBossHp(1);
-      if (!leveled) hud.notify(`⚠ BOSS INCOMING — ${boss.name}`);
+      if (!leveled) hud.notify(t('notify.bossIncoming', { name: boss.name }));
     } else {
       hud.showBoss(false);
       if (!leveled) hud.notify(`STAGE ${this.stage} — HOSTILES INBOUND`);
@@ -766,22 +786,64 @@ class Game {
   finish() {
     const p = this.player;
     const acc = p.shots ? Math.round((p.hits / p.shots) * 100) : 0;
-    const t = Math.round(this.time - this.startTime);
+    // `elapsed`, not `t` — `t` is the translation function in this module.
+    const elapsed = Math.round(this.time - this.startTime);
     this.progression.recordShots(p.shots, p.hits);
-    this.progression.recordRun(this.stage, t);
+    this.progression.recordRun(this.stage, elapsed);
     this.progression.recordWeaponShots(this._weaponShotsThisRun);
     this._weaponShotsThisRun = {};
     this.progression.addPlaytime(this._playtimeAccumMs);
     this._playtimeAccumMs = 0;
+    // The operator went down on this stage: bank the failure so the next
+    // deployment opens on attempt N+1, and headline that number on the death
+    // screen the way a Geometry Dash run does.
+    const nextAttempt = this.progression.recordAttempt(this.stage);
+    this.lastRunStats = { stage: this.stage, attempts: nextAttempt - 1, kills: p.kills };
     this.progression.clearRun();   // the run is over — nothing to resume
     hud.end([
       `STAGE REACHED — ${this.stage}`,
       `HOSTILES ELIMINATED — ${p.kills} &nbsp;(${p.headshots} HEADSHOTS)`,
       `ACCURACY — ${acc}%`,
-      `MISSION TIME — ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`,
+      `MISSION TIME — ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`,
       `OPERATOR LEVEL — ${this.progression.data.level}`,
-    ].join('<br>'));
+    ].join('<br>'), t('hud.attempt', { n: nextAttempt - 1 }));
     this.setState('end');
+  }
+
+  // ---- retention ----
+
+  // Offers today's login reward. Called when the menu becomes visible, so
+  // it lands on the screen the player is already looking at rather than
+  // interrupting a run.
+  offerDailyReward() {
+    // Never on a brand-new install. A first-time player should reach the
+    // DEPLOY button and be shooting within seconds, not read a streak chart
+    // for a streak they haven't started — the reward is there to pull people
+    // *back*, so it waits until they've actually played once.
+    if (!this.progression.data.totalKills && !this.progression.totalAttempts) return;
+    const st = dailyStatus();
+    if (!st.available) return;
+    hud.showDaily(true, { rewards: DAILY_REWARDS, day: st.day, streak: st.streak });
+  }
+
+  claimDailyReward() {
+    const reward = claimDaily();
+    if (!reward) { hud.showDaily(false); return; }
+    if (reward.kind === 'diamonds') this.progression.addDiamonds(reward.amount);
+    else this.progression.addTokens(reward.amount);
+    hud.markDailyClaimed();
+    if (audio.levelUp) audio.levelUp();
+    // Repaint the balances behind the overlay, then close it.
+    if (this.metaUI) this.metaUI.refresh();
+    if (this.storeUI) this.storeUI.refresh();
+    setTimeout(() => hud.showDaily(false), 900);
+  }
+
+  // Shares the run the player just finished. lastRunStats is set by finish().
+  async shareResult() {
+    const stats = this.lastRunStats || { stage: this.stage, attempts: 0, kills: 0 };
+    const kind = await shareRun(stats);
+    hud.setShareResult(kind);
   }
 
   ambient(dt) {
@@ -890,14 +952,14 @@ class Game {
     if (this.state === 'play' && this.player.deadT <= 0) this.crosshair();
   }
 
-  // Per-frame character draw options (contour colour/width), rebuilt cheaply
-  // each frame so a graphics-tier change takes effect immediately. Returns
-  // null on tiers with the contour disabled, which skips the buffered path.
+  // Per-frame character draw options (ground-accent colour/width), rebuilt
+  // cheaply each frame so a graphics-tier change takes effect immediately.
+  // Returns null on tiers with the accent disabled.
   characterDrawOpts() {
-    const px = quality.preset.outlinePx;
+    const px = quality.preset.accentPx;
     if (!px) return null;
-    if (!this._charOpts || this._charOpts.outline.px !== px) {
-      this._charOpts = { outline: { color: CHAR_OUTLINE_COLOR, px } };
+    if (!this._charOpts || this._charOpts.accent.px !== px) {
+      this._charOpts = { accent: { color: CHAR_ACCENT_COLOR, px } };
     }
     return this._charOpts;
   }
@@ -927,9 +989,9 @@ class Game {
     lightG.globalCompositeOperation = 'lighter';
 
     // glow map only feeds the bloom pass below — skip filling it entirely
-    // when the quality tier has bloom off, rather than painting into it and
-    // then discarding the result
-    const bloomOn = quality.preset.bloom;
+    // when bloom won't run, rather than painting into it and then discarding
+    // the result (the device probe can veto bloom as well as the tier)
+    const bloomOn = quality.preset.bloom && device.canvasFilter;
     if (bloomOn) {
       glowG.setTransform(1, 0, 0, 1, 0, 0);
       glowG.globalCompositeOperation = 'source-over';
@@ -967,7 +1029,12 @@ class Game {
     // wrap rather than a hazy wash (reduced bloom / less visual noise).
     // A canvas-wide blur filter is one of the pricier steps here, so weaker
     // quality tiers skip it outright rather than merely shrinking it.
-    if (quality.preset.bloom) {
+    // Gated on the live capability probe, not just the quality tier: where
+    // ctx.filter is unimplemented (older Android WebViews) the blur is a
+    // silent no-op, and this pass would screen the glow map over the scene
+    // completely unblurred — a bright haze that appears only in the APK.
+    // Better to ship no bloom there than a broken one.
+    if (quality.preset.bloom && device.canvasFilter) {
       ctx.globalCompositeOperation = 'screen';
       ctx.globalAlpha = 0.42;
       ctx.filter = `blur(${quality.preset.bloomBlur}px)`;
@@ -1154,7 +1221,7 @@ function frame(now) {
     if (lowPerfT > 4) {
       lowPerfT = -1e9;   // one check is enough; tryAutoLower() is one-shot anyway
       const lowered = quality.tryAutoLower();
-      if (lowered) { hud.notify(`GRAPHICS — AUTO-LOWERED TO ${quality.preset.name}`); resize(); }
+      if (lowered) { hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name })); resize(); }
     }
   }
 

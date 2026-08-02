@@ -6,12 +6,15 @@
 import { drawSprite } from '../art/paint.js';
 import { audio } from '../engine/audio.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
+import { t, getLang, LANGS } from '../engine/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
-const DET_LABEL = {
-  hidden: 'HIDDEN', suspicious: 'SUSPICIOUS', searching: 'SEARCHING',
-  detected: 'DETECTED', combat: 'COMBAT',
+// Detection states map to dictionary keys rather than literals so the threat
+// meter reads in the player's language like everything else.
+const DET_KEY = {
+  hidden: 'det.hidden', suspicious: 'det.suspicious', searching: 'det.searching',
+  detected: 'det.detected', combat: 'det.combat',
 };
 
 export class Hud {
@@ -39,7 +42,10 @@ export class Hud {
       introSkip: $('intro-skip'), sceneFade: $('scene-fade'),
       graphicsTier: $('graphics-tier'),
       bossBar: $('boss-bar'), bossName: $('boss-name'), bossHpFill: $('boss-hp-fill'),
-      lore: $('lore'),
+      lore: $('lore'), loreAttempt: $('lore-attempt'), attemptBadge: $('attempt-badge'),
+      daily: $('daily'), dailySub: $('daily-sub'), dailyTrack: $('daily-track'),
+      dailyStreak: $('daily-streak'), dailyClaim: $('btn-daily-claim'),
+      shareBtn: $('btn-share'),
     };
     this._loreTimers = [];
     this._lastAmmo = null;
@@ -54,6 +60,9 @@ export class Hud {
     $('btn-redeploy').onclick = h.restart;
     $('btn-menu').onclick = h.quit;
     if (h.graphics) $('btn-graphics').onclick = h.graphics;
+    if (h.language) $('btn-language').onclick = h.language;
+    if (h.share) $('btn-share').onclick = h.share;
+    if (h.claimDaily) $('btn-daily-claim').onclick = h.claimDaily;
     if (h.watchAdRevive) $('btn-revive-ad').onclick = h.watchAdRevive;
     if (h.skipRevive) $('btn-revive-skip').onclick = h.skipRevive;
   }
@@ -93,6 +102,54 @@ export class Hud {
   // behind it while the world is frozen).
   showRevive(on) {
     this.el.revive.classList.toggle('hidden', !on);
+  }
+
+  // Reflects the active language onto the pause-menu toggle.
+  setLanguage() {
+    const el = $('language-label');
+    if (!el) return;
+    const entry = LANGS.find((l) => l.code === getLang());
+    el.textContent = entry ? entry.label : getLang().toUpperCase();
+  }
+
+  // ---- daily reward ----
+  // `rewards` is the seven-day cycle, `day` the one being claimed now.
+  showDaily(on, { rewards = [], day = 1, streak = 0 } = {}) {
+    const el = this.el.daily;
+    if (!el) return;
+    el.classList.toggle('hidden', !on);
+    if (!on) return;
+    this.el.dailySub.textContent = t('daily.sub', { n: day });
+    this.el.dailyStreak.textContent = t('daily.streak', { n: streak });
+    const track = this.el.dailyTrack;
+    track.innerHTML = '';
+    for (const r of rewards) {
+      const cell = document.createElement('div');
+      cell.className = 'daily-cell'
+        + (r.kind === 'diamonds' ? ' diamond' : '')
+        + (r.day < day ? ' done' : '')
+        + (r.day === day ? ' today' : '');
+      cell.innerHTML = `<div class="daily-cell-day">${r.day}</div>` +
+        `<div class="daily-cell-amt">${r.amount}</div>`;
+      track.appendChild(cell);
+    }
+    this.el.dailyClaim.disabled = false;
+    this.el.dailyClaim.textContent = t('daily.claim');
+  }
+
+  markDailyClaimed() {
+    if (!this.el.dailyClaim) return;
+    this.el.dailyClaim.disabled = true;
+    this.el.dailyClaim.textContent = t('daily.claimed');
+  }
+
+  // Share button feedback: 'shared' | 'copied' | 'failed'
+  setShareResult(kind) {
+    const b = this.el.shareBtn;
+    if (!b) return;
+    b.textContent = kind === 'failed' ? t('end.share') : t('share.copied');
+    clearTimeout(this._shareT);
+    this._shareT = setTimeout(() => { b.textContent = t('end.share'); }, 1800);
   }
 
   setReviveCountdown(n) {
@@ -151,7 +208,7 @@ export class Hud {
       'hidden',
       !(player.reload || (isGun && cur.mag === 0 && cur.reserve > 0))
     );
-    this.el.reloadHint.textContent = player.reload ? 'RELOADING' : 'PRESS R — RELOAD';
+    this.el.reloadHint.textContent = t(player.reload ? 'hud.reloading' : 'hud.reloadHint');
 
     const slotOf = { rifle: 0, pistol: 1, knife: 2, smg: 3 };
     this.el.slots.forEach((s, i) => { if (s) s.classList.toggle('active', i === slotOf[player.current]); });
@@ -167,7 +224,7 @@ export class Hud {
   }
 
   setStage(n) {
-    this.el.stageLabel.textContent = `STAGE ${n}`;
+    this.el.stageLabel.textContent = t('hud.stage', { n });
   }
 
   setSlot4Visible(visible) {
@@ -180,7 +237,7 @@ export class Hud {
     this.el.detFill.style.width = `${Math.round(value * 100)}%`;
     if (state !== this._lastDetState) {
       this._lastDetState = state;
-      this.el.detLabel.textContent = DET_LABEL[state] || 'HIDDEN';
+      this.el.detLabel.textContent = t(DET_KEY[state] || 'det.hidden');
       // The threat bar only appears once an enemy is actually aware of the
       // player; in the safe 'hidden' state it fades out (via .det-visible /
       // the CSS opacity transition) so it never clutters stealth play.
@@ -198,6 +255,23 @@ export class Hud {
   // Mission briefing: visible for `hold` seconds, then fades itself out.
   // Re-showing while one is already up restarts it cleanly rather than
   // stacking timers (stage transitions can arrive faster than the hold).
+  // Attempt counter. `n` is which try this is at the current stage; the
+  // badge stays up for the whole run and the briefing line only appears
+  // once the player has actually failed here at least once (showing
+  // "ATTEMPT #1" on a first visit would just be noise).
+  setAttempt(n) {
+    const badge = this.el.attemptBadge;
+    if (badge) {
+      badge.textContent = t('hud.attempt', { n });
+      badge.classList.toggle('hidden', n <= 1);
+    }
+    const line = this.el.loreAttempt;
+    if (line) {
+      line.textContent = t('hud.attempt', { n });
+      line.classList.toggle('hidden', n <= 1);
+    }
+  }
+
   showLore(hold = 3) {
     const el = this.el.lore;
     if (!el) return;
@@ -345,9 +419,12 @@ export class Hud {
 
   // The campaign is endless — the only way a run ends is the operator going
   // down, so this is always the K.I.A. screen with a run summary.
-  end(stats) {
-    this.el.endTitle.textContent = 'K.I.A.';
+  // `attemptLine` is the headline number on a failed run (Geometry Dash
+  // style); it renders above the stat block so it reads first.
+  end(stats, attemptLine = '') {
+    this.el.endTitle.textContent = t('end.kia');
     this.el.endTitle.style.color = 'var(--red)';
-    this.el.endDetail.innerHTML = stats;
+    const head = attemptLine ? `<div class="end-attempt">${attemptLine}</div>` : '';
+    this.el.endDetail.innerHTML = head + stats;
   }
 }
