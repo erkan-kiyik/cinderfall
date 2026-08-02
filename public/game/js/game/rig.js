@@ -32,11 +32,16 @@ export function computePose(ent) {
   const mv = clamp(sp * 5, 0, 1);
 
   const breath = Math.sin(ent.breathT * 1.8) * (1 - sp * 0.7);
-  const bob = Math.abs(Math.sin(ent.gaitPhase)) * 2.4 * sp * (1 - air);
+  const bob = Math.abs(Math.sin(ent.gaitPhase)) * 3.1 * sp * (1 - air);
+  // Weight shifts side to side once per full stride (half the bob's rate), so
+  // the walk cycle isn't a perfectly symmetric up-down piston.
+  const sway = Math.sin(ent.gaitPhase * 0.5) * 1.4 * sp * (1 - air);
 
-  const lean = ent.lean + air * clamp(ent.vy * 0.00035, -0.12, 0.2);
+  // stumbleLean is a transient the Player adds on top of its damped lean —
+  // kept separate so the tilt can't feed back into the damping and linger.
+  const lean = ent.lean + (ent.stumbleLean || 0) + air * clamp(ent.vy * 0.00035, -0.12, 0.2);
 
-  const hipX = lean * 13;
+  const hipX = lean * 13 + sway;
   const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4 + breath * 0.4;
 
   const torsoLen = BONES.torso - crouch * 2.5;
@@ -147,9 +152,11 @@ function drawGun(g, wpn, ws, wa) {
 // reused by every entity in the frame, so nothing is allocated per draw.
 
 // Body bounds in entity-local space (pre-mirror), generous enough to hold the
-// head at full jump extension and a rifle at full forward reach. Symmetric on
-// x so the same box covers both facings.
-const OUTLINE_BOX = { x0: -95, y0: -162, x1: 95, y1: 32 };
+// head at full jump extension and a rifle at full forward reach, plus the
+// headroom squash & stretch needs at its limits (see SQUASH_LIMIT in
+// player.js — a stretched body reaches ~20% higher than a neutral one, and a
+// squashed one ~20% wider). Symmetric on x so one box covers both facings.
+const OUTLINE_BOX = { x0: -118, y0: -184, x1: 118, y1: 36 };
 const OUTLINE_DIRS = [
   [1, 0], [-1, 0], [0, 1], [0, -1],
   [0.71, 0.71], [-0.71, 0.71], [0.71, -0.71], [-0.71, -0.71],
@@ -236,6 +243,13 @@ export function drawSoldier(g, parts, shadow, ent, weapon, opts = null) {
 function drawBody(g, parts, ent, weapon) {
   g.save();
   g.scale(ent.facing, 1);
+
+  // Squash & stretch, anchored at the feet (local origin) so the operator
+  // never sinks into or floats above the street. Entities that don't set
+  // these (hostiles) are untouched.
+  if (ent.squashX !== undefined && (ent.squashX !== 1 || ent.squashY !== 1)) {
+    g.scale(ent.squashX, ent.squashY);
+  }
 
   // death fall: tip backward around the feet, limbs go limp
   let deadRot = 0;

@@ -404,9 +404,15 @@ export class World {
       }
     }
     ent.y = ny;
-    // ground probe (walking off edges)
+    // Ground probe (walking off edges, and any fall that stops just short of
+    // penetrating the surface). This path also has to report impact speed:
+    // whether a landing resolves here or in the sweep above depends on where
+    // the fall happens to land within a step, so leaving it silent made land
+    // dust, the camera bounce and the landing crouch spring fire only some of
+    // the time for identical drops.
     if (!ent.onGround && ent.vy >= 0) {
       if (this.rectHit(ent.x - ent.halfW, ent.y - 2, ent.halfW * 2, 4)) {
+        if (wasAir) landed = ent.vy;
         ent.onGround = true; ent.vy = 0;
       }
     }

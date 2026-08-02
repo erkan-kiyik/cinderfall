@@ -15,6 +15,30 @@ import { drawSoldier } from './rig.js';
 const RUN = 300, SPRINT = 450, ACCEL = 2800, JUMP = -900;
 const STEALTH_RANGE = 56;      // reach for a takedown from directly behind
 
+// ---- squash & stretch --------------------------------------------------
+// One signed value drives it: positive squashes (wide + short), negative
+// stretches (tall + narrow). It's a spring, so impulses overshoot and settle
+// instead of stepping. Scaling happens around the feet, so the operator never
+// sinks into or floats above the street.
+const JUMP_SQUASH = 0.10;      // pop at the instant of take-off (+10% wide / -10% tall)
+const LAND_SQUASH_MAX = 0.16;  // hardest possible landing compression
+const AIR_STRETCH = 0.15;      // full-speed airborne elongation (+15% tall)
+const AIR_STRETCH_DELAY = 0.06;  // hold the stretch off this long after take-off…
+const AIR_STRETCH_RAMP = 0.10;   // …then blend it in over this long
+const SQUASH_K = 260;          // spring stiffness
+const SQUASH_DAMP = 13;        // spring damping
+const SQUASH_LIMIT = 0.22;     // clamp so a freak impulse can't deform the rig
+
+// ---- stumble -----------------------------------------------------------
+// A brief, readable loss of composure: the body tilts, the camera is knocked,
+// and control authority dips. Fires on a hard landing, on a hard reversal at
+// speed, and on taking a solid hit.
+const STUMBLE_TILT_FWD = 0.175;   // ~10deg, pitching forward
+const STUMBLE_TILT_BACK = 0.087;  // ~5deg, rocked backward
+const REVERSAL_SPEED = 235;       // vx above which flipping input trips a stumble
+const REVERSAL_COOLDOWN = 0.5;    // keeps a wiggling stick from chain-stumbling
+const HARD_LAND_SPEED = 620;      // impact speed that starts costing composure
+
 export class Player {
   constructor(parts, shadow, weapons, world, fx, cam, audio, hud) {
     this.parts = parts; this.shadow = shadow;
@@ -44,6 +68,15 @@ export class Player {
     this.lastHurtT = -99; this.lastShotT = -99;
     this.stunT = 0;
     this.time = 0;
+
+    // squash/stretch: spring value + the per-frame scales the rig reads
+    this.squash = 0; this.squashVel = 0;
+    this.squashX = 1; this.squashY = 1;
+    // stumble: countdown, its own duration (for a stable 1->0 envelope),
+    // direction (+1 pitches forward, -1 rocks back) and the resulting tilt
+    this.stumbleT = 0; this.stumbleDur = 0; this.stumbleDir = 0;
+    this.stumbleLean = 0;
+    this.lastReversalT = -99;
 
     this.weapons = weapons;   // base defs, for finish/unlock lookups
     this.arsenal = {
@@ -115,6 +148,16 @@ export class Player {
     const crouchMul = lerp(1, 0.5, this.crouchHold);
     const top = lerp(RUN, SPRINT, this.sprintBlend) * stunMul * crouchMul;
     const target = mx * top;
+    // Hard reversal: cutting from a run into the opposite direction throws the
+    // operator's weight against the turn before it catches. Rate-limited so
+    // flicking the stick can't chain-stumble.
+    if (this.onGround && mx !== 0 && Math.abs(this.vx) > REVERSAL_SPEED &&
+        Math.sign(mx) !== Math.sign(this.vx) &&
+        this.time - this.lastReversalT > REVERSAL_COOLDOWN) {
+      this.lastReversalT = this.time;
+      this.stumble(-1, clamp(Math.abs(this.vx) / SPRINT, 0, 1) * 0.6);
+    }
+
     const rate = (this.onGround ? ACCEL : ACCEL * 0.45) * stunMul;
     this.vx = this.vx > target
       ? Math.max(target, this.vx - rate * dt)
@@ -125,6 +168,8 @@ export class Player {
       this.onGround = false;
       this.fx.landDust(this.x, this.y, false);
       this.cam.landBounce(-1.4);
+      this.squash = JUMP_SQUASH;      // compress off the launch, then stretch in the air
+      this.squashVel = 0;
     }
 
     const landed = this.world.moveEntity(this, dt);
@@ -132,9 +177,39 @@ export class Player {
       this.crouchVel += landed / 950;
       this.fx.landDust(this.x, this.y, landed > 750);
       this.cam.landBounce(clamp(landed * 0.004, 0.8, 4.2));
+      // impact compression, proportional to how hard the landing was
+      this.squash = clamp(landed / 900, 0.05, LAND_SQUASH_MAX);
+      this.squashVel = 0;
+      // a genuinely heavy landing also costs composure
+      if (landed > HARD_LAND_SPEED) {
+        this.stumble(1, clamp((landed - HARD_LAND_SPEED) / 700, 0.15, 1));
+      }
       if (landed > 1000) this.hurt(Math.floor((landed - 1000) / 40), 0);
     }
     this.airTime = this.onGround ? 0 : this.airTime + dt;
+
+    // Airborne elongation, driven by vertical speed. It has to be held off for
+    // a beat after take-off: vy is at its maximum on the very first airborne
+    // frame, so an un-ramped stretch cancels the launch squash outright and
+    // the compression never reads. Squash pops first, stretch takes over as
+    // the spring relaxes.
+    const stretchRamp = clamp((this.airTime - AIR_STRETCH_DELAY) / AIR_STRETCH_RAMP, 0, 1);
+    const airStretch = this.onGround
+      ? 0
+      : clamp(Math.abs(this.vy) / 850, 0, 1) * AIR_STRETCH * stretchRamp;
+    const s = clamp(this.squash - airStretch, -SQUASH_LIMIT, SQUASH_LIMIT);
+    this.squashY = 1 - s;
+    this.squashX = 1 + s * 0.95;
+
+    // stumble envelope: eases in and back out over the hit's lifetime
+    if (this.stumbleT > 0) {
+      this.stumbleT = Math.max(0, this.stumbleT - dt);
+      const k = this.stumbleDur > 0 ? this.stumbleT / this.stumbleDur : 0;
+      const amp = this.stumbleDir > 0 ? STUMBLE_TILT_FWD : STUMBLE_TILT_BACK;
+      this.stumbleLean = this.stumbleDir * amp * Math.sin(k * Math.PI);
+    } else {
+      this.stumbleLean = 0;
+    }
 
     // gait, lean, breathing
     const sp = Math.abs(this.vx);
@@ -275,11 +350,33 @@ export class Player {
     if (k >= 1) { this.stealth = null; this.lean = 0; }
   }
 
+  // Knocks the operator off balance for a moment: the torso pitches, the
+  // camera takes a jolt, and movement authority dips (stunT feeds stunMul in
+  // update). `dir` is +1 to pitch forward, -1 to rock back; `strength` 0..1
+  // scales how long and how hard. A stronger stumble always wins over one
+  // already running rather than cutting it short.
+  stumble(dir, strength = 0.5) {
+    const s = clamp(strength, 0, 1);
+    const dur = lerp(0.22, 0.42, s);
+    if (dur < this.stumbleT) return;   // a bigger stumble is already running
+    this.stumbleDir = dir;
+    this.stumbleDur = dur;
+    this.stumbleT = dur;
+    this.stunT = Math.max(this.stunT, lerp(0.05, 0.14, s));
+    this.cam.addTrauma(clamp(0.1 + s * 0.22, 0.1, 0.32));
+  }
+
   integrateSprings(dt) {
     // landing crouch spring
     this.crouchVel += -this.crouchSpring * 120 * dt;
     this.crouchVel *= Math.exp(-10 * dt);
     this.crouchSpring = Math.max(0, this.crouchSpring + this.crouchVel * dt * 34);
+
+    // squash/stretch spring — impulses set `squash` directly and this pulls it
+    // back to neutral with a little overshoot, which is what reads as weight
+    this.squashVel += -this.squash * SQUASH_K * dt;
+    this.squashVel *= Math.exp(-SQUASH_DAMP * dt);
+    this.squash = clamp(this.squash + this.squashVel * dt, -SQUASH_LIMIT, SQUASH_LIMIT);
   }
 
   // ------------------------------------------------------------- weapons
@@ -762,6 +859,16 @@ export class Player {
     this.stunT = Math.max(this.stunT, dmg > 14 ? 0.16 : 0.06);
     this.audio.hurt();
     this.cam.addTrauma(clamp(0.15 + dmg * 0.009, 0.15, 0.4));
+    // A solid hit rocks the body away from where it came from: shot from the
+    // front and the torso pitches back, shot from behind and it pitches
+    // forward. Light chip damage is left alone so sustained fire doesn't turn
+    // into a permanent wobble.
+    if (dmg > 8) {
+      const fromFront = sourceX === undefined
+        ? true
+        : Math.sign(sourceX - this.x) === Math.sign(this.facing || 1);
+      this.stumble(fromFront ? -1 : 1, clamp(dmg / 34, 0.25, 1));
+    }
     this.hud.damageFlash(this.hp / this.maxHp);
     this.fx.blood(this.x, this.y - 90, dirX);
     this.hud.damageDirection(sourceX === undefined ? 0 : sourceX - this.x, sourceX === undefined);
