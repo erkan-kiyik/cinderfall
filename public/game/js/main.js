@@ -40,6 +40,17 @@ const COMBO_WINDOW = 4.0;
 // shadow tint so it reads as a deep shadow edge rather than a sticker outline.
 const CHAR_OUTLINE_COLOR = 'rgba(6,8,13,0.92)';
 
+// Reticle bloom gains. Measured against the live weapon state: visSpread runs
+// ~0.025 at rest and peaks ~0.115 while spraying on the move, and the recoil
+// spring peaks ~1.45. These two land the reticle around 11px at rest and ~36px
+// at worst — wide enough to tell the player to stop spraying, tight enough to
+// still aim with. A literal projection of the cone would read past 50px.
+const CROSSHAIR_SPREAD_GAIN = 190;
+const CROSSHAIR_RECOIL_GAIN = 6;
+
+// Screen point -> world point, for reticle target testing.
+const cam2world = (cam, sx, sy) => cam.screenToWorld(sx, sy, vw, vh);
+
 let vw = 0, vh = 0, dpr = 1;
 let lightCv, lightG, glowCv, glowG, grainCv;
 let game = null;   // declared early so resize() can safely reference it
@@ -987,30 +998,86 @@ class Game {
     ctx.globalCompositeOperation = 'source-over';
   }
 
+  // True when the aim point is inside a live hostile's hitbox — the same box
+  // the weapons actually test against, so the reticle's target state can't
+  // disagree with where a shot would land.
+  aimOnTarget(wx, wy) {
+    for (const e of this.enemies) {
+      if (e.deadT > 0) continue;
+      const hs = e.hitboxScale || 1;
+      if (wx >= e.x - 13 * hs && wx <= e.x + 13 * hs &&
+          wy >= e.y - 134 * hs && wy <= e.y) return true;
+    }
+    return false;
+  }
+
   crosshair() {
     const inp = DEMO ? demoDriver : input;
     const mx = inp.mouse.x, my = inp.mouse.y;
     const p = this.player;
+    const w = cam2world(this.cam, mx, my);
+    const hot = this.aimOnTarget(w.x, w.y);
+    // Neon green idle / neon red on target. Each stroke goes down twice — a
+    // dark backing pass then the lit colour — so the reticle stays readable
+    // over a muzzle flash or a lit window, not just over the dimmed scene.
+    const neon = hot ? '#ff3b46' : '#4dffa0';
+    const glow = hot ? 'rgba(255,59,70,0.85)' : 'rgba(77,255,160,0.8)';
+
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.strokeStyle = 'rgba(235,232,222,0.9)';
-    ctx.fillStyle = 'rgba(235,232,222,0.9)';
-    ctx.lineWidth = 1.6;
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 2;
+    ctx.lineCap = 'round';
+
     if (p.cur.wpn.kind === 'gun') {
-      const gap = 7 + p.visSpread * 300 + p.cur.ws.recoil * 2;
-      const len = 7;
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      // Bloom: the reticle opens with the weapon's live cone (movement, hip
+      // fire, airborne) and kicks out on each shot via the recoil spring,
+      // then settles as the spring decays — so accuracy is readable at a
+      // glance instead of only felt through where rounds land.
+      const gap = 6 + p.visSpread * CROSSHAIR_SPREAD_GAIN + p.cur.ws.recoil * CROSSHAIR_RECOIL_GAIN;
+      const len = hot ? 9 : 7;
+      const ticks = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      // backing pass
+      ctx.strokeStyle = 'rgba(3,5,8,0.85)'; ctx.lineWidth = 3.6; ctx.shadowBlur = 0;
+      for (const [dx, dy] of ticks) {
         ctx.beginPath();
         ctx.moveTo(mx + dx * gap, my + dy * gap);
         ctx.lineTo(mx + dx * (gap + len), my + dy * (gap + len));
         ctx.stroke();
       }
-      ctx.beginPath(); ctx.arc(mx, my, 1.2, 0, Math.PI * 2); ctx.fill();
+      // lit pass
+      ctx.strokeStyle = neon; ctx.lineWidth = 1.7;
+      ctx.shadowColor = glow; ctx.shadowBlur = 7;
+      for (const [dx, dy] of ticks) {
+        ctx.beginPath();
+        ctx.moveTo(mx + dx * gap, my + dy * gap);
+        ctx.lineTo(mx + dx * (gap + len), my + dy * (gap + len));
+        ctx.stroke();
+      }
+      // centre dot
+      ctx.fillStyle = 'rgba(3,5,8,0.85)'; ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(mx, my, 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = neon; ctx.shadowColor = glow; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(mx, my, 1.3, 0, Math.PI * 2); ctx.fill();
+      // target brackets confirm a hostile is under the reticle
+      if (hot) {
+        const r = gap + len + 3;
+        ctx.strokeStyle = neon; ctx.lineWidth = 1.9; ctx.shadowBlur = 7;
+        for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          ctx.beginPath();
+          ctx.moveTo(mx + sx * r, my + sy * (r - 4));
+          ctx.lineTo(mx + sx * r, my + sy * r);
+          ctx.lineTo(mx + sx * (r - 4), my + sy * r);
+          ctx.stroke();
+        }
+      }
     } else {
-      ctx.beginPath(); ctx.arc(mx, my, 3.4, 0, Math.PI * 2); ctx.stroke();
+      // melee: a simple ring, same two-pass treatment
+      ctx.strokeStyle = 'rgba(3,5,8,0.85)'; ctx.lineWidth = 3.4; ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(mx, my, 3.8, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = neon; ctx.lineWidth = 1.6;
+      ctx.shadowColor = glow; ctx.shadowBlur = 7;
+      ctx.beginPath(); ctx.arc(mx, my, 3.8, 0, Math.PI * 2); ctx.stroke();
     }
     ctx.shadowBlur = 0;
+    ctx.lineCap = 'butt';
   }
 }
 

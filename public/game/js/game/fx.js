@@ -32,7 +32,13 @@ export class FX {
 
   // ---- weapon fire ----
   muzzle(x, y, ang, big = 1) {
-    this.addLight(x, y, 190 * big, [255, 190, 110], 0.95, 0.055);
+    // Two lights: a wide warm throw that briefly lifts the whole surrounding
+    // wall, and a tight white-hot core at the barrel. Sized up from the
+    // original single light because the scene now sits at a lower base value
+    // (see DEPTH_GRADE / BG_SCRIM) — the flash has to earn its punch against
+    // a darker frame, and this is the main "the gun just went off" cue.
+    this.addLight(x, y, 240 * big, [255, 186, 104], 0.95, 0.07);
+    this.addLight(x, y, 92 * big, [255, 238, 200], 0.9, 0.045);
     puffSmoke(this.ps, x + Math.cos(ang) * 8, y + Math.sin(ang) * 8, 2, 'rgba(150,148,145,0.7)', {
       vx: Math.cos(ang) * 40, vy: Math.sin(ang) * 40 - 14, sizeMul: 0.8, lifeMul: 0.8,
     });

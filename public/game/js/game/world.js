@@ -549,11 +549,23 @@ export class World {
       }
     }
 
-    // Depth scrim over the whole parallax stack. The layers are already graded
-    // down at bake time (see DEPTH_GRADE); this is the final, uniform push that
-    // guarantees nothing back here competes with the characters for attention.
-    // It lands before the world layer draws, so the street, props and everyone
-    // standing on them are unaffected — only what is genuinely behind.
+    // Atmospheric fog over the parallax stack: a cool blue-grey body that
+    // thickens toward the horizon, where the far skyline sits. This is the
+    // layer that actually separates the distant factory line from the
+    // foreground building the player fights on — distance reads as colour
+    // temperature, not just as dimness.
+    g.fillStyle = lingrad(g, 0, groundY - vh, 0, groundY + 40, [
+      [0, 'rgba(96,116,150,0.05)'],
+      [0.55, 'rgba(112,132,164,0.17)'],
+      [0.88, 'rgba(126,144,172,0.30)'],
+      [1, 'rgba(120,136,164,0.20)'],
+    ]);
+    g.fillRect(0, 0, vw, groundY + 40);
+
+    // Final uniform push. The layers are already graded down at bake time
+    // (see DEPTH_GRADE); this guarantees nothing back here competes with the
+    // characters. It lands before the world layer draws, so the street, props
+    // and everyone standing on them are unaffected — only what is truly behind.
     g.fillStyle = BG_SCRIM;
     g.fillRect(0, 0, vw, vh);
   }
@@ -599,6 +611,17 @@ export class World {
     ]);
     g.fillStyle = under;
     g.fillRect(-1600, GROUND_Y + 84, MAP_W + 3200, 1400);
+
+    // Foreground floor falloff: the road darkens as it comes toward camera, so
+    // the strip the characters stand on frames them from below instead of
+    // being the brightest band on screen. Props, barrels, pickups and decals
+    // all draw after this and keep their full value.
+    g.fillStyle = lingrad(g, 0, GROUND_Y - 4, 0, GROUND_Y + 96, [
+      [0, 'rgba(5,7,11,0)'],
+      [0.45, 'rgba(5,7,11,0.16)'],
+      [1, 'rgba(4,6,10,0.42)'],
+    ]);
+    g.fillRect(camX - scrimHalf, GROUND_Y - 4, scrimHalf * 2, 100);
     for (const p of this.props) { if (visible(p.x)) drawSprite(g, p.spr, p.x, p.y); }
     for (const b of this.barrels) if (b.alive && visible(b.x)) drawSprite(g, b.spr, b.x, b.y);
     this.drawPickups(g, visible);

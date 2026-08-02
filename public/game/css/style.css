@@ -235,21 +235,28 @@ html, body {
   100% { opacity: 0; max-height: 30px; padding: 7px 16px; }
 }
 
-/* shared bars (vitals + xp + threat fills) */
+/* shared bars (vitals + xp + threat fills)
+   The empty track is nearly clear so the filled portion is what the eye
+   catches; each fill carries its own glow so the vitals stay readable at a
+   glance against the darkened scene. */
 .bar {
   flex: 1; height: 8px;
-  background: rgba(4, 6, 9, 0.4);
-  border: 1px solid rgba(233, 226, 210, 0.12);
+  background: rgba(4, 6, 9, 0.22);
+  border: 1px solid rgba(233, 226, 210, 0.14);
   border-radius: var(--r-pill);
   padding: 1.5px;
 }
 .bar.slim { height: 6px; }
-.bar-fill { height: 100%; width: 100%; border-radius: var(--r-pill); transition: width 0.15s var(--ease-out); }
-.bar-fill.hp { background: linear-gradient(90deg, #8faa66, #b7c78f); }
-.bar-fill.hp.low { background: linear-gradient(90deg, #a3423a, #d0665a); }
-.bar-fill.st { background: linear-gradient(90deg, #6f8290, #a6b6c2); }
-.bar-fill.armor { background: linear-gradient(90deg, #5f7c8c, #9db6c2); }
-.bar-fill.xp { background: linear-gradient(90deg, #a5813a, var(--amber)); }
+.bar-fill {
+  height: 100%; width: 100%; border-radius: var(--r-pill);
+  transition: width 0.15s var(--ease-out), background 0.25s var(--ease);
+}
+.bar-fill.hp { background: linear-gradient(90deg, #46d16a, #9dff9f); box-shadow: 0 0 7px rgba(70,209,106,0.55); }
+.bar-fill.hp.low { background: linear-gradient(90deg, #ff3b30, #ff8a6b); box-shadow: 0 0 9px rgba(255,59,48,0.7); animation: hp-crit 0.9s ease-in-out infinite; }
+.bar-fill.st { background: linear-gradient(90deg, #2f9dff, #86dcff); box-shadow: 0 0 7px rgba(47,157,255,0.5); }
+.bar-fill.armor { background: linear-gradient(90deg, #7fb2ff, #c3dcff); box-shadow: 0 0 6px rgba(127,178,255,0.45); }
+.bar-fill.xp { background: linear-gradient(90deg, #d9a83f, #ffd479); box-shadow: 0 0 6px rgba(217,168,63,0.45); }
+@keyframes hp-crit { 50% { box-shadow: 0 0 14px rgba(255,59,48,0.95); } }
 
 /* top-right weapon + ammo readout — a soft drop-shadow keeps every HUD
    number legible over any part of the scene behind the glass panel */
@@ -275,8 +282,17 @@ html, body {
   background: rgba(8, 11, 15, 0.3); border-radius: var(--r2);
   transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
 }
-.slot.active { border-color: var(--amber); color: var(--amber); background: rgba(214, 69, 58, 0.14); }
-.slot-icon { width: 16px; height: 11px; opacity: 0.9; }
+/* Equipped slot: a full-strength border, a lit label and both an outer glow
+   and an inner sheen, so which weapon is live is unmistakable rather than a
+   faint tint difference. */
+.slot.active {
+  border-color: var(--amber-bright); color: #ffd9d2;
+  background: linear-gradient(180deg, rgba(255,92,70,0.30), rgba(214,69,58,0.16));
+  box-shadow: 0 0 10px rgba(255,92,70,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+  text-shadow: 0 0 6px rgba(255,92,70,0.6);
+}
+.slot-icon { width: 16px; height: 11px; opacity: 0.55; transition: opacity var(--dur-1) var(--ease); }
+.slot.active .slot-icon { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,92,70,0.55)); }
 
 #hitmark {
   position: absolute; left: 50%; top: 50%;
