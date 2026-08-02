@@ -14,6 +14,9 @@ import { drawSoldier } from './rig.js';
 // controls, without changing top speeds (preserves the existing game balance).
 const RUN = 300, SPRINT = 450, ACCEL = 2800, JUMP = -900;
 const STEALTH_RANGE = 56;      // reach for a takedown from directly behind
+// Collision height standing vs fully crouched (half). Drives the real hitbox,
+// not just the pose, so crouching fits under cover and shrinks the target.
+const STAND_H = 126, CROUCH_H = 63;
 
 // ---- squash & stretch --------------------------------------------------
 // One signed value drives it: positive squashes (wide + short), negative
@@ -47,7 +50,7 @@ export class Player {
 
     this.x = 260; this.y = 0; // y set by spawn
     this.vx = 0; this.vy = 0;
-    this.halfW = 10; this.h = 126;
+    this.halfW = 10; this.h = STAND_H;
     this.onGround = false; this.airTime = 0;
     this.facing = 1;
     this.aimLocal = 0; this.aimSmooth = 0; this.aimWorld = 0;
@@ -134,9 +137,19 @@ export class Player {
 
     // ---- crouch: hold to lower stance (slower, steadier, harder to spot).
     // Smoothly blended so the pose eases down/up rather than snapping.
-    const wantCrouch = input.crouch && this.onGround && this.stunT <= 0 && !this.reload;
+    let wantCrouch = input.crouch && this.onGround && this.stunT <= 0 && !this.reload;
+    // Standing back up is refused when there's no headroom, so releasing the
+    // key under a low ledge can't shove the operator's head into geometry.
+    if (!wantCrouch && this.crouchHold > 0.02 &&
+        this.world.rectHit(this.x - this.halfW, this.y - STAND_H,
+                           this.halfW * 2, STAND_H - CROUCH_H)) {
+      wantCrouch = true;
+    }
     this.crouchHold = damp(this.crouchHold, wantCrouch ? 1 : 0, 12, dt);
     this.crouched = this.crouchHold > 0.5;
+    // The collision box shrinks with the pose — crouching genuinely fits under
+    // low cover and presents a smaller target, rather than only looking lower.
+    this.h = lerp(STAND_H, CROUCH_H, this.crouchHold);
 
     // ---- movement
     this.stunT = Math.max(0, this.stunT - dt);

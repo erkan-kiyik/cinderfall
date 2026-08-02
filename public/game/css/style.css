@@ -166,13 +166,53 @@ html, body {
 .prog-row { display: flex; align-items: center; gap: var(--s2); padding: 4px clamp(6px, 1.1vw, 10px); width: 100%; }
 .lvl-label { font-size: var(--hud-fs-sm); letter-spacing: 0.14em; color: var(--amber-dim); width: 38px; white-space: nowrap; }
 .xp-track { flex: 1; height: 4px; }
-.hud-tokens { display: flex; align-items: center; gap: 4px; font-size: var(--hud-fs-sm); letter-spacing: 0.1em; color: var(--amber); white-space: nowrap; }
+.hud-tokens { display: flex; align-items: center; gap: 4px; font-size: var(--hud-fs); font-weight: 700; letter-spacing: 0.08em; color: #ffd479; white-space: nowrap; }
+/* CREDITS line inside the top-left cluster — a stacked tactical readout
+   rather than a floating number over the middle of the play area */
+.credits-row { margin-top: 1px; }
+.credits-row .vital-ico { color: rgba(255,212,121,0.6); }
 
 /* ---- shared currency icon canvases (header pills, HUD readout, crate cost) ---- */
 .cur-icon { display: inline-block; flex: none; vertical-align: middle; }
 .cur-icon.cur-para { filter: drop-shadow(0 0 3px rgba(224,189,119,0.35)); }
 .cur-icon.cur-diamond { filter: drop-shadow(0 0 4px rgba(111,212,236,0.5)); }
 .hud-tokens-ico { width: 16px; height: 16px; }
+
+/* ---------- mission briefing: centre screen, auto-dismisses ----------
+   Purely informational, so it never takes pointer events and fades itself out
+   rather than waiting on input. */
+.lore {
+  position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none; z-index: 12;
+  padding: clamp(12px, 2.4vw, 22px) clamp(18px, 4vw, 40px);
+  background: linear-gradient(180deg, rgba(10,13,18,0.82), rgba(10,13,18,0.62));
+  border: 1px solid rgba(214,69,58,0.42);
+  border-left: 3px solid var(--amber); border-right: 3px solid var(--amber);
+  border-radius: var(--r2);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.55);
+  max-width: min(560px, 86vw);
+  animation: lore-in 0.5s var(--ease-out);
+}
+.lore.out { animation: lore-out 0.6s var(--ease) forwards; }
+.lore-tag {
+  font-size: clamp(9px, 1.5vw, 12px); letter-spacing: 0.5em; color: var(--amber);
+  font-weight: 700; margin-bottom: 6px;
+}
+.lore-title {
+  font-size: clamp(17px, 3.6vw, 30px); letter-spacing: 0.14em; font-weight: 700;
+  color: var(--ink); margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+}
+.lore-status { font-size: clamp(9px, 1.5vw, 12px); letter-spacing: 0.24em; color: var(--ink-dim); margin-bottom: 6px; }
+.lore-status b { color: var(--red); font-weight: 700; }
+.lore-body { font-size: clamp(9px, 1.6vw, 13px); letter-spacing: 0.1em; color: var(--ink-2); line-height: 1.6; }
+@keyframes lore-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); letter-spacing: 0; }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes lore-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -56%) scale(0.98); }
+}
 
 /* ---------- detection / threat meter: compact, shows only when aware ---------- */
 .det-bar {
@@ -923,31 +963,43 @@ html, body {
 /* ================= On-screen touch controls ================= */
 #touch { position: absolute; inset: 0; z-index: 15; pointer-events: none; display: none; }
 #touch.on { display: block; }
+/* Touch layer: everything sits at low opacity and hugs the bottom corners so
+   the play area stays visible. Sizes are viewport-relative with hard caps —
+   the old fixed 132px sticks and labelled 62px buttons ate a large share of a
+   phone screen. Opacity lifts on contact so the control still confirms input. */
+#touch { --tc-alpha: 0.40; }
 .tc-stick {
-  position: absolute; bottom: calc(14px + env(safe-area-inset-bottom)); width: 132px; height: 132px; border-radius: 50%;
-  background: rgba(20,22,26,0.32); border: 1.5px solid rgba(232,228,218,0.22);
+  position: absolute; bottom: calc(12px + env(safe-area-inset-bottom));
+  width: clamp(78px, 15vw, 104px); height: clamp(78px, 15vw, 104px); border-radius: 50%;
+  background: rgba(18,21,26,0.30); border: 1px solid rgba(232,228,218,0.30);
+  opacity: var(--tc-alpha);
+  transition: opacity var(--dur-2) var(--ease);
   pointer-events: auto; touch-action: none;
 }
-.tc-stick.left { left: calc(26px + env(safe-area-inset-left)); }
-.tc-stick.right { right: calc(26px + env(safe-area-inset-right)); }
+.tc-stick.active { opacity: 0.78; }
+.tc-stick.left { left: calc(16px + env(safe-area-inset-left)); }
+.tc-stick.right { right: calc(16px + env(safe-area-inset-right)); }
 .tc-nub {
-  position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px;
-  border-radius: 50%; background: rgba(217,179,108,0.5); border: 1px solid rgba(255,255,255,0.35);
+  position: absolute; left: 50%; top: 50%; width: 42%; height: 42%; margin: -21% 0 0 -21%;
+  border-radius: 50%; background: rgba(217,179,108,0.55); border: 1px solid rgba(255,255,255,0.4);
 }
-.tc-stick.right .tc-nub { background: rgba(200,80,70,0.5); }
-.tc-label { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 9px; letter-spacing: 0.2em; color: var(--ink-dim); }
+.tc-stick.right .tc-nub { background: rgba(214,69,58,0.55); }
+/* the MOVE / AIM captions were pure clutter on a small screen */
+.tc-label { display: none; }
 .tc-btn {
   position: absolute; pointer-events: auto; touch-action: none;
-  width: 62px; height: 62px; border-radius: 50%;
-  background: rgba(20,22,26,0.4); border: 1.5px solid rgba(232,228,218,0.25);
-  color: var(--ink); font-family: var(--font); font-size: 11px; letter-spacing: 0.12em;
+  width: clamp(40px, 7.6vw, 52px); height: clamp(40px, 7.6vw, 52px); border-radius: 50%;
+  background: rgba(18,21,26,0.34); border: 1px solid rgba(232,228,218,0.30);
+  color: var(--ink); font-family: var(--font); font-size: clamp(8px, 1.3vw, 10px); letter-spacing: 0.1em;
   display: flex; align-items: center; justify-content: center; text-align: center;
+  opacity: var(--tc-alpha);
+  transition: opacity var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
 }
-.tc-btn:active { background: rgba(217,179,108,0.3); }
-.tc-jump { right: calc(172px + env(safe-area-inset-right)); bottom: calc(84px + env(safe-area-inset-bottom)); }
-.tc-reload { right: calc(172px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom)); }
-.tc-swap { right: calc(26px + env(safe-area-inset-right)); bottom: calc(154px + env(safe-area-inset-bottom)); width: 54px; height: 54px; font-size: 10px; }
-.tc-crouch { left: calc(172px + env(safe-area-inset-left)); bottom: calc(14px + env(safe-area-inset-bottom)); font-size: 10px; }
+.tc-btn:active { background: rgba(217,179,108,0.34); opacity: 0.9; }
+.tc-jump { right: calc(130px + env(safe-area-inset-right)); bottom: calc(74px + env(safe-area-inset-bottom)); }
+.tc-reload { right: calc(130px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom)); }
+.tc-swap { right: calc(20px + env(safe-area-inset-right)); bottom: calc(128px + env(safe-area-inset-bottom)); }
+.tc-crouch { left: calc(130px + env(safe-area-inset-left)); bottom: calc(14px + env(safe-area-inset-bottom)); }
 .tc-crouch.on { background: rgba(217,179,108,0.34); border-color: rgba(217,179,108,0.55); }
 .tc-takedown {
   left: 50%; bottom: calc(106px + env(safe-area-inset-bottom)); transform: translateX(-50%);

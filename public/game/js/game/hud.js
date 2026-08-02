@@ -39,7 +39,9 @@ export class Hud {
       introSkip: $('intro-skip'), sceneFade: $('scene-fade'),
       graphicsTier: $('graphics-tier'),
       bossBar: $('boss-bar'), bossName: $('boss-name'), bossHpFill: $('boss-hp-fill'),
+      lore: $('lore'),
     };
+    this._loreTimers = [];
     this._lastAmmo = null;
     this._lastDetState = null;
   }
@@ -191,6 +193,26 @@ export class Hud {
         this.el.detBar.classList.add('pulse');
       }
     }
+  }
+
+  // Mission briefing: visible for `hold` seconds, then fades itself out.
+  // Re-showing while one is already up restarts it cleanly rather than
+  // stacking timers (stage transitions can arrive faster than the hold).
+  showLore(hold = 3) {
+    const el = this.el.lore;
+    if (!el) return;
+    for (const t of this._loreTimers) clearTimeout(t);
+    this._loreTimers.length = 0;
+    el.classList.remove('hidden', 'out');
+    void el.offsetWidth;                      // restart the entry animation
+    this._loreTimers.push(setTimeout(() => el.classList.add('out'), hold * 1000));
+    this._loreTimers.push(setTimeout(() => el.classList.add('hidden'), hold * 1000 + 620));
+  }
+
+  hideLore() {
+    for (const t of this._loreTimers) clearTimeout(t);
+    this._loreTimers.length = 0;
+    if (this.el.lore) this.el.lore.classList.add('hidden');
   }
 
   setProgress(level, xpFrac) {

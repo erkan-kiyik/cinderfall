@@ -192,16 +192,24 @@ function drawBodyOutlined(g, parts, ent, weapon, o) {
   }
   outlineBuffers(W, H);
 
-  // 1) the body, rendered at final device resolution into the scratch buffer
+  // 1) the body, rendered at final device resolution into the scratch buffer.
+  //    State is reset explicitly, and the clear covers the whole buffer rather
+  //    than just the W/H window — the buffers are shared and only ever grow, so
+  //    a smaller entity must not be able to pick up a larger one's leftovers.
   obBody.g.setTransform(1, 0, 0, 1, 0, 0);
-  obBody.g.clearRect(0, 0, W, H);
+  obBody.g.globalCompositeOperation = 'source-over';
+  obBody.g.globalAlpha = 1;
+  obBody.g.filter = 'none';
+  obBody.g.clearRect(0, 0, obBody.cv.width, obBody.cv.height);
   obBody.g.setTransform(s, 0, 0, s, -x0 * s, -y0 * s);
   drawBody(obBody.g, parts, ent, weapon);
 
   // 2) flatten it to a solid silhouette (source-in recolours every opaque px)
   obSil.g.setTransform(1, 0, 0, 1, 0, 0);
   obSil.g.globalCompositeOperation = 'source-over';
-  obSil.g.clearRect(0, 0, W, H);
+  obSil.g.globalAlpha = 1;
+  obSil.g.filter = 'none';
+  obSil.g.clearRect(0, 0, obSil.cv.width, obSil.cv.height);
   obSil.g.drawImage(obBody.cv, 0, 0, W, H, 0, 0, W, H);
   obSil.g.globalCompositeOperation = 'source-in';
   obSil.g.fillStyle = o.color;

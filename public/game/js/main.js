@@ -51,6 +51,9 @@ const CROSSHAIR_RECOIL_GAIN = 6;
 // Screen point -> world point, for reticle target testing.
 const cam2world = (cam, sx, sy) => cam.screenToWorld(sx, sy, vw, vh);
 
+// Seconds the mission briefing stays up before fading itself out.
+const LORE_HOLD = 3;
+
 let vw = 0, vh = 0, dpr = 1;
 let lightCv, lightG, glowCv, glowG, grainCv;
 let game = null;   // declared early so resize() can safely reference it
@@ -427,6 +430,7 @@ class Game {
     hud.setTokens(this.progression.tokens);
     if (this.isBossStage) { hud.showBoss(true, this.enemies[0].name); hud.setBossHp(this.enemies[0].hp / this.enemies[0].maxHp); }
     else hud.showBoss(false);
+    hud.showLore(LORE_HOLD);   // mission briefing on entering a fresh deployment
   }
 
   // Called when every hostile in the current stage is down: the campaign is
@@ -831,6 +835,21 @@ class Game {
   // ------------------------------------------------------------ render
 
   render() {
+    // Hard reset of every piece of global canvas state at the top of the
+    // frame. The pass below composites with 'multiply', 'screen' and 'lighter'
+    // and applies `filter`; if any of those ever escaped (an early return, an
+    // exception mid-pass, a WebView that restores state differently), the next
+    // frame would composite the whole scene through it — which shows up as
+    // dark rectangles around sprites. Resetting unconditionally makes that
+    // class of bug impossible rather than relying on every path unwinding.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.filter = 'none';
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(0,0,0,0)';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // background parallax stack (screen space)
     this.world.drawBackground(ctx, this.cam, vw, vh, this.time);

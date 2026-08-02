@@ -38,6 +38,23 @@
         <span class="vital-ico">AR</span>
         <div class="bar slim"><div id="armor-fill" class="bar-fill armor"></div></div>
       </div>
+      <!-- CREDITS — moved out of the centre cluster so no readout sits over
+           the play area; reads as a stacked tactical line under the vitals -->
+      <div class="vital-row credits-row">
+        <span class="vital-ico">CR</span>
+        <span id="hud-tokens" class="hud-tokens">
+          <canvas class="cur-icon cur-para hud-tokens-ico" width="14" height="14"></canvas>
+          <span id="hud-tokens-val">0</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Mission briefing — centre screen for a few seconds when a stage opens -->
+    <div id="lore" class="lore hidden">
+      <div class="lore-tag">SECTOR 9</div>
+      <div class="lore-title">CINDERFALL DISTRICT</div>
+      <div class="lore-status">STATUS: <b>HOSTILE</b></div>
+      <div class="lore-body">Neutralize enemy forces and secure the perimeter.</div>
     </div>
 
     <!-- TOP CENTER — objective, progression, threat -->
@@ -51,7 +68,6 @@
       <div class="prog-row glass">
         <span id="lvl-label" class="lvl-label">LVL 1</span>
         <div class="bar xp-track"><div id="xp-fill" class="bar-fill xp"></div></div>
-        <span id="hud-tokens" class="hud-tokens"><canvas class="cur-icon cur-para hud-tokens-ico" width="16" height="16"></canvas><span id="hud-tokens-val">0</span></span>
       </div>
       <div id="det-bar" class="det-bar glass">
         <span class="det-ico">THREAT</span>
