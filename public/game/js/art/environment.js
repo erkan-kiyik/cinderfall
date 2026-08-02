@@ -196,41 +196,6 @@ export function lamp() {
   });
 }
 
-// ---------------- power pole with crossarm ----------------
-export function powerPole() {
-  const rng = nextRng();
-  return makeSprite(34, 110, 17, 108, (g) => {
-    g.fillStyle = lingrad(g, 14, 0, 20, 0, [
-      [0, '#2e2822'], [0.4, '#54493c'], [1, '#221d18'],
-    ]);
-    g.fillRect(15, 4, 4, 104);
-    // wood grain
-    g.strokeStyle = 'rgba(30,22,14,0.5)'; g.lineWidth = 0.5;
-    for (let i = 0; i < 5; i++) {
-      const x = 15.6 + rng() * 2.6;
-      g.beginPath(); g.moveTo(x, 8); g.lineTo(x + rng.range(-1, 1), 100); g.stroke();
-    }
-    // crossarms + insulators
-    for (const y of [8, 20]) {
-      g.fillStyle = '#463c30';
-      g.fillRect(2, y, 30, 2.6);
-      g.fillStyle = '#3a332a';
-      g.fillRect(2, y + 2.6, 30, 0.8);
-      for (const x of [4, 12, 22, 29]) {
-        g.fillStyle = '#565e66';
-        rr(g, x - 1, y - 3.4, 2, 3.6, 0.8); g.fill();
-      }
-    }
-    // transformer can
-    g.fillStyle = lingrad(g, 0, 30, 0, 44, [[0, '#494e44'], [1, '#26291f']]);
-    rr(g, 8, 30, 7.5, 13, 1.6); g.fill();
-    g.strokeStyle = '#191b16'; g.lineWidth = 0.8;
-    g.beginPath(); g.moveTo(11.6, 30); g.lineTo(13, 22.6); g.stroke();
-    streaks(g, 8, 32, 7.5, 11, rng, { n: 4, color: 'rgba(60,40,20,0.3)', wMax: 1.6 });
-    ao(g, 17, 108, 9, 2.6, 0.4);
-  });
-}
-
 // ---------------- chain-link fence segment ----------------
 export function fence(w = 70) {
   const rng = nextRng();

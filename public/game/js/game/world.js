@@ -70,7 +70,6 @@ export class World {
     this.props = [];
     this.lights = [];
     this.barrels = [];
-    this.wires = [];
     this.emitters.length = 0;
     this.pickups = [];
     this.coverSpots = [];
@@ -136,17 +135,6 @@ export class World {
       P(env.lamp(), lx);
       L(lx + 14, GY - 84, 230, [255, 202, 128], 0.62, lx === 2440 ? 0.5 : 0.04);
     }
-    const poles = [880, 1880, 2880, 3880];
-    for (const px of poles) P(env.powerPole(), px);
-    for (let i = 0; i < poles.length - 1; i++) {
-      const a = poles[i], b = poles[i + 1];
-      for (const dy of [0, 4, 12]) {
-        this.wires.push({ x0: a - 12, y0: GY - 100 + dy, x1: b - 12, y1: GY - 100 + dy, sag: 16 + dy });
-      }
-    }
-    this.wires.push({ x0: 880 - 12, y0: GY - 100, x1: 620 + 60, y1: GY - 175, sag: 8 });
-    this.wires.push({ x0: 3880 - 12, y0: GY - 100, x1: 4240 + 14, y1: GY - 86, sag: 10 });
-
     P(env.dock(300, 40), 1100);            // matches collider at 950..1250
     P(env.crate(26, 20), 911);
     P(env.dock(260, 40), 4030);
@@ -185,8 +173,10 @@ export class World {
     P(env.barrel('rust'), 2390);
     this.emitters.push({ kind: 'fire', x: 2390, y: GY - 21 });
     L(2390, GY - 30, 150, [255, 150, 60], 0.85, 0.8);
-    // shorted cable sparking above the road
-    this.emitters.push({ kind: 'sparks', x: 3506, y: GY - 132 });
+    // failing street lamp: sparks at the head of the fixture placed at 3420.
+    // (This used to hang off an overhead cable; with the wire system gone the
+    // sparks are anchored to the lamp so they read as a shorted fitting.)
+    this.emitters.push({ kind: 'sparks', x: 3434, y: GY - 86 });
     // industrial smoke sources: rooftop stacks rising over the sector + a
     // couple of ground vents. Hand-placed for the authored opening stage.
     this.emitters.push({ kind: 'chimney', x: 760, y: GY - 260, tint: 'exhaust', rate: 0.3, t: 0 });
@@ -308,14 +298,11 @@ export class World {
       this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red') });
     }
 
-    // -- lamps + power line --
-    const poles = [];
+    // -- street lamps --
+    // (power poles and the cable runs they carried were removed; the street
+    // reads cleaner without a web of wires across the play area)
     for (let lx = 300; lx < mapW - 200; lx += rng.range(760, 980)) {
       if (rng.chance(0.6)) { P(env.lamp(), lx); L(lx + 14, GY - 84, 220, [255, 202, 128], 0.6, rng.chance(0.25) ? 0.4 : 0.04); }
-      if (rng.chance(0.7)) { P(env.powerPole(), lx + rng.range(-80, 80)); poles.push(lx + rng.range(-80, 80)); }
-    }
-    for (let i = 0; i < poles.length - 1; i++) {
-      this.wires.push({ x0: poles[i] - 12, y0: GY - 100, x1: poles[i + 1] - 12, y1: GY - 100, sag: rng.range(12, 22) });
     }
 
     // -- fencing near the skyline gap, signage --
@@ -629,18 +616,6 @@ export class World {
     const camX = cam ? cam.x : 0;
     const visible = (x) => Math.abs(x - camX) < halfVis;
 
-    // power cables — the only world-space structure left behind the action
-    // now that the facade wall is gone, and they read as depth without
-    // blocking anything
-    g.strokeStyle = 'rgba(10,12,16,0.5)';
-    g.lineWidth = 1.1;
-    for (const w of this.wires) {
-      g.beginPath();
-      g.moveTo(w.x0, w.y0);
-      g.quadraticCurveTo((w.x0 + w.x1) / 2, Math.max(w.y0, w.y1) + w.sag, w.x1, w.y1);
-      g.stroke();
-    }
-
     drawSprite(g, this.ground, -250, GROUND_Y);
     // solid earth below the painted street — never let the sky bleed through
     const under = lingrad(g, 0, GROUND_Y + 82, 0, GROUND_Y + 700, [
@@ -728,25 +703,15 @@ function pickWeather(stage) {
   return 'rain';
 }
 
-// Near-camera out-of-focus silhouettes: two thin slack cables high in the
-// frame and a low band of curb clutter hugging the bottom edge. Deliberately
-// sparse and soft so it adds depth without reading as objects.
+// Near-camera foreground: a minimalist industrial platform band along the
+// bottom edge. The two slack cables that used to hang across the top of this
+// layer were removed along with the rest of the wire system — nothing crosses
+// the play area now.
 function paintForeground() {
   const W = 1400, H = 300;
   const { cv, g } = makeCanvas(W, H);
   const rng = makeRng(3131);
   const ink = (a) => `rgba(7,9,14,${a})`;
-
-  g.strokeStyle = ink(0.5); g.lineWidth = 2.6;
-  g.beginPath();
-  g.moveTo(-10, 26);
-  g.quadraticCurveTo(W * 0.3, 88, W * 0.62, 52);
-  g.quadraticCurveTo(W * 0.85, 28, W + 10, 58);
-  g.stroke();
-  g.strokeStyle = ink(0.4); g.lineWidth = 1.8;
-  g.beginPath();
-  g.moveTo(-10, 38); g.quadraticCurveTo(W * 0.4, 108, W + 10, 74);
-  g.stroke();
 
   // ---- industrial foreground band ----
   // The nearest parallax layer, and the one that reads as the sector the

@@ -503,6 +503,127 @@ function paintMid() {
 
 const NEON = ['#ff4d6d', '#3fd2ff', '#b26bff', '#ffd166', '#39e6a0'];
 
+// ---- realistic apartment detail helpers ----
+// Each of these is a small piece of real architecture. Individually they're
+// cheap; together they're what separates "a lit box" from "a building people
+// live in", which is the whole point of this layer.
+
+// Vertical panel joints and a fine grain over the render.
+function facadeTexture(g, x, y, w, h, col, rng) {
+  g.save();
+  g.beginPath(); g.rect(x, y, w, h); g.clip();
+  g.strokeStyle = 'rgba(6,8,13,0.16)'; g.lineWidth = 1;
+  for (let jx = x + 18; jx < x + w; jx += 26) {
+    g.beginPath(); g.moveTo(jx, y); g.lineTo(jx, y + h); g.stroke();
+  }
+  // horizontal floor-slab lines, fainter than the balcony bands
+  g.strokeStyle = 'rgba(6,8,13,0.11)';
+  for (let jy = y + 46; jy < y + h; jy += 46) {
+    g.beginPath(); g.moveTo(x, jy); g.lineTo(x + w, jy); g.stroke();
+  }
+  // weathering: a few damp streaks running down from the parapet
+  g.fillStyle = 'rgba(6,8,13,0.10)';
+  for (let i = 0; i < 4; i++) {
+    const sx = x + rng() * w;
+    g.fillRect(sx, y, rng.range(1.5, 4), rng.range(h * 0.2, h * 0.7));
+  }
+  // grain
+  for (let i = 0; i < 90; i++) {
+    g.fillStyle = rng.chance(0.5) ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.05)';
+    g.fillRect(x + rng() * w, y + rng() * h, 1, 1);
+  }
+  g.restore();
+}
+
+// Wall-mounted air-conditioning box on its bracket.
+function acUnit(g, x, y, col) {
+  g.fillStyle = shade(col, 0.24);
+  g.fillRect(x, y, 11, 7);
+  g.fillStyle = 'rgba(6,8,13,0.5)';
+  g.fillRect(x, y + 7, 11, 1.6);            // bracket shadow
+  g.strokeStyle = 'rgba(6,8,13,0.4)'; g.lineWidth = 0.7;
+  for (let i = 1; i < 4; i++) {
+    g.beginPath(); g.moveTo(x + i * 2.7, y + 1); g.lineTo(x + i * 2.7, y + 6); g.stroke();
+  }
+}
+
+// Zig-zag fire escape: landings joined by angled stair flights, plus the
+// drop-ladder at the bottom.
+function fireEscape(g, x, y, h, rng) {
+  const W = 26;
+  const landingGap = 46;
+  const n = Math.max(2, Math.floor(h / landingGap));
+  g.strokeStyle = 'rgba(8,10,16,0.62)';
+  g.fillStyle = 'rgba(8,10,16,0.62)';
+  // vertical stringers
+  g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + n * landingGap); g.stroke();
+  g.beginPath(); g.moveTo(x + W, y); g.lineTo(x + W, y + n * landingGap); g.stroke();
+  for (let i = 0; i < n; i++) {
+    const ly = y + i * landingGap;
+    // landing deck
+    g.fillRect(x - 2, ly, W + 4, 2.4);
+    // railing uprights
+    g.lineWidth = 0.9;
+    for (let rx = x; rx <= x + W; rx += 6) {
+      g.beginPath(); g.moveTo(rx, ly); g.lineTo(rx, ly - 10); g.stroke();
+    }
+    g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(x - 2, ly - 10); g.lineTo(x + W + 2, ly - 10); g.stroke();
+    // stair flight down to the next landing, alternating direction
+    if (i < n - 1) {
+      const leftToRight = i % 2 === 0;
+      const x0 = leftToRight ? x + 2 : x + W - 2;
+      const x1 = leftToRight ? x + W - 2 : x + 2;
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(x0, ly + 2.4); g.lineTo(x1, ly + landingGap);
+      g.stroke();
+      // treads
+      g.lineWidth = 0.8;
+      for (let s = 0.15; s < 1; s += 0.2) {
+        const tx = x0 + (x1 - x0) * s, ty = ly + 2.4 + (landingGap - 2.4) * s;
+        g.beginPath(); g.moveTo(tx - 2, ty); g.lineTo(tx + 2, ty); g.stroke();
+      }
+    }
+  }
+  // drop ladder hanging off the lowest landing
+  g.lineWidth = 1.3;
+  const by = y + (n - 1) * landingGap + 2.4;
+  g.beginPath(); g.moveTo(x + 6, by); g.lineTo(x + 6, by + 22); g.stroke();
+  g.beginPath(); g.moveTo(x + 13, by); g.lineTo(x + 13, by + 22); g.stroke();
+  for (let ry = by + 4; ry < by + 22; ry += 5) {
+    g.beginPath(); g.moveTo(x + 6, ry); g.lineTo(x + 13, ry); g.stroke();
+  }
+}
+
+// Rooftop water tank on its stilt frame — the classic tenement roofline.
+function waterTank(g, x, baseY, col, rng) {
+  const w = rng.range(16, 24), h = rng.range(14, 20), legH = rng.range(7, 12);
+  const y = baseY - legH - h;
+  // stilts
+  g.strokeStyle = 'rgba(8,10,16,0.7)'; g.lineWidth = 1.6;
+  for (const lx of [x + 2, x + w - 2]) {
+    g.beginPath(); g.moveTo(lx, y + h); g.lineTo(lx, baseY); g.stroke();
+  }
+  g.beginPath(); g.moveTo(x + 2, y + h + legH * 0.5); g.lineTo(x + w - 2, y + h + legH * 0.5); g.stroke();
+  // barrel
+  g.fillStyle = lingrad(g, x, y, x + w, y, [
+    [0, shade(col, 0.26)], [0.45, shade(col, 0.08)], [1, shade(col, -0.3)],
+  ]);
+  g.fillRect(x, y, w, h);
+  // banding hoops
+  g.strokeStyle = 'rgba(6,8,13,0.4)'; g.lineWidth = 0.9;
+  for (let i = 1; i < 3; i++) {
+    g.beginPath(); g.moveTo(x, y + (h / 3) * i); g.lineTo(x + w, y + (h / 3) * i); g.stroke();
+  }
+  // conical lid
+  g.fillStyle = shade(col, -0.18);
+  g.beginPath();
+  g.moveTo(x - 1.5, y); g.lineTo(x + w / 2, y - 5.5); g.lineTo(x + w + 1.5, y);
+  g.closePath(); g.fill();
+}
+
 function neonSign(g, x, y, w, h, col, rng) {
   // glow pool first, then the tube itself — cheap two-pass emissive
   g.save();
@@ -558,36 +679,90 @@ function paintNear() {
     ]);
     g.fillRect(x, top, bw, bh);
 
-    // parapet cap
+    // ---- facade render texture ----
+    // Vertical panel joints plus a fine speckle. Without this the block is a
+    // flat gradient, which is exactly the "cardboard box" read the realistic
+    // pass is meant to kill.
+    facadeTexture(g, x, top, bw, bh, col, rng);
+
+    // parapet cap, with the coping lip a real building has
     g.fillStyle = shade(col, -0.3);
     g.fillRect(x - 4, top - 7, bw + 8, 7);
+    g.fillStyle = shade(col, 0.12);
+    g.fillRect(x - 4, top - 7, bw + 8, 1.6);
 
-    // balcony bands — a couple of horizontal shelves break up the slab and
-    // instantly say "apartment block" rather than "warehouse"
-    if (rng.chance(0.62)) {
-      g.fillStyle = 'rgba(12,14,20,0.5)';
+    // balcony bands — horizontal shelves with a shadow line under each, so
+    // they read as slabs standing off the wall rather than painted stripes
+    const hasBalconies = rng.chance(0.62);
+    if (hasBalconies) {
       const bands = Math.floor(bh / 74);
       for (let i = 1; i <= bands; i++) {
-        g.fillRect(x - 3, top + i * 74, bw + 6, 5);
+        const by = top + i * 74;
+        g.fillStyle = shade(col, 0.06);
+        g.fillRect(x - 3, by, bw + 6, 5);
+        g.fillStyle = 'rgba(6,8,13,0.55)';
+        g.fillRect(x - 3, by + 5, bw + 6, 3);
+        // railing uprights along the balcony edge
+        g.fillStyle = 'rgba(10,12,18,0.45)';
+        for (let rx = x + 2; rx < x + bw - 2; rx += 7) g.fillRect(rx, by - 9, 1.2, 9);
       }
     }
 
-    // lit window scatter
+    // ---- windows, with light actually spilling onto the wall ----
     const cols = Math.max(1, Math.floor(bw / 30));
     const rows = Math.max(1, Math.floor(bh / 46));
     for (let ci = 0; ci < cols; ci++) {
       for (let ri = 0; ri < rows; ri++) {
         const wx = x + 9 + ci * 30, wy = top + 16 + ri * 46;
         if (wx + 13 > x + bw - 4) continue;
-        if (rng.chance(0.3)) {
+        const lit = rng.chance(0.3);
+        if (lit) {
           const warm = rng.chance(0.72);
-          g.fillStyle = withA(warm ? '#ffbe6e' : '#9fd4ff', rng.range(0.4, 0.85));
+          const tint = warm ? '#ffbe6e' : '#9fd4ff';
+          const a = rng.range(0.4, 0.85);
+          // Soft bleed first: a lit room throws light onto the render around
+          // its opening. This is the single detail that stops the windows
+          // reading as stickers on a flat wall.
+          g.save();
+          g.globalCompositeOperation = 'lighter';
+          const bleed = radgrad(g, wx + 6.5, wy + 9, 22, [
+            [0, withA(tint, a * 0.30)],
+            [0.5, withA(tint, a * 0.10)],
+            [1, withA(tint, 0)],
+          ]);
+          g.fillStyle = bleed;
+          g.fillRect(wx - 16, wy - 13, 45, 44);
+          g.restore();
+          g.fillStyle = withA(tint, a);
           g.fillRect(wx, wy, 13, 18);
+          // mullion + a hint of an interior edge
+          g.fillStyle = 'rgba(20,16,12,0.45)';
+          g.fillRect(wx + 6, wy, 1.2, 18);
+          g.fillStyle = withA(tint, Math.min(1, a + 0.15));
+          g.fillRect(wx, wy + 13, 13, 2);
         } else {
+          // dark glass still catches a little sky at the top
           g.fillStyle = 'rgba(10,12,18,0.62)';
           g.fillRect(wx, wy, 13, 18);
+          g.fillStyle = 'rgba(120,140,175,0.10)';
+          g.fillRect(wx, wy, 13, 5);
+        }
+        // reveal shadow down one side of every opening
+        g.fillStyle = 'rgba(6,8,13,0.4)';
+        g.fillRect(wx + 13, wy, 1.4, 18);
+
+        // air-conditioning unit bracketed under some windows
+        if (!hasBalconies && rng.chance(0.16) && wy + 26 < baseY - 6) {
+          acUnit(g, wx + 1, wy + 21, col);
         }
       }
+    }
+
+    // ---- fire escape: a zig-zag of landings and stair flights bolted to
+    // one face. Only on taller blocks, and only sometimes, so it stays a
+    // feature rather than wallpaper. ----
+    if (bh > 260 && rng.chance(0.42)) {
+      fireEscape(g, x + bw * (rng.chance(0.5) ? 0.12 : 0.58), top + 46, bh - 70, rng);
     }
 
     // neon: a rooftop bar or a tall hanging sign on the facade
@@ -609,6 +784,25 @@ function paintNear() {
       // aviation warning lamp
       g.fillStyle = 'rgba(255,70,70,0.85)';
       g.fillRect(x + bw * 0.72 - 1, top - sh - 3, sw + 2, 3);
+    }
+
+    // rooftop water tank on stilts — the detail that most says "tenement
+    // roofline" rather than "office block"
+    if (rng.chance(0.5)) {
+      waterTank(g, x + bw * rng.range(0.12, 0.44), top - 7, col, rng);
+    }
+
+    // roof-edge aerial mast, thin enough to read as a silhouette
+    if (rng.chance(0.35)) {
+      const mx = x + bw * rng.range(0.78, 0.92);
+      const mh = rng.range(18, 40);
+      g.strokeStyle = 'rgba(8,10,16,0.7)'; g.lineWidth = 1.4;
+      g.beginPath(); g.moveTo(mx, top - 7); g.lineTo(mx, top - 7 - mh); g.stroke();
+      g.lineWidth = 1;
+      for (let i = 1; i <= 3; i++) {
+        const ay = top - 7 - (mh / 4) * i;
+        g.beginPath(); g.moveTo(mx - 5, ay); g.lineTo(mx + 5, ay); g.stroke();
+      }
     }
 
     x += bw + rng.range(14, 58);
