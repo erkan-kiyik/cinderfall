@@ -307,7 +307,8 @@ export class StoreUI {
       const price = RARITY_DIAMOND_PRICE[item.rarity];
       const card = document.createElement('div');
       card.className = 'item-card' + (owned ? ' equipped' : '');
-      card.style.borderColor = rarity.color;
+      card.style.setProperty('--rarity', rarity.color);
+      card.style.setProperty('--rarity-glow', rarity.glow);
       const cv = document.createElement('canvas');
       cv.className = 'item-preview';
       card.appendChild(cv);

@@ -36,122 +36,86 @@ export function setupHiDpi(cv) {
   return { g, w, h };
 }
 
-// ---- PARA: a bound stack of bills — one bold block silhouette so it stays
-// legible at 24px, with layered material detail that rewards a closer look. ----
+// ---- PARA: a single clean coin medallion — one bold, legible silhouette at
+// any size, metallic amber to match the HUD's accent colour (no green bill
+// stack). Kept intentionally simple: a struck disc with a four-point star
+// mark, not a busy composition — reads instantly in a 16px header pill. ----
 export function paintPara(g, w, h) {
   g.clearRect(0, 0, w, h);
   const cx = w / 2, cy = h / 2;
   const size = Math.min(w, h);
   const s = size / 64;
-  // Below icon-slot size the two-medallion + band composition muddies into
-  // noise, so small renders switch to a simplified, higher-contrast layout —
-  // the same de-detailing real mobile game icon sets do for small UI slots.
   const tiny = size <= 30;
-  const full = size > 90;
   g.save();
   g.translate(cx, cy);
   g.scale(s, s);
 
-  const outline = '#0d1509';
-  const bx = -27, by = -18, bw = 54, bh = 34, br = 4;
+  const outline = '#3a2408';
+  const r = 26;
 
-  // ground shadow
+  // soft ground shadow (skipped at icon size — reads as noise that small)
   if (!tiny) {
-    g.fillStyle = 'rgba(0,0,0,0.3)';
-    g.beginPath(); g.ellipse(0, 19, 24, 4, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.28)';
+    g.beginPath(); g.ellipse(0, r + 5, r * 0.7, 3.5, 0, 0, Math.PI * 2); g.fill();
   }
 
-  // ---- single stack body: one bold rounded block, not separate floating
-  // layers, so the silhouette reads clearly even shrunk to icon size ----
-  const bodyGrad = g.createLinearGradient(bx, by, bx, by + bh);
-  bodyGrad.addColorStop(0, '#b7d47f');
-  bodyGrad.addColorStop(0.4, '#8bb056');
-  bodyGrad.addColorStop(0.72, '#6d9440');
-  bodyGrad.addColorStop(1, '#547730');
-  g.fillStyle = bodyGrad;
-  roundRect(g, bx, by, bw, bh, br);
-  g.fill();
-
-  // compressed page-edge lines along the lower third, clipped to the body —
-  // fine detail that only reads at full size
-  if (full) {
-    g.save();
-    roundRect(g, bx, by, bw, bh, br); g.clip();
-    g.strokeStyle = 'rgba(15,26,10,0.35)'; g.lineWidth = 1;
-    for (let i = 0; i < 4; i++) {
-      const ly = by + bh - 3 - i * 3.4;
-      g.beginPath(); g.moveTo(bx + 2, ly); g.lineTo(bx + bw - 2, ly); g.stroke();
-    }
-    g.restore();
-  }
-
-  roundRect(g, bx, by, bw, bh, br);
-  g.strokeStyle = outline; g.lineWidth = tiny ? 3 : 2.2; g.lineJoin = 'round';
+  // ---- struck disc: warm metallic gold radial gradient, key light upper-left ----
+  const body = g.createRadialGradient(-r * 0.32, -r * 0.34, r * 0.15, 0, 0, r * 1.05);
+  body.addColorStop(0, '#fff3cf');
+  body.addColorStop(0.32, '#ffd479');
+  body.addColorStop(0.65, '#e0a13a');
+  body.addColorStop(1, '#a9691f');
+  g.fillStyle = body;
+  g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = outline; g.lineWidth = tiny ? 3 : 2.4;
   g.stroke();
 
-  // ---- wrapper band across the middle, slightly overhanging the stack ----
-  const bandY = 0, bandH = tiny ? 15 : 12;
-  const bandGrad = g.createLinearGradient(0, bandY - bandH / 2, 0, bandY + bandH / 2);
-  bandGrad.addColorStop(0, '#f6e7ba');
-  bandGrad.addColorStop(0.5, '#e0bd77');
-  bandGrad.addColorStop(1, '#b8863f');
-  g.fillStyle = bandGrad;
-  roundRect(g, -31, bandY - bandH / 2, 62, bandH, 2.5);
-  g.fill();
-  g.strokeStyle = outline; g.lineWidth = tiny ? 2.6 : 2; g.stroke();
+  // recessed inner ring — the "struck coin" tell
+  g.strokeStyle = 'rgba(58,36,8,0.4)'; g.lineWidth = tiny ? 1.4 : 1;
+  g.beginPath(); g.arc(0, 0, r * 0.76, 0, Math.PI * 2); g.stroke();
   if (!tiny) {
-    g.strokeStyle = 'rgba(255,255,255,0.65)'; g.lineWidth = 1.1;
-    g.beginPath(); g.moveTo(-27.5, bandY - bandH / 2 + 2.4); g.lineTo(27.5, bandY - bandH / 2 + 2.4); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 0.8;
+    g.beginPath(); g.arc(0, 0, r * 0.76, Math.PI * 1.05, Math.PI * 1.85); g.stroke();
   }
 
-  // ---- currency medallion(s), drawn on top of the band ----
-  // Tiny: one big bold centered coin — the clearest possible silhouette.
-  // Normal/full: two smaller coins peeking above the band, more detail.
-  if (tiny) {
-    paraMedallion(g, 0, -2, 11, true);
-  } else {
-    paraMedallion(g, -14, -7, 8, false);
-    paraMedallion(g, 14, -7, 8, false);
-  }
+  // ---- centre mark: a simple four-point star, the one piece of "content"
+  // on the coin — bold enough to read at icon size, plain enough not to
+  // compete with the amount text next to it ----
+  g.fillStyle = 'rgba(58,36,8,0.88)';
+  star4(g, 0, 0, r * 0.42, r * 0.15);
 
-  // ---- premium gloss sheen, upper-left diagonal wash ----
-  if (!tiny) {
-    g.save();
-    roundRect(g, bx, by, bw, bh, br); g.clip();
-    const gloss = g.createLinearGradient(bx, by, bx + bw * 0.55, by + bh * 0.55);
-    gloss.addColorStop(0, 'rgba(255,255,255,0.45)');
-    gloss.addColorStop(0.6, 'rgba(255,255,255,0.1)');
-    gloss.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = gloss;
-    g.beginPath();
-    g.moveTo(bx, by); g.lineTo(bx + bw * 0.62, by); g.lineTo(bx, by + bh * 0.62); g.closePath();
-    g.fill();
-    g.restore();
-  }
+  // ---- gloss sheen, upper-left diagonal wash ----
+  g.save();
+  g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.clip();
+  const gloss = g.createLinearGradient(-r, -r, r * 0.2, r * 0.2);
+  gloss.addColorStop(0, 'rgba(255,255,255,0.55)');
+  gloss.addColorStop(0.55, 'rgba(255,255,255,0.12)');
+  gloss.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gloss;
+  g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill();
+  g.restore();
 
   g.restore();
 }
 
-function paraMedallion(g, x, y, r, bold) {
+// A compact 4-point star (diamond with concave sides) — used as the coin's
+// centre mark and reused nowhere else, so it stays a private helper.
+function star4(g, x, y, rOuter, rInner) {
   g.save();
   g.translate(x, y);
-  const grad = g.createRadialGradient(-r * 0.32, -r * 0.32, 0, 0, 0, r * 1.15);
-  grad.addColorStop(0, '#f4e9c4');
-  grad.addColorStop(0.55, '#d9b96a');
-  grad.addColorStop(1, '#a9812f');
-  g.fillStyle = grad;
-  g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = '#0d1509'; g.lineWidth = bold ? 2.4 : 1.6;
-  g.stroke();
-  if (!bold) {
-    g.strokeStyle = 'rgba(13,21,9,0.4)'; g.lineWidth = 0.7;
-    g.beginPath(); g.arc(0, 0, r * 0.62, 0, Math.PI * 2); g.stroke();
+  g.beginPath();
+  for (let i = 0; i < 4; i++) {
+    const a0 = (i / 4) * TAU2, a1 = a0 + TAU2 / 8;
+    const p0 = { x: Math.cos(a0) * rOuter, y: Math.sin(a0) * rOuter };
+    const p1 = { x: Math.cos(a1) * rInner, y: Math.sin(a1) * rInner };
+    if (i === 0) g.moveTo(p0.x, p0.y); else g.lineTo(p0.x, p0.y);
+    g.lineTo(p1.x, p1.y);
   }
-  // small top-left specular dot for a coined/metallic read
-  g.fillStyle = 'rgba(255,255,255,0.75)';
-  g.beginPath(); g.ellipse(-r * 0.3, -r * 0.35, r * 0.26, r * 0.16, -0.5, 0, Math.PI * 2); g.fill();
+  g.closePath();
+  g.fill();
   g.restore();
 }
+const TAU2 = Math.PI * 2;
 
 // ---- DIAMOND: faceted gem, cyan/blue/violet refraction ----
 // `scale` is an extra size multiplier on top of the box fit — used to make

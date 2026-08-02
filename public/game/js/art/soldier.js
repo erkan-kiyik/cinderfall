@@ -54,6 +54,29 @@ const VARIANTS = {
     masked: true,
     pad: '#453b29',
   },
+  // -- equippable operator skins (crate/store cosmetics; see meta.js CATALOG) --
+  viper: {
+    seed: 6613,
+    uniform: '#243325', uniformDark: '#17211a',
+    vest: '#2c3d2a', vestDark: '#1e2a1c',
+    helmet: '#202b1f',
+    glove: '#161d15',
+    boot: '#11150f',
+    skin: '#8a6f52',
+    masked: true,
+    pad: '#1a2417',
+  },
+  arctic: {
+    seed: 8842,
+    uniform: '#c7d0d6', uniformDark: '#9aa6ad',
+    vest: '#d9e2e6', vestDark: '#aeb9be',
+    helmet: '#b7c2c8',
+    glove: '#8f9aa0',
+    boot: '#5c6469',
+    skin: COL.skin,
+    masked: false,
+    pad: '#9fabb1',
+  },
 };
 
 // Fabric base fill: lit from top with warm key, cool shadow at bottom.

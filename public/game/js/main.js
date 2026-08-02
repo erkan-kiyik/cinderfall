@@ -36,9 +36,11 @@ const DEMO = params.has('demo');
 // combo; longer than this and the next kill starts a fresh combo of 1.
 const COMBO_WINDOW = 4.0;
 
-// Character contour colour. Near-black with a trace of the scene's cool
-// shadow tint so it reads as a deep shadow edge rather than a sticker outline.
-const CHAR_OUTLINE_COLOR = 'rgba(6,8,13,0.92)';
+// Character contour colour. A soft, translucent cool-dark tint — just enough
+// to separate the silhouette from a busy background at a glance, without the
+// heavy near-opaque "sticker" line the contour used to draw (that read as a
+// solid dark box around the character on small/compressed screens).
+const CHAR_OUTLINE_COLOR = 'rgba(9,12,19,0.5)';
 
 // Reticle bloom gains. Measured against the live weapon state: visSpread runs
 // ~0.025 at rest and peaks ~0.115 while spraying on the move, and the recoil
@@ -181,6 +183,8 @@ async function boot() {
   assets.ranger = buildSoldier('ranger');
   assets.phantom = buildSoldier('phantom');
   assets.nomad = buildSoldier('nomad');
+  assets.viper = buildSoldier('viper');
+  assets.arctic = buildSoldier('arctic');
   assets.shadow = makeShadowSprite();
   hud.setLoad(0.3, 'MACHINING WEAPONS…');
   await raf();

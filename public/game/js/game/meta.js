@@ -55,6 +55,8 @@ export const CATALOG = [
   // -- knife finishes (energy "sword" blade) --
   { id: 'knife_ravage', name: 'TALON-7 · RAVAGE', slot: 'knifeFinish', rarity: 'rare', kind: 'Blade',
     apply: { type: 'finish', weapon: 'knife', finish: 'ravage' } },
+  { id: 'knife_voidedge', name: 'VOID EDGE',      slot: 'knifeFinish', rarity: 'epic', kind: 'Energy Blade', tag: 'ENERGY',
+    apply: { type: 'finish', weapon: 'knife', finish: 'voidedge' } },
   { id: 'knife_volt',   name: 'VOLT EDGE',        slot: 'knifeFinish', rarity: 'legendary', kind: 'Energy Blade', tag: 'ENERGY',
     apply: { type: 'finish', weapon: 'knife', finish: 'volt' } },
 
@@ -63,11 +65,17 @@ export const CATALOG = [
     apply: { type: 'operator', variant: 'phantom' } },
   { id: 'op_nomad',   name: 'NOMAD OPERATOR',     slot: 'operator', rarity: 'rare', kind: 'Operator',
     apply: { type: 'operator', variant: 'nomad' } },
+  { id: 'op_viper',   name: 'VIPER OPERATOR',     slot: 'operator', rarity: 'epic', kind: 'Operator', tag: 'STEALTH',
+    apply: { type: 'operator', variant: 'viper' } },
+  { id: 'op_arctic',  name: 'ARCTIC OPERATOR',    slot: 'operator', rarity: 'legendary', kind: 'Operator', tag: 'RECON',
+    apply: { type: 'operator', variant: 'arctic' } },
 
   // -- Diamond-store exclusives: never drop from a crate (storeOnly), sold
   // directly for Diamonds at their rarity's RARITY_DIAMOND_PRICE. --
   { id: 'rifle_inferno', name: 'VK-77 · INFERNO', slot: 'rifleFinish', rarity: 'mythic', kind: 'Rifle Skin', tag: 'MYTHIC',
     storeOnly: true, apply: { type: 'finish', weapon: 'rifle', finish: 'inferno' } },
+  { id: 'knife_bloodmoon', name: 'BLOODMOON', slot: 'knifeFinish', rarity: 'mythic', kind: 'Energy Blade', tag: 'MYTHIC',
+    storeOnly: true, apply: { type: 'finish', weapon: 'knife', finish: 'bloodmoon' } },
   { id: 'knife_eventide', name: 'EVENTIDE — SECTOR 9 LAUNCH BLADE', slot: 'knifeFinish', rarity: 'ultraLimited', kind: 'Energy Blade', tag: 'EVENT',
     storeOnly: true, retiredAfter: Date.UTC(2026, 7, 9), apply: { type: 'finish', weapon: 'knife', finish: 'eventide' } },
 ];

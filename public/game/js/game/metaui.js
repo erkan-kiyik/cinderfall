@@ -46,7 +46,6 @@ export class MetaUI {
   // Re-read progression and repaint everything (call on menu show / after runs).
   refresh() {
     this.renderTokens();
-    this.renderLoadoutChips();
     this.renderLoadout();
     this.renderCollection();
     this.renderAdButton();
@@ -74,25 +73,6 @@ export class MetaUI {
     if (prev == null || n <= prev) { el.textContent = String(n); return; }   // init / spend: snap
     animateCount(el, prev, n);
     playCurrencyGain(document.querySelector('.token-pill'), 'para', this.audio);
-  }
-
-  // Compact equipped-gear summary shown on the PLAY tab.
-  renderLoadoutChips() {
-    const wrap = $('loadout-chips');
-    wrap.innerHTML = '';
-    const chips = [];
-    for (const slot of LOADOUT_SLOTS) {
-      const id = this.p.equipped(slot.key);
-      const item = id && itemById(id);
-      const label = item ? this.itemLabel(item).replace(/^.*·\s*/, '') : 'STOCK';
-      chips.push(`${slot.label}: ${label}`);
-    }
-    for (const text of chips) {
-      const c = document.createElement('span');
-      c.className = 'chip';
-      c.textContent = text;
-      wrap.appendChild(c);
-    }
   }
 
   renderLoadout() {
@@ -127,7 +107,10 @@ export class MetaUI {
     const card = document.createElement('div');
     const rarity = item ? RARITY[item.rarity] : null;
     card.className = 'item-card' + (equipped ? ' equipped' : '') + (locked ? ' locked' : '');
-    if (rarity) card.style.borderColor = rarity.color;
+    if (rarity) {
+      card.style.setProperty('--rarity', rarity.color);
+      card.style.setProperty('--rarity-glow', rarity.glow);
+    }
 
     const cv = document.createElement('canvas');
     cv.className = 'item-preview';
@@ -160,7 +143,6 @@ export class MetaUI {
         this.p.equip(slotKey, item ? item.id : null);
         if (this.audio) this.audio.equip ? this.audio.equip() : this.audio.ui();
         this.renderLoadout();
-        this.renderLoadoutChips();
       });
     }
     return card;
@@ -176,7 +158,8 @@ export class MetaUI {
       const rarity = RARITY[item.rarity];
       const card = document.createElement('div');
       card.className = 'item-card' + (has ? '' : ' locked');
-      card.style.borderColor = rarity.color;
+      card.style.setProperty('--rarity', rarity.color);
+      card.style.setProperty('--rarity-glow', rarity.glow);
       const cv = document.createElement('canvas');
       cv.className = 'item-preview';
       card.appendChild(cv);

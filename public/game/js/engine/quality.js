@@ -14,9 +14,9 @@ const KEY = 'cinderfall.quality.v1';
 // is baked at boot and keeps working there regardless.
 export const PRESETS = {
   low:    { name: 'LOW',    dprCap: 1,   assetScale: 2,   particleMax: 900,  bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.4,  outlinePx: 0 },
-  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1600, bloom: true,  bloomBlur: 8,  grain: false, ambientMul: 0.7,  outlinePx: 1.5 },
-  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: true,  ambientMul: 1,    outlinePx: 2 },
-  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, outlinePx: 2 },
+  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1600, bloom: true,  bloomBlur: 8,  grain: false, ambientMul: 0.7,  outlinePx: 0.85 },
+  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: true,  ambientMul: 1,    outlinePx: 1.1 },
+  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, outlinePx: 1.1 },
 };
 const ORDER = ['low', 'medium', 'high', 'ultra'];
 

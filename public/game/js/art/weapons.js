@@ -484,12 +484,18 @@ function paintSmgMag() {
 
 // ============================ "RAVAGE" bowie (knife finish) ============
 // Alternate blade geometry for the TALON-7 grip: straight clip-point bowie
-// with a blackened Cerakote finish, unlocked as a knife variant.
-function paintKnifeBowie() {
+// with a blackened Cerakote finish, unlocked as a knife variant. `finish`
+// optionally overrides the handle wrap colour and/or swaps the blade for an
+// emissive energy edge (same convention as paintKnife's `blade` override),
+// so higher-rarity bowie variants can read as visibly distinct without a
+// second geometry.
+function paintKnifeBowie(finish) {
+  const handle = (finish && finish.handle) || ['#2a2c26', '#1e201a', '#121310'];
+  const blade = finish && finish.blade;
   return makeSprite(22, 9, 6, 4.5, (g) => {
     g.translate(6, 4.5);
     g.fillStyle = lingrad(g, 0, -2.6, 0, 2.8, [
-      [0, '#2a2c26'], [0.5, '#1e201a'], [1, '#121310'],
+      [0, handle[0]], [0.5, handle[1]], [1, handle[2]],
     ]);
     g.beginPath();
     g.moveTo(-0.8, -2.2);
@@ -506,10 +512,15 @@ function paintKnifeBowie() {
     g.beginPath(); g.arc(-4.7, 0.2, 0.7, 0, Math.PI * 2); g.fill();
     g.fillStyle = lingrad(g, 0, -3.2, 0, 3.2, [[0, '#3c3e40'], [1, '#18191b']]);
     rr(g, -0.9, -3, 1.6, 6, 0.6); g.fill();
-    // straight clip-point blade, blackened
-    g.fillStyle = lingrad(g, 0, -2.6, 0, 2.2, [
-      [0, '#4c4e50'], [0.4, '#33353a'], [1, '#1c1d20'],
-    ]);
+    // straight clip-point blade — blackened steel, or an emissive energy edge
+    g.fillStyle = blade
+      ? lingrad(g, 0, -2.6, 0, 2.2, [
+          [0, '#eafcff'], [0.38, blade], [0.62, shade(blade, -0.35)], [1, shade(blade, -0.6)],
+        ])
+      : lingrad(g, 0, -2.6, 0, 2.2, [
+          [0, '#4c4e50'], [0.4, '#33353a'], [1, '#1c1d20'],
+        ]);
+    if (blade) { g.shadowColor = blade; g.shadowBlur = 5; }
     g.beginPath();
     g.moveTo(0.7, -2.4);
     g.lineTo(11.4, -2.3);
@@ -517,7 +528,10 @@ function paintKnifeBowie() {
     g.quadraticCurveTo(11.5, 1.2, 6, 1.7);
     g.quadraticCurveTo(2.8, 1.9, 0.7, 1.7);
     g.closePath(); g.fill();
-    g.fillStyle = lingrad(g, 0, 0.2, 0, 1.9, [[0, 'rgba(150,155,160,0.6)'], [1, 'rgba(90,95,100,0.1)']]);
+    g.shadowBlur = 0;
+    g.fillStyle = blade
+      ? lingrad(g, 0, 0.2, 0, 1.9, [[0, 'rgba(240,253,255,0.95)'], [1, withA(blade, 0.25)]])
+      : lingrad(g, 0, 0.2, 0, 1.9, [[0, 'rgba(150,155,160,0.6)'], [1, 'rgba(90,95,100,0.1)']]);
     g.beginPath();
     g.moveTo(1, 1); g.quadraticCurveTo(6, 1.3, 11.4, 0.5); g.quadraticCurveTo(14, -0.3, 16.1, 0.3);
     g.quadraticCurveTo(11.5, 1.3, 6, 1.75); g.quadraticCurveTo(2.8, 1.95, 1, 1.75);
@@ -580,33 +594,40 @@ const PATTERN_SMG = [0.55, 0.65, 0.78, 0.7, 0.6, 0.82, 0.9, 0.68];
 export function buildWeapons() {
   const flashes = [paintFlash(11), paintFlash(23), paintFlash(37)];
 
+  // Finish palettes are pushed noticeably more saturated/contrasty than a
+  // plain recolor of the default gunmetal — each named skin should read as a
+  // distinct, premium coating at a glance, not a dye-swap of the stock gun.
   const rifleBody = paintRifleBody('ranger');
   const rifleFinishes = {
     default: rifleBody,
-    urban: paintRifleBody('ranger', { rec: '#3c4750', poly: '#2b3640' }),
-    cinder: paintRifleBody('ranger', { rec: '#4a2e26', poly: '#38221c' }),
-    arc: paintRifleBody('ranger', { rec: '#123742', poly: '#0c2731' }),   // ARC-9 energy
-    inferno: paintRifleBody('ranger', { rec: '#5c1418', poly: '#3d0d10' }),   // mythic store finish
+    urban: paintRifleBody('ranger', { rec: '#48596b', poly: '#2f3d4a' }),
+    cinder: paintRifleBody('ranger', { rec: '#8a3820', poly: '#5c2414' }),
+    arc: paintRifleBody('ranger', { rec: '#15515f', poly: '#0e3946' }),   // ARC-9 energy
+    inferno: paintRifleBody('ranger', { rec: '#8a1c1c', poly: '#570f0f' }),   // mythic store finish
   };
   const pistolBody = paintPistolBody();
   const pistolFinishes = {
     default: pistolBody,
-    desert: paintPistolBody({ grip: '#5c4f3a', frame: '#6b5c42' }),
-    onyx: paintPistolBody({ grip: '#161719', frame: '#1c1d1f' }),
-    gold: paintPistolBody({ grip: '#5a4718', frame: '#8a6f28' }),
+    desert: paintPistolBody({ grip: '#6b5638', frame: '#8a7048' }),
+    onyx: paintPistolBody({ grip: '#14171c', frame: '#1d2129' }),
+    gold: paintPistolBody({ grip: '#8a6a16', frame: '#d9ac2e' }),
   };
   const knifeBody = paintKnife();
   const knifeFinishes = {
     default: knifeBody,
     ravage: paintKnifeBowie(),
-    volt: paintKnife({ blade: '#38e0ff' }),   // VOLT EDGE energy blade
+    voidedge: paintKnifeBowie({ blade: '#b26bff' }),                         // epic — violet energy bowie
+    volt: paintKnife({ blade: '#38e0ff' }),   // VOLT EDGE energy blade — legendary
+    bloodmoon: paintKnifeBowie({                                             // mythic store finish
+      handle: ['#4a1620', '#341019', '#1c0810'], blade: '#ff3b5c',
+    }),
     eventide: paintKnife({ blade: '#f2f6ff' }),   // ultra-limited event finish
   };
   const smgBody = paintSmgBody();
   const smgFinishes = {
     default: smgBody,
-    viper: paintSmgBody({ rec: '#2c4a2e', poly: '#1b2e1c' }),
-    arc: paintSmgBody({ rec: '#123742', poly: '#0c2731' }),
+    viper: paintSmgBody({ rec: '#3f8a3e', poly: '#265726' }),
+    arc: paintSmgBody({ rec: '#15515f', poly: '#0e3946' }),
   };
 
   const defs = {
