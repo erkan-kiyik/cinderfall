@@ -29,6 +29,11 @@ export const dist = (x0, y0, x1, y1) => Math.hypot(x1 - x0, y1 - y0);
 export const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 export const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 export const easeOutBack = (t) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
+export const easeInCubic = (t) => t * t * t;
+// Smootherstep: zero first *and* second derivative at both ends, so blending
+// between two animation phases with it leaves no velocity kink at the seam —
+// which is what a plain lerp or quad ease shows up as a visible hitch.
+export const smootherstep = (t) => t * t * t * (t * (t * 6 - 15) + 10);
 
 // Deterministic RNG (mulberry32) so painted grunge is stable between runs.
 export function makeRng(seed) {

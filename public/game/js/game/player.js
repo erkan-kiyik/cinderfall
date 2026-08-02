@@ -5,7 +5,8 @@
 // heavy slashes. All transitions are spring- or envelope-blended.
 
 import {
-  clamp, lerp, damp, rand, randSpread, easeOutCubic, easeInOutQuad, TAU, makeNoise1D,
+  clamp, lerp, damp, rand, randSpread, easeOutCubic, easeInOutQuad, easeInCubic,
+  smootherstep, TAU, makeNoise1D,
 } from '../engine/math.js';
 import { newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld } from './rig.js';
 import { drawSoldier } from './rig.js';
@@ -526,7 +527,11 @@ export class Player {
       this.unequipT += dt;
       const T = 0.2;
       const k = clamp(this.unequipT / T, 0, 1);
-      rot += k * 1.1; offY += k * 14;
+      // Stow accelerates away rather than ramping linearly — the arm starts
+      // the motion and gravity/momentum finishes it. A straight ramp here is
+      // the single most mechanical-looking frame in a weapon switch.
+      const e = easeInCubic(k);
+      rot += e * 1.1; offY += e * 14;
       if (k >= 1) {
         this.current = this.pendingSwitch;
         this.pendingSwitch = null;
@@ -869,13 +874,22 @@ export class Player {
       const windEnd = 0.32, strikeEnd = 0.62;
       const back = s.heavy ? -1.65 : -1.05;
       const fwd = s.heavy ? 1.5 : 1.2;
+      // Follow-through: the blade carries a little past where the swing was
+      // aimed before the arm reels it back, which is what makes a slash read
+      // as weight being thrown rather than a value being set.
+      const over = fwd + (s.heavy ? 0.22 : 0.14);
+      // Rest reach, and the reach the strike returns to at full extension's
+      // end. Both phases must agree on this number or the blade visibly
+      // snaps at the seam (it used to jump 20 -> 34 here).
+      const REST_REACH = 25, TUCK_REACH = 20;
       if (k < windEnd) {
-        const e = easeInOutQuad(k / windEnd);
-        ang = lerp(0.42, back, e); reach = lerp(25, 20, e); wrist = 0.5;
+        const e = smootherstep(k / windEnd);
+        ang = lerp(0.42, back, e); reach = lerp(REST_REACH, TUCK_REACH, e); wrist = 0.5;
       } else if (k < strikeEnd) {
         const e = easeOutCubic((k - windEnd) / (strikeEnd - windEnd));
-        ang = lerp(back, fwd, e);
-        reach = lerp(20, s.heavy ? 38 : 34, Math.sin(e * Math.PI));
+        ang = lerp(back, over, e);
+        // sin bump: tucked at both ends, fully extended through the middle
+        reach = lerp(TUCK_REACH, s.heavy ? 38 : 34, Math.sin(e * Math.PI));
         wrist = lerp(0.5, -0.1, e);
         if (!s.sounded) {
           s.sounded = true;
@@ -888,8 +902,12 @@ export class Player {
           this.knifeHit(enemies, s.heavy, game);
         }
       } else {
-        const e = easeInOutQuad((k - strikeEnd) / (1 - strikeEnd));
-        ang = lerp(fwd, 0.42, e); reach = lerp(34, 25, e); wrist = lerp(-0.1, 0.34, e);
+        // Recovery starts from exactly where the strike left the blade —
+        // `over` and TUCK_REACH — so there is no discontinuity to see.
+        const e = smootherstep((k - strikeEnd) / (1 - strikeEnd));
+        ang = lerp(over, 0.42, e);
+        reach = lerp(TUCK_REACH, REST_REACH, e);
+        wrist = lerp(-0.1, 0.34, e);
       }
       if (k >= 1) this.slash = null;
     }

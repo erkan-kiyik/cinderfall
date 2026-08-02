@@ -544,6 +544,267 @@ function paintKnifeBowie(finish) {
   });
 }
 
+// ==================== purpose-built energy weapon bodies ====================
+// The energy roster used to be the VK-77 receiver in different colours, which
+// meant a PARTICLE BEAM read as a rifle wearing a costume. These are their own
+// silhouettes: no magazine well, no ejection port, no stock comb — the shapes
+// come from what the weapon is supposed to *be* (a coil emitter, a rail, a
+// pressurised tank) instead of from a cartridge gun.
+//
+// They share the rifle's weapon-space contract so the rig needs no changes:
+// origin (0,0) is the trigger-hand grip, +x is the muzzle direction, and the
+// support hand lands near x=17, y=-5.
+
+// Shared: pistol grip + trigger guard at the origin. Every one of these is
+// held the same way, so the grip is drawn once.
+function energyGrip(g, poly, rec) {
+  g.fillStyle = polymer(g, -1, 8, poly);
+  g.beginPath();
+  g.moveTo(-1.2, -1);
+  g.quadraticCurveTo(-2.8, 3.4, -4.4, 6.6);
+  g.quadraticCurveTo(-4.6, 8, -2.6, 8);
+  g.quadraticCurveTo(-0.4, 7.8, 0.4, 5);
+  g.lineTo(1.6, -0.6);
+  g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.4;
+  for (let i = 0; i < 3; i++) {
+    g.beginPath();
+    g.moveTo(-1.8 - i * 0.8, 1.5 + i * 1.6);
+    g.lineTo(0.2 - i * 0.7, 2 + i * 1.6);
+    g.stroke();
+  }
+  g.strokeStyle = shade(rec, -0.15); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(1.6, 0); g.quadraticCurveTo(4.6, 3.6, 7.4, 0.4); g.stroke();
+  g.strokeStyle = '#1a1b1e'; g.lineWidth = 1.1;
+  g.beginPath(); g.moveTo(3.8, 0.2); g.quadraticCurveTo(3.4, 1.8, 4.4, 2.6); g.stroke();
+}
+
+// Glowing coil ring seen edge-on — the motif that says "this accelerates
+// something" rather than "this contains gunpowder".
+function coilRing(g, x, yTop, yBot, c, w = 2.4) {
+  const [r, gg, b] = c;
+  g.fillStyle = `rgba(${r},${gg},${b},0.25)`;
+  rr(g, x - w / 2, yTop, w, yBot - yTop, w / 2); g.fill();
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  g.fillStyle = `rgba(${Math.min(255, r + 70)},${Math.min(255, gg + 70)},${Math.min(255, b + 70)},0.75)`;
+  rr(g, x - w / 4, yTop + 0.6, w / 2, yBot - yTop - 1.2, w / 4); g.fill();
+  g.restore();
+}
+
+// ---- PARTICLE BEAM: coil emitter. Stacked accelerator rings down an open
+// cage, twin plasma feed lines along the spine, no barrel at all — the
+// business end is a flared emitter throat. ----
+function paintParticleThrower(finish) {
+  const rec = (finish && finish.rec) || '#2a1d55';
+  const poly = (finish && finish.poly) || '#1c1440';
+  const core = (finish && finish.core) || [190, 120, 255];
+  const [cr, cg, cb] = core;
+  return makeSprite(60, 20, 20, 12, (g) => {
+    g.translate(20, 12);
+
+    // rear energy cell — a fat cylinder where a stock would be
+    g.fillStyle = metal(g, -9, 2, shade(rec, -0.1));
+    rr(g, -19, -8.6, 12, 10.4, 3.2); g.fill();
+    g.fillStyle = 'rgba(8,9,14,0.75)';
+    rr(g, -17.4, -7, 3.2, 7.4, 1.2); g.fill();
+    // charge indicator bars on the cell
+    for (let i = 0; i < 3; i++) {
+      g.fillStyle = `rgba(${cr},${cg},${cb},${0.85 - i * 0.22})`;
+      g.fillRect(-13.2, -6.4 + i * 2.6, 4.4, 1.5);
+    }
+
+    // main spine housing (grip mounts to this)
+    g.fillStyle = metal(g, -6, 3, rec);
+    g.beginPath();
+    g.moveTo(-7.4, -7);
+    g.lineTo(9.5, -7);
+    g.lineTo(9.5, -0.6);
+    g.lineTo(-7.4, -0.6);
+    g.closePath(); g.fill();
+    energyGrip(g, poly, rec);
+
+    // twin plasma feed lines running the length of the spine
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    g.strokeStyle = `rgba(${cr},${cg},${cb},0.55)`; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(-8, -5.6); g.lineTo(24, -5.6); g.stroke();
+    g.beginPath(); g.moveTo(-8, -2.2); g.lineTo(22, -2.2); g.stroke();
+    g.restore();
+
+    // open accelerator cage: two rails with coil rings threaded along them,
+    // deliberately skeletal so the silhouette is unmistakable
+    g.fillStyle = metal(g, -10.4, -8.6, shade(rec, 0.14));
+    g.fillRect(9.5, -10.2, 22, 1.8);
+    g.fillRect(9.5, 0.4, 22, 1.8);
+    for (let i = 0; i < 5; i++) {
+      coilRing(g, 12.5 + i * 4.6, -10.4, 2.4, core, 2.6);
+    }
+
+    // flared emitter throat — the "muzzle", a cone not a tube
+    g.fillStyle = metal(g, -12, 3, shade(rec, 0.06));
+    g.beginPath();
+    g.moveTo(31.5, -9.4);
+    g.lineTo(38.5, -12.4);
+    g.lineTo(38.5, 3.6);
+    g.lineTo(31.5, 1.2);
+    g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.7; g.stroke();
+    // throat mouth glow
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    const throat = lingrad(g, 36, -12, 40, 3.6, [
+      [0, `rgba(${cr},${cg},${cb},0)`],
+      [1, `rgba(${Math.min(255, cr + 60)},${Math.min(255, cg + 60)},${Math.min(255, cb + 60)},0.9)`],
+    ]);
+    g.fillStyle = throat;
+    g.beginPath();
+    g.moveTo(37, -11.6); g.lineTo(39, -12.4); g.lineTo(39, 3.6); g.lineTo(37, 2.8);
+    g.closePath(); g.fill();
+    g.restore();
+
+    // support-hand shroud under the cage (hand lands ~x17,y-5)
+    g.fillStyle = polymer(g, -3, 2, poly);
+    rr(g, 13, -2.4, 11, 3.4, 1.2); g.fill();
+
+    scratches(g, -18, -11, 56, 15, rng, { n: 18, color: 'rgba(200,190,240,0.14)' });
+  });
+}
+
+// ---- GAUSS RAILGUN: two long parallel rails with a capacitor bank slung
+// underneath. Reads as a linear accelerator — nothing about it is a rifle. ----
+function paintRailgun(finish) {
+  const rec = (finish && finish.rec) || '#2e3238';
+  const poly = (finish && finish.poly) || '#202429';
+  const core = (finish && finish.core) || [150, 220, 255];
+  const [cr, cg, cb] = core;
+  return makeSprite(60, 20, 20, 12, (g) => {
+    g.translate(20, 12);
+
+    // shoulder brace instead of a stock
+    g.fillStyle = metal(g, -8, 2, shade(rec, -0.12));
+    g.beginPath();
+    g.moveTo(-6, -6.4); g.lineTo(-15, -6.4);
+    g.quadraticCurveTo(-18.4, -6.2, -18.2, -2.6);
+    g.lineTo(-18.4, 2.4); g.lineTo(-15.4, 2.4); g.lineTo(-14.6, -2);
+    g.lineTo(-6, -2);
+    g.closePath(); g.fill();
+
+    // body block + grip
+    g.fillStyle = metal(g, -7, 3, rec);
+    rr(g, -6.5, -7.4, 17, 7, 1); g.fill();
+    energyGrip(g, poly, rec);
+
+    // capacitor bank slung under the rails — three stacked drums
+    for (let i = 0; i < 3; i++) {
+      const cx = 12 + i * 6.4;
+      g.fillStyle = metal(g, -1, 4, shade(rec, -0.2));
+      rr(g, cx, -1.2, 5.4, 5, 1.6); g.fill();
+      g.fillStyle = `rgba(${cr},${cg},${cb},0.5)`;
+      g.fillRect(cx + 1, 0.4, 3.4, 1.1);
+    }
+
+    // twin rails: long, parallel, thin — the whole read of the weapon
+    g.fillStyle = metal(g, -11, -8.6, shade(rec, 0.2));
+    rr(g, 8, -11, 32, 2.2, 0.6); g.fill();
+    rr(g, 8, -6.4, 32, 2.2, 0.6); g.fill();
+    // arcing charge between the rails
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    g.strokeStyle = `rgba(${cr},${cg},${cb},0.5)`; g.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const ax = 13 + i * 7;
+      g.beginPath();
+      g.moveTo(ax, -8.8);
+      g.lineTo(ax + 2.2, -7.4);
+      g.lineTo(ax + 1, -6.2);
+      g.stroke();
+    }
+    // muzzle arc between the rail tips
+    g.strokeStyle = `rgba(${Math.min(255, cr + 60)},${Math.min(255, cg + 60)},${Math.min(255, cb + 60)},0.85)`;
+    g.lineWidth = 1.6;
+    g.beginPath(); g.moveTo(39.4, -9.4); g.lineTo(39.4, -4.6); g.stroke();
+    g.restore();
+
+    // rail spacers
+    g.fillStyle = shade(rec, -0.3);
+    for (const sx of [16, 26, 35]) g.fillRect(sx, -9.4, 1.6, 3.6);
+
+    // support-hand grip below the rails
+    g.fillStyle = polymer(g, -3, 2, poly);
+    rr(g, 14.5, -4.2, 9, 3, 1); g.fill();
+
+    scratches(g, -14, -11, 52, 14, rng, { n: 16, color: 'rgba(210,225,240,0.14)' });
+  });
+}
+
+// ---- FLAME THROWER: pressurised tank, hose loop, wide nozzle with a live
+// pilot flame. The one weapon here that shouldn't look high-tech at all. ----
+function paintFlamethrower(finish) {
+  const rec = (finish && finish.rec) || '#3a1f12';
+  const poly = (finish && finish.poly) || '#2a150c';
+  return makeSprite(60, 20, 20, 12, (g) => {
+    g.translate(20, 12);
+
+    // fuel tank where the stock would be — fat, ribbed, with a pressure gauge
+    g.fillStyle = metal(g, -9, 3, shade(rec, 0.05));
+    rr(g, -19, -9, 14, 11.4, 5); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.8;
+    for (let i = 0; i < 3; i++) {
+      g.beginPath(); g.moveTo(-16.6 + i * 4, -8.6); g.lineTo(-16.6 + i * 4, 2); g.stroke();
+    }
+    g.fillStyle = '#c9d2dc';
+    g.beginPath(); g.arc(-12, -4.6, 2.2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#1a1b1e'; g.lineWidth = 0.5; g.stroke();
+    g.strokeStyle = '#c0392b'; g.lineWidth = 0.7;
+    g.beginPath(); g.moveTo(-12, -4.6); g.lineTo(-10.6, -5.8); g.stroke();
+
+    // body + grip
+    g.fillStyle = metal(g, -6, 3, rec);
+    rr(g, -5.4, -6.6, 15, 6.2, 1); g.fill();
+    energyGrip(g, poly, rec);
+
+    // fuel hose looping from tank to nozzle — the signature shape
+    g.strokeStyle = shade(poly, -0.1); g.lineWidth = 2.6; g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(-8, -1.2);
+    g.quadraticCurveTo(2, 7.4, 14, 1.2);
+    g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.1)'; g.lineWidth = 0.8;
+    g.beginPath();
+    g.moveTo(-8, -1.9);
+    g.quadraticCurveTo(2, 6.4, 14, 0.5);
+    g.stroke();
+    g.lineCap = 'butt';
+
+    // barrel tube + wide nozzle
+    g.fillStyle = metal(g, -8.4, -3.6, shade(rec, 0.1));
+    rr(g, 9.6, -8, 22, 4.6, 1.2); g.fill();
+    g.fillStyle = metal(g, -9.6, -2.4, shade(rec, -0.15));
+    g.beginPath();
+    g.moveTo(31.6, -8.6); g.lineTo(38.6, -10.2); g.lineTo(38.6, -1); g.lineTo(31.6, -2.6);
+    g.closePath(); g.fill();
+    // pilot flame at the nozzle lip
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    const pilot = radgrad(g, 39.4, -5.6, 4.6, [
+      [0, 'rgba(255,230,150,0.95)'],
+      [0.4, 'rgba(255,150,50,0.55)'],
+      [1, 'rgba(255,90,20,0)'],
+    ]);
+    g.fillStyle = pilot;
+    g.beginPath(); g.arc(39.4, -5.6, 4.6, 0, Math.PI * 2); g.fill();
+    g.restore();
+
+    // support-hand foregrip on the tube
+    g.fillStyle = polymer(g, -3.4, 1.6, poly);
+    rr(g, 14, -3.2, 9.5, 3.2, 1.1); g.fill();
+
+    scratches(g, -18, -10, 56, 14, rng, { n: 22, color: 'rgba(240,200,160,0.16)' });
+    grunge(g, -19, -10, 58, 15, rng, { n: 50, dark: 0.14, light: 0.03 });
+  });
+}
+
 // ---- muzzle flash sprites (painted hot-core star flashes) ----
 function paintFlash(seed) {
   const frng = makeRng(seed);
@@ -771,7 +1032,10 @@ export function buildWeapons() {
     },
     // ------- energy: charge weapons -------
     railgun: {
-      ...R, id: 'railgun', recoilFeel: 'heavy', name: 'GAUSS RAILGUN', body: rifleSkin('#2e3238', '#202429', [150, 220, 255]),
+      ...R, id: 'railgun', recoilFeel: 'heavy', name: 'GAUSS RAILGUN', body: paintRailgun(),
+      // no magazine well and no reciprocating bolt on this frame — the
+      // rifle def these inherit from would otherwise draw both floating.
+      mag: null, bolt: null,
       energy: true, fireMode: 'projectile', auto: false, rpm: 60, dmg: 120, spread: 0.001,
       projectile: { color: [150, 220, 255], radius: 4.2, speed: 2600, pierce: 4, life: 0.8 },
       charge: { time: 0.9, minMul: 0.5, maxMul: 1.5 },
@@ -808,7 +1072,10 @@ export function buildWeapons() {
       recoilKick: 0.7, recoilRot: 0.012, camKick: 0.4, camTrauma: 0.024, shotSound: 'laser',
     },
     particle: {
-      ...R, id: 'particle', recoilFeel: 'beam', name: 'PARTICLE BEAM', body: rifleSkin('#2a1d55', '#1c1440', [190, 120, 255]),
+      ...R, id: 'particle', recoilFeel: 'beam', name: 'PARTICLE BEAM', body: paintParticleThrower(),
+      // no magazine well and no reciprocating bolt on this frame — the
+      // rifle def these inherit from would otherwise draw both floating.
+      mag: null, bolt: null,
       energy: true, fireMode: 'beam', auto: true, rpm: 520, dmg: 16, spread: 0.006,
       beam: { color: [190, 120, 255], width: 2.6 }, heatPerShot: 0.045, heatCool: 0.5,
       recoilKick: 0.9, recoilRot: 0.014, camKick: 0.5, camTrauma: 0.03, shotSound: 'particle',
@@ -826,7 +1093,10 @@ export function buildWeapons() {
       recoilKick: 0.5, recoilRot: 0.008, camKick: 0.3, camTrauma: 0.02,
     },
     flame: {
-      ...R, id: 'flame', recoilFeel: 'beam', name: 'FLAME THROWER', body: rifleSkin('#3a1f12', '#2a150c', [255, 130, 40]),
+      ...R, id: 'flame', recoilFeel: 'beam', name: 'FLAME THROWER', body: paintFlamethrower(),
+      // no magazine well and no reciprocating bolt on this frame — the
+      // rifle def these inherit from would otherwise draw both floating.
+      mag: null, bolt: null,
       energy: true, fireMode: 'beam', auto: true, rpm: 900, dmg: 6, spread: 0.05,
       beam: { color: [255, 130, 40], width: 6, range: 300, flame: true }, shotSound: 'flame',
       recoilKick: 0.4, recoilRot: 0.006, camKick: 0.3, camTrauma: 0.024,
