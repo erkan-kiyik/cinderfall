@@ -8,6 +8,7 @@ import {
   makeSprite, lingrad, radgrad, rr, grunge, scratches, shade, withA, COL,
 } from './paint.js';
 import { makeRng } from '../engine/math.js';
+import { buildSkinSet } from './skins.js';
 
 const rng = makeRng(4242);
 
@@ -985,20 +986,14 @@ export function buildWeapons() {
   // plain recolor of the default gunmetal — each named skin should read as a
   // distinct, premium coating at a glance, not a dye-swap of the stock gun.
   const rifleBody = paintRifleBody('ranger');
-  const rifleFinishes = {
-    default: rifleBody,
-    urban: paintRifleBody('ranger', { rec: '#48596b', poly: '#2f3d4a' }),
-    cinder: paintRifleBody('ranger', { rec: '#8a3820', poly: '#5c2414' }),
-    arc: paintRifleBody('ranger', { rec: '#15515f', poly: '#0e3946' }),   // ARC-9 energy
-    inferno: paintRifleBody('ranger', { rec: '#8a1c1c', poly: '#570f0f' }),   // mythic store finish
-  };
+  // Skins are composited assets, not palette swaps: buildSkinSet re-paints the
+  // body in the skin's palette and then layers coating, engraving, emissive
+  // rim, rail optic and muzzle device on top. See art/skins.js for the tables.
+  const rifleFinishes = buildSkinSet('rifle', rifleBody,
+    (pal) => paintRifleBody('ranger', pal));
   const pistolBody = paintPistolBody();
-  const pistolFinishes = {
-    default: pistolBody,
-    desert: paintPistolBody({ grip: '#6b5638', frame: '#8a7048' }),
-    onyx: paintPistolBody({ grip: '#14171c', frame: '#1d2129' }),
-    gold: paintPistolBody({ grip: '#8a6a16', frame: '#d9ac2e' }),
-  };
+  const pistolFinishes = buildSkinSet('pistol', pistolBody,
+    (pal) => paintPistolBody({ grip: pal.grip || pal.poly, frame: pal.frame || pal.rec }));
   const knifeBody = paintKnife();
   const knifeFinishes = {
     default: knifeBody,
@@ -1011,11 +1006,7 @@ export function buildWeapons() {
     eventide: paintKnife({ blade: '#f2f6ff' }),   // ultra-limited event finish
   };
   const smgBody = paintSmgBody();
-  const smgFinishes = {
-    default: smgBody,
-    viper: paintSmgBody({ rec: '#3f8a3e', poly: '#265726' }),
-    arc: paintSmgBody({ rec: '#15515f', poly: '#0e3946' }),
-  };
+  const smgFinishes = buildSkinSet('smg', smgBody, (pal) => paintSmgBody(pal));
 
   const defs = {
     rifle: {

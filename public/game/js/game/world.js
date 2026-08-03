@@ -37,6 +37,30 @@ export const FENCE_W = 70 * FENCE_SCALE;
 export const LAMP_HEAD_X = 14 * LAMP_SCALE;
 export const LAMP_HEAD_Y = 86 * LAMP_SCALE;
 
+// ---- obstacle scale ----
+// Cover was authored tiny: a 25px crate and a 22px barrel next to a 126px
+// operator read as litter, not as something to fight from behind. These bring
+// the whole cover vocabulary up to a size worth taking cover behind — a crate
+// now stands about chest height on a crouching operator, a container has to be
+// climbed rather than stepped over.
+//
+// Every collider below is derived from these rather than hard-coded, so the
+// physics box always matches the art. Note the step-up limit in moveEntity is
+// 27px: anything taller than that must be jumped, which is the point.
+export const OB_SCALE = 1.85;        // crates, sandbags, tires, rubble, dumpster
+export const CONTAINER_SCALE = 1.6;  // containers: big enough to break sightlines
+export const BARREL_SCALE = 2.1;     // drums
+
+// Derived collider dimensions (art size × scale).
+export const CRATE_W = 26 * OB_SCALE, CRATE_H = 20 * OB_SCALE;
+export const CRATE_SM_W = 22 * OB_SCALE, CRATE_SM_H = 16 * OB_SCALE;
+export const CONT_W = 96 * CONTAINER_SCALE, CONT_H = 38 * CONTAINER_SCALE;
+export const BAG_W = 42 * OB_SCALE, BAG_H = 13 * OB_SCALE;
+// Razor wire: a vaultable hazard strip. Low enough to clear with a jump,
+// tall enough that walking through is not an option.
+export const WIRE_SCALE = 1.5;
+export const WIRE_W = 90 * WIRE_SCALE, WIRE_H = 22 * WIRE_SCALE;
+
 // Stage 1 is the hand-authored, art-directed encounter layout.
 export const STAGE1_SPAWNS = [
   { x: 1080, min: 980, max: 1225, y: GROUND_Y - 40 },
@@ -132,19 +156,21 @@ export class World {
     const P = (spr, x, y = GY) => this.props.push({ spr, x, y });
     const L = (x, y, r, c, a, flicker = 0) => this.lights.push({ x, y, r, c, a, flicker, seed: rand(0, 100) });
 
+    // Cover boxes are derived from the obstacle scale constants so the physics
+    // always matches the (now much larger) art — see OB_SCALE / CONTAINER_SCALE.
     this.colliders.push(
-      { x: 950, y: GROUND_Y - 40, w: 300, h: 40 },         // loading dock
-      { x: 898, y: GROUND_Y - 20, w: 26, h: 20 },          // crate step
-      { x: 1750, y: GROUND_Y - 38, w: 96, h: 38 },         // container
-      { x: 1798, y: GROUND_Y - 76, w: 96, h: 38 },         // stacked container
-      { x: 1702, y: GROUND_Y - 20, w: 26, h: 20 },
-      { x: 2560, y: GROUND_Y - 20, w: 26, h: 20 },
-      { x: 2596, y: GROUND_Y - 42, w: 26, h: 42 },
-      { x: 3080, y: GROUND_Y - 38, w: 96, h: 38 },
-      { x: 2250, y: GROUND_Y - 13, w: 42, h: 13 },         // sandbags (vault)
-      { x: 3560, y: GROUND_Y - 13, w: 42, h: 13 },
-      { x: 3900, y: GROUND_Y - 40, w: 260, h: 40 },        // second dock
-      { x: 3848, y: GROUND_Y - 20, w: 26, h: 20 },
+      { x: 950, y: GY - 40, w: 300, h: 40 },                        // loading dock
+      { x: 898, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H },          // crate step
+      { x: 1750, y: GY - CONT_H, w: CONT_W, h: CONT_H },            // container
+      { x: 1798, y: GY - CONT_H * 2, w: CONT_W, h: CONT_H },        // stacked container
+      { x: 1702, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H },
+      { x: 2560, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H },
+      { x: 2596, y: GY - CRATE_H * 2, w: CRATE_W, h: CRATE_H * 2 },
+      { x: 3080, y: GY - CONT_H, w: CONT_W, h: CONT_H },
+      { x: 2250, y: GY - BAG_H, w: BAG_W, h: BAG_H },               // sandbags (vault)
+      { x: 3560, y: GY - BAG_H, w: BAG_W, h: BAG_H },
+      { x: 3900, y: GY - 40, w: 260, h: 40 },                       // second dock
+      { x: 3848, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H },
     );
 
     // Building facades used to stand here, a few metres behind the player.
@@ -165,47 +191,54 @@ export class World {
       L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 300, [255, 202, 128], 0.62, lx === 2440 ? 0.5 : 0.04);
     }
     P(env.dock(300, 40), 1100);            // matches collider at 950..1250
-    P(env.crate(26, 20), 911);
+    P(env.crate(26, 20, OB_SCALE), 911 + CRATE_W / 2);
     P(env.dock(260, 40), 4030);
-    P(env.crate(26, 20), 3861);
+    P(env.crate(26, 20, OB_SCALE), 3861 + CRATE_W / 2);
 
     // authored opener keeps its precisely-fitted container stack (96×38)
-    P(env.container('containerRed', 'HLC-407', 96, 38), 1798);
-    P(env.container('containerBlue', 'MSU-2213', 96, 38), 1846, GY - 38);
-    P(env.container('containerGreen', 'KDR-118', 96, 38), 3128);
-    P(env.crate(26, 20), 1715);
-    P(env.crate(26, 20), 2573);
-    P(env.crate(26, 22), 2609, GY);        // stack base
-    P(env.crate(26, 20), 2609, GY - 22);
-    P(env.sandbags(), 2271);
-    P(env.sandbags(), 3581);
+    P(env.container('containerRed', 'HLC-407', 96, 38, CONTAINER_SCALE), 1750 + CONT_W / 2);
+    P(env.container('containerBlue', 'MSU-2213', 96, 38, CONTAINER_SCALE), 1798 + CONT_W / 2, GY - CONT_H);
+    P(env.container('containerGreen', 'KDR-118', 96, 38, CONTAINER_SCALE), 3080 + CONT_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 1702 + CRATE_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 2560 + CRATE_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 2596 + CRATE_W / 2, GY);        // stack base
+    P(env.crate(26, 20, OB_SCALE), 2596 + CRATE_W / 2, GY - CRATE_H);
+    P(env.sandbags(OB_SCALE), 2250 + BAG_W / 2);
+    P(env.sandbags(OB_SCALE), 3560 + BAG_W / 2);
 
-    P(env.dumpster(), 1590);
-    P(env.tires(), 2330);
-    P(env.rubble(), 2060);
-    P(env.rubble(), 3300);
-    P(env.barrel('rust'), 1310);
-    P(env.barrel('blue'), 2700);
-    P(env.barrel('rust'), 2712, GY - 1);
-    P(env.barrel('blue'), 3730);
+    P(env.dumpster(OB_SCALE), 1590);
+    P(env.tires(OB_SCALE), 2330);
+    P(env.rubble(OB_SCALE), 2060);
+    P(env.rubble(OB_SCALE), 3300);
+    P(env.barrel('rust', BARREL_SCALE), 1310);
+    P(env.barrel('blue', BARREL_SCALE), 2700);
+    P(env.barrel('rust', BARREL_SCALE), 2712, GY - 1);
+    P(env.barrel('blue', BARREL_SCALE), 3730);
     for (const fx of [1720, 1930, 2070]) P(env.fence(70, FENCE_SCALE), fx + FENCE_W / 2);
     P(env.fence(70, FENCE_SCALE), 4390); P(env.fence(70, FENCE_SCALE), 4390 + FENCE_W - 2);
-    P(env.crate(22, 16), 1140, GY - 40);   // crates up on the dock
-    P(env.barrel('rust'), 1210, GY - 40);
+    P(env.crate(22, 16, OB_SCALE), 1140, GY - 40);   // crates up on the dock
+    P(env.barrel('rust', BARREL_SCALE), 1210, GY - 40);
 
     // explosive barrels (entities — shootable)
     for (const bx of [1685, 2620, 3260]) {
-      this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red') });
+      this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE) });
     }
 
     // burn barrel: painted barrel + fire emitter + strong flicker light
-    P(env.barrel('rust'), 2390);
+    P(env.barrel('rust', BARREL_SCALE), 2390);
     this.emitters.push({ kind: 'fire', x: 2390, y: GY - 21 });
     L(2390, GY - 30, 150, [255, 150, 60], 0.85, 0.8);
     // failing street lamp: sparks at the head of the fixture placed at 3420.
     // (This used to hang off an overhead cable; with the wire system gone the
     // sparks are anchored to the lamp so they read as a shorted fitting.)
     this.emitters.push({ kind: 'sparks', x: 3434, y: GY - 86 });
+    // Razor wire strung across the street — a hazard to vault rather than a
+    // shooting position, so it breaks up the run without adding more cover.
+    for (const wx of [1450, 2880, 4520, 6300]) {
+      P(env.razorWire(90, WIRE_SCALE), wx);
+      this.colliders.push({ x: wx - WIRE_W / 2, y: GY - WIRE_H, w: WIRE_W, h: WIRE_H });
+    }
+
     // Civil-war aftermath: barrels burned down to soot along the block. These
     // are dressing, not hazards — they carry no fire emitter and no light, so
     // they read as "this fight already happened here" rather than as another
@@ -228,37 +261,37 @@ export class World {
     // containers to break sightlines, a dock to fight up onto, barrels to
     // shoot — so the extended run still reads as one authored space.
     this.colliders.push(
-      { x: 4820, y: GY - 38, w: 96, h: 38 },               // container
-      { x: 4772, y: GY - 20, w: 26, h: 20 },
-      { x: 5400, y: GY - 13, w: 42, h: 13 },               // sandbags (vault)
-      { x: 5880, y: GY - 40, w: 280, h: 40 },              // third dock
-      { x: 5828, y: GY - 20, w: 26, h: 20 },
-      { x: 6480, y: GY - 38, w: 96, h: 38 },
-      { x: 6528, y: GY - 76, w: 96, h: 38 },               // stacked
-      { x: 6432, y: GY - 20, w: 26, h: 20 },
-      { x: 6980, y: GY - 13, w: 42, h: 13 },
+      { x: 4820, y: GY - CONT_H, w: CONT_W, h: CONT_H },            // container
+      { x: 4772, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H },
+      { x: 5400, y: GY - BAG_H, w: BAG_W, h: BAG_H },               // sandbags (vault)
+      { x: 5880, y: GY - 40, w: 280, h: 40 },                       // third dock
+      { x: 5828, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H },
+      { x: 6480, y: GY - CONT_H, w: CONT_W, h: CONT_H },
+      { x: 6528, y: GY - CONT_H * 2, w: CONT_W, h: CONT_H },        // stacked
+      { x: 6432, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H },
+      { x: 6980, y: GY - BAG_H, w: BAG_W, h: BAG_H },
     );
-    P(env.container('containerBlue', 'VTX-889', 96, 38), 4868);
-    P(env.crate(26, 20), 4785);
-    P(env.sandbags(), 5421);
+    P(env.container('containerBlue', 'VTX-889', 96, 38, CONTAINER_SCALE), 4820 + CONT_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 4772 + CRATE_W / 2);
+    P(env.sandbags(OB_SCALE), 5400 + BAG_W / 2);
     P(env.dock(280, 40), 6020);
-    P(env.crate(26, 20), 5841);
-    P(env.container('containerRed', 'QLR-052', 96, 38), 6528);
-    P(env.container('containerGreen', 'ZBN-771', 96, 38), 6576, GY - 38);
-    P(env.crate(26, 20), 6445);
-    P(env.sandbags(), 7001);
-    P(env.dumpster(), 5150);
-    P(env.tires(), 6250);
-    P(env.rubble(), 4600);
-    P(env.rubble(), 6800);
-    P(env.barrel('blue'), 5620);
-    P(env.barrel('rust'), 6120, GY - 40);
+    P(env.crate(26, 20, OB_SCALE), 5828 + CRATE_W / 2);
+    P(env.container('containerRed', 'QLR-052', 96, 38, CONTAINER_SCALE), 6480 + CONT_W / 2);
+    P(env.container('containerGreen', 'ZBN-771', 96, 38, CONTAINER_SCALE), 6528 + CONT_W / 2, GY - CONT_H);
+    P(env.crate(26, 20, OB_SCALE), 6432 + CRATE_W / 2);
+    P(env.sandbags(OB_SCALE), 6980 + BAG_W / 2);
+    P(env.dumpster(OB_SCALE), 5150);
+    P(env.tires(OB_SCALE), 6250);
+    P(env.rubble(OB_SCALE), 4600);
+    P(env.rubble(OB_SCALE), 6800);
+    P(env.barrel('blue', BARREL_SCALE), 5620);
+    P(env.barrel('rust', BARREL_SCALE), 6120, GY - 40);
     for (const lx of [5080, 6000, 6900]) {
       P(env.lamp(LAMP_SCALE), lx);
       L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 300, [255, 202, 128], 0.62, lx === 6000 ? 0.45 : 0.04);
     }
     for (const bx of [5320, 6340]) {
-      this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red') });
+      this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE) });
     }
     this.emitters.push({ kind: 'chimney', x: 5500, y: GY - 275, tint: 'soot', rate: 0.3, t: 0.45 });
     this.emitters.push({ kind: 'chimney', x: 6700, y: GY - 245, tint: 'steam', rate: 0.28, t: 0.6 });
@@ -295,31 +328,39 @@ export class World {
     }
 
     // -- randomized road cover: crates / containers / barrels / sandbags --
-    const coverKinds = ['crate', 'container', 'sandbags', 'barrel', 'dumpster', 'tires', 'rubble', 'dock'];
+    const coverKinds = ['crate', 'container', 'sandbags', 'barrel', 'dumpster', 'tires', 'rubble', 'dock', 'wire'];
     let x = 260;
     const clusters = [];
     while (x < mapW - 300) {
       const kind = coverKinds[rng.int(0, coverKinds.length - 1)];
       const gap = rng.range(240, 420);
       if (kind === 'crate') {
-        // enlarged cover — comfortable to tuck behind (matches new art size)
-        P(env.crate(), x);
-        this.colliders.push({ x: x - 15, y: GY - 25, w: 30, h: 25 });
+        // Cover boxes derive from OB_SCALE, so the collider always matches the
+        // (much larger) art — see the obstacle scale block at the top.
+        const cw = 30 * OB_SCALE, ch = 25 * OB_SCALE;
+        P(env.crate(30, 25, OB_SCALE), x);
+        this.colliders.push({ x: x - cw / 2, y: GY - ch, w: cw, h: ch });
       } else if (kind === 'container') {
         const variant = rng.pick(['containerRed', 'containerBlue', 'containerGreen']);
-        P(env.container(variant, `${rng.pick(['HLC', 'MSU', 'KDR', 'TRX'])}-${rng.int(100, 999)}`), x);
-        this.colliders.push({ x: x - 54, y: GY - 44, w: 108, h: 44 });
+        const cw = 108 * CONTAINER_SCALE, ch = 44 * CONTAINER_SCALE;
+        P(env.container(variant, `${rng.pick(['HLC', 'MSU', 'KDR', 'TRX'])}-${rng.int(100, 999)}`, 108, 44, CONTAINER_SCALE), x);
+        this.colliders.push({ x: x - cw / 2, y: GY - ch, w: cw, h: ch });
       } else if (kind === 'sandbags') {
-        P(env.sandbags(1.2), x);
-        this.colliders.push({ x: x - 24, y: GY - 16, w: 48, h: 16 });
+        const bw = 40 * OB_SCALE, bh = 16 * OB_SCALE;
+        P(env.sandbags(OB_SCALE), x);
+        this.colliders.push({ x: x - bw / 2, y: GY - bh, w: bw, h: bh });
+      } else if (kind === 'wire') {
+        // Razor wire: a vault-or-detour hazard strip, not a shooting position.
+        P(env.razorWire(90, WIRE_SCALE), x);
+        this.colliders.push({ x: x - WIRE_W / 2, y: GY - WIRE_H, w: WIRE_W, h: WIRE_H });
       } else if (kind === 'barrel') {
-        P(env.barrel(rng.pick(['rust', 'blue'])), x);
+        P(env.barrel(rng.pick(['rust', 'blue']), BARREL_SCALE), x);
       } else if (kind === 'dumpster') {
-        P(env.dumpster(), x);
+        P(env.dumpster(OB_SCALE), x);
       } else if (kind === 'tires') {
-        P(env.tires(), x);
+        P(env.tires(OB_SCALE), x);
       } else if (kind === 'rubble') {
-        P(env.rubble(), x);
+        P(env.rubble(OB_SCALE), x);
       } else if (kind === 'dock') {
         const w = rng.range(180, 300);
         P(env.dock(w, 40), x);
@@ -333,7 +374,7 @@ export class World {
     const barrelCount = rng.int(2, 4);
     for (let i = 0; i < barrelCount; i++) {
       const bx = clusters[rng.int(0, clusters.length - 1)] + rng.range(-60, 60);
-      this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red') });
+      this.barrels.push({ x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE) });
     }
 
     // -- street lamps --
@@ -354,7 +395,7 @@ export class World {
     // -- one hazard emitter (burning barrel or sparking line) per stage --
     if (rng.chance(0.7)) {
       const hx = clusters[rng.int(0, clusters.length - 1)];
-      P(env.barrel('rust'), hx);
+      P(env.barrel('rust', BARREL_SCALE), hx);
       this.emitters.push({ kind: 'fire', x: hx, y: GY - 21 });
       L(hx, GY - 30, 150, [255, 150, 60], 0.85, 0.8);
     }
@@ -365,7 +406,7 @@ export class World {
     const wrecks = rng.int(4, 8);
     for (let i = 0; i < wrecks; i++) {
       const wx = rng.range(300, mapW - 300);
-      P(env.barrel('rust'), wx);
+      P(env.barrel('rust', BARREL_SCALE), wx);
       this.emitters.push({ kind: 'smolder', x: wx, y: GY - 21, rate: rng.range(0.45, 0.75), t: rng.range(0, 0.6) });
     }
     // -- industrial smoke sources: rooftop stacks (steady columns) + a couple

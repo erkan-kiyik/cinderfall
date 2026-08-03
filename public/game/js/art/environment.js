@@ -13,10 +13,11 @@ const nextRng = () => makeRng((seedCounter += 1013));
 
 // ---------------- shipping container ----------------
 // w×h world units, anchor bottom-center. Corrugated walls, door end, stencil.
-export function container(colorKey = 'containerRed', label = 'HLC-407', w = 108, h = 44) {
+export function container(colorKey = 'containerRed', label = 'HLC-407', w = 108, h = 44, scale = 1) {
   const rng = nextRng();
   const base = COL[colorKey] || colorKey;
-  return makeSprite(w, h + 4, w / 2, h + 2, (g) => {
+  return makeSprite(w * scale, (h + 4) * scale, (w / 2) * scale, (h + 2) * scale, (g) => {
+    g.scale(scale, scale);
     const y0 = 2;
     // body
     g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [
@@ -70,10 +71,11 @@ export function container(colorKey = 'containerRed', label = 'HLC-407', w = 108,
 }
 
 // ---------------- barrels ----------------
-export function barrel(variant = 'rust') {
+export function barrel(variant = 'rust', scale = 1) {
   const rng = nextRng();
   const base = variant === 'red' ? '#8a3b2e' : variant === 'blue' ? '#3d5161' : '#5c5a4a';
-  return makeSprite(16, 22, 8, 21, (g) => {
+  return makeSprite(16 * scale, 22 * scale, 8 * scale, 21 * scale, (g) => {
+    g.scale(scale, scale);
     g.fillStyle = lingrad(g, 1, 0, 15, 0, [
       [0, shade(base, -0.3)], [0.28, shade(base, 0.2)], [0.55, base], [1, shade(base, -0.42)],
     ]);
@@ -105,10 +107,11 @@ export function barrel(variant = 'rust') {
 }
 
 // ---------------- wooden crate ----------------
-export function crate(w = 30, h = 25) {
+export function crate(w = 30, h = 25, scale = 1) {
   const rng = nextRng();
   const base = COL.woodCrate;
-  return makeSprite(w, h + 3, w / 2, h + 1.5, (g) => {
+  return makeSprite(w * scale, (h + 3) * scale, (w / 2) * scale, (h + 1.5) * scale, (g) => {
+    g.scale(scale, scale);
     g.fillStyle = lingrad(g, 0, 0, 0, h, [
       [0, shade(base, 0.14)], [0.5, shade(base, -0.06)], [1, shade(base, -0.32)],
     ]);
@@ -201,6 +204,74 @@ export function lamp(scale = 1) {
   });
 }
 
+// ---------------- concertina / razor wire ----------------
+// Coiled barbed wire strung along the street — the fastest visual shorthand
+// for a city that has been fought over. Purely an obstacle: it is drawn as a
+// low coil the operator has to vault, and world.js gives it a matching
+// collider. `w` is the run length, `scale` sizes it against the operator.
+export function razorWire(w = 90, scale = 1) {
+  const rng = nextRng();
+  const H = 34;
+  return makeSprite(w * scale, H * scale, (w / 2) * scale, (H - 1) * scale, (g) => {
+    g.scale(scale, scale);
+    const baseY = H - 2;
+
+    // support stakes at each end and one in the middle
+    for (const sx of [2, w / 2, w - 4]) {
+      g.fillStyle = lingrad(g, sx, 0, sx + 2.4, 0, [[0, '#4a5058'], [1, '#1d2126']]);
+      g.fillRect(sx, baseY - 26, 2.4, 26);
+      // angled top arm the wire hangs from
+      g.strokeStyle = '#3a4046'; g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(sx + 1.2, baseY - 24);
+      g.lineTo(sx + 5.5, baseY - 30);
+      g.stroke();
+    }
+
+    // the coil itself: overlapping ellipses along the run, so it reads as a
+    // continuous spiral rather than a row of separate rings
+    const loops = Math.max(3, Math.floor(w / 13));
+    for (let i = 0; i < loops; i++) {
+      const cx = 6 + i * ((w - 12) / (loops - 1));
+      const ry = rng.range(8.5, 11.5);
+      const rx = rng.range(7, 9.5);
+      const cy = baseY - 12 + rng.range(-1.5, 1.5);
+      g.strokeStyle = 'rgba(196,204,214,0.55)';
+      g.lineWidth = 1.1;
+      g.beginPath();
+      g.ellipse(cx, cy, rx, ry, rng.range(-0.25, 0.25), 0, Math.PI * 2);
+      g.stroke();
+      // inner darker pass so the coil has depth
+      g.strokeStyle = 'rgba(70,78,88,0.5)';
+      g.lineWidth = 0.7;
+      g.beginPath();
+      g.ellipse(cx, cy + 1, rx * 0.82, ry * 0.82, 0, 0, Math.PI * 2);
+      g.stroke();
+
+      // barbs: short crossed ticks around the coil
+      g.strokeStyle = 'rgba(214,220,230,0.7)';
+      g.lineWidth = 0.8;
+      for (let bAng = 0; bAng < Math.PI * 2; bAng += Math.PI / 3) {
+        const bx = cx + Math.cos(bAng) * rx;
+        const by = cy + Math.sin(bAng) * ry;
+        g.beginPath();
+        g.moveTo(bx - 1.8, by - 1.8); g.lineTo(bx + 1.8, by + 1.8);
+        g.moveTo(bx + 1.8, by - 1.8); g.lineTo(bx - 1.8, by + 1.8);
+        g.stroke();
+      }
+    }
+
+    // taut strand running the length, tying the coils together
+    g.strokeStyle = 'rgba(180,188,200,0.4)'; g.lineWidth = 0.8;
+    g.beginPath();
+    g.moveTo(1, baseY - 22);
+    g.quadraticCurveTo(w / 2, baseY - 19, w - 2, baseY - 22);
+    g.stroke();
+
+    ao(g, w / 2, baseY + 1, w * 0.5, 3.5, 0.42);
+  });
+}
+
 // ---------------- chain-link fence segment ----------------
 // Same scale story as lamp(): a 42px fence next to a 126px operator read as
 // knee-high garden edging. At FENCE_SCALE it stands near shoulder height,
@@ -238,10 +309,11 @@ export function fence(w = 70, scale = 1) {
 }
 
 // ---------------- dumpster ----------------
-export function dumpster() {
+export function dumpster(scale = 1) {
   const rng = nextRng();
   const base = '#3f4d42';
-  return makeSprite(40, 28, 20, 27, (g) => {
+  return makeSprite(40 * scale, 28 * scale, 20 * scale, 27 * scale, (g) => {
+    g.scale(scale, scale);
     g.fillStyle = lingrad(g, 0, 4, 0, 26, [
       [0, shade(base, 0.14)], [0.4, base], [1, shade(base, -0.38)],
     ]);
@@ -281,9 +353,10 @@ export function dumpster() {
 }
 
 // ---------------- tire stack ----------------
-export function tires() {
+export function tires(scale = 1) {
   const rng = nextRng();
-  return makeSprite(20, 18, 10, 17, (g) => {
+  return makeSprite(20 * scale, 18 * scale, 10 * scale, 17 * scale, (g) => {
+    g.scale(scale, scale);
     for (let i = 0; i < 3; i++) {
       const y = 14.4 - i * 5;
       const off = rng.range(-1.2, 1.2);
@@ -299,9 +372,10 @@ export function tires() {
 }
 
 // ---------------- trash / rubble pile ----------------
-export function rubble() {
+export function rubble(scale = 1) {
   const rng = nextRng();
-  return makeSprite(30, 10, 15, 9, (g) => {
+  return makeSprite(30 * scale, 10 * scale, 15 * scale, 9 * scale, (g) => {
+    g.scale(scale, scale);
     for (let i = 0; i < 16; i++) {
       const x = rng.range(2, 28), y = rng.range(4, 8.4);
       const s = rng.range(1.4, 4);

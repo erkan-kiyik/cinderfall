@@ -78,6 +78,17 @@ export const CATALOG = [
   { id: 'pistol_gold',   name: 'C-9 · GILDED',    slot: 'pistolFinish', rarity: 'epic', kind: 'Pistol Skin',
     apply: { type: 'finish', weapon: 'pistol', finish: 'gold' } },
 
+  // -- new composited skins (art/skins.js) --
+  // These carry real geometry — muzzle devices, optics, coatings, emissive
+  // rims — so the rarity on the card matches what the weapon actually looks
+  // like in hand.
+  { id: 'rifle_spectre', name: 'VK-77 · SPECTRE', slot: 'rifleFinish', rarity: 'epic', kind: 'Rifle Skin', tag: 'SUPPRESSED',
+    apply: { type: 'finish', weapon: 'rifle', finish: 'spectre' } },
+  { id: 'pistol_quantum', name: 'C-9 · QUANTUM',  slot: 'pistolFinish', rarity: 'legendary', kind: 'Pistol Skin', tag: 'ENERGY',
+    apply: { type: 'finish', weapon: 'pistol', finish: 'quantum' } },
+  { id: 'smg_hornet',  name: 'P-12 · HORNET',     slot: 'smgFinish', rarity: 'legendary', kind: 'SMG Skin',
+    apply: { type: 'finish', weapon: 'smg', finish: 'hornet' } },
+
   // -- smg finishes --
   { id: 'smg_viper',  name: 'P-12 · VIPER',       slot: 'smgFinish', rarity: 'rare', kind: 'SMG Skin',
     apply: { type: 'finish', weapon: 'smg', finish: 'viper' } },
@@ -115,6 +126,8 @@ export const CATALOG = [
     storeOnly: true, apply: { type: 'finish', weapon: 'rifle', finish: 'inferno' } },
   { id: 'knife_bloodmoon', name: 'BLOODMOON', slot: 'knifeFinish', rarity: 'mythic', kind: 'Energy Blade', tag: 'MYTHIC',
     storeOnly: true, apply: { type: 'finish', weapon: 'knife', finish: 'bloodmoon' } },
+  { id: 'rifle_warden', name: 'VK-77 · WARDEN', slot: 'rifleFinish', rarity: 'ultraLimited', kind: 'Rifle Skin', tag: 'PROTOTYPE',
+    storeOnly: true, apply: { type: 'finish', weapon: 'rifle', finish: 'warden' } },
   { id: 'knife_eventide', name: 'EVENTIDE — SECTOR 9 LAUNCH BLADE', slot: 'knifeFinish', rarity: 'ultraLimited', kind: 'Energy Blade', tag: 'EVENT',
     storeOnly: true, retiredAfter: Date.UTC(2026, 7, 9), apply: { type: 'finish', weapon: 'knife', finish: 'eventide' } },
 ];
