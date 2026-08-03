@@ -4,8 +4,9 @@
 
 import {
   CATALOG, RARITY, CRATE_COST, DUPLICATE_REFUND, LOADOUT_SLOTS,
-  rollCrate, itemsForSlot, itemById, weaponVariantIds, LOOT_POOL,
+  rollCrate, itemsForSlot, itemById, weaponVariantIds, LOOT_POOL, describePerk,
 } from './meta.js';
+import { weaponStatRows, weaponForItem } from './weaponstats.js';
 import { AD_CRATE_DAILY_LIMIT } from './progression.js';
 import { watchRewardedAd } from '../engine/ads.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
@@ -41,6 +42,20 @@ export class MetaUI {
     $('btn-watch-ad').addEventListener('click', () => this.openCrateWithAd());
     $('reveal-done').addEventListener('click', () => this.closeReveal());
     $('crate-cost').textContent = String(CRATE_COST);
+    // inspect sheet
+    $('btn-inspect-close').addEventListener('click', () => this.closeInspect());
+    $('inspect').addEventListener('click', (e) => {
+      // tapping the dimmed backdrop dismisses; taps inside the card do not
+      if (e.target === $('inspect')) this.closeInspect();
+    });
+    $('btn-inspect-equip').addEventListener('click', () => {
+      const ctx = this._inspect;
+      if (!ctx || ctx.locked) return;
+      this.p.equip(ctx.slotKey, ctx.item ? ctx.item.id : null);
+      if (this.audio) (this.audio.equip ? this.audio.equip() : this.audio.ui());
+      this.closeInspect();
+      this.renderLoadout();
+    });
     // Labels built here (slot heads, rarity chips, ad button) aren't static
     // markup, so they need an explicit repaint when the language changes.
     onLangChange(() => this.refresh());
@@ -141,6 +156,23 @@ export class MetaUI {
       }
     }
 
+    // Inspect affordance. The card body still equips on tap — that one-tap
+    // flow is the fast path and shouldn't get slower — so inspect gets its own
+    // thumb-sized target instead of stealing the tap or needing a long-press
+    // (long-press competes with scrolling on a touch device).
+    if (item) {
+      const info = document.createElement('button');
+      info.className = 'item-info';
+      info.type = 'button';
+      info.textContent = 'i';
+      info.setAttribute('aria-label', t('inspect.title'));
+      info.addEventListener('click', (e) => {
+        e.stopPropagation();          // don't equip on the way past
+        this.openInspect(item, slotKey, locked);
+      });
+      card.appendChild(info);
+    }
+
     // draw preview after it's in the DOM (needs a layout size)
     requestAnimationFrame(() => this.previewItem(item, cv));
 
@@ -152,6 +184,122 @@ export class MetaUI {
       });
     }
     return card;
+  }
+
+  // ---- weapon inspect sheet ----------------------------------------
+  // Renders the stat readout for a tapped item. Every label goes through
+  // t(), and the metric keys live in weaponstats.js — nothing here spells a
+  // stat name out, so a new metric or a new language needs no change to this
+  // function.
+  openInspect(item, slotKey, locked = false) {
+    this._inspect = { item, slotKey, locked };
+    const rarity = item ? RARITY[item.rarity] : null;
+
+    const card = document.querySelector('.inspect-card');
+    if (rarity) {
+      card.style.setProperty('--rarity', rarity.color);
+      card.style.setProperty('--rarity-glow', rarity.glow);
+    }
+    $('inspect-name').textContent = this.itemLabel(item);
+    const rr = $('inspect-rarity');
+    rr.textContent = rarity
+      ? (locked ? t('item.locked') : t(rarity.labelKey))
+      : '';
+
+    const body = $('inspect-body');
+    body.innerHTML = '';
+
+    // --- ballistics ---
+    const weapon = weaponForItem(item, this.weapons);
+    const rows = weaponStatRows(weapon, this.weapons);
+    if (rows.length) {
+      body.appendChild(this.statGroupTitle(t('inspect.title')));
+      for (const r of rows) body.appendChild(this.statRow(r));
+    } else if (weapon) {
+      // a real weapon with no ballistics — the knife
+      const p = document.createElement('div');
+      p.className = 'inspect-empty';
+      p.textContent = t('inspect.noStats');
+      body.appendChild(p);
+    }
+
+    // --- perks (operators, boss redeemables, some skins) ---
+    const perks = describePerk(item && item.perk);
+    if (perks.length) {
+      body.appendChild(this.statGroupTitle(t('inspect.perks')));
+      for (const p of perks) {
+        const row = document.createElement('div');
+        row.className = 'perk-row';
+        const l = document.createElement('span');
+        l.className = 'perk-label';
+        // perk rows carry their own i18n key from PERK_DEFS
+        l.textContent = t(p.key);
+        const v = document.createElement('span');
+        v.className = 'perk-value';
+        v.textContent = p.value;
+        row.appendChild(l); row.appendChild(v);
+        body.appendChild(row);
+      }
+    }
+
+    // --- actions ---
+    const eqBtn = $('btn-inspect-equip');
+    const isEquipped = item && this.p.equipped(slotKey) === item.id;
+    eqBtn.textContent = locked ? t('item.locked')
+      : isEquipped ? t('inspect.equipped') : t('inspect.equip');
+    eqBtn.disabled = !!locked || !!isEquipped;
+
+    $('inspect').classList.remove('hidden');
+    // preview needs a laid-out canvas, and the bars animate from zero — both
+    // have to wait a frame after the sheet becomes visible
+    requestAnimationFrame(() => {
+      this.previewItem(item, $('inspect-preview'));
+      body.querySelectorAll('.stat-fill').forEach((el) => {
+        el.style.width = `${(parseFloat(el.dataset.fill) * 100).toFixed(1)}%`;
+      });
+    });
+    if (this.audio) this.audio.ui();
+  }
+
+  closeInspect() {
+    $('inspect').classList.add('hidden');
+    this._inspect = null;
+  }
+
+  statGroupTitle(text) {
+    const h = document.createElement('div');
+    h.className = 'stat-group-title';
+    h.textContent = text;
+    return h;
+  }
+
+  // label + value on one line, proportional bar underneath. `fill` is already
+  // normalised so a long bar always means "better", whichever direction the
+  // underlying metric runs (see weaponstats.js).
+  statRow(r) {
+    const row = document.createElement('div');
+    row.className = 'stat-row';
+
+    const top = document.createElement('div');
+    top.className = 'stat-row-top';
+    const l = document.createElement('span');
+    l.className = 'stat-label';
+    l.textContent = r.label;
+    const v = document.createElement('span');
+    v.className = 'stat-value';
+    v.textContent = r.value;
+    top.appendChild(l); top.appendChild(v);
+
+    const track = document.createElement('div');
+    track.className = 'stat-track';
+    const fill = document.createElement('div');
+    fill.className = 'stat-fill';
+    fill.style.setProperty('--stat-color', r.color);
+    fill.dataset.fill = String(r.fill);   // width applied next frame, so it animates
+    track.appendChild(fill);
+
+    row.appendChild(top); row.appendChild(track);
+    return row;
   }
 
   renderCollection() {

@@ -1311,3 +1311,173 @@ html, body {
   color: var(--ink-dim);
   margin-top: calc(2px * var(--ui-scale));
 }
+
+/* ---- weapon inspect panel -------------------------------------------- */
+/* Opened by the ⓘ chip on a loadout card. Deliberately a sheet rather than a
+   modal box: on a phone it rises from the bottom edge and stays inside thumb
+   reach, which is where the equip button needs to be. */
+.inspect-card {
+  width: min(calc(430px * var(--ui-scale)), 92vw);
+  max-height: 86vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(16px * var(--ui-scale)) calc(16px * var(--ui-scale)) calc(14px * var(--ui-scale));
+  border-radius: calc(16px * var(--ui-scale));
+  /* soft translucent surface — no hard outline anywhere */
+  background: linear-gradient(180deg, rgba(28,33,42,0.90), rgba(14,17,23,0.94));
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow:
+    0 calc(18px * var(--ui-scale)) calc(48px * var(--ui-scale)) rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+/* the blur is the surface; without it fall back to a denser fill */
+html.no-backdrop-filter .inspect-card {
+  background: linear-gradient(180deg, rgba(24,29,37,0.985), rgba(12,15,20,0.99));
+}
+
+.inspect-head {
+  display: flex;
+  align-items: center;
+  gap: calc(12px * var(--ui-scale));
+  padding-bottom: calc(12px * var(--ui-scale));
+  /* hairline separator instead of a border box */
+  background: linear-gradient(90deg, rgba(233,226,210,0.14), rgba(233,226,210,0)) bottom / 100% 1px no-repeat;
+}
+.inspect-preview {
+  width: calc(112px * var(--ui-scale));
+  height: calc(56px * var(--ui-scale));
+  flex: 0 0 auto;
+}
+.inspect-id { min-width: 0; }
+.inspect-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(15px * var(--ui-scale));
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.inspect-rarity {
+  font-family: var(--font);
+  font-size: calc(9.5px * var(--ui-scale));
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  margin-top: calc(3px * var(--ui-scale));
+  color: var(--rarity, var(--ink-dim));
+}
+
+.inspect-body { padding: calc(12px * var(--ui-scale)) 0 calc(4px * var(--ui-scale)); }
+
+.stat-group-title {
+  font-family: var(--font);
+  font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: var(--ink-dim);
+  margin: calc(4px * var(--ui-scale)) 0 calc(9px * var(--ui-scale));
+}
+.stat-group-title + .stat-group-title { margin-top: calc(14px * var(--ui-scale)); }
+
+/* one stat: label on the left, value right-aligned, bar underneath */
+.stat-row { margin-bottom: calc(10px * var(--ui-scale)); }
+.stat-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: calc(4px * var(--ui-scale));
+}
+.stat-label {
+  font-family: var(--font);
+  font-size: calc(10.5px * var(--ui-scale));
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.stat-track {
+  height: calc(5px * var(--ui-scale));
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+.stat-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--stat-color, #8b93a2);
+  box-shadow: 0 0 calc(8px * var(--ui-scale)) var(--stat-color, #8b93a2);
+  /* animates from 0 when the sheet opens */
+  width: 0;
+  transition: width 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* perk rows read as a value chip, not a bar — they are flat bonuses */
+.perk-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(7px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  margin-bottom: calc(6px * var(--ui-scale));
+  border-radius: calc(8px * var(--ui-scale));
+  background: rgba(255,255,255,0.045);
+}
+.perk-label {
+  font-family: var(--font);
+  font-size: calc(10.5px * var(--ui-scale));
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.perk-value {
+  font-family: var(--font-display);
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 800;
+  color: var(--green);
+}
+
+.inspect-empty {
+  font-family: var(--font);
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--ink-dim);
+  padding: calc(10px * var(--ui-scale)) 0;
+}
+
+.inspect-actions {
+  display: flex;
+  gap: calc(8px * var(--ui-scale));
+  padding-top: calc(12px * var(--ui-scale));
+}
+.inspect-actions .btn { flex: 1; }
+
+/* the ⓘ affordance on a loadout card — tapping the card still equips, so
+   inspect needs its own hit target, sized for a thumb */
+.item-info {
+  position: absolute;
+  top: calc(3px * var(--ui-scale));
+  right: calc(3px * var(--ui-scale));
+  width: calc(24px * var(--ui-scale));
+  height: calc(24px * var(--ui-scale));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(10,12,16,0.55);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+.item-info:active { background: rgba(10,12,16,0.8); color: var(--ink); }
+
+#inspect { z-index: 34; }

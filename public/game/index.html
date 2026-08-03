@@ -297,6 +297,25 @@
     </div>
   </div>
 
+  <!-- Weapon inspect: stat panel for a tapped loadout card. Built empty and
+       filled by MetaUI.openInspect() so the markup stays declarative. -->
+  <div id="inspect" class="overlay dim hidden">
+    <div class="inspect-card">
+      <div class="inspect-head">
+        <canvas id="inspect-preview" class="inspect-preview"></canvas>
+        <div class="inspect-id">
+          <div id="inspect-name" class="inspect-name"></div>
+          <div id="inspect-rarity" class="inspect-rarity"></div>
+        </div>
+      </div>
+      <div id="inspect-body" class="inspect-body"></div>
+      <div class="inspect-actions">
+        <button id="btn-inspect-equip" class="btn primary" data-i18n="inspect.equip">EQUIP</button>
+        <button id="btn-inspect-close" class="btn quiet" data-i18n="inspect.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Viral score card — painted to canvas so it can be shared as an image -->
   <div id="sharecard" class="overlay dim hidden">
     <div class="sharecard-inner">
