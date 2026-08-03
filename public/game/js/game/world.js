@@ -47,9 +47,17 @@ export const LAMP_HEAD_Y = 86 * LAMP_SCALE;
 // Every collider below is derived from these rather than hard-coded, so the
 // physics box always matches the art. Note the step-up limit in moveEntity is
 // 27px: anything taller than that must be jumped, which is the point.
-export const OB_SCALE = 1.85;        // crates, sandbags, tires, rubble, dumpster
-export const CONTAINER_SCALE = 1.6;  // containers: big enough to break sightlines
-export const BARREL_SCALE = 2.1;     // drums
+// Sized against the operator's 126px standing height (STAND_H in player.js):
+//   crate      20 * 3.4 = 68px   — waist-high, crouch behind it
+//   sandbags   13 * 3.4 = 44px   — thigh, still vaultable at a walk
+//   barrel     22 * 2.9 = 64px   — waist
+//   container  38 * 2.4 = 91px   — chest, real cover you have to climb
+//   dumpster   28 * 3.4 = 95px   — chest
+// All stay under the 168.8px jump apex (JUMP 900 / GRAV 2400), so nothing
+// becomes impassable — verified, not assumed.
+export const OB_SCALE = 3.4;         // crates, sandbags, tires, rubble, dumpster
+export const CONTAINER_SCALE = 2.4;  // containers: chest-high, break sightlines
+export const BARREL_SCALE = 2.9;     // drums
 
 // Derived collider dimensions (art size × scale).
 export const CRATE_W = 26 * OB_SCALE, CRATE_H = 20 * OB_SCALE;
@@ -58,7 +66,7 @@ export const CONT_W = 96 * CONTAINER_SCALE, CONT_H = 38 * CONTAINER_SCALE;
 export const BAG_W = 42 * OB_SCALE, BAG_H = 13 * OB_SCALE;
 // Razor wire: a vaultable hazard strip. Low enough to clear with a jump,
 // tall enough that walking through is not an option.
-export const WIRE_SCALE = 1.5;
+export const WIRE_SCALE = 2.0;
 export const WIRE_W = 90 * WIRE_SCALE, WIRE_H = 22 * WIRE_SCALE;
 
 // Stage 1 is the hand-authored, art-directed encounter layout.
@@ -143,7 +151,12 @@ export class World {
   // excluded by size.
   deriveCoverSpots() {
     for (const c of this.colliders) {
-      if (c.h > 90 || c.w > 340) continue;
+      // Height ceiling has to sit above the tallest piece of *cover* so the
+      // AI still recognises it. Containers are 91px now (they were 38px), and
+      // at the old 90px limit they silently stopped counting as cover spots —
+      // enemies would ignore the single best piece of cover on the map.
+      // 130 clears containers while still excluding the 800px map bounds.
+      if (c.h > 130 || c.w > 340) continue;
       this.coverSpots.push({ x: c.x - 18, y: GROUND_Y });
       this.coverSpots.push({ x: c.x + c.w + 18, y: GROUND_Y });
     }

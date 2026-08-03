@@ -1,4 +1,5 @@
 import { BOSS_DROPS } from './loot.js';
+import { WEAPON_SKINS } from '../art/skins.js';
 
 // Meta-economy: item catalog, rarity tiers, crate rolls and loadout apply.
 // Crate drops reuse the game's existing weapon-finish and operator-skin art
@@ -62,47 +63,6 @@ export const DUPLICATE_REFUND = 0.4;
 // player when the item is equipped. slot = which loadout key it occupies
 // (one equipped item per slot).
 export const CATALOG = [
-  // -- rifle finishes --
-  { id: 'rifle_urban',  name: 'VK-77 · URBAN',    slot: 'rifleFinish', rarity: 'common', kind: 'Rifle Skin',
-    apply: { type: 'finish', weapon: 'rifle', finish: 'urban' } },
-  { id: 'rifle_cinder', name: 'VK-77 · CINDER',   slot: 'rifleFinish', rarity: 'rare', kind: 'Rifle Skin',
-    apply: { type: 'finish', weapon: 'rifle', finish: 'cinder' } },
-  { id: 'rifle_arc',    name: 'ARC-9 · PULSE',    slot: 'rifleFinish', rarity: 'legendary', kind: 'Ray Rifle', tag: 'ENERGY',
-    apply: { type: 'finish', weapon: 'rifle', finish: 'arc' } },
-
-  // -- pistol finishes --
-  { id: 'pistol_desert', name: 'C-9 · DESERT',    slot: 'pistolFinish', rarity: 'common', kind: 'Pistol Skin',
-    apply: { type: 'finish', weapon: 'pistol', finish: 'desert' } },
-  { id: 'pistol_onyx',   name: 'C-9 · ONYX',      slot: 'pistolFinish', rarity: 'rare', kind: 'Pistol Skin',
-    apply: { type: 'finish', weapon: 'pistol', finish: 'onyx' } },
-  { id: 'pistol_gold',   name: 'C-9 · GILDED',    slot: 'pistolFinish', rarity: 'epic', kind: 'Pistol Skin',
-    apply: { type: 'finish', weapon: 'pistol', finish: 'gold' } },
-
-  // -- new composited skins (art/skins.js) --
-  // These carry real geometry — muzzle devices, optics, coatings, emissive
-  // rims — so the rarity on the card matches what the weapon actually looks
-  // like in hand.
-  { id: 'rifle_spectre', name: 'VK-77 · SPECTRE', slot: 'rifleFinish', rarity: 'epic', kind: 'Rifle Skin', tag: 'SUPPRESSED',
-    apply: { type: 'finish', weapon: 'rifle', finish: 'spectre' } },
-  { id: 'pistol_quantum', name: 'C-9 · QUANTUM',  slot: 'pistolFinish', rarity: 'legendary', kind: 'Pistol Skin', tag: 'ENERGY',
-    apply: { type: 'finish', weapon: 'pistol', finish: 'quantum' } },
-  { id: 'smg_hornet',  name: 'P-12 · HORNET',     slot: 'smgFinish', rarity: 'legendary', kind: 'SMG Skin',
-    apply: { type: 'finish', weapon: 'smg', finish: 'hornet' } },
-
-  // -- smg finishes --
-  { id: 'smg_viper',  name: 'P-12 · VIPER',       slot: 'smgFinish', rarity: 'rare', kind: 'SMG Skin',
-    apply: { type: 'finish', weapon: 'smg', finish: 'viper' } },
-  { id: 'smg_arc',    name: 'P-12 · TESLA',       slot: 'smgFinish', rarity: 'epic', kind: 'SMG Skin', tag: 'ENERGY',
-    apply: { type: 'finish', weapon: 'smg', finish: 'arc' } },
-
-  // -- knife finishes (energy "sword" blade) --
-  { id: 'knife_ravage', name: 'TALON-7 · RAVAGE', slot: 'knifeFinish', rarity: 'rare', kind: 'Blade',
-    apply: { type: 'finish', weapon: 'knife', finish: 'ravage' } },
-  { id: 'knife_voidedge', name: 'VOID EDGE',      slot: 'knifeFinish', rarity: 'epic', kind: 'Energy Blade', tag: 'ENERGY',
-    apply: { type: 'finish', weapon: 'knife', finish: 'voidedge' } },
-  { id: 'knife_volt',   name: 'VOLT EDGE',        slot: 'knifeFinish', rarity: 'legendary', kind: 'Energy Blade', tag: 'ENERGY',
-    apply: { type: 'finish', weapon: 'knife', finish: 'volt' } },
-
   // -- operator skins --
   // Every operator carries a `perk`: a passive that changes how the character
   // actually plays, not just how they look. Skins are a progression axis now,
@@ -119,18 +79,47 @@ export const CATALOG = [
   { id: 'op_arctic',  name: 'ARCTIC OPERATOR',    slot: 'operator', rarity: 'legendary', kind: 'Operator', tag: 'RECON',
     perk: { maxArmor: 25, recoil: 0.18, moveSpeed: 0.08 },
     apply: { type: 'operator', variant: 'arctic' } },
-
-  // -- Diamond-store exclusives: never drop from a crate (storeOnly), sold
-  // directly for Diamonds at their rarity's RARITY_DIAMOND_PRICE. --
-  { id: 'rifle_inferno', name: 'VK-77 · INFERNO', slot: 'rifleFinish', rarity: 'mythic', kind: 'Rifle Skin', tag: 'MYTHIC',
-    storeOnly: true, apply: { type: 'finish', weapon: 'rifle', finish: 'inferno' } },
-  { id: 'knife_bloodmoon', name: 'BLOODMOON', slot: 'knifeFinish', rarity: 'mythic', kind: 'Energy Blade', tag: 'MYTHIC',
-    storeOnly: true, apply: { type: 'finish', weapon: 'knife', finish: 'bloodmoon' } },
-  { id: 'rifle_warden', name: 'VK-77 · WARDEN', slot: 'rifleFinish', rarity: 'ultraLimited', kind: 'Rifle Skin', tag: 'PROTOTYPE',
-    storeOnly: true, apply: { type: 'finish', weapon: 'rifle', finish: 'warden' } },
-  { id: 'knife_eventide', name: 'EVENTIDE — SECTOR 9 LAUNCH BLADE', slot: 'knifeFinish', rarity: 'ultraLimited', kind: 'Energy Blade', tag: 'EVENT',
-    storeOnly: true, retiredAfter: Date.UTC(2026, 7, 9), apply: { type: 'finish', weapon: 'knife', finish: 'eventide' } },
 ];
+
+// ---- weapon skins ----
+// Generated straight from the art table (art/skins.js) so a skin can never
+// exist as a sprite without also being obtainable — the two cannot drift.
+// Ids keep the historical `${weaponId}_${skinId}` shape, which is what the
+// battle pass and unlock tables already reference.
+//
+// Each weapon gets its own slot key (`skin_<weaponId>`), so equipping a
+// Plasma Rifle skin does not fight with the VK-77's.
+export const SKIN_ITEMS = Object.entries(WEAPON_SKINS).flatMap(([weaponId, table]) =>
+  Object.entries(table).map(([skinId, skin]) => ({
+    id: `${weaponId}_${skinId}`,
+    name: skin.name,
+    slot: `skin_${weaponId}`,
+    weaponId,
+    rarity: skin.tier,
+    kind: 'Weapon Skin',
+    tag: skin.glow ? 'GLOW' : undefined,
+    // storeOnly tiers are never crate loot (see LOOT_POOL below)
+    storeOnly: skin.tier === 'mythic' || skin.tier === 'ultraLimited',
+    apply: { type: 'finish', weapon: weaponId, finish: skinId },
+  }))
+);
+
+// Human-readable weapon names for the skin slot headers.
+const WEAPON_SLOT_LABEL = {
+  rifle: 'VK-77', pistol: 'C-9', smg: 'P-12', knife: 'TALON-7',
+  battle: 'MK-2', lmg: 'M-900', sniper: 'LRS-1', minigun: 'ANNIHILATOR',
+  rocket: 'SIEGEBREAKER', raygun: 'RAY GUN', plasma: 'PLASMA', pulse: 'PULSE',
+  eshotgun: 'SCATTER', quantum: 'QUANTUM', railgun: 'RAILGUN', ion: 'ION',
+  emp: 'EMP', gravity: 'GRAVITY', lasersmg: 'LASER SMG', particle: 'PARTICLE',
+  lightning: 'LIGHTNING', cryo: 'CRYO', flame: 'FLAME',
+};
+
+// One loadout slot per weapon that has skins.
+export const SKIN_SLOTS = Object.keys(WEAPON_SKINS).map((weaponId) => ({
+  key: `skin_${weaponId}`,
+  label: `${WEAPON_SLOT_LABEL[weaponId] || weaponId.toUpperCase()} SKIN`,
+  weaponId,
+}));
 
 // ---- weapon loadout: pick which weapon fills each arsenal slot. Only the
 // starter three (below) are owned from the start — every other weapon is
@@ -201,9 +190,13 @@ const LOOT_WEAPON_ITEMS = ALL_WEAPON_IDS
   .filter((id) => !STARTER_WEAPON_IDS.includes(id) && !BOSS_WEAPON_IDS.includes(id))
   .map((id) => WEAPON_ITEMS.find((i) => i.weaponId === id));
 // storeOnly cosmetics (Diamond-store exclusives) never enter crate loot.
-export const LOOT_POOL = [...CATALOG.filter((i) => !i.storeOnly), ...LOOT_WEAPON_ITEMS];
+export const LOOT_POOL = [
+  ...CATALOG.filter((i) => !i.storeOnly),
+  ...SKIN_ITEMS.filter((i) => !i.storeOnly),
+  ...LOOT_WEAPON_ITEMS,
+];
 
-const ALL_ITEMS = [...CATALOG, ...WEAPON_ITEMS, ...BOSS_DROPS];
+const ALL_ITEMS = [...CATALOG, ...SKIN_ITEMS, ...WEAPON_ITEMS, ...BOSS_DROPS];
 const BY_ID = Object.fromEntries(ALL_ITEMS.map((i) => [i.id, i]));
 export const itemById = (id) => BY_ID[id] || null;
 export const itemsForSlot = (slot) => ALL_ITEMS.filter((i) => i.slot === slot);
@@ -214,11 +207,18 @@ export const LOADOUT_SLOTS = [
   { key: 'wpn_secondary',label: 'SIDEARM',     labelKey: 'slot.sidearm' },
   { key: 'wpn_special',  label: 'SPECIAL',     labelKey: 'slot.special' },
   { key: 'operator',    label: 'OPERATOR',     labelKey: 'slot.operator' },
-  { key: 'rifleFinish', label: 'RIFLE SKIN',   labelKey: 'slot.rifleSkin' },
-  { key: 'pistolFinish',label: 'PISTOL SKIN',  labelKey: 'slot.pistolSkin' },
-  { key: 'smgFinish',   label: 'SMG SKIN',     labelKey: 'slot.smgSkin' },
-  { key: 'knifeFinish', label: 'BLADE',        labelKey: 'slot.blade' },
+  // One skin slot per weapon, generated from the art table — every weapon in
+  // the game gets its own row rather than four hard-coded ones that only ever
+  // covered the starter guns.
+  ...SKIN_SLOTS,
 ];
+
+// Loadout keys used before skins were per-weapon. Reading them keeps saves
+// made by older builds working; nothing writes them any more.
+const LEGACY_SKIN_SLOTS = {
+  skin_rifle: 'rifleFinish', skin_pistol: 'pistolFinish',
+  skin_smg: 'smgFinish', skin_knife: 'knifeFinish',
+};
 
 // Weighted rarity pick, then a uniform item of that rarity, drawn from the
 // combined cosmetics + weapons loot pool. Falls back to a lower rarity if a
@@ -278,14 +278,18 @@ export function applyLoadout(player, progression, assets) {
     if (parts) player.parts = parts;
     if (item) addPerk(item.perk);
   }
-  // weapon finishes (applied before weapon overrides so a chosen weapon wins)
-  for (const slot of ['rifleFinish', 'pistolFinish', 'smgFinish', 'knifeFinish']) {
-    const id = progression.equipped(slot);
-    if (!id) continue;
-    const item = itemById(id);
-    if (item && item.apply.type === 'finish') {
-      player.applyFinish(item.apply.weapon, item.apply.finish);
-    }
+  // Weapon skins are resolved after the arsenal is filled (below), because a
+  // skin belongs to a *weapon*, not to an arsenal slot — the Plasma Rifle's
+  // skin has to follow it into whichever slot it is equipped in. Perks from
+  // skin items are still gathered here so ordering can't change the totals.
+  const skinFor = (weaponId) => {
+    const key = `skin_${weaponId}`;
+    const id = progression.equipped(key)
+      || (LEGACY_SKIN_SLOTS[key] ? progression.equipped(LEGACY_SKIN_SLOTS[key]) : null);
+    return id ? itemById(id) : null;
+  };
+  for (const slot of SKIN_SLOTS) {
+    const item = skinFor(slot.weaponId);
     if (item) addPerk(item.perk);
   }
   // weapon selection → fill arsenal slots
@@ -304,6 +308,22 @@ export function applyLoadout(player, progression, assets) {
     addPerk(item.perk);
   }
   if (specialAssigned) player.smgUnlocked = true;
+
+  // ---- apply weapon skins ----
+  // Walk the live arsenal and swap in the skinned body for whatever weapon
+  // actually ended up in each slot. This is what lets all 23 weapons carry
+  // skins: the old path looked the finish up on the slot's *default* weapon,
+  // so a skin could only ever land on the four starter guns.
+  for (const key of Object.keys(player.arsenal)) {
+    const a = player.arsenal[key];
+    if (!a || !a.wpn) continue;
+    const item = skinFor(a.wpn.id);
+    if (!item) continue;
+    const base = assets.weapons[a.wpn.id];
+    const body = base && base.finishes && base.finishes[item.apply.finish];
+    if (!body) continue;
+    a.wpn = { ...a.wpn, body, finish: item.apply.finish };
+  }
 
   applyPerks(player, perks);
 }

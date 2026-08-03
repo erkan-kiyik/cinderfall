@@ -994,17 +994,22 @@ export function buildWeapons() {
   const pistolBody = paintPistolBody();
   const pistolFinishes = buildSkinSet('pistol', pistolBody,
     (pal) => paintPistolBody({ grip: pal.grip || pal.poly, frame: pal.frame || pal.rec }));
-  const knifeBody = paintKnife();
-  const knifeFinishes = {
-    default: knifeBody,
-    ravage: paintKnifeBowie(),
-    voidedge: paintKnifeBowie({ blade: '#b26bff' }),                         // epic — violet energy bowie
-    volt: paintKnife({ blade: '#38e0ff' }),   // VOLT EDGE energy blade — legendary
-    bloodmoon: paintKnifeBowie({                                             // mythic store finish
-      handle: ['#4a1620', '#341019', '#1c0810'], blade: '#ff3b5c',
-    }),
-    eventide: paintKnife({ blade: '#f2f6ff' }),   // ultra-limited event finish
+  // Knife skins keep their bespoke blade geometry — the bowie is a different
+  // shape, not a recolour — and the composited pass runs on top of whichever
+  // base the skin id selects.
+  const KNIFE_BOWIE = new Set(['ravage', 'voidedge', 'bloodmoon']);
+  const KNIFE_BLADE_COL = {
+    ravage: undefined, voidedge: '#b26bff', volt: '#38e0ff',
+    bloodmoon: '#ff3b5c', eventide: '#f2f6ff',
   };
+  const knifeBody = paintKnife();
+  const knifeFinishes = buildSkinSet('knife', knifeBody, (pal, id) => (
+    KNIFE_BOWIE.has(id)
+      ? paintKnifeBowie(id === 'bloodmoon'
+          ? { handle: ['#4a1620', '#341019', '#1c0810'], blade: KNIFE_BLADE_COL[id] }
+          : { blade: KNIFE_BLADE_COL[id] })
+      : paintKnife({ blade: KNIFE_BLADE_COL[id] })
+  ));
   const smgBody = paintSmgBody();
   const smgFinishes = buildSkinSet('smg', smgBody, (pal) => paintSmgBody(pal));
 
@@ -1250,6 +1255,51 @@ export function buildWeapons() {
       recoilKick: 0.4, recoilRot: 0.006, camKick: 0.3, camTrauma: 0.024,
     },
   });
+
+  // ------------------------------------------------------------------
+  // Skin sets for every remaining weapon.
+  //
+  // rifle / pistol / smg / knife already got theirs above (their finish maps
+  // are referenced directly by their defs). This covers the other 19 so that
+  // no weapon in the game ships without skins.
+  //
+  // `mount` names which chassis the weapon's body actually is — most energy
+  // weapons share the rifle chassis, so they share its muzzle/rail mount
+  // points, but each still gets its own skin table and its own composited
+  // sprites. `paint` re-paints that chassis in the skin's palette.
+  const SKIN_BASES = {
+    // conventional, rifle chassis
+    battle:   { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly) },
+    lmg:      { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly) },
+    sniper:   { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly) },
+    // energy, rifle chassis
+    plasma:   { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    pulse:    { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    eshotgun: { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    ion:      { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    emp:      { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    gravity:  { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    lightning:{ mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    cryo:     { mount: 'rifle',  paint: (p) => rifleSkin(p.rec, p.poly, p.core) },
+    // energy, pistol chassis
+    raygun:   { mount: 'pistol', paint: (p) => pistolSkin(p.grip || p.poly, p.frame || p.rec, p.core) },
+    quantum:  { mount: 'pistol', paint: (p) => pistolSkin(p.grip || p.poly, p.frame || p.rec, p.core) },
+    // energy, smg chassis
+    lasersmg: { mount: 'smg',    paint: (p) => smgSkin(p.rec, p.poly, p.core) },
+    // purpose-built chassis, each with its own painter and mount points
+    particle: { mount: 'particle', paint: (p) => paintParticleThrower(p) },
+    railgun:  { mount: 'railgun',  paint: (p) => paintRailgun(p) },
+    flame:    { mount: 'flame',    paint: (p) => paintFlamethrower(p) },
+    minigun:  { mount: 'minigun',  paint: (p) => paintMinigun(p) },
+    rocket:   { mount: 'rocket',   paint: (p) => paintRocketLauncher(p) },
+  };
+
+  for (const [id, base] of Object.entries(SKIN_BASES)) {
+    const def = defs[id];
+    if (!def) continue;
+    def.finishes = buildSkinSet(id, def.body, base.paint, base.mount);
+    def.finish = 'default';
+  }
 
   return defs;
 }
