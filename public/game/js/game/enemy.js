@@ -7,6 +7,7 @@
 // a scripted collapse on death that leaves the body in the scene.
 
 import { clamp, lerp, damp, rand, randSpread, easeInOutQuad, angleDiff } from '../engine/math.js';
+import { bossHp, bossDmgMul, bossSkill, BOSS_INTERVAL } from './difficulty.js';
 import { newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld, drawSoldier } from './rig.js';
 import { segVsBox } from './player.js';
 
@@ -527,7 +528,9 @@ export class Enemy {
 // beat. Spawned solo on every 5th stage — see spawnEnemiesForStage()
 // in main.js — so the regular squad encounters are untouched.
 export const BOSS_NAMES = ['WARLORD KESTREL', 'THE FOREMAN', 'IRON SERGEANT', 'THE COLLECTOR', 'WARDEN VESK', 'BLACKOUT PRIME'];
-export const BOSS_STAGE_INTERVAL = 5;
+// Re-exported from the difficulty module so the encounter code and the
+// scaling curves cannot disagree about where bosses live.
+export const BOSS_STAGE_INTERVAL = BOSS_INTERVAL;
 
 // Which heavy weapon each boss tier carries. A boss never picks up an
 // infantry rifle — the oversized silhouette is half of what makes the
@@ -544,9 +547,12 @@ export class Boss extends Enemy {
     this.weaponId = BOSS_WEAPONS[tier % BOSS_WEAPONS.length];
     this.visualScale = 1.5;
     this.hitboxScale = 1.32;
-    this.dmgMul = 1.6;
-    this.difficulty = clamp(Math.floor(stage / 3), 3, 10);
-    this.maxHp = 420 + stage * 55;
+    // Boss stats ride the shared endless curves (game/difficulty.js) instead
+    // of the old `clamp(stage/3, 3, 10)` and a flat `420 + stage * 55`, both
+    // of which stopped meaning anything deep into a run.
+    this.dmgMul = bossDmgMul(stage);
+    this.difficulty = bossSkill(stage);
+    this.maxHp = bossHp(stage);
     this.hp = this.maxHp;
     this.slamCd = rand(3.5, 5);
   }

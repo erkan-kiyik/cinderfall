@@ -113,28 +113,41 @@ export class Hud {
   // so a player can farm a boss or re-run a layout; the frontier stage (the
   // one they have not beaten yet) is highlighted. Everything past it is
   // rendered locked rather than hidden, so the run ahead stays legible.
-  renderLevelSelect(unlocked, isCleared, bossInterval, showAhead = 4) {
+  // Boss arenas only.
+  //
+  // Intermediate stages are one-and-done — they are beaten on the way through
+  // and never offered again, so the campaign always moves forward instead of
+  // letting a player farm an easy early stage. Boss arenas are the farm: they
+  // hold the 1/1000 redeemable table, so going back to one has a point.
+  //
+  // `stages` is the list of boss stage numbers to show (see
+  // Progression.bossStages); the last entry is the frontier the player is
+  // still working toward and is shown locked until it has been cleared once.
+  renderLevelSelect(stages, isCleared, showAhead = 2) {
     const grid = $('level-grid');
     if (!grid) return;
     grid.innerHTML = '';
-    const frontier = unlocked.length ? unlocked[unlocked.length - 1] : 1;
-    const last = frontier + showAhead;
-    for (let n = 1; n <= last; n++) {
-      const playable = n <= frontier;
+    if (!stages || !stages.length) return;
+
+    const frontier = stages[stages.length - 1];
+    // a couple of locked arenas beyond the frontier, so the road ahead reads
+    const interval = stages.length > 1 ? stages[1] - stages[0] : frontier;
+    const preview = [];
+    for (let i = 1; i <= showAhead; i++) preview.push(frontier + interval * i);
+
+    for (const n of [...stages, ...preview]) {
       const cleared = isCleared(n);
-      const isBoss = bossInterval > 0 && n % bossInterval === 0;
+      // only a cleared boss arena can be replayed
+      const playable = cleared;
       const cell = document.createElement('button');
-      cell.className = 'level-cell';
+      cell.className = 'level-cell boss';
       if (cleared) cell.classList.add('cleared');
-      if (isBoss) cell.classList.add('boss');
       if (n === frontier && !cleared) cell.classList.add('next');
       cell.disabled = !playable;
       cell.textContent = String(n);
       const tag = document.createElement('span');
       tag.className = 'level-tag';
-      tag.textContent = !playable ? t('level.locked')
-        : isBoss ? t('level.boss')
-        : cleared ? t('level.cleared') : '';
+      tag.textContent = cleared ? t('level.boss') : t('level.locked');
       cell.appendChild(tag);
       if (playable && this._onPickStage) {
         cell.onclick = () => this._onPickStage(n);

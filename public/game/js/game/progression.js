@@ -4,6 +4,7 @@
 
 import { STARTER_WEAPON_IDS, weaponVariantIds } from './meta.js';
 import { rollBossDrop } from './loot.js';
+import { BOSS_INTERVAL, isBossStage } from './difficulty.js';
 
 const KEY = 'cinderfall.progress.v1';
 // Separate key for the in-progress run snapshot (stage + operator vitals), so
@@ -227,12 +228,28 @@ export class Progression {
 
   stageCleared(stage) { return !!(this.data.stagesCleared || {})[stage]; }
 
-  // Every stage the player may launch directly from the level select: all
-  // cleared stages plus the next uncleared one (the live frontier).
-  unlockedStages() {
+  // Stages the level select may offer.
+  //
+  // Only boss stages are replayable. Intermediate stages are one-and-done:
+  // you beat them on the way through and never pick them again, which keeps
+  // the campaign moving forward instead of letting players grind an easy
+  // early stage. Boss arenas are the farm — they hold the 1/1000 redeemable
+  // table (see game/loot.js), so replaying one is the only reason to go back.
+  //
+  // A boss stage is offered once it has been cleared, plus the next one the
+  // player is working toward, so the frontier is always visible.
+  bossStages() {
     const out = [];
-    for (let i = 1; i <= this.resumeStage; i++) out.push(i);
+    const cleared = this.checkpoint;
+    // the boss stage at or just past the frontier is the one being worked on
+    const frontier = Math.ceil(Math.max(1, cleared + 1) / BOSS_INTERVAL) * BOSS_INTERVAL;
+    for (let s = BOSS_INTERVAL; s <= frontier; s += BOSS_INTERVAL) out.push(s);
     return out;
+  }
+
+  // True when a boss stage may be launched directly (already beaten once).
+  canReplay(stage) {
+    return isBossStage(stage) && this.stageCleared(stage);
   }
 
   isUnlocked(id) { return !!this.data.unlocked[id]; }

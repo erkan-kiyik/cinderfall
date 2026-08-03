@@ -10,6 +10,7 @@ import { buildBackground } from '../art/background.js';
 import { makeCanvas, drawSprite, lingrad, radgrad, rr } from '../art/paint.js';
 import { clamp, rand, randSpread, makeRng } from '../engine/math.js';
 import { gradeAt, pickWeather, START_HOUR } from '../engine/daycycle.js';
+import { enemyCount, lootCount } from './difficulty.js';
 
 export const GROUND_Y = 640;
 // Map width. Stages were clearing in well under a minute at 4600; the wider
@@ -449,8 +450,8 @@ export class World {
     }
 
     // -- loot: scattered resupply crates, more on higher stages --
-    const lootCount = 4 + Math.min(4, Math.floor(stage / 3));
-    for (let i = 0; i < lootCount; i++) {
+    const loot = lootCount(stage);
+    for (let i = 0; i < loot; i++) {
       const kind = rng.pick(['ammo', 'ammo', 'health', 'armor']);
       const lx = clusters.length ? clusters[rng.int(0, clusters.length - 1)] + rng.range(-40, 40) : rng.range(300, mapW - 300);
       this.pickups.push({ x: lx, y: GY, kind, alive: true, bob: rng.range(0, 6) });
@@ -459,9 +460,12 @@ export class World {
     // -- enemy spawns: count + spacing scale with stage difficulty. The cap
     //    rose with MAP_W so the longer field stays populated rather than
     //    turning into a walk between fights. --
-    const enemyCount = Math.min(6 + Math.floor(stage / 2), 16);
-    const spacing = (mapW - 700) / enemyCount;
-    for (let i = 0; i < enemyCount; i++) {
+    // Squad size comes from game/difficulty.js — square-root growth with a
+    // ceiling that is a frame-rate budget, not a difficulty cap (health and
+    // damage keep climbing past it forever).
+    const squad = enemyCount(stage);
+    const spacing = (mapW - 700) / squad;
+    for (let i = 0; i < squad; i++) {
       const sx = 500 + spacing * i + rng.range(-60, 60);
       const onDock = rng.chance(0.25);
       this.enemySpawns.push({

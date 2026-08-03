@@ -18,6 +18,7 @@ import { World, GROUND_Y, MAP_W } from './game/world.js';
 import { FX } from './game/fx.js';
 import { Player } from './game/player.js';
 import { Enemy, Boss, BOSS_STAGE_INTERVAL, BOSS_WEAPONS, getGlobalDetection } from './game/enemy.js';
+import { aiSkill, enemyHp, dmgMul, isBossStage, bossTier } from './game/difficulty.js';
 import { Hud } from './game/hud.js';
 import { Progression, UNLOCKS } from './game/progression.js';
 import { DayCycle, formatHour } from './engine/daycycle.js';
@@ -278,6 +279,10 @@ class Game {
       // Level select: launching a specific sector is always a fresh mission
       // into that stage, so any half-finished run snapshot is discarded first.
       pickStage: (n) => {
+        // Belt-and-braces: the UI only renders replayable arenas, but the
+        // handler refuses anything else so a stale DOM node can't launch an
+        // intermediate stage out of order.
+        if (!this.progression.canReplay(n)) return;
         audio.resume(); audio.ui();
         this.progression.clearRun();
         this.pendingResume = null;
@@ -312,8 +317,12 @@ class Game {
   }
 
   spawnEnemiesForStage() {
-    const diff = clamp(this.stage - 1, 0, 8);
-    this.isBossStage = this.stage > 0 && this.stage % BOSS_STAGE_INTERVAL === 0;
+    // Every scaling number comes from game/difficulty.js. The clamps that used
+    // to live here (`clamp(stage - 1, 0, 8)`, `Math.min(60, diff * 5)`) meant
+    // difficulty stopped growing at stage 9 — stage 40 played exactly like
+    // stage 10, which is what made the endless campaign feel finite.
+    const skill = aiSkill(this.stage);
+    this.isBossStage = isBossStage(this.stage);
     if (this.isBossStage) {
       // one heavyweight encounter in place of the regular squad — spawned at
       // the map's middle spawn point (a reasonable, already-clear patrol lane)
@@ -322,7 +331,7 @@ class Game {
       const mid = spawns[Math.floor(spawns.length / 2)] || { x: MAP_W * 0.55, y: GROUND_Y, min: MAP_W * 0.4, max: MAP_W * 0.75 };
       // Bosses carry heavy weapons, never an infantry rifle — the weapon id
       // is chosen by tier in the Boss constructor (see BOSS_WEAPONS).
-      const tier = Math.max(0, Math.floor(this.stage / BOSS_STAGE_INTERVAL) - 1);
+      const tier = bossTier(this.stage);
       const bossWpn = assets.weapons[BOSS_WEAPONS[tier % BOSS_WEAPONS.length]] || assets.weapons.rifle;
       const boss = new Boss(assets.phantom, assets.shadow, bossWpn, this.world, this.fx, audio, mid.x, mid.min, mid.max, this.stage);
       boss.y = mid.y;
@@ -331,9 +340,10 @@ class Game {
       this.enemies = this.world.enemySpawns.map((s) => {
         const e = new Enemy(assets.phantom, assets.shadow, assets.weapons.rifle, this.world, this.fx, audio, s.x, s.min, s.max);
         e.y = s.y;
-        e.difficulty = diff;
-        e.maxHp = 100 + Math.min(60, diff * 5);
+        e.difficulty = skill;
+        e.maxHp = enemyHp(this.stage);
         e.hp = e.maxHp;
+        e.dmgMul = dmgMul(this.stage);
         return e;
       });
     }
@@ -445,10 +455,10 @@ class Game {
   // Repaints the level-select grid from current progress. Called whenever the
   // menu is shown, so clearing a stage makes it immediately replayable.
   refreshLevelSelect() {
+    // Boss arenas only — see Progression.bossStages / Hud.renderLevelSelect.
     hud.renderLevelSelect(
-      this.progression.unlockedStages(),
+      this.progression.bossStages(),
       (n) => this.progression.stageCleared(n),
-      BOSS_STAGE_INTERVAL,
     );
   }
 
