@@ -117,9 +117,12 @@
   </div>
 
   <!-- Loading -->
+  <!-- Animated boot sequence. The canvas plays the intro cinematic while
+       assets paint; the label and bar are reduced to a hairline status line at
+       the bottom edge so the animation owns the screen. -->
   <div id="loading" class="overlay">
-    <div class="ov-inner">
-      <div class="title-small">CINDERFALL</div>
+    <canvas id="intro-canvas" class="intro-canvas"></canvas>
+    <div class="intro-status">
       <div class="load-label" id="load-label">PAINTING ASSETS…</div>
       <div class="load-bar"><div id="load-fill"></div></div>
     </div>

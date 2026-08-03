@@ -4,7 +4,7 @@
 
 import { STARTER_WEAPON_IDS, weaponVariantIds } from './meta.js';
 import { rollBossDrop } from './loot.js';
-import { BOSS_INTERVAL, isBossStage } from './difficulty.js';
+import { isBossStage } from './difficulty.js';
 
 const KEY = 'cinderfall.progress.v1';
 // Separate key for the in-progress run snapshot (stage + operator vitals), so
@@ -228,26 +228,25 @@ export class Progression {
 
   stageCleared(stage) { return !!(this.data.stagesCleared || {})[stage]; }
 
-  // Stages the level select may offer.
+  // Boss arenas the player has actually beaten, ascending.
   //
-  // Only boss stages are replayable. Intermediate stages are one-and-done:
-  // you beat them on the way through and never pick them again, which keeps
-  // the campaign moving forward instead of letting players grind an easy
-  // early stage. Boss arenas are the farm — they hold the 1/1000 redeemable
-  // table (see game/loot.js), so replaying one is the only reason to go back.
+  // This is the entire content of the level select. Intermediate stages are
+  // one-and-done — beaten on the way through and never offered again, so the
+  // campaign always moves forward instead of letting players grind an easy
+  // early stage. Boss arenas hold the 1/1000 redeemable table (game/loot.js),
+  // so replaying one is the only reason to go back.
   //
-  // A boss stage is offered once it has been cleared, plus the next one the
-  // player is working toward, so the frontier is always visible.
-  bossStages() {
-    const out = [];
-    const cleared = this.checkpoint;
-    // the boss stage at or just past the frontier is the one being worked on
-    const frontier = Math.ceil(Math.max(1, cleared + 1) / BOSS_INTERVAL) * BOSS_INTERVAL;
-    for (let s = BOSS_INTERVAL; s <= frontier; s += BOSS_INTERVAL) out.push(s);
-    return out;
+  // Unbeaten arenas are deliberately absent rather than listed as locked: the
+  // menu shows what you own, not what you don't.
+  clearedBossStages() {
+    const cleared = this.data.stagesCleared || {};
+    return Object.keys(cleared)
+      .map(Number)
+      .filter((n) => Number.isFinite(n) && isBossStage(n) && cleared[n])
+      .sort((a, b) => a - b);
   }
 
-  // True when a boss stage may be launched directly (already beaten once).
+  // True when a boss arena may be launched directly from the menu.
   canReplay(stage) {
     return isBossStage(stage) && this.stageCleared(stage);
   }

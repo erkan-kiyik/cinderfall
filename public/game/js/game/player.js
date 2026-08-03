@@ -25,6 +25,23 @@ const RELAX_IN = 0.85;
 const RELAX_OUT = 0.12;
 const RELAX_MAX_SPEED = 40;
 
+// ---- vault / hood slide ----
+// A run-up at speed into waist-or-chest cover is answered with a vault rather
+// than a jump: the operator plants a hand and slides across the top without
+// losing pace. Gravity is switched off for the duration — a parabolic arc is
+// exactly the floaty, speed-shedding feel this is meant to replace.
+const VAULT_MIN_SPEED = 210;     // below this it reads as clambering, not vaulting
+const VAULT_MIN_H = 50;          // waist
+const VAULT_MAX_H = 100;         // chest. Taller than this you climb, not vault.
+const VAULT_PROBE = 40;          // how far ahead the leading edge looks
+const VAULT_CLEAR = 16;          // px past the far edge the exit lands
+const VAULT_MIN_DUR = 0.20;
+const VAULT_MAX_DUR = 0.52;
+const VAULT_COOLDOWN = 0.22;     // stops a re-trigger on the frame we land
+const VAULT_RISE = 0.30;         // fraction of the vault spent getting on top
+const VAULT_FALL = 0.28;         // fraction spent coming off the far side
+const VAULT_HOVER = 6;           // px the body rides above the surface
+
 const SPRINT_LEAN_RAMP = 1.35;
 const SPRINT_LEAN_DECAY = 2.1;
 const SPRINT_LEAN_MAX = 0.14;
@@ -131,6 +148,11 @@ export class Player {
     // ---- perk modifiers ----
     // Neutral defaults so the player is fully playable with nothing equipped;
     // applyPerks() (game/meta.js) overwrites these from the loadout.
+    // vault state machine — see tryVault()/updateVault()
+    this.vault = null;     // active vault, or null
+    this.vaultK = 0;       // 0..1 progress, read by the rig for the pose
+    this.vaultPlant = null;// world point the support hand is planted on
+    this.vaultCdT = 0;
     this.perks = {};
     this.moveMul = 1;      // top speed multiplier
     this.reloadMul = 1;    // <1 = faster reload
@@ -248,13 +270,34 @@ export class Player {
       ? Math.max(target, this.vx - rate * dt)
       : Math.min(target, this.vx + rate * dt);
 
-    if (input.jump && this.onGround) {
+    // ---- vault ----
+    // Checked before the jump so a run-up into chest cover vaults instead of
+    // hopping. Only fires while genuinely moving at pace; at a walk the
+    // ordinary jump/step-up still handles the same obstacle.
+    this.vaultCdT = Math.max(0, this.vaultCdT - dt);
+    if (!this.vault && this.onGround && this.vaultCdT <= 0 &&
+        Math.abs(this.vx) >= VAULT_MIN_SPEED && mx !== 0 &&
+        Math.sign(mx) === Math.sign(this.vx)) {
+      this.tryVault();
+    }
+
+    if (input.jump && this.onGround && !this.vault) {
       this.vy = JUMP;
       this.onGround = false;
       this.fx.landDust(this.x, this.y, false);
       this.cam.landBounce(-1.4);
       this.squash = JUMP_SQUASH;      // compress off the launch, then stretch in the air
       this.squashVel = 0;
+    }
+
+    // A vault owns the body outright: position is driven along a scripted
+    // path, so gravity and the collision sweep are both skipped for its
+    // duration. Running moveEntity here would fight the lerp and shove the
+    // operator back out of the obstacle it is crossing.
+    if (this.vault) {
+      this.updateVault(dt);
+      this.airTime = 0;
+      return;
     }
 
     const landed = this.world.moveEntity(this, dt);
@@ -501,6 +544,128 @@ export class Player {
     this.audio.equip();
   }
 
+  // ---- vault: detection ----
+  //
+  // Looks for a waist-to-chest obstacle directly ahead and, if the far side is
+  // clear, commits to a slide across it. Everything is measured off the live
+  // collider list, so it automatically tracks the obstacle scale constants in
+  // world.js rather than duplicating their numbers.
+  tryVault() {
+    const dir = Math.sign(this.vx);
+    const lead = this.x + dir * this.halfW;           // leading edge
+    const feet = this.y;
+    let best = null;
+
+    for (const c of this.world.colliders) {
+      // ground plane and the map bounds are not vaultable
+      if (c.h >= 400 || c.w > 340) continue;
+      const top = feet - c.y;                         // height of the top surface
+      if (top < VAULT_MIN_H || top > VAULT_MAX_H) continue;
+      // must be ahead of us and within reach
+      const nearFace = dir > 0 ? c.x : c.x + c.w;
+      const gap = (nearFace - lead) * dir;
+      if (gap < -this.halfW || gap > VAULT_PROBE) continue;
+      // nearest one wins
+      if (!best || gap < best.gap) best = { c, gap };
+    }
+    if (!best) return false;
+
+    const c = best.c;
+    const exitX = dir > 0 ? c.x + c.w + VAULT_CLEAR : c.x - VAULT_CLEAR;
+    const surfaceY = c.y - VAULT_HOVER;
+
+    // Refuse if the body could not pass through the exit.
+    //
+    // This has to be measured against the volume the body actually travels
+    // through — a box standing on the obstacle's top plane — not against the
+    // entry foot level. Testing at the feet rejected every crate that steps up
+    // onto a loading dock, because the dock beyond it registered as "blocked"
+    // when in fact it is just the surface you land on.
+    if (this.world.rectHit(exitX - this.halfW, c.y - this.h, this.halfW * 2, this.h - 4)) {
+      return false;
+    }
+    // Refuse if there is no headroom over the surface to pass through.
+    if (this.world.rectHit(c.x, c.y - this.h, c.w, this.h - VAULT_HOVER - 2)) {
+      return false;
+    }
+
+    // Where the exit actually lands. The far side may be higher than the
+    // approach (a crate stepping onto a dock), so the drop-off targets the
+    // real surface rather than assuming the ground we started from.
+    const landY = this.groundAt(exitX, c.y, feet);
+
+    const speed = Math.abs(this.vx);
+    const dist = Math.abs(exitX - this.x);
+    this.vault = {
+      t: 0,
+      dur: clamp(dist / Math.max(1, speed), VAULT_MIN_DUR, VAULT_MAX_DUR),
+      x0: this.x, x1: exitX,
+      y0: feet, surfaceY, y1: landY,
+      dir, speed,
+      // where the support hand plants, in world space
+      plantX: dir > 0 ? c.x + c.w * 0.28 : c.x + c.w * 0.72,
+      plantY: c.y,
+    };
+    this.vaultK = 0;
+    this.vy = 0;
+    this.onGround = false;
+    this.fx.landDust(this.x, this.y, false);
+    if (this.audio && this.audio.footstep) this.audio.footstep(0.9);
+    return true;
+  }
+
+  // Highest walkable surface under `x` between `fromY` (exclusive, the
+  // obstacle top) and `maxY` (the approach ground). Used to land a vault on
+  // whatever is actually on the far side.
+  groundAt(x, fromY, maxY) {
+    let best = maxY;
+    for (const c of this.world.colliders) {
+      if (x < c.x || x > c.x + c.w) continue;
+      if (c.y < fromY || c.y > maxY) continue;    // above the obstacle, or below the floor
+      if (c.y < best) best = c.y;
+    }
+    return best;
+  }
+
+  // ---- vault: motion ----
+  //
+  // Position is lerped, not integrated. Horizontal travel is linear so pace is
+  // visibly preserved end to end; the vertical component rises onto the
+  // surface, holds flat across it, then drops off the far side — the hood-slide
+  // read, rather than an arc.
+  updateVault(dt) {
+    const v = this.vault;
+    v.t += dt;
+    const k = clamp(v.t / v.dur, 0, 1);
+    this.vaultK = k;
+
+    // linear in x: no speed shed while crossing
+    this.x = lerp(v.x0, v.x1, k);
+
+    // up onto the surface, flat, then down
+    const rise = smootherstep(clamp(k / VAULT_RISE, 0, 1));
+    const fall = smootherstep(clamp((k - (1 - VAULT_FALL)) / VAULT_FALL, 0, 1));
+    const onTop = lerp(v.y0, v.surfaceY, rise);
+    this.y = lerp(onTop, v.y1, fall);
+
+    // keep the reported velocity honest so the gait/lean systems and anything
+    // reading vx during the vault see the real ground speed
+    this.vx = v.dir * v.speed;
+    this.vy = 0;
+    this.vaultPlant = { x: v.plantX, y: v.plantY };
+
+    if (k >= 1) {
+      this.vault = null;
+      this.vaultK = 0;
+      this.vaultPlant = null;
+      this.vaultCdT = VAULT_COOLDOWN;
+      // exits at full pace, which is the whole point
+      this.vx = v.dir * v.speed;
+      this.onGround = false;          // the next sweep settles us onto the ground
+      this.fx.landDust(this.x, this.y, false);
+    }
+  }
+
   updateWeapon(dt, input, enemies, game) {
     const cur = this.cur;
     const { wpn, ws } = cur;
@@ -530,6 +695,9 @@ export class Player {
     // bringing the weapon back on target is instant while settling into a
     // relaxed carry takes a beat — which is how the real motion reads.
     const holdingFire = input && input.mouse && input.mouse.down;
+    // A vault forces the one-handed carry outright: the support hand is busy
+    // on the obstacle, so the weapon cannot be in a two-handed grip.
+    if (this.vault) { ws.relax = 1; }
     const idle = !holdingFire
       && this.time - (ws.lastFireT || -99) > RELAX_DELAY
       && Math.abs(this.vx) < RELAX_MAX_SPEED

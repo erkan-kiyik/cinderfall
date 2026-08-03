@@ -11,6 +11,7 @@ import { clamp, damp, lerp, rand, randSpread, makeNoise1D } from './engine/math.
 import { makeCanvas, drawSprite, setAssetScale } from './art/paint.js';
 import { quality } from './engine/quality.js';
 import { device, applyDeviceProfile } from './engine/device.js';
+import { Intro } from './engine/intro.js';
 import { t, applyTranslations, cycleLang, getLang, LANGS } from './engine/i18n.js';
 import { buildSoldier, makeShadowSprite } from './art/soldier.js';
 import { buildWeapons } from './art/weapons.js';
@@ -183,6 +184,11 @@ function previewItem(item, cv) {
 async function boot() {
   applyTranslations();          // fill static markup before the first paint
   hud.show('loading');
+  // The animated boot sequence runs *while* assets paint, so the wait is the
+  // show rather than a static card. It holds for its own minimum runtime and
+  // then waits on assetsDone(), whichever is later — see engine/intro.js.
+  const intro = new Intro(document.getElementById('intro-canvas'));
+  const introDone = intro.run();
   // bake sprites at the resolution the chosen quality tier calls for — set
   // once, before the first paint call, since assets are only built here
   setAssetScale(quality.preset.assetScale);
@@ -223,7 +229,9 @@ async function boot() {
   game.touch.mount();
 
   hud.setLoad(1, 'READY');
-  await raf();
+  // hand the intro its cue, then wait for it to finish its fade
+  intro.assetsDone();
+  await introDone;
   if (DEMO) game.deploy();
   else {
     hud.show('menu'); game.state = 'menu';
@@ -456,10 +464,7 @@ class Game {
   // menu is shown, so clearing a stage makes it immediately replayable.
   refreshLevelSelect() {
     // Boss arenas only — see Progression.bossStages / Hud.renderLevelSelect.
-    hud.renderLevelSelect(
-      this.progression.bossStages(),
-      (n) => this.progression.stageCleared(n),
-    );
+    hud.renderLevelSelect(this.progression.clearedBossStages());
   }
 
   // Persist the live mission state so a reload continues from here.

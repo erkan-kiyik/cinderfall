@@ -123,35 +123,37 @@ export class Hud {
   // `stages` is the list of boss stage numbers to show (see
   // Progression.bossStages); the last entry is the frontier the player is
   // still working toward and is shown locked until it has been cleared once.
-  renderLevelSelect(stages, isCleared, showAhead = 2) {
+  // Cleared boss arenas only — nothing else is ever drawn here.
+  //
+  // No locked placeholders: an arena the player has not beaten yet simply does
+  // not exist in this menu. A grid of greyed-out boxes advertises content the
+  // player cannot touch and makes the screen read as mostly-unavailable, which
+  // is the opposite of what a replay menu is for. The section hides itself
+  // entirely until the first boss goes down, so a new player never sees an
+  // empty shell.
+  //
+  // `stages` is the list of *cleared* boss stage numbers (see
+  // Progression.clearedBossStages).
+  renderLevelSelect(stages) {
     const grid = $('level-grid');
+    const section = $('level-select');
     if (!grid) return;
     grid.innerHTML = '';
-    if (!stages || !stages.length) return;
 
-    const frontier = stages[stages.length - 1];
-    // a couple of locked arenas beyond the frontier, so the road ahead reads
-    const interval = stages.length > 1 ? stages[1] - stages[0] : frontier;
-    const preview = [];
-    for (let i = 1; i <= showAhead; i++) preview.push(frontier + interval * i);
+    const list = stages || [];
+    // the whole block disappears rather than showing an empty heading
+    if (section) section.classList.toggle('hidden', list.length === 0);
+    if (!list.length) return;
 
-    for (const n of [...stages, ...preview]) {
-      const cleared = isCleared(n);
-      // only a cleared boss arena can be replayed
-      const playable = cleared;
+    for (const n of list) {
       const cell = document.createElement('button');
-      cell.className = 'level-cell boss';
-      if (cleared) cell.classList.add('cleared');
-      if (n === frontier && !cleared) cell.classList.add('next');
-      cell.disabled = !playable;
+      cell.className = 'level-cell boss cleared';
       cell.textContent = String(n);
       const tag = document.createElement('span');
       tag.className = 'level-tag';
-      tag.textContent = cleared ? t('level.boss') : t('level.locked');
+      tag.textContent = t('level.boss');
       cell.appendChild(tag);
-      if (playable && this._onPickStage) {
-        cell.onclick = () => this._onPickStage(n);
-      }
+      if (this._onPickStage) cell.onclick = () => this._onPickStage(n);
       grid.appendChild(cell);
     }
   }

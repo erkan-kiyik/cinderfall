@@ -7,7 +7,7 @@
 
 import { BONES } from '../art/soldier.js';
 import { drawSprite } from '../art/paint.js';
-import { ik2, clamp, lerp, easeOutCubic, TAU } from '../engine/math.js';
+import { ik2, clamp, lerp, easeOutCubic, smootherstep, TAU } from '../engine/math.js';
 
 // Draw a limb sprite stretched between two joints.
 function drawBone(g, spr, x0, y0, x1, y1, len, sx = 1) {
@@ -109,7 +109,86 @@ export function computePose(ent) {
     legs.push({ hip, knee, ankle });
   }
 
+  // ---- vault blend ----
+  // While vaulting the body is thrown into a horizontal slide: torso pitched
+  // hard over the obstacle, hips high and forward, both legs swept to one
+  // side and tucked. It blends in and out rather than snapping, so the
+  // transition out of the run cycle reads continuously.
+  const vk = ent.vaultK || 0;
+  if (vk > 0.001) {
+    // eased in over the first fifth and out over the last quarter, so the
+    // pose is fully committed across the middle of the slide
+    const w = Math.min(smootherstep(clamp(vk / 0.2, 0, 1)),
+                       smootherstep(clamp((1 - vk) / 0.25, 0, 1)));
+    const pose = vaultPose(ent, vk, hipX, hipY, lean);
+    return blendPose(
+      { hipX, hipY, neck, shoulder, lean, legs, breath, air },
+      pose, w,
+    );
+  }
+
   return { hipX, hipY, neck, shoulder, lean, legs, breath, air };
+}
+
+
+// ---- vault pose ----
+// Built as a complete alternative pose and cross-faded against the walk, which
+// keeps the vault out of the gait maths entirely — no phase to fight, nothing
+// to unwind when it ends.
+function vaultPose(ent, k, hipX, hipY, lean) {
+  // torso pitches forward through the slide and recovers on the way out
+  const pitch = Math.sin(Math.PI * clamp(k, 0, 1));
+  const vLean = lean + 0.62 * pitch;
+  // hips ride forward and slightly up as the body clears the surface
+  const vHipX = hipX + 7 * pitch;
+  const vHipY = hipY - 5.5 * pitch;
+
+  const torsoLen = BONES.torso - 2.2 * pitch;
+  const neck = {
+    x: vHipX + Math.sin(vLean) * torsoLen,
+    y: vHipY - Math.cos(vLean) * torsoLen,
+  };
+  const shLen = torsoLen - BONES.shoulderDrop;
+  const shoulder = {
+    x: vHipX + Math.sin(vLean) * shLen,
+    y: vHipY - Math.cos(vLean) * shLen,
+  };
+
+  // Both legs sweep to the trailing side and tuck — the scissor kick that
+  // clears the obstacle. The lead leg extends first, the trail leg follows.
+  const legs = [];
+  for (let i = 0; i < 2; i++) {
+    const lead = i === 0;
+    const swing = lead
+      ? lerp(-6, 16, clamp(k * 1.3, 0, 1))
+      : lerp(-14, 6, clamp((k - 0.15) * 1.3, 0, 1));
+    const tuck = lead ? -20 - 6 * pitch : -13 - 9 * pitch;
+    const ankle = { x: vHipX * 0.4 + swing, y: tuck };
+    const hip = { x: vHipX + (lead ? 1.4 : -1.4), y: vHipY + 1.5 };
+    const knee = ik2(hip.x, hip.y, ankle.x, ankle.y, BONES.thigh, BONES.shin, -1);
+    legs.push({ hip, knee, ankle });
+  }
+  return { hipX: vHipX, hipY: vHipY, neck, shoulder, lean: vLean, legs, breath: 0, air: 0 };
+}
+
+// Linear cross-fade between two poses. Only the fields the renderer reads.
+function blendPose(a, b, w) {
+  const mixPt = (p, q) => ({ x: lerp(p.x, q.x, w), y: lerp(p.y, q.y, w) });
+  return {
+    hipX: lerp(a.hipX, b.hipX, w),
+    hipY: lerp(a.hipY, b.hipY, w),
+    neck: mixPt(a.neck, b.neck),
+    shoulder: mixPt(a.shoulder, b.shoulder),
+    lean: lerp(a.lean, b.lean, w),
+    legs: a.legs.map((leg, i) => ({
+      hip: mixPt(leg.hip, b.legs[i].hip),
+      knee: mixPt(leg.knee, b.legs[i].knee),
+      ankle: mixPt(leg.ankle, b.legs[i].ankle),
+    })),
+    breath: lerp(a.breath, b.breath, w),
+    air: lerp(a.air, b.air, w),
+    vaultW: w,
+  };
 }
 
 // ------------------------------------------------------ weapon placement
@@ -290,6 +369,9 @@ function drawBody(g, parts, ent, weapon) {
     } else {
       // Support hand: on the foregrip when the weapon is up, released and
       // hanging at the side once the operator relaxes into a one-handed carry.
+      // During a vault it leaves the weapon entirely and plants on the
+      // obstacle — the weapon stays in the trigger hand, which is what makes
+      // the move read as a hand-plant rather than a jump.
       const onGrip = weaponPoint(wa, wpn.gripB);
       const relax = ws.relax || 0;
       if (relax > 0.001) {
@@ -305,6 +387,19 @@ function drawBody(g, parts, ent, weapon) {
         if (relax > 0.55) handSprB = 'handOpen';
       } else {
         gripB = onGrip;
+      }
+      // Vault hand-plant. `vaultPlant` is a world point (the obstacle top),
+      // converted into the facing-neutral local space the pose is built in.
+      const vw = pose.vaultW || 0;
+      if (vw > 0.001 && ent.vaultPlant) {
+        const px = (ent.vaultPlant.x - ent.x) * (ent.facing || 1);
+        const py = ent.vaultPlant.y - ent.y;
+        gripB = {
+          x: lerp(gripB.x, px, vw),
+          y: lerp(gripB.y, py, vw),
+        };
+        handSprB = 'handOpen';
+        handAngB = lerp(handAngB, 1.6, vw);
       }
     }
     handAngB = wa.ang + (weapon.ws.magHand ? 0.5 : 0) + 1.3 * (ws.relax || 0);
