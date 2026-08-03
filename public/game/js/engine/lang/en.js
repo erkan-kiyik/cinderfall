@@ -200,4 +200,72 @@ export const EN = {
   'notify.bossIncoming': '⚠ BOSS INCOMING — {name}',
   'notify.graphicsLowered': 'GRAPHICS — AUTO-LOWERED TO {tier}',
   'skip.hint': 'CLICK OR PRESS ANY KEY TO SKIP',
+
+  // ---- intel logs (archives) ----
+  'tab.archives': 'ARCHIVES',
+  'archives.title': 'ARCHIVES',
+  'archives.sub': 'Intel files recovered in the field. Every hostile that goes down might be carrying something.',
+  'archives.progress': '{found} / {total} FILES RECOVERED',
+  'archives.empty': 'No files recovered yet. Get back out there.',
+  'archives.locked': 'LOCKED — CLASSIFIED DATA',
+  'archives.lockedHint': 'ENCRYPTED',
+  'archives.bossOnly': 'COMMAND LEVEL',
+  'archives.read': 'READ',
+  'intel.found': 'NEW INTEL RECOVERED',
+  'intel.para': 'ARCHIVE COMPLETE — {n} PARA',
+  'intel.close': 'CLOSE',
+  'intel.source': 'SOURCE',
+  'intel.tier.field': 'FIELD REPORT',
+  'intel.tier.signal': 'RADIO INTERCEPT',
+  'intel.tier.civilian': 'CIVILIAN RECORD',
+  'intel.tier.command': 'COMMAND ORDER',
+  'intel.tier.blackfile': 'BLACK FILE',
+
+  'intel.log_01.title': 'Evacuation Order #44',
+  'intel.log_01.source': 'Sgt. Miller',
+  'intel.log_01.body': 'Sector 9 is lost. We sealed the streets with barrels but the insurgents are coming over the apartments. We cannot hold the top floors — every block has its own stairwell and all of them connect. All remaining units withdraw. Repeat: all remaining units withdraw.',
+
+  'intel.log_02.title': 'Last Broadcast',
+  'intel.log_02.source': 'Radio Op. Arda K.',
+  'intel.log_02.body': 'The tower has been silent three hours. Nobody took the antenna down and the power is still on — the tower simply chose to stop. One thing went out all night, every ten minutes, the same woman\'s voice: "Nine is closed. Do not go outside. The count is tomorrow." What count? Nobody ever told us about a count.',
+
+  'intel.log_03.title': 'The Quarantine Wall',
+  'intel.log_03.source': 'Cpl. Deniz, Engineers',
+  'intel.log_03.body': 'They told us we built the wall to keep the insurgents in. But the concrete barriers face the wrong way — the spurs point inward. This wall was not designed to stop anyone getting in. It was designed to stop anyone getting out. I did not ask anyone about it. I am not going to.',
+
+  'intel.log_04.title': 'It Is Snowing Ash',
+  'intel.log_04.source': 'Unsigned civilian diary',
+  'intel.log_04.body': 'Day forty. The ash is still falling and nobody asks where it comes from any more. The children call it snow. I do not correct them. From the window the city does not look like it is burning — it looks like it is cooling. Someone gave it a name: Cinderfall. The name stuck, because it is accurate.',
+
+  'intel.log_05.title': 'Frequency 9.9',
+  'intel.log_05.source': 'Listening post — decoded',
+  'intel.log_05.body': '[03:14] — "...is the line open? Good. The units in Nine are not under our command any more."\n[03:14] — "Under whose command?"\n[03:15] — [12 seconds of silence]\n[03:15] — "Don\'t ask. Just send the inventory and close the line."\nThe recording cuts here. The second speaker could not be identified.',
+
+  'intel.log_06.title': 'The Quiet Street',
+  'intel.log_06.source': 'Scout Baran',
+  'intel.log_06.body': 'Three days watching the same street. The other side does not come along the ground any more. They use the fire escapes, they jump roof to roof, they close the distance without firing once. Our barriers seal the street but they do not seal the sky. Nobody ever taught us to look up.',
+
+  'intel.log_07.title': 'Burn The Barrels',
+  'intel.log_07.source': 'Name redacted — Admin Wing',
+  'intel.log_07.body': 'All paper records are to be destroyed before noon. That is what the barrels in the streets are for; not for warmth. The list does not say which files to burn — it says "all of them". Twenty years of deeds, the census book, the hospital archive. If you want to erase a street, first you make people forget who lived on it.',
+
+  'intel.log_08.title': 'Learn To Take Cover',
+  'intel.log_08.source': 'Sgt. Miller — training note',
+  'intel.log_08.body': 'I tell the new ones the same thing: a barrier does not stop a bullet, it only breaks line of sight. Get behind the concrete, but do not stay there. A man who stops moving is a mark on somebody\'s map. The people who live on this street are the ones who keep moving. And nobody — nobody — reloads in the open.',
+
+  'intel.log_09.title': 'Directive: RED LINE',
+  'intel.log_09.source': 'Command — Encrypted',
+  'intel.log_09.body': 'The authority of all units inside Sector 9 is suspended as of this moment. Personnel remaining in the zone will henceforth be classified as missing. This is not an evacuation order. Evacuation was already denied. This is an order to be removed from the record.',
+
+  'intel.log_10.title': 'Inventory — Section C',
+  'intel.log_10.source': 'Command — Logistics',
+  'intel.log_10.body': 'The heavy materiel listed under Section C has been released into the field: turrets, rocket launchers, rotary cannon. This equipment was not designed to put down an uprising — it was designed to close a district permanently. I am not answering the question of who it was issued to. I do not know either.',
+
+  'intel.log_11.title': 'Miller\'s Last Note',
+  'intel.log_11.source': 'Sgt. Miller',
+  'intel.log_11.body': 'I wrote the evacuation order forty-four times. All forty-four came back. Today I learned they never reached anyone — our radio was only ever set to receive. We have been talking into nothing for months. I am not telling my men. Tomorrow we will get behind the barriers again, because it is the only thing we have left.',
+
+  'intel.log_12.title': 'PROTOCOL: CINDERFALL',
+  'intel.log_12.source': '— no source —',
+  'intel.log_12.body': 'Cinderfall is not the name of an attack. It is the name of an outcome. The protocol defines it: when a district is lost beyond recovery, it is not recovered — it is sealed, emptied, and left to burn. The ash is not evidence that the plan failed. It is evidence that it completed.\n\nSector 9 was not the first application. It will not be the last.',
 };

@@ -202,4 +202,72 @@ export const TR = {
   'notify.bossIncoming': '⚠ BOSS GELİYOR — {name}',
   'notify.graphicsLowered': 'GRAFİK — {tier} SEVİYESİNE DÜŞÜRÜLDÜ',
   'skip.hint': 'GEÇMEK İÇİN TIKLA VEYA BİR TUŞA BAS',
+
+  // ---- istihbarat dosyaları (arşiv) ----
+  'tab.archives': 'ARŞİV',
+  'archives.title': 'ARŞİV',
+  'archives.sub': 'Sahada bulunan istihbarat dosyaları. Düşen her düşman bir şey taşıyor olabilir.',
+  'archives.progress': '{found} / {total} DOSYA KURTARILDI',
+  'archives.empty': 'Henüz hiçbir dosya kurtarılmadı. Sahaya in.',
+  'archives.locked': 'KİLİTLİ — GİZLİ VERİ',
+  'archives.lockedHint': 'ŞİFRELİ',
+  'archives.bossOnly': 'KOMUTA KADEMESİ',
+  'archives.read': 'OKU',
+  'intel.found': 'YENİ İSTİHBARAT BULUNDU',
+  'intel.para': 'ARŞİV TAM — {n} PARA',
+  'intel.close': 'KAPAT',
+  'intel.source': 'KAYNAK',
+  'intel.tier.field': 'SAHA RAPORU',
+  'intel.tier.signal': 'TELSİZ KAYDI',
+  'intel.tier.civilian': 'SİVİL KAYIT',
+  'intel.tier.command': 'KOMUTA EMRİ',
+  'intel.tier.blackfile': 'KARA DOSYA',
+
+  'intel.log_01.title': 'Tahliye Emri #44',
+  'intel.log_01.source': 'Çavuş Miller',
+  'intel.log_01.body': 'Bölge 9 kaybedildi. Sokakları varillerle kapattık ama isyancılar apartmanların üzerinden geliyor. Çatı katlarını tutamıyoruz — her bloğun kendi merdiveni var ve hepsi birbirine bağlı. Kalan tüm birimler geri çekilsin. Tekrar ediyorum: kalan tüm birimler geri çekilsin.',
+
+  'intel.log_02.title': 'Son Yayın',
+  'intel.log_02.source': 'Telsizci Arda K.',
+  'intel.log_02.body': 'Kule üç saattir sessiz. Anteni kimse indirmedi, elektrik de var — kule sadece susmayı seçti. Gece boyunca bir tek şey yayınlandı, on dakikada bir, aynı kadın sesi: "Dokuz kapandı. Dışarı çıkmayın. Sayım yarın." Hangi sayım? Kimse bize bir sayımdan bahsetmedi.',
+
+  'intel.log_03.title': 'Karantina Duvarı',
+  'intel.log_03.source': 'İstihkâm Onbaşı Deniz',
+  'intel.log_03.body': 'Bize duvarı isyancıları içeride tutmak için ördüğümüz söylendi. Ama beton bariyerlerin yönü yanlış — mahmuzlar içeriye bakıyor. Bu duvar birinin girmesini engellemek için tasarlanmamış. Çıkmasını engellemek için tasarlanmış. Bunu kimseye sormadım. Sormayacağım da.',
+
+  'intel.log_04.title': 'Kül Yağıyor',
+  'intel.log_04.source': 'İsimsiz sivil defteri',
+  'intel.log_04.body': 'Kırkıncı gün. Kül hâlâ yağıyor ve artık nereden geldiğini soran kalmadı. Çocuklar ona kar diyor. Ben düzeltmiyorum. Pencereden bakınca şehir yanmıyor gibi görünüyor — sadece soğuyor gibi. Birisi buna bir isim takmış: Cinderfall. Kül düşüşü. İsim tuttu, çünkü doğru.',
+
+  'intel.log_05.title': 'Frekans 9.9',
+  'intel.log_05.source': 'Dinleme İstasyonu — çözümlenmiş kayıt',
+  'intel.log_05.body': '[03:14] — "...hat açık mı? Tamam. Dokuzdaki birimler artık bizim emrimizde değil."\n[03:14] — "Kimin emrinde?"\n[03:15] — [12 saniye sessizlik]\n[03:15] — "Sorma. Sadece envanteri gönder ve hattı kapat."\nKayıt burada kesiliyor. Konuşan ikinci sesin kime ait olduğu tespit edilemedi.',
+
+  'intel.log_06.title': 'Sessiz Sokak',
+  'intel.log_06.source': 'Keşif Eri Baran',
+  'intel.log_06.body': 'Üç gündür aynı sokağı izliyorum. Karşı taraf artık yerden gelmiyor. Yangın merdivenlerini kullanıyorlar, çatıdan çatıya atlıyorlar, hiç ateş etmeden yaklaşıyorlar. Bariyerlerimiz sokağı kapatıyor ama gökyüzünü kapatmıyor. Kimse bize yukarıya bakmayı öğretmedi.',
+
+  'intel.log_07.title': 'Varilleri Yakın',
+  'intel.log_07.source': 'Adı silinmiş — İdari Kanat',
+  'intel.log_07.body': 'Bugün öğleden önce tüm kâğıt evrak imha edilecek. Sokaklardaki variller bunun içindir; ısınmak için değil. Hangi dosyaların yakılacağı listede yazmıyor — "hepsi" yazıyor. Yirmi yıllık tapu kaydı, nüfus defteri, hastane arşivi. Bir sokağı yok etmek istiyorsan önce kimin orada yaşadığını unutturursun.',
+
+  'intel.log_08.title': 'Siper Almayı Öğrenin',
+  'intel.log_08.source': 'Çavuş Miller — eğitim notu',
+  'intel.log_08.body': 'Yeni gelenlere aynı şeyi anlatıyorum: bariyer seni kurşundan korumaz, sadece görüşü keser. Betonun arkasına saklan, ama orada kalma. Duran adam haritadaki bir işarettir. Bu sokakta yaşayanlar hareket edenlerdir. Ve kimse — kimse — açık alanda yeniden şarjör değiştirmez.',
+
+  'intel.log_09.title': 'Direktif: KIRMIZI HAT',
+  'intel.log_09.source': 'Komuta — Şifreli',
+  'intel.log_09.body': 'Sektör 9 içindeki tüm birimlerin yetkisi bu andan itibaren askıya alınmıştır. Bölgede kalan personel artık "kayıp" olarak sınıflandırılacaktır. Bu bir tahliye emri değildir. Tahliye zaten reddedildi. Bu, kayıtlardan silinme emridir.',
+
+  'intel.log_10.title': 'Envanter — Kısım C',
+  'intel.log_10.source': 'Komuta — Lojistik',
+  'intel.log_10.body': 'Kısım C\'de listelenen ağır teçhizat sahaya indirilmiştir: taretler, roketatarlar, dönerli namlular. Bu ekipman ayaklanma bastırmak için tasarlanmadı — bir bölgeyi kalıcı olarak kapatmak için tasarlandı. Kime dağıtıldığı sorusuna cevap vermiyorum. Cevabı ben de bilmiyorum.',
+
+  'intel.log_11.title': 'Miller\'ın Son Notu',
+  'intel.log_11.source': 'Çavuş Miller',
+  'intel.log_11.body': 'Tahliye emrini kırk dört kez yazdım. Kırk dördü de geri döndü. Bugün öğrendim ki emirler hiç yukarı ulaşmamış — bizim telsizimiz sadece almaya ayarlıymış. Aylardır boşluğa konuşuyoruz. Adamlarıma söylemeyeceğim. Yarın yine bariyerlerin arkasına geçeceğiz, çünkü elimizde kalan tek şey bu.',
+
+  'intel.log_12.title': 'PROTOKOL: CINDERFALL',
+  'intel.log_12.source': '— kaynak yok —',
+  'intel.log_12.body': 'Cinderfall bir saldırının adı değil. Bir sonucun adı. Protokol şunu tanımlar: bir bölge geri alınamayacak kadar kaybedildiğinde, geri alınmaz — kapatılır, boşaltılır ve yanması beklenir. Kül, planın başarısız olduğunun değil, tamamlandığının kanıtıdır.\n\nSektör 9 ilk uygulama değildi. Son uygulama da olmayacak.',
 };

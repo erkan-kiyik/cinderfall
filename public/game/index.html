@@ -106,6 +106,19 @@
     </div>
 
     <div id="notify" class="notify"></div>
+
+    <!-- Intel drop toast. Deliberately its own element rather than a call to
+         #notify: an intel find and a level-up can land on the same kill, and
+         sharing one banner meant whichever fired second wiped the first. This
+         sits lower so both are legible at once. -->
+    <div id="intel-toast" class="intel-toast">
+      <span class="intel-toast-mark">▤</span>
+      <span class="intel-toast-text">
+        <span class="intel-toast-kicker" data-i18n="intel.found">NEW INTEL RECOVERED</span>
+        <span id="intel-toast-title" class="intel-toast-title"></span>
+      </span>
+    </div>
+
     <div id="dmg-left" class="dmg-dir left"></div>
     <div id="dmg-right" class="dmg-dir right"></div>
     <div id="dmg-omni" class="dmg-dir omni"></div>
@@ -255,6 +268,17 @@
             <div id="achievements-list"></div>
           </div>
         </section>
+
+        <!-- ARCHIVES — recovered intel logs. Built by game/archives.js. -->
+        <section id="tab-archives" class="home-panel">
+          <h2 class="panel-title" data-i18n="archives.title">ARCHIVES</h2>
+          <p class="panel-sub" data-i18n="archives.sub">Intel files recovered in the field.</p>
+          <div class="archives-meter">
+            <div id="archives-count" class="archives-count"></div>
+            <div class="archives-track"><div id="archives-fill" class="archives-fill"></div></div>
+          </div>
+          <div id="archives-list" class="archives-list"></div>
+        </section>
       </main>
 
       <nav class="home-tabs">
@@ -263,6 +287,7 @@
         <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span><span data-i18n="tab.crates">CRATES</span></button>
         <button class="home-tab" data-tab="store"><span class="tab-ico">◆</span><span data-i18n="tab.store">STORE</span></button>
         <button class="home-tab" data-tab="stats"><span class="tab-ico">◉</span><span data-i18n="tab.stats">STATS</span></button>
+        <button class="home-tab" data-tab="archives"><span class="tab-ico">▤</span><span data-i18n="tab.archives">ARCHIVES</span></button>
       </nav>
       <div class="home-legal">
         <a href="legal/privacy.html" target="_blank" rel="noopener" data-i18n="legal.privacy">Privacy</a>
@@ -315,6 +340,28 @@
       <div class="inspect-actions">
         <button id="btn-inspect-equip" class="btn primary" data-i18n="inspect.equip">EQUIP</button>
         <button id="btn-inspect-close" class="btn quiet" data-i18n="inspect.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Intel reader: a recovered log, presented as the document it is.
+       Filled by ArchivesUI.open() so the markup stays declarative. -->
+  <div id="intel-reader" class="overlay dim hidden">
+    <div class="intel-card">
+      <div class="intel-card-head">
+        <div class="intel-stamp">
+          <span id="intel-read-tier" class="intel-tier"></span>
+          <span id="intel-read-code" class="intel-code"></span>
+        </div>
+        <div id="intel-read-title" class="intel-read-title"></div>
+        <div class="intel-read-source">
+          <span class="intel-source-label" data-i18n="intel.source">SOURCE</span>
+          <span id="intel-read-source" class="intel-source-name"></span>
+        </div>
+      </div>
+      <div id="intel-read-body" class="intel-read-body"></div>
+      <div class="intel-card-actions">
+        <button id="btn-intel-close" class="btn quiet" data-i18n="intel.close">CLOSE</button>
       </div>
     </div>
   </div>

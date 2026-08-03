@@ -5,6 +5,7 @@
 import { STARTER_WEAPON_IDS, weaponVariantIds } from './meta.js';
 import { rollBossDrop } from './loot.js';
 import { isBossStage } from './difficulty.js';
+import { rollIntelDrop } from './intel.js';
 
 const KEY = 'cinderfall.progress.v1';
 // Separate key for the in-progress run snapshot (stage + operator vitals), so
@@ -73,6 +74,8 @@ function defaultProgress() {
     achievements: {},              // achId -> { claimed: true }
     // ---- ad-watch -> TL cashout ----
     adTLRewardsClaimed: 0,
+    // ---- intel logs (collectible lore) ----
+    intel: {},                     // logId -> ts found
   };
 }
 
@@ -587,6 +590,33 @@ export class Progression {
     this.data.achievements[id] = { claimed: true, ts: Date.now() };
     this.addDiamonds(1);
     return true;
+  }
+
+  // ---- intel logs ----
+  // Collectible lore recovered off bodies. Stored as logId -> timestamp rather
+  // than logId -> true so the Archives can sort by discovery order later
+  // without a save migration.
+  hasIntel(id) { return !!(this.data.intel || {})[id]; }
+
+  grantIntel(id) {
+    if (!this.data.intel) this.data.intel = {};
+    if (this.data.intel[id]) return false;
+    this.data.intel[id] = Date.now();
+    this.save();
+    return true;
+  }
+
+  intelFoundCount() { return Object.keys(this.data.intel || {}).length; }
+
+  // Rolls one kill's intel drop and banks the result. `luck` is the equipped
+  // perk block's Loot Luck, matching how rollBossReward treats it.
+  // Returns the same shape as rollIntelDrop, or null on a miss.
+  rollIntel(isBoss, stage, luck = 1) {
+    const res = rollIntelDrop(isBoss, stage, (id) => this.hasIntel(id), Math.random, luck);
+    if (!res) return null;
+    if (res.kind === 'log') this.grantIntel(res.log.id);
+    else if (res.kind === 'para') this.addTokens(res.amount);
+    return res;
   }
 
   // ---- ad-watch -> TL cashout (see engine/cashout.js for the payout side) ----

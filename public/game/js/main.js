@@ -27,6 +27,8 @@ import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
 import { StoreUI } from './game/storeui.js';
 import { StatsUI } from './game/statsui.js';
+import { ArchivesUI } from './game/archives.js';
+import { intelTitleKey } from './game/intel.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
 import { mountCurrencyIcons } from './art/currency.js';
@@ -225,6 +227,8 @@ async function boot() {
   game.statsUI = new StatsUI({ progression: game.progression, weapons: assets.weapons, audio });
   game.statsUI.mount();
   document.querySelector('[data-tab="stats"]').addEventListener('click', () => game.statsUI.refresh());
+  game.archivesUI = new ArchivesUI({ progression: game.progression, audio });
+  game.archivesUI.mount();
   game.touch = new TouchControls(input, { force: params.has('touch') });
   game.touch.mount();
 
@@ -236,6 +240,7 @@ async function boot() {
   else {
     hud.show('menu'); game.state = 'menu';
     game.metaUI.refresh(); game.storeUI.refresh(); game.statsUI.refresh();
+    game.archivesUI.render();
     game.refreshLevelSelect();   // boot sets state directly, bypassing setState()
     game.offerDailyReward();   // lands on the menu, never mid-run
   }
@@ -396,6 +401,7 @@ class Game {
     const res = this.progression.addXp(10 + (headshot ? 15 : 0));
     this.handleLevelUp(res);
     this.registerKill();
+    this.rollIntel(enemy);
     if (enemy && enemy.isBoss) this.onBossDefeated(enemy);
   }
 
@@ -408,7 +414,28 @@ class Game {
     const res = this.progression.addXp(14);
     this.handleLevelUp(res);
     this.registerKill();
+    this.rollIntel(enemy);
     if (enemy && enemy.isBoss) this.onBossDefeated(enemy);
+  }
+
+  // Intel log drop. Rolled on every elimination, silent-takedown included —
+  // a body is a body, and gating lore behind loud kills would have punished
+  // exactly the stealth play the takedown mechanic exists to encourage.
+  //
+  // Called before onBossDefeated so a boss's intel toast lands ahead of the
+  // boss-down banner rather than on top of it.
+  rollIntel(enemy) {
+    const isBoss = !!(enemy && enemy.isBoss);
+    const res = this.progression.rollIntel(isBoss, this.stage, this.player ? this.player.luckMul : 1);
+    if (!res) return;
+    if (res.kind === 'log') {
+      hud.showIntel(t(intelTitleKey(res.log.id)), t('intel.found'));
+    } else {
+      // Archive already complete — the roll still paid, so say what it paid.
+      hud.setTokens(this.progression.tokens);
+      hud.showIntel('', t('intel.para', { n: res.amount }));
+    }
+    audio.ui();
   }
 
   // Bonus payout + a distinct toast on top of the regular kill reward —
@@ -671,6 +698,9 @@ class Game {
     if (s === 'menu' && this.metaUI) this.metaUI.refresh();
     if (s === 'menu' && this.storeUI) this.storeUI.refresh();
     if (s === 'menu' && this.statsUI) this.statsUI.refresh();
+    // Logs are found mid-run, so the Archives are stale the moment a mission
+    // ends — repaint on the way back to the menu, not just on tab click.
+    if (s === 'menu' && this.archivesUI) this.archivesUI.render();
     if (s === 'menu') this.refreshLevelSelect();
     if (this.touch) this.touch.setVisible(s === 'play');
   }

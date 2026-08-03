@@ -37,6 +37,7 @@ export class Hud {
       detBar: $('det-bar'), detFill: $('det-fill'), detLabel: $('det-label'),
       xpFill: $('xp-fill'), lvlLabel: $('lvl-label'), hudTokens: $('hud-tokens'), hudTokensVal: $('hud-tokens-val'),
       notify: $('notify'),
+      intelToast: $('intel-toast'), intelToastTitle: $('intel-toast-title'),
       endTitle: $('end-title'), endDetail: $('end-detail'),
       cineBars: $('cine-bars'), introKicker: $('intro-kicker'), introLine: $('intro-line'),
       introSkip: $('intro-skip'), sceneFade: $('scene-fade'),
@@ -436,6 +437,25 @@ export class Hud {
     el.textContent = text;
     el.classList.remove('show');
     void el.offsetWidth;
+    el.classList.add('show');
+  }
+
+  // Intel recovered off a body. Runs on its own element so it can coexist
+  // with a level-up or boss banner landing on the same kill — the two used to
+  // share #notify, and whichever fired second silently replaced the first.
+  //
+  // `kicker` lets the caller swap the headline for the "archive complete, paid
+  // out instead" case without needing a second element.
+  showIntel(title, kicker = null) {
+    const el = this.el.intelToast;
+    if (!el) return;
+    if (kicker) {
+      const k = el.querySelector('.intel-toast-kicker');
+      if (k) k.textContent = kicker;
+    }
+    this.el.intelToastTitle.textContent = title || '';
+    el.classList.remove('show');
+    void el.offsetWidth;      // restart the animation on a repeat find
     el.classList.add('show');
   }
 

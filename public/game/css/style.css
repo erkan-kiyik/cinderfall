@@ -1520,3 +1520,239 @@ html.no-backdrop-filter .inspect-card {
   border-radius: 2px;
   overflow: hidden;
 }
+
+/* ---- intel logs: in-game toast ---------------------------------------- */
+/* Sits below .notify (top 22%) rather than replacing it. An intel find and a
+   level-up routinely land on the same kill; sharing one banner meant the
+   second one silently wiped the first, so this owns its own strip. */
+.intel-toast {
+  position: absolute;
+  top: 31%; left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center;
+  gap: calc(9px * var(--ui-scale));
+  max-width: min(84vw, 420px);
+  padding: 0 calc(14px * var(--ui-scale));
+  background: rgba(11, 14, 19, 0.42);
+  -webkit-backdrop-filter: blur(9px) saturate(1.1);
+  backdrop-filter: blur(9px) saturate(1.1);
+  border-radius: var(--r2);
+  /* one lit edge instead of an outline — the box never reads as a border */
+  box-shadow:
+    inset 2px 0 0 var(--amber),
+    0 6px 20px rgba(0, 0, 0, 0.45);
+  opacity: 0; max-height: 0; overflow: hidden;
+  pointer-events: none;
+}
+html.no-backdrop-filter .intel-toast { background: rgba(11, 14, 19, 0.94); }
+.intel-toast-mark {
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--amber-bright);
+  flex: 0 0 auto;
+}
+.intel-toast-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.intel-toast-kicker {
+  font-family: var(--font);
+  font-size: calc(8.5px * var(--ui-scale));
+  letter-spacing: 0.26em; font-weight: 700;
+  color: var(--amber);
+  white-space: nowrap;
+}
+.intel-toast-title {
+  font-family: var(--font-ui);
+  font-size: calc(11.5px * var(--ui-scale));
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.intel-toast-title:empty { display: none; }
+.intel-toast.show { animation: intel-pop 3.1s ease-out; }
+@keyframes intel-pop {
+  0%   { opacity: 0; max-height: 0;    padding-top: 0; padding-bottom: 0; transform: translate(-50%, -6px); }
+  7%   { opacity: 1; max-height: 60px; padding-top: 8px; padding-bottom: 8px; transform: translate(-50%, 0); }
+  84%  { opacity: 1; max-height: 60px; padding-top: 8px; padding-bottom: 8px; transform: translate(-50%, 0); }
+  100% { opacity: 0; max-height: 60px; padding-top: 8px; padding-bottom: 8px; transform: translate(-50%, 0); }
+}
+
+/* ---- archives: collection list ---------------------------------------- */
+.archives-meter { margin-bottom: var(--s5); }
+.archives-count {
+  font-family: var(--font);
+  font-size: 10px; letter-spacing: 0.22em; font-weight: 700;
+  color: var(--ink-dim);
+  margin-bottom: 6px;
+}
+.archives-track {
+  height: 2px; border-radius: 2px;
+  background: rgba(237, 234, 226, 0.09);
+  overflow: hidden;
+}
+.archives-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--amber), var(--amber-bright));
+  box-shadow: 0 0 8px rgba(214, 69, 58, 0.5);
+  transition: width 0.5s var(--ease-out);
+}
+
+.archives-list { display: flex; flex-direction: column; gap: 8px; }
+
+.archive-row {
+  display: flex; align-items: center;
+  gap: calc(12px * var(--ui-scale));
+  width: 100%;
+  text-align: left;
+  padding: calc(11px * var(--ui-scale)) calc(13px * var(--ui-scale));
+  border: none; border-radius: var(--r3);
+  background: linear-gradient(180deg, rgba(30,36,46,0.72), rgba(16,20,26,0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 10px rgba(0,0,0,0.3);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out);
+}
+.archive-row:hover:not(.locked) {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.42);
+}
+.archive-row.locked { cursor: default; opacity: 0.62; }
+
+.archive-code {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: calc(10px * var(--ui-scale));
+  font-weight: 700; letter-spacing: 0.06em;
+  color: var(--amber-dim);
+}
+.archive-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.archive-title {
+  font-family: var(--font-ui);
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.archive-tier {
+  font-family: var(--font);
+  font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.2em; font-weight: 700;
+  color: var(--ink-dim);
+}
+.archive-go {
+  flex: 0 0 auto;
+  font-family: var(--font);
+  font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.2em; font-weight: 700;
+  color: var(--amber);
+}
+.archive-lock { flex: 0 0 auto; font-size: calc(11px * var(--ui-scale)); color: var(--ink-dim); }
+
+/* Redacted title. The blocks come from intel.js seeded off the log id, so a
+   locked row looks identical every time the tab is opened — re-randomising
+   per render made the list visibly crawl and read as a rendering bug. The
+   drift here is a slow signal-loss shimmer, not a reshuffle. */
+.archive-title.redacted {
+  color: rgba(237, 234, 226, 0.30);
+  letter-spacing: 0.04em;
+  animation: redact-flicker 4.2s steps(1, end) infinite;
+}
+@keyframes redact-flicker {
+  0%, 88%, 100% { opacity: 1; transform: translateX(0); }
+  90% { opacity: 0.45; transform: translateX(-1px); }
+  92% { opacity: 1; transform: translateX(1px); }
+  94% { opacity: 0.6; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .archive-title.redacted { animation: none; }
+}
+
+/* ---- intel reader ------------------------------------------------------ */
+/* Same glass surface language as the weapon inspect sheet, so the two modals
+   read as one system. No hard outline anywhere — the edge is a blur plus an
+   inset highlight. */
+.intel-card {
+  width: min(calc(460px * var(--ui-scale)), 92vw);
+  max-height: 86vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(18px * var(--ui-scale)) calc(18px * var(--ui-scale)) calc(14px * var(--ui-scale));
+  border-radius: calc(16px * var(--ui-scale));
+  background: linear-gradient(180deg, rgba(28,33,42,0.90), rgba(14,17,23,0.94));
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow:
+    0 calc(18px * var(--ui-scale)) calc(48px * var(--ui-scale)) rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+html.no-backdrop-filter .intel-card {
+  background: linear-gradient(180deg, rgba(24,29,37,0.985), rgba(12,15,20,0.99));
+}
+
+.intel-card-head {
+  padding-bottom: calc(12px * var(--ui-scale));
+  background: linear-gradient(90deg, rgba(233,226,210,0.14), rgba(233,226,210,0)) bottom / 100% 1px no-repeat;
+}
+.intel-stamp {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-bottom: calc(7px * var(--ui-scale));
+}
+.intel-tier {
+  font-family: var(--font);
+  font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.24em; font-weight: 700;
+  color: var(--amber);
+}
+.intel-code {
+  font-family: var(--font-display);
+  font-size: calc(9.5px * var(--ui-scale));
+  font-weight: 700; letter-spacing: 0.08em;
+  color: var(--ink-dim);
+}
+.intel-read-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(16px * var(--ui-scale));
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.intel-read-source {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-top: calc(6px * var(--ui-scale));
+}
+.intel-source-label {
+  font-family: var(--font);
+  font-size: calc(8.5px * var(--ui-scale));
+  letter-spacing: 0.22em; font-weight: 700;
+  color: var(--ink-dim);
+}
+.intel-source-name {
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--ink-2);
+}
+
+/* The document itself. Monospace and pre-line: several entries are radio
+   transcripts with timestamped lines, and collapsing them into one run
+   destroys the only formatting the fiction has. */
+.intel-read-body {
+  margin: calc(14px * var(--ui-scale)) 0 calc(16px * var(--ui-scale));
+  font-family: "DM Mono", "SFMono-Regular", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: calc(12px * var(--ui-scale));
+  line-height: 1.72;
+  letter-spacing: 0.01em;
+  color: rgba(237, 234, 226, 0.80);
+  white-space: pre-line;
+  /* faint paper tint so the text block reads as a scanned page on the glass */
+  padding: calc(12px * var(--ui-scale)) calc(13px * var(--ui-scale));
+  border-radius: var(--r3);
+  background: rgba(8, 10, 14, 0.42);
+  box-shadow: inset 2px 0 0 rgba(214, 69, 58, 0.42);
+}
+.intel-card-actions { display: flex; justify-content: flex-end; }
+
+/* Six tabs instead of five: let the labels shrink and stop the icons forcing
+   an overflow on a narrow handset. */
+.home-tabs { min-width: 0; }
+.home-tab { min-width: 0; padding-left: 2px; padding-right: 2px; }
+.home-tab > span:last-child {
+  max-width: 100%;
+  overflow: hidden; text-overflow: clip; white-space: nowrap;
+}
