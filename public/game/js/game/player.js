@@ -151,7 +151,6 @@ export class Player {
     // vault state machine — see tryVault()/updateVault()
     this.vault = null;     // active vault, or null
     this.vaultK = 0;       // 0..1 progress, read by the rig for the pose
-    this.vaultPlant = null;// world point the support hand is planted on
     this.vaultCdT = 0;
     this.perks = {};
     this.moveMul = 1;      // top speed multiplier
@@ -532,7 +531,13 @@ export class Player {
     const base = this.weapons[slot];
     if (!base || !base.finishes || !base.finishes[finishKey]) return;
     const cur = this.arsenal[slot];
-    cur.wpn = finishKey === 'default' ? base : { ...base, body: base.finishes[finishKey], finish: finishKey };
+    const fin = base.finishes[finishKey];
+    // A skin repaints the detachable magazine too (see buildSkinSet), so take
+    // the finish's own mag when it has one — otherwise a coated weapon runs
+    // around with the default-palette magazine bolted to it.
+    cur.wpn = finishKey === 'default'
+      ? base
+      : { ...base, body: fin, mag: fin.mag || base.mag, finish: finishKey };
   }
 
   switchTo(slot) {
@@ -602,9 +607,6 @@ export class Player {
       x0: this.x, x1: exitX,
       y0: feet, surfaceY, y1: landY,
       dir, speed,
-      // where the support hand plants, in world space
-      plantX: dir > 0 ? c.x + c.w * 0.28 : c.x + c.w * 0.72,
-      plantY: c.y,
     };
     this.vaultK = 0;
     this.vy = 0;
@@ -652,12 +654,10 @@ export class Player {
     // reading vx during the vault see the real ground speed
     this.vx = v.dir * v.speed;
     this.vy = 0;
-    this.vaultPlant = { x: v.plantX, y: v.plantY };
 
     if (k >= 1) {
       this.vault = null;
       this.vaultK = 0;
-      this.vaultPlant = null;
       this.vaultCdT = VAULT_COOLDOWN;
       // exits at full pace, which is the whole point
       this.vx = v.dir * v.speed;

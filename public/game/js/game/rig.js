@@ -27,6 +27,54 @@ const WEIGHT_BIAS = 0.16;
 const PELVIC_LIST = 1.15;
 const STEP_BIAS = 0.12;
 
+// ---- posture ----
+// The operator used to stand bolt upright and stay upright at a sprint, which
+// is the single biggest reason the character read as amateur: a soldier under
+// threat never stands like that. STANCE_PITCH is the permanent forward set of
+// the torso at rest — chest over the balls of the feet, weapon up. RUN_PITCH
+// adds to it with speed, because the faster you move the further your mass
+// leads your feet.
+const STANCE_PITCH = 0.085;   // radians of forward lean, standing
+const RUN_PITCH = 0.20;       // extra radians at a full sprint
+// The head does NOT follow the torso all the way down — eyes stay on the
+// threat. This is how much of the torso pitch the neck cancels.
+const HEAD_COUNTER = 0.62;
+
+// ---- run cycle ----
+// Counter-rotation: the shoulders twist against the hips once per stride.
+// Without it the upper and lower body move as one plank, which is the "kütük"
+// read — a mannequin being slid along rather than a person running.
+const SHOULDER_COUNTER = 2.6;    // px of horizontal shoulder offset
+// Hip drive: the pelvis pushes forward on the drive leg's stance phase.
+const HIP_DRIVE = 2.1;
+// How much higher the knee comes up once the gait crosses into a run.
+const RUN_KNEE_LIFT = 5.5;
+// Heel-strike to toe-off: the planted foot rolls instead of staying flat.
+const FOOT_ROLL = 2.4;
+
+// 0.995 keeps ik2 off its own singularity (a perfectly straight two-bone chain
+// has no defined bend direction).
+const REACH_LIMIT = 0.995;
+const ARM_REACH = (BONES.upperArm + BONES.foreArm) * REACH_LIMIT;
+const LEG_REACH = (BONES.thigh + BONES.shin) * REACH_LIMIT;
+
+// Pulls `target` back onto the circle the limb can actually reach from `root`.
+// Direction is preserved, so the limb still points where it was asked to.
+//
+// This has to happen on the *target*, not inside ik2. ik2 clamps the distance
+// it uses to place the joint, but the end effector is drawn where the caller
+// asked for it — so an out-of-reach target left the joint on its circle and
+// stretched the second bone's sprite across the remainder. That is the visible
+// "limb grows" artefact, and it showed up on both the vaulting arm and, at a
+// sprint, the shin.
+function clampReach(root, target, max) {
+  const dx = target.x - root.x, dy = target.y - root.y;
+  const d = Math.hypot(dx, dy);
+  if (d <= max || d === 0) return target;
+  const s = max / d;
+  return { x: root.x + dx * s, y: root.y + dy * s };
+}
+
 const rot2 = (px, py, ang) => {
   const c = Math.cos(ang), s = Math.sin(ang);
   return { x: px * c - py * s, y: px * s + py * c };
@@ -63,19 +111,37 @@ export function computePose(ent) {
 
   // stumbleLean is a transient the Player adds on top of its damped lean —
   // kept separate so the tilt can't feed back into the damping and linger.
-  const lean = ent.lean + (ent.stumbleLean || 0) + air * clamp(ent.vy * 0.00035, -0.12, 0.2);
+  //
+  // The stance pitch is added last and is not part of ent.lean, so the Player's
+  // damping and the stumble transient still work on their own terms — this
+  // just sets where "upright" is. Crouching straightens the torso back up
+  // (you are already low; folding further would put the head on the knees).
+  const posture = (STANCE_PITCH + RUN_PITCH * sp * sp) * (1 - air * 0.7)
+                  * (1 - clamp(crouch * 0.4, 0, 0.55));
+  const lean = ent.lean + (ent.stumbleLean || 0)
+               + air * clamp(ent.vy * 0.00035, -0.12, 0.2) + posture;
 
-  const hipX = lean * 13 + sway + noise * 1.6;
+  // Shoulders counter-rotate against the hips, once per full stride. Pure
+  // horizontal offset rather than a real twist — in a side view that is what
+  // a torso rotation looks like, and it costs nothing.
+  const counter = -strideSide * SHOULDER_COUNTER * sp * (1 - air);
+  // Hips drive forward as the stance leg extends.
+  const drive = Math.abs(stride) * HIP_DRIVE * sp * (1 - air);
+
+  const hipX = lean * 13 + sway + noise * 1.6 + drive;
   const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4 + breath * 0.4 + pelvicList;
 
   const torsoLen = BONES.torso - crouch * 2.5;
+  // Head holds its line while the chest drops — the operator is looking at
+  // where he is going, not at the floor.
+  const neckLean = lean - posture * HEAD_COUNTER;
   const neck = {
-    x: hipX + Math.sin(lean) * torsoLen,
-    y: hipY - Math.cos(lean) * torsoLen,
+    x: hipX + Math.sin(neckLean) * torsoLen,
+    y: hipY - Math.cos(neckLean) * torsoLen,
   };
   const shLen = torsoLen - BONES.shoulderDrop;
   const shoulder = {
-    x: hipX + Math.sin(lean) * shLen,
+    x: hipX + Math.sin(lean) * shLen + counter,
     y: hipY - Math.cos(lean) * shLen + breath * 0.4,
   };
 
@@ -83,6 +149,10 @@ export function computePose(ent) {
   const legs = [];
   const S = 11 + sp * 11;
   const liftH = 3.5 + sp * 8;
+  // Above a jog the swing leg folds up under the body instead of pendulum-ing
+  // through straight. A straight-through swing is the other half of the
+  // "logs for legs" read; a real runner's knee comes up first.
+  const runK = clamp((sp - 0.45) / 0.55, 0, 1);
   for (let i = 0; i < 2; i++) {
     const ph = ent.gaitPhase + (i ? Math.PI : 0);
     // One leg takes a marginally longer step and lifts marginally higher than
@@ -91,9 +161,16 @@ export function computePose(ent) {
     const legS = S * (1 + (i ? STEP_BIAS : -STEP_BIAS));
     const legLift = liftH * (1 + (i ? -STEP_BIAS : STEP_BIAS));
     const gx = -Math.cos(ph) * legS + hipX * 0.55;
-    const lift = Math.max(0, Math.sin(ph)) * legLift;
+    const sw = Math.max(0, Math.sin(ph));          // 0 planted → 1 mid-swing
+    // The knee leads the foot: extra lift concentrated in the first half of
+    // the swing, so the leg folds up and then reaches out rather than
+    // sweeping through as one rigid bar.
+    const lift = sw * legLift + Math.pow(sw, 1.6) * RUN_KNEE_LIFT * runK;
+    // Planted foot rolls heel→toe across its stance phase instead of staying
+    // pinned flat to the street.
+    const roll = (1 - sw) * Math.sin(ph) * FOOT_ROLL * sp;
     const standX = i ? -4.5 : 5.5;
-    let fx = lerp(standX, gx, mv) + noise * 0.8;
+    let fx = lerp(standX, gx + roll, mv) + noise * 0.8;
     let fy = -lerp(0, lift, mv);
     if (air > 0) {
       // tuck in the air; reach for the ground while falling fast
@@ -103,8 +180,10 @@ export function computePose(ent) {
       fx = lerp(fx, tx, air);
       fy = lerp(fy, ty, air);
     }
-    const ankle = { x: fx, y: fy - 5 };
     const hip = { x: hipX + (i ? -1.4 : 1.4), y: hipY + 1.5 };
+    // Clamped before the solve: the knee lift can otherwise ask the foot to
+    // reach further than the leg is long, and the shin sprite stretches.
+    const ankle = clampReach(hip, { x: fx, y: fy - 5 }, LEG_REACH);
     const knee = ik2(hip.x, hip.y, ankle.x, ankle.y, BONES.thigh, BONES.shin, -1);
     legs.push({ hip, knee, ankle });
   }
@@ -136,12 +215,14 @@ export function computePose(ent) {
 // keeps the vault out of the gait maths entirely — no phase to fight, nothing
 // to unwind when it ends.
 function vaultPose(ent, k, hipX, hipY, lean) {
-  // torso pitches forward through the slide and recovers on the way out
+  // Torso pitches hard over the obstacle and recovers on the way out. This is
+  // the whole move now that nothing reaches for the surface: the operator
+  // crosses on the body, so the body has to be doing the work.
   const pitch = Math.sin(Math.PI * clamp(k, 0, 1));
-  const vLean = lean + 0.62 * pitch;
-  // hips ride forward and slightly up as the body clears the surface
-  const vHipX = hipX + 7 * pitch;
-  const vHipY = hipY - 5.5 * pitch;
+  const vLean = lean + 0.95 * pitch;
+  // hips ride forward and up — chest over the obstacle, weight already past it
+  const vHipX = hipX + 9 * pitch;
+  const vHipY = hipY - 8 * pitch;
 
   const torsoLen = BONES.torso - 2.2 * pitch;
   const neck = {
@@ -154,17 +235,21 @@ function vaultPose(ent, k, hipX, hipY, lean) {
     y: vHipY - Math.cos(vLean) * shLen,
   };
 
-  // Both legs sweep to the trailing side and tuck — the scissor kick that
-  // clears the obstacle. The lead leg extends first, the trail leg follows.
+  // Both legs sweep through to the front and tuck up under the hips — the
+  // scissor kick that carries the body across. The lead leg swings out first
+  // and the trail leg follows a beat behind, which is what makes it read as
+  // one continuous motion instead of both legs snapping to the same shape.
   const legs = [];
   for (let i = 0; i < 2; i++) {
     const lead = i === 0;
     const swing = lead
-      ? lerp(-6, 16, clamp(k * 1.3, 0, 1))
-      : lerp(-14, 6, clamp((k - 0.15) * 1.3, 0, 1));
-    const tuck = lead ? -20 - 6 * pitch : -13 - 9 * pitch;
-    const ankle = { x: vHipX * 0.4 + swing, y: tuck };
+      ? lerp(-8, 24, clamp(k * 1.3, 0, 1))
+      : lerp(-18, 12, clamp((k - 0.15) * 1.3, 0, 1));
+    // Feet come up level with the hips at the peak — knees clear the obstacle
+    // rather than trailing through it.
+    const tuck = lead ? -24 - 9 * pitch : -15 - 13 * pitch;
     const hip = { x: vHipX + (lead ? 1.4 : -1.4), y: vHipY + 1.5 };
+    const ankle = clampReach(hip, { x: vHipX * 0.4 + swing, y: tuck }, LEG_REACH);
     const knee = ik2(hip.x, hip.y, ankle.x, ankle.y, BONES.thigh, BONES.shin, -1);
     legs.push({ hip, knee, ankle });
   }
@@ -369,9 +454,6 @@ function drawBody(g, parts, ent, weapon) {
     } else {
       // Support hand: on the foregrip when the weapon is up, released and
       // hanging at the side once the operator relaxes into a one-handed carry.
-      // During a vault it leaves the weapon entirely and plants on the
-      // obstacle — the weapon stays in the trigger hand, which is what makes
-      // the move read as a hand-plant rather than a jump.
       const onGrip = weaponPoint(wa, wpn.gripB);
       const relax = ws.relax || 0;
       if (relax > 0.001) {
@@ -388,18 +470,25 @@ function drawBody(g, parts, ent, weapon) {
       } else {
         gripB = onGrip;
       }
-      // Vault hand-plant. `vaultPlant` is a world point (the obstacle top),
-      // converted into the facing-neutral local space the pose is built in.
+      // Vault: the support hand tucks in against the chest instead of reaching
+      // for the obstacle.
+      //
+      // It used to plant on the obstacle top, which is a world point up to a
+      // body-length away from the shoulder. ik2 clamps the *elbow* to arm
+      // reach but the hand target itself stayed where it was, so drawBone
+      // stretched the forearm sprite across the gap — the arm visibly grew.
+      // Nothing touches the obstacle now: the operator goes over it on the
+      // body alone, which is what a hood slide actually is.
       const vw = pose.vaultW || 0;
-      if (vw > 0.001 && ent.vaultPlant) {
-        const px = (ent.vaultPlant.x - ent.x) * (ent.facing || 1);
-        const py = ent.vaultPlant.y - ent.y;
-        gripB = {
-          x: lerp(gripB.x, px, vw),
-          y: lerp(gripB.y, py, vw),
+      if (vw > 0.001) {
+        const tuck = {
+          x: pose.shoulder.x + 7.5,
+          y: pose.shoulder.y + 11,
         };
-        handSprB = 'handOpen';
-        handAngB = lerp(handAngB, 1.6, vw);
+        gripB = {
+          x: lerp(gripB.x, tuck.x, vw),
+          y: lerp(gripB.y, tuck.y, vw),
+        };
       }
     }
     handAngB = wa.ang + (weapon.ws.magHand ? 0.5 : 0) + 1.3 * (ws.relax || 0);
@@ -428,6 +517,14 @@ function drawBody(g, parts, ent, weapon) {
 
   const shF = { x: pose.shoulder.x + 2, y: pose.shoulder.y };
   const shB = { x: pose.shoulder.x - 2.5, y: pose.shoulder.y + 1 };
+  // Hands can never be pulled past what the arm can physically reach.
+  //
+  // ik2 already clamps the elbow, but the hand target is what drawBone
+  // measures the forearm against — an out-of-reach target stretched the
+  // forearm sprite to span the gap. Clamping the target itself means the arm
+  // straightens and stops, the way an arm does, no matter what asks for it.
+  gripF = clampReach(shF, gripF, ARM_REACH);
+  gripB = clampReach(shB, gripB, ARM_REACH);
   const elbF = ik2(shF.x, shF.y, gripF.x, gripF.y, BONES.upperArm, BONES.foreArm, 1);
   const elbB = ik2(shB.x, shB.y, gripB.x, gripB.y, BONES.upperArm, BONES.foreArm, 1);
 

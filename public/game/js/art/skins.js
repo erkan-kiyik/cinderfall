@@ -33,6 +33,10 @@ export const MOUNTS = {
   rifle:  { muzzle: { x: 40,   y: -5.3, s: 1.0 },  rail: { x: 1,   y: -15.4, s: 1.0 },  span: [-20, 40] },
   pistol: { muzzle: { x: 10.2, y: -5.2, s: 0.5 },  rail: { x: 1,   y: -9.6,  s: 0.5 },  span: [-7, 11] },
   smg:    { muzzle: { x: 24,   y: -5.6, s: 0.8 },  rail: { x: 0,   y: -11.6, s: 0.75 }, span: [-14, 24] },
+  // Laser SMG: its own frame, so its own mounts. The aperture sits at 22.4 and
+  // the lens stack already occupies the top deck, so a rail optic rides just
+  // above it rather than at the P-12's height.
+  lasersmg: { muzzle: { x: 22.4, y: -5.9, s: 0.75 }, rail: { x: 1, y: -10.6, s: 0.7 }, span: [-14, 23] },
   knife:  { muzzle: null,                          rail: null,                          span: [-6, 16] },
   // purpose-built energy / heavy bodies. Each has its own emitter geometry,
   // so the muzzle mount sits where that body's barrel actually ends rather
@@ -42,6 +46,27 @@ export const MOUNTS = {
   flame:    { muzzle: { x: 38.6, y: -4.2, s: 0.9 },  rail: { x: 0, y: -14.6, s: 0.85 }, span: [-20, 39] },
   minigun:  { muzzle: { x: 41,   y: -2.5, s: 1.15 }, rail: { x: -8, y: -12.0, s: 1.0 }, span: [-22, 52] },
   rocket:   { muzzle: { x: 47,   y: 0,    s: 1.1 },  rail: { x: 2,  y: -10.6, s: 1.0 }, span: [-26, 56] },
+
+  // ---- modular-chassis weapons ------------------------------------------
+  // These eleven each build a different barrel and a different topside from
+  // the chassis kit in weapons.js, so they cannot share the rifle's mounts:
+  // a brake pinned at x=40 hangs in mid-air off a stub barrel that ends at
+  // 35.6, and sits buried inside a long barrel that runs to 49. A rail optic
+  // pinned at y=-15.4 floats over a receiver whose deck is at -8.6.
+  //
+  // Muzzle x/y mirror BARREL_TIP and rail y mirrors TOP_RAIL_Y in weapons.js
+  // — same measurements, same geometry, so the attachment lands on the part.
+  battle:    { muzzle: { x: 49.0, y: -5.2, s: 1.0 },  rail: { x: 1,  y: -16.2, s: 1.0 },  span: [-22, 49] },
+  lmg:       { muzzle: { x: 42.0, y: -5.1, s: 1.1 },  rail: { x: 1,  y: -15.4, s: 1.0 },  span: [-22, 42] },
+  sniper:    { muzzle: { x: 47.0, y: -5.1, s: 1.0 },  rail: { x: 1,  y: -16.2, s: 1.05 }, span: [-21, 47] },
+  plasma:    { muzzle: { x: 43.5, y: -5.0, s: 0.95 }, rail: { x: 1,  y: -14.8, s: 0.95 }, span: [-21, 44] },
+  pulse:     { muzzle: { x: 47.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.2, s: 0.9 },  span: [-17, 47] },
+  eshotgun:  { muzzle: { x: 35.6, y: -5.0, s: 1.05 }, rail: { x: 1,  y: -8.6,  s: 0.85 }, span: [-14, 36] },
+  ion:       { muzzle: { x: 46.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.8, s: 0.95 }, span: [-21, 46] },
+  emp:       { muzzle: { x: 44.0, y: -3.4, s: 1.0 },  rail: { x: 1,  y: -14.2, s: 0.9 },  span: [-17, 44] },
+  gravity:   { muzzle: { x: 47.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.8, s: 0.95 }, span: [-21, 47] },
+  lightning: { muzzle: { x: 46.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.2, s: 0.9 },  span: [-7, 46] },
+  cryo:      { muzzle: { x: 47.0, y: -5.1, s: 0.95 }, rail: { x: 1,  y: -8.6,  s: 0.85 }, span: [-21, 47] },
 };
 
 // Padding is keyed off the mount kind, so a minigun gets room for its rotor
@@ -50,6 +75,7 @@ const PAD_BY_KIND = {
   rifle:    { l: 3, r: 18, t: 9,  b: 3 },
   pistol:   { l: 2, r: 9,  t: 7,  b: 2 },
   smg:      { l: 2, r: 13, t: 8,  b: 2 },
+  lasersmg: { l: 2, r: 13, t: 9,  b: 2 },
   knife:    { l: 3, r: 4,  t: 4,  b: 4 },
   railgun:  { l: 3, r: 18, t: 9,  b: 3 },
   particle: { l: 3, r: 18, t: 9,  b: 3 },
@@ -57,6 +83,14 @@ const PAD_BY_KIND = {
   minigun:  { l: 3, r: 20, t: 10, b: 4 },
   rocket:   { l: 3, r: 20, t: 10, b: 4 },
 };
+
+// Chassis weapons reuse the rifle's padding, widened on the right so a brake
+// bolted to the longest barrel (x=49) still lands inside the canvas rather
+// than being clipped at the edge.
+for (const id of ['battle', 'lmg', 'sniper', 'plasma', 'pulse', 'eshotgun',
+                  'ion', 'emp', 'gravity', 'lightning', 'cryo']) {
+  PAD_BY_KIND[id] = { l: 3, r: 24, t: 11, b: 3 };
+}
 
 
 
@@ -847,7 +881,7 @@ export function buildSkin(kind, base, skin, seed = 1) {
 // weapon uses (many weapons share the rifle chassis, so they share its mount
 // points but get their own skins). Defaults to the weapon id when the weapon
 // has a body all of its own.
-export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weaponId) {
+export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weaponId, paintMag = null) {
   const table = WEAPON_SKINS[weaponId] || {};
   const finishes = { default: defaultBody };
   let seed = 11 + weaponId.length * 31;
@@ -857,6 +891,13 @@ export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weapo
     // bowie) can pick the right painter rather than being forced onto one.
     const body = paintBase(skin.palette || {}, id, skin);
     finishes[id] = buildSkin(mountKind, body, skin, seed);
+    // Detachable magazines are drawn as their own sprite, so a skin has to
+    // repaint them too — otherwise a Mythic coating ships with the drab
+    // default magazine still hanging off it, which reads as a mismatched part.
+    if (paintMag) {
+      const mag = paintMag(skin.palette || {}, id, skin);
+      if (mag) finishes[id].mag = mag;
+    }
     // Every composited skin carries its own sprite identity, so nothing
     // downstream can confuse two skins that happen to share a base body.
     finishes[id].spriteId = `${weaponId}__${id}`;
