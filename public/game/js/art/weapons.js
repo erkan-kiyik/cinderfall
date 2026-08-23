@@ -1516,6 +1516,58 @@ const PATTERN_RIFLE = [0.7, 0.85, 1.0, 1.12, 1.2, 1.1, 0.95, 1.15, 1.25, 1.05];
 const PATTERN_PISTOL = [1.15, 0.75, 0.95, 0.8];
 const PATTERN_SMG = [0.55, 0.65, 0.78, 0.7, 0.6, 0.82, 0.9, 0.68];
 
+// ---- spray patterns ----
+// PATTERN_* above only scales how hard each shot kicks the *sprite*; the aim
+// itself never moved, so holding the trigger down cost nothing but a wider
+// random cone. That is the opposite of how a shooter is supposed to read:
+// randomness you cannot answer is just noise, while a muzzle that walks a
+// fixed path is a skill you can learn to pull against.
+//
+// These are radians of muzzle climb contributed by each consecutive shot,
+// applied to the operator's actual aim (so it is visible on screen and the
+// bullets follow it — see Player.spray). The shape is what matters:
+//
+//   * the first shots barely move, so tapping stays precise
+//   * the middle of the burst climbs hardest — the part you must drag down
+//   * late in the burst the climb tails off and starts alternating sign, so a
+//     long hold wanders rather than rising forever
+//
+// A weapon that spreads a base def (`...R`) inherits that class's pattern, so
+// the whole chassis family gets a sensible one without repeating it.
+// On magnitude. These were first written at roughly twice these numbers,
+// which put a rifle's full burst about 8.8 degrees off target. That reads
+// fine as a number and is badly wrong in this game: the camera is fixed and
+// side-on, so 8.8 degrees at a 700px engagement is ~107px of rise — a clean
+// miss over the head of a 126px-tall hostile, with no way to see it coming on
+// the first magazine. Held to a ~4 degree total climb instead, a full burst
+// walks about a third of a body height at that range: unmistakable, worth
+// correcting, and survivable while you are still learning the pattern.
+// On where the climb sits in the burst. The first four rounds are close to
+// free on every automatic here, and that is deliberate: a tap or a short
+// burst is the disciplined play, so it should cost nothing at all, and a
+// pattern that starts biting on round two just reads as the gun being
+// inaccurate. The climb is loaded into the middle of the magazine instead —
+// exactly where "I am holding this trigger down" becomes a decision.
+const SPRAY_RIFLE = [
+  0.0008, 0.0015, 0.003, 0.005, 0.008, 0.010, 0.011, 0.010,
+  0.008, 0.006, -0.003, 0.006, -0.004, 0.005, -0.004, 0.004,
+];
+const SPRAY_SMG = [
+  0.0006, 0.0012, 0.0022, 0.0035, 0.005, 0.006, 0.0065, 0.006,
+  0.005, -0.002, 0.004, -0.003, 0.0035, -0.0025, 0.003, -0.003,
+];
+// Semi-auto: one firm step per pull that recovers between shots, so a fast
+// double-tap is punished but a paced one is not.
+const SPRAY_PISTOL = [0.010, 0.012, 0.013, 0.011];
+// Belt-fed: never really settles, and the climb keeps its sign much longer.
+// The worst offender in the game by design — this is the cost of the ammo.
+const SPRAY_LMG = [
+  0.001, 0.002, 0.004, 0.007, 0.010, 0.012, 0.013, 0.013,
+  0.012, 0.011, 0.010, 0.008, -0.004, 0.007, -0.005, 0.006,
+];
+// One heavy shot at a time — a single hard step, nothing to learn past it.
+const SPRAY_HEAVY = [0.030];
+
 export function buildWeapons() {
   const flashes = [paintFlash(11), paintFlash(23), paintFlash(37)];
 
@@ -1570,7 +1622,7 @@ export function buildWeapons() {
       // stats
       auto: true, rpm: 690, dmg: 26, spread: 0.02, pellets: 1,
       recoilKick: 1.5, recoilRot: 0.022, camKick: 0.85, camTrauma: 0.042,
-      recoilPattern: PATTERN_RIFLE,
+      recoilPattern: PATTERN_RIFLE, sprayPattern: SPRAY_RIFLE,
       magSize: 30, reserve: 120,
       reloadT: 2.1, reloadEmptyT: 2.75,
       shotSound: 'rifle', casingSize: 4.6,
@@ -1588,7 +1640,7 @@ export function buildWeapons() {
       shoulder: { x: 4, y: -1 },
       auto: false, rpm: 380, dmg: 34, spread: 0.014, pellets: 1,
       recoilKick: 1.28, recoilRot: 0.04, camKick: 0.66, camTrauma: 0.036,
-      recoilPattern: PATTERN_PISTOL,
+      recoilPattern: PATTERN_PISTOL, sprayPattern: SPRAY_PISTOL,
       magSize: 12, reserve: 48,
       reloadT: 1.65, reloadEmptyT: 2.1,
       shotSound: 'pistol', casingSize: 3.4,
@@ -1608,7 +1660,7 @@ export function buildWeapons() {
       shoulder: { x: -9, y: -3 },
       auto: true, rpm: 950, dmg: 15, spread: 0.028, pellets: 1,
       recoilKick: 1.1, recoilRot: 0.017, camKick: 0.58, camTrauma: 0.034,
-      recoilPattern: PATTERN_SMG,
+      recoilPattern: PATTERN_SMG, sprayPattern: SPRAY_SMG,
       magSize: 35, reserve: 140,
       reloadT: 1.8, reloadEmptyT: 2.3,
       shotSound: 'pistol', casingSize: 3.6,
@@ -1729,7 +1781,7 @@ export function buildWeapons() {
       magSize: 20, reserve: 100, reloadT: 2.3, reloadEmptyT: 3.0, shotSound: 'rifle',
     },
     lmg: {
-      ...R, id: 'lmg', recoilFeel: 'heavy', name: 'M-900 "OX" LMG', body: chassisBody('lmg', { rec: '#2f3630', poly: '#232823', core: null }),
+      ...R, id: 'lmg', sprayPattern: SPRAY_LMG, recoilFeel: 'heavy', name: 'M-900 "OX" LMG', body: chassisBody('lmg', { rec: '#2f3630', poly: '#232823', core: null }),
       ...chassisMounts('lmg', { rec: '#2f3630', poly: '#232823', core: null }),
       auto: true, rpm: 820, dmg: 24, spread: 0.032,
       recoilKick: 1.9, recoilRot: 0.03, camKick: 1.0, camTrauma: 0.05, muzzleBig: 1.35,
@@ -1740,7 +1792,7 @@ export function buildWeapons() {
     // Redeemable (see game/loot.js). Both are tuned well above the craftable
     // ceiling on purpose — that is what makes the drop worth chasing.
     minigun: {
-      ...R, id: 'minigun', recoilFeel: 'heavy', name: 'ANNIHILATOR', body: paintMinigun(),
+      ...R, id: 'minigun', sprayPattern: SPRAY_LMG, recoilFeel: 'heavy', name: 'ANNIHILATOR', body: paintMinigun(),
       auto: true, rpm: 1400, dmg: 26, spread: 0.055,
       recoilKick: 1.1, recoilRot: 0.012, camKick: 0.7, camTrauma: 0.075, muzzleBig: 1.6,
       magSize: 250, reserve: 500, reloadT: 5.2, reloadEmptyT: 6.0, shotSound: 'rifle',
@@ -1748,7 +1800,7 @@ export function buildWeapons() {
       tracerColor: [255, 214, 150], tracerWidth: 2.2,
     },
     rocket: {
-      ...R, id: 'rocket', recoilFeel: 'heavy', name: 'SIEGEBREAKER', body: paintRocketLauncher(),
+      ...R, id: 'rocket', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'SIEGEBREAKER', body: paintRocketLauncher(),
       auto: false, rpm: 42, dmg: 210, spread: 0.004,
       fireMode: 'projectile',
       projectile: { speed: 900, radius: 6, explode: 96, headMul: 1.2, color: [255, 170, 90] },
@@ -1757,7 +1809,7 @@ export function buildWeapons() {
       mag: null, bolt: null,
     },
     sniper: {
-      ...R, id: 'sniper', recoilFeel: 'heavy', name: 'LRS-1 "TALON"', body: chassisBody('sniper', { rec: '#2a2e33', poly: '#20242a', core: null }),
+      ...R, id: 'sniper', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'LRS-1 "TALON"', body: chassisBody('sniper', { rec: '#2a2e33', poly: '#20242a', core: null }),
       ...chassisMounts('sniper', { rec: '#2a2e33', poly: '#20242a', core: null }),
       auto: false, rpm: 55, dmg: 150, spread: 0.002,
       recoilKick: 3.2, recoilRot: 0.05, camKick: 2.4, camTrauma: 0.12, muzzleBig: 1.5,
@@ -1788,7 +1840,7 @@ export function buildWeapons() {
       recoilKick: 1.2, recoilRot: 0.018, camKick: 0.62, camTrauma: 0.036, shotSound: 'pulse',
     },
     eshotgun: {
-      ...R, id: 'eshotgun', recoilFeel: 'heavy', name: 'ENERGY SHOTGUN', body: chassisBody('eshotgun', { rec: '#43301a', poly: '#2f2112', core: [255, 160, 60] }),
+      ...R, id: 'eshotgun', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'ENERGY SHOTGUN', body: chassisBody('eshotgun', { rec: '#43301a', poly: '#2f2112', core: [255, 160, 60] }),
       ...chassisMounts('eshotgun', { rec: '#43301a', poly: '#2f2112', core: [255, 160, 60] }),
       energy: true, fireMode: 'projectile', auto: false, rpm: 75, dmg: 15, spread: 0.14, pellets: 8,
       projectile: { color: [255, 160, 60], radius: 3.4, speed: 820, life: 0.55 },
@@ -1804,7 +1856,7 @@ export function buildWeapons() {
     },
     // ------- energy: charge weapons -------
     railgun: {
-      ...R, id: 'railgun', recoilFeel: 'heavy', name: 'GAUSS RAILGUN', body: paintRailgun(),
+      ...R, id: 'railgun', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'GAUSS RAILGUN', body: paintRailgun(),
       // no magazine well and no reciprocating bolt on this frame — the
       // rifle def these inherit from would otherwise draw both floating.
       mag: null, bolt: null,
@@ -1815,7 +1867,7 @@ export function buildWeapons() {
       magSize: 5, reserve: 30, reloadT: 2.8, reloadEmptyT: 3.3, shotSound: 'rail',
     },
     ion: {
-      ...R, id: 'ion', recoilFeel: 'heavy', name: 'ION CANNON', body: chassisBody('ion', { rec: '#173d3a', poly: '#0f2b29', core: [80, 255, 210] }),
+      ...R, id: 'ion', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'ION CANNON', body: chassisBody('ion', { rec: '#173d3a', poly: '#0f2b29', core: [80, 255, 210] }),
       ...chassisMounts('ion', { rec: '#173d3a', poly: '#0f2b29', core: [80, 255, 210] }),
       energy: true, fireMode: 'projectile', auto: false, rpm: 40, dmg: 90, spread: 0.004,
       projectile: { color: [80, 255, 210], radius: 7, speed: 720, blast: 130, life: 2 },

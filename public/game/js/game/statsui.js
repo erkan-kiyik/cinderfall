@@ -31,6 +31,11 @@ const STAT_FIELDS = [
   { key: 'mostUsed',   label: 'MOST USED WEAPON',        icon: 'star',   value: (p, weapons) => { const id = p.mostUsedWeapon(); return id ? (weapons[id]?.name || id) : '—'; } },
   { key: 'level',      label: 'OPERATOR LEVEL',          icon: 'star',   value: (p) => String(p.data.level) },
   { key: 'xp',         label: 'TOTAL XP',                icon: 'bolt',   value: (p) => Math.round(p.data.xp).toLocaleString() },
+  // What the level is actually worth in the field. Without these two rows the
+  // per-level stat gain is invisible — the player would be getting steadily
+  // tougher with nothing on screen ever saying so.
+  { key: 'lvlHp',      label: 'LEVEL BONUS — HEALTH',    icon: 'shield', value: (p) => `+${p.levelBonuses().maxHp}` },
+  { key: 'lvlDmg',     label: 'LEVEL BONUS — DAMAGE',    icon: 'guns',   value: (p) => `+${Math.round(p.levelBonuses().damage * 100)}%` },
 ];
 
 export class StatsUI {

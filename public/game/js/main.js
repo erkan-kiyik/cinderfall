@@ -222,6 +222,11 @@ async function boot() {
   assets.nomad = buildSoldier('nomad');
   assets.viper = buildSoldier('viper');
   assets.arctic = buildSoldier('arctic');
+  assets.ember = buildSoldier('ember');
+  assets.midnight = buildSoldier('midnight');
+  assets.rust = buildSoldier('rust');
+  assets.vanguard = buildSoldier('vanguard');
+  assets.sable = buildSoldier('sable');
   assets.shadow = makeShadowSprite();
   hud.setLoad(0.3, 'MACHINING WEAPONS…');
   await raf();
@@ -445,8 +450,30 @@ class Game {
     audio.levelUp();
     for (const u of res.newUnlocks) this.applyUnlock(u);
     hud.setSlot4Visible(this.player.smgUnlocked);
+    // The level's stat reward lands immediately, mid-run: max HP goes up and
+    // the operator is healed by the gain, so a level earned in a firefight is
+    // felt right then rather than only from the next deployment.
+    //
+    // Applied as a *difference* against what applyLoadout already baked in at
+    // deployment (player.levelBonusApplied), not as a flat per-level step —
+    // otherwise the whole accumulated block would be paid out again here, and
+    // the bonus would keep growing past LEVEL_BONUS_CAP.
+    const p = this.player;
+    let buff = '';
+    if (p) {
+      const lb = this.progression.levelBonuses();
+      const prev = p.levelBonusApplied || { maxHp: 0, damage: 0 };
+      const dHp = lb.maxHp - prev.maxHp;
+      const dDmg = lb.damage - prev.damage;
+      if (dHp > 0) { p.maxHp += dHp; p.hp = Math.min(p.maxHp, p.hp + dHp); }
+      if (dDmg > 0) p.dmgMul = (p.dmgMul || 1) + dDmg;
+      p.levelBonusApplied = lb;
+      if (dHp > 0 || dDmg > 0) {
+        buff = ` (+${dHp} HP, +${Math.round(dDmg * 100)}% DMG)`;
+      }
+    }
     const extra = res.newUnlocks.length ? ' — ' + res.newUnlocks.map((u) => u.label).join(', ') : '';
-    hud.notify(t('notify.levelUp', { n: res.newLevel }) + extra);
+    hud.notify(t('notify.levelUp', { n: res.newLevel }) + buff + extra);
     return true;
   }
 

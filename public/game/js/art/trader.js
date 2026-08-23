@@ -311,54 +311,59 @@ function shadeA(hex, k, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-// One lean-to stall: two raked poles, a sagging canvas roof, a counter
-// plank, and a handful of things hung off the crossbeam. `flip` mirrors it
-// for the right-hand side; `depth` (0..1) pushes it back into the haze —
-// smaller, flatter light, less detail — so it reads as background rather
-// than competing with CROW.
-function stall(g, u, flip, depth, seed) {
-  const rnd = rng(seed);
-  const s = 1 - depth * 0.32;
-  const haze = depth * 0.5;
-  g.save();
-  g.scale(flip, 1);
-  g.scale(s, s);
-  g.translate(0, -depth * 6 * u);
+// The stall is drawn in two passes with CROW composited between them, so he
+// is genuinely *behind* his counter: the plank and the crates stacked under
+// it occlude his lower body, which is what sells him as sitting at it rather
+// than standing in front of a painted backdrop.
+//
+// Geometry is shared between the two passes so they cannot drift apart.
+// Sized so the stall FRAMES CROW rather than perching on him: the uprights
+// have to stand outside his shoulders and the awning has to clear his hood by
+// a real margin, or the whole thing reads as a hat. At these numbers his
+// silhouette spans about 85% of the gap between the poles.
+const STALL = {
+  poleH: 92,     // pole height in `u`
+  poleW: 3.4,
+  spread: 96,    // distance between the two uprights
+  counterY: -30, // top of the counter plank — crosses his chest, not his waist
+};
 
-  const poleH = 46 * u, poleW = 2.6 * u, spread = 34 * u;
-  const wood = shadeA(WOOD, 1 - haze * 0.5, 1 - haze * 0.35);
-  g.fillStyle = wood;
-  g.fillRect(-spread / 2 - poleW / 2, -poleH, poleW, poleH);
-  g.fillRect(spread / 2 - poleW / 2, -poleH, poleW, poleH);
-  // crossbeam
-  g.fillRect(-spread / 2 - poleW, -poleH - 2 * u, spread + poleW * 2, 3 * u);
+// Back half: uprights, crossbeam, sagging awning, goods strung up to sell.
+function stallBack(g, u, seed) {
+  const rnd = rng(seed);
+  const { poleH, poleW, spread } = STALL;
+  const H = poleH * u, W = poleW * u, S = spread * u;
+
+  g.fillStyle = shadeA(WOOD, 1, 1);
+  g.fillRect(-S / 2 - W / 2, -H, W, H);
+  g.fillRect(S / 2 - W / 2, -H, W, H);
+  g.fillRect(-S / 2 - W, -H - 2 * u, S + W * 2, 3 * u);
 
   // sagging canvas awning, front edge lower than the back so it reads as
   // cloth rather than a rigid roof
-  g.fillStyle = shadeA(CANVAS_AWN, 1 - haze * 0.4, 0.94 - haze * 0.4);
+  g.fillStyle = shadeA(CANVAS_AWN, 1, 0.94);
   g.beginPath();
-  g.moveTo(-spread / 2 - 6 * u, -poleH - 2 * u);
-  g.quadraticCurveTo(0, -poleH + 8 * u, spread / 2 + 6 * u, -poleH - 2 * u);
-  g.lineTo(spread / 2 + 2 * u, -poleH - 12 * u);
-  g.quadraticCurveTo(0, -poleH - 20 * u, -spread / 2 - 2 * u, -poleH - 12 * u);
+  g.moveTo(-S / 2 - 6 * u, -H - 2 * u);
+  g.quadraticCurveTo(0, -H + 9 * u, S / 2 + 6 * u, -H - 2 * u);
+  g.lineTo(S / 2 + 2 * u, -H - 13 * u);
+  g.quadraticCurveTo(0, -H - 21 * u, -S / 2 - 2 * u, -H - 13 * u);
   g.closePath(); g.fill();
-  // awning stripe, torn edge
-  g.strokeStyle = shadeA('#000000', 1, 0.25 - haze * 0.15);
+  g.strokeStyle = shadeA('#000000', 1, 0.25);
   g.lineWidth = u;
   g.beginPath();
-  for (let x = -spread / 2; x <= spread / 2; x += 6 * u) {
-    g.moveTo(x, -poleH - 16 * u); g.lineTo(x + 3 * u, -poleH - 6 * u);
+  for (let x = -S / 2; x <= S / 2; x += 6 * u) {
+    g.moveTo(x, -H - 17 * u); g.lineTo(x + 3 * u, -H - 7 * u);
   }
   g.stroke();
 
-  // hung goods: strung along the crossbeam, silhouetted — canisters, coiled
-  // wire, a couple of scrap plates. Just enough shape variety to read as
-  // "salvage for sale" without individually resolving at banner scale.
-  const hangY = -poleH + 2 * u;
-  for (let i = 0; i < 4; i++) {
-    const hx = -spread / 2 + 6 * u + i * ((spread - 12 * u) / 3);
-    const hh = (6 + rnd() * 5) * u;
-    g.fillStyle = shadeA(RUST, 1 - haze * 0.5, 0.85 - haze * 0.4);
+  // hung goods along the crossbeam — canisters, plates, coiled wire. Kept to
+  // the outer thirds so nothing dangles in front of CROW's head.
+  for (let i = 0; i < 6; i++) {
+    if (i === 2 || i === 3) continue;
+    const hx = -S / 2 + 5 * u + i * ((S - 10 * u) / 5);
+    const hh = (7 + rnd() * 5) * u;
+    const hangY = -H + 2 * u;
+    g.fillStyle = shadeA(RUST, 1, 0.85);
     g.strokeStyle = shadeA('#000000', 1, 0.5);
     g.lineWidth = 0.5 * u;
     g.beginPath(); g.moveTo(hx, hangY); g.lineTo(hx, hangY + hh * 0.3); g.stroke();
@@ -369,16 +374,43 @@ function stall(g, u, flip, depth, seed) {
       g.strokeRect(hx - hh * 0.18, hangY + hh * 0.32, hh * 0.36, hh * 0.5);
     }
   }
+}
 
-  // counter plank across the front poles, waist height
-  g.fillStyle = shadeA(WOOD, 1.15 - haze * 0.4, 1 - haze * 0.35);
-  g.fillRect(-spread / 2 - 3 * u, -20 * u, spread + 6 * u, 3 * u);
-  // a couple of crates stacked under the counter
-  g.fillStyle = shadeA(WOOD, 0.85 - haze * 0.4, 0.9 - haze * 0.4);
-  g.fillRect(-spread / 2, -13 * u, 10 * u, 13 * u);
-  g.fillRect(-spread / 2 + 11 * u, -9 * u, 8 * u, 9 * u);
+// Front half: the counter plank and what is stacked against it, all of which
+// sits between CROW and the camera.
+function stallFront(g, u) {
+  const { spread, counterY } = STALL;
+  const S = spread * u, cy = counterY * u;
 
-  g.restore();
+  // counter plank, with a lit top edge so it reads as a surface
+  g.fillStyle = shadeA(WOOD, 1.15, 1);
+  g.fillRect(-S / 2 - 4 * u, cy, S + 8 * u, 3.2 * u);
+  g.fillStyle = 'rgba(255,186,120,0.16)';
+  g.fillRect(-S / 2 - 4 * u, cy, S + 8 * u, 0.8 * u);
+  // Boarded apron, running from the plank all the way down to the street. It
+  // stops short of the right-hand upright on purpose: that open bay is where
+  // the camera sees the crate CROW is sitting on and the knee he has pushed
+  // out, and without it his lower cloak is just an unreadable mass under the
+  // counter. Everything left of the bay is closed off.
+  const bayX = 12 * u;
+  g.fillStyle = shadeA(WOOD, 0.58, 1);
+  g.fillRect(-S / 2 - 4 * u, cy + 3.2 * u, (S / 2 + 4 * u) + bayX, -cy - 3.2 * u);
+  // vertical boards, so the apron reads as planking rather than a flat slab
+  g.strokeStyle = 'rgba(0,0,0,0.40)';
+  g.lineWidth = 0.6 * u;
+  for (let x = -S / 2; x < bayX; x += 9 * u) {
+    g.beginPath(); g.moveTo(x, cy + 4 * u); g.lineTo(x, 0); g.stroke();
+  }
+  // a lit lip just under the plank, separating counter from apron
+  g.fillStyle = 'rgba(0,0,0,0.35)';
+  g.fillRect(-S / 2 - 4 * u, cy + 3.2 * u, (S / 2 + 4 * u) + bayX, 1.4 * u);
+
+  // crate stacked against the left end, in front of the upright
+  g.fillStyle = shadeA(WOOD, 0.88, 1);
+  g.fillRect(-S / 2 - 6 * u, -15 * u, 12 * u, 15 * u);
+  g.strokeStyle = 'rgba(0,0,0,0.45)';
+  g.lineWidth = 0.5 * u;
+  g.strokeRect(-S / 2 - 6 * u, -15 * u, 12 * u, 15 * u);
 }
 
 // Paints the wide trader-panel banner into a `w`×`h` box: two stalls flanking
@@ -398,7 +430,7 @@ export function paintTraderScene(g, w, h) {
   wall.addColorStop(1, 'rgba(46,32,20,0.5)');
   g.fillStyle = wall;
   g.fillRect(0, 0, w, groundY);
-  const glow = g.createRadialGradient(w * 0.58, groundY, 2 * u, w * 0.58, groundY, w * 0.24);
+  const glow = g.createRadialGradient(w * 0.5, groundY, 2 * u, w * 0.5, groundY, w * 0.26);
   glow.addColorStop(0, 'rgba(255,140,60,0.30)');
   glow.addColorStop(1, 'rgba(255,140,60,0)');
   g.fillStyle = glow;
@@ -412,24 +444,88 @@ export function paintTraderScene(g, w, h) {
   g.lineWidth = Math.max(1, 0.7 * u);
   g.beginPath(); g.moveTo(0, groundY); g.lineTo(w, groundY); g.stroke();
   g.fillStyle = 'rgba(255,150,70,0.08)';
-  g.beginPath(); g.ellipse(w * 0.58, groundY, w * 0.22, 3 * u, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(w * 0.5, groundY, w * 0.24, 3 * u, 0, 0, Math.PI * 2); g.fill();
 
-  // ---- background stalls, pushed back and to the sides — clearly smaller
-  // and flatter than CROW's own, so the eye has somewhere to land besides him
-  g.save(); g.translate(w * 0.15, groundY); stall(g, u * 0.86, 1, 0.6, 0x5a11); g.restore();
-  g.save(); g.translate(w * 0.88, groundY); stall(g, u * 0.86, -1, 0.55, 0x5a29); g.restore();
+  // ---- ONE stall, dead centre. It used to be three — two dressed-back ones
+  // flanking CROW's own — which split the eye three ways and left him as the
+  // middle of a row rather than the reason the row exists. A single stall he
+  // is sitting at makes him the subject and the market the setting.
+  const cx = w * 0.5;
 
-  // ---- CROW's own counter, front and centre-left so his standing spot and
-  // the goods on it stay clear of his own silhouette
-  g.save(); g.translate(w * 0.40, groundY); stall(g, u, 1, 0, 0x5a37); g.restore();
+  g.save(); g.translate(cx, groundY); stallBack(g, u, 0x5a37); g.restore();
 
-  // scrap plates laid out on the near counter
+  // ---- CROW, seated behind his own counter.
+  //
+  // The bust painter has no lower body — it is cropped at the shoulders — so
+  // "seated" has to come entirely from staging, and the order things are
+  // painted in IS the staging:
+  //
+  //   bust  →  legs  →  forearm  →  counter
+  //
+  // The bust goes down first and its cloak drapes below the counter line. The
+  // legs are painted over that drape, which is the correct occlusion for a
+  // man sitting with his knees in front of his own coat — painted underneath
+  // instead, they vanished and the drape was left showing as a shapeless mass
+  // with the bandolier strap cutting across it. The counter goes on last and
+  // takes the rest.
+  const figH = Math.min(64 * u, groundY * 0.80), figW = figH;
+  const off = document.createElement('canvas');
+  off.width = Math.max(1, Math.round(figW));
+  off.height = Math.max(1, Math.round(figH));
+  paintTrader(off.getContext('2d'), off.width, off.height);
+  // Sunk 16u rather than sitting on the street: the counter has to cross his
+  // chest for the seated read, and any more cloak than that hanging below it
+  // just piles up in the open bay as a dark mass with no shape to it.
+  g.drawImage(off, cx - figW / 2, groundY - 16 * u - figH, figW, figH);
+
   g.save();
-  g.translate(w * 0.365, groundY - 20.2 * u);
+  g.translate(cx, groundY);
+  // the crate he sits on, in the open bay the counter apron leaves clear
+  g.fillStyle = shadeA(WOOD, 0.72, 1);
+  g.fillRect(20 * u, -19 * u, 20 * u, 19 * u);
+  g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 0.6 * u;
+  g.strokeRect(20 * u, -19 * u, 20 * u, 19 * u);
+  // thigh and bent knee pushed out past the apron, boot flat on the street —
+  // the only part of him below the counter the camera actually resolves, and
+  // the cue that says "sitting" rather than "cropped by furniture"
+  g.fillStyle = shadeA(CANVAS, 1.18, 1);
+  g.beginPath();
+  g.moveTo(14 * u, -24 * u);
+  g.quadraticCurveTo(36 * u, -23 * u, 37 * u, -9 * u);
+  g.lineTo(26 * u, -8 * u);
+  g.quadraticCurveTo(26 * u, -17 * u, 13 * u, -17 * u);
+  g.closePath(); g.fill();
+  g.fillStyle = shadeA(LEATHER, 0.85, 1);
+  g.fillRect(24 * u, -8.5 * u, 17 * u, 8.5 * u);
+  g.fillStyle = 'rgba(255,170,100,0.10)';
+  g.fillRect(24 * u, -8.5 * u, 17 * u, 1.2 * u);
+  g.restore();
+
+  // ---- forearm laid along the counter. Drawn after the bust and before the
+  // plank, so it sits on his side of the wood and the plank's front edge laps
+  // over it — an arm resting on a surface, not floating above one.
+  g.save();
+  g.translate(cx, groundY);
+  g.fillStyle = shadeA(CANVAS, 0.95, 1);
+  g.beginPath();
+  g.moveTo(-26 * u, -32 * u);
+  g.quadraticCurveTo(-8 * u, -37 * u, 12 * u, -34 * u);
+  g.lineTo(12 * u, -28 * u);
+  g.quadraticCurveTo(-8 * u, -27 * u, -26 * u, -26 * u);
+  g.closePath(); g.fill();
+  // gloved hand at the end of it
+  g.fillStyle = shadeA(LEATHER, 1.1, 1);
+  g.beginPath(); g.ellipse(15 * u, -32 * u, 4.6 * u, 3.4 * u, -0.15, 0, Math.PI * 2); g.fill();
+  g.restore();
+
+  g.save(); g.translate(cx, groundY); stallFront(g, u); g.restore();
+
+  // ---- scrap laid out for sale on the counter top, to his off side
+  g.save();
+  g.translate(cx - 36 * u, groundY + (STALL.counterY - 1.8) * u);
   for (let i = 0; i < 3; i++) {
-    const px = i * 6 * u, py = -Math.sin(i * 1.3) * 0.6 * u;
     g.save();
-    g.translate(px, py);
+    g.translate(i * 6 * u, -Math.sin(i * 1.3) * 0.6 * u);
     g.rotate((i - 1) * 0.22);
     const pg = g.createLinearGradient(-2.6 * u, -1.8 * u, 2.6 * u, 1.8 * u);
     pg.addColorStop(0, shade('#8e9099', 1.25));
@@ -441,16 +537,6 @@ export function paintTraderScene(g, w, h) {
     g.restore();
   }
   g.restore();
-
-  // ---- CROW himself, composited from his own portrait painter so the two
-  // never fall out of sync. Sized to read as the tallest thing in frame
-  // without crowding the stalls either side of him, and clamped so his hood
-  // always has headroom regardless of the box's aspect ratio.
-  const figH = Math.min(64 * u, groundY * 0.94), figW = figH;
-  const off = document.createElement('canvas');
-  off.width = figW; off.height = figH;
-  paintTrader(off.getContext('2d'), figW, figH);
-  g.drawImage(off, w * 0.58 - figW / 2, groundY - figH, figW, figH);
 
   // ---- foreground vignette: darkens the bottom corners so the ground
   // doesn't compete with the item cards sitting just below the panel

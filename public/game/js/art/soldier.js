@@ -77,6 +77,71 @@ const VARIANTS = {
     masked: false,
     pad: '#9fabb1',
   },
+  // The roster above ran green / grey / tan / green / white, which is two
+  // pairs that read alike at gameplay distance — an operator you cannot name
+  // from its silhouette and value is not really a second skin. These five are
+  // picked to sit apart from those and from each other: each one owns a
+  // different corner of the palette (burnt orange, near-black blue, oxide
+  // brown, cold steel, black-and-gold) and a different mask state, so the
+  // whole set stays distinguishable at a glance.
+  ember: {
+    seed: 3301,
+    uniform: '#5a3320', uniformDark: '#3e2214',
+    vest: '#7a4526', vestDark: '#57301a',
+    helmet: '#4e2c1a',
+    glove: '#331d11',
+    boot: '#26150c',
+    skin: '#8a6a4e',
+    masked: true,
+    pad: '#42241a',
+  },
+  midnight: {
+    seed: 5158,
+    uniform: '#1d2436', uniformDark: '#131824',
+    vest: '#232b40', vestDark: '#171d2b',
+    helmet: '#1a2131',
+    glove: '#10141d',
+    boot: '#0c0f16',
+    skin: '#7d6249',
+    masked: true,
+    pad: '#161c29',
+  },
+  rust: {
+    seed: 7724,
+    uniform: '#6b4a32', uniformDark: '#4d3423',
+    vest: '#7d5535', vestDark: '#5a3d26',
+    helmet: '#5e412c',
+    glove: '#3d2a1c',
+    boot: '#2e2015',
+    skin: COL.skin,
+    masked: false,
+    pad: '#4a3323',
+  },
+  vanguard: {
+    seed: 2276,
+    uniform: '#3c4650', uniformDark: '#2b333b',
+    vest: '#55626e', vestDark: '#3e4954',
+    helmet: '#46515c',
+    glove: '#2a3138',
+    boot: '#1f252a',
+    skin: COL.skin,
+    masked: false,
+    pad: '#333b43',
+  },
+  // Gold pads against near-black kit: the one variant whose accent colour is
+  // not a shade of its own uniform, which is what makes it read as the
+  // trophy skin rather than another dark one.
+  sable: {
+    seed: 9934,
+    uniform: '#1f1e22', uniformDark: '#141317',
+    vest: '#2b2830', vestDark: '#1c1a20',
+    helmet: '#232128',
+    glove: '#151418',
+    boot: '#100f13',
+    skin: '#6f563f',
+    masked: true,
+    pad: '#8a6a2e',
+  },
 };
 
 // Fabric base fill: lit from top with warm key, cool shadow at bottom.

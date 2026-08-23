@@ -52,8 +52,12 @@ export function describePerk(perk) {
   return Object.entries(perk).map(([stat, v]) => {
     const def = PERK_DEFS[stat];
     if (!def) return null;
-    const value = def.kind === 'pct' ? `+${Math.round(v * 100)}%` : `+${v}`;
-    return { stat, key: def.key, label: def.label, value };
+    // A perk can be a cost as well as a bonus (VANGUARD trades move speed for
+    // armour), so the sign comes from the value — hard-coding "+" printed a
+    // penalty as "+-4%".
+    const n = def.kind === 'pct' ? Math.round(v * 100) : v;
+    const value = `${n < 0 ? '' : '+'}${n}${def.kind === 'pct' ? '%' : ''}`;
+    return { stat, key: def.key, label: def.label, value, negative: n < 0 };
   }).filter(Boolean);
 }
 
@@ -82,6 +86,26 @@ export const CATALOG = [
   { id: 'op_arctic',  name: 'ARCTIC OPERATOR',    slot: 'operator', rarity: 'legendary', kind: 'Operator', tag: 'RECON',
     perk: { maxArmor: 25, recoil: 0.18, moveSpeed: 0.08 },
     apply: { type: 'operator', variant: 'arctic' } },
+  // Five more, so the operator slot is a roster to work through rather than a
+  // four-item shortlist. Each one leans on a different stat pair, so picking a
+  // skin is a loadout decision and not only a colour preference — and the
+  // rarities are spread across the table so the slot has something to buy at
+  // every price point rather than only at the top.
+  { id: 'op_rust',    name: 'RUST OPERATOR',      slot: 'operator', rarity: 'rare', kind: 'Operator', tag: 'SALVAGE',
+    perk: { maxHp: 20, luck: 0.12 },
+    apply: { type: 'operator', variant: 'rust' } },
+  { id: 'op_ember',   name: 'EMBER OPERATOR',     slot: 'operator', rarity: 'epic', kind: 'Operator', tag: 'ASSAULT',
+    perk: { damage: 0.10, recoil: 0.15 },
+    apply: { type: 'operator', variant: 'ember' } },
+  { id: 'op_midnight', name: 'MIDNIGHT OPERATOR', slot: 'operator', rarity: 'epic', kind: 'Operator', tag: 'NIGHT OPS',
+    perk: { stealth: 0.32, moveSpeed: 0.09 },
+    apply: { type: 'operator', variant: 'midnight' } },
+  { id: 'op_vanguard', name: 'VANGUARD OPERATOR', slot: 'operator', rarity: 'legendary', kind: 'Operator', tag: 'BREACHER',
+    perk: { maxArmor: 30, maxHp: 25, moveSpeed: -0.04 },
+    apply: { type: 'operator', variant: 'vanguard' } },
+  { id: 'op_sable',   name: 'SABLE OPERATOR',     slot: 'operator', rarity: 'mythic', kind: 'Operator', tag: 'ELITE',
+    perk: { damage: 0.12, stealth: 0.20, reload: 0.15 },
+    apply: { type: 'operator', variant: 'sable' } },
 ];
 
 // ---- weapon skins ----
@@ -299,6 +323,20 @@ export function applyLoadout(player, progression, assets) {
     if (!p) return;
     for (const [k, v] of Object.entries(p)) perks[k] = (perks[k] || 0) + v;
   };
+
+  // Operator level pays out as a permanent stat block, folded in as just
+  // another perk source so it stacks with the loadout by the same rules
+  // everything else does. Read off the instance rather than importing
+  // levelBonuses directly — progression.js already imports this module, and
+  // taking the function by name would close that cycle.
+  if (progression.levelBonuses) {
+    const lb = progression.levelBonuses();
+    addPerk(lb);
+    // Remember what got baked in here. A level earned mid-run tops the player
+    // up by the *difference* against this (see Game.handleLevelUp), which is
+    // what stops the deployment-time block being paid out a second time.
+    player.levelBonusApplied = lb;
+  }
 
   // operator skin
   const opId = progression.equipped('operator');

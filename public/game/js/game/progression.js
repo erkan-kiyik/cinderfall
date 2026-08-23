@@ -18,6 +18,27 @@ function xpForLevel(n) {
   return Math.round(120 * n * (n + 1) / 2 + Math.pow(n, 2.1) * 8);
 }
 
+// ---- per-level combat bonuses ----
+// Levelling used to pay out only in unlocks (see UNLOCKS below), and those
+// stop at level 10 — so past that, a level-up was a number going up and
+// nothing else. Every level now also carries a permanent stat gain, which is
+// what makes the XP bar worth watching for its own sake rather than only as a
+// countdown to the next unlock.
+//
+// The curve is deliberately flat rather than compounding: a fixed step per
+// level, capped, so a high-level operator is durably better without the game
+// having to re-tune every hostile around him. At the cap that is +174 HP and
+// +72% damage over a fresh operator — a real power difference, still inside
+// what the existing difficulty scaling can answer.
+export const LEVEL_HP_PER = 6;        // max HP added per level past 1
+export const LEVEL_DMG_PER = 0.025;   // outgoing damage added per level past 1
+export const LEVEL_BONUS_CAP = 30;    // level past which the bonuses stop growing
+
+export function levelBonuses(level) {
+  const n = Math.max(0, Math.min(level || 1, LEVEL_BONUS_CAP) - 1);
+  return { maxHp: n * LEVEL_HP_PER, damage: n * LEVEL_DMG_PER };
+}
+
 // Unlock table: tier fires the first time player level reaches `level`.
 export const UNLOCKS = [
   { level: 2, id: 'armor25', label: 'ARMOR PLATE — 25 CAP', kind: 'equipment' },
@@ -375,6 +396,14 @@ export class Progression {
     const cur = xpForLevel(d.level);
     const next = xpForLevel(d.level + 1);
     return clamp01((d.xp - cur) / Math.max(1, next - cur));
+  }
+
+  // This operator's permanent level rewards. Exposed as a method so callers
+  // (meta.applyLoadout, the stats screen) can read it off the instance
+  // instead of importing levelBonuses — this module already imports meta.js,
+  // so an import back the other way would be a cycle.
+  levelBonuses() {
+    return levelBonuses(this.data.level);
   }
 
   recordKill(headshot) {

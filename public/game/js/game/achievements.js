@@ -170,6 +170,17 @@ export function drawAchievementIcon(g, kind, w, h, color) {
       g.lineTo(r * 0.85, -r * 0.1); g.lineTo(r * 0.85, r * 0.5);
       g.closePath(); g.fill();
       break;
+    // Vitality: a plate carrier's front panel, tapering to a point.
+    case 'shield':
+      g.beginPath();
+      g.moveTo(0, -r * 0.85);
+      g.lineTo(r * 0.72, -r * 0.5);
+      g.lineTo(r * 0.72, r * 0.18);
+      g.quadraticCurveTo(r * 0.6, r * 0.72, 0, r * 0.92);
+      g.quadraticCurveTo(-r * 0.6, r * 0.72, -r * 0.72, r * 0.18);
+      g.lineTo(-r * 0.72, -r * 0.5);
+      g.closePath(); g.fill();
+      break;
     default:
       g.beginPath(); g.arc(0, 0, r * 0.7, 0, Math.PI * 2); g.fill();
   }

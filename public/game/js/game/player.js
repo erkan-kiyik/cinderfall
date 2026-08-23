@@ -76,6 +76,40 @@ const SPREAD_MODEL = {
 const VIBE_FREQ = 46;
 const VIBE_DECAY = 4.2;
 
+// ---- spray control -----------------------------------------------------
+// Holding the trigger walks the muzzle up a fixed per-weapon path (see the
+// SPRAY_* tables in art/weapons.js) rather than only widening a random cone.
+// The climb is applied to the operator's own aim, so the player watches it
+// happen and can drag the stick down against it — the pattern is a skill,
+// not a tax. The random cone still exists on top; it just no longer has to
+// carry the whole feel of sustained fire on its own.
+//
+// Recovery is deliberately generous. A pattern you cannot reset is a pattern
+// nobody learns: releasing the trigger for a beat should hand the weapon back
+// on target, which is what makes burst discipline the counter-play.
+const SPRAY_RECOVER = 4.6;        // rad/s the muzzle settles back once you stop
+const SPRAY_RECOVER_DELAY = 0.10; // grace after the last shot before it starts
+const SPRAY_MAX = 0.14;           // ceiling, so a held trigger can't aim at the sky
+// Crouching braces the weapon: the same burst climbs noticeably less, which
+// gives the slow approach a mechanical payoff beyond the tighter cone.
+const SPRAY_CROUCH_BRACE = 0.62;
+
+// ---- recoil travel -----------------------------------------------------
+// How far, in weapon-local px, the gun is allowed to slam back toward the
+// body on a shot. This has a hard cap for a reason: the hands are solved onto
+// the weapon's grips, so whatever the gun does the hands do too, and an
+// uncapped impulse (a sniper's kick used to translate the receiver ~7px in a
+// single frame) folded the arms shut faster than any arm moves. That reads
+// exactly like the weapon jumping out of the operator's grip.
+//
+// The kick did not need to be that large to feel heavy — it needed to go
+// somewhere the eye reads as force rather than as a glitch. So the travel is
+// clamped here and the energy is spent on muzzle climb, camera kick and the
+// spray pattern instead, all of which scale freely without ever detaching the
+// gun from the hands.
+const RECOIL_TRAVEL_MAX = 3.4;
+const RECOIL_IMPULSE = 1.45;      // was 2.1, before the travel was capped
+
 // The rig's knifeReach is in weapon-local units; the blade tip sits a little
 // past it. This converts one to the other for the motion trail.
 const BLADE_TIP_SCALE = 1.32;
@@ -89,7 +123,32 @@ function bladeTrailColor(wpn) {
 
 // Movement feel: snappier ground acceleration and blends for more responsive
 // controls, without changing top speeds (preserves the existing game balance).
-const RUN = 300, SPRINT = 450, ACCEL = 2800, JUMP = -900;
+const RUN = 300, SPRINT = 450, JUMP = -900;
+// Ground movement used one acceleration number for everything: starting,
+// stopping and turning around all ramped at the same 2800/s². That is what
+// made the operator feel like he was on ice in one direction and in tar in
+// the other — a reversal had to bleed off a full run and then build it again
+// at the same rate, ~0.2s of no control in the middle of a firefight.
+//
+// Splitting the three cases is the whole fix. Each one wants a different
+// answer and none of them wants the "start moving" number:
+//   ACCEL  — pressing into a direction. Deliberately the gentlest of the
+//            three, so there is still a moment of build-up to a sprint.
+//   DECEL  — releasing the stick. Faster than ACCEL: an operator plants his
+//            feet much quicker than he gets up to speed, and a stop that
+//            lingers is the single most common "unresponsive" complaint.
+//   TURN   — reversing at pace. Fastest of all, because this is the input
+//            the player makes when something is shooting at them.
+const ACCEL = 3000;
+const DECEL = 4400;
+const TURN_ACCEL = 5600;
+// Air steering stays weak on purpose — a jump is a commitment, not a second
+// set of controls. Still a touch above the old flat 45% of ACCEL so a leap
+// can be corrected rather than only watched.
+const AIR_ACCEL = 1500;
+// Below this speed a direction change is just a step, not a reversal, and
+// should not pay the turn cost or trip the stumble.
+const TURN_EPS = 24;
 const STEALTH_RANGE = 56;      // reach for a takedown from directly behind
 // Collision height standing vs fully crouched (half). Drives the real hitbox,
 // not just the pose, so crouching fits under cover and shrinks the target.
@@ -135,8 +194,12 @@ const JUMP_BUFFER_T = 0.12;    // seconds a too-early press is remembered for
 // speed, and on taking a solid hit.
 const STUMBLE_TILT_FWD = 0.175;   // ~10deg, pitching forward
 const STUMBLE_TILT_BACK = 0.087;  // ~5deg, rocked backward
-const REVERSAL_SPEED = 235;       // vx above which flipping input trips a stumble
-const REVERSAL_COOLDOWN = 0.5;    // keeps a wiggling stick from chain-stumbling
+// Raised past RUN (300) once turning got its own, much faster acceleration:
+// at 235 an ordinary jog-and-turn tripped a stumble, so the snappier reversal
+// would have been handed straight back as a loss of control. Only a genuine
+// sprint reversal costs composure now.
+const REVERSAL_SPEED = 340;       // vx above which flipping input trips a stumble
+const REVERSAL_COOLDOWN = 0.6;    // keeps a wiggling stick from chain-stumbling
 const HARD_LAND_SPEED = 620;      // impact speed that starts costing composure
 
 // ---- energy emitter glow ----
@@ -220,6 +283,10 @@ export class Player {
 
     this.fireCd = 0;
     this.recoilAccum = 0;
+    // Accumulated muzzle climb from the spray pattern, in radians. Rides on
+    // top of the aim (never replaces it) and decays back to zero between
+    // bursts — see SPRAY_* above.
+    this.spray = 0;
     this.reload = null;       // {t,T,empty,fired:{s0,s1,s2},dropped}
     this.inspectT = -1;
     this.equipT = 0.01;       // start with a raise
@@ -258,7 +325,11 @@ export class Player {
     const raw = this.facing === 1
       ? this.aimWorld
       : Math.atan2(Math.sin(this.aimWorld), -Math.cos(this.aimWorld));
-    this.aimLocal = clamp(raw, -1.15, 1.2);
+    // Spray rides on top of the clamped aim rather than inside it: the climb
+    // is recoil pushing the muzzle off where the operator is pointing, so it
+    // has to be able to leave the aim cone the stick can reach. A positive
+    // local angle is "down" here (see weaponAnchor), so climb subtracts.
+    this.aimLocal = clamp(raw, -1.15, 1.2) - this.spray;
     this.aimSmooth = damp(this.aimSmooth, this.aimLocal, 15, dt);
 
     // ---- crouch: hold to lower stance (slower, steadier, harder to spot).
@@ -283,7 +354,10 @@ export class Player {
     const mx = input.moveX;
     const wantSprint = input.sprint && mx !== 0 && this.stamina > 1 && !this.reload && this.stunT <= 0 && !wantCrouch;
     this.sprinting = wantSprint;
-    this.sprintBlend = damp(this.sprintBlend, wantSprint ? 1 : 0, 9, dt);
+    // Asymmetric: winding a sprint up takes a moment, dropping out of it is
+    // immediate. Committing to a run should cost something; coming off it to
+    // shoot or turn should never make the player wait for the animation.
+    this.sprintBlend = damp(this.sprintBlend, wantSprint ? 1 : 0, wantSprint ? 7 : 15, dt);
     const crouchMul = lerp(1, 0.5, this.crouchHold);
     const top = lerp(RUN, SPRINT, this.sprintBlend) * stunMul * crouchMul * this.moveMul;
     const target = mx * top;
@@ -297,7 +371,14 @@ export class Player {
       this.stumble(-1, clamp(Math.abs(this.vx) / SPRINT, 0, 1) * 0.6);
     }
 
-    const rate = (this.onGround ? ACCEL : ACCEL * 0.45) * stunMul;
+    // Pick the rate from what the input actually is (see ACCEL/DECEL/TURN):
+    // planting, turning and accelerating are three different moves.
+    const turning = mx !== 0 && Math.abs(this.vx) > TURN_EPS
+                    && Math.sign(mx) !== Math.sign(this.vx);
+    const rate = (!this.onGround ? AIR_ACCEL
+                  : mx === 0 ? DECEL
+                  : turning ? TURN_ACCEL
+                  : ACCEL) * stunMul;
     this.vx = this.vx > target
       ? Math.max(target, this.vx - rate * dt)
       : Math.min(target, this.vx + rate * dt);
@@ -608,6 +689,9 @@ export class Player {
     this.unequipT = 0;
     this.reload = null;
     this.inspectT = -1;
+    // Each weapon owns its own spray path, so carrying accumulated climb
+    // across a swap would apply one gun's pattern to another's aim.
+    this.spray = 0;
     this.audio.equip();
   }
 
@@ -756,7 +840,9 @@ export class Player {
     // weapon snaps back to center quickly and settles smoothly (no bounce)
     ws.recoilVel += -ws.recoil * 340 * dt;
     ws.recoilVel *= Math.exp(-20 * dt);
-    ws.recoil = Math.max(0, ws.recoil + ws.recoilVel * dt * 44);
+    // Clamped, not just floored: see RECOIL_TRAVEL_MAX. The gun is allowed to
+    // punch back, never far enough to tear out of the hands solved onto it.
+    ws.recoil = clamp(ws.recoil + ws.recoilVel * dt * 44, 0, RECOIL_TRAVEL_MAX);
     ws.recoilRotVel += -ws.recoilRot * 360 * dt;
     ws.recoilRotVel *= Math.exp(-19 * dt);
     ws.recoilRot += ws.recoilRotVel * dt * 40;
@@ -793,6 +879,13 @@ export class Player {
     // an LMG stays open long after the trigger is released.
     const spreadModel = SPREAD_MODEL[wpn.recoilFeel] || SPREAD_MODEL.standard;
     this.recoilAccum = Math.max(0, this.recoilAccum - dt * 0.17 * spreadModel.recover);
+    // Spray recovery: the muzzle walks back down to where the operator is
+    // actually pointing once the trigger is released. Same per-class recovery
+    // curve the cone uses, so a sidearm resets almost instantly and an LMG
+    // stays high long after the last round.
+    if (this.time - (ws.lastFireT || -99) > SPRAY_RECOVER_DELAY) {
+      this.spray = Math.max(0, this.spray - dt * SPRAY_RECOVER * spreadModel.recover);
+    }
     // energy weapons cool between shots; overheat clears once cooled enough
     ws.heat = Math.max(0, ws.heat - dt * (wpn.heatCool || 0.6));
     if (ws.overheated && ws.heat <= 0.2) ws.overheated = false;
@@ -1039,7 +1132,12 @@ export class Player {
     const mzl = toWorld(this, weaponPoint(wa, wpn.muzzle));
     const ejl = toWorld(this, weaponPoint(wa, wpn.eject || wpn.muzzle));
     const baseAng = this.facing === 1 ? wa.ang : Math.atan2(Math.sin(wa.ang), -Math.cos(wa.ang));
-    const shotAng = () => baseAng + randSpread(this.visSpread) - this.recoilAccum * 0.32 * this.facing;
+    // baseAng already carries the spray climb, because the pattern is applied
+    // to the aim itself and the muzzle transform is derived from it. The old
+    // `- recoilAccum * 0.32` bullet-only bias is gone with it: an aim error
+    // the weapon does not visibly make is one the player can never answer.
+    // recoilAccum still opens the random cone below, which is its real job.
+    const shotAng = () => baseAng + randSpread(this.visSpread);
 
     const mode = wpn.fireMode || 'hitscan';
     const n = wpn.pellets || 1;
@@ -1150,8 +1248,17 @@ export class Player {
     const spread = SPREAD_MODEL[wpn.recoilFeel] || SPREAD_MODEL.standard;
     // recoilMul is the equipped perk block's recoil-control bonus (1 = none).
     const rm = this.recoilMul;
-    ws.recoilVel += wpn.recoilKick * 2.1 * patMul * chargeMul * feel.kick * rm;
+    ws.recoilVel += wpn.recoilKick * RECOIL_IMPULSE * patMul * chargeMul * feel.kick * rm;
     ws.recoilRotVel -= wpn.recoilRot * 18 * patMul * chargeMul * feel.climb * rm;
+    // Spray step: walk the aim one entry further along this weapon's pattern.
+    // Read at the pre-increment index so the first round of a burst gets the
+    // pattern's first (deliberately gentle) step — a tap should not climb.
+    const spray = wpn.sprayPattern;
+    if (spray) {
+      const brace = lerp(1, SPRAY_CROUCH_BRACE, this.crouchHold);
+      const step = spray[(ws.shotIndex - 1) % spray.length] * feel.climb * rm * brace;
+      this.spray = clamp(this.spray + step, 0, SPRAY_MAX);
+    }
     if (feel.vibe) ws.vibe = Math.min(1, (ws.vibe || 0) + feel.vibe * chargeMul);
     if (wpn.bolt) ws.boltBack = 1;
     if (wpn.slide) ws.slideBack = 1;

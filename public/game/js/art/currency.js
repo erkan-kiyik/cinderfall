@@ -6,9 +6,10 @@
 // The game used to run two currencies with two icons: a struck coin for Para
 // and a cut gem for Diamonds. Both are wrong for what the economy is now.
 // Scrap is salvage — the usable metal stripped off what the operator downs —
-// so the icon is a bolted plate fragment with a torn edge rather than
-// something minted or mined. It has to read at 14px in a HUD pill, so the
-// silhouette is one chunky shape with a single bolt, not a busy composition.
+// so the icon has to look like hardware pulled off a machine, not like
+// something minted or mined. It is a hex nut with a threaded bolt run through
+// it: two named shapes rather than one abstract one, which is what lets it
+// survive being shown at 14px in a HUD pill.
 
 function shade(hex, k) {
   const n = parseInt(hex.slice(1), 16);
@@ -30,14 +31,33 @@ export function setupHiDpi(cv) {
   return { g, w, h };
 }
 
-// ---- SCRAP: a salvaged steel plate fragment, one corner sheared off, a bolt
+// Flat-top hexagon path, centred on (x,y).
+function hexPath(g, x, y, r) {
+  g.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+    if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+  }
+  g.closePath();
+}
+
+// ---- SCRAP: salvaged hardware — a heavy hex nut with a threaded bolt lying
 // through it. Warm steel rather than the HUD amber, so a scrap count never
-// reads as the same thing as an objective marker. ----
+// reads as the same thing as an objective marker.
+//
+// This was a torn steel plate with a single bolt on it, and the plate was
+// doing nothing for it: an irregular quad is a shape with no name, so at HUD
+// size it read as a grey blob and the one bolt was too small to rescue it.
+// Salvage currency should look like the stuff you actually strip off a
+// machine, so the hardware IS the icon now. A hex nut is the right hero —
+// it is instantly nameable, its silhouette is symmetric enough to stay
+// legible at 14px, and the hole through the middle survives any scale.
 export function paintScrap(g, w, h, scale = 1) {
   g.clearRect(0, 0, w, h);
   const cx = w / 2, cy = h / 2;
   const size = Math.min(w, h);
-  const s = (size / 64) * scale;
+  const s = (size / 57) * scale;   // fills the icon box rather than floating in it
   const tiny = size <= 30;
   g.save();
   g.translate(cx, cy);
@@ -46,82 +66,103 @@ export function paintScrap(g, w, h, scale = 1) {
   const base = '#8e9099';
   const outline = '#1c1f24';
   const R = 25;
+  const lw = tiny ? 2.6 : 3.2;
+  g.lineJoin = 'round';
+  g.lineCap = 'round';
 
   // ground shadow (skipped at icon size — reads as noise that small)
   if (!tiny) {
     g.fillStyle = 'rgba(0,0,0,0.30)';
-    g.beginPath(); g.ellipse(0, R + 5, R * 0.72, 3.5, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(0, R + 4, R * 0.78, 3.5, 0, 0, Math.PI * 2); g.fill();
   }
 
-  // plate body: a rough quad with one sheared corner, so the silhouette says
-  // "torn off something" rather than "manufactured"
-  const plate = () => {
-    g.beginPath();
-    g.moveTo(-R, -R * 0.72);
-    g.lineTo(R * 0.52, -R * 0.86);
-    g.lineTo(R, -R * 0.1);      // sheared corner
-    g.lineTo(R * 0.72, R * 0.8);
-    g.lineTo(-R * 0.66, R * 0.86);
-    g.closePath();
-  };
-
-  const body = g.createLinearGradient(-R, -R, R * 0.6, R);
-  body.addColorStop(0, shade(base, 1.32));
-  body.addColorStop(0.42, base);
-  body.addColorStop(1, shade(base, 0.52));
-  g.fillStyle = body;
-  plate(); g.fill();
-
-  // top-left bevel catching the key light
+  // ---- bolt, raked up to the right and passing behind the nut. Drawn first
+  // so the nut sits on it, which is what makes the two read as one assembled
+  // piece of hardware rather than two icons side by side.
   g.save();
-  plate(); g.clip();
-  g.fillStyle = 'rgba(255,248,232,0.30)';
+  g.rotate(-0.55);
+  const half = R * 0.26;                 // half the shaft's thickness
+  // The head is pushed out far enough to clear the nut's lower-left flat.
+  // Tucked in behind it the bolt read as a stub poking out of one side; with
+  // both ends showing, the silhouette is a bolt run through a nut.
+  const tipX = R * 1.16, headX = -R * 1.06;
+  const shaftG = g.createLinearGradient(0, -half, 0, half);
+  shaftG.addColorStop(0, shade(base, 1.34));
+  shaftG.addColorStop(0.45, shade(base, 0.98));
+  shaftG.addColorStop(1, shade(base, 0.46));
+  g.fillStyle = shaftG;
   g.beginPath();
-  g.moveTo(-R, -R * 0.72); g.lineTo(R * 0.52, -R * 0.86);
-  g.lineTo(R * 0.4, -R * 0.6); g.lineTo(-R * 0.86, -R * 0.44);
-  g.closePath(); g.fill();
-  // underside shadow
-  g.fillStyle = 'rgba(10,12,16,0.34)';
-  g.beginPath();
-  g.moveTo(-R * 0.66, R * 0.86); g.lineTo(R * 0.72, R * 0.8);
-  g.lineTo(R * 0.66, R * 0.5); g.lineTo(-R * 0.6, R * 0.56);
-  g.closePath(); g.fill();
-  // a couple of scuffs, only where they'll read
+  g.moveTo(headX, -half);
+  g.lineTo(tipX - half * 0.7, -half);
+  g.quadraticCurveTo(tipX, -half, tipX, 0);        // rounded tip
+  g.quadraticCurveTo(tipX, half, tipX - half * 0.7, half);
+  g.lineTo(headX, half);
+  g.closePath();
+  g.fill();
+  g.strokeStyle = outline; g.lineWidth = lw; g.stroke();
+  // thread pitch — raked ticks, the detail that says "screw" and not "rod"
+  if (!tiny) {
+    g.save();
+    g.beginPath();
+    g.rect(R * 0.24, -half, tipX - R * 0.24, half * 2);
+    g.clip();
+    g.strokeStyle = 'rgba(18,20,26,0.50)';
+    g.lineWidth = 1.5;
+    for (let x = R * 0.3; x < tipX; x += 4.4) {
+      g.beginPath(); g.moveTo(x + 1.8, -half); g.lineTo(x - 1.8, half); g.stroke();
+    }
+    g.restore();
+  }
+  // hex head on the near end
+  const hr = R * 0.42;
+  const headG = g.createLinearGradient(headX - hr, -hr, headX + hr, hr);
+  headG.addColorStop(0, shade(base, 1.42));
+  headG.addColorStop(1, shade(base, 0.58));
+  g.fillStyle = headG;
+  hexPath(g, headX, 0, hr); g.fill();
+  g.strokeStyle = outline; g.lineWidth = lw; g.stroke();
+  g.restore();
+
+  // ---- the nut itself: the hero shape, sitting just left of centre so the
+  // bolt's threaded end stays visible past its top-right flat.
+  const nx = -R * 0.14, ny = R * 0.06;
+  const nr = R * 0.78;
+
+  const nutG = g.createLinearGradient(nx - nr, ny - nr, nx + nr * 0.7, ny + nr);
+  nutG.addColorStop(0, shade(base, 1.36));
+  nutG.addColorStop(0.44, base);
+  nutG.addColorStop(1, shade(base, 0.50));
+  g.fillStyle = nutG;
+  hexPath(g, nx, ny, nr); g.fill();
+
+  g.save();
+  hexPath(g, nx, ny, nr); g.clip();
+  // chamfered top face — the bevel every real nut has, and the thing that
+  // stops the hexagon reading as a flat sticker
+  g.fillStyle = 'rgba(255,248,232,0.26)';
+  hexPath(g, nx, ny - nr * 0.10, nr * 0.86); g.fill();
+  g.fillStyle = 'rgba(10,12,16,0.32)';
+  g.fillRect(nx - nr, ny + nr * 0.42, nr * 2, nr);
   if (!tiny) {
     g.strokeStyle = 'rgba(20,22,28,0.34)';
     g.lineWidth = 1.6;
-    g.beginPath(); g.moveTo(-R * 0.5, R * 0.1); g.lineTo(R * 0.1, R * 0.3); g.stroke();
-    g.strokeStyle = 'rgba(255,250,238,0.20)';
-    g.lineWidth = 1.1;
-    g.beginPath(); g.moveTo(-R * 0.44, -R * 0.06); g.lineTo(R * 0.2, R * 0.12); g.stroke();
+    g.beginPath(); g.moveTo(nx - nr * 0.6, ny + nr * 0.3); g.lineTo(nx + nr * 0.2, ny + nr * 0.52); g.stroke();
   }
   g.restore();
 
-  g.strokeStyle = outline;
-  g.lineWidth = tiny ? 2.6 : 3.2;
-  g.lineJoin = 'round';
-  plate(); g.stroke();
+  g.strokeStyle = outline; g.lineWidth = lw;
+  hexPath(g, nx, ny, nr); g.stroke();
 
-  // bolt through the plate — the one detail that survives at 14px and makes
-  // the shape read as hardware rather than as an abstract polygon
-  const bx = -R * 0.16, by = -R * 0.04;
-  const br = tiny ? R * 0.3 : R * 0.26;
-  g.fillStyle = shade(base, 0.42);
-  g.beginPath(); g.arc(bx, by, br * 1.35, 0, Math.PI * 2); g.fill();
-  const boltG = g.createLinearGradient(bx - br, by - br, bx + br, by + br);
-  boltG.addColorStop(0, shade(base, 1.45));
-  boltG.addColorStop(1, shade(base, 0.72));
-  g.fillStyle = boltG;
-  // hex head
-  g.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
-    const px = bx + Math.cos(a) * br, py = by + Math.sin(a) * br;
-    if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
-  }
-  g.closePath(); g.fill();
-  g.strokeStyle = outline; g.lineWidth = tiny ? 1.6 : 1.9;
-  g.stroke();
+  // the bore through it — dark, so the nut is unmistakably a nut
+  const br = nr * 0.44;
+  g.fillStyle = '#15171c';
+  g.beginPath(); g.arc(nx, ny, br, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = outline; g.lineWidth = tiny ? 1.8 : 2.2;
+  g.beginPath(); g.arc(nx, ny, br, 0, Math.PI * 2); g.stroke();
+  // a sliver of light on the far inner wall, so the hole has depth
+  g.strokeStyle = 'rgba(255,250,238,0.26)';
+  g.lineWidth = tiny ? 1.6 : 2;
+  g.beginPath(); g.arc(nx, ny, br * 0.82, Math.PI * 0.85, Math.PI * 1.75); g.stroke();
 
   g.restore();
 }
