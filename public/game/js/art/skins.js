@@ -47,7 +47,17 @@ import { makeRng } from '../engine/math.js';
 export const MOUNTS = {
   // conventional bodies
   rifle:  { muzzle: { x: 40,   y: -5.3, s: 1.0 },  rail: { x: 1,   y: -10.2, s: 1.0 },  span: [-20, 40] },
-  pistol: { muzzle: { x: 10.2, y: -5.2, s: 0.5 },  rail: { x: 1,   y: -8.5,  s: 0.5 },  span: [-7, 11] },
+  // Pistol's barrel/slide is a *separate* sprite from its body (blowback
+  // animation — see paintPistolSlide in weapons.js), composited on top only
+  // at real render time. Both numbers above were eyeballed off the body
+  // alone, which doesn't have a barrel on it at all, so muzzle devices sat
+  // out near the rear sight and rail optics floated a full unit above the
+  // slide. Re-measured against the body+slide composite (matching how
+  // rig.js actually draws the gun): muzzle sits right at the slide's front
+  // curve (bore centre ~y:-4.4), rail sits right on the slide's top deck
+  // (~y:-6.9, just above its built-in iron sights). Also used by the RAY
+  // GUN / QUANTUM energy pistols, which share this mount (see SKIN_BASES).
+  pistol: { muzzle: { x: 11.8, y: -4.4, s: 0.5 },  rail: { x: 1,   y: -6.9,  s: 0.5 },  span: [-7, 11] },
   smg:    { muzzle: { x: 24,   y: -5.6, s: 0.8 },  rail: { x: 0,   y: -9.3,  s: 0.75 }, span: [-14, 24] },
   // Laser SMG: its own frame, so its own mounts. The aperture sits at 22.4.
   lasersmg: { muzzle: { x: 22.4, y: -5.9, s: 0.75 }, rail: { x: 1, y: -8.0,  s: 0.7 }, span: [-14, 23] },
