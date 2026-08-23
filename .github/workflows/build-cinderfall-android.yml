@@ -10,6 +10,9 @@ on:
       - "mobile/**"
       - ".github/workflows/build-cinderfall-android.yml"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -48,3 +51,24 @@ jobs:
           name: cinderfall-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Actions artifacts live behind Azure Blob Storage, which is unreachable
+      # from some sandboxed agent environments. A GitHub Release attaches the
+      # same APK to github.com itself, so it's downloadable from anywhere the
+      # rest of GitHub is reachable — including those environments.
+      - name: Publish a dev release with the APK attached
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev-build-${{ github.run_number }}
+          name: "Cinderfall dev build #${{ github.run_number }}"
+          body: |
+            Automated debug-signed Android build from commit ${{ github.sha }}.
+
+            Debug-key signed — install directly on a device for testing. Not
+            suitable for Play Store submission (needs a release keystore and
+            Play App Signing enrollment; see docs/RELEASE.md).
+          files: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
