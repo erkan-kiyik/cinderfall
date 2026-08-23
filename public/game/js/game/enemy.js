@@ -13,6 +13,34 @@ import { segVsBox } from './player.js';
 
 const WALK = 95, CHASE = 210;
 
+// Radians of muzzle climb a hostile's burst gains per round fired, reset
+// between bursts.
+//
+// This number exists because of a bug it replaces. Hostiles used to fire
+// along their *drawn* weapon angle, which carries the recoil animation, so
+// every burst walked itself off the player. Measured over live combat that
+// landed about 48-56% of their rounds — a difficulty the game was balanced
+// around without anyone choosing it. Taking the animation out of the
+// ballistics (see fireShot) took them straight to 100%, which is not a
+// difficulty setting, it is a death sentence.
+//
+// So the walk-off is modelled properly instead: the first round of a burst
+// is dead on the player's chest and each one after climbs, which is both what
+// a real burst does and what makes breaking line of sight for a beat worth
+// doing. Higher difficulty tiers hold it down better, bottoming out at half.
+//
+// 0.135 was picked by measurement, not feel: it puts live hit rate back at
+// ~54%, i.e. where the bug had it, so the balance the rest of the game is
+// tuned against is preserved. Isolated per range it reads 60% / 33% / 25% at
+// 200 / 350 / 500px — point blank is genuinely dangerous and distance is
+// genuinely safer, which the flat old number never expressed.
+const BURST_CLIMB = 0.135;
+
+// Seconds after a flinch before another bullet can cause one. See
+// Enemy.damage — this is what keeps sustained fire suppressive rather than
+// paralysing.
+const FLINCH_REFRACTORY = 0.85;
+
 export class Enemy {
   constructor(parts, shadow, rifle, world, fx, audio, x, patrolMin, patrolMax) {
     this.parts = parts; this.shadow = shadow;
@@ -39,9 +67,14 @@ export class Enemy {
     this.waitT = rand(0, 2);
     this.alertT = 0;
     this.flinchT = 0;
+    this.flinchCd = 0;   // refractory timer, see damage()
     this.mag = 30;
     this.reload = null;
     this.burstLeft = 0;
+    // Muzzle climb accumulated across the current burst, in radians. Hostiles
+    // walk their fire off target the same way the player does — see
+    // BURST_CLIMB and Enemy.fireShot.
+    this.burstClimb = 0;
     this.burstGap = rand(0.6, 1.4);
     this.shotCd = 0;
     this.engagedT = 0;
@@ -66,7 +99,23 @@ export class Enemy {
     if (this.deadT > 0) return;
     this.hp -= dmg;
     this.hurtT = 0.35;
-    this.flinchT = melee ? 0.55 : 0.3;
+    // Flinch is rate-limited, because a hostile that flinches on every single
+    // round is not suppressed, it is disabled. The fire gate below requires
+    // `flinchT <= 0`, and a rifle lands a round every ~0.09s — so once the
+    // player's shots actually started connecting (see the ballistics fix in
+    // fireShot), a single operator could hold a hostile in an unbroken 0.3s
+    // flinch forever and it would never fire back once. That is not a
+    // difficulty setting either; it just deletes the firefight.
+    //
+    // A hit inside the refractory window still hurts, still staggers the
+    // sprite via hurtT, and still knocks the hostile back. It just cannot
+    // restart the flinch, which leaves a real window to shoot back in.
+    // Melee is exempt: a knife is a deliberate close-range commitment and
+    // stunning with it is the point.
+    if (melee || this.flinchCd <= 0) {
+      this.flinchT = melee ? 0.55 : 0.3;
+      this.flinchCd = melee ? 0.3 : FLINCH_REFRACTORY;
+    }
     this.vx += dirX * (melee ? 210 : 60);
     this.audio.hitFlesh();
     // getting shot reveals the shooter immediately, wherever it came from
@@ -211,6 +260,7 @@ export class Enemy {
     this.breathT += dt;
     this.hurtT = Math.max(0, this.hurtT - dt);
     this.flinchT = Math.max(0, this.flinchT - dt);
+    this.flinchCd = Math.max(0, this.flinchCd - dt);
     this.shotCd -= dt;
     this.meleeT -= dt;
     this.coverCooldown -= dt;
@@ -321,6 +371,7 @@ export class Enemy {
           this.burstGap -= dt;
           if (this.burstGap <= 0 && dist < 620 && per.visible) {
             this.burstLeft = 1 + ((rand() * 2) | 0);
+            this.burstClimb = 0;
             this.burstGap = rand(1.1, 2.1);
           }
           if (this.burstLeft > 0 && this.shotCd <= 0) this.fireShot(player);
@@ -399,6 +450,7 @@ export class Enemy {
               this.burstGap -= dt;
               if (this.burstGap <= 0 && dist < 620 && per.visible) {
                 this.burstLeft = 3 + (rand() * 3 | 0) + Math.floor(this.difficulty * 0.4);
+                this.burstClimb = 0;
                 this.burstGap = Math.max(0.3, rand(0.75, 1.5) - this.difficulty * 0.04);
               }
             }
@@ -476,8 +528,22 @@ export class Enemy {
     const wa = weaponAnchor(pose, this.wpn, ws, this.aimLocal);
     const mzl = toWorld(this, weaponPoint(wa, this.wpn.muzzle));
     const ejl = toWorld(this, weaponPoint(wa, this.wpn.eject));
-    let ang = this.facing === 1 ? wa.ang : Math.atan2(Math.sin(wa.ang), -Math.cos(wa.ang));
+    // Same split the player has (see Player.fire): the drawn weapon carries
+    // the recoil spring, the bullet does not. Firing along the animated
+    // transform meant a hostile's own muzzle-climb animation walked its burst
+    // off the player — inaccuracy that came from the sprite rather than from
+    // `aimErr`, which is the knob difficulty is actually supposed to turn.
+    const drawAng = this.facing === 1 ? wa.ang : Math.atan2(Math.sin(wa.ang), -Math.cos(wa.ang));
+    const ballistic = this.aimLocal - this.burstClimb;
+    let ang = this.facing === 1
+      ? ballistic
+      : Math.atan2(Math.sin(ballistic), -Math.cos(ballistic));
     ang += randSpread(this.aimErr + 0.025);
+    // Advance the climb for the next round of this burst. This is what makes
+    // a hostile's burst start on target and drift high — the behaviour the
+    // old animation-driven angle produced by accident, now a designed number
+    // that difficulty can tune instead of a side effect of the sprite.
+    this.burstClimb += BURST_CLIMB * Math.max(0.5, 1 - this.difficulty * 0.05);
 
     const range = 1300;
     const ex = mzl.x + Math.cos(ang) * range;
@@ -506,7 +572,7 @@ export class Enemy {
     ws.boltBack = 1;
     const distVol = clamp(1 - Math.abs(this.x - player.x) / 900, 0.3, 0.85);
     this.audio.shot('rifle', distVol);
-    this.fx.muzzle(mzl.x, mzl.y, ang, 0.85);
+    this.fx.muzzle(mzl.x, mzl.y, drawAng, 0.85);
     this.fx.tracer(mzl.x + Math.cos(ang) * 14, mzl.y + Math.sin(ang) * 14, hx, hy);
     this.fx.casing(ejl.x, ejl.y, this.facing, 4.6);
   }

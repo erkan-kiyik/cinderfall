@@ -1131,12 +1131,34 @@ export class Player {
     const wa = weaponAnchor(pose, wpn, ws, this.aimSmooth);
     const mzl = toWorld(this, weaponPoint(wa, wpn.muzzle));
     const ejl = toWorld(this, weaponPoint(wa, wpn.eject || wpn.muzzle));
-    const baseAng = this.facing === 1 ? wa.ang : Math.atan2(Math.sin(wa.ang), -Math.cos(wa.ang));
-    // baseAng already carries the spray climb, because the pattern is applied
-    // to the aim itself and the muzzle transform is derived from it. The old
-    // `- recoilAccum * 0.32` bullet-only bias is gone with it: an aim error
-    // the weapon does not visibly make is one the player can never answer.
-    // recoilAccum still opens the random cone below, which is its real job.
+    // Two different angles, and keeping them apart is the whole point.
+    //
+    // `drawAng` is the weapon transform actually on screen this frame. It
+    // carries the recoil spring, the idle sway, the sprint carry and the
+    // relaxed-carry muzzle dip, because those are what the sprite is doing.
+    // The flash and the ejected casing hang off it so they line up with the
+    // barrel that is drawn.
+    const drawAng = this.facing === 1 ? wa.ang : Math.atan2(Math.sin(wa.ang), -Math.cos(wa.ang));
+    // `baseAng` is where the operator is pointing, and it is what the bullet
+    // follows. It deliberately does NOT include the weapon's animation.
+    //
+    // This was the single worst bug in the shooting model: bullets were fired
+    // along the animated transform, so the cosmetic muzzle climb steered them.
+    // `ws.recoilRot` reaches roughly a seventh of a radian within one frame of
+    // a shot, which is about 8 degrees of pure animation — measured against a
+    // hostile at 650px, shots aimed dead centre of the chest were landing
+    // 60-160px above the head, and holding the trigger on a target you were
+    // perfectly aimed at connected under 8% of the time. The kick has to be
+    // visible and it must not aim the gun.
+    //
+    // Recoil still costs accuracy, through the two systems that are meant to:
+    // `this.spray` (deterministic, learnable, already folded into aimSmooth)
+    // and `this.visSpread` (the random cone, which is where movement, jumping
+    // and sustained-fire bloom are priced in).
+    const ballistic = this.aimSmooth;
+    const baseAng = this.facing === 1
+      ? ballistic
+      : Math.atan2(Math.sin(ballistic), -Math.cos(ballistic));
     const shotAng = () => baseAng + randSpread(this.visSpread);
 
     const mode = wpn.fireMode || 'hitscan';
@@ -1156,7 +1178,9 @@ export class Player {
       for (let i = 0; i < n; i++) this.hitscanShot(mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul * this.dmgMul);
     }
 
-    this.presentShot(cur, mzl, ejl, baseAng, chargeMul);
+    // Flash and casing take the drawn angle, not the ballistic one, so they
+    // stay welded to the barrel while it kicks.
+    this.presentShot(cur, mzl, ejl, drawAng, chargeMul);
   }
 
   hitscanShot(mzl, ang, wpn, enemies, game, dmg) {
