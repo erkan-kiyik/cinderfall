@@ -28,44 +28,58 @@ import { makeRng } from '../engine/math.js';
 // Where attachments bolt on, in each body's own local space (origin = the
 // grip/trigger anchor, +x toward the muzzle). Measured off the body painters
 // in weapons.js — see the "box:" comment at the top of each.
+// `rail.y` for every entry below is the weapon's own DECK — the top surface
+// a real accessory's mounting foot would rest on — not the top of whatever
+// happens to be sitting there. That distinction is the whole bug this table
+// used to have: every `rail.y` had been set to roughly where the body's own
+// built-in optic/carry-handle/fin stack STARTS (its top edge), because that
+// was the easiest thing to eyeball off the body art. But railDevice() below
+// draws each attachment's shape growing upward FROM the mount point — so a
+// mount pinned at an accessory's top left every skin-added scope, laser or
+// holo sight floating 3-8 units above the gun with nothing connecting it to
+// the body, on every single weapon that had one. `eshotgun` and `cryo`,
+// which carry no built-in topside accessory at all, already had the deck
+// value right (-8.6) — that's the number that was generalised to the rest.
+//
+// Verified per-weapon against a ruler overlay rendered on each body sprite
+// (ax.rail.y crosshair against the receiver/frame's real top surface), not
+// guessed from the paint code alone.
 export const MOUNTS = {
   // conventional bodies
-  rifle:  { muzzle: { x: 40,   y: -5.3, s: 1.0 },  rail: { x: 1,   y: -15.4, s: 1.0 },  span: [-20, 40] },
-  pistol: { muzzle: { x: 10.2, y: -5.2, s: 0.5 },  rail: { x: 1,   y: -9.6,  s: 0.5 },  span: [-7, 11] },
-  smg:    { muzzle: { x: 24,   y: -5.6, s: 0.8 },  rail: { x: 0,   y: -11.6, s: 0.75 }, span: [-14, 24] },
-  // Laser SMG: its own frame, so its own mounts. The aperture sits at 22.4 and
-  // the lens stack already occupies the top deck, so a rail optic rides just
-  // above it rather than at the P-12's height.
-  lasersmg: { muzzle: { x: 22.4, y: -5.9, s: 0.75 }, rail: { x: 1, y: -10.6, s: 0.7 }, span: [-14, 23] },
+  rifle:  { muzzle: { x: 40,   y: -5.3, s: 1.0 },  rail: { x: 1,   y: -10.2, s: 1.0 },  span: [-20, 40] },
+  pistol: { muzzle: { x: 10.2, y: -5.2, s: 0.5 },  rail: { x: 1,   y: -8.5,  s: 0.5 },  span: [-7, 11] },
+  smg:    { muzzle: { x: 24,   y: -5.6, s: 0.8 },  rail: { x: 0,   y: -9.3,  s: 0.75 }, span: [-14, 24] },
+  // Laser SMG: its own frame, so its own mounts. The aperture sits at 22.4.
+  lasersmg: { muzzle: { x: 22.4, y: -5.9, s: 0.75 }, rail: { x: 1, y: -8.0,  s: 0.7 }, span: [-14, 23] },
   knife:  { muzzle: null,                          rail: null,                          span: [-6, 16] },
   // purpose-built energy / heavy bodies. Each has its own emitter geometry,
   // so the muzzle mount sits where that body's barrel actually ends rather
   // than at a shared guess.
-  railgun:  { muzzle: { x: 39.4, y: -4.6, s: 0.95 }, rail: { x: 0, y: -15.0, s: 0.95 }, span: [-20, 40] },
-  particle: { muzzle: { x: 39.0, y: -3.9, s: 0.95 }, rail: { x: 0, y: -14.6, s: 0.9 },  span: [-20, 39] },
-  flame:    { muzzle: { x: 38.6, y: -4.2, s: 0.9 },  rail: { x: 0, y: -14.6, s: 0.85 }, span: [-20, 39] },
-  minigun:  { muzzle: { x: 41,   y: -2.5, s: 1.15 }, rail: { x: -8, y: -12.0, s: 1.0 }, span: [-22, 52] },
-  rocket:   { muzzle: { x: 47,   y: 0,    s: 1.1 },  rail: { x: 2,  y: -10.6, s: 1.0 }, span: [-26, 56] },
+  railgun:  { muzzle: { x: 39.4, y: -4.6, s: 0.95 }, rail: { x: 0, y: -8.5,  s: 0.95 }, span: [-20, 40] },
+  particle: { muzzle: { x: 39.0, y: -3.9, s: 0.95 }, rail: { x: 0, y: -8.5,  s: 0.9 },  span: [-20, 39] },
+  flame:    { muzzle: { x: 38.6, y: -4.2, s: 0.9 },  rail: { x: 0, y: -7.0,  s: 0.85 }, span: [-20, 39] },
+  minigun:  { muzzle: { x: 41,   y: -2.5, s: 1.15 }, rail: { x: -8, y: -10.5, s: 1.0 }, span: [-22, 52] },
+  rocket:   { muzzle: { x: 47,   y: 0,    s: 1.1 },  rail: { x: 2,  y: -8.5,  s: 1.0 }, span: [-26, 56] },
 
   // ---- modular-chassis weapons ------------------------------------------
-  // These eleven each build a different barrel and a different topside from
-  // the chassis kit in weapons.js, so they cannot share the rifle's mounts:
-  // a brake pinned at x=40 hangs in mid-air off a stub barrel that ends at
-  // 35.6, and sits buried inside a long barrel that runs to 49. A rail optic
-  // pinned at y=-15.4 floats over a receiver whose deck is at -8.6.
+  // These eleven share one receiver+grip (see paintChassis in weapons.js —
+  // "identical across every chassis"), so they share one deck height too:
+  // -8.6, confirmed against eshotgun's bare receiver (no topside accessory
+  // to obscure it) and against where battle/sniper's own built-in scope and
+  // lmg's carry handle actually meet the frame.
   //
-  // Muzzle x/y mirror BARREL_TIP and rail y mirrors TOP_RAIL_Y in weapons.js
-  // — same measurements, same geometry, so the attachment lands on the part.
-  battle:    { muzzle: { x: 49.0, y: -5.2, s: 1.0 },  rail: { x: 1,  y: -16.2, s: 1.0 },  span: [-22, 49] },
-  lmg:       { muzzle: { x: 42.0, y: -5.1, s: 1.1 },  rail: { x: 1,  y: -15.4, s: 1.0 },  span: [-22, 42] },
-  sniper:    { muzzle: { x: 47.0, y: -5.1, s: 1.0 },  rail: { x: 1,  y: -16.2, s: 1.05 }, span: [-21, 47] },
-  plasma:    { muzzle: { x: 43.5, y: -5.0, s: 0.95 }, rail: { x: 1,  y: -14.8, s: 0.95 }, span: [-21, 44] },
-  pulse:     { muzzle: { x: 47.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.2, s: 0.9 },  span: [-17, 47] },
+  // Muzzle x/y still mirrors BARREL_TIP in weapons.js — that part was never
+  // wrong, only rail.y was.
+  battle:    { muzzle: { x: 49.0, y: -5.2, s: 1.0 },  rail: { x: 1,  y: -8.6, s: 1.0 },  span: [-22, 49] },
+  lmg:       { muzzle: { x: 42.0, y: -5.1, s: 1.1 },  rail: { x: 1,  y: -8.6, s: 1.0 },  span: [-22, 42] },
+  sniper:    { muzzle: { x: 47.0, y: -5.1, s: 1.0 },  rail: { x: 1,  y: -8.6, s: 1.05 }, span: [-21, 47] },
+  plasma:    { muzzle: { x: 43.5, y: -5.0, s: 0.95 }, rail: { x: 1,  y: -8.6, s: 0.95 }, span: [-21, 44] },
+  pulse:     { muzzle: { x: 47.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -8.6, s: 0.9 },  span: [-17, 47] },
   eshotgun:  { muzzle: { x: 35.6, y: -5.0, s: 1.05 }, rail: { x: 1,  y: -8.6,  s: 0.85 }, span: [-14, 36] },
-  ion:       { muzzle: { x: 46.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.8, s: 0.95 }, span: [-21, 46] },
-  emp:       { muzzle: { x: 44.0, y: -3.4, s: 1.0 },  rail: { x: 1,  y: -14.2, s: 0.9 },  span: [-17, 44] },
-  gravity:   { muzzle: { x: 47.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.8, s: 0.95 }, span: [-21, 47] },
-  lightning: { muzzle: { x: 46.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -14.2, s: 0.9 },  span: [-7, 46] },
+  ion:       { muzzle: { x: 46.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -8.6, s: 0.95 }, span: [-21, 46] },
+  emp:       { muzzle: { x: 44.0, y: -3.4, s: 1.0 },  rail: { x: 1,  y: -8.6, s: 0.9 },  span: [-17, 44] },
+  gravity:   { muzzle: { x: 47.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -8.6, s: 0.95 }, span: [-21, 47] },
+  lightning: { muzzle: { x: 46.0, y: -4.9, s: 0.95 }, rail: { x: 1,  y: -8.6, s: 0.9 },  span: [-7, 46] },
   cryo:      { muzzle: { x: 47.0, y: -5.1, s: 0.95 }, rail: { x: 1,  y: -8.6,  s: 0.85 }, span: [-21, 47] },
 };
 
