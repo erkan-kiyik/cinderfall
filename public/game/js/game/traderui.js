@@ -21,7 +21,7 @@ import {
   formatCountdown, traderLineKey, DEEP_CUT,
 } from './trader.js';
 import { watchRewardedAd } from '../engine/ads.js';
-import { renderTraderPortrait } from '../art/trader.js';
+import { renderTraderScene } from '../art/trader.js';
 import { renderScrapIcon } from '../art/currency.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { t, onLangChange } from '../engine/i18n.js';
@@ -66,7 +66,6 @@ export class TraderUI {
   }
 
   mount() {
-    renderTraderPortrait($('trader-portrait'));
     this.renderCategories();
     $('btn-trade-ad').addEventListener('click', () => this.watchAdForScrap());
     this.refresh();
@@ -90,6 +89,7 @@ export class TraderUI {
   }
 
   refresh() {
+    this.renderScene();
     this.renderScrapBalance();
     this.renderTraderLine();
     this.renderAdOffer();
@@ -97,6 +97,16 @@ export class TraderUI {
     this.renderRestockClock();
     this.renderItemGrid();
     this.renderCategories();
+  }
+
+  // Repainted on every refresh rather than once at mount(): the panel starts
+  // hidden (`display:none` until its tab is active), so a canvas sized off
+  // `clientWidth` at mount time would bake in a width of 0. Painting again
+  // each time the tab is actually shown also picks up an orientation change
+  // for free — it's a cheap procedural canvas paint, not a network call.
+  renderScene() {
+    const cv = $('trader-scene');
+    if (cv && cv.clientWidth) renderTraderScene(cv);
   }
 
   renderScrapBalance() {

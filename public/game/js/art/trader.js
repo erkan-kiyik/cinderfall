@@ -283,3 +283,198 @@ export function renderTraderPortrait(cv) {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   paintTrader(g, w, h);
 }
+
+// ---------------------------------------------------------------------------
+// The stall — CROW's corner of the sector, wide banner for the trader panel
+// ---------------------------------------------------------------------------
+// The bust portrait above says who CROW is; this says where he does business.
+// Two lean-to stalls flank him — poles, a tattered awning, salvage strung up
+// to show what he deals in — receding slightly into the haze so he stays the
+// thing the eye lands on. He is the same figure paintTrader already draws
+// (composited in from an offscreen pass rather than redrawn, so the two
+// never drift apart), just standing at his own counter instead of alone.
+//
+// Same two-light rule as his portrait: warm ember low or the fire, cool haze
+// high off the sodium lamps, nothing else lit. A market only reads as HIS
+// market if it is lit by the same fire he is.
+
+const WOOD = '#3c2f22';      // stall timber
+const CANVAS_AWN = '#463a2c'; // awning canvas, unlit
+const RUST = '#6b4226';       // hung scrap / canisters
+
+function shadeA(hex, k, a) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = Math.min(255, Math.max(0, Math.round(r * k)));
+  g = Math.min(255, Math.max(0, Math.round(g * k)));
+  b = Math.min(255, Math.max(0, Math.round(b * k)));
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// One lean-to stall: two raked poles, a sagging canvas roof, a counter
+// plank, and a handful of things hung off the crossbeam. `flip` mirrors it
+// for the right-hand side; `depth` (0..1) pushes it back into the haze —
+// smaller, flatter light, less detail — so it reads as background rather
+// than competing with CROW.
+function stall(g, u, flip, depth, seed) {
+  const rnd = rng(seed);
+  const s = 1 - depth * 0.32;
+  const haze = depth * 0.5;
+  g.save();
+  g.scale(flip, 1);
+  g.scale(s, s);
+  g.translate(0, -depth * 6 * u);
+
+  const poleH = 46 * u, poleW = 2.6 * u, spread = 34 * u;
+  const wood = shadeA(WOOD, 1 - haze * 0.5, 1 - haze * 0.35);
+  g.fillStyle = wood;
+  g.fillRect(-spread / 2 - poleW / 2, -poleH, poleW, poleH);
+  g.fillRect(spread / 2 - poleW / 2, -poleH, poleW, poleH);
+  // crossbeam
+  g.fillRect(-spread / 2 - poleW, -poleH - 2 * u, spread + poleW * 2, 3 * u);
+
+  // sagging canvas awning, front edge lower than the back so it reads as
+  // cloth rather than a rigid roof
+  g.fillStyle = shadeA(CANVAS_AWN, 1 - haze * 0.4, 0.94 - haze * 0.4);
+  g.beginPath();
+  g.moveTo(-spread / 2 - 6 * u, -poleH - 2 * u);
+  g.quadraticCurveTo(0, -poleH + 8 * u, spread / 2 + 6 * u, -poleH - 2 * u);
+  g.lineTo(spread / 2 + 2 * u, -poleH - 12 * u);
+  g.quadraticCurveTo(0, -poleH - 20 * u, -spread / 2 - 2 * u, -poleH - 12 * u);
+  g.closePath(); g.fill();
+  // awning stripe, torn edge
+  g.strokeStyle = shadeA('#000000', 1, 0.25 - haze * 0.15);
+  g.lineWidth = u;
+  g.beginPath();
+  for (let x = -spread / 2; x <= spread / 2; x += 6 * u) {
+    g.moveTo(x, -poleH - 16 * u); g.lineTo(x + 3 * u, -poleH - 6 * u);
+  }
+  g.stroke();
+
+  // hung goods: strung along the crossbeam, silhouetted — canisters, coiled
+  // wire, a couple of scrap plates. Just enough shape variety to read as
+  // "salvage for sale" without individually resolving at banner scale.
+  const hangY = -poleH + 2 * u;
+  for (let i = 0; i < 4; i++) {
+    const hx = -spread / 2 + 6 * u + i * ((spread - 12 * u) / 3);
+    const hh = (6 + rnd() * 5) * u;
+    g.fillStyle = shadeA(RUST, 1 - haze * 0.5, 0.85 - haze * 0.4);
+    g.strokeStyle = shadeA('#000000', 1, 0.5);
+    g.lineWidth = 0.5 * u;
+    g.beginPath(); g.moveTo(hx, hangY); g.lineTo(hx, hangY + hh * 0.3); g.stroke();
+    if (i % 2 === 0) {
+      g.beginPath(); g.arc(hx, hangY + hh * 0.55, hh * 0.28, 0, Math.PI * 2); g.fill(); g.stroke();
+    } else {
+      g.fillRect(hx - hh * 0.18, hangY + hh * 0.32, hh * 0.36, hh * 0.5);
+      g.strokeRect(hx - hh * 0.18, hangY + hh * 0.32, hh * 0.36, hh * 0.5);
+    }
+  }
+
+  // counter plank across the front poles, waist height
+  g.fillStyle = shadeA(WOOD, 1.15 - haze * 0.4, 1 - haze * 0.35);
+  g.fillRect(-spread / 2 - 3 * u, -20 * u, spread + 6 * u, 3 * u);
+  // a couple of crates stacked under the counter
+  g.fillStyle = shadeA(WOOD, 0.85 - haze * 0.4, 0.9 - haze * 0.4);
+  g.fillRect(-spread / 2, -13 * u, 10 * u, 13 * u);
+  g.fillRect(-spread / 2 + 11 * u, -9 * u, 8 * u, 9 * u);
+
+  g.restore();
+}
+
+// Paints the wide trader-panel banner into a `w`×`h` box: two stalls flanking
+// CROW at his own counter, lit by the same fire his portrait uses.
+export function paintTraderScene(g, w, h) {
+  g.clearRect(0, 0, w, h);
+  const u = h / 140;   // reference scale: composition designed at ~140 units tall
+  const groundY = h * 0.90;
+
+  // ---- back wall: dark and fairly flat, so silhouettes read against it
+  // instead of dissolving into a haze. What warmth there is stays low and
+  // narrow, behind CROW specifically — it is his fire, not ambient light.
+  g.fillStyle = '#0d0e12';
+  g.fillRect(0, 0, w, groundY);
+  const wall = g.createLinearGradient(0, 0, 0, groundY);
+  wall.addColorStop(0, 'rgba(20,17,15,0)');
+  wall.addColorStop(1, 'rgba(46,32,20,0.5)');
+  g.fillStyle = wall;
+  g.fillRect(0, 0, w, groundY);
+  const glow = g.createRadialGradient(w * 0.58, groundY, 2 * u, w * 0.58, groundY, w * 0.24);
+  glow.addColorStop(0, 'rgba(255,140,60,0.30)');
+  glow.addColorStop(1, 'rgba(255,140,60,0)');
+  g.fillStyle = glow;
+  g.fillRect(0, 0, w, groundY);
+
+  // ---- ground: a street edge (one hard line, the game's own convention for
+  // "this is the floor") then a darker band toward camera
+  g.fillStyle = '#0a0908';
+  g.fillRect(0, groundY, w, h - groundY);
+  g.strokeStyle = 'rgba(255,180,120,0.14)';
+  g.lineWidth = Math.max(1, 0.7 * u);
+  g.beginPath(); g.moveTo(0, groundY); g.lineTo(w, groundY); g.stroke();
+  g.fillStyle = 'rgba(255,150,70,0.08)';
+  g.beginPath(); g.ellipse(w * 0.58, groundY, w * 0.22, 3 * u, 0, 0, Math.PI * 2); g.fill();
+
+  // ---- background stalls, pushed back and to the sides — clearly smaller
+  // and flatter than CROW's own, so the eye has somewhere to land besides him
+  g.save(); g.translate(w * 0.15, groundY); stall(g, u * 0.86, 1, 0.6, 0x5a11); g.restore();
+  g.save(); g.translate(w * 0.88, groundY); stall(g, u * 0.86, -1, 0.55, 0x5a29); g.restore();
+
+  // ---- CROW's own counter, front and centre-left so his standing spot and
+  // the goods on it stay clear of his own silhouette
+  g.save(); g.translate(w * 0.40, groundY); stall(g, u, 1, 0, 0x5a37); g.restore();
+
+  // scrap plates laid out on the near counter
+  g.save();
+  g.translate(w * 0.365, groundY - 20.2 * u);
+  for (let i = 0; i < 3; i++) {
+    const px = i * 6 * u, py = -Math.sin(i * 1.3) * 0.6 * u;
+    g.save();
+    g.translate(px, py);
+    g.rotate((i - 1) * 0.22);
+    const pg = g.createLinearGradient(-2.6 * u, -1.8 * u, 2.6 * u, 1.8 * u);
+    pg.addColorStop(0, shade('#8e9099', 1.25));
+    pg.addColorStop(1, shade('#8e9099', 0.5));
+    g.fillStyle = pg;
+    g.fillRect(-2.6 * u, -1.8 * u, 5.2 * u, 3.6 * u);
+    g.strokeStyle = 'rgba(8,9,11,0.85)'; g.lineWidth = 0.4 * u;
+    g.strokeRect(-2.6 * u, -1.8 * u, 5.2 * u, 3.6 * u);
+    g.restore();
+  }
+  g.restore();
+
+  // ---- CROW himself, composited from his own portrait painter so the two
+  // never fall out of sync. Sized to read as the tallest thing in frame
+  // without crowding the stalls either side of him, and clamped so his hood
+  // always has headroom regardless of the box's aspect ratio.
+  const figH = Math.min(64 * u, groundY * 0.94), figW = figH;
+  const off = document.createElement('canvas');
+  off.width = figW; off.height = figH;
+  paintTrader(off.getContext('2d'), figW, figH);
+  g.drawImage(off, w * 0.58 - figW / 2, groundY - figH, figW, figH);
+
+  // ---- foreground vignette: darkens the bottom corners so the ground
+  // doesn't compete with the item cards sitting just below the panel
+  const vig = g.createLinearGradient(0, h * 0.75, 0, h);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.30)');
+  g.fillStyle = vig;
+  g.fillRect(0, 0, w, h);
+  // edge falloff so the banner reads as a scene, not a rectangle of content
+  const edge = g.createLinearGradient(0, 0, w, 0);
+  edge.addColorStop(0, 'rgba(0,0,0,0.35)');
+  edge.addColorStop(0.12, 'rgba(0,0,0,0)');
+  edge.addColorStop(0.88, 'rgba(0,0,0,0)');
+  edge.addColorStop(1, 'rgba(0,0,0,0.35)');
+  g.fillStyle = edge;
+  g.fillRect(0, 0, w, h);
+}
+
+// HiDPI-aware convenience for the wide banner.
+export function renderTraderScene(cv) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = cv.clientWidth || 640, h = cv.clientHeight || 220;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  paintTraderScene(g, w, h);
+}

@@ -897,19 +897,20 @@ html, body {
 }
 
 /* ---- CROW: portrait, name plate and the line he greets you with. Laid out
-   as a two-column bust + text block so the portrait keeps a fixed size while
-   the line wraps into whatever is left. ---- */
+   as a wide scene banner (his stall, not just his face) with the name plate
+   and line below it — a bust crammed into a 96px square couldn't show he
+   has a marketplace at all, and a banner has room for one. ---- */
 .trader-hero {
   max-width: 640px; margin: 0 auto var(--s6);
-  display: flex; align-items: flex-start; gap: var(--s5);
   background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
   border: 1px solid var(--line-2); border-radius: var(--r3);
-  padding: var(--s5);
+  padding: var(--s4) var(--s5) var(--s5);
   box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.trader-portrait {
-  flex: none; width: 96px; height: 96px; border-radius: var(--r2);
-  background: radial-gradient(120% 100% at 30% 100%, #241a14, #0e0f12 70%);
+.trader-scene {
+  display: block; width: 100%; aspect-ratio: 2.6 / 1; height: auto;
+  border-radius: var(--r2);
+  background: #0d0e12;
   border: 1px solid var(--line-2);
   /* the burn barrel behind him breathes; canvas stays static so this costs
      one compositor property and no repaints */
@@ -919,7 +920,7 @@ html, body {
   0%, 100% { filter: brightness(1); }
   50% { filter: brightness(1.09); }
 }
-.trader-id { min-width: 0; }
+.trader-id { min-width: 0; margin-top: var(--s4); }
 .trader-name { font-size: 17px; font-weight: 700; letter-spacing: 0.22em; color: var(--ink); }
 .trader-role { font-size: 9px; font-weight: 600; letter-spacing: 0.2em; color: var(--amber-dim); margin-top: 2px; }
 .trader-line {
