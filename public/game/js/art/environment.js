@@ -71,76 +71,139 @@ export function container(colorKey = 'containerRed', label = 'HLC-407', w = 108,
 }
 
 // ---------------- barrels ----------------
+// Cylinder shading needs a real specular story to read as metal rather than a
+// flat rounded rect: dark terminator at both edges, a narrow bright sheen
+// offset toward the key-light side, not a wide soft gradient. `rust` used to
+// silently fall through to a desaturated olive-grey — the most common barrel
+// variant in the game was never actually rust-colored.
 export function barrel(variant = 'rust', scale = 1) {
   const rng = nextRng();
-  const base = variant === 'red' ? '#8a3b2e' : variant === 'blue' ? '#3d5161' : '#5c5a4a';
+  const base = variant === 'red' ? '#8a3b2e' : variant === 'blue' ? '#3d5161' : '#8a5a34';
   return makeSprite(16 * scale, 22 * scale, 8 * scale, 21 * scale, (g) => {
     g.scale(scale, scale);
     g.fillStyle = lingrad(g, 1, 0, 15, 0, [
-      [0, shade(base, -0.3)], [0.28, shade(base, 0.2)], [0.55, base], [1, shade(base, -0.42)],
+      [0, shade(base, -0.5)], [0.16, shade(base, -0.2)], [0.34, shade(base, 0.42)],
+      [0.46, shade(base, 0.08)], [0.7, shade(base, -0.12)], [1, shade(base, -0.55)],
     ]);
     rr(g, 1, 1, 14, 20, 2); g.fill();
-    // ribs
-    for (const y of [6, 12]) {
-      g.fillStyle = 'rgba(0,0,0,0.28)';
-      g.fillRect(1, y, 14, 1.8);
-      g.fillStyle = 'rgba(255,240,210,0.12)';
-      g.fillRect(1, y - 0.8, 14, 0.8);
+    // rolling hoops: dark groove + crisp highlight catching the same key light
+    // as the body sheen, so they read as pressed metal, not painted stripes
+    for (const y of [5.5, 11.5, 17]) {
+      g.fillStyle = 'rgba(0,0,0,0.38)';
+      g.fillRect(1, y, 14, 2.1);
+      g.fillStyle = 'rgba(255,244,222,0.22)';
+      g.fillRect(1, y - 1, 14, 0.9);
+      g.fillStyle = 'rgba(0,0,0,0.22)';
+      g.fillRect(1, y + 2.1, 14, 0.6);
     }
-    // lid
-    g.fillStyle = lingrad(g, 0, 0.4, 0, 2.6, [[0, shade(base, 0.28)], [1, shade(base, -0.1)]]);
+    // lid: same sheen logic as the body, plus a rolled-edge rim highlight
+    g.fillStyle = lingrad(g, 2, 0, 14, 0, [
+      [0, shade(base, -0.35)], [0.4, shade(base, 0.36)], [1, shade(base, -0.4)],
+    ]);
     g.beginPath(); g.ellipse(8, 2, 7, 1.8, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(255,244,222,0.3)'; g.lineWidth = 0.5;
+    g.beginPath(); g.ellipse(8, 1.7, 6.3, 1.5, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+    g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.6;
+    g.beginPath(); g.ellipse(8, 2, 7, 1.8, 0, 0, Math.PI * 2); g.stroke();
     if (variant === 'red') {
       // flammable marking
-      g.fillStyle = 'rgba(240,230,205,0.55)';
+      g.fillStyle = 'rgba(20,14,8,0.5)';
       g.font = 'bold 3.2px monospace';
-      g.fillText('FLAM', 4.4, 10.5);
+      g.fillText('FLAM', 4.3, 10.6);
+      g.fillStyle = 'rgba(245,235,210,0.75)';
+      g.font = 'bold 3.2px monospace';
+      g.fillText('FLAM', 4.4, 10.4);
       g.save(); g.translate(8, 16); g.rotate(Math.PI / 4);
-      g.strokeStyle = 'rgba(240,230,205,0.4)'; g.lineWidth = 0.8;
+      g.strokeStyle = 'rgba(245,235,210,0.55)'; g.lineWidth = 0.8;
       g.strokeRect(-2.4, -2.4, 4.8, 4.8);
       g.restore();
+    } else if (variant === 'blue') {
+      g.fillStyle = 'rgba(230,235,245,0.55)';
+      g.font = 'bold 3px monospace';
+      g.fillText('H2O', 5, 10.6);
     }
-    streaks(g, 1, 2, 14, 18, rng, { n: 6, color: 'rgba(70,40,20,0.3)', wMax: 2 });
-    grunge(g, 1, 1, 14, 20, rng, { n: 60 });
-    ao(g, 8, 21, 9, 3, 0.4);
+    if (variant !== 'blue') {
+      // blotchy oxidation streaks down from each hoop join — rust runs from a
+      // seam outward, it does not spray evenly like generic grime
+      for (const y of [7.6, 13.6]) {
+        for (let i = 0; i < 3; i++) {
+          const sx = rng.range(2, 13);
+          const len = rng.range(4, 9);
+          const gr = g.createLinearGradient(0, y, 0, y + len);
+          gr.addColorStop(0, 'rgba(58,26,10,0.4)');
+          gr.addColorStop(1, 'rgba(58,26,10,0)');
+          g.fillStyle = gr;
+          g.fillRect(sx, y, rng.range(0.8, 1.8), len);
+        }
+      }
+    }
+    streaks(g, 1, 2, 14, 18, rng, { n: 5, color: 'rgba(20,14,8,0.28)', wMax: 1.6 });
+    scratches(g, 2, 5, 12, 14, rng, { n: 8, color: 'rgba(255,244,222,0.16)' });
+    grunge(g, 1, 1, 14, 20, rng, { n: 55 });
+    ao(g, 8, 21, 9, 3, 0.42);
   });
 }
 
 // ---------------- wooden crate ----------------
+// Each plank is its own filled band with its own shade offset and a dark
+// groove between boards — a single gradient over the whole face plus two
+// hairline strokes reads as a flat brown rectangle at gameplay scale, not
+// individual timber.
 export function crate(w = 30, h = 25, scale = 1) {
   const rng = nextRng();
   const base = COL.woodCrate;
   return makeSprite(w * scale, (h + 3) * scale, (w / 2) * scale, (h + 1.5) * scale, (g) => {
     g.scale(scale, scale);
-    g.fillStyle = lingrad(g, 0, 0, 0, h, [
-      [0, shade(base, 0.14)], [0.5, shade(base, -0.06)], [1, shade(base, -0.32)],
-    ]);
+    // base fill under the planks (fallback for any gap)
+    g.fillStyle = shade(base, -0.3);
     g.fillRect(0.5, 0.5, w - 1, h);
-    // planks
-    g.strokeStyle = 'rgba(40,28,14,0.5)'; g.lineWidth = 0.8;
-    for (let i = 1; i < 3; i++) {
-      g.beginPath(); g.moveTo(1, (h / 3) * i); g.lineTo(w - 1, (h / 3) * i + rng.range(-0.5, 0.5)); g.stroke();
+    // horizontal planks, each with its own lit-top / shadow-bottom bevel and
+    // a slightly different tone so no two boards match exactly
+    const plankH = h / 3;
+    for (let i = 0; i < 3; i++) {
+      const py = 0.5 + i * plankH;
+      const tone = shade(base, rng.range(-0.1, 0.12));
+      g.fillStyle = lingrad(g, 0, py, 0, py + plankH, [
+        [0, shade(tone, 0.32)], [0.18, shade(tone, 0.08)], [0.85, shade(tone, -0.16)], [1, shade(tone, -0.4)],
+      ]);
+      g.fillRect(0.5, py, w - 1, plankH - (i < 2 ? 0.9 : 0));
+      // groove between planks
+      if (i < 2) {
+        g.fillStyle = 'rgba(18,11,5,0.6)';
+        g.fillRect(0.5, py + plankH - 0.9, w - 1, 0.9);
+      }
+      // long grain streaks along the board
+      g.strokeStyle = `rgba(50,34,16,${rng.range(0.18, 0.3)})`; g.lineWidth = 0.4;
+      for (let s = 0; s < 2; s++) {
+        const gy = py + rng.range(plankH * 0.25, plankH * 0.75);
+        g.beginPath(); g.moveTo(2, gy);
+        g.quadraticCurveTo(w / 2, gy + rng.range(-0.6, 0.6), w - 2, gy);
+        g.stroke();
+      }
     }
-    // frame
-    g.fillStyle = shade(base, -0.18);
-    g.fillRect(0.5, 0.5, 3, h); g.fillRect(w - 3.5, 0.5, 3, h);
-    g.fillRect(0.5, 0.5, w - 1, 2.6); g.fillRect(0.5, h - 2.1, w - 1, 2.6);
-    // wood grain
-    g.strokeStyle = 'rgba(60,44,22,0.3)'; g.lineWidth = 0.4;
-    for (let i = 0; i < 6; i++) {
-      const y = rng.range(4, h - 4);
-      g.beginPath(); g.moveTo(rng.range(4, 8), y);
-      g.quadraticCurveTo(w / 2, y + rng.range(-1, 1), w - rng.range(4, 8), y);
-      g.stroke();
-    }
-    // stencil
-    g.fillStyle = 'rgba(45,32,16,0.6)';
-    g.font = 'bold 4px monospace';
-    g.fillText('9-C', w / 2 - 4, h / 2 + 1.6);
-    for (const [nx, ny] of [[2, 2], [w - 2, 2], [2, h - 1], [w - 2, h - 1]]) rivet(g, nx, ny, 0.8);
-    grunge(g, 1, 1, w - 2, h - 1, rng, { n: 50 });
-    rim(g, 0, 0, w, h, { top: 0.14, bottom: 0.26 });
-    ao(g, w / 2, h + 1, w * 0.55, 3, 0.38);
+    // corner battens (the structural frame reads on top of the plank bands)
+    g.fillStyle = lingrad(g, 0, 0, 3.4, 0, [[0, shade(base, -0.05)], [1, shade(base, -0.42)]]);
+    g.fillRect(0.5, 0.5, 3.4, h);
+    g.fillStyle = lingrad(g, w - 3.9, 0, w - 0.5, 0, [[0, shade(base, -0.42)], [1, shade(base, -0.1)]]);
+    g.fillRect(w - 3.9, 0.5, 3.4, h);
+    g.strokeStyle = 'rgba(18,11,5,0.5)'; g.lineWidth = 0.5;
+    g.strokeRect(0.5, 0.5, 3.4, h); g.strokeRect(w - 3.9, 0.5, 3.4, h);
+    // top/bottom cap rails
+    g.fillStyle = shade(base, -0.28);
+    g.fillRect(0.5, 0.5, w - 1, 1.6); g.fillRect(0.5, h - 0.6, w - 1, 1.1);
+    g.fillStyle = 'rgba(255,235,205,0.16)';
+    g.fillRect(0.5, 0.5, w - 1, 0.7);
+    // stencil, dark base + lighter overlay so it holds up against light and
+    // dark boards alike
+    g.font = 'bold 4.4px monospace';
+    g.fillStyle = 'rgba(20,13,6,0.55)';
+    g.fillText('9-C', w / 2 - 4.6, h / 2 + 1.7);
+    g.fillStyle = 'rgba(232,220,195,0.62)';
+    g.fillText('9-C', w / 2 - 4.8, h / 2 + 1.5);
+    for (const [nx, ny] of [[2.2, 2.2], [w - 2.2, 2.2], [2.2, h - 1.4], [w - 2.2, h - 1.4]]) rivet(g, nx, ny, 0.9);
+    grunge(g, 1, 1, w - 2, h - 1, rng, { n: 45 });
+    rim(g, 0, 0, w, h, { top: 0.16, bottom: 0.3 });
+    ao(g, w / 2, h + 1, w * 0.55, 3, 0.4);
   });
 }
 
@@ -229,43 +292,79 @@ export function razorWire(w = 90, scale = 1) {
     }
 
     // the coil itself: overlapping ellipses along the run, so it reads as a
-    // continuous spiral rather than a row of separate rings
+    // continuous spiral rather than a row of separate rings. Dulled steel,
+    // not bright chrome — a pale, even-alpha stroke reads as a bicycle-chain
+    // decoration rather than a hazard, so this leans darker with a real
+    // shadow/highlight pair per wrap and denser, spikier barb clusters.
     const loops = Math.max(3, Math.floor(w / 13));
     for (let i = 0; i < loops; i++) {
       const cx = 6 + i * ((w - 12) / (loops - 1));
       const ry = rng.range(8.5, 11.5);
       const rx = rng.range(7, 9.5);
       const cy = baseY - 12 + rng.range(-1.5, 1.5);
-      g.strokeStyle = 'rgba(196,204,214,0.55)';
-      g.lineWidth = 1.1;
+      // drop shadow of the wrap onto the wrap behind it
+      g.strokeStyle = 'rgba(4,5,7,0.35)';
+      g.lineWidth = 2.4;
+      g.beginPath();
+      g.ellipse(cx, cy + 1.4, rx, ry, rng.range(-0.25, 0.25), 0, Math.PI * 2);
+      g.stroke();
+      // core strand: dark oxidised steel body
+      g.strokeStyle = 'rgba(58,64,72,0.85)';
+      g.lineWidth = 1.7;
       g.beginPath();
       g.ellipse(cx, cy, rx, ry, rng.range(-0.25, 0.25), 0, Math.PI * 2);
       g.stroke();
-      // inner darker pass so the coil has depth
-      g.strokeStyle = 'rgba(70,78,88,0.5)';
+      // narrow specular pass along the top-facing arc only, not the full ring
+      g.strokeStyle = 'rgba(210,218,226,0.6)';
       g.lineWidth = 0.7;
       g.beginPath();
-      g.ellipse(cx, cy + 1, rx * 0.82, ry * 0.82, 0, 0, Math.PI * 2);
+      g.ellipse(cx, cy - 0.6, rx * 0.94, ry * 0.94, 0, Math.PI * 1.15, Math.PI * 1.85);
+      g.stroke();
+      // inner darker pass so the coil has depth
+      g.strokeStyle = 'rgba(20,22,26,0.55)';
+      g.lineWidth = 0.8;
+      g.beginPath();
+      g.ellipse(cx, cy + 1, rx * 0.8, ry * 0.8, 0, 0, Math.PI * 2);
       g.stroke();
 
-      // barbs: short crossed ticks around the coil
-      g.strokeStyle = 'rgba(214,220,230,0.7)';
-      g.lineWidth = 0.8;
-      for (let bAng = 0; bAng < Math.PI * 2; bAng += Math.PI / 3) {
+      // barbs: angular 4-point clusters, not thin crosses — the shape that
+      // actually reads as "do not touch" at a glance
+      for (let bAng = 0; bAng < Math.PI * 2; bAng += Math.PI / 3.2) {
         const bx = cx + Math.cos(bAng) * rx;
         const by = cy + Math.sin(bAng) * ry;
+        for (const spin of [0, Math.PI / 2]) {
+          g.strokeStyle = 'rgba(8,9,11,0.55)';
+          g.lineWidth = 1.3;
+          g.beginPath();
+          g.moveTo(bx - Math.cos(bAng + spin) * 2.4, by - Math.sin(bAng + spin) * 2.4);
+          g.lineTo(bx + Math.cos(bAng + spin) * 2.4, by + Math.sin(bAng + spin) * 2.4);
+          g.stroke();
+          g.strokeStyle = 'rgba(196,202,212,0.7)';
+          g.lineWidth = 0.6;
+          g.beginPath();
+          g.moveTo(bx - Math.cos(bAng + spin) * 2.2, by - Math.sin(bAng + spin) * 2.2 - 0.3);
+          g.lineTo(bx + Math.cos(bAng + spin) * 2.2, by + Math.sin(bAng + spin) * 2.2 - 0.3);
+          g.stroke();
+        }
+      }
+      // faint rust bleed at a couple of wraps
+      if (rng.chance(0.4)) {
+        g.strokeStyle = 'rgba(120,60,28,0.28)'; g.lineWidth = 1;
         g.beginPath();
-        g.moveTo(bx - 1.8, by - 1.8); g.lineTo(bx + 1.8, by + 1.8);
-        g.moveTo(bx + 1.8, by - 1.8); g.lineTo(bx - 1.8, by + 1.8);
+        g.ellipse(cx, cy + 2, rx * 0.7, ry * 0.4, 0, 0, Math.PI);
         g.stroke();
       }
     }
 
     // taut strand running the length, tying the coils together
-    g.strokeStyle = 'rgba(180,188,200,0.4)'; g.lineWidth = 0.8;
+    g.strokeStyle = 'rgba(30,33,38,0.6)'; g.lineWidth = 1.1;
     g.beginPath();
     g.moveTo(1, baseY - 22);
     g.quadraticCurveTo(w / 2, baseY - 19, w - 2, baseY - 22);
+    g.stroke();
+    g.strokeStyle = 'rgba(200,206,216,0.35)'; g.lineWidth = 0.5;
+    g.beginPath();
+    g.moveTo(1, baseY - 22.6); g.quadraticCurveTo(w / 2, baseY - 19.6, w - 2, baseY - 22.6);
     g.stroke();
 
     ao(g, w / 2, baseY + 1, w * 0.5, 3.5, 0.42);
@@ -372,24 +471,60 @@ export function tires(scale = 1) {
 }
 
 // ---------------- trash / rubble pile ----------------
+// Each chunk gets a real top-facet / shadow-facet pair rather than a shaded
+// rectangle — a broken concrete slab reads as debris by its faceted light,
+// not by scattering flat colored tiles.
 export function rubble(scale = 1) {
   const rng = nextRng();
-  return makeSprite(30 * scale, 10 * scale, 15 * scale, 9 * scale, (g) => {
+  return makeSprite(30 * scale, 12 * scale, 15 * scale, 11 * scale, (g) => {
     g.scale(scale, scale);
-    for (let i = 0; i < 16; i++) {
-      const x = rng.range(2, 28), y = rng.range(4, 8.4);
-      const s = rng.range(1.4, 4);
+    // back layer: smaller, darker, sets depth before the hero chunks paint over
+    for (let i = 0; i < 10; i++) {
+      const x = rng.range(1, 29), y = rng.range(3, 9);
+      const s = rng.range(1.2, 2.6);
       g.save(); g.translate(x, y); g.rotate(rng.range(0, 3));
-      g.fillStyle = shade(COL.concreteDark, rng.range(-0.3, 0.2));
-      g.fillRect(-s / 2, -s / 3, s, s * 0.6);
-      g.fillStyle = 'rgba(255,235,205,0.1)';
-      g.fillRect(-s / 2, -s / 3, s, s * 0.16);
+      g.fillStyle = shade(COL.asphalt, rng.range(-0.3, 0));
+      g.fillRect(-s / 2, -s / 3, s, s * 0.7);
       g.restore();
     }
-    // rebar
-    g.strokeStyle = '#4a3a2c'; g.lineWidth = 0.7;
-    g.beginPath(); g.moveTo(6, 8); g.quadraticCurveTo(14, 0.6, 24, 4); g.stroke();
-    ao(g, 15, 9, 15, 2.6, 0.36);
+    // hero chunks: concrete with rebar-stained edges, each with a lit top
+    // facet and a dark underside so it reads as a broken 3D fragment
+    for (let i = 0; i < 11; i++) {
+      const x = rng.range(2, 28), y = rng.range(5, 10.5);
+      const s = rng.range(2.6, 5.6);
+      const rot = rng.range(-0.6, 0.6);
+      const tone = shade(COL.concrete, rng.range(-0.15, 0.1));
+      g.save(); g.translate(x, y); g.rotate(rot);
+      // underside shadow facet
+      g.fillStyle = shade(tone, -0.55);
+      g.beginPath();
+      g.moveTo(-s / 2, -s * 0.1); g.lineTo(s / 2, -s * 0.16); g.lineTo(s * 0.42, s * 0.32); g.lineTo(-s * 0.44, s * 0.3);
+      g.closePath(); g.fill();
+      // lit top facet, offset up so the pair reads as a wedge catching light
+      g.fillStyle = lingrad(g, -s / 2, -s * 0.5, s / 2, -s * 0.1, [
+        [0, shade(tone, 0.22)], [1, shade(tone, -0.12)],
+      ]);
+      g.beginPath();
+      g.moveTo(-s / 2, -s * 0.1); g.lineTo(-s * 0.3, -s * 0.5); g.lineTo(s * 0.36, -s * 0.44); g.lineTo(s / 2, -s * 0.16);
+      g.closePath(); g.fill();
+      // exposed rebar stub on some chunks
+      if (rng.chance(0.3)) {
+        g.strokeStyle = 'rgba(70,44,26,0.7)'; g.lineWidth = 0.5;
+        g.beginPath(); g.moveTo(-s * 0.1, -s * 0.3); g.lineTo(s * 0.2, s * 0.1); g.stroke();
+      }
+      g.restore();
+    }
+    // rebar arcing through the pile, rust-stained
+    g.strokeStyle = 'rgba(74,58,40,0.8)'; g.lineWidth = 0.9;
+    g.beginPath(); g.moveTo(5, 9.6); g.quadraticCurveTo(14, 1.2, 25, 5); g.stroke();
+    g.strokeStyle = 'rgba(120,64,34,0.4)'; g.lineWidth = 0.5;
+    g.beginPath(); g.moveTo(5, 9.4); g.quadraticCurveTo(14, 1, 25, 4.8); g.stroke();
+    // dust settled at the base
+    for (let i = 0; i < 14; i++) {
+      g.fillStyle = `rgba(200,195,182,${rng.range(0.05, 0.14)})`;
+      g.fillRect(rng.range(1, 29), rng.range(9.5, 11.6), rng.range(0.8, 1.8), rng.range(0.5, 1));
+    }
+    ao(g, 15, 11, 15, 2.8, 0.4);
   });
 }
 

@@ -881,7 +881,7 @@ export function buildSkin(kind, base, skin, seed = 1) {
 // weapon uses (many weapons share the rifle chassis, so they share its mount
 // points but get their own skins). Defaults to the weapon id when the weapon
 // has a body all of its own.
-export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weaponId, paintMag = null) {
+export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weaponId, paintMag = null, paintSlide = null) {
   const table = WEAPON_SKINS[weaponId] || {};
   const finishes = { default: defaultBody };
   let seed = 11 + weaponId.length * 31;
@@ -897,6 +897,14 @@ export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weapo
     if (paintMag) {
       const mag = paintMag(skin.palette || {}, id, skin);
       if (mag) finishes[id].mag = mag;
+    }
+    // Same reasoning as the magazine: the pistol's slide is a separate sprite
+    // for the blowback animation, so it needs its own repaint or every finish
+    // — including the priciest tiers — shows a plain gunmetal slide bolted
+    // onto a fully coated frame.
+    if (paintSlide) {
+      const slide = paintSlide(skin.palette || {}, id, skin);
+      if (slide) finishes[id].slide = slide;
     }
     // Every composited skin carries its own sprite identity, so nothing
     // downstream can confuse two skins that happen to share a base body.

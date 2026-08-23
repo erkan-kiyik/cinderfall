@@ -31,7 +31,7 @@ export const UNLOCKS = [
 ];
 
 // Only the starter loadout is owned on a fresh save — every other weapon
-// and cosmetic is crate loot, unlocked with tokens or a rewarded ad.
+// and cosmetic is crate loot, unlocked with scrap or a rewarded ad.
 function starterInventory() {
   const inv = {};
   for (const id of STARTER_WEAPON_IDS) for (const vid of weaponVariantIds(id)) inv[vid] = true;
@@ -44,9 +44,13 @@ function defaultProgress() {
     totalKills: 0, totalHeadshots: 0, shotsTotal: 0, hitsTotal: 0,
     longestSurvivalStage: 0, longestSurvivalTime: 0, gamesPlayed: 0,
     unlocked: {},
-    // meta-economy: soft currency earned in combat, spent on crates
-    tokens: 0,          // "Coins" — earned in combat
-    gems: 25,           // premium currency
+    // ---- meta-economy ----
+    // One currency: SCRAP, salvaged off everything the operator downs and
+    // spent at the Trader. The game used to run two (Coins for crates, a
+    // premium currency for the store) which only made sense while real-money
+    // purchases existed; with those gone a second currency was a second
+    // number to explain and no decision to make.
+    scrap: 0,
     energy: 20, energyMax: 20,   // play resource
     inventory: starterInventory(),   // itemId -> true once owned (crate drops)
     loadout: {},     // slotKey -> itemId currently equipped
@@ -58,82 +62,129 @@ function defaultProgress() {
     weekly: null, missionWeek: 0,
     bpXp: 0, bpClaimed: {},            // battle pass
     lastLogin: 0, loginStreak: 0,
-    firstPlayed: Date.now(),           // for "new player" store offers
-    // premium store
-    diamondAdDay: 0, diamondAdWatched: 0, diamondAdGrantedToday: 0, lastDiamondAdAt: 0,
-    purchases: [],        // { id, diamonds, priceTL, ts } — receipt log, newest last
-    boughtBundles: {},    // bundleId -> true, one-time bundles can't be rebought
+    firstPlayed: Date.now(),
+    // rewarded-ad scrap payout (see SCRAP_AD_* below)
+    scrapAdDay: 0, scrapAdWatched: 0, scrapAdGrantedToday: 0, lastScrapAdAt: 0,
     // ---- stats page: lifetime counters (never decrease, unlike balances) ----
     totalPlaytimeMs: 0,
-    lifetimeCoinsEarned: 0, lifetimeDiamondsEarned: 0,
-    totalAdsWatched: 0,           // unified across every ad type (crate/revive/diamond)
+    lifetimeScrapEarned: 0,
+    totalAdsWatched: 0,           // unified across every ad type (crate/revive/scrap)
     totalMissionsCompleted: 0,
     highestCombo: 0, longestKillStreak: 0,
     weaponShots: {},               // weaponId -> lifetime shots fired
     // ---- achievements ----
     achievements: {},              // achId -> { claimed: true }
-    // ---- ad-watch -> TL cashout ----
-    adTLRewardsClaimed: 0,
     // ---- intel logs (collectible lore) ----
     intel: {},                     // logId -> ts found
+    // ---- first-run coaching (game/tutorial.js) ----
+    // tipId -> true once shown. Persisted so a lesson survives a death: a
+    // player who dies on stage 1 is not re-taught the same thing on attempt 2.
+    tips: {},
+    // ---- player card (offline profile) ----
+    // Four headline numbers the Profile screen reads. Each one is written in
+    // the same method as its legacy twin below, so the pair can never drift;
+    // existing saves get them backfilled once by _seedProfile().
+    maxLevelReached: 0,            // highest stage reached (mirrors longestSurvivalStage)
+    totalDeaths: 0,                // lifetime K.I.A. count (mirrors totalAttempts)
+    bossKills: 0,                  // bosses downed (mirrors bossesDefeated)
+    favoriteWeapon: null,          // { weaponId, skinId } snapshot, refreshed at run end
   };
 }
 
-// Tokens awarded per kill (headshots pay a premium).
-export const TOKENS_PER_KILL = 8;
-export const TOKENS_PER_HEADSHOT = 14;
+// ---- Sector Score: the one number the player card leads with ----
+// Deliberately simple and fully offline — reaching further and downing bosses
+// pays, dying costs a little. Deaths can never drag it negative, so a rough
+// patch dents the score without erasing the campaign behind it.
+export const SCORE_PER_LEVEL = 100;
+export const SCORE_PER_BOSS = 500;
+export const SCORE_PER_DEATH = 10;
 
-// Bonus reward on top of the regular kill payout for downing a boss.
-export const BOSS_KILL_TOKEN_BONUS = 250;
-export const BOSS_KILL_DIAMOND_BONUS = 5;
+export function sectorScore({ maxLevelReached = 0, bossKills = 0, totalDeaths = 0 }) {
+  const raw = maxLevelReached * SCORE_PER_LEVEL
+    + bossKills * SCORE_PER_BOSS
+    - totalDeaths * SCORE_PER_DEATH;
+  return Math.max(0, raw);
+}
+
+// ---- Rank titles ----
+// There is no server and no leaderboard, so rank is the whole progression
+// story: a band the player climbs on their own numbers. Ordered high -> low
+// and resolved by the first `min` the score clears, which keeps the boundary
+// rule in one place (a score of exactly 1000 is a Veteran, not a Rookie).
+export const RANKS = [
+  { id: 'commander', min: 6000, key: 'rank.commander', color: '#ffcc4d', glow: 'rgba(255,204,77,0.55)' },
+  { id: 'elite',     min: 3000, key: 'rank.elite',     color: '#c07bff', glow: 'rgba(192,123,255,0.45)' },
+  { id: 'veteran',   min: 1000, key: 'rank.veteran',   color: '#4fc3e8', glow: 'rgba(79,195,232,0.40)' },
+  { id: 'rookie',    min: 0,    key: 'rank.rookie',    color: '#8fae6a', glow: 'rgba(143,174,106,0.32)' },
+];
+
+export function rankFor(score) {
+  return RANKS.find((r) => score >= r.min) || RANKS[RANKS.length - 1];
+}
+
+// Scrap salvaged per kill (headshots pay a premium — a clean kill leaves
+// more of the gear intact).
+export const SCRAP_PER_KILL = 8;
+export const SCRAP_PER_HEADSHOT = 14;
+
+// Bonus salvage on top of the regular kill payout for downing a boss.
+export const BOSS_KILL_SCRAP_BONUS = 350;
 
 // Free crates earned by watching a rewarded ad, capped per calendar day.
 export const AD_CRATE_DAILY_LIMIT = 5;
 
-// Free Diamonds: every 10 rewarded ads watched grants 1 Diamond, capped at
-// 5 Diamonds/day (so at most 50 ad-watches count per day). A short cooldown
-// between watches, plus only ever crediting a watch through the ad
-// provider's actual reward callback (never a bare button click), is the
-// exploit guard — there's no backend here to validate server-side.
-export const DIAMOND_AD_WATCHES_PER_DIAMOND = 10;
-export const DIAMOND_AD_DAILY_CAP = 5;
-export const DIAMOND_AD_COOLDOWN_MS = 12000;
+// Scrap paid out for claiming an achievement.
+export const ACHIEVEMENT_SCRAP = 200;
 
-// Ads watched per 10 TL cashout reward, and the reward amount itself.
-export const AD_TL_REWARD_THRESHOLD = 1000;
-export const AD_TL_REWARD_AMOUNT_TL = 10;
+// Free scrap: every rewarded ad watched pays a salvage bundle, capped per
+// calendar day. A short cooldown between watches, plus only ever crediting a
+// watch through the ad provider's actual reward callback (never a bare button
+// click), is the exploit guard — there's no backend here to validate
+// server-side.
+export const SCRAP_AD_REWARD = 150;
+export const SCRAP_AD_DAILY_CAP = 5;      // paid watches per day
+export const SCRAP_AD_COOLDOWN_MS = 12000;
+
+// What one legacy Diamond is worth in scrap. Old saves and any reward row
+// still authored with `gems` convert at this rate — a Diamond bought a rare
+// cosmetic at 15, and a crate costs 300 scrap, so 30 keeps the old value
+// roughly intact rather than quietly deleting someone's balance.
+export const SCRAP_PER_LEGACY_GEM = 30;
+
 
 // Battle-pass: XP per tier and the reward table.
 export const BP_XP_PER_TIER = 1000;
 export const BP_TIERS = [
-  { tier: 1, reward: { coins: 150 }, label: '150 PARA' },
-  { tier: 2, reward: { gems: 10 }, label: '10 GEMS', premium: true },
+  { tier: 1, reward: { scrap: 150 }, label: '150 SCRAP' },
+  { tier: 2, reward: { scrap: 300 }, label: '300 SCRAP', premium: true },
   { tier: 3, reward: { item: 'rifle_urban' }, label: 'VK-77 URBAN' },
-  { tier: 4, reward: { coins: 250 }, label: '250 PARA' },
+  { tier: 4, reward: { scrap: 250 }, label: '250 SCRAP' },
   { tier: 5, reward: { energy: 10 }, label: '+10 ENERGY' },
   { tier: 6, reward: { item: 'op_nomad' }, label: 'NOMAD SKIN', premium: true },
-  { tier: 7, reward: { coins: 400 }, label: '400 PARA' },
-  { tier: 8, reward: { gems: 25 }, label: '25 GEMS', premium: true },
+  { tier: 7, reward: { scrap: 400 }, label: '400 PARA' },
+  { tier: 8, reward: { scrap: 750 }, label: '750 SCRAP', premium: true },
   { tier: 9, reward: { item: 'pistol_gold' }, label: 'C-9 GILDED' },
   { tier: 10, reward: { item: 'rifle_arc' }, label: 'ARC-9 PULSE', premium: true },
 ];
 
 // Mission templates — combat goals sampled daily / weekly.
 const DAILY_TEMPLATES = [
-  { id: 'kills', desc: 'Eliminate {n} hostiles', goals: [15, 25, 40], reward: { coins: 120 } },
-  { id: 'heads', desc: 'Land {n} headshots', goals: [5, 10, 15], reward: { coins: 150 } },
-  { id: 'stage', desc: 'Reach stage {n}', goals: [3, 5], reward: { gems: 5 } },
-  { id: 'play', desc: 'Complete {n} deployments', goals: [2, 3, 5], reward: { coins: 100 } },
+  { id: 'kills', desc: 'Eliminate {n} hostiles', goals: [15, 25, 40], reward: { scrap: 120 } },
+  { id: 'heads', desc: 'Land {n} headshots', goals: [5, 10, 15], reward: { scrap: 150 } },
+  { id: 'stage', desc: 'Reach stage {n}', goals: [3, 5], reward: { scrap: 150 } },
+  { id: 'play', desc: 'Complete {n} deployments', goals: [2, 3, 5], reward: { scrap: 100 } },
 ];
 const WEEKLY_TEMPLATES = [
-  { id: 'wkills', desc: 'Eliminate {n} hostiles this week', goals: [150, 250], reward: { gems: 20 } },
-  { id: 'wheads', desc: 'Land {n} headshots this week', goals: [50, 80], reward: { coins: 600 } },
-  { id: 'wcrates', desc: 'Open {n} supply crates', goals: [5, 10], reward: { gems: 15 } },
+  { id: 'wkills', desc: 'Eliminate {n} hostiles this week', goals: [150, 250], reward: { scrap: 600 } },
+  { id: 'wheads', desc: 'Land {n} headshots this week', goals: [50, 80], reward: { scrap: 600 } },
+  { id: 'wcrates', desc: 'Open {n} supply crates', goals: [5, 10], reward: { scrap: 450 } },
 ];
 
 export class Progression {
   constructor() {
     this.data = this.load();
+    this._migrateCurrency();
+    this._seedProfile();
   }
 
   load() {
@@ -142,6 +193,47 @@ export class Progression {
       if (raw) return { ...defaultProgress(), ...JSON.parse(raw) };
     } catch (e) { /* storage unavailable — play this session only */ }
     return defaultProgress();
+  }
+
+  // Folds a two-currency save into the single scrap balance. Coins carried
+  // over 1:1 and Diamonds at SCRAP_PER_LEGACY_GEM, so a returning player keeps
+  // the buying power they had rather than logging in to a wiped wallet. The
+  // old fields are deleted afterwards, which is also what makes this run once:
+  // with nothing left to fold, a second call is a no-op.
+  _migrateCurrency() {
+    const d = this.data;
+    const legacy = (d.tokens || 0) + (d.gems || 0) * SCRAP_PER_LEGACY_GEM;
+    if (legacy > 0) {
+      d.scrap = (d.scrap || 0) + legacy;
+      // Lifetime counters feed the stats page, so carry them across too rather
+      // than resetting a returning player's totals to zero.
+      d.lifetimeScrapEarned = Math.max(
+        d.lifetimeScrapEarned || 0,
+        (d.lifetimeCoinsEarned || 0) + (d.lifetimeDiamondsEarned || 0) * SCRAP_PER_LEGACY_GEM,
+      );
+    }
+    if ('tokens' in d || 'gems' in d) {
+      delete d.tokens; delete d.gems;
+      delete d.lifetimeCoinsEarned; delete d.lifetimeDiamondsEarned;
+      // Old ad-cycle bookkeeping no longer has a meaning — the reward is a
+      // flat scrap bundle per watch now, not a 10-watch cycle toward a gem.
+      delete d.diamondAdDay; delete d.diamondAdWatched;
+      delete d.diamondAdGrantedToday; delete d.lastDiamondAdAt;
+      this.save();
+    }
+  }
+
+  // Backfills the player-card counters on a save written before they existed.
+  // They mirror counters the game has been keeping all along, so a returning
+  // player opens the Profile on their real campaign rather than on zeros.
+  // Max() rather than assignment: on an already-migrated save the live values
+  // are the authority and this becomes a no-op.
+  _seedProfile() {
+    const d = this.data;
+    d.maxLevelReached = Math.max(d.maxLevelReached || 0, d.longestSurvivalStage || 0, d.checkpoint || 0);
+    d.totalDeaths = Math.max(d.totalDeaths || 0, d.totalAttempts || 0);
+    d.bossKills = Math.max(d.bossKills || 0, d.bossesDefeated || 0);
+    if (!d.favoriteWeapon) d.favoriteWeapon = this._computeFavoriteWeapon();
   }
 
   save() {
@@ -189,6 +281,7 @@ export class Progression {
     this.data.attempts[stage] = next;
     // Best-effort lifetime tally for the stats screen / share card.
     this.data.totalAttempts = (this.data.totalAttempts || 0) + 1;
+    this.data.totalDeaths = this.data.totalAttempts;   // player card twin
     this.save();
     return next;
   }
@@ -287,15 +380,15 @@ export class Progression {
   recordKill(headshot) {
     this.data.totalKills++;
     if (headshot) this.data.totalHeadshots++;
-    return this.addTokens(headshot ? TOKENS_PER_HEADSHOT : TOKENS_PER_KILL);
+    return this.addScrap(headshot ? SCRAP_PER_HEADSHOT : SCRAP_PER_KILL);
   }
 
   // Boss kills already count as a regular recordKill (called first) — this
   // layers the bonus reward + lifetime tally on top.
   recordBossKill() {
     this.data.bossesDefeated++;
-    this.addTokens(BOSS_KILL_TOKEN_BONUS);
-    this.addGems(BOSS_KILL_DIAMOND_BONUS);
+    this.data.bossKills = this.data.bossesDefeated;   // player card twin
+    this.addScrap(BOSS_KILL_SCRAP_BONUS);
     this.save();
   }
 
@@ -316,18 +409,18 @@ export class Progression {
   // so the chase is legible rather than invisible.
   get bossDropDrought() { return (this.data.bossDropState || {}).since || 0; }
 
-  // ---- token economy ----
-  get tokens() { return this.data.tokens; }
+  // ---- scrap economy ----
+  get scrap() { return this.data.scrap; }
 
-  // Every Coin gain routes through here so lifetimeCoinsEarned (stats page)
+  // Every scrap gain routes through here so lifetimeScrapEarned (stats page)
   // always matches, regardless of source (kills, duplicate-crate refunds,
-  // missions, battle pass).
-  addTokens(n) { this.data.tokens += n; this.data.lifetimeCoinsEarned += n; this.save(); return this.data.tokens; }
+  // missions, battle pass, rewarded ads).
+  addScrap(n) { this.data.scrap += n; this.data.lifetimeScrapEarned += n; this.save(); return this.data.scrap; }
 
   // Attempts to spend `n`; returns true and deducts on success, false if broke.
-  spendTokens(n) {
-    if (this.data.tokens < n) return false;
-    this.data.tokens -= n;
+  spendScrap(n) {
+    if (this.data.scrap < n) return false;
+    this.data.scrap -= n;
     this.save();
     return true;
   }
@@ -376,6 +469,7 @@ export class Progression {
     d.gamesPlayed++;
     if (stage > d.longestSurvivalStage) d.longestSurvivalStage = stage;
     if (survivalTime > d.longestSurvivalTime) d.longestSurvivalTime = survivalTime;
+    d.maxLevelReached = d.longestSurvivalStage;   // player card twin
     this.save();
   }
 
@@ -384,88 +478,60 @@ export class Progression {
     return d.shotsTotal ? Math.round((d.hitsTotal / d.shotsTotal) * 100) : 0;
   }
 
-  // ---- currencies (Coins = tokens, Gems = premium, Energy = play resource) ----
-  get coins() { return this.data.tokens; }
-  get gems() { return this.data.gems; }
   get energy() { return this.data.energy; }
   get energyMax() { return this.data.energyMax; }
-
-  // Every Diamond gain routes through here (mirrors addTokens) so
-  // lifetimeDiamondsEarned always matches, regardless of source.
-  addGems(n) { this.data.gems += n; this.data.lifetimeDiamondsEarned += n; this.save(); return this.data.gems; }
-  spendGems(n) { if (this.data.gems < n) return false; this.data.gems -= n; this.save(); return true; }
   useEnergy(n = 1) { if (this.data.energy < n) return false; this.data.energy -= n; this.save(); return true; }
   refillEnergy() { this.data.energy = this.data.energyMax; this.save(); }
 
-  // ---- Diamonds — the store-facing name for the same premium currency as
-  // `gems` above (never surfaced to players before the store existed, so
-  // there's no legacy save data to migrate). ----
-  get diamonds() { return this.data.gems; }
-  addDiamonds(n) { return this.addGems(n); }
-  spendDiamonds(n) { return this.spendGems(n); }
-
-  // Records a completed (real or simulated) IAP receipt and grants the pack.
-  recordPurchase(pkg) {
-    this.addDiamonds(pkg.diamonds);
-    this.data.purchases.push({ id: pkg.id, diamonds: pkg.diamonds, priceTL: pkg.priceTL, ts: Date.now() });
-    this.save();
-  }
-
-  boughtBundle(id) { return !!this.data.boughtBundles[id]; }
-  recordBundlePurchase(bundle) {
-    this.data.boughtBundles[bundle.id] = true;
-    this.grantReward(bundle.grant);
-  }
-
-  // ---- Diamonds from ads: 10 watches → 1 Diamond, capped 5/day ----
-  _rolloverDiamondAdDay() {
+  // ---- scrap from ads: one salvage bundle per watch, capped per day ----
+  _rolloverScrapAdDay() {
     const day = Math.floor(Date.now() / 86400000);
-    if (this.data.diamondAdDay !== day) {
-      this.data.diamondAdDay = day;
-      this.data.diamondAdWatched = 0;
-      this.data.diamondAdGrantedToday = 0;
+    if (this.data.scrapAdDay !== day) {
+      this.data.scrapAdDay = day;
+      this.data.scrapAdWatched = 0;
+      this.data.scrapAdGrantedToday = 0;
     }
   }
 
-  diamondAdProgress() {
-    this._rolloverDiamondAdDay();
-    const inCycle = this.data.diamondAdWatched % DIAMOND_AD_WATCHES_PER_DIAMOND;
-    const cooldownLeft = Math.max(0, DIAMOND_AD_COOLDOWN_MS - (Date.now() - this.data.lastDiamondAdAt));
+  scrapAdProgress() {
+    this._rolloverScrapAdDay();
+    const cooldownLeft = Math.max(0, SCRAP_AD_COOLDOWN_MS - (Date.now() - this.data.lastScrapAdAt));
     return {
-      watched: inCycle, required: DIAMOND_AD_WATCHES_PER_DIAMOND,
-      grantedToday: this.data.diamondAdGrantedToday, dailyCap: DIAMOND_AD_DAILY_CAP,
-      capped: this.data.diamondAdGrantedToday >= DIAMOND_AD_DAILY_CAP,
+      reward: SCRAP_AD_REWARD,
+      grantedToday: this.data.scrapAdGrantedToday, dailyCap: SCRAP_AD_DAILY_CAP,
+      capped: this.data.scrapAdGrantedToday >= SCRAP_AD_DAILY_CAP,
       cooldownMs: cooldownLeft,
     };
   }
 
   // Call only from the ad provider's actual reward callback. Returns
-  // { watched, required, diamondGranted } so the caller can react/toast.
-  recordDiamondAdWatch() {
-    this._rolloverDiamondAdDay();
+  // { ...progress, granted } so the caller can react/toast.
+  recordScrapAdWatch() {
+    this._rolloverScrapAdDay();
     const now = Date.now();
-    if (now - this.data.lastDiamondAdAt < DIAMOND_AD_COOLDOWN_MS) return { rejected: 'cooldown' };
-    if (this.data.diamondAdGrantedToday >= DIAMOND_AD_DAILY_CAP) return { rejected: 'cap' };
-    this.data.lastDiamondAdAt = now;
-    this.data.diamondAdWatched++;
+    if (now - this.data.lastScrapAdAt < SCRAP_AD_COOLDOWN_MS) return { rejected: 'cooldown' };
+    if (this.data.scrapAdGrantedToday >= SCRAP_AD_DAILY_CAP) return { rejected: 'cap' };
+    this.data.lastScrapAdAt = now;
+    this.data.scrapAdWatched++;
     this.data.totalAdsWatched++;
-    let diamondGranted = false;
-    if (this.data.diamondAdWatched % DIAMOND_AD_WATCHES_PER_DIAMOND === 0) {
-      this.data.diamondAdGrantedToday++;
-      this.addDiamonds(1);
-      diamondGranted = true;
-    }
+    this.data.scrapAdGrantedToday++;
+    this.addScrap(SCRAP_AD_REWARD);
     this.save();
-    return { ...this.diamondAdProgress(), diamondGranted };
+    return { ...this.scrapAdProgress(), granted: SCRAP_AD_REWARD };
   }
 
-  // Applies a reward object { coins, gems, energy, item, items } from
-  // missions / BP / store bundles. `items` (array) covers bundles that
-  // grant more than one cosmetic; `item` (single id) covers everything else.
+  // Applies a reward object { scrap, energy, item, items } from missions and
+  // the battle pass. `items` (array) covers rewards granting more than one
+  // cosmetic; `item` (single id) covers everything else.
+  //
+  // `coins` and `gems` are still read for backwards compatibility with reward
+  // rows authored under the old two-currency model — both now pay out as
+  // scrap, at the rate SCRAP_PER_LEGACY_GEM for the premium one, so no
+  // existing table silently stops rewarding anything.
   grantReward(r) {
     if (!r) return;
-    if (r.coins) this.data.tokens += r.coins, this.data.lifetimeCoinsEarned += r.coins;
-    if (r.gems) this.data.gems += r.gems, this.data.lifetimeDiamondsEarned += r.gems;
+    const scrap = (r.scrap || 0) + (r.coins || 0) + (r.gems || 0) * SCRAP_PER_LEGACY_GEM;
+    if (scrap) this.addScrap(scrap);
     if (r.energy) this.data.energy = Math.min(this.data.energyMax, this.data.energy + r.energy);
     if (r.item) this.data.inventory[r.item] = true;
     if (r.items) for (const id of r.items) this.data.inventory[id] = true;
@@ -556,9 +622,18 @@ export class Progression {
   // infrequent localStorage write like every other stat here.
   addPlaytime(ms) { if (ms > 0) { this.data.totalPlaytimeMs += ms; this.save(); } }
 
-  // Every rewarded-ad watch (crate/revive/Diamond — any type) feeds this one
-  // counter, which also drives the ad-watch -> TL cashout below.
+  // Every rewarded-ad watch (crate/revive/scrap — any type) feeds this one
+  // lifetime counter, which the Stats screen reads.
   recordAdWatched() { this.data.totalAdsWatched++; this.save(); }
+
+  // ---- first-run coaching ----
+  tipSeen(id) { return !!(this.data.tips && this.data.tips[id]); }
+  markTipSeen(id) {
+    if (!this.data.tips) this.data.tips = {};
+    if (this.data.tips[id]) return;
+    this.data.tips[id] = true;
+    this.save();
+  }
 
   // Weapon shot counts accumulate per-run in memory (Game) and flush once at
   // run end via this, exactly like the existing recordShots(shots, hits) —
@@ -568,7 +643,19 @@ export class Progression {
     for (const [id, n] of Object.entries(shotsByWeapon)) {
       this.data.weaponShots[id] = (this.data.weaponShots[id] || 0) + n;
     }
+    // Recomputed here rather than read live by the Profile so the card shows
+    // the skin that was equipped while the weapon earned its place, not
+    // whatever happens to be equipped when the card is opened.
+    this.data.favoriteWeapon = this._computeFavoriteWeapon();
     this.save();
+  }
+
+  // Most-fired weapon plus the skin equipped on it, or null before a shot has
+  // ever been fired. Shape: { weaponId, skinId } — skinId is null on stock.
+  _computeFavoriteWeapon() {
+    const weaponId = this.mostUsedWeapon();
+    if (!weaponId) return null;
+    return { weaponId, skinId: this.equipped(`skin_${weaponId}`) || null };
   }
   mostUsedWeapon() {
     const entries = Object.entries(this.data.weaponShots);
@@ -588,7 +675,7 @@ export class Progression {
   claimAchievement(id) {
     if (this.data.achievements[id]) return false;
     this.data.achievements[id] = { claimed: true, ts: Date.now() };
-    this.addDiamonds(1);
+    this.addScrap(ACHIEVEMENT_SCRAP);
     return true;
   }
 
@@ -615,20 +702,43 @@ export class Progression {
     const res = rollIntelDrop(isBoss, stage, (id) => this.hasIntel(id), Math.random, luck);
     if (!res) return null;
     if (res.kind === 'log') this.grantIntel(res.log.id);
-    else if (res.kind === 'para') this.addTokens(res.amount);
+    else if (res.kind === 'scrap') this.addScrap(res.amount);
     return res;
   }
 
-  // ---- ad-watch -> TL cashout (see engine/cashout.js for the payout side) ----
-  adTLRewardsAvailable() {
-    return Math.floor(this.data.totalAdsWatched / AD_TL_REWARD_THRESHOLD) - this.data.adTLRewardsClaimed;
+  // ---- player card (offline profile) ----
+  // The Profile screen's whole data contract. Everything here is local: no
+  // request is made, no id is sent anywhere, and the numbers come from the
+  // same counters the rest of the game has always kept.
+  get maxLevelReached() { return this.data.maxLevelReached || 0; }
+  get totalDeaths() { return this.data.totalDeaths || 0; }
+  get bossKills() { return this.data.bossKills || 0; }
+  get favoriteWeapon() { return this.data.favoriteWeapon || null; }
+
+  sectorScore() {
+    return sectorScore({
+      maxLevelReached: this.maxLevelReached,
+      bossKills: this.bossKills,
+      totalDeaths: this.totalDeaths,
+    });
   }
-  claimAdTLReward() {
-    if (this.adTLRewardsAvailable() <= 0) return false;
-    this.data.adTLRewardsClaimed++;
-    this.save();
-    return true;
+
+  rank() { return rankFor(this.sectorScore()); }
+
+  // One call for the whole card, so the UI never has to know which counter
+  // backs which number.
+  profile() {
+    const score = this.sectorScore();
+    return {
+      maxLevelReached: this.maxLevelReached,
+      totalDeaths: this.totalDeaths,
+      bossKills: this.bossKills,
+      favoriteWeapon: this.favoriteWeapon,
+      score,
+      rank: rankFor(score),
+    };
   }
+
 }
 
 function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }

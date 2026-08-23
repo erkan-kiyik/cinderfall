@@ -28,8 +28,7 @@ export const ACHIEVEMENTS = [
   { id: 'unstoppable',   tier: 'medium', name: 'UNSTOPPABLE',     desc: 'Reach a 10-kill streak without going down.', icon: 'fire',  stat: 'longestKillStreak', goal: 10 },
   { id: 'deep_cover',    tier: 'medium', name: 'DEEP COVER',      desc: 'Reach stage 10 in a single run.',          icon: 'flag',    stat: 'longestSurvivalStage', goal: 10 },
   { id: 'crate_collector', tier: 'medium', name: 'CRATE COLLECTOR', desc: 'Open 25 supply crates.',                 icon: 'crate',   stat: 'cratesOpened', goal: 25 },
-  { id: 'big_spender',   tier: 'medium', name: 'STACKING PARA',   desc: 'Earn 5,000 lifetime Para.',                icon: 'coin',    stat: 'lifetimeCoinsEarned', goal: 5000 },
-  { id: 'gem_hunter',    tier: 'medium', name: 'GEM HUNTER',      desc: 'Earn 50 lifetime Diamonds.',               icon: 'diamond', stat: 'lifetimeDiamondsEarned', goal: 50 },
+  { id: 'big_spender',   tier: 'medium', name: 'SCRAPPER',       desc: 'Salvage 5,000 lifetime scrap.',            icon: 'scrap',    stat: 'lifetimeScrapEarned', goal: 5000 },
   { id: 'arsenal',       tier: 'medium', name: 'ARSENAL',         desc: 'Fire 5 different weapons.',                icon: 'guns',    stat: 'weaponsUsedCount', goal: 5 },
   { id: 'ad_regular',    tier: 'medium', name: 'AD REGULAR',      desc: 'Watch 100 rewarded ads.',                  icon: 'play',    stat: 'totalAdsWatched', goal: 100 },
   { id: 'hour_one',      tier: 'medium', name: 'HOUR ONE',        desc: 'Play for 1 hour total.',                   icon: 'clock',   stat: 'totalPlaytimeMs', goal: 3600000 },
@@ -40,7 +39,9 @@ export const ACHIEVEMENTS = [
   { id: 'chain_reaction', tier: 'hard', name: 'CHAIN REACTION',   desc: 'Reach a 10-kill combo.',                  icon: 'bolt',    stat: 'highestCombo', goal: 10 },
   { id: 'ghost',         tier: 'hard', name: 'GHOST',             desc: 'Reach a 25-kill streak without going down.', icon: 'fire', stat: 'longestKillStreak', goal: 25 },
   { id: 'sector_master', tier: 'hard', name: 'SECTOR MASTER',     desc: 'Reach stage 25 in a single run.',         icon: 'flag',    stat: 'longestSurvivalStage', goal: 25 },
-  { id: 'diamond_mogul', tier: 'hard', name: 'DIAMOND MOGUL',     desc: 'Earn 500 lifetime Diamonds.',             icon: 'diamond', stat: 'lifetimeDiamondsEarned', goal: 500 },
+  // `id` is the persisted claim key, so it keeps its pre-scrap name — renaming
+  // it would hand every existing player this achievement to claim a second time.
+  { id: 'diamond_mogul', tier: 'hard', name: 'SALVAGE BARON',     desc: 'Salvage 50,000 lifetime scrap.',          icon: 'scrap',   stat: 'lifetimeScrapEarned', goal: 50000 },
   { id: 'ad_veteran',    tier: 'hard', name: 'AD VETERAN',        desc: 'Watch 500 rewarded ads.',                 icon: 'play',    stat: 'totalAdsWatched', goal: 500 },
   { id: 'marathon',      tier: 'hard', name: 'MARATHON OPERATOR', desc: 'Play for 5 hours total.',                 icon: 'clock',   stat: 'totalPlaytimeMs', goal: 5 * 3600000 },
   { id: 'sector9_legend', tier: 'hard', name: 'SECTOR 9 LEGEND',  desc: 'Reach operator level 20.',                icon: 'star',    stat: 'level', goal: 20 },
@@ -140,15 +141,15 @@ export function drawAchievementIcon(g, kind, w, h, color) {
       g.moveTo(-r * 0.55, -r * 0.85); g.lineTo(r * 0.75, -r * 0.55); g.lineTo(-r * 0.05, -r * 0.25);
       g.lineTo(-r * 0.55, -r * 0.3); g.closePath(); g.fill();
       break;
-    case 'coin':
-      g.beginPath(); g.arc(0, 0, r * 0.85, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = Math.max(1, r * 0.1);
-      g.beginPath(); g.arc(0, 0, r * 0.52, 0, Math.PI * 2); g.stroke();
-      break;
-    case 'diamond':
+    // Scrap: the same sheared plate + bolt silhouette as the currency icon in
+    // art/currency.js, reduced to a flat shape so it still reads at 40px.
+    case 'scrap':
       g.beginPath();
-      g.moveTo(0, -r); g.lineTo(r * 0.8, -r * 0.28); g.lineTo(r * 0.5, r * 0.85);
-      g.lineTo(-r * 0.5, r * 0.85); g.lineTo(-r * 0.8, -r * 0.28); g.closePath(); g.fill();
+      g.moveTo(-r * 0.9, -r * 0.65); g.lineTo(r * 0.45, -r * 0.8);
+      g.lineTo(r * 0.9, -r * 0.08); g.lineTo(r * 0.62, r * 0.72);
+      g.lineTo(-r * 0.6, r * 0.78); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,0.4)'; g.lineWidth = Math.max(1, r * 0.12);
+      g.beginPath(); g.arc(-r * 0.12, 0, r * 0.24, 0, Math.PI * 2); g.stroke();
       break;
     case 'guns':
       g.lineWidth = r * 0.2;

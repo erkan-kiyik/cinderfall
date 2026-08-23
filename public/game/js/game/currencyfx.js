@@ -1,8 +1,8 @@
 // Shared "currency gained" feedback: a scale bump + glow flash on the
 // balance pill, a short screen-space particle burst fanning out from its
-// icon, and a distinct collection chime — used anywhere a Para or Diamond
-// balance increases (HUD readout, header pills, achievement/ad/purchase
-// claims). Centralized here so every currency gain in the game feels and
+// icon, and a collection chime — used anywhere the scrap balance increases
+// (HUD readout, header pill, achievement/ad/trade claims). Centralized here
+// so every currency gain in the game feels and
 // looks the same, and so the burst stays a handful of DOM nodes on cheap
 // compositor-only CSS animations (mobile-safe, no canvas/particle-sim cost).
 
@@ -15,16 +15,16 @@ function getLayer() {
   return fxLayer;
 }
 
-const PARA_COLORS = ['#e0bd77', '#b7d47f', '#f6e7ba'];
-const DIAMOND_COLORS = ['#8fe0ff', '#bdf3ff', '#5fd0ee'];
+// Warm steel, matching the scrap plate icon in art/currency.js.
+const SCRAP_COLORS = ['#cfd3dc', '#9aa0ab', '#eef1f6'];
 
-function spawnBurst(el, kind) {
+function spawnBurst(el) {
   if (!el || !el.getBoundingClientRect) return;
   const rect = el.getBoundingClientRect();
   if (!rect.width && !rect.height) return;
   const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-  const colors = kind === 'diamond' ? DIAMOND_COLORS : PARA_COLORS;
-  const count = kind === 'diamond' ? 8 : 6;
+  const colors = SCRAP_COLORS;
+  const count = 6;
   const layer = getLayer();
   for (let i = 0; i < count; i++) {
     const p = document.createElement('span');
@@ -41,31 +41,22 @@ function spawnBurst(el, kind) {
     p.addEventListener('animationend', cleanup, { once: true });
     setTimeout(cleanup, 900);
   }
-  if (kind === 'diamond') {
-    const burst = document.createElement('span');
-    burst.className = 'cur-fx-lightburst';
-    burst.style.left = `${cx}px`; burst.style.top = `${cy}px`;
-    layer.appendChild(burst);
-    const cleanup = () => burst.remove();
-    burst.addEventListener('animationend', cleanup, { once: true });
-    setTimeout(cleanup, 700);
-  }
 }
 
-// Triggers the full "gained" feedback on a pill/readout element. `kind` is
-// 'para' or 'diamond'. `audio`, if passed, plays the matching collection
-// chime (coinGain / gemGain). Safe to call rapidly — the reflow trick makes
-// the CSS animation restart cleanly even mid-flight.
-export function playCurrencyGain(el, kind, audio) {
+// Triggers the full "gained" feedback on a pill/readout element. `audio`, if
+// passed, plays the collection chime. Safe to call rapidly — the reflow trick
+// makes the CSS animation restart cleanly even mid-flight.
+//
+// The old signature took a `kind` ('para' | 'diamond'); with one currency
+// there is nothing to switch on, and callers that still pass a second
+// argument are harmlessly ignored.
+export function playCurrencyGain(el, _kind, audio) {
   if (!el) return;
   el.classList.remove('bump', 'cur-flash');
   void el.offsetWidth;
   el.classList.add('bump', 'cur-flash');
-  spawnBurst(el, kind);
-  if (audio) {
-    if (kind === 'diamond') { if (audio.gemGain) audio.gemGain(); }
-    else if (audio.coinGain) audio.coinGain();
-  }
+  spawnBurst(el);
+  if (audio && audio.coinGain) audio.coinGain();
 }
 
 // Eased count-up tween for a text node showing a currency total. Cheap

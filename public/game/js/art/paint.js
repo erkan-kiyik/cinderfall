@@ -37,6 +37,34 @@ export function drawSprite(g, spr, x, y, rot = 0, sx = 1, sy = 1) {
   g.restore();
 }
 
+// Draws only the [wx0, wx1] slice of a very wide sprite, in world units.
+//
+// The street strip is one sprite 7900 world units across, which at ASSET_SCALE
+// is a backing canvas 15-27k pixels wide. Handing that whole canvas to
+// drawImage every frame is the single most expensive call in the render loop:
+// the rasteriser clips it, but the source is still bound and sampled, and on
+// mobile GPUs a texture that wide falls off the fast path entirely. Only about
+// 1200 world units are ever on screen, so the nine-argument form cuts the work
+// by more than an order of magnitude and draws exactly the same pixels.
+//
+// Returns without drawing if the requested slice misses the sprite.
+export function drawSpriteSlice(g, spr, x, y, wx0, wx1) {
+  const scale = spr.s;                       // world units per source pixel
+  const left = x - spr.ax * scale;           // world x of the sprite's left edge
+  const srcW = spr.cv.width, srcH = spr.cv.height;
+  let sx = (wx0 - left) / scale;
+  let ex = (wx1 - left) / scale;
+  if (ex <= 0 || sx >= srcW) return;
+  sx = Math.max(0, Math.floor(sx));
+  ex = Math.min(srcW, Math.ceil(ex));
+  const sw = ex - sx;
+  if (sw <= 0) return;
+  g.drawImage(
+    spr.cv, sx, 0, sw, srcH,
+    left + sx * scale, y - spr.ay * scale, sw * scale, srcH * scale,
+  );
+}
+
 // ---- color utilities ----------------------------------------------------
 
 export function hexRgb(hex) {

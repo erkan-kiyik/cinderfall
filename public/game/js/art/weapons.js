@@ -197,8 +197,8 @@ function paintRifleBody(variant, finish) {
   });
 }
 
-function paintRifleMag(variant) {
-  const poly = variant === 'phantom' ? '#232529' : COL.polymer;
+function paintRifleMag(variant, finish) {
+  const poly = (finish && finish.poly) || (variant === 'phantom' ? '#232529' : COL.polymer);
   // curved 30-rd magazine; anchor at top (feed) point.
   return makeSprite(10, 16, 5, 1, (g) => {
     g.translate(5, 1);
@@ -286,11 +286,12 @@ function paintPistolBody(finish) {
     if (finish && finish.core) drawCore(g, 0.4, -1.4, 7.6, -1.4, finish.core);
   });
 }
-function paintPistolSlide() {
+function paintPistolSlide(finish) {
+  const metalCol = (finish && finish.metal) || '#3d4046';
   // separate slide for blowback animation; anchor aligns with frame top.
   return makeSprite(19, 6, 7, 6, (g) => {
     g.translate(7, 6);
-    g.fillStyle = metal(g, -6, -2.4, '#3d4046');
+    g.fillStyle = metal(g, -6, -2.4, metalCol);
     g.beginPath();
     g.moveTo(-6.4, -5.8);
     g.lineTo(10.8, -5.8);
@@ -563,17 +564,18 @@ function paintSmgBody(finish) {
     if (finish && finish.core) drawCore(g, -2, -6.2, 12, -6.2, finish.core);
   });
 }
-function paintSmgMag() {
+function paintSmgMag(finish) {
+  const body = (finish && finish.poly) || '#26282b';
   // straight box mag; anchor at top (feed) point.
   return makeSprite(7, 15, 3.5, 1, (g) => {
     g.translate(3.5, 1);
     g.fillStyle = lingrad(g, -3, 0, 3, 0, [
-      [0, shade(COL.polymer, 0.1)], [0.5, '#26282b'], [1, shade('#26282b', -0.3)],
+      [0, shade(body, 0.32)], [0.5, body], [1, shade(body, -0.3)],
     ]);
     rr(g, -2.6, 0, 5.2, 12.6, 0.8); g.fill();
     g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.4;
     for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(-2.6, i * 3); g.lineTo(2.6, i * 3); g.stroke(); }
-    g.fillStyle = shade('#26282b', -0.35);
+    g.fillStyle = shade(body, -0.35);
     rr(g, -2.9, 11.6, 5.8, 2.2, 0.6); g.fill();
     g.strokeStyle = 'rgba(255,215,165,0.16)'; g.lineWidth = 0.5;
     g.beginPath(); g.moveTo(2.7, 1); g.lineTo(2.7, 11); g.stroke();
@@ -1525,10 +1527,12 @@ export function buildWeapons() {
   // body in the skin's palette and then layers coating, engraving, emissive
   // rim, rail optic and muzzle device on top. See art/skins.js for the tables.
   const rifleFinishes = buildSkinSet('rifle', rifleBody,
-    (pal) => paintRifleBody('ranger', pal));
+    (pal) => paintRifleBody('ranger', pal), 'rifle',
+    (pal) => paintRifleMag('ranger', pal));
   const pistolBody = paintPistolBody();
   const pistolFinishes = buildSkinSet('pistol', pistolBody,
-    (pal) => paintPistolBody({ grip: pal.grip || pal.poly, frame: pal.frame || pal.rec }));
+    (pal) => paintPistolBody({ grip: pal.grip || pal.poly, frame: pal.frame || pal.rec }), 'pistol', null,
+    (pal) => paintPistolSlide({ metal: pal.rec || pal.frame }));
   // Knife skins keep their bespoke blade geometry — the bowie is a different
   // shape, not a recolour — and the composited pass runs on top of whichever
   // base the skin id selects.
@@ -1546,7 +1550,8 @@ export function buildWeapons() {
       : paintKnife({ blade: KNIFE_BLADE_COL[id] })
   ));
   const smgBody = paintSmgBody();
-  const smgFinishes = buildSkinSet('smg', smgBody, (pal) => paintSmgBody(pal));
+  const smgFinishes = buildSkinSet('smg', smgBody, (pal) => paintSmgBody(pal), 'smg',
+    (pal) => paintSmgMag(pal));
 
   const defs = {
     rifle: {

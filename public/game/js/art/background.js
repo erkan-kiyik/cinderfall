@@ -24,9 +24,17 @@ export const DEPTH_GRADE = {
   sky:    { brightness: 0.78, saturate: 0.82 },                        // stretched, never tiled — no blur to gain
   clouds: { brightness: 0.70, saturate: 0.62, blur: 2.6, wrap: true },
   // The one building layer. It sits closest to the play surface, so it keeps
-  // the most contrast and stays sharp — but it is still graded down enough
-  // that the characters in front of it remain the brightest thing on screen.
-  city:   { brightness: 0.62, saturate: 0.72, blur: 0.5, wrap: true },
+  // the most contrast — but it is still graded down enough that the characters
+  // in front of it remain the brightest thing on screen.
+  //
+  // The blur is the depth-of-field cue. It was 0.5, which is below the
+  // threshold where the eye reads "out of focus" at all — the apartments were
+  // simply slightly soft. At 1.8 the facade detail (window mullions, fire
+  // escapes, panel joints) goes just far enough out of focus that the stick
+  // figure and the cover he is fighting from become the plane the eye settles
+  // on, without the backdrop turning into mush. Baked once at boot, so the
+  // focus pull costs nothing per frame.
+  city:   { brightness: 0.62, saturate: 0.72, blur: 1.8, wrap: true },
 };
 
 // Applies a depth grade to a finished layer, in place.
@@ -79,9 +87,70 @@ export function buildBackground() {
     sky: paintSky(),
     clouds: paintClouds(),
     city: paintCityBlock(),
+    haze: paintHazeBank(),
   };
   for (const layer of Object.keys(DEPTH_GRADE)) depthTreat(bg[layer], DEPTH_GRADE[layer]);
   return bg;
+}
+
+// ---------------- drifting haze ----------------
+// A ragged band of smoke/dust that scrolls between the apartments and the
+// street. It is deliberately its own layer rather than another screen-space
+// gradient: a flat wash sits still while the camera moves and reads as a
+// filter over the lens, whereas this parallaxes, so the air itself has depth.
+//
+// The bank is painted with a hard alpha ceiling and no opaque core — it has to
+// veil the building line without ever hiding a hostile standing in front of
+// it. It is not depth-graded (it is airborne dust, not a distant solid), so it
+// is built after the grade loop reads its layers.
+function paintHazeBank() {
+  const W = 2048, H = 300;
+  const { cv, g } = makeCanvas(W, H);
+  const rng = makeRng(4471);
+
+  // Wrap-aware, same reasoning as the cloud bank: a puff straddling the tile
+  // seam is drawn on both sides so the scroll has no visible repeat edge.
+  //
+  // The gradient is built *inside* the translate/scale, centred on the local
+  // origin the arc is drawn around. A canvas gradient is defined in the user
+  // space current when it is created, and the transform in force at fill time
+  // re-maps it — so building it at (x, y) and then translating to (x, y) puts
+  // the gradient's centre at roughly double the intended offset, leaving the
+  // arc filled with the transparent outer stop. Setting the transform first
+  // keeps the falloff concentric with the shape.
+  const puff = (x, y, rx, ry, a) => {
+    for (const ox of [0, -W, W]) {
+      if (x + ox + rx < -4 || x + ox - rx > W + 4) continue;
+      g.save();
+      g.translate(x + ox, y);
+      g.scale(1, ry / rx);
+      g.fillStyle = radgrad(g, 0, 0, rx, [
+        [0, withA('#8e94a4', a)],
+        [0.55, withA('#7c8494', a * 0.45)],
+        [1, 'rgba(120,128,144,0)'],
+      ]);
+      g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.fill();
+      g.restore();
+    }
+  };
+
+  // Two rows at different heights so the band has a torn top edge instead of
+  // reading as one uniform ribbon. The lower row is the body of the bank; the
+  // upper row is thinner wisps lifting off it.
+  //
+  // The alphas stay low on purpose. This layer lands on pixels the scene
+  // already works — the street-level fog gradient, the aerial-perspective haze
+  // and, on a fog or storm stage, the weather pass. Painted at a value that
+  // looks right in isolation it stacks into mud on the worst-weather stages,
+  // so it is tuned to be the thing you notice *moving* rather than the thing
+  // you notice.
+  for (let i = 0; i < 34; i++) {
+    puff(rng.range(0, W), rng.range(150, 250), rng.range(170, 330), rng.range(40, 82), rng.range(0.07, 0.15));
+  }
+  for (let i = 0; i < 18; i++) {
+    puff(rng.range(0, W), rng.range(60, 150), rng.range(120, 240), rng.range(28, 58), rng.range(0.04, 0.09));
+  }
+  return cv;
 }
 
 // ---------------- sky ----------------

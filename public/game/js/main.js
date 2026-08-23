@@ -12,7 +12,9 @@ import { makeCanvas, drawSprite, setAssetScale } from './art/paint.js';
 import { quality } from './engine/quality.js';
 import { device, applyDeviceProfile } from './engine/device.js';
 import { Intro } from './engine/intro.js';
-import { t, applyTranslations, cycleLang, getLang, LANGS } from './engine/i18n.js';
+import { brightness, LEVELS as BRIGHTNESS_LEVELS } from './engine/brightness.js';
+import { Interlude } from './engine/interlude.js';
+import { t, applyTranslations, cycleLang, getLang, LANGS, onLangChange } from './engine/i18n.js';
 import { buildSoldier, makeShadowSprite } from './art/soldier.js';
 import { buildWeapons } from './art/weapons.js';
 import { World, GROUND_Y, MAP_W } from './game/world.js';
@@ -25,9 +27,12 @@ import { Progression, UNLOCKS } from './game/progression.js';
 import { DayCycle, formatHour } from './engine/daycycle.js';
 import { applyLoadout } from './game/meta.js';
 import { MetaUI } from './game/metaui.js';
-import { StoreUI } from './game/storeui.js';
+import { TraderUI } from './game/traderui.js';
 import { StatsUI } from './game/statsui.js';
 import { ArchivesUI } from './game/archives.js';
+import { Barks } from './game/barks.js';
+import { Tutorial } from './game/tutorial.js';
+import { ProfileUI } from './game/profile.js';
 import { intelTitleKey } from './game/intel.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
@@ -60,12 +65,17 @@ const CROSSHAIR_RECOIL_GAIN = 6;
 
 // Screen point -> world point, for reticle target testing.
 const cam2world = (cam, sx, sy) => cam.screenToWorld(sx, sy, vw, vh);
+// How far down the aim ray the touch reticle looks for a target (world px).
+const AIM_RAY_RANGE = 1100;
 
 // Seconds the mission briefing stays up before fading itself out.
 const LORE_HOLD = 3;
 
 let vw = 0, vh = 0, dpr = 1;
 let lightCv, lightG, glowCv, glowG, grainCv;
+// Device pixels per CSS pixel in the light/glow maps. Lower than `dpr` on the
+// weaker tiers; see resize().
+let lightDpr = 1;
 let game = null;   // declared early so resize() can safely reference it
 
 // Responsive camera zoom: 1.25 at ~720p, eased down on short/narrow phone
@@ -78,11 +88,22 @@ function baseZoom() {
 }
 
 function resize() {
-  dpr = Math.min(window.devicePixelRatio || 1, quality.preset.dprCap);
+  // `dpr` here is device pixels per CSS pixel in the SCENE canvas, which is
+  // the display's ratio capped by the tier and then scaled down by the tier's
+  // renderScale. The element stays CSS-sized to the viewport, so a sub-1
+  // renderScale simply means the browser upsamples the scene — which is by
+  // far the cheapest frame time available on a rasterisation-bound canvas.
+  // Everything downstream keeps working unchanged because every transform is
+  // expressed in terms of this one number and every layout number in CSS px.
+  dpr = Math.min(window.devicePixelRatio || 1, quality.preset.dprCap) * quality.preset.renderScale;
   vw = window.innerWidth; vh = window.innerHeight;
   canvas.width = vw * dpr; canvas.height = vh * dpr;
-  const l = makeCanvas(vw * dpr, vh * dpr); lightCv = l.cv; lightG = l.g;
-  const g = makeCanvas(vw * dpr, vh * dpr); glowCv = g.cv; glowG = g.g;
+  // The light and glow maps get their own, usually lower, resolution — see
+  // `lightScale` in quality.js. They are stretched back to full size by the
+  // composite, and being low-frequency they lose nothing visible for it.
+  lightDpr = dpr * quality.preset.lightScale;
+  const l = makeCanvas(vw * lightDpr, vh * lightDpr); lightCv = l.cv; lightG = l.g;
+  const g = makeCanvas(vw * lightDpr, vh * lightDpr); glowCv = g.cv; glowG = g.g;
   // refresh --ui-scale so the DOM overlay tracks the new viewport
   applyDeviceProfile();
   // keep the framing right across orientation / resize (not mid-cinematic)
@@ -221,14 +242,23 @@ async function boot() {
     audio,
   });
   game.metaUI.mount();
-  game.storeUI = new StoreUI({ progression: game.progression, previewItem, audio });
-  game.storeUI.mount();
-  document.querySelector('[data-tab="store"]').addEventListener('click', () => game.storeUI.refresh());
+  game.traderUI = new TraderUI({
+    progression: game.progression,
+    previewItem,
+    weapons: assets.weapons,
+    audio,
+  });
+  game.traderUI.mount();
+  document.querySelector('[data-tab="trader"]').addEventListener('click', () => game.traderUI.refresh());
   game.statsUI = new StatsUI({ progression: game.progression, weapons: assets.weapons, audio });
   game.statsUI.mount();
   document.querySelector('[data-tab="stats"]').addEventListener('click', () => game.statsUI.refresh());
   game.archivesUI = new ArchivesUI({ progression: game.progression, audio });
   game.archivesUI.mount();
+  game.profileUI = new ProfileUI({
+    progression: game.progression, weapons: assets.weapons, previewItem, audio,
+  });
+  game.profileUI.mount();
   game.touch = new TouchControls(input, { force: params.has('touch') });
   game.touch.mount();
 
@@ -239,7 +269,7 @@ async function boot() {
   if (DEMO) game.deploy();
   else {
     hud.show('menu'); game.state = 'menu';
-    game.metaUI.refresh(); game.storeUI.refresh(); game.statsUI.refresh();
+    game.metaUI.refresh(); game.traderUI.refresh(); game.statsUI.refresh();
     game.archivesUI.render();
     game.refreshLevelSelect();   // boot sets state directly, bypassing setState()
     game.offerDailyReward();   // lands on the menu, never mid-run
@@ -286,6 +316,24 @@ class Game {
     this.currentKillStreak = 0;
     this.comboCount = 0; this.comboTimer = 0;
     this.isBossStage = false;
+    // Between-stage cinematic (engine/interlude.js). Built once and replayed;
+    // `interludeT` freezes update() while it runs so the world does not tick
+    // under a screen the player cannot see or act on.
+    this.interlude = null;
+    this.interludeRunning = false;
+    // MOTH's in-mission radio barks (game/barks.js). Heavily rate-limited
+    // there; this class only reports events to it.
+    this.barks = new Barks(document.getElementById('bark'), audio);
+    // First-run coaching (game/tutorial.js). Shares the bark strip so a lesson
+    // and a quip can never overlap. The touch layer is handed over as a getter
+    // rather than a value: boot() assigns game.touch *after* this constructor
+    // runs, so capturing it here would pin it to undefined and coach every
+    // phone player with keyboard controls they do not have.
+    this.tutorial = new Tutorial({
+      progression: this.progression,
+      barks: this.barks,
+      getTouch: () => this.touch,
+    });
     this.reset();
     hud.bind({
       deploy: () => { audio.resume(); audio.ui(); this.deploy(); },
@@ -306,8 +354,9 @@ class Game {
       // restart is an explicit fresh mission — discard the resume snapshot
       restart: () => { audio.ui(); this.progression.clearRun(); this.pendingResume = null; this.reset(); this.setState('play'); },
       quit: () => { audio.ui(); this.pendingResume = null; this.reset(); this.setState('menu'); },
-      // cycles Low → Medium → High → Ultra; dpr/bloom/grain/particle cap all
-      // take effect immediately, ASSET_SCALE only on the next full reload
+      // cycles Low → Medium → High → Ultra; render scale, dpr, light-map
+      // resolution, bloom, grain and the particle cap all take effect
+      // immediately, ASSET_SCALE only on the next full reload
       graphics: () => {
         audio.ui();
         quality.cycle();
@@ -319,6 +368,10 @@ class Game {
       // Cycles TR ⇄ EN. The static markup is re-filled by i18n itself; the
       // screens that build their labels in JS repaint through onLangChange.
       language: () => { audio.ui(); cycleLang(); hud.setLanguage(); },
+      // Cycles the screen brightness lift. Takes effect on the very next
+      // frame — grade() reads the module directly, so there is nothing to
+      // rebuild and the player can judge the change while the menu is open.
+      brightness: () => { audio.ui(); hud.setBrightness(brightness.cycle()); },
       share: () => { audio.ui(); this.openShareCard(); },
       shareSend: () => { audio.ui(); this.sendShareCard(); },
       shareClose: () => { audio.ui(); hud.showShareCard(false); },
@@ -326,6 +379,10 @@ class Game {
     });
     hud.setGraphicsTier(quality.preset.name);
     hud.setLanguage();
+    hud.setBrightness(brightness.level);
+    // The brightness label resolves through t(), so a language switch has to
+    // repaint it — applyTranslations only refills static data-i18n nodes.
+    onLangChange(() => hud.setBrightness(brightness.level));
     canvas.addEventListener('mousedown', () => audio.resume(), { once: true });
   }
 
@@ -395,12 +452,13 @@ class Game {
 
   onPlayerHit(headshot, killed, enemy) {
     if (!killed) return;
-    this.progression.recordKill(headshot);   // also awards tokens
+    this.progression.recordKill(headshot);   // also awards scrap
     this.progression.addBpXp(headshot ? 20 : 12);   // battle-pass progress (currency system stays intact even though the shop UI is gone)
-    hud.setTokens(this.progression.tokens);
+    hud.setScrap(this.progression.scrap);
     const res = this.progression.addXp(10 + (headshot ? 15 : 0));
     this.handleLevelUp(res);
     this.registerKill();
+    this.noteKillBark(headshot ? 'headshot' : null);
     this.rollIntel(enemy);
     if (enemy && enemy.isBoss) this.onBossDefeated(enemy);
   }
@@ -410,10 +468,11 @@ class Game {
   onStealthKill(enemy) {
     this.progression.recordKill(false);
     this.progression.addBpXp(16);
-    hud.setTokens(this.progression.tokens);
+    hud.setScrap(this.progression.scrap);
     const res = this.progression.addXp(14);
     this.handleLevelUp(res);
     this.registerKill();
+    this.noteKillBark('stealth');
     this.rollIntel(enemy);
     if (enemy && enemy.isBoss) this.onBossDefeated(enemy);
   }
@@ -432,8 +491,8 @@ class Game {
       hud.showIntel(t(intelTitleKey(res.log.id)), t('intel.found'));
     } else {
       // Archive already complete — the roll still paid, so say what it paid.
-      hud.setTokens(this.progression.tokens);
-      hud.showIntel('', t('intel.para', { n: res.amount }));
+      hud.setScrap(this.progression.scrap);
+      hud.showIntel('', t('intel.scrap', { n: res.amount }));
     }
     audio.ui();
   }
@@ -443,12 +502,12 @@ class Game {
   // other elimination.
   onBossDefeated(boss) {
     this.progression.recordBossKill();
-    hud.setTokens(this.progression.tokens);
+    hud.setScrap(this.progression.scrap);
     hud.showBoss(false);
     hud.notify(t('notify.bossDown', { name: boss.name }));
 
     // Boss Redeemable roll — 1/1000, boss kills only. This is the sole way
-    // these items enter a save; nothing in the crate or the Diamond store
+    // these items enter a save; nothing in the crate or on CROW's stall
     // can produce one. Loot Luck from the equipped perk block scales it.
     const drop = this.progression.rollBossReward(this.player ? this.player.luckMul : 1);
     if (drop) {
@@ -472,6 +531,19 @@ class Game {
   }
 
   resetKillStreak() { this.currentKillStreak = 0; }
+
+  // One place where every elimination decides whether MOTH says anything.
+  // The streak thresholds are checked first and win over the per-kill flavour
+  // line, so a headshot that also lands the sixth kill reports the streak —
+  // Barks itself would drop the second call on its global cooldown anyway,
+  // and this makes which one survives deliberate rather than incidental.
+  noteKillBark(flavour) {
+    this.barks.noteKill();
+    if (this.currentKillStreak === 1) { this.barks.fire('firstBlood'); return; }
+    if (this.currentKillStreak === 6) { this.barks.fire('streak6'); return; }
+    if (this.currentKillStreak === 3) { this.barks.fire('streak3'); return; }
+    if (flavour) this.barks.fire(flavour);
+  }
 
   // Called by Player.fire() every trigger pull — in-memory only, flushed to
   // Progression in one batch at run end (see finish()).
@@ -539,16 +611,44 @@ class Game {
     hud.showRevive(false);
     this._weaponShotsThisRun = {};
     this.currentKillStreak = 0; this.comboCount = 0; this.comboTimer = 0;
+    this.barks.reset();
     this.startTime = this.time;
     this.cam.follow(this.player.x, this.player.y - 60, 0, 0, true);
     hud.setObjective(0, this.enemies.length);
     hud.setStage(this.stage);
     hud.setProgress(this.progression.data.level, this.progression.xpProgress());
-    hud.setTokens(this.progression.tokens);
+    hud.setScrap(this.progression.scrap);
     if (this.isBossStage) { hud.showBoss(true, this.enemies[0].name); hud.setBossHp(this.enemies[0].hp / this.enemies[0].maxHp); }
     else hud.showBoss(false);
     hud.setAttempt(this.progression.attempts(this.stage));
     hud.showLore(LORE_HOLD);   // mission briefing on entering a fresh deployment
+  }
+
+  // Stage cleared → MOTH's interlude → the next stage. The cinematic is
+  // cosmetic, so every failure path here still lands on nextStage(): a
+  // missing overlay, a construction throw or a rejected promise all fall
+  // through to the plain transition rather than stranding the run.
+  playInterludeThenNextStage() {
+    if (this.interludeRunning) return;      // one beat per clear, not one per frame
+    this.interludeRunning = true;
+    const overlay = document.getElementById('interlude');
+    const canvas = document.getElementById('interlude-canvas');
+    const finish = () => {
+      if (overlay) overlay.classList.add('hidden');
+      this.interludeRunning = false;
+      this.nextStage();
+    };
+    if (!overlay || !canvas) { finish(); return; }
+    try {
+      if (!this.interlude) this.interlude = new Interlude(canvas);
+      // The stage being *entered*, and whether that one is a boss stage —
+      // this.stage is still the cleared stage until nextStage() increments.
+      const entering = this.stage + 1;
+      overlay.classList.remove('hidden');
+      this.interlude.run(entering, isBossStage(entering)).then(finish, finish);
+    } catch (e) {
+      finish();
+    }
   }
 
   // Called when every hostile in the current stage is down: the campaign is
@@ -581,6 +681,7 @@ class Game {
       const boss = this.enemies[0];
       hud.showBoss(true, boss.name);
       hud.setBossHp(1);
+      this.barks.fire('bossSpot');
       if (!leveled) hud.notify(t('notify.bossIncoming', { name: boss.name }));
     } else {
       hud.showBoss(false);
@@ -696,7 +797,7 @@ class Game {
     hud.show(s);
     if (s === 'play') this.snapshotRun();   // checkpoint as soon as play begins
     if (s === 'menu' && this.metaUI) this.metaUI.refresh();
-    if (s === 'menu' && this.storeUI) this.storeUI.refresh();
+    if (s === 'menu' && this.traderUI) this.traderUI.refresh();
     if (s === 'menu' && this.statsUI) this.statsUI.refresh();
     // Logs are found mid-run, so the Archives are stale the moment a mission
     // ends — repaint on the way back to the menu, not just on tab click.
@@ -715,6 +816,7 @@ class Game {
     if (!b.alive) return;
     b.alive = false;
     this.fx.explosion(b.x, b.y);
+    this.barks.fire('barrel');
     const hurtRadius = 160;
     const blast = (ent, isPlayer) => {
       const d = Math.hypot(ent.x - b.x, (ent.y - 60) - (b.y - 10));
@@ -750,6 +852,39 @@ class Game {
     }
     if (this.state === 'pause') { input.endFrame(); return; }
     if (this.state === 'revive') { input.endFrame(); return; }
+    // MOTH's ambient barks (low health, recovery, a long lull). Ticked above
+    // the interlude gate on purpose: a bark left on screen when the stage was
+    // cleared has to keep draining its hold, or it is still sitting there —
+    // frozen mid-animation — when the cinematic hands off to the next stage.
+    // `playing` gates only the *triggers*, so nothing new fires meanwhile.
+    this.barks.update(dt, {
+      playing: this.state === 'play' && !this.interludeRunning && this.player.deadT <= 0,
+      hp: this.player.hp,
+      maxHp: this.player.maxHp,
+    });
+
+    // First-run coaching (game/tutorial.js). The vault probe is a collider
+    // scan, so it only runs while that one lesson is still unseen — once the
+    // player has been taught it, this costs nothing.
+    {
+      const p = this.player;
+      const teaching = this.state === 'play' && !this.interludeRunning && p.deadT <= 0;
+      const cur = p.cur;
+      this.tutorial.update(dt, teaching ? {
+        playing: true,
+        detState: this._prevDetState,
+        stealthTarget: !!p.stealthTarget,
+        vaultCandidate: !this.tutorial.seen('vault') && p.onGround
+          ? !!p.findVaultTarget(p.facing) : false,
+        magEmpty: !!(cur && cur.wpn && cur.wpn.kind === 'gun' && cur.mag === 0),
+        swapUnlocked: p.smgUnlocked,
+      } : null);
+    }
+
+    // The between-stage cinematic covers the playfield, so nothing should be
+    // simulating under it — and the taps that skip it must not also fire the
+    // weapon on the stage it hands off to.
+    if (this.interludeRunning) { input.endFrame(); return; }
 
     this.world.update(dt);
     this.fx.update(dt);
@@ -780,6 +915,22 @@ class Game {
 
     // play / end
     const p = this.player;
+    // Touch drives Input once per frame rather than once per pointer event —
+    // see engine/touch.js. The aim stick works outward from the operator's own
+    // screen position, so it is handed that first: push the stick at 2
+    // o'clock, the shot goes to 2 o'clock. Shake is deliberately excluded, or
+    // an explosion would drag the crosshair around with the camera.
+    if (this.touch && this.touch.visible) {
+      // AIM_ORIGIN_Y mirrors player.js's `oy = this.y - 95` — the chest, which
+      // is the point aimWorld is measured from. Anchoring anywhere else would
+      // make the stick angle and the shot angle differ by a few degrees at
+      // close range, which is exactly where it would be noticed.
+      this.touch.setAimAnchor(
+        (p.x - this.cam.x) * this.cam.zoom + vw / 2,
+        (p.y - 95 - this.cam.y) * this.cam.zoom + vh / 2,
+      );
+      this.touch.update(dt);
+    }
     hud.setAimScreen(inp.mouse.x, inp.mouse.y);
     if (this.state === 'play') {
       p.update(dt, { input: inp, enemies: this.enemies, game: this, vw, vh });
@@ -831,7 +982,7 @@ class Game {
         }
       } else if (this.enemies.length > 0 && kills === this.enemies.length) {
         this.endDelay += dt;
-        if (this.endDelay > 1.6) this.nextStage();
+        if (this.endDelay > 1.6) this.playInterludeThenNextStage();
       }
       // lightweight periodic checkpoint — "save & continue" per spec: state
       // is captured frequently so a reload/close always resumes in place
@@ -938,13 +1089,12 @@ class Game {
   claimDailyReward() {
     const reward = claimDaily();
     if (!reward) { hud.showDaily(false); return; }
-    if (reward.kind === 'diamonds') this.progression.addDiamonds(reward.amount);
-    else this.progression.addTokens(reward.amount);
+    this.progression.addScrap(reward.amount);
     hud.markDailyClaimed();
     if (audio.levelUp) audio.levelUp();
     // Repaint the balances behind the overlay, then close it.
     if (this.metaUI) this.metaUI.refresh();
-    if (this.storeUI) this.storeUI.refresh();
+    if (this.traderUI) this.traderUI.refresh();
     setTimeout(() => hud.showDaily(false), 900);
   }
 
@@ -952,7 +1102,7 @@ class Game {
   // lastRunStats is set by finish().
   openShareCard() {
     const stats = this.lastRunStats || { stage: this.stage, attempts: 0, kills: 0 };
-    stats.tokens = this.progression.tokens;
+    stats.scrap = this.progression.scrap;
     const cv = hud.shareCanvasEl();
     if (!cv) return;
     paintShareCard(cv, stats);
@@ -1059,7 +1209,7 @@ class Game {
     // world layer
     ctx.save();
     this.cam.applyTransform(ctx, vw, vh);
-    this.world.drawBack(ctx, this.cam, vw);
+    this.world.drawBack(ctx, this.cam, vw, vh);
 
     // Characters draw last in this layer and carry a contour, so they read as
     // the foreground subject against the (deliberately dimmed, desaturated)
@@ -1110,14 +1260,14 @@ class Game {
     // Warmer and brighter toward street level — reads as the low sun's fill.
     lightG.setTransform(1, 0, 0, 1, 0, 0);
     lightG.globalCompositeOperation = 'source-over';
-    const gsy = (vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom) * dpr;
+    const gsy = (vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom) * lightDpr;
     const amb = lightG.createLinearGradient(0, 0, 0, Math.max(gsy, 1));
     amb.addColorStop(0, 'rgb(182,188,206)');
     amb.addColorStop(0.72, 'rgb(204,201,204)');
     amb.addColorStop(1, 'rgb(224,214,200)');
     lightG.fillStyle = amb;
     lightG.fillRect(0, 0, lightCv.width, lightCv.height);
-    lightG.setTransform(dpr, 0, 0, dpr, 0, 0);
+    lightG.setTransform(lightDpr, 0, 0, lightDpr, 0, 0);
     this.cam.applyTransform(lightG, vw, vh);
     lightG.globalCompositeOperation = 'lighter';
 
@@ -1129,7 +1279,7 @@ class Game {
       glowG.setTransform(1, 0, 0, 1, 0, 0);
       glowG.globalCompositeOperation = 'source-over';
       glowG.clearRect(0, 0, glowCv.width, glowCv.height);
-      glowG.setTransform(dpr, 0, 0, dpr, 0, 0);
+      glowG.setTransform(lightDpr, 0, 0, lightDpr, 0, 0);
       this.cam.applyTransform(glowG, vw, vh);
       glowG.globalCompositeOperation = 'lighter';
     }
@@ -1185,7 +1335,34 @@ class Game {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const gy = vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom;
 
-    // atmospheric haze band across the mid-distance (distant fog)
+    if (quality.preset.richGrade) this.gradeRich(gy);
+    else this.gradeCheap(gy);
+
+    // film grain — subtle; skipped on weaker quality tiers (a canvas-wide
+    // tiled overlay draw isn't free, and it's the least-missed effect).
+    // Note this tier check used to `return` outright; it no longer can,
+    // because the brightness lift below has to run on every tier — the
+    // cheapest devices are exactly the ones with the dimmest screens.
+    if (quality.preset.grain) {
+      ctx.globalCompositeOperation = 'overlay';
+      ctx.globalAlpha = 0.03;
+      const ox = (Math.random() * 256) | 0, oy = (Math.random() * 256) | 0;
+      for (let x = -ox; x < vw; x += 256) {
+        for (let y = -oy; y < vh; y += 256) ctx.drawImage(grainCv, x, y);
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    // Player brightness lift, last of all — see engine/brightness.js. It has
+    // to sit after the vignette and grain, or those passes would darken the
+    // very pixels it just raised.
+    brightness.apply(ctx, vw, vh);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // Full grade: haze band, warm highlight push, cool shadow tint, vignette.
+  // Four full-screen passes, two of them on `overlay` and `soft-light`.
+  gradeRich(gy) {
     ctx.globalCompositeOperation = 'source-over';
     const haze = ctx.createLinearGradient(0, gy - vh * 0.5, 0, gy);
     haze.addColorStop(0, 'rgba(150,158,172,0)');
@@ -1193,43 +1370,124 @@ class Game {
     ctx.fillStyle = haze;
     ctx.fillRect(0, 0, vw, gy);
 
-    // warm highlight push (softened — less saturation)
     ctx.globalCompositeOperation = 'overlay';
     ctx.fillStyle = 'rgba(255,180,112,0.055)';
     ctx.fillRect(0, 0, vw, vh);
-    // cool shadow tint
     ctx.globalCompositeOperation = 'soft-light';
     ctx.fillStyle = 'rgba(48,68,116,0.06)';
     ctx.fillRect(0, 0, vw, vh);
-    // vignette — softer, larger falloff
+
     ctx.globalCompositeOperation = 'source-over';
-    const v = ctx.createRadialGradient(vw / 2, vh * 0.46, Math.min(vw, vh) * 0.5, vw / 2, vh / 2, Math.max(vw, vh) * 0.78);
-    v.addColorStop(0, 'rgba(5,6,10,0)');
-    v.addColorStop(1, 'rgba(4,5,9,0.16)');
-    ctx.fillStyle = v;
+    ctx.fillStyle = this.vignette();
     ctx.fillRect(0, 0, vw, vh);
-    // film grain — subtle; skipped on weaker quality tiers (a canvas-wide
-    // tiled overlay draw isn't free, and it's the least-missed effect)
-    if (!quality.preset.grain) { ctx.globalCompositeOperation = 'source-over'; return; }
-    ctx.globalCompositeOperation = 'overlay';
-    ctx.globalAlpha = 0.03;
-    const ox = (Math.random() * 256) | 0, oy = (Math.random() * 256) | 0;
-    for (let x = -ox; x < vw; x += 256) {
-      for (let y = -oy; y < vh; y += 256) ctx.drawImage(grainCv, x, y);
-    }
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
   }
 
-  // True when the aim point is inside a live hostile's hitbox — the same box
-  // the weapons actually test against, so the reticle's target state can't
-  // disagree with where a shot would land.
+  // Cheap grade, for the tier where a dropped frame costs more than tonal
+  // separation does.
+  //
+  // The rich pass is four full-screen passes, and on a weak GPU each one is a
+  // separate read-modify-write of the whole framebuffer — `overlay` and
+  // `soft-light` especially, since neither is a fixed-function blend. All four
+  // are `source-over`-compatible once the two tonal passes are folded into a
+  // single flat tint, and everything left is a function of the screen rather
+  // than of the scene. So they are baked once into a small texture and blitted
+  // in one stretched draw: four framebuffer passes become one, and the pixels
+  // that produce them are computed at a fraction of the resolution — which
+  // costs nothing here, because every layer in the bake is a smooth gradient.
+  //
+  // The bake only depends on the viewport and on where the ground sits on
+  // screen, so it is rebuilt when the viewport changes or the horizon moves
+  // more than a few pixels — a handful of times a second while the camera
+  // travels, never per frame.
+  gradeCheap(gy) {
+    const q = Math.round(gy / 12);
+    if (!this._gradeCv || this._gradeVw !== vw || this._gradeVh !== vh || this._gradeQ !== q) {
+      this._gradeQ = q; this._gradeVw = vw; this._gradeVh = vh;
+      // Aspect-correct and deliberately small: 1/4 scale, floored so a tiny
+      // window still gets enough rows for the gradients to be smooth.
+      const bw = Math.max(64, Math.round(vw / 4));
+      const bh = Math.max(64, Math.round(vh / 4));
+      if (!this._gradeCv || this._gradeCv.width !== bw || this._gradeCv.height !== bh) {
+        const m = makeCanvas(bw, bh);
+        this._gradeCv = m.cv; this._gradeG = m.g;
+      }
+      const g = this._gradeG;
+      const k = bh / vh;             // bake pixels per CSS pixel
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, bw, bh);
+      // haze band
+      const gyk = gy * k;
+      const haze = g.createLinearGradient(0, gyk - bh * 0.5, 0, gyk);
+      haze.addColorStop(0, 'rgba(150,158,172,0)');
+      haze.addColorStop(1, 'rgba(150,158,172,0.05)');
+      g.fillStyle = haze;
+      g.fillRect(0, 0, bw, Math.max(0, gyk));
+      // net tint standing in for the warm-highlight and cool-shadow passes
+      g.fillStyle = 'rgba(150,142,150,0.045)';
+      g.fillRect(0, 0, bw, bh);
+      // vignette
+      const v = g.createRadialGradient(bw / 2, bh * 0.46, Math.min(bw, bh) * 0.5, bw / 2, bh / 2, Math.max(bw, bh) * 0.78);
+      v.addColorStop(0, 'rgba(5,6,10,0)');
+      v.addColorStop(1, 'rgba(4,5,9,0.16)');
+      g.fillStyle = v;
+      g.fillRect(0, 0, bw, bh);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(this._gradeCv, 0, 0, vw, vh);
+  }
+
+  // Vignette gradient, rebuilt only when the viewport changes.
+  vignette() {
+    if (!this._vig || this._vigVw !== vw || this._vigVh !== vh) {
+      this._vigVw = vw; this._vigVh = vh;
+      const v = ctx.createRadialGradient(vw / 2, vh * 0.46, Math.min(vw, vh) * 0.5, vw / 2, vh / 2, Math.max(vw, vh) * 0.78);
+      v.addColorStop(0, 'rgba(5,6,10,0)');
+      v.addColorStop(1, 'rgba(4,5,9,0.16)');
+      this._vig = v;
+    }
+    return this._vig;
+  }
+
+  // Is the crosshair on a live hostile? Drives the reticle's green/red state.
+  //
+  // With a mouse the crosshair is a POSITION, so the honest test is "is this
+  // point inside a hitbox". With the touch sticks it is a DIRECTION — the
+  // reticle sits a fixed distance out from the operator's chest and only its
+  // angle carries meaning — so the same test would leave the reticle green
+  // while the player is pouring rounds into someone twenty metres away. When
+  // touch is driving, the test becomes "does the aim ray pass through anyone",
+  // which is the question the reticle is actually answering on a phone.
   aimOnTarget(wx, wy) {
+    const directional = !!(this.touch && this.touch.visible);
+    if (directional && this.player) return this.aimRayOnTarget(wx, wy);
     for (const e of this.enemies) {
       if (e.deadT > 0) continue;
       const hs = e.hitboxScale || 1;
       if (wx >= e.x - 13 * hs && wx <= e.x + 13 * hs &&
           wy >= e.y - 134 * hs && wy <= e.y) return true;
+    }
+    return false;
+  }
+
+  // Perpendicular distance from each hostile's centre of mass to the aim ray,
+  // measured from the same chest origin player.js fires from. AIM_RAY_RANGE
+  // keeps it to targets that are plausibly shootable rather than lighting up
+  // for someone on the far side of the block.
+  aimRayOnTarget(wx, wy) {
+    const p = this.player;
+    const ox = p.x, oy = p.y - 95;
+    const dx = wx - ox, dy = wy - oy;
+    const len = Math.hypot(dx, dy);
+    if (len < 1) return false;
+    const ux = dx / len, uy = dy / len;
+    for (const e of this.enemies) {
+      if (e.deadT > 0) continue;
+      const hs = e.hitboxScale || 1;
+      const ex = e.x - ox, ey = (e.y - 67 * hs) - oy;
+      const along = ex * ux + ey * uy;
+      if (along <= 0 || along > AIM_RAY_RANGE) continue;    // behind, or too far
+      const perp = Math.abs(ex * uy - ey * ux);
+      if (perp <= 30 * hs) return true;
     }
     return false;
   }
@@ -1348,11 +1606,15 @@ function frame(now) {
   }
   game.render();
 
-  if (game.state === 'play') {
+  if (game.state === 'play' && !quality.autoLowerExhausted) {
     perfAvg = perfAvg * 0.94 + rawDt * 0.06;
     lowPerfT = perfAvg > 1 / 38 ? lowPerfT + rawDt : 0;
     if (lowPerfT > 4) {
-      lowPerfT = -1e9;   // one check is enough; tryAutoLower() is one-shot anyway
+      // Give the new preset a fair run before judging it again, rather than
+      // stepping down twice off the same bad stretch. The step-down budget in
+      // quality.js is what actually bounds this.
+      lowPerfT = -8;
+      perfAvg = 1 / 60;
       const lowered = quality.tryAutoLower();
       if (lowered) { hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name })); resize(); }
     }

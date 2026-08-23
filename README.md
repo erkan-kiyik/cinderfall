@@ -14,15 +14,18 @@ Every system is developed with scalability, optimization, maintainability, and v
 
 The game is built for:
 
-* 🌐 Web Browser
 * 🤖 Android
 * 🍎 iPhone & iPad
+
+The game itself is a self-contained web build (`public/game`) that the
+Capacitor shell in `mobile/` packages into the native apps — it is not
+published as a browser game.
 
 ---
 
 # Vision
 
-Create one of the highest-quality browser and mobile tactical shooters with:
+Create one of the highest-quality mobile tactical shooters with:
 
 * Beautiful illustrated graphics
 * Smooth gameplay

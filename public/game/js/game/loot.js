@@ -1,6 +1,6 @@
 // Boss Redeemables — the 1/1000 drop table.
 //
-// These never appear in a crate, never appear in the Diamond store, and cannot
+// These never appear in a crate, never appear on the Trader's shelf, and cannot
 // be bought at any price. The only way one enters a save is by killing a boss
 // and winning a roll at BOSS_DROP_RATE. That scarcity is the entire point: a
 // player carrying one has demonstrably ground bosses, and everyone who sees

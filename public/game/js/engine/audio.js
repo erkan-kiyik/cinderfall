@@ -228,7 +228,7 @@ class AudioSys {
     this._tone({ freq: 2200, dur: 0.06, gain: 0.05, type: 'sine', t0: 0.03 });
   }
 
-  // bright crystalline chime — Diamond (premium currency) gained
+  // bright chime — a large scrap payout (crate refund, achievement, boss)
   gemGain() {
     this._tone({ freq: 1400, dur: 0.09, gain: 0.1, type: 'sine' });
     this._tone({ freq: 1866, dur: 0.11, gain: 0.09, type: 'sine', t0: 0.05 });

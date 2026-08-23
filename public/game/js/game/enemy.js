@@ -495,7 +495,7 @@ export class Enemy {
     if (hitPlayer) {
       player.hurt(((7 + rand(0, 5) | 0) * this.dmgMul) | 0, Math.sign(ex - mzl.x), this.x);
     } else if (wHit) {
-      this.fx.impactWall(hx, hy, wHit.nx, wHit.ny);
+      this.fx.impactWall(hx, hy, wHit.nx, wHit.ny, wHit.mat);
     }
 
     ws.flashT = 1;

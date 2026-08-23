@@ -14,6 +14,12 @@ export class Input {
     this.pressed = new Set();       // keys that went down since last endFrame()
     this.mouse = { x: 0, y: 0, down: false, clicked: false, rdown: false };
     this.canvas = canvas;
+    // Analog horizontal move, -1..1, written by the touch layer (and left at 0
+    // by keyboard/gamepad). A keyboard can only ever say "full left" or "full
+    // right"; a thumb on a stick can say "a third of the way", and the
+    // movement code already multiplies by whatever moveX returns, so honouring
+    // that costs nothing downstream.
+    this.axisX = 0;
 
     // gamepad-synthesized state, kept separate from real keyboard state
     this._gpKeys = new Set();
@@ -29,7 +35,7 @@ export class Input {
       if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
-    window.addEventListener('blur', () => { this.keys.clear(); this.mouse.down = false; });
+    window.addEventListener('blur', () => { this.keys.clear(); this.mouse.down = false; this.axisX = 0; });
 
     canvas.addEventListener('mousemove', (e) => {
       const r = canvas.getBoundingClientRect();
@@ -51,6 +57,10 @@ export class Input {
   hit(code) { return this.pressed.has(code) || this._gpPressed.has(code); }
 
   get moveX() {
+    // An analog axis wins when it is live; digital keys are the fallback, so
+    // a player can lift their thumb off the stick and finish the run on a
+    // keyboard (or a gamepad d-pad) without anything getting stuck.
+    if (this.axisX !== 0) return this.axisX;
     return (this.down('KeyD') || this.down('ArrowRight') ? 1 : 0) -
            (this.down('KeyA') || this.down('ArrowLeft') ? 1 : 0);
   }

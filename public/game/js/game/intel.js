@@ -26,7 +26,7 @@ export const BOSS_INTEL_DROP_CHANCE = 0.30;
 
 // Paid out when a roll wins but there is nothing left to find, so a completed
 // archive doesn't turn every future win into a silent no-op.
-export const INTEL_DUPLICATE_PARA = 120;
+export const INTEL_DUPLICATE_SCRAP = 120;
 
 // `minStage` staggers the narrative: the evacuation order can be found in the
 // first block, the entries that explain *why* cannot. It is a floor, not a
@@ -77,7 +77,7 @@ export const intelTierKey = (tier) => `intel.tier.${tier}`;
 // codebase already shipped once in loot.js — would skew selection toward the
 // front of the list and make the later logs rarer than intended.
 //
-// Returns { kind: 'log', log } | { kind: 'para', amount } | null.
+// Returns { kind: 'log', log } | { kind: 'scrap', amount } | null.
 export function rollIntelDrop(isBoss, stage, owned, rng = Math.random, luck = 1) {
   const base = isBoss ? BOSS_INTEL_DROP_CHANCE : INTEL_DROP_CHANCE;
   if (rng() >= Math.min(0.95, base * Math.max(0, luck))) return null;
@@ -88,7 +88,7 @@ export function rollIntelDrop(isBoss, stage, owned, rng = Math.random, luck = 1)
   // Won the roll with nothing eligible left — pay out instead of dropping the
   // reward on the floor. This covers both "archive complete" and "the only
   // entries left are boss-only and this was a regular kill".
-  if (!pool.length) return { kind: 'para', amount: INTEL_DUPLICATE_PARA };
+  if (!pool.length) return { kind: 'scrap', amount: INTEL_DUPLICATE_SCRAP };
 
   // Clamped: an rng that returns exactly 1 would otherwise index past the end
   // and turn a win into an undefined.

@@ -14,16 +14,19 @@ export const RARITY = {
   rare:      { key: 'rare',      label: 'RARE',      labelKey: 'rarity.rare',      color: '#4a90d9', glow: 'rgba(74,144,217,0.7)',  weight: 27 },
   epic:      { key: 'epic',      label: 'EPIC',      labelKey: 'rarity.epic',      color: '#a55cd6', glow: 'rgba(165,92,214,0.7)', weight: 11 },
   legendary: { key: 'legendary', label: 'LEGENDARY', labelKey: 'rarity.legendary', color: '#e0a13a', glow: 'rgba(224,161,58,0.85)', weight: 4 },
-  // Diamond-store-only tiers — never rolled from a crate (rollCrate only
+  // Trader-shelf-only tiers — never rolled from a crate (rollCrate only
   // walks common/rare/epic/legendary), so `weight` here is just documentation.
   mythic:       { key: 'mythic',       label: 'MYTHIC',        labelKey: 'rarity.mythic',       color: '#e0446e', glow: 'rgba(224,68,110,0.85)', weight: 0 },
   ultraLimited: { key: 'ultraLimited', label: 'ULTRA LIMITED', labelKey: 'rarity.ultraLimited', color: '#4ee0d6', glow: 'rgba(78,224,214,0.9)',  weight: 0 },
 };
 
-// Diamond price by rarity for the direct-purchase store (crate-only
-// "common" tier has no store price — it's never worth spending Diamonds on).
-export const RARITY_DIAMOND_PRICE = {
-  rare: 15, epic: 30, legendary: 50, mythic: 80, ultraLimited: 120,
+// Scrap price by rarity for the Trader's direct-purchase shelf. The crate-only
+// "common" tier has no price — it is never worth spending scrap on something
+// a crate hands out for free. Priced against CRATE_COST below, so buying a
+// known rare costs about the same as a crate and a legendary costs several:
+// the gamble is cheaper per pull, the certainty costs a premium.
+export const RARITY_SCRAP_PRICE = {
+  rare: 450, epic: 900, legendary: 1500, mythic: 2400, ultraLimited: 3600,
 };
 
 // ---- perks ----
@@ -54,8 +57,8 @@ export function describePerk(perk) {
   }).filter(Boolean);
 }
 
-// Crate cost in tokens.
-export const CRATE_COST = 120;
+// Crate cost in scrap.
+export const CRATE_COST = 300;
 // Duplicate drops refund this fraction of the crate cost.
 export const DUPLICATE_REFUND = 0.4;
 
@@ -158,7 +161,7 @@ const WEAPON_META = {
 // Every weapon id that can be selected.
 export const ALL_WEAPON_IDS = [...new Set(WEAPON_SLOTS.flatMap((s) => s.ids))];
 
-// Owned from the very start — everything else unlocks from crates (tokens
+// Owned from the very start — everything else unlocks from crates (scrap
 // or a rewarded ad). These match Player's built-in default arsenal, so a
 // fresh save is always playable even with nothing else unlocked yet.
 export const STARTER_WEAPON_IDS = ['rifle', 'pistol', 'smg'];
@@ -189,12 +192,39 @@ const BOSS_WEAPON_IDS = ['minigun', 'rocket'];
 const LOOT_WEAPON_ITEMS = ALL_WEAPON_IDS
   .filter((id) => !STARTER_WEAPON_IDS.includes(id) && !BOSS_WEAPON_IDS.includes(id))
   .map((id) => WEAPON_ITEMS.find((i) => i.weaponId === id));
-// storeOnly cosmetics (Diamond-store exclusives) never enter crate loot.
+// storeOnly cosmetics (Trader-shelf exclusives) never enter crate loot.
 export const LOOT_POOL = [
   ...CATALOG.filter((i) => !i.storeOnly),
   ...SKIN_ITEMS.filter((i) => !i.storeOnly),
   ...LOOT_WEAPON_ITEMS,
 ];
+
+// ---- what CROW will sell you -------------------------------------------
+// The trader's shelf used to be `CATALOG` alone, which meant four operator
+// skins: every weapon and every weapon finish in the game was crate-only, so
+// the browse categories rendered empty grids. The stall now carries the whole
+// spendable universe instead — cosmetics, finishes and guns — with three
+// deliberate exclusions:
+//
+//   * commons, which have no scrap price (a crate hands them out for free);
+//   * the starter three, which every save already owns;
+//   * the boss redeemables (ANNIHILATOR, SIEGEBREAKER), which are a 1/1000
+//     boss drop and must stay unbuyable — see rollBossReward in progression.
+//
+// Weapons occupy more than one loadout slot, so they are deduped by weaponId
+// here and granted across every variant at purchase time (weaponVariantIds).
+export const TRADEABLE = (() => {
+  const seenWeapon = new Set();
+  const guns = WEAPON_ITEMS.filter((i) => {
+    if (STARTER_WEAPON_IDS.includes(i.weaponId)) return false;
+    if (BOSS_WEAPON_IDS.includes(i.weaponId)) return false;
+    if (seenWeapon.has(i.weaponId)) return false;
+    seenWeapon.add(i.weaponId);
+    return true;
+  });
+  return [...CATALOG, ...SKIN_ITEMS, ...guns]
+    .filter((i) => RARITY_SCRAP_PRICE[i.rarity] != null);
+})();
 
 const ALL_ITEMS = [...CATALOG, ...SKIN_ITEMS, ...WEAPON_ITEMS, ...BOSS_DROPS];
 const BY_ID = Object.fromEntries(ALL_ITEMS.map((i) => [i.id, i]));

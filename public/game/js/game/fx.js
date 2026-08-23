@@ -14,6 +14,47 @@ const TRAIL_GAP = 0.05;
 const TRAIL_MAX_PTS = 24;
 const TRAIL_WIDTH = 7;
 
+// Impact recipes, keyed by the surface the round actually landed on (the
+// collider's `mat`, threaded through World.raycast). A hit used to look
+// identical whether it struck a steel container or a sandbag, which is the
+// single loudest "this is a cheap game" tell in a shooter — the impact is the
+// most-repeated effect on screen.
+//
+//   sparks   how many hot ricochet sparks fly, and how far
+//   chips    solid fragments knocked loose, with their colour
+//   dust     the puff left behind, and how heavy it reads
+//   light    the brief flash at the point of impact (metal strikes glow)
+const MATERIALS = {
+  metal: {
+    sparks: 9, sparkSpread: 1.5, sparkSpeed: 480,
+    chips: 2, chipColor: ['#6e6a63', '#8a8279'], chipSize: [1.0, 2.0],
+    dust: 'rgba(140,138,134,0.42)', dustSize: 0.45,
+    light: [255, 214, 150], lightR: 62, lightA: 0.6,
+  },
+  wood: {
+    // Splinters, not sparks: a couple of stray embers at most, and long thin
+    // fragments that tumble further than stone chips.
+    sparks: 1, sparkSpread: 0.7, sparkSpeed: 200,
+    chips: 6, chipColor: ['#6b4f30', '#8a6a42', '#4e3a22'], chipSize: [1.4, 3.4],
+    dust: 'rgba(146,116,80,0.6)', dustSize: 0.8,
+    light: null, lightR: 0, lightA: 0,
+  },
+  concrete: {
+    sparks: 3, sparkSpread: 1.1, sparkSpeed: 330,
+    chips: 4, chipColor: ['#55524a', '#6a675e', '#43413b'], chipSize: [1.4, 2.8],
+    dust: 'rgba(150,146,138,0.8)', dustSize: 1.05,
+    light: [255, 200, 130], lightR: 36, lightA: 0.3,
+  },
+  sand: {
+    // A sandbag swallows a round: no sparks, no fragments, just a heavy
+    // grain-coloured cloud and a spray of fill.
+    sparks: 0, sparkSpread: 0, sparkSpeed: 0,
+    chips: 5, chipColor: ['#8f7a52', '#a08a5e', '#7a6743'], chipSize: [1.0, 2.2],
+    dust: 'rgba(168,148,106,0.85)', dustSize: 1.25,
+    light: null, lightR: 0, lightA: 0,
+  },
+};
+
 export class FX {
   constructor(particles, audio, camera, world) {
     this.ps = particles;
@@ -27,6 +68,7 @@ export class FX {
     this.projectiles = []; // energy bolts: {x,y,vx,vy,color,radius,dmg,...}
     this.beams = [];      // {x0,y0,x1,y1,color,width,life,age}
     this.arcs = [];       // electric arcs: {pts,color,life,age}
+    this.emitter = null;  // sustained energy-weapon glow — see setEmitter()
     this.game = null;     // bound after construction for projectile damage
 
     particles.solidAt = (x, y) => world.solidAt(x, y);
@@ -38,6 +80,19 @@ export class FX {
 
   addLight(x, y, r, c, a, life = 0.08) {
     this.lights.push({ x, y, r, c, a, life, age: 0 });
+  }
+
+  // Sustained emitter glow for energy weapons.
+  //
+  // A muzzle flash is an event light — it fires and dies in 60ms. A charged
+  // plasma emitter or a hot particle-beam aperture is *always* radiating, and
+  // without that the weapon reads as an inert prop between shots. This is a
+  // single slot rather than a queue: the player overwrites it every frame with
+  // the current barrel position and intensity, and it decays on its own if the
+  // weapon is stowed or swapped, so it can never leak a stale light into the
+  // scene.
+  setEmitter(x, y, c, a, r) {
+    this.emitter = { x, y, c, a, r, hold: 0.12 };
   }
 
   // ---- weapon fire ----
@@ -79,18 +134,25 @@ export class FX {
   }
 
   // ---- impacts ----
-  impactWall(x, y, nx, ny) {
+  // `mat` names the surface struck — see MATERIALS. Callers pass the hit's
+  // material straight through from the raycast; anything unrecognised falls
+  // back to concrete, which is what the old single recipe approximated.
+  impactWall(x, y, nx, ny, mat = 'concrete') {
+    const m = MATERIALS[mat] || MATERIALS.concrete;
     const ang = Math.atan2(ny, nx);
-    burstSparks(this.ps, x + nx * 2, y + ny * 2, ang, 5, 1, 380);
-    puffSmoke(this.ps, x + nx * 3, y + ny * 3, 2, 'rgba(130,124,112,0.75)', { sizeMul: 0.7 });
-    for (let i = 0; i < 3; i++) {
+    // sparks fly back along the surface normal, away from the impact
+    if (m.sparks) burstSparks(this.ps, x + nx * 2, y + ny * 2, ang, m.sparks, m.sparkSpread, m.sparkSpeed);
+    puffSmoke(this.ps, x + nx * 3, y + ny * 3, 2, m.dust, { sizeMul: m.dustSize });
+    for (let i = 0; i < m.chips; i++) {
       this.ps.spawn(K.DEBRIS, {
         x, y, vx: nx * rand(40, 160) + randSpread(70), vy: ny * rand(40, 140) - rand(30, 110),
-        vrot: randSpread(14), life: rand(0.5, 1.1), size: rand(1.4, 2.8),
-        color: '#55524a', grav: 1500, bounce: 0.3,
+        vrot: randSpread(14), life: rand(0.5, 1.1),
+        size: rand(m.chipSize[0], m.chipSize[1]),
+        color: m.chipColor[(Math.random() * m.chipColor.length) | 0],
+        grav: 1500, bounce: 0.3,
       });
     }
-    this.addLight(x + nx * 3, y + ny * 3, 40, [255, 200, 130], 0.4, 0.04);
+    if (m.light) this.addLight(x + nx * 3, y + ny * 3, m.lightR, m.light, m.lightA, 0.05);
     this.world.bulletHole(x, y);
     this.audio.impact();
   }
@@ -346,6 +408,9 @@ export class FX {
 
   update(dt) {
     this.updateProjectiles(dt);
+    // The emitter is refreshed every frame while an energy weapon is held; the
+    // hold countdown is what clears it when one is put away.
+    if (this.emitter && (this.emitter.hold -= dt) <= 0) this.emitter = null;
     for (let i = this.beams.length - 1; i >= 0; i--) {
       if ((this.beams[i].age += dt) >= this.beams[i].life) this.beams.splice(i, 1);
     }
@@ -531,6 +596,9 @@ export class FX {
     for (const pr of this.projectiles) {
       out.push({ x: pr.x, y: pr.y, r: pr.radius * 12, c: pr.color, a: 0.7, flicker: 0.3, seed: pr.age * 30 });
     }
+    // the held weapon's own emitter — flickers so it reads as live plasma
+    const em = this.emitter;
+    if (em) out.push({ x: em.x, y: em.y, r: em.r, c: em.c, a: em.a, flicker: 0.35, seed: this.emitterSeed = (this.emitterSeed || 0) + 0.7 });
     return out;
   }
 }

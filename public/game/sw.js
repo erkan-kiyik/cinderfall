@@ -8,10 +8,19 @@
 //     refresh — instant loads, self-healing when files change.
 // Bump CACHE on any shipped change to retire the previous cache on activate.
 
-const CACHE = 'cinderfall-v1';
+const CACHE = 'cinderfall-v2';
 
 // The full game shell — every module is a static ES import, so precaching
-// them means the whole game is available offline after the first visit.
+// them means the whole game is available offline from the very first visit,
+// rather than only once the fetch handler below has happened to see each file.
+//
+// This list is exhaustive on purpose, and it drifts when edited by hand: it had
+// gone stale by roughly half the modules. Regenerate it from inside
+// public/game with
+//
+//   find js -name '*.js' | sort | sed "s|^|  './|; s|$|',|"
+//
+// and paste the result over the js/ entries below.
 const SHELL = [
   './',
   './index.html',
@@ -22,28 +31,55 @@ const SHELL = [
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
   './assets/favicon-32.png',
-  './js/main.js',
-  './js/engine/input.js',
-  './js/engine/camera.js',
-  './js/engine/particles.js',
-  './js/engine/audio.js',
-  './js/engine/math.js',
-  './js/engine/touch.js',
-  './js/engine/quality.js',
-  './js/art/paint.js',
-  './js/art/soldier.js',
-  './js/art/weapons.js',
-  './js/art/environment.js',
   './js/art/background.js',
-  './js/game/world.js',
-  './js/game/fx.js',
-  './js/game/player.js',
+  './js/art/currency.js',
+  './js/art/environment.js',
+  './js/art/paint.js',
+  './js/art/skins.js',
+  './js/art/soldier.js',
+  './js/art/trader.js',
+  './js/art/weapons.js',
+  './js/engine/ads.js',
+  './js/engine/audio.js',
+  './js/engine/brightness.js',
+  './js/engine/camera.js',
+  './js/engine/daycycle.js',
+  './js/engine/device.js',
+  './js/engine/i18n.js',
+  './js/engine/input.js',
+  './js/engine/interlude.js',
+  './js/engine/intro.js',
+  './js/engine/lang/en.js',
+  './js/engine/lang/tr.js',
+  './js/engine/math.js',
+  './js/engine/particles.js',
+  './js/engine/quality.js',
+  './js/engine/touch.js',
+  './js/game/achievements.js',
+  './js/game/archives.js',
+  './js/game/barks.js',
+  './js/game/currencyfx.js',
+  './js/game/difficulty.js',
   './js/game/enemy.js',
+  './js/game/fx.js',
   './js/game/hud.js',
-  './js/game/rig.js',
+  './js/game/intel.js',
+  './js/game/loot.js',
   './js/game/meta.js',
   './js/game/metaui.js',
+  './js/game/player.js',
+  './js/game/profile.js',
   './js/game/progression.js',
+  './js/game/retention.js',
+  './js/game/rig.js',
+  './js/game/sharecard.js',
+  './js/game/statsui.js',
+  './js/game/trader.js',
+  './js/game/traderui.js',
+  './js/game/tutorial.js',
+  './js/game/weaponstats.js',
+  './js/game/world.js',
+  './js/main.js',
 ];
 
 self.addEventListener('install', (e) => {

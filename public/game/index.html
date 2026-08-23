@@ -41,10 +41,10 @@
       <!-- CREDITS — moved out of the centre cluster so no readout sits over
            the play area; reads as a stacked tactical line under the vitals -->
       <div class="vital-row credits-row">
-        <span class="vital-ico">CR</span>
-        <span id="hud-tokens" class="hud-tokens">
-          <canvas class="cur-icon cur-para hud-tokens-ico" width="14" height="14"></canvas>
-          <span id="hud-tokens-val">0</span>
+        <span class="vital-ico">SC</span>
+        <span id="hud-scrap" class="hud-tokens">
+          <canvas class="cur-icon cur-scrap hud-tokens-ico" width="14" height="14"></canvas>
+          <span id="hud-scrap-val">0</span>
         </span>
       </div>
     </div>
@@ -119,6 +119,18 @@
       </span>
     </div>
 
+    <!-- MOTH's radio barks. Its own element for the same reason the intel
+         toast is: a bark and an intel find can land on the same kill, and
+         sharing a banner means whichever fires second wipes the first. Sits
+         low-left, clear of the objective and the weapon panel. -->
+    <div id="bark" class="bark">
+      <span class="bark-mark">◎</span>
+      <span class="bark-body">
+        <span class="bark-who">MOTH</span>
+        <span class="bark-text"></span>
+      </span>
+    </div>
+
     <div id="dmg-left" class="dmg-dir left"></div>
     <div id="dmg-right" class="dmg-dir right"></div>
     <div id="dmg-omni" class="dmg-dir omni"></div>
@@ -141,14 +153,24 @@
     </div>
   </div>
 
+  <!-- Between-stage interlude — MOTH's cinematic. Driven by
+       engine/interlude.js; hidden except while a stage transition plays. -->
+  <div id="interlude" class="overlay hidden">
+    <canvas id="interlude-canvas" class="intro-canvas"></canvas>
+    <div class="interlude-skip" data-i18n="interlude.skip">TAP TO SKIP</div>
+  </div>
+
   <!-- Main menu — mobile-first tabbed home -->
   <div id="menu" class="overlay hidden">
     <div class="home">
       <header class="home-top">
         <div class="home-brand">CINDERFALL<span data-i18n="brand.sub">SECTOR 9</span></div>
         <div class="pill-row">
-          <div class="token-pill"><canvas class="cur-icon cur-para" width="20" height="20"></canvas><span id="token-count">0</span></div>
-          <div class="token-pill diamond-pill"><canvas class="cur-icon cur-diamond" width="20" height="20"></canvas><span id="diamond-count">0</span></div>
+          <button id="btn-profile" class="profile-pill" type="button" data-i18n-attr="title:profile.title" title="PROFILE">
+            <span class="profile-pill-ico">◎</span>
+            <span class="profile-pill-label" data-i18n="profile.short">PROFILE</span>
+          </button>
+          <div class="token-pill scrap-pill"><canvas class="cur-icon cur-scrap" width="20" height="20"></canvas><span id="scrap-count">0</span></div>
         </div>
       </header>
 
@@ -201,7 +223,7 @@
               <div id="crate-burst" class="crate-burst"></div>
               <span class="crate-mark">◈</span>
             </div>
-            <button id="btn-open-crate" class="btn primary big">OPEN — <span id="crate-cost">120</span> <canvas class="cur-icon cur-para" width="16" height="16"></canvas></button>
+            <button id="btn-open-crate" class="btn primary big">OPEN — <span id="crate-cost">300</span> <canvas class="cur-icon cur-scrap" width="16" height="16"></canvas></button>
             <button id="btn-watch-ad" class="btn secondary big">▶ WATCH AD — FREE CRATE<span class="ad-remaining"></span></button>
             <div id="crate-msg" class="crate-msg"></div>
           </div>
@@ -211,35 +233,43 @@
           </div>
         </section>
 
-        <!-- STORE -->
-        <section id="tab-store" class="home-panel">
-          <h2 class="panel-title" data-i18n="store.title">PREMIUM STORE</h2>
-          <div id="store-cats" class="store-cats"></div>
+        <!-- TRADER — CROW's stall. Scrap is the only thing that changes
+             hands here; there is no real-money purchase path in the game. -->
+        <section id="tab-trader" class="home-panel">
+          <h2 class="panel-title" data-i18n="trader.title">THE TRADER</h2>
 
-          <div id="store-section-diamonds" class="store-section">
-            <div class="store-section-head" data-i18n="store.buyDiamonds">BUY DIAMONDS</div>
-            <div id="diamond-packages" class="diamond-grid"></div>
-          </div>
-
-          <div id="store-section-free" class="store-section">
-            <div class="store-section-head" data-i18n="store.freeDiamonds">FREE DIAMONDS</div>
-            <div class="free-diamonds-card">
-              <div class="free-diamonds-desc" data-i18n="store.freeDesc">Watch 10 rewarded ads to earn 1 Diamond — up to 5 Diamonds a day.</div>
-              <div class="ad-progress-track"><div id="diamond-ad-fill" class="ad-progress-fill"></div></div>
-              <div class="ad-progress-label">ADS WATCHED: <span id="diamond-ad-count">0</span> / 10</div>
-              <button id="btn-watch-ad-diamond" class="btn secondary" data-i18n="store.watchAd">▶ WATCH AD</button>
-              <div id="diamond-ad-status" class="ad-status"></div>
+          <div class="trader-hero">
+            <canvas id="trader-portrait" class="trader-portrait" width="120" height="120" aria-hidden="true"></canvas>
+            <div class="trader-id">
+              <div class="trader-name" data-i18n="trader.name">CROW</div>
+              <div class="trader-role" data-i18n="trader.role">SALVAGE FENCE — SECTOR 9</div>
+              <p id="trader-line" class="trader-line"></p>
             </div>
           </div>
 
-          <div id="store-section-offers" class="store-section">
-            <div class="store-section-head" data-i18n="store.specialOffers">SPECIAL OFFERS</div>
-            <div id="bundle-list" class="bundle-list"></div>
+          <div id="trader-cats" class="store-cats"></div>
+
+          <div id="trader-section-stall" class="store-section">
+            <div class="store-section-head trader-stall-head">
+              <span data-i18n="trader.stall">TODAY'S STALL</span>
+              <span id="trader-restock" class="trader-restock"></span>
+            </div>
+            <div id="trader-stall-grid" class="collection-grid"></div>
           </div>
 
-          <div id="store-section-items" class="store-section">
-            <div class="store-section-head" id="store-items-head">FEATURED</div>
-            <div id="store-item-grid" class="collection-grid"></div>
+          <div id="trader-section-ad" class="store-section">
+            <div class="store-section-head" data-i18n="trader.adTitle">SCRAP FOR A WATCH</div>
+            <div class="trade-card">
+              <div id="trade-ad-desc" class="trade-card-desc"></div>
+              <div class="ad-progress-track"><div id="trade-ad-fill" class="ad-progress-fill"></div></div>
+              <button id="btn-trade-ad" class="btn secondary" data-i18n="trader.watchAd">▶ WATCH AD</button>
+              <div id="trade-ad-status" class="ad-status"></div>
+            </div>
+          </div>
+
+          <div id="trader-section-items" class="store-section hidden">
+            <div class="store-section-head" id="trader-items-head">ITEMS</div>
+            <div id="trader-item-grid" class="collection-grid"></div>
           </div>
         </section>
 
@@ -253,15 +283,6 @@
 
           <div id="stats-overview" class="store-section">
             <div id="stats-grid" class="stats-grid"></div>
-
-            <div class="store-section-head">AD WATCH REWARD</div>
-            <div class="free-diamonds-card">
-              <div class="free-diamonds-desc">Watch <span id="ad-tl-threshold">1,000</span> rewarded ads to earn <span id="ad-tl-amount">10</span> TL — counts every ad watched anywhere in the game.</div>
-              <div class="ad-progress-track"><div id="ad-tl-fill" class="ad-progress-fill"></div></div>
-              <div class="ad-progress-label" id="ad-tl-progress-label">0 / 1,000 ADS WATCHED</div>
-              <button id="btn-claim-ad-tl" class="btn primary" disabled>CLAIM 10 TL</button>
-              <div id="ad-tl-status" class="ad-status"></div>
-            </div>
           </div>
 
           <div id="stats-achievements" class="store-section hidden">
@@ -285,7 +306,7 @@
         <button class="home-tab active" data-tab="play"><span class="tab-ico">▶</span><span data-i18n="tab.play">PLAY</span></button>
         <button class="home-tab" data-tab="loadout"><span class="tab-ico">◈</span><span data-i18n="tab.loadout">LOADOUT</span></button>
         <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span><span data-i18n="tab.crates">CRATES</span></button>
-        <button class="home-tab" data-tab="store"><span class="tab-ico">◆</span><span data-i18n="tab.store">STORE</span></button>
+        <button class="home-tab" data-tab="trader"><span class="tab-ico">⚒</span><span data-i18n="tab.trader">TRADER</span></button>
         <button class="home-tab" data-tab="stats"><span class="tab-ico">◉</span><span data-i18n="tab.stats">STATS</span></button>
         <button class="home-tab" data-tab="archives"><span class="tab-ico">▤</span><span data-i18n="tab.archives">ARCHIVES</span></button>
       </nav>
@@ -366,6 +387,38 @@
     </div>
   </div>
 
+  <!-- Player card — the offline profile. Built by game/profile.js; every
+       number on it is read from local storage, nothing is sent anywhere. -->
+  <div id="profile-overlay" class="overlay dim hidden">
+    <div id="profile-card" class="profile-card">
+      <div class="profile-head">
+        <span class="profile-kicker" data-i18n="profile.kicker">OPERATOR FILE</span>
+        <span class="profile-title" data-i18n="profile.title">PROFILE</span>
+      </div>
+
+      <div class="profile-score-block">
+        <div id="profile-score" class="profile-score">0</div>
+        <div id="profile-score-label" class="profile-score-label" data-i18n="profile.score">SECTOR SCORE</div>
+        <div id="profile-rank" class="profile-rank"></div>
+        <div class="profile-rank-track"><div id="profile-rank-fill" class="profile-rank-fill"></div></div>
+        <div id="profile-rank-next" class="profile-rank-next"></div>
+      </div>
+
+      <div id="profile-stats" class="profile-stats"></div>
+
+      <div class="profile-weapon">
+        <div class="profile-weapon-head" data-i18n="profile.favorite">FAVOURITE WEAPON</div>
+        <canvas id="profile-weapon-art" class="profile-weapon-art" width="200" height="72"></canvas>
+        <div id="profile-weapon-name" class="profile-weapon-name"></div>
+        <div id="profile-weapon-skin" class="profile-weapon-skin"></div>
+      </div>
+
+      <div class="profile-actions">
+        <button id="btn-profile-close" class="btn quiet" data-i18n="profile.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Viral score card — painted to canvas so it can be shared as an image -->
   <div id="sharecard" class="overlay dim hidden">
     <div class="sharecard-inner">
@@ -385,6 +438,7 @@
       <button id="btn-restart" class="btn" data-i18n="pause.restart">RESTART MISSION</button>
       <button id="btn-quit" class="btn" data-i18n="pause.quit">ABORT TO MENU</button>
       <button id="btn-graphics" class="btn quiet"><span data-i18n="pause.graphics">GRAPHICS:</span> <span id="graphics-tier">HIGH</span></button>
+      <button id="btn-brightness" class="btn quiet"><span data-i18n="pause.brightness">BRIGHTNESS:</span> <span id="brightness-label">NORMAL</span></button>
       <button id="btn-language" class="btn quiet"><span data-i18n="pause.language">LANGUAGE:</span> <span id="language-label">ENGLISH</span></button>
     </div>
   </div>
@@ -415,6 +469,11 @@
 
   <!-- On-screen touch controls (shown on touch devices during play) -->
   <div id="touch">
+    <!-- Capture zones. Each stick floats to wherever the thumb lands inside
+         its zone, so neither pad ever has to be found by eye. The zones sit
+         below the buttons in z-order, so a tap on JUMP is still a jump. -->
+    <div id="tc-zone-left" class="tc-zone left"></div>
+    <div id="tc-zone-right" class="tc-zone right"></div>
     <div id="tc-move" class="tc-stick left"><div class="tc-nub"></div><div class="tc-label">MOVE</div></div>
     <div id="tc-aim" class="tc-stick right"><div class="tc-nub"></div><div class="tc-label">AIM / FIRE</div></div>
     <button id="tc-jump" class="tc-btn tc-jump" data-i18n="ctrl.jump">JUMP</button>

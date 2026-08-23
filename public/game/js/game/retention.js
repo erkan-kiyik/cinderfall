@@ -10,13 +10,13 @@ const DAILY_KEY = 'cinderfall.daily.v1';
 // small enough that missing them costs little. `kind` maps to a Progression
 // grant the caller performs — this module only decides *what* is owed.
 export const DAILY_REWARDS = [
-  { day: 1, kind: 'tokens',   amount: 60 },
-  { day: 2, kind: 'tokens',   amount: 90 },
-  { day: 3, kind: 'diamonds', amount: 2 },
-  { day: 4, kind: 'tokens',   amount: 150 },
-  { day: 5, kind: 'diamonds', amount: 4 },
-  { day: 6, kind: 'tokens',   amount: 240 },
-  { day: 7, kind: 'diamonds', amount: 10 },
+  { day: 1, kind: 'scrap', amount: 60 },
+  { day: 2, kind: 'scrap', amount: 90 },
+  { day: 3, kind: 'scrap', amount: 140 },
+  { day: 4, kind: 'scrap', amount: 200 },
+  { day: 5, kind: 'scrap', amount: 280 },
+  { day: 6, kind: 'scrap', amount: 380 },
+  { day: 7, kind: 'scrap', amount: 600 },
 ];
 
 // Local calendar day, not UTC and not a rolling 24h window: players think in

@@ -19,6 +19,44 @@ export const K = {
 
 const ADDITIVE = new Set([K.SPARK, K.EMBER]);
 
+// ---------------------------------------------------------------------------
+// Baked soft discs
+// ---------------------------------------------------------------------------
+// Dust and smoke used to build a CanvasGradient per particle per frame — smoke
+// two of them — which on a busy frame with the low tier's 900-particle pool is
+// hundreds of shader objects allocated and thrown away sixty times a second.
+// It is also the one thing in this file that generated per-frame garbage, in a
+// system whose entire design is about not doing that.
+//
+// The ramps are fixed, so they are baked once into small canvases instead and
+// blitted. `globalAlpha` still modulates each draw, so the result is identical;
+// only the per-frame allocation is gone. Keyed by colour, with a hard cap so an
+// unexpected caller passing many colours degrades to the old path rather than
+// growing without bound.
+const DISC_R = 32;
+const DISC_CAP = 48;
+const discCache = new Map();
+
+function bakeDisc(key, stops) {
+  let cv = discCache.get(key);
+  if (cv) return cv;
+  if (discCache.size >= DISC_CAP) return null;   // fall back to a live gradient
+  cv = document.createElement('canvas');
+  cv.width = DISC_R * 2; cv.height = DISC_R * 2;
+  const g = cv.getContext('2d');
+  const grad = g.createRadialGradient(DISC_R, DISC_R, 0, DISC_R, DISC_R, DISC_R);
+  for (const [at, col] of stops) grad.addColorStop(at, col);
+  g.fillStyle = grad;
+  g.fillRect(0, 0, DISC_R * 2, DISC_R * 2);
+  discCache.set(key, cv);
+  return cv;
+}
+
+// Draws a baked disc centred on (x, y) with radius r.
+function blitDisc(g, cv, x, y, r) {
+  g.drawImage(cv, x - r, y - r, r * 2, r * 2);
+}
+
 function blankParticle() {
   return {
     kind: 0, x: 0, y: 0, vx: 0, vy: 0, life: 1, age: 0, size: 3, grow: 0,
@@ -157,11 +195,13 @@ export class Particles {
         }
         case K.DUST: {
           const r = Math.max(0.5, p.size);
+          g.globalAlpha = a * 0.55;
+          const disc = bakeDisc(`d:${p.color}`, [[0, p.color], [1, 'rgba(0,0,0,0)']]);
+          if (disc) { blitDisc(g, disc, p.x, p.y, r); break; }
           const grad = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
           grad.addColorStop(0, p.color);
           grad.addColorStop(1, 'rgba(0,0,0,0)');
           g.fillStyle = grad;
-          g.globalAlpha = a * 0.55;
           g.beginPath();
           g.arc(p.x, p.y, r, 0, TAU);
           g.fill();
@@ -180,19 +220,33 @@ export class Particles {
           const fout = t > 0.5 ? 1 - (t - 0.5) / 0.5 : 1;      // gradual dissipation
           const base = clamp(p.alpha * fin * fout, 0, 1);
           if (base <= 0.01) break;
+          const rgb = `${cr},${cg},${cb}`;
+          const ox = Math.cos(p.seed) * r * 0.18, oy = Math.sin(p.seed) * r * 0.18;
+          const body = bakeDisc(`sb:${rgb}`, [
+            [0, `rgba(${rgb},0.5)`], [0.55, `rgba(${rgb},0.22)`], [1, `rgba(${rgb},0)`],
+          ]);
+          const core = bakeDisc(`sc:${rgb}`, [
+            [0, `rgba(${rgb},0.75)`], [1, `rgba(${rgb},0)`],
+          ]);
+          if (body && core) {
+            g.globalAlpha = base * 0.6;
+            blitDisc(g, body, p.x, p.y, r);
+            g.globalAlpha = base * 0.7;
+            blitDisc(g, core, p.x + ox, p.y + oy, r * 0.6);
+            break;
+          }
           // wide faint body
           let grad = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
-          grad.addColorStop(0, `rgba(${cr},${cg},${cb},0.5)`);
-          grad.addColorStop(0.55, `rgba(${cr},${cg},${cb},0.22)`);
-          grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+          grad.addColorStop(0, `rgba(${rgb},0.5)`);
+          grad.addColorStop(0.55, `rgba(${rgb},0.22)`);
+          grad.addColorStop(1, `rgba(${rgb},0)`);
           g.fillStyle = grad;
           g.globalAlpha = base * 0.6;
           g.beginPath(); g.arc(p.x, p.y, r, 0, TAU); g.fill();
           // denser offset core for internal density variation
-          const ox = Math.cos(p.seed) * r * 0.18, oy = Math.sin(p.seed) * r * 0.18;
           grad = g.createRadialGradient(p.x + ox, p.y + oy, 0, p.x + ox, p.y + oy, r * 0.6);
-          grad.addColorStop(0, `rgba(${cr},${cg},${cb},0.75)`);
-          grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+          grad.addColorStop(0, `rgba(${rgb},0.75)`);
+          grad.addColorStop(1, `rgba(${rgb},0)`);
           g.fillStyle = grad;
           g.globalAlpha = base * 0.7;
           g.beginPath(); g.arc(p.x + ox, p.y + oy, r * 0.6, 0, TAU); g.fill();

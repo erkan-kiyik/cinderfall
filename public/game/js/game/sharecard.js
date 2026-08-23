@@ -8,7 +8,7 @@
 // download, then the clipboard.
 
 import { t } from '../engine/i18n.js';
-import { paintPara } from '../art/currency.js';
+import { paintScrap } from '../art/currency.js';
 
 // Portrait 4:5 — the aspect both Instagram feed and WhatsApp preview crop
 // least aggressively.
@@ -97,12 +97,12 @@ export function paintShareCard(cv, stats) {
   // ---- currency earned, using the real in-game coin art
   const coin = document.createElement('canvas');
   coin.width = coin.height = 92;
-  paintPara(coin.getContext('2d'), 92, 92);
+  paintScrap(coin.getContext('2d'), 92, 92);
   g.drawImage(coin, CARD_W / 2 - 96, 850, 72, 72);
   g.textAlign = 'left';
   g.fillStyle = '#ffd479';
   g.font = '700 54px Orbitron, Rajdhani, sans-serif';
-  g.fillText(String(stats.tokens || 0), CARD_W / 2 - 8, 906);
+  g.fillText(String(stats.scrap || 0), CARD_W / 2 - 8, 906);
 
   // ---- footer call to action
   g.textAlign = 'center';

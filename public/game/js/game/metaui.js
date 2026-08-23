@@ -64,7 +64,7 @@ export class MetaUI {
 
   // Re-read progression and repaint everything (call on menu show / after runs).
   refresh() {
-    this.renderTokens();
+    this.renderScrap();
     this.renderLoadout();
     this.renderCollection();
     this.renderAdButton();
@@ -86,14 +86,15 @@ export class MetaUI {
     if (this.audio) this.audio.ui();
   }
 
-  renderTokens() {
-    const el = $('token-count');
-    const n = this.p.tokens;
-    const prev = this._lastTokenCount;
-    this._lastTokenCount = n;
+  renderScrap() {
+    const el = $('scrap-count');
+    if (!el) return;
+    const n = this.p.scrap;
+    const prev = this._lastScrapCount;
+    this._lastScrapCount = n;
     if (prev == null || n <= prev) { el.textContent = String(n); return; }   // init / spend: snap
     animateCount(el, prev, n);
-    playCurrencyGain(document.querySelector('.token-pill'), 'para', this.audio);
+    playCurrencyGain(document.querySelector('.scrap-pill'), 'scrap', this.audio);
   }
 
   renderLoadout() {
@@ -332,11 +333,11 @@ export class MetaUI {
     $('collection-count').textContent = `${owned} / ${CATALOG.length}`;
   }
 
-  // ---- crate open: spend (tokens or a watched ad), roll, spin, reveal ----
+  // ---- crate open: spend (scrap or a watched ad), roll, spin, reveal ----
   openCrate({ free = false } = {}) {
     if (this.busy) return;
     const msg = $('crate-msg');
-    if (!free && this.p.tokens < CRATE_COST) {
+    if (!free && this.p.scrap < CRATE_COST) {
       msg.textContent = t('crates.notEnough');
       msg.classList.add('warn');
       return;
@@ -344,22 +345,22 @@ export class MetaUI {
     msg.classList.remove('warn');
     msg.textContent = '';
     this.busy = true;
-    if (!free) this.p.spendTokens(CRATE_COST);
+    if (!free) this.p.spendScrap(CRATE_COST);
     this.p.data.cratesOpened++;
-    this.renderTokens();
+    this.renderScrap();
     if (this.audio) this.audio.ui();
 
     const drop = rollCrate();
     const isDup = this.p.owns(drop.id);
     let refund = 0;
-    if (isDup) { refund = Math.round(CRATE_COST * DUPLICATE_REFUND); this.p.addTokens(refund); }
+    if (isDup) { refund = Math.round(CRATE_COST * DUPLICATE_REFUND); this.p.addScrap(refund); }
     else if (drop.weaponId) { for (const vid of weaponVariantIds(drop.weaponId)) this.p.grant(vid); }
     else this.p.grant(drop.id);
 
     this.playCaseOpen(() => this.spinReel(drop, () => this.showReveal(drop, isDup, refund)));
   }
 
-  // Free crate paid for by finishing a rewarded ad instead of tokens.
+  // Free crate paid for by finishing a rewarded ad instead of scrap.
   openCrateWithAd() {
     if (this.busy) return;
     const msg = $('crate-msg');
@@ -477,7 +478,7 @@ export class MetaUI {
   closeReveal() {
     $('crate-reveal').classList.add('hidden');
     this.busy = false;
-    this.renderTokens();
+    this.renderScrap();
     this.renderCollection();
     this.renderLoadout();
     this.renderLoadoutChips();

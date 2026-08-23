@@ -35,7 +35,7 @@ export class Hud {
       stealthPrompt: $('stealth-prompt'),
       dmgLeft: $('dmg-left'), dmgRight: $('dmg-right'), dmgOmni: $('dmg-omni'),
       detBar: $('det-bar'), detFill: $('det-fill'), detLabel: $('det-label'),
-      xpFill: $('xp-fill'), lvlLabel: $('lvl-label'), hudTokens: $('hud-tokens'), hudTokensVal: $('hud-tokens-val'),
+      xpFill: $('xp-fill'), lvlLabel: $('lvl-label'), hudScrap: $('hud-scrap'), hudScrapVal: $('hud-scrap-val'),
       notify: $('notify'),
       intelToast: $('intel-toast'), intelToastTitle: $('intel-toast-title'),
       endTitle: $('end-title'), endDetail: $('end-detail'),
@@ -63,6 +63,7 @@ export class Hud {
     $('btn-menu').onclick = h.quit;
     if (h.graphics) $('btn-graphics').onclick = h.graphics;
     if (h.language) $('btn-language').onclick = h.language;
+    if (h.brightness) $('btn-brightness').onclick = h.brightness;
     this._onPickStage = h.pickStage || null;
     if (h.share) $('btn-share').onclick = h.share;
     if (h.shareSend) $('btn-sharecard-send').onclick = h.shareSend;
@@ -166,6 +167,14 @@ export class Hud {
     el.textContent = entry ? entry.label : getLang().toUpperCase();
   }
 
+  // Brightness step label. Takes the level rather than reading the module so
+  // the HUD stays a pure view — same shape as setLanguage above.
+  setBrightness(level) {
+    const el = $('brightness-label');
+    if (!el || !level) return;
+    el.textContent = t(level.label);
+  }
+
   // ---- daily reward ----
   // `rewards` is the seven-day cycle, `day` the one being claimed now.
   showDaily(on, { rewards = [], day = 1, streak = 0 } = {}) {
@@ -180,7 +189,6 @@ export class Hud {
     for (const r of rewards) {
       const cell = document.createElement('div');
       cell.className = 'daily-cell'
-        + (r.kind === 'diamonds' ? ' diamond' : '')
         + (r.day < day ? ' done' : '')
         + (r.day === day ? ' today' : '');
       cell.innerHTML = `<div class="daily-cell-day">${r.day}</div>` +
@@ -358,14 +366,14 @@ export class Hud {
     this.el.xpFill.style.width = `${Math.round(xpFrac * 100)}%`;
   }
 
-  setTokens(n) {
-    const valEl = this.el.hudTokensVal;
+  setScrap(n) {
+    const valEl = this.el.hudScrapVal;
     if (!valEl) return;
-    const prev = this._lastTokens;
-    this._lastTokens = n;
+    const prev = this._lastScrap;
+    this._lastScrap = n;
     if (prev == null || n <= prev) { valEl.textContent = String(n); return; }   // init / spend: snap, no fanfare
     animateCount(valEl, prev, n);
-    playCurrencyGain(this.el.hudTokens, 'para', audio);
+    playCurrencyGain(this.el.hudScrap, null, audio);
   }
 
   // Energy weapons: shows heat (yellow→red, flashes when overheated) or, for
