@@ -42,6 +42,28 @@ jobs:
       - name: Scaffold Android shell from web assets
         run: npm run add:android
 
+      # The three steps below were written for exactly this pipeline (see
+      # their own comments in mobile/scripts/ and the "assets" script in
+      # mobile/package.json) but this workflow never called them, which
+      # meant every APK it produced booted with Capacitor's default light/
+      # white theme (a white flash before the WebView paints, on some
+      # devices outlasting the whole synchronous asset-bake and looking
+      # like a hang), the stock placeholder app icon instead of Cinderfall's
+      # own, and a Google Mobile Ads manifest gap that the AdMob SDK is
+      # documented to crash on. All three regenerate every run because
+      # `cap add android` rebuilds android/ from scratch each time.
+      - name: Generate app icons + splash screens
+        run: npm run assets
+
+      - name: Patch Android theme (dark, edge-to-edge)
+        run: node ./scripts/patch-android-theme.mjs
+
+      - name: Patch Android manifest (AdMob test App ID)
+        run: node ./scripts/patch-android-admob.mjs
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
       - name: Build debug APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug --no-daemon
