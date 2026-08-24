@@ -202,6 +202,10 @@ function paintRifleMag(variant, finish) {
   // curved 30-rd magazine; anchor at top (feed) point.
   return makeSprite(10, 16, 5, 1, (g) => {
     g.translate(5, 1);
+    // Seated 0.8 up into the well. The receiver's underside slopes from 0.4 at
+    // the well's front to -0.4 at its rear, so a magazine whose feed lip sat
+    // flat at 0.2 met the gun at one corner and showed daylight at the other.
+    g.translate(0, -0.8);
     g.fillStyle = lingrad(g, -4, 0, 5, 0, [
       [0, shade(poly, 0.14)], [0.5, poly], [1, shade(poly, -0.3)],
     ]);
@@ -471,7 +475,11 @@ function paintLaserSmg(finish) {
 
     // vertical foregrip — nothing else in the size class has one
     g.fillStyle = polymer(g, 9, 6, shade(poly, 0.06));
-    rr(g, 9.4, -1.4, 3.2, 6.6, 1.3); g.fill();
+    // Top raised into the housing. The emitter's underside slopes from -1.6 to
+    // -2.3 across the grip's width, so a grip starting flat at -1.4 hung below
+    // it the whole way — joined by an antialiased pixel at one corner, which
+    // is why an automated connectivity check passed it while the eye did not.
+    rr(g, 9.4, -3.0, 3.2, 8.2, 1.3); g.fill();
     g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.35;
     for (let i = 0; i < 3; i++) {
       g.beginPath(); g.moveTo(9.6, 0.4 + i * 1.7); g.lineTo(12.4, 0.4 + i * 1.7); g.stroke();
@@ -569,6 +577,7 @@ function paintSmgMag(finish) {
   // straight box mag; anchor at top (feed) point.
   return makeSprite(7, 15, 3.5, 1, (g) => {
     g.translate(3.5, 1);
+    g.translate(0, -0.8);   // seated into the well, same as the rifle's
     g.fillStyle = lingrad(g, -3, 0, 3, 0, [
       [0, shade(body, 0.32)], [0.5, body], [1, shade(body, -0.3)],
     ]);
@@ -966,8 +975,10 @@ function chassisBarrel(g, kind, rec, core) {
       g.beginPath(); g.moveTo(25 + i * 3.4, -7); g.lineTo(25 + i * 3.4, -3.2); g.stroke();
     }
     g.fillStyle = shade(rec, -0.3);
-    g.fillRect(30, -2.6, 1.8, 7);                 // bipod leg
-    g.fillRect(33.5, -2.6, 1.8, 7);
+    // Legs start inside the barrel (its underside is -2.8), not level with it —
+    // butted exactly against it they left a hairline of background showing.
+    g.fillRect(30, -3.4, 1.8, 7.8);               // bipod leg
+    g.fillRect(33.5, -3.4, 1.8, 7.8);
   } else if (kind === 'shroud') {
     // perforated cooling shroud over a thin barrel
     g.fillStyle = metal(g, -8, -2.6, shade(rec, 0.04));
@@ -1072,19 +1083,36 @@ function chassisMag(g, kind, rec, poly, core) {
 }
 
 // ---- topside accessory ----
+// The receiver's top deck. Every accessory below has to reach this line, or
+// it is floating: the deck is what an optic's mount, a carry handle's feet or
+// a heat sink's base physically bolts to.
+//
+// None of them did. The scope's rings stopped at -9.2, the carry handle's
+// feet at -10.4, the emitter at -10.2 and the fin stack's base plate at -9.4,
+// leaving gaps of 1.0 to 2.2 units of clear air between the accessory and the
+// gun on all eleven chassis weapons. (This is a different bug from the one
+// fixed in skins.js, which was about skin-*added* optics; these are the
+// weapon's own built-in parts.) Each one now runs down to the deck.
+const DECK_Y = -8.2;
+
 function chassisTop(g, kind, rec, core) {
   const [cr, cg, cb] = core || [140, 190, 255];
   if (kind === 'carry') {
     // fixed carry handle — a very distinctive outline
     g.fillStyle = metal(g, -16, -11, shade(rec, 0.02));
     g.beginPath();
-    g.moveTo(-2, -10.4); g.lineTo(-2, -15.4); g.lineTo(14, -15.4); g.lineTo(14, -10.4);
-    g.lineTo(11.6, -10.4); g.lineTo(11.6, -13.4); g.lineTo(0.4, -13.4); g.lineTo(0.4, -10.4);
+    g.moveTo(-2, DECK_Y); g.lineTo(-2, -15.4); g.lineTo(14, -15.4); g.lineTo(14, DECK_Y);
+    g.lineTo(11.6, DECK_Y); g.lineTo(11.6, -13.4); g.lineTo(0.4, -13.4); g.lineTo(0.4, DECK_Y);
     g.closePath(); g.fill();
   } else if (kind === 'scope') {
+    // rings run from the tube down onto the deck
     g.fillStyle = shade(rec, -0.3);
-    g.fillRect(1, -11.6, 2, 2.4);
-    g.fillRect(10, -11.6, 2, 2.4);
+    const ringH = DECK_Y - -11.6 + 0.6;   // tube underside down onto the deck
+    g.fillRect(1, -11.6, 2, ringH);
+    g.fillRect(10, -11.6, 2, ringH);
+    // mounting base plate along the deck, so the rings land on something
+    g.fillStyle = shade(rec, -0.18);
+    g.fillRect(0, DECK_Y - 1.4, 13, 1.6);
     g.fillStyle = metal(g, -17, -11, shade(rec, 0.06));
     rr(g, -1.5, -16.4, 17, 5, 2.4); g.fill();
     g.fillStyle = 'rgba(120,190,230,0.5)';
@@ -1093,18 +1121,18 @@ function chassisTop(g, kind, rec, core) {
     // dorsal emitter fin with a lit slot
     g.fillStyle = metal(g, -15, -10, shade(rec, -0.1));
     g.beginPath();
-    g.moveTo(-1, -10.2); g.lineTo(3, -15.2); g.lineTo(12, -15.2); g.lineTo(14, -10.2);
+    g.moveTo(-1, DECK_Y); g.lineTo(3, -15.2); g.lineTo(12, -15.2); g.lineTo(14, DECK_Y);
     g.closePath(); g.fill();
     g.save(); g.globalCompositeOperation = 'lighter';
     g.fillStyle = `rgba(${cr},${cg},${cb},0.6)`;
     g.fillRect(3.4, -13.4, 8, 1.5);
     g.restore();
   } else if (kind === 'fins') {
-    // heat-sink fin stack
+    // heat-sink fin stack on a base plate that sits flat on the deck
     g.fillStyle = shade(rec, -0.16);
     for (let i = 0; i < 5; i++) g.fillRect(0.5 + i * 2.7, -14.4, 1.7, 4.4);
     g.fillStyle = shade(rec, 0.08);
-    g.fillRect(0, -10.6, 14.5, 1.2);
+    g.fillRect(0, -10.6, 14.5, DECK_Y - -10.6 + 0.4);
   }
 }
 
@@ -1121,9 +1149,24 @@ function paintChassisMag(kind, rec, poly, core) {
   const AX = 4, AY = 4;
   return makeSprite(24, 22, AX, AY, (g) => {
     g.translate(AX, AY);
+    // Lifted into the receiver rather than hung below it. Every feed device
+    // used to start at y 0.2 while the receiver's underside runs -0.4..0.4 and
+    // the handguard's is -1.0, so the magazine met the gun along a hairline at
+    // best and floated a unit clear of it at worst. It is drawn *behind* the
+    // body, so overlapping into the well costs nothing visually and the joint
+    // simply stops existing.
+    g.translate(0, -1.2);
     chassisMag(g, kind, rec, poly, core);
+    // Wear clipped to the magazine's own pixels, exactly as paintChassis does
+    // for the body. Unclipped, these scattered over the whole 15x15 box and
+    // left loose diagonal scratches hanging in the air under the gun with no
+    // geometry beneath them — the stray marks visible below the grip on every
+    // chassis weapon.
+    g.save();
+    g.globalCompositeOperation = 'source-atop';
     scratches(g, 2, 0, 15, 15, rng, { n: 3 });
     grunge(g, 2, 0, 15, 15, rng, { n: 16, dark: 0.1 });
+    g.restore();
   });
 }
 
@@ -1353,9 +1396,19 @@ function paintRailgun(finish) {
     rr(g, -6.5, -7.4, 17, 7, 1); g.fill();
     energyGrip(g, poly, rec);
 
-    // capacitor bank slung under the rails — three stacked drums
+    // Capacitor bank slung under the rails — three stacked drums.
+    //
+    // Each drum needs the strap that carries it. The drums sit at y -1.2 and
+    // the lower rail's underside is at -4.2, so without one they hung three
+    // units clear of the weapon with nothing joining them to it: the only
+    // genuinely detached geometry left in the whole roster.
     for (let i = 0; i < 3; i++) {
       const cx = 12 + i * 6.4;
+      // Lit like the rest of the receiver, not shaded down: at -0.34 the strap
+      // was so close to the background that the bank still read as floating
+      // even though it was physically joined.
+      g.fillStyle = metal(g, -4.6, -0.8, shade(rec, 0.12));
+      g.fillRect(cx + 1.6, -4.6, 2.2, 3.8);       // hanger, rail down to drum
       g.fillStyle = metal(g, -1, 4, shade(rec, -0.2));
       rr(g, cx, -1.2, 5.4, 5, 1.6); g.fill();
       g.fillStyle = `rgba(${cr},${cg},${cb},0.5)`;
