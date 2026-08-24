@@ -321,12 +321,160 @@ function shadeA(hex, k, a) {
 // have to stand outside his shoulders and the awning has to clear his hood by
 // a real margin, or the whole thing reads as a hat. At these numbers his
 // silhouette spans about 85% of the gap between the poles.
+// Lamp position in stall units (see lanternFixture / lanternGlow).
+const LAMP = { x: -26, y: -70 };
+
 const STALL = {
   poleH: 92,     // pole height in `u`
   poleW: 3.4,
   spread: 96,    // distance between the two uprights
   counterY: -30, // top of the counter plank — crosses his chest, not his waist
 };
+
+// ---------------------------------------------------------------- backdrop
+// The scene used to be one stall against a flat dark rectangle, which left the
+// outer thirds of a 900px banner as literal nothing and gave the stall no
+// world to stand in. This is that world: a shuttered sector frontage receding
+// into haze. It is deliberately low-contrast and made of big shapes — at the
+// 380px end of the banner's range it has to read as texture, not as detail,
+// and it must never compete with CROW for the eye.
+function backdrop(g, w, h, groundY, u) {
+  // night sky / upper wall
+  const sky = g.createLinearGradient(0, 0, 0, groundY);
+  sky.addColorStop(0, '#0e1016');
+  sky.addColorStop(0.55, '#141119');
+  sky.addColorStop(1, '#221a16');
+  g.fillStyle = sky;
+  g.fillRect(0, 0, w, groundY);
+
+  // far tower silhouettes with a handful of lit windows, well back in the haze
+  const rnd = rng(0x9e21);
+  // Darker than the sky behind them, not lighter — at rgba(26,24,32) these
+  // came out a shade *above* the sky value and the whole row read as a pale
+  // lavender wall pasted across the middle of the banner.
+  const farTop = groundY - 68 * u;
+  g.fillStyle = 'rgba(9,9,14,0.92)';
+  let x = -8 * u;
+  while (x < w + 8 * u) {
+    const bw = (14 + rnd() * 20) * u;
+    const bh = (18 + rnd() * 40) * u;
+    g.fillRect(x, farTop - bh + 20 * u, bw, bh + 60 * u);
+    // a few windows, warm and dim
+    for (let i = 0; i < 3; i++) {
+      if (rnd() > 0.55) {
+        g.fillStyle = `rgba(255,186,110,${0.035 + rnd() * 0.05})`;
+        g.fillRect(x + (2 + rnd() * (bw / u - 6)) * u, farTop - bh + (24 + i * 7) * u, 2.2 * u, 3 * u);
+        g.fillStyle = 'rgba(9,9,14,0.92)';
+      }
+    }
+    x += bw + (3 + rnd() * 5) * u;
+  }
+
+  // near frontage: roller shutters and doorways, the wall the stall backs onto
+  // Kept below CROW's shoulder line. At -46u its top edge ran straight through
+  // his upper chest, and a hard horizontal landing across the subject is the
+  // one place a backdrop edge must never sit.
+  const wallTop = groundY - 34 * u;
+  g.fillStyle = '#17130f';
+  g.fillRect(0, wallTop, w, groundY - wallTop);
+  // shutter bays, each a slightly different height so the run is not a stripe
+  const bay = 30 * u;
+  let bi = 0;
+  for (let bx = -bay; bx < w + bay; bx += bay) {
+    const jog = ((bi++ * 7919) % 5) * 1.1 * u;
+    g.fillStyle = 'rgba(9,8,7,0.6)';
+    g.fillRect(bx + 3 * u, wallTop + 8 * u + jog, bay - 8 * u, groundY - wallTop - 8 * u - jog);
+    // corrugation
+    g.strokeStyle = 'rgba(255,220,180,0.030)';
+    g.lineWidth = Math.max(0.6, 0.5 * u);
+    for (let rx = bx + 5 * u; rx < bx + bay - 6 * u; rx += 2.4 * u) {
+      g.beginPath(); g.moveTo(rx, wallTop + 9 * u + jog); g.lineTo(rx, groundY - 1 * u); g.stroke();
+    }
+    // lintel
+    g.fillStyle = 'rgba(255,210,160,0.05)';
+    g.fillRect(bx + 2 * u, wallTop + 5 * u + jog, bay - 6 * u, 1.4 * u);
+  }
+  // service pipe running the length of the frontage, and its shadow
+  g.fillStyle = 'rgba(8,8,10,0.55)';
+  g.fillRect(0, wallTop + 1.4 * u, w, 2.6 * u);
+  g.fillStyle = 'rgba(255,214,170,0.055)';
+  g.fillRect(0, wallTop + 1.4 * u, w, 0.8 * u);
+  for (let bx = 6 * u; bx < w; bx += 34 * u) {
+    g.fillStyle = 'rgba(6,6,8,0.6)';
+    g.fillRect(bx, wallTop + 0.6 * u, 2.2 * u, 4.4 * u);
+  }
+
+  // slack cable strung across the frontage — one sagging curve, reads instantly
+  // as an inhabited back-street and costs a single path
+  g.strokeStyle = 'rgba(6,6,9,0.75)';
+  g.lineWidth = Math.max(1, 0.7 * u);
+  g.beginPath();
+  g.moveTo(-4 * u, wallTop - 14 * u);
+  g.quadraticCurveTo(w * 0.5, wallTop - 2 * u, w + 4 * u, wallTop - 18 * u);
+  g.stroke();
+
+  // atmospheric haze: the sector's sodium light hanging in the air, thickest
+  // just above the street so everything below the wall line softens
+  const haze = g.createLinearGradient(0, wallTop - 16 * u, 0, groundY);
+  haze.addColorStop(0, withA(HAZE, 0));
+  haze.addColorStop(0.65, withA(HAZE, 0.05));
+  haze.addColorStop(1, withA(HAZE, 0.10));
+  g.fillStyle = haze;
+  g.fillRect(0, wallTop - 16 * u, w, groundY - wallTop + 16 * u);
+}
+
+// ---------------------------------------------------------------- lantern
+// The warm light in this scene used to be a radial gradient with nothing
+// making it — light with no lamp, which is the single fastest way to make a
+// painted scene look unfinished. This is the lamp: a hooded bulb wired to the
+// crossbeam, and it is what every warm value in the frame is now coming from.
+// Drawn in stall-local coordinates.
+function lanternGlow(g, u, x, y) {
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  // the throw
+  const cone = g.createRadialGradient(x, y, 1 * u, x, y, 54 * u);
+  cone.addColorStop(0, 'rgba(255,176,96,0.42)');
+  cone.addColorStop(0.35, 'rgba(255,140,60,0.16)');
+  cone.addColorStop(1, 'rgba(255,120,40,0)');
+  g.fillStyle = cone;
+  g.beginPath(); g.arc(x, y, 54 * u, 0, Math.PI * 2); g.fill();
+  // the hot spot
+  const core = g.createRadialGradient(x, y, 0, x, y, 7 * u);
+  core.addColorStop(0, 'rgba(255,232,190,0.85)');
+  core.addColorStop(1, 'rgba(255,170,90,0)');
+  g.fillStyle = core;
+  g.beginPath(); g.arc(x, y, 7 * u, 0, Math.PI * 2); g.fill();
+  g.restore();
+}
+
+function lanternFixture(g, u, x, y, hangFrom) {
+  // flex lead up to the crossbeam
+  g.strokeStyle = 'rgba(8,8,10,0.9)';
+  g.lineWidth = Math.max(1, 0.6 * u);
+  g.beginPath();
+  g.moveTo(x, hangFrom);
+  g.quadraticCurveTo(x + 1.4 * u, (hangFrom + y) / 2, x, y - 4.6 * u);
+  g.stroke();
+  // conical tin shade
+  g.fillStyle = shadeA(RUST, 0.85, 1);
+  g.beginPath();
+  g.moveTo(x - 6.4 * u, y - 1.6 * u);
+  g.lineTo(x - 1.6 * u, y - 6.4 * u);
+  g.lineTo(x + 1.6 * u, y - 6.4 * u);
+  g.lineTo(x + 6.4 * u, y - 1.6 * u);
+  g.closePath(); g.fill();
+  g.fillStyle = 'rgba(255,206,150,0.18)';
+  g.beginPath();
+  g.moveTo(x - 6.4 * u, y - 1.6 * u);
+  g.lineTo(x - 1.6 * u, y - 6.4 * u);
+  g.lineTo(x - 0.4 * u, y - 6.4 * u);
+  g.lineTo(x - 4.6 * u, y - 1.6 * u);
+  g.closePath(); g.fill();
+  // bulb
+  g.fillStyle = 'rgba(255,238,204,0.95)';
+  g.beginPath(); g.ellipse(x, y, 1.9 * u, 2.3 * u, 0, 0, Math.PI * 2); g.fill();
+}
 
 // Back half: uprights, crossbeam, sagging awning, goods strung up to sell.
 function stallBack(g, u, seed) {
@@ -356,24 +504,87 @@ function stallBack(g, u, seed) {
   }
   g.stroke();
 
-  // hung goods along the crossbeam — canisters, plates, coiled wire. Kept to
-  // the outer thirds so nothing dangles in front of CROW's head.
-  for (let i = 0; i < 6; i++) {
-    if (i === 2 || i === 3) continue;
-    const hx = -S / 2 + 5 * u + i * ((S - 10 * u) / 5);
-    const hh = (7 + rnd() * 5) * u;
-    const hangY = -H + 2 * u;
-    g.fillStyle = shadeA(RUST, 1, 0.85);
-    g.strokeStyle = shadeA('#000000', 1, 0.5);
-    g.lineWidth = 0.5 * u;
-    g.beginPath(); g.moveTo(hx, hangY); g.lineTo(hx, hangY + hh * 0.3); g.stroke();
-    if (i % 2 === 0) {
-      g.beginPath(); g.arc(hx, hangY + hh * 0.55, hh * 0.28, 0, Math.PI * 2); g.fill(); g.stroke();
+  // Torn hem along the front edge of the canvas. A perfectly clean curve reads
+  // as a printed sheet; the notches are what make it a tarp that has been up
+  // through a few Sector 9 winters.
+  g.fillStyle = 'rgba(9,9,12,0.55)';
+  for (let x = -S / 2 - 4 * u; x < S / 2 + 4 * u; x += 5.5 * u) {
+    const t = (x + S / 2) / S;                       // sag follows the curve
+    const yEdge = -H - 2 * u + Math.sin(Math.PI * t) * 11 * u;
+    const d = (1.2 + rnd() * 2.2) * u;
+    g.beginPath();
+    g.moveTo(x, yEdge - 0.5 * u);
+    g.lineTo(x + 2.7 * u, yEdge - 0.5 * u);
+    g.lineTo(x + 1.35 * u, yEdge + d);
+    g.closePath(); g.fill();
+  }
+
+  // Hung goods along the crossbeam. These were alternating dots and squares,
+  // which at banner size read as a string of beads rather than as stock. Each
+  // one is now a nameable object — a gas canister, a coil of cable, a length
+  // of chain, a salvaged helmet — because a market stall is only convincing
+  // if you can tell what is for sale. Kept to the outer thirds so nothing
+  // dangles in front of CROW's head.
+  const hangY = -H + 2 * u;
+  const goods = [
+    { x: -0.38, kind: 'canister' },
+    { x: -0.22, kind: 'coil' },
+    { x: 0.24, kind: 'chain' },
+    { x: 0.39, kind: 'helmet' },
+  ];
+  g.lineWidth = 0.5 * u;
+  for (const it of goods) {
+    const hx = it.x * S;
+    const drop = (3 + rnd() * 2) * u;
+    g.strokeStyle = shadeA('#000000', 1, 0.65);
+    g.beginPath(); g.moveTo(hx, hangY); g.lineTo(hx, hangY + drop); g.stroke();
+    const y = hangY + drop;
+    g.fillStyle = shadeA(RUST, 1, 0.9);
+    g.strokeStyle = shadeA('#000000', 1, 0.55);
+    if (it.kind === 'canister') {
+      rrPath(g, hx - 2.1 * u, y, 4.2 * u, 9 * u, 1.8 * u); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,196,132,0.16)';
+      g.fillRect(hx - 1.5 * u, y + 1 * u, 1 * u, 6.6 * u);
+      g.fillStyle = shadeA(STEEL, 0.55, 1);
+      g.fillRect(hx - 0.9 * u, y - 1.4 * u, 1.8 * u, 1.6 * u);   // valve
+    } else if (it.kind === 'coil') {
+      g.strokeStyle = shadeA(STEEL, 0.42, 1);
+      g.lineWidth = 0.9 * u;
+      for (let r = 0; r < 3; r++) {
+        g.beginPath();
+        g.ellipse(hx, y + 3.4 * u + r * 1.5 * u, 3.4 * u - r * 0.4 * u, 1.5 * u, 0, 0, Math.PI * 2);
+        g.stroke();
+      }
+      g.lineWidth = 0.5 * u;
+    } else if (it.kind === 'chain') {
+      g.strokeStyle = shadeA(STEEL, 0.5, 1);
+      g.lineWidth = 0.8 * u;
+      for (let l = 0; l < 5; l++) {
+        g.beginPath();
+        g.ellipse(hx, y + 1.4 * u + l * 2.2 * u, 1.3 * u, 1.2 * u, 0, 0, Math.PI * 2);
+        g.stroke();
+      }
+      g.lineWidth = 0.5 * u;
     } else {
-      g.fillRect(hx - hh * 0.18, hangY + hh * 0.32, hh * 0.36, hh * 0.5);
-      g.strokeRect(hx - hh * 0.18, hangY + hh * 0.32, hh * 0.36, hh * 0.5);
+      // helmet, hung by its chin strap
+      g.fillStyle = shadeA(CANVAS, 1.5, 1);
+      g.beginPath(); g.arc(hx, y + 4 * u, 3.8 * u, Math.PI, 0); g.fill();
+      g.fillRect(hx - 3.8 * u, y + 4 * u, 7.6 * u, 1.5 * u);
+      g.fillStyle = 'rgba(255,196,132,0.14)';
+      g.beginPath(); g.arc(hx - 0.8 * u, y + 4 * u, 2.6 * u, Math.PI, Math.PI * 1.55); g.fill();
     }
   }
+}
+
+// Local rounded-rect path helper (this module does not import paint.js).
+function rrPath(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
 }
 
 // Front half: the counter plank and what is stacked against it, all of which
@@ -420,39 +631,81 @@ export function paintTraderScene(g, w, h) {
   const u = h / 140;   // reference scale: composition designed at ~140 units tall
   const groundY = h * 0.90;
 
-  // ---- back wall: dark and fairly flat, so silhouettes read against it
-  // instead of dissolving into a haze. What warmth there is stays low and
-  // narrow, behind CROW specifically — it is his fire, not ambient light.
-  g.fillStyle = '#0d0e12';
-  g.fillRect(0, 0, w, groundY);
-  const wall = g.createLinearGradient(0, 0, 0, groundY);
-  wall.addColorStop(0, 'rgba(20,17,15,0)');
-  wall.addColorStop(1, 'rgba(46,32,20,0.5)');
-  g.fillStyle = wall;
-  g.fillRect(0, 0, w, groundY);
-  const glow = g.createRadialGradient(w * 0.5, groundY, 2 * u, w * 0.5, groundY, w * 0.26);
-  glow.addColorStop(0, 'rgba(255,140,60,0.30)');
-  glow.addColorStop(1, 'rgba(255,140,60,0)');
-  g.fillStyle = glow;
-  g.fillRect(0, 0, w, groundY);
+  const cx = w * 0.5;
+  // Where the lamp hangs, in stall units — the single source every warm value
+  // in this painting is derived from. Offset left of centre so CROW is lit
+  // from one side rather than flatly from straight on.
+  const lampX = LAMP.x * u, lampY = LAMP.y * u;
 
-  // ---- ground: a street edge (one hard line, the game's own convention for
-  // "this is the floor") then a darker band toward camera
-  g.fillStyle = '#0a0908';
+  // ---- the sector behind him: shuttered frontage, far towers, hanging haze
+  backdrop(g, w, h, groundY, u);
+
+  // ---- ground: wet asphalt. The street edge stays a hard line (the game's own
+  // convention for "this is the floor"), but everything below it is now a
+  // reflective surface, which is what a rainy sector street should be and what
+  // finally gives the bottom third of the banner something to do.
+  const road = g.createLinearGradient(0, groundY, 0, h);
+  road.addColorStop(0, '#15120f');
+  road.addColorStop(0.45, '#0d0b0a');
+  road.addColorStop(1, '#08080a');
+  g.fillStyle = road;
   g.fillRect(0, groundY, w, h - groundY);
-  g.strokeStyle = 'rgba(255,180,120,0.14)';
+
+  // reflection of the stall and lamp, mirrored in the wet road. Painted from a
+  // second pass of the same painters rather than faked with streaks, so it can
+  // never disagree with what is standing above it.
+  const refl = document.createElement('canvas');
+  refl.width = Math.max(1, Math.round(w));
+  refl.height = Math.max(1, Math.round(h));
+  const rg = refl.getContext('2d');
+  rg.save(); rg.translate(cx, groundY);
+  stallBack(rg, u, 0x5a37);
+  stallFront(rg, u);
+  lanternGlow(rg, u, lampX, lampY);
+  rg.restore();
+  g.save();
+  const K = 0.5;                       // foreshortening of the mirrored image
+  g.globalAlpha = 0.42;
+  g.translate(0, groundY * (1 + K));
+  g.scale(1, -K);
+  g.drawImage(refl, 0, 0, w, h);
+  g.restore();
+  // fade the reflection out with distance from the kerb
+  const fade = g.createLinearGradient(0, groundY, 0, h);
+  fade.addColorStop(0, 'rgba(8,8,10,0)');
+  fade.addColorStop(0.55, 'rgba(8,8,10,0.55)');
+  fade.addColorStop(1, 'rgba(8,8,10,0.95)');
+  g.fillStyle = fade;
+  g.fillRect(0, groundY, w, h - groundY);
+
+  // standing water: a couple of shallow puddles catching the lamp
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  for (const [px, pw, pa] of [[0.30, 0.10, 0.05], [0.62, 0.14, 0.07], [0.86, 0.07, 0.035]]) {
+    const pgd = g.createRadialGradient(w * px, groundY + 5 * u, 0, w * px, groundY + 5 * u, w * pw);
+    pgd.addColorStop(0, `rgba(255,168,92,${pa})`);
+    pgd.addColorStop(1, 'rgba(255,168,92,0)');
+    g.fillStyle = pgd;
+    g.beginPath(); g.ellipse(w * px, groundY + 5 * u, w * pw, 3.4 * u, 0, 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+
+  // the kerb itself
+  g.strokeStyle = 'rgba(255,190,130,0.20)';
   g.lineWidth = Math.max(1, 0.7 * u);
   g.beginPath(); g.moveTo(0, groundY); g.lineTo(w, groundY); g.stroke();
-  g.fillStyle = 'rgba(255,150,70,0.08)';
-  g.beginPath(); g.ellipse(w * 0.5, groundY, w * 0.24, 3 * u, 0, 0, Math.PI * 2); g.fill();
 
   // ---- ONE stall, dead centre. It used to be three — two dressed-back ones
   // flanking CROW's own — which split the eye three ways and left him as the
   // middle of a row rather than the reason the row exists. A single stall he
   // is sitting at makes him the subject and the market the setting.
-  const cx = w * 0.5;
-
   g.save(); g.translate(cx, groundY); stallBack(g, u, 0x5a37); g.restore();
+
+  // lamp throw, laid down before CROW so he is lit BY it rather than in front
+  // of it — this is what puts the warm gradient behind his hood
+  g.save(); g.translate(cx, groundY);
+  lanternGlow(g, u, lampX, lampY);
+  g.restore();
 
   // ---- CROW, seated behind his own counter.
   //
@@ -476,29 +729,88 @@ export function paintTraderScene(g, w, h) {
   // Sunk 16u rather than sitting on the street: the counter has to cross his
   // chest for the seated read, and any more cloak than that hanging below it
   // just piles up in the open bay as a dark mass with no shape to it.
-  g.drawImage(off, cx - figW / 2, groundY - 16 * u - figH, figW, figH);
+  const figX = cx - figW / 2, figY = groundY - 16 * u - figH;
+
+  // Rim light. Against a dark frontage his cloak is a dark mass on a dark
+  // wall, which is the one thing that stops a silhouette from reading as a
+  // person. A haze-tinted copy of his own sprite, offset up and away from the
+  // lamp and drawn UNDER him, shows only along the edge that faces the sector
+  // lights — the cheapest true rim there is, and it can never disagree with
+  // his outline because it IS his outline.
+  const rim = document.createElement('canvas');
+  rim.width = off.width; rim.height = off.height;
+  const rgc = rim.getContext('2d');
+  rgc.drawImage(off, 0, 0);
+  rgc.globalCompositeOperation = 'source-in';
+  const rimGrad = rgc.createLinearGradient(0, rim.height * 0.75, rim.width, 0);
+  rimGrad.addColorStop(0, withA(HAZE, 0));
+  rimGrad.addColorStop(0.6, withA(HAZE, 0));   // nothing on the lamp side
+  rimGrad.addColorStop(1, withA(HAZE, 0.9));
+  rgc.fillStyle = rimGrad;
+  rgc.fillRect(0, 0, rim.width, rim.height);
+  g.save();
+  // Thin and faint on purpose: at 0.75 alpha and a 1.3u offset this read as a
+  // blue sticker outline traced round him rather than as light catching an
+  // edge.
+  g.globalAlpha = 0.34;
+  g.drawImage(rim, figX + 0.8 * u, figY - 0.8 * u, figW, figH);
+  g.restore();
+
+  g.drawImage(off, figX, figY, figW, figH);
 
   g.save();
   g.translate(cx, groundY);
   // the crate he sits on, in the open bay the counter apron leaves clear
-  g.fillStyle = shadeA(WOOD, 0.72, 1);
+  g.fillStyle = shadeA(WOOD, 0.86, 1);
   g.fillRect(20 * u, -19 * u, 20 * u, 19 * u);
-  g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 0.6 * u;
+  g.fillStyle = 'rgba(255,186,120,0.07)';
+  g.fillRect(20 * u, -19 * u, 20 * u, 1.2 * u);      // lit top edge
+  g.strokeStyle = 'rgba(0,0,0,0.55)'; g.lineWidth = 0.6 * u;
   g.strokeRect(20 * u, -19 * u, 20 * u, 19 * u);
-  // thigh and bent knee pushed out past the apron, boot flat on the street —
-  // the only part of him below the counter the camera actually resolves, and
-  // the cue that says "sitting" rather than "cropped by furniture"
-  g.fillStyle = shadeA(CANVAS, 1.18, 1);
+  g.strokeStyle = 'rgba(0,0,0,0.30)'; g.lineWidth = 0.5 * u;
+  g.beginPath(); g.moveTo(20 * u, -12 * u); g.lineTo(40 * u, -12 * u); g.stroke();
+  g.beginPath(); g.moveTo(20 * u, -6 * u); g.lineTo(40 * u, -6 * u); g.stroke();
+
+  // Thigh, bent knee and boot — the only part of him below the counter the
+  // camera resolves, and the cue that says "sitting" rather than "cropped by
+  // furniture". Painted as three reading shapes rather than one silhouette:
+  // as a single smooth curve it was the right colour and still came out a
+  // shapeless lump, because nothing in it said knee, ankle or sole.
+  const legFill = g.createLinearGradient(0, -24 * u, 0, -8 * u);
+  legFill.addColorStop(0, shadeA(CANVAS, 1.34, 1));
+  legFill.addColorStop(1, shadeA(CANVAS, 0.82, 1));
+  g.fillStyle = legFill;
   g.beginPath();
   g.moveTo(14 * u, -24 * u);
   g.quadraticCurveTo(36 * u, -23 * u, 37 * u, -9 * u);
   g.lineTo(26 * u, -8 * u);
   g.quadraticCurveTo(26 * u, -17 * u, 13 * u, -17 * u);
   g.closePath(); g.fill();
-  g.fillStyle = shadeA(LEATHER, 0.85, 1);
-  g.fillRect(24 * u, -8.5 * u, 17 * u, 8.5 * u);
-  g.fillStyle = 'rgba(255,170,100,0.10)';
-  g.fillRect(24 * u, -8.5 * u, 17 * u, 1.2 * u);
+  // knee crease + a fold along the thigh
+  g.strokeStyle = 'rgba(0,0,0,0.38)'; g.lineWidth = 0.7 * u;
+  g.beginPath();
+  g.moveTo(30 * u, -21.5 * u);
+  g.quadraticCurveTo(33.5 * u, -18 * u, 33.5 * u, -12 * u);
+  g.stroke();
+  g.strokeStyle = 'rgba(255,190,130,0.10)'; g.lineWidth = 0.6 * u;
+  g.beginPath();
+  g.moveTo(17 * u, -22 * u); g.quadraticCurveTo(28 * u, -21.5 * u, 32 * u, -19 * u);
+  g.stroke();
+
+  // boot: shaft, toe cap and a sole that actually meets the street
+  g.fillStyle = shadeA(LEATHER, 1.0, 1);
+  g.beginPath();
+  g.moveTo(25.5 * u, -9.5 * u);
+  g.lineTo(37 * u, -9.5 * u);
+  g.quadraticCurveTo(42 * u, -8 * u, 42 * u, -3.4 * u);
+  g.lineTo(25.5 * u, -3.4 * u);
+  g.closePath(); g.fill();
+  g.fillStyle = 'rgba(255,178,110,0.13)';
+  g.fillRect(25.5 * u, -9.5 * u, 13 * u, 1 * u);     // lamp on the boot top
+  g.fillStyle = '#100e0c';
+  g.fillRect(24.6 * u, -3.4 * u, 18.2 * u, 3.4 * u); // sole
+  g.fillStyle = 'rgba(255,186,120,0.09)';
+  g.fillRect(24.6 * u, -3.4 * u, 18.2 * u, 0.7 * u);
   g.restore();
 
   // ---- forearm laid along the counter. Drawn after the bust and before the
@@ -519,6 +831,12 @@ export function paintTraderScene(g, w, h) {
   g.restore();
 
   g.save(); g.translate(cx, groundY); stallFront(g, u); g.restore();
+
+  // ---- the lamp itself, hung off the crossbeam. Painted last of the stall
+  // parts so its shade sits in front of everything it is lighting.
+  g.save(); g.translate(cx, groundY);
+  lanternFixture(g, u, lampX, lampY, -(STALL.poleH + 1) * u);
+  g.restore();
 
   // ---- scrap laid out for sale on the counter top, to his off side
   g.save();
