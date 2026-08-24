@@ -1690,7 +1690,19 @@ export function buildWeapons() {
       muzzle: { x: 12.4, y: -4.2 },
       eject: { x: 4.4, y: -5 },
       magPos: { x: -2.2, y: 4 },
-      shoulder: { x: 4, y: -1 },
+      // weaponAnchor SUBTRACTS this, so a negative x pushes the weapon out in
+      // front of the operator and a positive x pulls it back into his chest.
+      // Every other gun in the game is negative (-13 for the rifle class, -9
+      // for the SMGs); this one was +4, which folded the firing arm down to
+      // about 5 units of extension against the rifle's 15 and left the C-9
+      // buried in the operator's own torso, muzzle pointing at the floor. On
+      // screen the pistol simply looked absent.
+      //
+      // Handguns are punched out, not shouldered, so this sits a little
+      // further forward than the rifle's — ~18 units of extension, still less
+      // than half of what the arm can physically reach. Shared by the RAY GUN
+      // and QUANTUM PISTOL, which spread this def.
+      shoulder: { x: -17, y: -1 },
       auto: false, rpm: 380, dmg: 34, spread: 0.014, pellets: 1,
       recoilKick: 1.28, recoilRot: 0.04, camKick: 0.66, camTrauma: 0.036,
       recoilPattern: PATTERN_PISTOL, sprayPattern: SPRAY_PISTOL,
