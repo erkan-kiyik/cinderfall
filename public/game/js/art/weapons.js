@@ -1884,6 +1884,11 @@ export function buildWeapons() {
     // ------- energy: projectiles -------
     raygun: {
       ...P, id: 'raygun', recoilFeel: 'energy', name: 'RAY GUN', body: paintEnergyPistol('bell', { grip: '#3a1d55', frame: '#4a2668', core: [200, 110, 255] }),
+      // Its own support-hand point. These two spread the C-9's def, but they
+      // do not share its frame: paintEnergyPistol's grip column ends at about
+      // x=1 where the C-9's runs to 2.6, so the inherited gripB had the
+      // support hand closing on a unit of empty air beside the weapon.
+      gripB: { x: 0.8, y: 2.2 },
       energy: true, fireMode: 'projectile', auto: false, rpm: 200, dmg: 62, spread: 0.02,
       projectile: { color: [200, 110, 255], radius: 5, speed: 900, blast: 44, headMul: 1.6, life: 1.6 },
       recoilKick: 1.4, recoilRot: 0.03, camKick: 0.8, camTrauma: 0.05, muzzleBig: 1.15,
@@ -1914,6 +1919,11 @@ export function buildWeapons() {
     },
     quantum: {
       ...P, id: 'quantum', recoilFeel: 'energy', name: 'QUANTUM PISTOL', body: paintEnergyPistol('prism', { grip: '#123045', frame: '#164a63', core: [90, 200, 255] }),
+      // Its own support-hand point. These two spread the C-9's def, but they
+      // do not share its frame: paintEnergyPistol's grip column ends at about
+      // x=1 where the C-9's runs to 2.6, so the inherited gripB had the
+      // support hand closing on a unit of empty air beside the weapon.
+      gripB: { x: 0.8, y: 2.2 },
       energy: true, fireMode: 'projectile', auto: false, rpm: 300, dmg: 40, spread: 0.016,
       projectile: { color: [120, 220, 255], radius: 4, speed: 1400, pierce: 1, life: 1.2 },
       recoilKick: 1.2, recoilRot: 0.03, camKick: 0.6, camTrauma: 0.04, shotSound: 'ray',

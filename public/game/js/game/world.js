@@ -529,7 +529,31 @@ export class World {
 
   // ent: x,y feet-center, halfW, h, vx, vy, onGround
   moveEntity(ent, dt) {
-    ent.vy = Math.min(ent.vy + GRAV * dt, 1500);
+    // Gravity is not one number for anything that wants to feel good to
+    // control. A jump that rises and falls at the same rate spends half its
+    // life drifting back down with nothing to do, which is exactly what
+    // "floaty" means — and this one was perfectly symmetric, 0.38s up and
+    // 0.38s down.
+    //
+    // Entities opt in by setting `gravityFeel` (see Player). Two departures
+    // from the flat curve, both standard and both cheap:
+    //
+    //   fall  — heavier once past the apex, so the descent is decisive
+    //   hang  — lighter while vertical speed is near zero, which stretches
+    //           the top of the arc into a beat the player can read and aim
+    //           through instead of a corner they whip around
+    //
+    // Neither touches the rise rate below the hang band, so the apex height
+    // is essentially unchanged — and this level is a continuous street where
+    // the constraint is clearing 95px obstacles with a 169px jump, not
+    // crossing gaps, so shortening the airtime costs no traversal.
+    let gm = 1;
+    const gf = ent.gravityFeel;
+    if (gf) {
+      if (Math.abs(ent.vy) < gf.hangBand) gm = gf.hang;
+      else if (ent.vy > 0) gm = gf.fall;
+    }
+    ent.vy = Math.min(ent.vy + GRAV * gm * dt, 1500);
     let landed = 0;
 
     let nx = ent.x + ent.vx * dt;

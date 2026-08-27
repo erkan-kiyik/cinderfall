@@ -225,6 +225,15 @@ export class Player {
     // from the moment the operator leaves the ground; `jumpBufT` counts down
     // from a press that arrived too early to be spent yet.
     this.coyoteT = 0; this.jumpBufT = 0;
+    // Jump-arc shaping, read by World.moveEntity. Only the operator gets it —
+    // hostiles keep the flat curve, since nothing about their movement asks
+    // to be read frame by frame.
+    // Numbers picked by simulating the arc, not by feel: at fall 1.45 with a
+    // 190 band the hang phase ate the whole gain and the jump came out LONGER
+    // than the flat curve it replaced (0.80s against 0.75s). These give
+    // apex 167px (unchanged, so every obstacle clears exactly as before),
+    // rise 0.38s (unchanged), and a descent 18% quicker at 0.31s.
+    this.gravityFeel = { fall: 1.7, hang: 0.75, hangBand: 70 };
     this.facing = 1;
     this.aimLocal = 0; this.aimSmooth = 0; this.aimWorld = 0;
     this.gaitPhase = 0; this.speedNorm = 0;
