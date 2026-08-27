@@ -151,10 +151,66 @@ export function drawAchievementIcon(g, kind, w, h, color) {
       g.strokeStyle = 'rgba(0,0,0,0.4)'; g.lineWidth = Math.max(1, r * 0.12);
       g.beginPath(); g.arc(-r * 0.12, 0, r * 0.24, 0, Math.PI * 2); g.stroke();
       break;
-    case 'guns':
-      g.lineWidth = r * 0.2;
-      g.beginPath(); g.moveTo(-r * 0.7, -r * 0.7); g.lineTo(r * 0.7, r * 0.7); g.stroke();
-      g.beginPath(); g.moveTo(-r * 0.7, r * 0.7); g.lineTo(r * 0.7, -r * 0.7); g.stroke();
+    // Was a bare X, which read as "unavailable" rather than "armoury". Two
+    // crossed rifle silhouettes — receiver, magazine and muzzle — say it.
+    case 'guns': {
+      const rifle = () => {
+        g.beginPath();
+        g.moveTo(-r * 0.85, -r * 0.10); g.lineTo(r * 0.72, -r * 0.10);
+        g.lineTo(r * 0.72, r * 0.10);   g.lineTo(r * 0.20, r * 0.10);
+        g.lineTo(r * 0.10, r * 0.44);   g.lineTo(-r * 0.12, r * 0.44);
+        g.lineTo(-r * 0.06, r * 0.10);  g.lineTo(-r * 0.85, r * 0.10);
+        g.closePath(); g.fill();
+      };
+      g.save(); g.rotate(-Math.PI / 5); rifle(); g.restore();
+      g.save(); g.rotate(Math.PI / 5); g.scale(-1, 1); rifle(); g.restore();
+      break;
+    }
+    // Precision: a reticle with the ring broken at the cardinals, so it does
+    // not collide with the solid concentric rings of `target` (accuracy).
+    case 'crosshair': {
+      g.lineWidth = r * 0.14;
+      for (let i = 0; i < 4; i++) {
+        const a0 = -Math.PI / 2 + i * Math.PI / 2 + 0.32;
+        g.beginPath(); g.arc(0, 0, r * 0.76, a0, a0 + Math.PI / 2 - 0.64); g.stroke();
+      }
+      g.beginPath(); g.moveTo(0, -r * 0.98); g.lineTo(0, -r * 0.5); g.stroke();
+      g.beginPath(); g.moveTo(0, r * 0.5); g.lineTo(0, r * 0.98); g.stroke();
+      g.beginPath(); g.moveTo(-r * 0.98, 0); g.lineTo(-r * 0.5, 0); g.stroke();
+      g.beginPath(); g.moveTo(r * 0.5, 0); g.lineTo(r * 0.98, 0); g.stroke();
+      g.beginPath(); g.arc(0, 0, r * 0.13, 0, Math.PI * 2); g.fill();
+      break;
+    }
+    // Rank: stacked chevrons, the way a rating patch reads.
+    case 'chevron': {
+      g.lineWidth = r * 0.2; g.lineJoin = 'miter';
+      for (let i = 0; i < 3; i++) {
+        const y = r * 0.55 - i * r * 0.48;
+        g.beginPath();
+        g.moveTo(-r * 0.72, y); g.lineTo(0, y - r * 0.42); g.lineTo(r * 0.72, y);
+        g.stroke();
+      }
+      break;
+    }
+    // Experience: a four-point spark, distinct from the lightning `bolt`.
+    case 'spark':
+      g.beginPath();
+      g.moveTo(0, -r);
+      g.quadraticCurveTo(r * 0.14, -r * 0.14, r, 0);
+      g.quadraticCurveTo(r * 0.14, r * 0.14, 0, r);
+      g.quadraticCurveTo(-r * 0.14, r * 0.14, -r, 0);
+      g.quadraticCurveTo(-r * 0.14, -r * 0.14, 0, -r);
+      g.closePath(); g.fill();
+      break;
+    // Damage output: a broadhead pointing up and to the right.
+    case 'blade':
+      g.beginPath();
+      g.moveTo(r * 0.9, -r * 0.9); g.lineTo(r * 0.9, -r * 0.1); g.lineTo(r * 0.5, -r * 0.5);
+      g.lineTo(-r * 0.42, r * 0.42); g.lineTo(-r * 0.9, r * 0.9); g.lineTo(-r * 0.42, r * 0.86);
+      g.lineTo(r * 0.1, -r * 0.5); g.closePath(); g.fill();
+      g.beginPath();
+      g.moveTo(r * 0.9, -r * 0.9); g.lineTo(r * 0.1, -r * 0.9); g.lineTo(r * 0.5, -r * 0.5);
+      g.closePath(); g.fill();
       break;
     case 'clock':
       g.lineWidth = r * 0.14;

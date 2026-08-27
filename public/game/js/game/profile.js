@@ -147,12 +147,17 @@ export class ProfileUI {
     const cv = $('profile-weapon-art');
     if (!nameEl || !cv) return;
 
+    // Nothing logged yet: collapse the art plate rather than reserving 64px of
+    // empty box above the placeholder line. `empty` also drops the panel to a
+    // single quiet row so the card doesn't end on a hole.
+    const panel = cv.parentElement;
     if (!fav) {
+      if (panel) panel.classList.add('empty');
       nameEl.textContent = t('profile.noWeapon');
       if (skinEl) skinEl.textContent = '';
-      if (this.previewItem) requestAnimationFrame(() => this.previewItem(null, cv));
       return;
     }
+    if (panel) panel.classList.remove('empty');
 
     const def = this.weapons[fav.weaponId];
     nameEl.textContent = (def && def.name) || fav.weaponId.toUpperCase();

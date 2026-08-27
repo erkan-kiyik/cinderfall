@@ -101,6 +101,10 @@ export class Hud {
     // 'revive' keeps the live #hud visible (dimmed) behind its overlay,
     // same as 'pause' — only 'menu'/'loading'/'end' hide it outright.
     this.el.hud.classList.toggle('hidden', !(state === 'play' || state === 'pause' || state === 'revive'));
+    // While a sheet is up the readout is live but not actionable, so it steps
+    // back rather than competing with the menu for attention — the ammo count
+    // and threat bar were reading as loud as the RESUME button.
+    this.el.hud.classList.toggle('behind', state === 'pause' || state === 'revive');
   }
 
   // Revive prompt overlays on top of the live #hud (unlike menu/pause/end,

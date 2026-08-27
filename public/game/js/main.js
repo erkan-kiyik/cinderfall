@@ -198,8 +198,15 @@ function previewItem(item, cv) {
   }
   if (!spr) return;
   const scale = Math.min((W * 0.84) / spr.w, (H * 0.84) / spr.h);
+  // Centre the sprite's *box*, not its anchor. drawSprite() places the art
+  // relative to the rig attachment point (a head hangs below its neck joint,
+  // a gun sits behind its grip), so translating straight to the middle of the
+  // canvas pushed the art off-centre and clipped tall previews — visibly so on
+  // the operator cards, which were cropped through the helmet.
+  const cx = (spr.ax * spr.s - spr.w / 2) * scale;
+  const cy = (spr.ay * spr.s - spr.h / 2) * scale;
   g.save();
-  g.translate(W / 2, H / 2);
+  g.translate(W / 2 + cx, H / 2 + cy);
   drawSprite(g, spr, 0, 0, 0, scale, scale);
   g.restore();
 }

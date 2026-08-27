@@ -12,6 +12,19 @@ import { watchRewardedAd } from '../engine/ads.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { t, onLangChange } from '../engine/i18n.js';
 
+
+// A horizontally scrolling item row is masked at its right edge so the card
+// that runs off the fold fades instead of being sliced, but only while there
+// is actually something out there — measured after layout, and again on every
+// tab switch because a hidden panel measures zero.
+function syncRowFades() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.item-row, .store-cats').forEach((row) => {
+      row.classList.toggle('fits', row.scrollWidth <= row.clientWidth + 1);
+    });
+  });
+}
+
 const $ = (id) => document.getElementById(id);
 
 export class MetaUI {
@@ -70,6 +83,58 @@ export class MetaUI {
     this.renderAdButton();
   }
 
+  // The PLAY tab's operator readout: rank, XP to the next level, what the
+  // level is worth right now, and the three weapons going into the field.
+  renderDeployStatus() {
+    const host = $('deploy-status');
+    if (!host) return;
+    const d = this.p.data;
+    const pct = Math.round(this.p.xpProgress() * 100);
+    $('ds-level-n').textContent = String(d.level);
+    $('ds-xp-pct').textContent = `${pct}%`;
+    $('ds-xp-fill').style.width = `${pct}%`;
+
+    const lb = this.p.levelBonuses();
+    $('ds-buffs').innerHTML =
+      `<span class="ds-buff"><i class="ds-buff-hp"></i>+${lb.maxHp} HP</span>` +
+      `<span class="ds-buff"><i class="ds-buff-dmg"></i>+${Math.round(lb.damage * 100)}% DMG</span>`;
+
+    const kit = $('ds-kit');
+    kit.innerHTML = '';
+    for (const slot of LOADOUT_SLOTS.slice(0, 3)) {
+      // Nothing equipped still means a weapon goes into the field. Fall back to
+      // the first weapon in the slot the player actually owns, so the strip
+      // names the gun they will be holding instead of three cards reading
+      // "STOCK" — but never advertise a locked one, which is what taking
+      // list[0] blindly did for SPECIAL (it offered the Plasma Rifle).
+      const chosen = itemById(this.p.equipped(slot.key));
+      const item = chosen || itemsForSlot(slot.key).find((it) => this.itemOwned(it)) || null;
+      const cell = document.createElement('div');
+      cell.className = 'ds-slot' + (item ? '' : ' empty') + (chosen ? '' : ' stock');
+      const cv = document.createElement('canvas');
+      cv.className = 'ds-slot-art';
+      cell.appendChild(cv);
+      const lbl = document.createElement('div');
+      lbl.className = 'ds-slot-name';
+      lbl.textContent = item ? this.itemLabel(item) : t('item.stock');
+      if (!chosen) lbl.title = t('item.stock');
+      cell.appendChild(lbl);
+      const kind = document.createElement('div');
+      kind.className = 'ds-slot-kind';
+      kind.textContent = t(slot.labelKey);
+      cell.appendChild(kind);
+      if (item) {
+        const rarity = RARITY[item.rarity];
+        if (rarity) {
+          cell.style.setProperty('--rarity', rarity.color);
+          cell.style.setProperty('--rarity-glow', rarity.glow);
+        }
+      }
+      kit.appendChild(cell);
+      requestAnimationFrame(() => this.previewItem(item, cv));
+    }
+  }
+
   renderAdButton() {
     const btn = $('btn-watch-ad');
     if (!btn) return;
@@ -83,6 +148,7 @@ export class MetaUI {
   switchTab(name) {
     document.querySelectorAll('.home-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
     document.querySelectorAll('.home-panel').forEach((s) => s.classList.toggle('active', s.id === `tab-${name}`));
+    syncRowFades();
     if (this.audio) this.audio.ui();
   }
 
@@ -123,12 +189,15 @@ export class MetaUI {
       box.appendChild(row);
       host.appendChild(box);
     }
+    syncRowFades();
+    this.renderDeployStatus();   // the PLAY tab mirrors what is equipped here
   }
 
   makeCard(item, slotKey, equipped, locked = false) {
     const card = document.createElement('div');
     const rarity = item ? RARITY[item.rarity] : null;
-    card.className = 'item-card' + (equipped ? ' equipped' : '') + (locked ? ' locked' : '');
+    card.className = 'item-card' + (item ? '' : ' stock')
+      + (equipped ? ' equipped' : '') + (locked ? ' locked' : '');
     if (rarity) {
       card.style.setProperty('--rarity', rarity.color);
       card.style.setProperty('--rarity-glow', rarity.glow);
@@ -328,7 +397,11 @@ export class MetaUI {
       r.textContent = has ? t(rarity.labelKey) : t('item.locked');
       card.appendChild(r);
       grid.appendChild(card);
-      requestAnimationFrame(() => this.previewItem(has ? item : null, cv));
+      // Draw the art even when it is not owned yet — a collection screen where
+      // eight of nine slots are a placeholder dash tells the player nothing
+      // about what they are chasing. `.item-card.locked` desaturates it, so it
+      // still reads as unearned; the shape is the point.
+      requestAnimationFrame(() => this.previewItem(item, cv));
     }
     $('collection-count').textContent = `${owned} / ${CATALOG.length}`;
   }

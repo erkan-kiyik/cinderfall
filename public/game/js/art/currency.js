@@ -24,7 +24,17 @@ function shade(hex, k) {
 // just need a <canvas> element with the right CSS width/height set.
 export function setupHiDpi(cv) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = cv.clientWidth || 48, h = cv.clientHeight || 48;
+  // Measure once and remember it. Writing cv.width changes the element's
+  // intrinsic size, so re-measuring after a repaint returned dpr x the
+  // previous box — an icon whose CSS box came from its width/height
+  // attributes doubled on every remount until it swallowed its own button.
+  // Cached rather than pinned via cv.style so the stylesheet stays in charge
+  // of how big the icon actually draws.
+  let w = cv._logicalW, h = cv._logicalH;
+  if (!w || !h) {
+    w = cv.clientWidth || 48; h = cv.clientHeight || 48;
+    cv._logicalW = w; cv._logicalH = h;
+  }
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   const g = cv.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0);

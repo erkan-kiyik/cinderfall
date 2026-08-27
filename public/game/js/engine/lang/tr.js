@@ -18,6 +18,9 @@ export const TR = {
   // ---- play ----
   'play.kicker': '2D TAKTİK HAREKÂT',
   'play.deploy': 'GÖREVE BAŞLA',
+  'play.lvl': 'SVY',
+  'play.nextRank': 'SONRAKİ SEVİYE',
+  'play.kitHead': 'GÖREVE ÇIKAN TEÇHİZAT',
   'play.controls': 'KONTROLLER',
   'play.controlsNote': 'Telefonlarda dokunmatik kontroller otomatik görünür.',
   'ctrl.move': 'HAREKET',

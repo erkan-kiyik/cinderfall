@@ -69,6 +69,13 @@
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px;
   --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px; --s16: 64px;
 
+  /* Shared content column. Every menu panel — heading, hero, grid and
+     list alike — is centred on this one width, so a panel title can
+     never sit flush-left while the cards under it float in the middle
+     of a wide screen. It opens up on desktop instead of stranding the
+     content in a phone-width ribbon. */
+  --col: 640px;
+
   /* radii */
   --r1: 3px; --r2: 6px; --r3: 10px; --r-pill: 999px;
 
@@ -217,8 +224,20 @@ html, body {
   display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
 }
 
+/* Pause / revive: the readout stays on screen (the player is mid-run and the
+   numbers still matter) but drops back so the sheet in front of it reads as
+   the only thing to act on. */
+#hud.behind { opacity: 0.3; filter: saturate(0.45); transition: opacity var(--dur-3) var(--ease); }
+
 .vital-row { display: flex; align-items: center; gap: 8px; }
-.vital-ico { font-size: var(--hud-fs-sm); letter-spacing: 0.14em; color: var(--amber-dim); width: 16px; }
+/* HP / ST / SC gutter. --amber-dim is 50%-alpha red: legible on a menu panel,
+   not over a lit street at 9px. These sit on the live scene, so they get plain
+   ink and a shadow to hold their edge against whatever passes behind them. */
+.vital-ico {
+  font-size: var(--hud-fs-sm); letter-spacing: 0.14em; width: 16px;
+  color: rgba(237, 234, 226, 0.62); font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
 
 /* max-width + overflow are load-bearing: the row is nowrap, so without them a
    long objective line pushes past the cluster box and collides with the
@@ -238,7 +257,11 @@ html, body {
 .stage-label { color: var(--amber-dim); font-weight: 700; padding-left: clamp(6px, 1vw, 10px); border-left: 1px solid var(--line-2); text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
 
 .prog-row { display: flex; align-items: center; gap: var(--s2); padding: 4px clamp(6px, 1.1vw, 10px); width: 100%; }
-.lvl-label { font-size: var(--hud-fs-sm); letter-spacing: 0.14em; color: var(--amber-dim); width: 38px; white-space: nowrap; }
+.lvl-label {
+  font-size: var(--hud-fs-sm); letter-spacing: 0.14em; width: 38px; white-space: nowrap;
+  color: rgba(237, 234, 226, 0.62); font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
 .xp-track { flex: 1; height: 4px; }
 .hud-tokens { display: flex; align-items: center; gap: 4px; font-size: var(--hud-fs); font-weight: 700; letter-spacing: 0.08em; color: #ffd479; white-space: nowrap; }
 /* CREDITS line inside the top-left cluster — a stacked tactical readout
@@ -247,7 +270,11 @@ html, body {
 .credits-row .vital-ico { color: rgba(255,212,121,0.6); }
 
 /* ---- shared currency icon canvases (header pills, HUD readout, crate cost) ---- */
-.cur-icon { display: inline-block; flex: none; vertical-align: middle; }
+/* Explicit CSS box. setupHiDpi() sizes the backing store from clientWidth,
+   so a canvas whose only size came from its width/height attributes grew
+   by the device pixel ratio on every remount — the crate button's scrap
+   icon ended up eight times its intended size and ran over the label. */
+.cur-icon { display: inline-block; flex: none; vertical-align: middle; width: 16px; height: 16px; }
 .cur-icon.cur-scrap { filter: drop-shadow(0 0 3px rgba(190,196,208,0.30)); }
 .hud-tokens-ico { width: 16px; height: 16px; }
 
@@ -758,7 +785,9 @@ html, body {
 @keyframes tab-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
 
 /* PLAY */
-.hero { text-align: center; padding: 6vh 0 4vh; display: flex; flex-direction: column; align-items: center; }
+/* The readout below carries the lower half of the screen now, so the hero no
+   longer has to pad itself out to fill it. */
+.hero { text-align: center; padding: 5vh 0 2vh; display: flex; flex-direction: column; align-items: center; }
 .hero-kicker { font-size: clamp(9px, 1.1vw + 6px, 12px); letter-spacing: 0.4em; color: var(--amber); font-weight: 600; margin-bottom: var(--s3); }
 /* Wordmark: relative to the viewport but capped at both ends, and never wider
    than its column. It tracks whichever axis is scarcer — the old 13vw/92px
@@ -773,23 +802,153 @@ html, body {
   max-width: 100%; line-height: 1.05;
 }
 .btn.big { width: min(360px, 82vw); padding: clamp(13px, 2.6vw, 20px) 0; font-size: clamp(13px, 3.2vw, 17px); }
-.controls-fold { max-width: 420px; margin: var(--s6) auto 0; }
-.controls-fold summary { cursor: pointer; text-align: center; font-size: 11px; letter-spacing: 0.28em; color: var(--amber-dim); list-style: none; padding: var(--s2); transition: color var(--dur-1) var(--ease); }
-.controls-fold summary:hover { color: var(--amber); }
+/* price and its scrap glyph as one centred unit; as inline content the canvas
+   sat on the text baseline and pushed the label off centre */
+#btn-open-crate { display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); }
+#btn-open-crate .cur-icon { width: 18px; height: 18px; }
+.controls-fold { max-width: 420px; margin: var(--s6) auto 0; text-align: center; }
+/* Was flat --amber-dim text on a near-black field, which read as a disabled
+   control rather than a link. It is a real button now: readable ink, a quiet
+   chassis behind it and a caret that turns when the fold opens. */
+.controls-fold summary {
+  cursor: pointer; display: inline-flex; align-items: center; gap: var(--s2);
+  font-size: 11px; letter-spacing: 0.24em; font-weight: 600; color: var(--ink-2);
+  list-style: none; padding: var(--s2) var(--s5); border-radius: var(--r-pill);
+  background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line);
+  transition: color var(--dur-1) var(--ease), background var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.controls-fold summary::before {
+  content: "▾"; font-size: 9px; color: var(--amber);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.controls-fold[open] summary::before { transform: rotate(-180deg); }
+.controls-fold summary:hover { color: var(--ink); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line-2); }
 .controls-fold summary::-webkit-details-marker { display: none; }
 .controls-note { text-align: center; font-size: 10px; letter-spacing: 0.12em; color: var(--ink-dim); margin-top: var(--s4); }
+
+/* ---- PLAY: operator readout --------------------------------------------
+   The landing screen used to stop at DEPLOY, leaving the lower half of a
+   phone display empty. This fills it with the three things a player checks
+   before a run: what rank they are and how close the next one is, what that
+   rank is currently worth in health and damage, and the kit going with them.
+   ------------------------------------------------------------------------ */
+.deploy-status {
+  max-width: min(560px, var(--col)); margin: var(--s6) auto 0;
+  display: flex; flex-direction: column; gap: var(--s4);
+}
+.ds-rank {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s4);
+  border-radius: var(--r3);
+  background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
+  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+/* Rank badge — the number, then a small cap under it. */
+.ds-level {
+  flex: 0 0 auto; width: 56px; height: 56px; border-radius: var(--r3);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, rgba(214,69,58,0.22), rgba(214,69,58,0.06));
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+.ds-level-n {
+  font-family: var(--font-display); font-weight: 800; font-size: 24px; line-height: 1;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.ds-level-cap { font-size: 8px; letter-spacing: 0.22em; color: var(--amber-bright); margin-top: 3px; font-weight: 700; }
+
+.ds-xp { flex: 1 1 auto; min-width: 0; }
+.ds-xp-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 9px; letter-spacing: 0.2em; font-weight: 700; color: var(--ink-dim);
+  margin-bottom: var(--s2);
+}
+.ds-xp-pct { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ds-xp-track { height: 6px; border-radius: var(--r-pill); background: rgba(6,8,11,0.7); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.6); }
+.ds-xp-fill {
+  height: 100%; width: 0%; border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--amber), var(--amber-bright));
+  box-shadow: 0 0 10px rgba(214,69,58,0.55);
+  transition: width 480ms var(--ease-out);
+}
+.ds-buffs { display: flex; gap: var(--s4); margin-top: var(--s3); }
+.ds-buff {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; letter-spacing: 0.1em; font-weight: 700; color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+/* Two tiny painted marks so the pair reads at a glance: a plate-carrier
+   silhouette for health, a chevron for damage. */
+.ds-buff i { width: 9px; height: 10px; display: block; }
+.ds-buff-hp {
+  background: var(--green);
+  clip-path: polygon(50% 0, 100% 22%, 100% 62%, 50% 100%, 0 62%, 0 22%);
+}
+.ds-buff-dmg {
+  background: var(--amber-bright);
+  clip-path: polygon(50% 0, 100% 46%, 74% 46%, 74% 100%, 26% 100%, 26% 46%, 0 46%);
+}
+
+/* Kit strip: primary / sidearm / special, drawn with the loadout's own art. */
+.ds-kit { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.ds-slot {
+  position: relative; overflow: hidden;
+  padding: var(--s2) var(--s2) var(--s3);
+  border-radius: var(--r3); text-align: center;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
+  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.ds-slot::after {
+  content: ""; position: absolute; left: var(--s3); right: var(--s3); bottom: 0; height: 2px;
+  border-radius: 2px; background: var(--rarity, transparent); opacity: 0.75;
+  box-shadow: 0 0 7px var(--rarity-glow, transparent);
+}
+.ds-slot.empty { background: rgba(12, 15, 20, 0.55); box-shadow: inset 0 0 0 1px var(--line); }
+.ds-slot-art { width: 100%; height: 40px; display: block; }
+.ds-slot-name {
+  font-family: var(--font-ui); font-size: 10px; color: var(--ink);
+  margin-top: var(--s1); line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ds-slot-kind { font-size: 8px; letter-spacing: 0.18em; font-weight: 700; color: var(--amber-dim); margin-top: 3px; }
+/* Below ~360px three cards plus their labels stop fitting side by side. */
+@media (max-width: 360px) { .ds-slot-kind { letter-spacing: 0.1em; } .ds-slot-name { font-size: 9px; } }
 
 /* panel headings */
 .panel-title { font-size: 22px; font-weight: 700; letter-spacing: 0.18em; color: var(--ink); margin-bottom: var(--s1); }
 .panel-sub { font-size: 12px; font-family: var(--font-ui); letter-spacing: 0.02em; color: var(--ink-dim); margin-bottom: var(--s6); }
 
+/* Everything a panel puts on screen rides the same centred column. Without
+   this the heading anchored to the panel's own left edge while the grids
+   underneath centred themselves, which on a desktop viewport left the title
+   stranded hundreds of pixels away from the content it names. */
+.panel-title, .panel-sub, .home-panel > .store-cats,
+.archives-meter, .archives-list {
+  max-width: var(--col); margin-left: auto; margin-right: auto;
+}
+/* A rule above the heading gives each tab a masthead instead of text
+   floating on an empty field, and marks where the column starts. */
+.panel-title {
+  padding-top: var(--s2);
+  background: linear-gradient(90deg, var(--amber), rgba(214,69,58,0)) top left / 44px 2px no-repeat;
+}
+
 /* LOADOUT */
-.loadout-list { display: flex; flex-direction: column; gap: var(--s3); max-width: 640px; margin: 0 auto; }
+.loadout-list { display: flex; flex-direction: column; gap: var(--s3); max-width: var(--col); margin: 0 auto; }
 .loadout-slot { border: 1px solid var(--line); background: linear-gradient(160deg, var(--surface-2), var(--surface-1)); padding: var(--s4); border-radius: var(--r2); box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.03); }
 .loadout-slot-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s3); }
 .loadout-slot-label { font-size: 11px; letter-spacing: 0.22em; color: var(--amber); font-weight: 700; }
 .loadout-slot-equipped { font-size: 11px; font-family: var(--font-ui); letter-spacing: 0.02em; color: var(--ink-2); }
-.item-row { display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s1); -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+/* The row scrolls sideways past the fold. The mask fades the trailing card
+   out instead of guillotining it, which is what tells the player there is
+   more to the right without spending a row on arrows. */
+.item-row {
+  display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s1);
+  -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
+}
+/* nothing to fade once the row fits — the mask would eat a real card's edge */
+.item-row.fits { -webkit-mask-image: none; mask-image: none; }
 /* Rarity used to read as a solid coloured border ring around every card —
    replaced with a soft glow (box-shadow) plus a thin accent bar under the
    preview, so cards separate from each other and the background through
@@ -811,7 +970,27 @@ html, body {
 .item-card:hover { transform: translateY(-3px); background: linear-gradient(160deg, var(--surface-3), var(--surface-2)); box-shadow: var(--sh-2), inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 24px -10px var(--rarity-glow, rgba(214,69,58,0.25)); }
 .item-card:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(214, 69, 58, 0.4); }
 .item-card.equipped { background: linear-gradient(160deg, var(--surface-3), var(--surface-2)); box-shadow: var(--sh-2), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 22px -4px var(--rarity-glow, rgba(214,69,58,0.4)); }
-.item-card.locked { opacity: 0.38; filter: grayscale(0.6); cursor: default; box-shadow: none; }
+/* The default/unequipped slot. Previously identical to a real item card with
+   an empty preview, so it read as a broken entry; a dashed plate says
+   "nothing fitted" the way an empty attachment slot should. */
+.item-card.stock { background: rgba(12, 15, 20, 0.55); box-shadow: inset 0 0 0 1px var(--line); }
+.item-card.stock .item-preview {
+  border-radius: var(--r2);
+  box-shadow: inset 0 0 0 1px rgba(237, 234, 226, 0.14);
+  background:
+    repeating-linear-gradient(135deg, rgba(237,234,226,0.05) 0 6px, transparent 6px 12px);
+}
+.item-card.stock.equipped { box-shadow: inset 0 0 0 1px var(--accent-line), 0 0 18px -6px rgba(214,69,58,0.45); }
+.item-card.stock .item-name { color: var(--ink-2); }
+
+/* 0.38 + heavy grayscale made a locked card almost invisible, so a mostly
+   locked row read as an empty row. It still reads as unavailable, but the
+   player can now see what they are working towards. */
+.item-card.locked { opacity: 0.62; filter: grayscale(0.45); cursor: default; box-shadow: none; }
+/* Collection cards show the real art while locked, so they get a heavier
+   knock-back than a loadout row does — the silhouette should read, the
+   detail should not. */
+.collection-grid .item-card.locked .item-preview { filter: grayscale(1) brightness(0.55) contrast(1.15); }
 .item-card.locked::after { opacity: 0.3; }
 .item-card.locked:hover { transform: none; box-shadow: none; }
 .item-preview { width: 100%; height: 52px; display: block; margin-bottom: var(--s2); }
@@ -820,21 +999,60 @@ html, body {
 .item-tag { font-size: 8px; letter-spacing: 0.12em; color: #79c9d6; margin-top: 2px; }
 
 /* CRATES */
-.crate-hero { text-align: center; max-width: 480px; margin: 0 auto var(--s10); display: flex; flex-direction: column; align-items: center; }
+.crate-hero { text-align: center; max-width: min(480px, var(--col)); margin: 0 auto var(--s10); display: flex; flex-direction: column; align-items: center; }
+/* The crate is the only object on this screen, so it has to carry it. It was
+   a flat rounded rectangle with a glyph in the middle; it is now a stamped
+   metal case — panel seams, a hazard band across the lid, corner rivets and a
+   shadow it actually casts — sat on the ground rather than floating in a void. */
 .crate-box {
-  position: relative; width: 148px; height: 116px; margin: var(--s3) auto var(--s6);
-  background: linear-gradient(160deg, var(--surface-3), var(--surface-1)); border: 1px solid var(--accent-line); border-radius: var(--r3);
-  box-shadow: var(--sh-3);
+  position: relative; width: 172px; height: 132px; margin: var(--s5) auto var(--s8);
+  border-radius: var(--r3);
+  border: 1px solid rgba(214, 69, 58, 0.34);
+  background:
+    /* vertical panel seams */
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 26px),
+    linear-gradient(165deg, #2b3441 0%, #1b222c 46%, #10151c 100%);
+  box-shadow:
+    var(--sh-3),
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -14px 22px -12px rgba(0,0,0,0.7);
   display: flex; align-items: center; justify-content: center;
   animation: crate-float 4s ease-in-out infinite;
 }
-.crate-lid { position: absolute; top: 0; left: 0; right: 0; height: 34%; border-bottom: 1px solid var(--accent-line); background: rgba(214, 69, 58, 0.05); border-radius: var(--r3) var(--r3) 0 0; transform-origin: 50% 0%; }
-.crate-glow { position: absolute; inset: 0; border-radius: var(--r3); box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4); }
+/* rivets, one per corner */
+.crate-box::before {
+  content: ""; position: absolute; inset: 7px; border-radius: var(--r2);
+  background:
+    radial-gradient(circle at 0 0,        rgba(237,234,226,0.30) 1.6px, transparent 2.2px),
+    radial-gradient(circle at 100% 0,     rgba(237,234,226,0.30) 1.6px, transparent 2.2px),
+    radial-gradient(circle at 0 100%,     rgba(237,234,226,0.30) 1.6px, transparent 2.2px),
+    radial-gradient(circle at 100% 100%,  rgba(237,234,226,0.30) 1.6px, transparent 2.2px);
+  pointer-events: none;
+}
+/* contact shadow — grounds the float instead of letting it hover in space */
+.crate-box::after {
+  content: ""; position: absolute; left: 12%; right: 12%; bottom: -16px; height: 14px;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.55), rgba(0,0,0,0) 70%);
+}
+.crate-lid {
+  position: absolute; top: 0; left: 0; right: 0; height: 34%;
+  border-bottom: 1px solid rgba(214, 69, 58, 0.42);
+  border-radius: var(--r3) var(--r3) 0 0; transform-origin: 50% 0%;
+  background:
+    repeating-linear-gradient(-45deg, rgba(214,69,58,0.16) 0 7px, transparent 7px 14px),
+    linear-gradient(180deg, rgba(255,255,255,0.07), rgba(214, 69, 58, 0.06));
+}
+.crate-glow { position: absolute; inset: 0; border-radius: var(--r3); box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.45); }
 .crate-burst {
   position: absolute; inset: 0; border-radius: var(--r3); pointer-events: none; opacity: 0;
   background: radial-gradient(circle, rgba(255, 226, 172, 0.9) 0%, rgba(230, 180, 100, 0.35) 42%, rgba(230, 180, 100, 0) 74%);
 }
-.crate-mark { font-size: 38px; color: var(--amber); opacity: 0.85; }
+.crate-mark {
+  font-size: 40px; color: var(--amber-bright); opacity: 0.95;
+  text-shadow: 0 0 18px rgba(214, 69, 58, 0.55);
+  margin-top: 14px;   /* sits on the case body, clear of the lid seam */
+}
 @keyframes crate-float { 50% { transform: translateY(-6px); } }
 .crate-msg { font-size: 12px; font-family: var(--font-ui); letter-spacing: 0.02em; margin-top: var(--s4); min-height: 18px; color: var(--amber-dim); }
 .crate-msg.warn { color: var(--red); }
@@ -870,15 +1088,33 @@ html, body {
 /* fade the reel overlay in instead of a hard cut */
 .crate-reveal:not(.hidden) { animation: overlay-in var(--dur-3) var(--ease); }
 
-.collection { max-width: 640px; margin: 0 auto; }
+.collection { max-width: var(--col); margin: 0 auto; }
 .collection-head { font-size: 12px; letter-spacing: 0.22em; color: var(--amber-dim); margin-bottom: var(--s4); border-top: 1px solid var(--line); padding-top: var(--s5); }
-.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--s2); }
+/* auto-FIT, not auto-fill: a four-item stall in a nine-track row used to sit
+   hard against the left edge with half the column empty behind it. Fit
+   collapses the unused tracks so whatever is in stock spreads across the
+   width. The cards have to give up their fixed flex width to stretch into
+   their track — they keep it inside the horizontally scrolling loadout rows,
+   where a fixed width is what makes the row scrollable in the first place. */
+.collection-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: var(--s2);
+}
+.collection-grid .item-card { width: auto; }
+/* Wider tracks give the art more room; match it with a taller plate so a
+   weapon or an operator reads at a glance rather than as a thumbnail. */
+.collection-grid .item-preview { height: 62px; }
 
 /* ======================= TRADER: CROW'S STALL ======================= */
+/* Same trailing fade as the loadout rows: the chip strip runs off a phone's
+   right edge and the scrollbar is hidden, so without it there is nothing on
+   screen saying the list continues. */
 .store-cats {
   display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s3); margin-bottom: var(--s6);
   -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
 }
+.store-cats.fits { -webkit-mask-image: none; mask-image: none; }
 .store-cats::-webkit-scrollbar { display: none; }
 .store-cat-chip {
   flex: 0 0 auto; padding: var(--s2) var(--s4); border-radius: var(--r-pill);
@@ -889,7 +1125,7 @@ html, body {
 .store-cat-chip:hover { color: var(--ink-2); }
 .store-cat-chip.active { background: var(--amber); border-color: var(--amber); color: #f5ede8; }
 
-.store-section { max-width: 640px; margin: 0 auto var(--s10); }
+.store-section { max-width: var(--col); margin: 0 auto var(--s10); }
 .store-section.hidden { display: none; }
 .store-section-head {
   font-size: 12px; letter-spacing: 0.22em; color: var(--amber-dim); font-weight: 700;
@@ -901,7 +1137,7 @@ html, body {
    and line below it — a bust crammed into a 96px square couldn't show he
    has a marketplace at all, and a banner has room for one. ---- */
 .trader-hero {
-  max-width: 640px; margin: 0 auto var(--s6);
+  max-width: var(--col); margin: 0 auto var(--s6);
   background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
   border: 1px solid var(--line-2); border-radius: var(--r3);
   padding: var(--s4) var(--s5) var(--s5);
@@ -977,18 +1213,37 @@ html, body {
 .ad-status.ok { color: #b9c0cc; }
 
 /* ============================ STATS SCREEN ============================ */
-.stats-grid {
+.stats-grid { margin-bottom: var(--s8); }
+/* Section rule + label, matching the collection/stall heads elsewhere so the
+   whole menu reads as one system. */
+.stats-group-head {
+  font-size: 12px; letter-spacing: 0.22em; font-weight: 700; color: var(--amber-dim);
+  border-top: 1px solid var(--line); padding-top: var(--s5); margin-bottom: var(--s4);
+}
+.stats-group-head:first-child { border-top: none; padding-top: 0; }
+.stats-group-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s3);
-  margin-bottom: var(--s8);
+  margin-bottom: var(--s6);
 }
 .stat-card {
   background: linear-gradient(160deg, var(--surface-2), var(--surface-1)); border: none;
   border-radius: var(--r3); padding: var(--s4) var(--s3); text-align: center;
   box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.04); transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease);
 }
+/* Headline numbers. Same footprint, louder value and a warm floor tint, so the
+   eye lands on kills / accuracy / level / scrap before the supporting counts. */
+.stat-card.hero {
+  background: linear-gradient(160deg, #232c38, #151a22);
+  box-shadow: var(--sh-2), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -22px 26px -24px rgba(214,69,58,0.40);
+}
+.stat-card.hero .stat-card-value { font-size: 24px; color: #fff6f0; }
+.stat-card.hero .stat-card-label { color: var(--ink-2); }
 .stat-card:hover { transform: translateY(-2px); box-shadow: var(--sh-2), inset 0 1px 0 rgba(255,255,255,0.06); }
 .stat-card-icon { width: 100%; height: 30px; display: block; margin-bottom: var(--s2); }
-.stat-card-value { font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.stat-card-value {
+  font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
 .stat-card-label { font-size: 8px; letter-spacing: 0.1em; color: var(--ink-dim); margin-top: var(--s2); line-height: 1.4; }
 
 /* ---- achievements ---- */
@@ -1214,6 +1469,24 @@ html, body {
 
 @media (min-width: 900px) and (pointer: fine) {
   .home-panel { padding: 32px 40px; }
+}
+
+/* Desktop: let the column breathe. A 640px ribbon centred in a 1400px window
+   is mostly empty margin, and it forces item grids down to three columns when
+   there is room for five. The column grows in two steps rather than going
+   fluid, so card sizes stay on the same rhythm the phone layout uses. */
+@media (min-width: 1080px) { :root { --col: 900px; } }
+@media (min-width: 1440px) { :root { --col: 1080px; } }
+
+/* On a wide screen CROW's banner and his name plate sit side by side instead
+   of stacking, which halves the hero's height and pulls the stall itself —
+   the part the player came here to shop — above the fold. */
+@media (min-width: 1080px) {
+  .trader-hero {
+    display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: var(--s6); align-items: center;
+  }
+  .trader-id { margin-top: 0; }
 }
 
 /* Phones (landscape): the top-right shows only the CURRENT weapon + ammo —
@@ -1467,19 +1740,24 @@ html.no-backdrop-filter .inspect-card {
 
 /* the ⓘ affordance on a loadout card — tapping the card still equips, so
    inspect needs its own hit target, sized for a thumb */
+/* Inspect affordance. Kept thumb-sized for touch, but tucked into the corner
+   and knocked back so it stops sitting on top of the weapon it describes —
+   at 24px opaque it was covering the optic on every rifle card. */
 .item-info {
   position: absolute;
-  top: calc(3px * var(--ui-scale));
-  right: calc(3px * var(--ui-scale));
-  width: calc(24px * var(--ui-scale));
-  height: calc(24px * var(--ui-scale));
+  top: calc(2px * var(--ui-scale));
+  right: calc(2px * var(--ui-scale));
+  width: calc(21px * var(--ui-scale));
+  height: calc(21px * var(--ui-scale));
+  opacity: 0.55;
+  transition: opacity var(--dur-1) var(--ease);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 0;
   padding: 0;
   border-radius: 50%;
-  background: rgba(10,12,16,0.55);
+  background: rgba(10,12,16,0.62);
   color: var(--ink-2);
   font-family: var(--font-display);
   font-size: calc(11px * var(--ui-scale));
@@ -1488,6 +1766,7 @@ html.no-backdrop-filter .inspect-card {
   cursor: pointer;
   z-index: 2;
 }
+.item-card:hover .item-info, .item-info:hover, .item-info:focus-visible { opacity: 1; }
 .item-info:active { background: rgba(10,12,16,0.8); color: var(--ink); }
 
 #inspect { z-index: 34; }
@@ -1674,32 +1953,46 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
 
 .archives-list { display: flex; flex-direction: column; gap: 8px; }
 
+/* The list is twelve near-identical rows, so it lives or dies on density and
+   on the code column reading as a spine. Each row carries a left index bar
+   (amber once recovered, dead grey while locked) and the code sits in a fixed
+   gutter so the titles all start on the same line. */
 .archive-row {
   display: flex; align-items: center;
   gap: calc(12px * var(--ui-scale));
   width: 100%;
   text-align: left;
-  padding: calc(11px * var(--ui-scale)) calc(13px * var(--ui-scale));
+  padding: calc(9px * var(--ui-scale)) calc(13px * var(--ui-scale));
   border: none; border-radius: var(--r3);
-  background: linear-gradient(180deg, rgba(30,36,46,0.72), rgba(16,20,26,0.82));
+  background:
+    linear-gradient(90deg, var(--amber) 0 3px, transparent 3px),
+    linear-gradient(180deg, rgba(30,36,46,0.72), rgba(16,20,26,0.82));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 10px rgba(0,0,0,0.3);
   font: inherit;
   cursor: pointer;
+  overflow: hidden;
   transition: transform 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out);
+}
+.archive-row.locked {
+  background:
+    linear-gradient(90deg, rgba(237,234,226,0.30) 0 3px, transparent 3px),
+    linear-gradient(180deg, rgba(24,29,37,0.68), rgba(14,17,23,0.80));
 }
 .archive-row:hover:not(.locked) {
   transform: translateY(-1px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.42);
 }
-.archive-row.locked { cursor: default; opacity: 0.62; }
+.archive-row.locked { cursor: default; opacity: 0.72; }
 
 .archive-code {
   flex: 0 0 auto;
+  width: calc(46px * var(--ui-scale));   /* fixed gutter: titles line up */
   font-family: var(--font-display);
   font-size: calc(10px * var(--ui-scale));
   font-weight: 700; letter-spacing: 0.06em;
-  color: var(--amber-dim);
+  color: var(--amber);
 }
+.archive-row.locked .archive-code { color: var(--ink-dim); }
 .archive-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
 .archive-title {
   font-family: var(--font-ui);
@@ -1707,11 +2000,19 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
   color: var(--ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* Classification chip, right-aligned. Boxed so it reads as metadata on the
+   row rather than a second line of the title. */
 .archive-tier {
+  flex: 0 0 auto;
   font-family: var(--font);
   font-size: calc(9px * var(--ui-scale));
   letter-spacing: 0.2em; font-weight: 700;
   color: var(--ink-dim);
+  padding: calc(3px * var(--ui-scale)) calc(8px * var(--ui-scale));
+  border-radius: var(--r-pill);
+  background: rgba(8, 10, 14, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(237, 234, 226, 0.08);
+  white-space: nowrap;
 }
 .archive-go {
   flex: 0 0 auto;
@@ -1720,7 +2021,22 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
   letter-spacing: 0.2em; font-weight: 700;
   color: var(--amber);
 }
-.archive-lock { flex: 0 0 auto; font-size: calc(11px * var(--ui-scale)); color: var(--ink-dim); }
+/* Padlock, drawn rather than typed: body plus a shackle arch, both in the
+   list's own ink so it never renders as a colour emoji. */
+.archive-lock {
+  flex: 0 0 auto; position: relative;
+  width: calc(9px * var(--ui-scale)); height: calc(8px * var(--ui-scale));
+  margin-top: calc(4px * var(--ui-scale));
+  border-radius: 1.5px;
+  background: rgba(237, 234, 226, 0.34);
+}
+.archive-lock::before {
+  content: ""; position: absolute; left: 50%; bottom: 100%;
+  width: calc(6px * var(--ui-scale)); height: calc(5px * var(--ui-scale));
+  transform: translateX(-50%);
+  border: 1.5px solid rgba(237, 234, 226, 0.34); border-bottom: 0;
+  border-radius: calc(4px * var(--ui-scale)) calc(4px * var(--ui-scale)) 0 0;
+}
 
 /* Redacted title. The blocks come from intel.js seeded off the log id, so a
    locked row looks identical every time the tab is opened — re-randomising
@@ -1947,9 +2263,12 @@ html.no-backdrop-filter .profile-card {
 
 .profile-rank-track {
   margin: calc(10px * var(--ui-scale)) auto 0;
-  width: 72%; height: calc(4px * var(--ui-scale));
+  width: 72%; height: calc(5px * var(--ui-scale));
   border-radius: 999px; overflow: hidden;
-  background: rgba(8, 10, 14, 0.55);
+  /* Recessed, with a hairline lip. A flat slab at 0% fill was indistinguishable
+     from a bar that had been filled all the way. */
+  background: rgba(6, 8, 11, 0.72);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(237,234,226,0.07);
 }
 .profile-rank-fill {
   height: 100%; border-radius: 999px;
@@ -2007,6 +2326,14 @@ html.no-backdrop-filter .profile-card {
   display: block; margin: calc(8px * var(--ui-scale)) auto;
   width: calc(180px * var(--ui-scale)); height: calc(64px * var(--ui-scale));
   max-width: 100%;
+}
+/* Before any weapon has been logged the plate held a blank 64px canvas above
+   a placeholder line, which read as a failed render. Collapse it. */
+.profile-weapon.empty { padding: calc(9px * var(--ui-scale)) calc(10px * var(--ui-scale)); }
+.profile-weapon.empty .profile-weapon-art { display: none; }
+.profile-weapon.empty .profile-weapon-name {
+  margin-top: calc(6px * var(--ui-scale));
+  font-size: calc(11px * var(--ui-scale)); color: var(--ink-dim); letter-spacing: 0.14em;
 }
 .profile-weapon-name {
   font-family: var(--font); font-weight: 700;

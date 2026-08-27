@@ -79,8 +79,11 @@ export class ArchivesUI {
       `<span class="archive-code">${this.code(log)}</span>` +
       `<span class="archive-main">` +
         `<span class="archive-title"></span>` +
-        `<span class="archive-tier"></span>` +
       `</span>` +
+      // Classification and the action sit at the row's right edge. Stacked
+      // under the title they left two thirds of a wide row empty and gave the
+      // eye nothing to track down the list.
+      `<span class="archive-tier"></span>` +
       `<span class="archive-go">${t('archives.read')}</span>`;
     // textContent rather than interpolation — the lore is author-written prose
     // with apostrophes and line breaks, and it has no business being parsed
@@ -102,9 +105,13 @@ export class ArchivesUI {
       `<span class="archive-code">${this.code(log)}</span>` +
       `<span class="archive-main">` +
         `<span class="archive-title redacted" aria-label="${t('archives.locked')}">${redactedTitle(log.id)}</span>` +
-        `<span class="archive-tier">${hint}</span>` +
       `</span>` +
-      `<span class="archive-lock">✕</span>`;
+      `<span class="archive-tier">${hint}</span>` +
+      // A padlock, not a cross. `✕` read as "dismiss this row" rather than
+      // "not recovered yet", which is the opposite of what a locked entry
+      // means. Drawn in CSS so it stays monochrome with the rest of the list
+      // instead of dropping a colour emoji into it.
+      `<span class="archive-lock" aria-hidden="true"></span>`;
     return row;
   }
 

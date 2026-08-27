@@ -16,6 +16,9 @@ export const EN = {
   // ---- play ----
   'play.kicker': 'A 2D TACTICAL OPERATION',
   'play.deploy': 'DEPLOY',
+  'play.lvl': 'LVL',
+  'play.nextRank': 'NEXT LEVEL',
+  'play.kitHead': 'DEPLOYING WITH',
   'play.controls': 'CONTROLS',
   'play.controlsNote': 'On phones, on-screen controls appear automatically.',
   'ctrl.move': 'MOVE',

@@ -15,28 +15,44 @@ function formatDuration(ms) {
   return `${m}m`;
 }
 
-const STAT_FIELDS = [
-  { key: 'playtime',   label: 'TOTAL PLAYTIME',          icon: 'clock',  value: (p) => formatDuration(p.data.totalPlaytimeMs) },
-  { key: 'kills',      label: 'TOTAL KILLS',             icon: 'skull',  value: (p) => p.data.totalKills.toLocaleString() },
-  { key: 'shots',      label: 'SHOTS FIRED',             icon: 'bullet', value: (p) => p.data.shotsTotal.toLocaleString() },
-  { key: 'accuracy',   label: 'ACCURACY',                icon: 'target', value: (p) => `${p.accuracy()}%` },
-  { key: 'headshots',  label: 'HEADSHOTS',               icon: 'target', value: (p) => p.data.totalHeadshots.toLocaleString() },
-  { key: 'combo',      label: 'HIGHEST COMBO',           icon: 'bolt',   value: (p) => String(p.data.highestCombo) },
-  { key: 'streak',     label: 'LONGEST KILL STREAK',     icon: 'fire',   value: (p) => String(p.data.longestKillStreak) },
-  { key: 'scrap',      label: 'LIFETIME SCRAP SALVAGED', icon: 'scrap',  value: (p) => p.data.lifetimeScrapEarned.toLocaleString() },
-  { key: 'ads',        label: 'ADS WATCHED',             icon: 'play',   value: (p) => p.data.totalAdsWatched.toLocaleString() },
-  { key: 'missions',   label: 'MISSIONS COMPLETED',      icon: 'flag',   value: (p) => String(p.data.totalMissionsCompleted) },
-  { key: 'crates',     label: 'CRATES OPENED',           icon: 'crate',  value: (p) => String(p.data.cratesOpened) },
-  { key: 'weaponsUsed', label: 'WEAPONS USED',           icon: 'guns',   value: (p) => String(p.weaponsUsedCount()) },
-  { key: 'mostUsed',   label: 'MOST USED WEAPON',        icon: 'star',   value: (p, weapons) => { const id = p.mostUsedWeapon(); return id ? (weapons[id]?.name || id) : '—'; } },
-  { key: 'level',      label: 'OPERATOR LEVEL',          icon: 'star',   value: (p) => String(p.data.level) },
-  { key: 'xp',         label: 'TOTAL XP',                icon: 'bolt',   value: (p) => Math.round(p.data.xp).toLocaleString() },
-  // What the level is actually worth in the field. Without these two rows the
-  // per-level stat gain is invisible — the player would be getting steadily
-  // tougher with nothing on screen ever saying so.
-  { key: 'lvlHp',      label: 'LEVEL BONUS — HEALTH',    icon: 'shield', value: (p) => `+${p.levelBonuses().maxHp}` },
-  { key: 'lvlDmg',     label: 'LEVEL BONUS — DAMAGE',    icon: 'guns',   value: (p) => `+${Math.round(p.levelBonuses().damage * 100)}%` },
+// Grouped rather than one 17-card wall. A flat grid left an orphan card on
+// its own final row and gave the eye no place to start; three named blocks —
+// how you fight, how far you have come, what you have banked — each land on a
+// clean row and let a player find the number they came for. Every field owns a
+// distinct icon: `accuracy` and `headshots` both drew the same reticle before,
+// as did combo/XP, level/most-used and weapons-used/damage-bonus.
+const STAT_GROUPS = [
+  { label: 'COMBAT RECORD', fields: [
+    { key: 'kills',      label: 'TOTAL KILLS',             icon: 'skull',     value: (p) => p.data.totalKills.toLocaleString() },
+    { key: 'headshots',  label: 'HEADSHOTS',               icon: 'crosshair', value: (p) => p.data.totalHeadshots.toLocaleString() },
+    { key: 'accuracy',   label: 'ACCURACY',                icon: 'target',    value: (p) => `${p.accuracy()}%` },
+    { key: 'shots',      label: 'SHOTS FIRED',             icon: 'bullet',    value: (p) => p.data.shotsTotal.toLocaleString() },
+    { key: 'combo',      label: 'HIGHEST COMBO',           icon: 'bolt',      value: (p) => String(p.data.highestCombo) },
+    { key: 'streak',     label: 'LONGEST KILL STREAK',     icon: 'fire',      value: (p) => String(p.data.longestKillStreak) },
+    { key: 'missions',   label: 'MISSIONS COMPLETED',      icon: 'flag',      value: (p) => String(p.data.totalMissionsCompleted) },
+    { key: 'playtime',   label: 'TOTAL PLAYTIME',          icon: 'clock',     value: (p) => formatDuration(p.data.totalPlaytimeMs) },
+  ] },
+  { label: 'OPERATOR', fields: [
+    { key: 'level',      label: 'OPERATOR LEVEL',          icon: 'chevron',   value: (p) => String(p.data.level) },
+    { key: 'xp',         label: 'TOTAL XP',                icon: 'spark',     value: (p) => Math.round(p.data.xp).toLocaleString() },
+    // What the level is actually worth in the field. Without these two rows
+    // the per-level stat gain is invisible — the player would be getting
+    // steadily tougher with nothing on screen ever saying so.
+    { key: 'lvlHp',      label: 'LEVEL BONUS — HEALTH',    icon: 'shield',    value: (p) => `+${p.levelBonuses().maxHp}` },
+    { key: 'lvlDmg',     label: 'LEVEL BONUS — DAMAGE',    icon: 'blade',     value: (p) => `+${Math.round(p.levelBonuses().damage * 100)}%` },
+  ] },
+  { label: 'ARMOURY & SALVAGE', fields: [
+    { key: 'mostUsed',   label: 'MOST USED WEAPON',        icon: 'crown',     value: (p, weapons) => { const id = p.mostUsedWeapon(); return id ? (weapons[id]?.name || id) : '—'; } },
+    { key: 'weaponsUsed', label: 'WEAPONS USED',           icon: 'guns',      value: (p) => String(p.weaponsUsedCount()) },
+    { key: 'crates',     label: 'CRATES OPENED',           icon: 'crate',     value: (p) => String(p.data.cratesOpened) },
+    { key: 'scrap',      label: 'LIFETIME SCRAP SALVAGED', icon: 'scrap',     value: (p) => p.data.lifetimeScrapEarned.toLocaleString() },
+    { key: 'ads',        label: 'ADS WATCHED',             icon: 'play',      value: (p) => p.data.totalAdsWatched.toLocaleString() },
+  ] },
 ];
+
+// The four numbers a returning player checks first get a wider, brighter card
+// at the head of their group instead of hiding in a uniform wall.
+const STAT_HERO = new Set(['kills', 'accuracy', 'level', 'scrap']);
 
 export class StatsUI {
   constructor(deps) {
@@ -71,32 +87,44 @@ export class StatsUI {
   }
 
   renderOverview() {
-    const grid = $('stats-grid');
-    grid.innerHTML = '';
-    for (const field of STAT_FIELDS) {
-      const card = document.createElement('div');
-      card.className = 'stat-card';
-      const cv = document.createElement('canvas');
-      cv.className = 'stat-card-icon';
-      card.appendChild(cv);
-      const val = document.createElement('div');
-      val.className = 'stat-card-value';
-      val.textContent = field.value(this.p, this.weapons);
-      card.appendChild(val);
-      const lbl = document.createElement('div');
-      lbl.className = 'stat-card-label';
-      lbl.textContent = field.label;
-      card.appendChild(lbl);
-      grid.appendChild(card);
-      requestAnimationFrame(() => {
-        const g = cv.getContext('2d');
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const w = cv.clientWidth || 28, h = cv.clientHeight || 28;
-        cv.width = w * dpr; cv.height = h * dpr;
-        g.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawAchievementIcon(g, field.icon, w, h, '#ff5c46');
-      });
+    const host = $('stats-grid');
+    host.innerHTML = '';
+    for (const group of STAT_GROUPS) {
+      const head = document.createElement('div');
+      head.className = 'stats-group-head';
+      head.textContent = group.label;
+      host.appendChild(head);
+
+      const grid = document.createElement('div');
+      grid.className = 'stats-group-grid';
+      for (const field of group.fields) grid.appendChild(this.makeStatCard(field));
+      host.appendChild(grid);
     }
+  }
+
+  makeStatCard(field) {
+    const card = document.createElement('div');
+    card.className = 'stat-card' + (STAT_HERO.has(field.key) ? ' hero' : '');
+    const cv = document.createElement('canvas');
+    cv.className = 'stat-card-icon';
+    card.appendChild(cv);
+    const val = document.createElement('div');
+    val.className = 'stat-card-value';
+    val.textContent = field.value(this.p, this.weapons);
+    card.appendChild(val);
+    const lbl = document.createElement('div');
+    lbl.className = 'stat-card-label';
+    lbl.textContent = field.label;
+    card.appendChild(lbl);
+    requestAnimationFrame(() => {
+      const g = cv.getContext('2d');
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = cv.clientWidth || 28, h = cv.clientHeight || 28;
+      cv.width = w * dpr; cv.height = h * dpr;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawAchievementIcon(g, field.icon, w, h, '#ff5c46');
+    });
+    return card;
   }
 
   renderAchievements() {
