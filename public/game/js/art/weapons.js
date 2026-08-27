@@ -28,6 +28,52 @@ function polymer(g, y0, y1, base = COL.polymer) {
     [1, shade(base, -0.3)],
   ]);
 }
+// Picatinny rail. Drawn as a real part — a dark bed with recoil slots milled
+// into it and a thin lit edge on the tooth tops — rather than dark notches
+// stamped straight onto the receiver. The old version left the receiver's warm
+// top-edge highlight showing through every gap, so at asset scale the rail
+// read as a cream-and-black zipper stuck along the gun instead of steel.
+function railTeeth(g, x0, x1, yTop, base, { pitch = 1.7, slot = 0.8 } = {}) {
+  const h = 1.15;
+  g.fillStyle = lingrad(g, 0, yTop, 0, yTop + h, [
+    [0, shade(base, 0.14)], [0.45, shade(base, -0.10)], [1, shade(base, -0.34)],
+  ]);
+  g.fillRect(x0, yTop, x1 - x0, h);
+  // milled slots
+  g.fillStyle = 'rgba(0,0,0,0.55)';
+  for (let x = x0 + 0.5; x < x1 - slot; x += pitch) g.fillRect(x, yTop + 0.15, slot, h - 0.15);
+  // lit tooth crowns, clipped to the rail so nothing spills onto the receiver
+  g.save();
+  g.beginPath(); g.rect(x0, yTop, x1 - x0, 0.34); g.clip();
+  g.fillStyle = 'rgba(226,232,240,0.30)';
+  g.fillRect(x0, yTop, x1 - x0, 0.34);
+  g.fillStyle = 'rgba(0,0,0,0.5)';
+  for (let x = x0 + 0.5; x < x1 - slot; x += pitch) g.fillRect(x, yTop, slot, 0.34);
+  g.restore();
+}
+
+// Overall form light. Every part on these guns is filled with its own small
+// vertical gradient, which makes each piece read but leaves the assembled
+// weapon one flat plate of a single value end to end — the desert battle rifle
+// was the clearest case, a tan silhouette with nothing to separate barrel from
+// receiver from stock. This lays one shared light over the whole silhouette:
+// sky above, bounce below, shadow along the underside. source-atop keeps it on
+// pixels that are already painted, so it never leaks into the air around the
+// gun. Call it after the wear pass, last.
+function formLight(g, x, y, w, h) {
+  g.save();
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = lingrad(g, 0, y, 0, y + h, [
+    [0, 'rgba(214,228,246,0.13)'],
+    [0.30, 'rgba(214,228,246,0.02)'],
+    [0.62, 'rgba(0,0,0,0)'],
+    [0.88, 'rgba(0,0,0,0.20)'],
+    [1, 'rgba(0,0,0,0.34)'],
+  ]);
+  g.fillRect(x, y, w, h);
+  g.restore();
+}
+
 // Fine speckle so polymer reads as textured, not flat.
 function speckle(g, x, y, w, h, n = 60) {
   for (let i = 0; i < n; i++) {
@@ -61,8 +107,11 @@ function paintRifleBody(variant, finish) {
   const rec = (finish && finish.rec) || (dark ? '#2c2e33' : COL.gunmetal);
   const poly = (finish && finish.poly) || (dark ? '#232529' : COL.polymer);
   // box: x -20..+40 (60), y -12..+8 (20); anchor at (20,12) inside sprite.
-  return makeSprite(60, 20, 20, 12, (g) => {
-    g.translate(20, 12);  // move origin to grip point
+  // Box sized off the geometry, with margin. Several painters drew past
+  // their canvas and the excess was silently sheared flat at the edge —
+  // the parts that looked "detached" or "chopped" were simply cropped.
+  return makeSprite(64, 25, 22, 16, (g) => {
+    g.translate(22, 16);  // move origin to grip point
 
     // -- skeleton stock (-20..-6)
     g.fillStyle = polymer(g, -8, 2, poly);
@@ -130,9 +179,7 @@ function paintRifleBody(variant, finish) {
     // -- upper receiver (flat top)
     g.fillStyle = metal(g, -10.4, -6, shade(rec, 0.03));
     rr(g, -7, -10.6, 24.5, 4.4, 0.8); g.fill();
-    // picatinny rail teeth
-    g.fillStyle = 'rgba(0,0,0,0.42)';
-    for (let x = -6; x < 16.4; x += 1.7) g.fillRect(x, -11, 0.9, 1);
+    railTeeth(g, -6.6, 17.2, -11.35, rec);
     // ejection port (bolt sprite overlays here)
     g.fillStyle = '#101114';
     rr(g, 6.8, -6.4, 5.8, 2.6, 0.6); g.fill();
@@ -148,8 +195,7 @@ function paintRifleBody(variant, finish) {
     rr(g, 10.5, -9.8, 16, 6.2, 1.4); g.fill();
     g.fillStyle = 'rgba(8,9,11,0.85)';
     for (let i = 0; i < 3; i++) { rr(g, 12.4 + i * 4.6, -7.4, 3, 1.4, 0.7); g.fill(); }
-    g.fillStyle = 'rgba(0,0,0,0.42)';
-    for (let x = 11.2; x < 26; x += 1.7) g.fillRect(x, -10.2, 0.9, 0.9);
+    railTeeth(g, 11.0, 26.2, -10.5, shade(poly, 0.1), { pitch: 1.7, slot: 0.8 });
     // front support-hand stop
     g.fillStyle = polymer(g, -4, -1, poly);
     g.beginPath();
@@ -190,9 +236,18 @@ function paintRifleBody(variant, finish) {
     g.restore();
     speckle(g, -19, -8, 14, 9, 40);
     speckle(g, 10.5, -10, 16, 7, 40);
-    // top edge light
-    g.strokeStyle = 'rgba(255,215,165,0.22)'; g.lineWidth = 0.6;
-    g.beginPath(); g.moveTo(-6.8, -10.7); g.lineTo(17.4, -10.7); g.stroke();
+    // Body highlights. The top edge is the rail's job now; a warm cream line
+    // laid under the teeth is what made the rail read as a zipper, and stacked
+    // on top of metal()'s own bright top stop it widened into a tan band
+    // running the length of the receiver. What is left is a cool hairline.
+    g.strokeStyle = 'rgba(198,212,228,0.13)'; g.lineWidth = 0.35;
+    g.beginPath(); g.moveTo(-6.4, -9.85); g.lineTo(17.0, -9.85); g.stroke();
+    // Contact shadow under the barrel line, so the gun sits in its own light
+    // instead of reading as one flat grey plate end to end.
+    g.strokeStyle = 'rgba(0,0,0,0.34)'; g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(10.8, -3.7); g.lineTo(26.2, -3.7); g.stroke();
+    g.beginPath(); g.moveTo(26.6, -4.2); g.lineTo(34.8, -4.2); g.stroke();
+    formLight(g, -20, -12, 60, 20);
     if (finish && finish.core) drawCore(g, -4, -8.4, 15.5, -8.4, finish.core);
   });
 }
@@ -206,43 +261,61 @@ function paintRifleMag(variant, finish) {
     // the well's front to -0.4 at its rear, so a magazine whose feed lip sat
     // flat at 0.2 met the gun at one corner and showed daylight at the other.
     g.translate(0, -0.8);
-    g.fillStyle = lingrad(g, -4, 0, 5, 0, [
-      [0, shade(poly, 0.14)], [0.5, poly], [1, shade(poly, -0.3)],
+    // Narrower and darker than the pistol grip in front of it. At 6.8 units
+    // across and the same value as the grip, the magazine read as a second
+    // handle rather than something the gun was fed from — the SMG had the same
+    // problem worse. A rifle mag is a thin curved box; this is one.
+    const skin = shade(poly, -0.16);
+    g.fillStyle = lingrad(g, -2.6, 0, 3, 0, [
+      [0, shade(skin, 0.16)], [0.42, skin], [1, shade(skin, -0.38)],
     ]);
     g.beginPath();
-    g.moveTo(-3.4, 0);
-    g.lineTo(3.4, 0);
-    g.quadraticCurveTo(4.4, 7, 2.8, 12.6);     // curved front
-    g.quadraticCurveTo(0.2, 14.4, -2.6, 13.2); // base plate
-    g.quadraticCurveTo(-4.6, 7, -3.4, 0);
+    g.moveTo(-2.3, 0);
+    g.lineTo(2.3, 0);
+    g.quadraticCurveTo(3.3, 7, 2.1, 12.4);     // curved front
+    g.quadraticCurveTo(0.1, 13.5, -1.9, 12.9);
+    g.quadraticCurveTo(-3.3, 7, -2.3, 0);
     g.closePath(); g.fill();
-    // ribs
-    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.5;
-    for (let i = 1; i < 4; i++) {
-      g.beginPath();
-      g.moveTo(-3.6 + i * 0.15, i * 3);
-      g.quadraticCurveTo(0, i * 3 + 0.8, 3.8 - i * 0.2, i * 3 + 0.4);
-      g.stroke();
+    // Witness holes down the spine: the detail that says "magazine" at a
+    // glance, where the old horizontal bands said "grip".
+    g.fillStyle = 'rgba(0,0,0,0.42)';
+    for (let i = 0; i < 4; i++) {
+      const t = 2.1 + i * 2.7;
+      rr(g, -0.9 + t * 0.045, t, 1.7, 1.0, 0.45); g.fill();
     }
-    // base plate
-    g.fillStyle = shade(poly, -0.35);
-    g.beginPath();
-    g.moveTo(-2.9, 12.2); g.quadraticCurveTo(0.2, 14.8, 3.1, 12.4);
-    g.lineTo(2.8, 13.8); g.quadraticCurveTo(0, 15.6, -2.6, 13.9);
-    g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(255,215,165,0.16)'; g.lineWidth = 0.5;
-    g.beginPath(); g.moveTo(3.5, 1); g.quadraticCurveTo(4.4, 7, 3, 12); g.stroke();
-    speckle(g, -4, 0, 8, 13, 30);
+    // floorplate, proud of the body on both sides
+    g.fillStyle = shade(skin, -0.42);
+    rr(g, -2.5, 12.2, 4.9, 1.9, 0.5); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.14)';
+    g.fillRect(-2.4, 12.3, 4.7, 0.3);
+    // spine light down the leading edge
+    g.strokeStyle = 'rgba(226,232,240,0.20)'; g.lineWidth = 0.45;
+    g.beginPath(); g.moveTo(2.35, 0.6); g.quadraticCurveTo(3.3, 7, 2.2, 12); g.stroke();
+    speckle(g, -3, 0, 6, 12.5, 26);
   });
 }
 
-function paintBolt() {
-  // charging handle / bolt carrier that cycles in the ejection port
+function paintBolt(rec = '#41454b') {
+  // Charging handle / bolt carrier riding in the ejection port. It used to
+  // start at #8d939c — brighter than anything else on the gun — so it read as
+  // a white block sitting on the receiver rather than a part inside it. Now it
+  // is receiver-valued with a lit top edge and its own port shadow, and it
+  // takes the chassis' own colour: a fixed grey block sat on the olive LMG
+  // and the teal energy rifles like a part off a different gun.
   return makeSprite(8, 4, 1, 2, (g) => {
-    g.fillStyle = lingrad(g, 0, 0, 0, 4, [[0, '#8d939c'], [0.5, '#5c6167'], [1, '#33363b']]);
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    rr(g, 0.2, 0.4, 7.4, 3.0, 0.9); g.fill();
+    g.fillStyle = lingrad(g, 0, 0, 0, 4, [
+      [0, shade(rec, 0.34)], [0.42, rec], [1, shade(rec, -0.34)],
+    ]);
     rr(g, 0.4, 0.6, 7, 2.6, 0.8); g.fill();
-    g.fillStyle = '#1c1e21';
+    g.fillStyle = 'rgba(226,232,240,0.26)';
+    g.fillRect(0.7, 0.7, 6.4, 0.3);
+    // serrated latch at the rear of the handle
+    g.fillStyle = shade(rec, -0.62);
     g.fillRect(5.6, 0.2, 1.6, 3.4);
+    g.fillStyle = 'rgba(226,232,240,0.14)';
+    for (let i = 0; i < 3; i++) g.fillRect(5.8 + i * 0.5, 0.5, 0.22, 2.8);
   });
 }
 
@@ -251,8 +324,8 @@ function paintPistolBody(finish) {
   const gripCol = (finish && finish.grip) || '#2a2c30';
   const frameCol = (finish && finish.frame) || '#303236';
   // box x -7..+11, y -8..+7; anchor grip at (0,0) → sprite anchor (7,8)
-  return makeSprite(18, 15, 7, 8, (g) => {
-    g.translate(7, 8);
+  return makeSprite(21, 17, 8, 9, (g) => {
+    g.translate(8, 9);
     // grip with stippling
     g.fillStyle = polymer(g, -1, 7, gripCol);
     g.beginPath();
@@ -262,65 +335,109 @@ function paintPistolBody(finish) {
     g.lineTo(0.6, 6.4);
     g.quadraticCurveTo(1.8, 3, 2.2, -1.2);
     g.closePath(); g.fill();
-    for (let i = 0; i < 14; i++) {
-      g.fillStyle = 'rgba(0,0,0,0.3)';
-      g.fillRect(-3.4 + rng() * 4.6, 0.5 + rng() * 5, 0.5, 0.5);
+    // Stipple panel. Scattering fourteen random dots read as dirt on the grip;
+    // a staggered lattice reads as the moulded texture it is meant to be.
+    g.save();
+    g.beginPath();
+    g.moveTo(-1.8, -1.4); g.lineTo(-4.2, 5.2);
+    g.quadraticCurveTo(-4.4, 6.8, -2.4, 6.8);
+    g.lineTo(0.6, 6.4); g.quadraticCurveTo(1.8, 3, 2.2, -1.2);
+    g.closePath(); g.clip();
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 5; col++) {
+        const x = -3.6 + col * 1.15 + (row % 2) * 0.55 + row * 0.18;
+        const y = 0.2 + row * 0.72;
+        g.fillStyle = 'rgba(0,0,0,0.34)'; g.fillRect(x, y, 0.42, 0.42);
+        g.fillStyle = 'rgba(226,232,240,0.10)'; g.fillRect(x, y - 0.22, 0.42, 0.2);
+      }
     }
+    g.restore();
     // frame + trigger guard
     g.fillStyle = polymer(g, -3, 0, frameCol);
+    // The dust cover used to stop at 8.8 while the slide above it ran to 11.6,
+    // leaving the front of the slide hanging over open air. The frame now
+    // carries it almost to the bushing, stepping down where the guard ends.
     g.beginPath();
-    g.moveTo(-2.4, -2.8);
-    g.lineTo(8.8, -2.8);
-    g.lineTo(8.8, -0.6);
+    g.moveTo(-4.4, -2.8);          // tang under the slide's rear overhang
+    g.lineTo(10.6, -2.8);
+    g.lineTo(10.6, -1.5);
+    g.lineTo(8.8, -0.9);
     g.lineTo(6.4, -0.2);
     g.quadraticCurveTo(6.6, 2.8, 4, 3);       // guard front
     g.quadraticCurveTo(2.4, 3, 2.2, 0.6);
     g.lineTo(-2.4, -0.6);
+    g.lineTo(-3.9, -1.5);
     g.closePath(); g.fill();
+    // shadow line where the slide overhangs the dust cover
+    g.strokeStyle = 'rgba(0,0,0,0.38)'; g.lineWidth = 0.3;
+    g.beginPath(); g.moveTo(-2.2, -2.55); g.lineTo(10.5, -2.55); g.stroke();
     g.strokeStyle = '#17181b'; g.lineWidth = 1;
     g.beginPath(); g.moveTo(3.2, -0.2); g.quadraticCurveTo(2.9, 1.4, 3.8, 2); g.stroke(); // trigger
-    // accessory rail
-    g.fillStyle = 'rgba(0,0,0,0.4)';
-    for (let x = 4; x < 8.6; x += 1.3) g.fillRect(x, -1.6, 0.7, 0.8);
+    railTeeth(g, 3.9, 8.8, -1.75, shade(frameCol, -0.05), { pitch: 1.3, slot: 0.6 });
     // engraving
     g.fillStyle = 'rgba(205,212,222,0.25)';
     g.font = '1.5px monospace';
     g.fillText('C-9', 4.6, 1.4);
     speckle(g, -4, -2, 12, 8, 26);
+    formLight(g, -7, -8, 18, 15);
     if (finish && finish.core) drawCore(g, 0.4, -1.4, 7.6, -1.4, finish.core);
   });
 }
 function paintPistolSlide(finish) {
   const metalCol = (finish && finish.metal) || '#3d4046';
   // separate slide for blowback animation; anchor aligns with frame top.
-  return makeSprite(19, 6, 7, 6, (g) => {
-    g.translate(7, 6);
+  // 21 wide, not 19: the barrel bushing added at the muzzle end runs to x=13.1
+  // and the old box stopped the sprite dead at 12, shearing the crown off.
+  return makeSprite(22, 9, 7, 8, (g) => {
+    g.translate(7, 8);
     g.fillStyle = metal(g, -6, -2.4, metalCol);
     g.beginPath();
-    g.moveTo(-6.4, -5.8);
+    // Rear face pulled in from -6.4 to -4.6, level with the grip's backstrap.
+    // It used to cantilever nearly two units past the frame with nothing under
+    // it, which read as a bar balanced on a handle rather than a slide.
+    g.moveTo(-4.6, -5.8);
     g.lineTo(10.8, -5.8);
     g.quadraticCurveTo(11.8, -5.8, 11.6, -4.6);
     g.lineTo(11.4, -2.9);
-    g.lineTo(-6.4, -2.9);
+    g.lineTo(-4.6, -2.9);
     g.closePath(); g.fill();
     // slide serrations
     g.fillStyle = 'rgba(0,0,0,0.4)';
-    for (let i = 0; i < 5; i++) g.fillRect(-5.6 + i * 1.1, -5.4, 0.5, 2.2);
+    for (let i = 0; i < 4; i++) g.fillRect(-4.1 + i * 1.1, -5.4, 0.5, 2.2);
     for (let i = 0; i < 4; i++) g.fillRect(6.8 + i * 1.1, -5.4, 0.5, 2.2);
     // ejection port
     g.fillStyle = '#101113';
     rr(g, 2.6, -5.2, 3.6, 1.7, 0.4); g.fill();
+    // Barrel bushing and crown. The slide used to stop dead at its front face
+    // with nothing behind it, so the pistol read as a block on a grip with no
+    // business end — the one part of a handgun the eye looks for.
+    g.fillStyle = metal(g, -5.4, -3.2, shade(metalCol, -0.16));
+    rr(g, 11.2, -5.2, 1.9, 2.0, 0.4); g.fill();
+    g.fillStyle = '#0c0d0f';
+    g.beginPath(); g.ellipse(12.5, -4.2, 0.55, 0.72, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(226,232,240,0.30)'; g.lineWidth = 0.28;
+    g.beginPath(); g.arc(12.5, -4.2, 0.72, Math.PI * 0.75, Math.PI * 1.7); g.stroke();
+    // front bevel, so the slide is not a plain slab end-on
+    g.fillStyle = 'rgba(0,0,0,0.28)';
+    g.beginPath();
+    g.moveTo(10.2, -5.8); g.lineTo(11.6, -5.8); g.lineTo(11.5, -4.6);
+    g.closePath(); g.fill();
     // sights
     g.fillStyle = '#17181b';
-    g.fillRect(-5.9, -6.7, 1.4, 1);
+    g.fillRect(-4.3, -6.7, 1.4, 1);
     g.fillRect(9.8, -6.7, 1, 1);
     g.fillStyle = '#7ec26a';
-    g.fillRect(-5.6, -6.5, 0.6, 0.6);
-    g.strokeStyle = 'rgba(255,215,165,0.25)'; g.lineWidth = 0.5;
-    g.beginPath(); g.moveTo(-6.2, -5.9); g.lineTo(11.2, -5.9); g.stroke();
+    g.fillRect(-4.0, -6.5, 0.6, 0.6);
+    // Cool hairline, not the old warm one: stacked on metal()'s bright top
+    // stop, a cream stroke widened into a tan band across the whole slide.
+    g.strokeStyle = 'rgba(198,212,228,0.16)'; g.lineWidth = 0.35;
+    g.beginPath(); g.moveTo(-4.4, -5.85); g.lineTo(11.2, -5.85); g.stroke();
+    // slide-stop / takedown line breaks up the flank
+    g.strokeStyle = 'rgba(0,0,0,0.34)'; g.lineWidth = 0.3;
+    g.beginPath(); g.moveTo(-2.2, -3.15); g.lineTo(10.6, -3.15); g.stroke();
     g.save();
     g.globalCompositeOperation = 'source-atop';
-    scratches(g, -6, -6.6, 17, 4, rng, { n: 10 });
+    scratches(g, -4.6, -6.6, 16, 4, rng, { n: 10 });
     g.restore();
   });
 }
@@ -329,9 +446,10 @@ function paintPistolSlide(finish) {
 function paintKnife(finish) {
   // Optional energy finish: recolors the blade to an emissive edge (VOLT EDGE).
   const blade = finish && finish.blade;
-  // box x -6..+16, y -4..+4; anchor at grip center → (6,4)
-  return makeSprite(22, 9, 6, 4.5, (g) => {
-    g.translate(6, 4.5);
+  // box x -6.5..+17.5, y -4.5..+4.5; anchor at grip centre. 22 wide put the
+  // canvas wall right where the point is, so the tip was being shaved off.
+  return makeSprite(24, 9, 6.5, 4.5, (g) => {
+    g.translate(6.5, 4.5);
     // handle: G10 scales
     g.fillStyle = lingrad(g, 0, -2.6, 0, 2.8, [
       [0, '#3f4238'], [0.5, '#31342b'], [1, '#20221c'],
@@ -365,14 +483,25 @@ function paintKnife(finish) {
           [0, '#c9ced6'], [0.42, '#9aa1aa'], [0.55, '#585d64'], [1, '#3a3e44'],
         ]);
     if (blade) { g.shadowColor = blade; g.shadowBlur = 5; }
+    // Clip point. The spine used to curve smoothly into the edge belly, which
+    // gave the blade a rounded nose — it read as a spoon rather than something
+    // that stabs. The spine now runs flat, breaks at the clip and comes to an
+    // actual point.
     g.beginPath();
     g.moveTo(0.7, -2.6);
-    g.lineTo(9.4, -2.9);                        // spine
-    g.quadraticCurveTo(13.2, -2.7, 15.6, -0.4); // tip
+    g.lineTo(11.4, -2.9);                       // spine
+    g.lineTo(14.2, -2.05);                      // clip break
+    g.lineTo(16.4, -0.55);                      // point
     g.quadraticCurveTo(11.5, 1.6, 7, 1.9);      // edge belly
     g.quadraticCurveTo(3, 2.2, 0.7, 1.9);
     g.closePath(); g.fill();
     g.shadowBlur = 0;
+    // false edge along the clip
+    g.fillStyle = blade ? withA(blade, 0.5) : 'rgba(226,232,240,0.30)';
+    g.beginPath();
+    g.moveTo(11.4, -2.9); g.lineTo(14.2, -2.05); g.lineTo(16.4, -0.55);
+    g.lineTo(14.0, -1.35); g.lineTo(11.6, -2.35);
+    g.closePath(); g.fill();
     // edge grind highlight
     g.fillStyle = blade
       ? lingrad(g, 0, 0.4, 0, 2.2, [[0, 'rgba(235,252,255,0.95)'], [1, withA(blade, 0.3)]])
@@ -380,7 +509,7 @@ function paintKnife(finish) {
     g.beginPath();
     g.moveTo(1, 1.1);
     g.quadraticCurveTo(7, 1.4, 11.4, 0.5);
-    g.quadraticCurveTo(13.6, 0, 15.3, -0.4);
+    g.quadraticCurveTo(14, 0.05, 16.2, -0.52);
     g.quadraticCurveTo(11.5, 1.7, 7, 1.95);
     g.quadraticCurveTo(3, 2.2, 1, 1.9);
     g.closePath(); g.fill();
@@ -421,8 +550,8 @@ function paintLaserSmg(finish) {
   const poly = (finish && finish.poly) || '#280d16';
   const core = (finish && finish.core) || [255, 70, 90];
   const [cr, cg, cb] = core;
-  return makeSprite(40, 17, 14, 9, (g) => {
-    g.translate(14, 9);
+  return makeSprite(44, 22, 15, 13, (g) => {
+    g.translate(15, 13);
     const emissive = (x, y, w, h, a) => {
       g.save(); g.globalCompositeOperation = 'lighter';
       g.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
@@ -496,9 +625,10 @@ function paintLaserSmg(finish) {
 function paintSmgBody(finish) {
   const rec = (finish && finish.rec) || '#3a3d42';
   const poly = (finish && finish.poly) || '#26282b';
-  // box x -14..+24 (38), y -9..+7 (16); anchor (14,9)
-  return makeSprite(40, 17, 14, 9, (g) => {
-    g.translate(14, 9);
+  // Box x -16..+26, y -13..+9. Was 40x17 at (14,9): the folding stock ran off
+  // the left wall and the sight rail off the top, both sheared flat.
+  return makeSprite(44, 23, 16, 13, (g) => {
+    g.translate(16, 13);
     // folding stock (thin wire-frame, collapsed)
     g.strokeStyle = shade(rec, -0.2); g.lineWidth = 1.6;
     g.beginPath();
@@ -567,8 +697,9 @@ function paintSmgBody(finish) {
     grunge(g, -14, -8.5, 38, 15, rng, { n: 50, dark: 0.1, light: 0.04 });
     g.restore();
     speckle(g, 8.6, -7.6, 11, 5, 28);
-    g.strokeStyle = 'rgba(255,215,165,0.22)'; g.lineWidth = 0.5;
-    g.beginPath(); g.moveTo(-4, -8.5); g.lineTo(14, -8.5); g.stroke();
+    g.strokeStyle = 'rgba(198,212,228,0.14)'; g.lineWidth = 0.35;
+    g.beginPath(); g.moveTo(-4, -8.45); g.lineTo(14, -8.45); g.stroke();
+    formLight(g, -14, -12, 40, 24);
     if (finish && finish.core) drawCore(g, -2, -6.2, 12, -6.2, finish.core);
   });
 }
@@ -578,17 +709,25 @@ function paintSmgMag(finish) {
   return makeSprite(7, 15, 3.5, 1, (g) => {
     g.translate(3.5, 1);
     g.translate(0, -0.8);   // seated into the well, same as the rifle's
-    g.fillStyle = lingrad(g, -3, 0, 3, 0, [
-      [0, shade(body, 0.32)], [0.5, body], [1, shade(body, -0.3)],
+    // 5.2 units across and lit to shade(body, 0.32) on its left edge, this
+    // magazine was as wide and as bright as the pistol grip immediately in
+    // front of it — the two merged into one fat handle. Narrower, darker, and
+    // detailed as a magazine rather than a gripped surface.
+    const skin = shade(body, -0.10);
+    g.fillStyle = lingrad(g, -2, 0, 2, 0, [
+      [0, shade(skin, 0.14)], [0.42, skin], [1, shade(skin, -0.36)],
     ]);
-    rr(g, -2.6, 0, 5.2, 12.6, 0.8); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.4;
-    for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(-2.6, i * 3); g.lineTo(2.6, i * 3); g.stroke(); }
-    g.fillStyle = shade(body, -0.35);
-    rr(g, -2.9, 11.6, 5.8, 2.2, 0.6); g.fill();
-    g.strokeStyle = 'rgba(255,215,165,0.16)'; g.lineWidth = 0.5;
-    g.beginPath(); g.moveTo(2.7, 1); g.lineTo(2.7, 11); g.stroke();
-    speckle(g, -2.6, 0, 5.2, 12, 20);
+    rr(g, -1.9, 0, 3.8, 12.4, 0.7); g.fill();
+    // witness holes, not grip bands
+    g.fillStyle = 'rgba(0,0,0,0.44)';
+    for (let i = 0; i < 4; i++) { rr(g, -0.7, 2.0 + i * 2.6, 1.4, 0.9, 0.4); g.fill(); }
+    g.fillStyle = shade(skin, -0.44);
+    rr(g, -2.2, 11.9, 4.4, 1.9, 0.5); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.13)';
+    g.fillRect(-2.1, 12.0, 4.2, 0.3);
+    g.strokeStyle = 'rgba(226,232,240,0.18)'; g.lineWidth = 0.4;
+    g.beginPath(); g.moveTo(1.95, 0.8); g.lineTo(1.95, 11.4); g.stroke();
+    speckle(g, -1.9, 0, 3.8, 12, 18);
   });
 }
 
@@ -713,8 +852,8 @@ function paintParticleThrower(finish) {
   const poly = (finish && finish.poly) || '#1c1440';
   const core = (finish && finish.core) || [190, 120, 255];
   const [cr, cg, cb] = core;
-  return makeSprite(60, 20, 20, 12, (g) => {
-    g.translate(20, 12);
+  return makeSprite(64, 26, 21, 15, (g) => {
+    g.translate(21, 15);
 
     // rear energy cell — a fat cylinder where a stock would be
     g.fillStyle = metal(g, -9, 2, shade(rec, -0.1));
@@ -808,9 +947,11 @@ function paintEnergyPistol(variant, finish) {
     g0.restore();
   };
   let g0;
-  return makeSprite(18, 15, 7, 8, (g) => {
+  // 18x15 at (7,8) cut the emitter bell off the front and the sight rib off
+  // the top on both the ray gun and the quantum pistol.
+  return makeSprite(24, 21, 8, 13, (g) => {
     g0 = g;
-    g.translate(7, 8);
+    g.translate(8, 13);
 
     // grip — raked back on the raygun, near-vertical on the quantum
     const rake = variant === 'bell' ? 2.2 : 0.6;
@@ -829,14 +970,31 @@ function paintEnergyPistol(variant, finish) {
       // ---- RAY GUN: retro bulb emitter on a stubby frame ----
       g.fillStyle = metal(g, -6, 0, frame);
       rr(g, -5.4, -5.6, 11, 5.4, 1.4); g.fill();
-      // spherical charge bulb sitting on top
-      const bg = g.createRadialGradient(-1.4, -8, 0.5, -1.4, -8, 4.2);
-      bg.addColorStop(0, `rgba(${cr},${cg},${cb},0.95)`);
-      bg.addColorStop(1, `rgba(${cr},${cg},${cb},0.10)`);
+      // Spherical charge bulb. It used to be one radial gradient fading to 10%
+      // alpha at its own rim, so it had no edge at all — a purple fog the size
+      // of the gun rather than a glass bulb sitting on it. Now: a housing
+      // collar, glass with a defined rim, the plasma inside it, and a bloom
+      // that stays well inside the silhouette.
+      g.fillStyle = metal(g, -5.4, -3.6, shade(frame, -0.12));
+      rr(g, -3.4, -5.6, 4.2, 2.2, 0.5); g.fill();        // collar onto the frame
+      g.save();
+      g.globalCompositeOperation = 'lighter';
+      const halo = g.createRadialGradient(-1.4, -7.8, 1.2, -1.4, -7.8, 5.4);
+      halo.addColorStop(0, `rgba(${cr},${cg},${cb},0.22)`);
+      halo.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+      g.fillStyle = halo;
+      g.beginPath(); g.arc(-1.4, -7.8, 5.4, 0, Math.PI * 2); g.fill();
+      g.restore();
+      const bg = g.createRadialGradient(-2.4, -8.8, 0.3, -1.4, -7.8, 3.5);
+      bg.addColorStop(0, `rgba(255,255,255,0.92)`);
+      bg.addColorStop(0.38, `rgba(${cr},${cg},${cb},0.85)`);
+      bg.addColorStop(1, `rgba(${Math.round(cr * 0.35)},${Math.round(cg * 0.3)},${Math.round(cb * 0.45)},0.92)`);
       g.fillStyle = bg;
-      g.beginPath(); g.arc(-1.4, -8, 4.2, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = shade(frame, 0.14); g.lineWidth = 1;
-      g.beginPath(); g.arc(-1.4, -8, 4.2, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.arc(-1.4, -7.8, 3.5, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = shade(frame, 0.26); g.lineWidth = 0.9;
+      g.beginPath(); g.arc(-1.4, -7.8, 3.5, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.42)'; g.lineWidth = 0.45;
+      g.beginPath(); g.arc(-1.4, -7.8, 2.9, Math.PI * 1.05, Math.PI * 1.55); g.stroke();
       // flared muzzle bell
       g.fillStyle = metal(g, -7, -1, shade(frame, 0.1));
       g.beginPath();
@@ -876,6 +1034,7 @@ function paintEnergyPistol(variant, finish) {
     scratches(g, -6, -8, 17, 13, rng, { n: 6 });
     grunge(g, -6, -8, 17, 13, rng, { n: 34, dark: 0.1 });
     g.restore();
+    formLight(g, -8, -13, 24, 21);
   });
 }
 
@@ -960,12 +1119,26 @@ function chassisBarrel(g, kind, rec, core) {
   };
 
   if (kind === 'long') {
-    g.fillStyle = metal(g, -6.6, -4, shade(rec, -0.08));
-    g.fillRect(24, -6.2, 22, 2.2);
-    g.fillStyle = metal(g, -7.6, -3.6, rec);
-    rr(g, 44, -7.2, 5, 4, 1); g.fill();          // slim brake
+    // Twenty-two units of featureless bar was a quarter of the weapon's length
+    // with nothing on it. It steps down past the gas block the way a real
+    // profile does, and ends in a ported flash hider rather than a knob.
+    g.fillStyle = metal(g, -6.8, -3.8, shade(rec, -0.10));
+    g.fillRect(24, -6.4, 8, 2.6);                 // chamber end, thicker
+    g.fillStyle = metal(g, -6.5, -4.1, shade(rec, -0.16));
+    g.fillRect(32, -6.1, 12.4, 2.0);              // stepped-down profile
+    // gas block + folded front sight
+    g.fillStyle = metal(g, -8.4, -4, shade(rec, 0.04));
+    rr(g, 30.4, -8.0, 3.2, 4.2, 0.5); g.fill();
+    g.fillStyle = shade(rec, -0.34);
+    g.fillRect(31.4, -9.3, 1.1, 1.5);
+    // ported flash hider
+    g.fillStyle = metal(g, -7.6, -3.4, rec);
+    rr(g, 44, -7.2, 5.2, 4, 1); g.fill();
     g.fillStyle = '#0e0f11';
-    g.fillRect(45.4, -7.6, 0.9, 4.8);
+    for (let i = 0; i < 3; i++) g.fillRect(44.9 + i * 1.4, -7.5, 0.7, 2.2);
+    g.beginPath(); g.ellipse(49.0, -5.2, 0.5, 1.2, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(226,232,240,0.22)'; g.lineWidth = 0.3;
+    g.beginPath(); g.moveTo(44.2, -7.0); g.lineTo(48.9, -7.0); g.stroke();
   } else if (kind === 'heavy') {
     // thick fluted barrel with a bipod stub
     g.fillStyle = metal(g, -7.4, -3, shade(rec, -0.05));
@@ -974,11 +1147,24 @@ function chassisBarrel(g, kind, rec, core) {
     for (let i = 0; i < 5; i++) {
       g.beginPath(); g.moveTo(25 + i * 3.4, -7); g.lineTo(25 + i * 3.4, -3.2); g.stroke();
     }
-    g.fillStyle = shade(rec, -0.3);
-    // Legs start inside the barrel (its underside is -2.8), not level with it —
-    // butted exactly against it they left a hairline of background showing.
-    g.fillRect(30, -3.4, 1.8, 7.8);               // bipod leg
-    g.fillRect(33.5, -3.4, 1.8, 7.8);
+    // Bipod. Two bare rectangles hanging off the barrel read as chopsticks —
+    // no hinge to swing on and no foot to stand on. It now has a yoke it
+    // folds from, splayed legs and pads at the ends.
+    g.fillStyle = shade(rec, -0.22);
+    rr(g, 29.4, -3.6, 6.6, 2.4, 0.6); g.fill();      // yoke under the barrel
+    g.fillStyle = shade(rec, -0.4);
+    g.beginPath(); g.arc(32.7, -2.4, 0.85, 0, Math.PI * 2); g.fill();  // pivot
+    g.fillStyle = shade(rec, -0.32);
+    for (const [top, bot] of [[30.4, 28.9], [34.9, 36.4]]) {
+      g.beginPath();
+      g.moveTo(top - 0.8, -2.2); g.lineTo(top + 0.9, -2.2);
+      g.lineTo(bot + 0.85, 4.0); g.lineTo(bot - 0.85, 4.0);
+      g.closePath(); g.fill();
+      // foot pad
+      g.fillStyle = shade(rec, -0.46);
+      rr(g, bot - 1.6, 3.6, 3.2, 1.2, 0.4); g.fill();
+      g.fillStyle = shade(rec, -0.32);
+    }
   } else if (kind === 'shroud') {
     // perforated cooling shroud over a thin barrel
     g.fillStyle = metal(g, -8, -2.6, shade(rec, 0.04));
@@ -1044,15 +1230,30 @@ function chassisBarrel(g, kind, rec, core) {
 function chassisMag(g, kind, rec, poly, core) {
   const [cr, cg, cb] = core || [140, 190, 255];
   if (kind === 'stick') {
-    g.fillStyle = polymer(g, 1, 12, poly);
+    // Six units across in the same tone as the grip in front of it, this read
+    // as a second handle. Narrower, darker, with witness holes and a
+    // floorplate — the details that say "magazine" at a glance.
+    const skin = shade(poly, -0.14);
+    g.fillStyle = polymer(g, 1, 12, skin);
     g.beginPath();
-    g.moveTo(6.4, 0.2); g.lineTo(12.4, 0.2); g.lineTo(11.2, 12); g.lineTo(5.6, 12);
+    g.moveTo(7.0, 0.2); g.lineTo(11.4, 0.2); g.lineTo(10.5, 11.6); g.lineTo(6.4, 11.6);
     g.closePath(); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.42)';
+    for (let i = 0; i < 4; i++) { rr(g, 8.0 - i * 0.12, 2.0 + i * 2.4, 1.5, 0.9, 0.4); g.fill(); }
+    g.fillStyle = shade(skin, -0.42);
+    rr(g, 6.1, 11.2, 4.7, 1.8, 0.5); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    g.fillRect(10.6, 0.6, 0.34, 10.6);
   } else if (kind === 'box') {
-    g.fillStyle = polymer(g, 1, 9, poly);
-    rr(g, 5.4, 0.2, 8, 9, 1); g.fill();
-    g.fillStyle = 'rgba(8,9,12,0.35)';
-    g.fillRect(5.4, 4, 8, 0.9);
+    const skin = shade(poly, -0.12);
+    g.fillStyle = polymer(g, 1, 9, skin);
+    rr(g, 6.0, 0.2, 6.6, 9.2, 1); g.fill();
+    g.fillStyle = 'rgba(8,9,12,0.42)';
+    for (let i = 0; i < 3; i++) { rr(g, 7.6, 1.8 + i * 2.4, 1.5, 0.9, 0.4); g.fill(); }
+    g.fillStyle = shade(skin, -0.4);
+    rr(g, 5.7, 9.0, 7.2, 1.7, 0.5); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.15)';
+    g.fillRect(12.3, 0.6, 0.32, 8.4);
   } else if (kind === 'drum') {
     g.fillStyle = metal(g, 1, 14, shade(rec, -0.12));
     g.beginPath(); g.arc(9.4, 7.4, 6.6, 0, Math.PI * 2); g.fill();
@@ -1061,12 +1262,36 @@ function chassisMag(g, kind, rec, poly, core) {
     g.strokeStyle = 'rgba(8,9,12,0.4)'; g.lineWidth = 0.8;
     g.beginPath(); g.arc(9.4, 7.4, 4.6, 0, Math.PI * 2); g.stroke();
   } else if (kind === 'belt') {
-    // ammo belt hanging out of a feed tray
+    // Ammo belt out of a feed tray. The rounds used to be six loose rectangles
+    // whose tops were scattered +/-1.2 about the tray's lower edge, so half of
+    // them hung in clear air below the gun — the belt read as spilled bricks.
+    // They hang from a single link strip that starts inside the tray.
     g.fillStyle = metal(g, 0, 6, shade(rec, -0.2));
     rr(g, 4.6, 0.2, 10, 5.4, 1); g.fill();
-    g.fillStyle = '#8a6a2a';
+    g.fillStyle = 'rgba(8,9,12,0.5)';
+    g.fillRect(5.2, 4.4, 8.8, 1.2);
+    const sag = (i) => 4.9 + Math.sin(i * 0.55) * 0.55 + i * 0.42;
+    // link strip the cases are pinned to
+    g.fillStyle = shade(rec, -0.34);
+    g.beginPath();
+    g.moveTo(5.0, sag(0));
+    for (let i = 0; i <= 6; i++) g.lineTo(5.0 + i * 1.75, sag(i));
+    for (let i = 6; i >= 0; i--) g.lineTo(5.0 + i * 1.75, sag(i) + 1.5);
+    g.closePath(); g.fill();
     for (let i = 0; i < 6; i++) {
-      g.fillRect(5.4 + i * 1.9, 5.4 + Math.sin(i * 0.9) * 1.2, 1.4, 4.2);
+      const x = 5.4 + i * 1.75, y = sag(i) + 0.3;
+      // case
+      g.fillStyle = lingrad(g, x, 0, x + 1.3, 0, [
+        [0, '#c39a49'], [0.45, '#9c7833'], [1, '#5f4620'],
+      ]);
+      g.fillRect(x, y, 1.3, 3.6);
+      // projectile tip, so a case reads as a round rather than a stick
+      g.fillStyle = '#6d5a3c';
+      g.beginPath();
+      g.moveTo(x, y + 3.6); g.lineTo(x + 1.3, y + 3.6);
+      g.lineTo(x + 0.65, y + 5.0); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(255,240,205,0.22)';
+      g.fillRect(x + 0.15, y, 0.28, 3.4);
     }
   } else if (kind === 'cell') {
     // translucent energy cell with a charge window
@@ -1098,25 +1323,60 @@ const DECK_Y = -8.2;
 function chassisTop(g, kind, rec, core) {
   const [cr, cg, cb] = core || [140, 190, 255];
   if (kind === 'carry') {
-    // fixed carry handle — a very distinctive outline
-    g.fillStyle = metal(g, -16, -11, shade(rec, 0.02));
+    // Fixed carry handle. The old outline was a 16 x 7.2 square loop standing
+    // clear of the receiver — it read as a suitcase handle bolted to the gun.
+    // Lower, shorter, with radiused corners and a grip wrap across the top.
+    const TOP = -13.4;
+    g.fillStyle = metal(g, -14, -9, shade(rec, 0.02));
     g.beginPath();
-    g.moveTo(-2, DECK_Y); g.lineTo(-2, -15.4); g.lineTo(14, -15.4); g.lineTo(14, DECK_Y);
-    g.lineTo(11.6, DECK_Y); g.lineTo(11.6, -13.4); g.lineTo(0.4, -13.4); g.lineTo(0.4, DECK_Y);
+    g.moveTo(-1, DECK_Y);
+    g.lineTo(-1, TOP + 1.6);
+    g.quadraticCurveTo(-1, TOP, 0.8, TOP);
+    g.lineTo(11.4, TOP);
+    g.quadraticCurveTo(13.2, TOP, 13.2, TOP + 1.6);
+    g.lineTo(13.2, DECK_Y);
+    g.lineTo(10.9, DECK_Y);
+    g.lineTo(10.9, TOP + 2.1);
+    g.lineTo(1.3, TOP + 2.1);
+    g.lineTo(1.3, DECK_Y);
     g.closePath(); g.fill();
+    // knurled grip wrap on the bar the hand actually takes
+    g.fillStyle = 'rgba(8,9,12,0.5)';
+    for (let i = 0; i < 7; i++) g.fillRect(2.6 + i * 1.2, TOP + 0.15, 0.55, 1.8);
+    g.fillStyle = 'rgba(226,232,240,0.18)';
+    g.fillRect(0.6, TOP + 0.05, 11.8, 0.3);
   } else if (kind === 'scope') {
-    // rings run from the tube down onto the deck
-    g.fillStyle = shade(rec, -0.3);
-    const ringH = DECK_Y - -11.6 + 0.6;   // tube underside down onto the deck
-    g.fillRect(1, -11.6, 2, ringH);
-    g.fillRect(10, -11.6, 2, ringH);
-    // mounting base plate along the deck, so the rings land on something
-    g.fillStyle = shade(rec, -0.18);
-    g.fillRect(0, DECK_Y - 1.4, 13, 1.6);
-    g.fillStyle = metal(g, -17, -11, shade(rec, 0.06));
-    rr(g, -1.5, -16.4, 17, 5, 2.4); g.fill();
-    g.fillStyle = 'rgba(120,190,230,0.5)';
-    rr(g, 14, -15.6, 1.5, 3.4, 0.6); g.fill();
+    // Sat 3.2 units clear of the deck on two thin posts, with a tube as thick
+    // as the receiver and a saturated cyan disc on its front face — a thermos
+    // on scaffolding. Lower, slimmer, on solid rings, with the bells at the
+    // ends where a scope actually has them and glass instead of a cyan chip.
+    const TUBE_T = -14.9, TUBE_B = -11.6, MID = (TUBE_T + TUBE_B) / 2;
+    // one-piece mount: base plate on the deck plus two solid rings
+    g.fillStyle = shade(rec, -0.2);
+    g.fillRect(0.4, DECK_Y - 1.5, 12.4, 1.7);
+    g.fillStyle = shade(rec, -0.32);
+    rr(g, 1.4, TUBE_B - 0.4, 2.6, DECK_Y - TUBE_B + 1.0, 0.5); g.fill();
+    rr(g, 9.2, TUBE_B - 0.4, 2.6, DECK_Y - TUBE_B + 1.0, 0.5); g.fill();
+    // tube
+    g.fillStyle = metal(g, TUBE_T, TUBE_B, shade(rec, 0.06));
+    rr(g, 0.4, TUBE_T, 13.4, TUBE_B - TUBE_T, 1.5); g.fill();
+    // ocular bell (rear, at the shooter) and objective bell (front)
+    g.fillStyle = metal(g, TUBE_T - 0.7, TUBE_B + 0.7, shade(rec, 0.02));
+    rr(g, -1.6, TUBE_T - 0.7, 3.0, TUBE_B - TUBE_T + 1.4, 1.1); g.fill();
+    rr(g, 12.6, TUBE_T - 0.6, 3.2, TUBE_B - TUBE_T + 1.2, 1.1); g.fill();
+    // turret
+    g.fillStyle = shade(rec, -0.12);
+    rr(g, 5.6, TUBE_T - 1.5, 2.8, 1.7, 0.4); g.fill();
+    // glass: dark, with a cool sheen across it — not a bright chip of colour
+    g.fillStyle = lingrad(g, 0, TUBE_T, 0, TUBE_B, [
+      [0, 'rgba(96,132,152,0.85)'], [0.45, 'rgba(24,38,46,0.95)'], [1, 'rgba(12,18,22,0.95)'],
+    ]);
+    rr(g, 14.4, TUBE_T + 0.2, 1.2, TUBE_B - TUBE_T + 0.4, 0.5); g.fill();
+    g.fillStyle = 'rgba(190,222,238,0.35)';
+    g.fillRect(14.6, TUBE_T + 0.5, 0.8, 0.7);
+    // lit edge along the top of the tube
+    g.fillStyle = 'rgba(226,232,240,0.20)';
+    g.fillRect(1.0, TUBE_T + 0.1, 12.2, 0.32);
   } else if (kind === 'emitter') {
     // dorsal emitter fin with a lit slot
     g.fillStyle = metal(g, -15, -10, shade(rec, -0.1));
@@ -1225,10 +1485,16 @@ function paintChassis(cfg) {
 
     // handguard bridging receiver to barrel — length varies per chassis
     const hgEnd = cfg.hg || 22;
-    g.fillStyle = metal(g, -8, -1, shade(rec, -0.06));
+    // Polymer, not another shade of the receiver. At shade(rec, -0.06) the
+    // handguard was within a hair of the receiver's own value, so the front
+    // half of every chassis weapon read as one continuous slab.
+    g.fillStyle = polymer(g, -8.4, -1, poly);
     rr(g, 12, -8.4, hgEnd - 12, 7.4, 1.2); g.fill();
-    g.fillStyle = 'rgba(8,9,12,0.4)';
+    g.fillStyle = 'rgba(8,9,12,0.46)';
     for (let x = 14; x < hgEnd - 2; x += 3.4) g.fillRect(x, -6.6, 1.3, 4);
+    // seam where the handguard meets the receiver
+    g.fillStyle = 'rgba(0,0,0,0.30)';
+    g.fillRect(11.7, -8.2, 0.6, 7.2);
 
     chassisBarrel(g, cfg.barrel, rec, core);
     chassisTop(g, cfg.top, rec, core);
@@ -1245,6 +1511,7 @@ function paintChassis(cfg) {
     scratches(g, -22, -16, 72, 24, rng, { n: 12 });
     grunge(g, -22, -16, 72, 24, rng, { n: 70, dark: 0.1 });
     g.restore();
+    formLight(g, -24, -18, 76, 28);
   });
 }
 
@@ -1259,8 +1526,8 @@ function paintChassis(cfg) {
 function paintMinigun(finish) {
   const rec = (finish && finish.rec) || '#33383e';
   const poly = (finish && finish.poly) || '#22262b';
-  return makeSprite(74, 30, 22, 15, (g) => {
-    g.translate(22, 15);
+  return makeSprite(80, 34, 24, 17, (g) => {
+    g.translate(24, 17);
 
     // ammo drum hanging below the receiver
     g.fillStyle = metal(g, 2, 13, shade(rec, -0.2));
@@ -1275,12 +1542,19 @@ function paintMinigun(finish) {
     g.moveTo(4, 2.2); g.lineTo(10, -3.4); g.lineTo(13, -1.2); g.lineTo(7.5, 3.6);
     g.closePath(); g.fill();
 
-    // spade grips at the rear
+    // Spade grips at the rear, on a backplate. Standing on their own they
+    // read as an I-beam floating behind the gun with nothing joining them.
+    g.fillStyle = metal(g, -8, 3, shade(rec, -0.14));
+    rr(g, -17.5, -7, 4, 12, 1.2); g.fill();
     g.fillStyle = poly;
     rr(g, -20, -7.5, 4.2, 15, 1.6); g.fill();
     g.fillStyle = shade(poly, -0.2);
     rr(g, -21.5, -8.5, 7, 3.4, 1.2); g.fill();
     rr(g, -21.5, 5.4, 7, 3.4, 1.2); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.5;
+    for (let i = 0; i < 4; i++) {
+      g.beginPath(); g.moveTo(-19.7, -4.6 + i * 2.6); g.lineTo(-16.1, -4.6 + i * 2.6); g.stroke();
+    }
 
     // receiver housing
     g.fillStyle = metal(g, -8, 3, rec);
@@ -1288,29 +1562,57 @@ function paintMinigun(finish) {
     g.fillStyle = 'rgba(255,255,255,0.10)';
     g.fillRect(-16, -8, 24, 1.5);
 
-    // rotor face
-    g.fillStyle = shade(rec, -0.28);
-    g.beginPath(); g.arc(9, -2.5, 7.4, 0, Math.PI * 2); g.fill();
+    // Rotor housing. A bare circle stuck on the front of the receiver showed
+    // as a crescent poking out above and below it — the gun looked like it had
+    // a claw. The housing is a shroud the rotor turns inside: a squared block
+    // blended into the receiver, with the rotor face and spindle on it.
+    g.fillStyle = metal(g, -9.4, 5, shade(rec, -0.12));
+    rr(g, 2, -9.4, 13.4, 14.4, 3); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.10)';
+    g.fillRect(2.6, -9.2, 12.2, 1.1);
+    g.fillStyle = shade(rec, -0.32);
+    g.beginPath(); g.arc(9, -2.4, 6.2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(6,8,11,0.55)'; g.lineWidth = 0.8;
+    g.beginPath(); g.arc(9, -2.4, 6.2, 0, Math.PI * 2); g.stroke();
     g.fillStyle = shade(rec, 0.16);
-    g.beginPath(); g.arc(9, -2.5, 3.1, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(9, -2.4, 2.8, 0, Math.PI * 2); g.fill();
+    g.fillStyle = shade(rec, -0.5);
+    g.beginPath(); g.arc(9, -2.4, 1.1, 0, Math.PI * 2); g.fill();
 
-    // six barrels on the rotor, drawn back-to-front so the near ones overlap
+    // Six barrels on the rotor. The comment claimed they were drawn back to
+    // front, but the loop ran in index order — so a far barrel could be laid
+    // over a near one, and with no gap between them the cluster fused into a
+    // single grey slab of horizontal stripes. Sorted by depth, separated by a
+    // dark shoulder, and each one bored at the muzzle.
     const BARREL_L = 30;
+    const bars = [];
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2 + 0.35;
-      const oy = Math.sin(a) * 4.6;
-      const depth = (Math.cos(a) + 1) / 2;            // 0 far … 1 near
-      const shadeAmt = -0.34 + depth * 0.34;
-      g.fillStyle = metal(g, -2.6 + oy, 1.6 + oy, shade(rec, shadeAmt));
-      rr(g, 9, -3.6 + oy, BARREL_L, 2.5, 1.1); g.fill();
-      // muzzle crown
-      g.fillStyle = shade(rec, shadeAmt - 0.2);
-      rr(g, 9 + BARREL_L - 3, -4.1 + oy, 3.4, 3.5, 1); g.fill();
+      bars.push({ oy: Math.sin(a) * 4.8, depth: (Math.cos(a) + 1) / 2 });
+    }
+    bars.sort((p, q) => p.depth - q.depth);           // far first
+    for (const b of bars) {
+      const shadeAmt = -0.40 + b.depth * 0.42;
+      // dark shoulder under each tube so neighbours never merge
+      g.fillStyle = 'rgba(6,8,11,0.75)';
+      rr(g, 9, -4.0 + b.oy, BARREL_L + 3.6, 3.4, 1.3); g.fill();
+      g.fillStyle = metal(g, -3.4 + b.oy, 0.8 + b.oy, shade(rec, shadeAmt));
+      rr(g, 9, -3.6 + b.oy, BARREL_L, 2.6, 1.1); g.fill();
+      g.fillStyle = `rgba(226,232,240,${0.06 + b.depth * 0.16})`;
+      g.fillRect(10, -3.4 + b.oy, BARREL_L - 2.4, 0.5);
+      // muzzle crown + bore
+      g.fillStyle = shade(rec, shadeAmt - 0.16);
+      rr(g, 9 + BARREL_L - 3, -4.2 + b.oy, 3.6, 3.8, 1); g.fill();
+      g.fillStyle = '#0b0d10';
+      g.beginPath(); g.ellipse(9 + BARREL_L + 0.2, -2.3 + b.oy, 0.55, 1.05, 0, 0, Math.PI * 2); g.fill();
     }
 
     // barrel clamp ring near the muzzle end
     g.fillStyle = shade(rec, -0.1);
-    rr(g, 9 + BARREL_L - 12, -6.4, 3.4, 9.4, 1.2); g.fill();
+    rr(g, 9 + BARREL_L - 12, -6.8, 3.6, 10.2, 1.2); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    g.fillRect(9 + BARREL_L - 11.7, -6.6, 3.0, 0.4);
+    formLight(g, -24, -17, 80, 34);
   });
 }
 
@@ -1320,8 +1622,10 @@ function paintMinigun(finish) {
 function paintRocketLauncher(finish) {
   const rec = (finish && finish.rec) || '#3d4237';
   const poly = (finish && finish.poly) || '#262a22';
-  return makeSprite(80, 26, 24, 13, (g) => {
-    g.translate(24, 13);
+  // 80x26 at (24,13) sheared the blast cone off the back, the optic off the
+  // top and the forward grip off the bottom.
+  return makeSprite(88, 34, 30, 17, (g) => {
+    g.translate(30, 17);
 
     // main tube
     g.fillStyle = metal(g, -6.5, 5.5, rec);
@@ -1341,16 +1645,40 @@ function paintRocketLauncher(finish) {
     g.fillStyle = 'rgba(6,8,12,0.75)';
     g.beginPath(); g.ellipse(-25.4, 0, 1.8, 8.6, 0, 0, Math.PI * 2); g.fill();
 
-    // warhead protruding from the muzzle
-    g.fillStyle = '#6d4a2c';
-    rr(g, 30, -4.6, 9, 9, 2.2); g.fill();
-    g.fillStyle = '#8a5f38';
+    // Warhead. Two flat brown fills and a red stripe read as a traffic cone
+    // stuck in the tube. It is lit as a body of revolution now, with a seeker
+    // tip, a driving band and stabiliser fins folded against the case.
+    g.fillStyle = lingrad(g, 0, -4.8, 0, 4.8, [
+      [0, '#a5764a'], [0.28, '#7e5533'], [0.62, '#63401f'], [1, '#3c2612'],
+    ]);
+    rr(g, 30, -4.8, 9.4, 9.6, 2.2); g.fill();
+    // ogive nose
+    g.fillStyle = lingrad(g, 0, -4.8, 0, 4.8, [
+      [0, '#b58254'], [0.3, '#8a5e38'], [1, '#452a14'],
+    ]);
     g.beginPath();
-    g.moveTo(39, -4.6); g.lineTo(47, 0); g.lineTo(39, 4.6);
+    g.moveTo(39.2, -4.7);
+    g.quadraticCurveTo(45.2, -3.2, 47.4, 0);
+    g.quadraticCurveTo(45.2, 3.2, 39.2, 4.7);
     g.closePath(); g.fill();
-    // warning band
-    g.fillStyle = 'rgba(210,60,50,0.85)';
-    g.fillRect(31.5, -4.6, 2.4, 9);
+    // seeker tip
+    g.fillStyle = '#20242a';
+    g.beginPath(); g.ellipse(46.6, 0, 1.1, 1.5, 0, 0, Math.PI * 2); g.fill();
+    // stabiliser fins folded along the case
+    g.fillStyle = 'rgba(28,20,12,0.8)';
+    g.beginPath();
+    g.moveTo(30.4, -4.8); g.lineTo(36.4, -4.8); g.lineTo(35.2, -6.6); g.lineTo(31.2, -6.6);
+    g.closePath(); g.fill();
+    g.beginPath();
+    g.moveTo(30.4, 4.8); g.lineTo(36.4, 4.8); g.lineTo(35.2, 6.6); g.lineTo(31.2, 6.6);
+    g.closePath(); g.fill();
+    // yellow driving band + red warning stripe
+    g.fillStyle = 'rgba(206,168,58,0.9)';
+    g.fillRect(35.6, -4.8, 1.6, 9.6);
+    g.fillStyle = 'rgba(196,54,44,0.92)';
+    g.fillRect(31.5, -4.8, 2.4, 9.6);
+    g.fillStyle = 'rgba(255,236,206,0.16)';
+    g.fillRect(30.2, -4.4, 9.0, 1.0);
 
     // optic on a short rail
     g.fillStyle = shade(rec, -0.35);
@@ -1371,6 +1699,13 @@ function paintRocketLauncher(finish) {
     // forward grip under the tube
     g.fillStyle = shade(poly, 0.06);
     rr(g, 16, 5.5, 4.6, 9, 1.8); g.fill();
+    // finger grooves on both grips, so they are not two blank rounded slabs
+    g.strokeStyle = 'rgba(0,0,0,0.34)'; g.lineWidth = 0.6;
+    for (let i = 0; i < 4; i++) {
+      g.beginPath(); g.moveTo(16.3, 7.2 + i * 1.8); g.lineTo(20.3, 7.2 + i * 1.8); g.stroke();
+      g.beginPath(); g.moveTo(-5.6 - i * 0.35, 8.2 + i * 1.8); g.lineTo(0.6 - i * 0.35, 8.2 + i * 1.8); g.stroke();
+    }
+    formLight(g, -30, -17, 88, 34);
   });
 }
 
@@ -1379,8 +1714,10 @@ function paintRailgun(finish) {
   const poly = (finish && finish.poly) || '#202429';
   const core = (finish && finish.core) || [150, 220, 255];
   const [cr, cg, cb] = core;
-  return makeSprite(60, 20, 20, 12, (g) => {
-    g.translate(20, 12);
+  // The rails, the muzzle arc and the capacitor drums all ran past x=40; at
+  // 60 wide the whole business end was sheared off square.
+  return makeSprite(70, 24, 20, 14, (g) => {
+    g.translate(20, 14);
 
     // shoulder brace instead of a stock
     g.fillStyle = metal(g, -8, 2, shade(rec, -0.12));
@@ -1415,31 +1752,54 @@ function paintRailgun(finish) {
       g.fillRect(cx + 1, 0.4, 3.4, 1.1);
     }
 
+    // Breech block: the rails have to come out of something. The upper rail
+    // used to start in clear air above the receiver, so the whole assembly
+    // read as a bar hovering over the gun rather than bolted into it.
+    g.fillStyle = metal(g, -11.4, -4, shade(rec, -0.06));
+    rr(g, 5.4, -11.4, 6.4, 7.6, 1); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.34)';
+    g.fillRect(7.0, -10.2, 3.2, 0.7);
+    g.fillRect(7.0, -7.0, 3.2, 0.7);
+
     // twin rails: long, parallel, thin — the whole read of the weapon
     g.fillStyle = metal(g, -11, -8.6, shade(rec, 0.2));
     rr(g, 8, -11, 32, 2.2, 0.6); g.fill();
     rr(g, 8, -6.4, 32, 2.2, 0.6); g.fill();
-    // arcing charge between the rails
-    g.save();
-    g.globalCompositeOperation = 'lighter';
-    g.strokeStyle = `rgba(${cr},${cg},${cb},0.5)`; g.lineWidth = 1;
-    for (let i = 0; i < 4; i++) {
-      const ax = 13 + i * 7;
-      g.beginPath();
-      g.moveTo(ax, -8.8);
-      g.lineTo(ax + 2.2, -7.4);
-      g.lineTo(ax + 1, -6.2);
-      g.stroke();
-    }
-    // muzzle arc between the rail tips
-    g.strokeStyle = `rgba(${Math.min(255, cr + 60)},${Math.min(255, cg + 60)},${Math.min(255, cb + 60)},0.85)`;
-    g.lineWidth = 1.6;
-    g.beginPath(); g.moveTo(39.4, -9.4); g.lineTo(39.4, -4.6); g.stroke();
-    g.restore();
 
-    // rail spacers
+    // rail spacers (drawn before the arc so the discharge crosses in front)
     g.fillStyle = shade(rec, -0.3);
     for (const sx of [16, 26, 35]) g.fillRect(sx, -9.4, 1.6, 3.6);
+
+    // Arcing charge. Four identical chevrons read as arrows stencilled on the
+    // gun; a discharge is a jagged line that walks the gap, with a soft bloom
+    // under it. Deterministic — this is baked once, not animated.
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    // Centred in the gap between the rails (-8.8 and -6.4) and kept inside it:
+    // struck along the upper rail it read as a cable lying on the gun.
+    const MID = -7.65;
+    const arc = (x0, x1, seed, wide, alpha) => {
+      const r = makeRng(seed);
+      g.beginPath();
+      g.moveTo(x0, MID);
+      const steps = 7;
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        g.lineTo(x0 + (x1 - x0) * t, MID + (r() - 0.5) * 1.7);
+      }
+      g.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.26})`;
+      g.lineWidth = wide; g.stroke();
+      g.strokeStyle = `rgba(${Math.min(255, cr + 70)},${Math.min(255, cg + 70)},${Math.min(255, cb + 70)},${alpha})`;
+      g.lineWidth = 0.42; g.stroke();
+    };
+    g.lineCap = 'round'; g.lineJoin = 'miter';
+    arc(11.5, 24, 91, 1.7, 0.45);
+    arc(26, 38.5, 137, 1.7, 0.4);
+    // muzzle arc between the rail tips
+    g.strokeStyle = `rgba(${Math.min(255, cr + 60)},${Math.min(255, cg + 60)},${Math.min(255, cb + 60)},0.7)`;
+    g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(39.4, -9.4); g.lineTo(39.4, -4.6); g.stroke();
+    g.restore();
 
     // support-hand grip below the rails
     g.fillStyle = polymer(g, -3, 2, poly);
@@ -1449,6 +1809,7 @@ function paintRailgun(finish) {
     g.globalCompositeOperation = 'source-atop';
     scratches(g, -14, -11, 52, 14, rng, { n: 16, color: 'rgba(210,225,240,0.14)' });
     g.restore();
+    formLight(g, -20, -14, 70, 24);
   });
 }
 
@@ -1457,8 +1818,8 @@ function paintRailgun(finish) {
 function paintFlamethrower(finish) {
   const rec = (finish && finish.rec) || '#3a1f12';
   const poly = (finish && finish.poly) || '#2a150c';
-  return makeSprite(60, 20, 20, 12, (g) => {
-    g.translate(20, 12);
+  return makeSprite(70, 24, 21, 14, (g) => {
+    g.translate(21, 14);
 
     // fuel tank where the stock would be — fat, ribbed, with a pressure gauge
     g.fillStyle = metal(g, -9, 3, shade(rec, 0.05));
@@ -1493,7 +1854,9 @@ function paintFlamethrower(finish) {
 
     // barrel tube + wide nozzle
     g.fillStyle = metal(g, -8.4, -3.6, shade(rec, 0.1));
-    rr(g, 9.6, -8, 22, 4.6, 1.2); g.fill();
+    // Starts at 8.2, not 9.6: butted exactly against the body's rounded corner
+    // the two cylinders met along a hairline and showed daylight between them.
+    rr(g, 8.2, -8, 23.4, 4.6, 1.2); g.fill();
     g.fillStyle = metal(g, -9.6, -2.4, shade(rec, -0.15));
     g.beginPath();
     g.moveTo(31.6, -8.6); g.lineTo(38.6, -10.2); g.lineTo(38.6, -1); g.lineTo(31.6, -2.6);
@@ -1519,6 +1882,7 @@ function paintFlamethrower(finish) {
     scratches(g, -18, -10, 56, 14, rng, { n: 22, color: 'rgba(240,200,160,0.16)' });
     grunge(g, -19, -10, 58, 15, rng, { n: 50, dark: 0.14, light: 0.03 });
     g.restore();
+    formLight(g, -21, -14, 70, 24);
   });
 }
 
@@ -1830,7 +2194,7 @@ export function buildWeapons() {
       magPos: { x: 0, y: 0 },
       // Support hand rides the back of this chassis's own handguard.
       gripB: { x: row.hg - 4.5, y: -5.2 },
-      bolt: BOLTED.has(id) ? paintBolt() : null,
+      bolt: BOLTED.has(id) ? paintBolt(pal.rec) : null,
       railY: TOP_RAIL_Y[row.top],
     };
   };
@@ -1889,6 +2253,12 @@ export function buildWeapons() {
       // x=1 where the C-9's runs to 2.6, so the inherited gripB had the
       // support hand closing on a unit of empty air beside the weapon.
       gripB: { x: 0.8, y: 2.2 },
+      // Neither of these has a reciprocating slide, but both spread the C-9's
+      // def — so the conventional steel slide sprite was being drawn straight
+      // across the emitter, a grey pistol laid over a ray gun.
+      slide: null,
+      muzzle: { x: 11.4, y: -3.4 },
+      eject: null,
       energy: true, fireMode: 'projectile', auto: false, rpm: 200, dmg: 62, spread: 0.02,
       projectile: { color: [200, 110, 255], radius: 5, speed: 900, blast: 44, headMul: 1.6, life: 1.6 },
       recoilKick: 1.4, recoilRot: 0.03, camKick: 0.8, camTrauma: 0.05, muzzleBig: 1.15,
@@ -1924,6 +2294,12 @@ export function buildWeapons() {
       // x=1 where the C-9's runs to 2.6, so the inherited gripB had the
       // support hand closing on a unit of empty air beside the weapon.
       gripB: { x: 0.8, y: 2.2 },
+      // Neither of these has a reciprocating slide, but both spread the C-9's
+      // def — so the conventional steel slide sprite was being drawn straight
+      // across the emitter, a grey pistol laid over a ray gun.
+      slide: null,
+      muzzle: { x: 11.6, y: -4.6 },
+      eject: null,
       energy: true, fireMode: 'projectile', auto: false, rpm: 300, dmg: 40, spread: 0.016,
       projectile: { color: [120, 220, 255], radius: 4, speed: 1400, pierce: 1, life: 1.2 },
       recoilKick: 1.2, recoilRot: 0.03, camKick: 0.6, camTrauma: 0.04, shotSound: 'ray',
