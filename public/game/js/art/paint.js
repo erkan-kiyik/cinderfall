@@ -180,12 +180,15 @@ export function streaks(g, x, y, w, h, rng, { n = 8, color = 'rgba(40,26,16,0.16
 }
 
 // Fine bright scratches for worn metal edges.
-export function scratches(g, x, y, w, h, rng, { n = 10, color = 'rgba(220,225,235,0.20)' } = {}) {
+// `len` caps how long a mark can get. On a big flat panel the default 7-unit
+// strokes stop reading as wear and start reading as cracks in the metal, so a
+// caller with large uninterrupted surfaces can ask for shorter marks.
+export function scratches(g, x, y, w, h, rng, { n = 10, len: maxLen = 7, color = 'rgba(220,225,235,0.20)' } = {}) {
   g.strokeStyle = color;
   for (let i = 0; i < n; i++) {
     const sx = x + rng() * w, sy = y + rng() * h;
     const a = rng.range(-0.5, 0.5);
-    const len = rng.range(1.5, 7);
+    const len = rng.range(Math.min(1.5, maxLen * 0.4), maxLen);
     g.lineWidth = rng.range(0.25, 0.7);
     g.beginPath();
     g.moveTo(sx, sy);

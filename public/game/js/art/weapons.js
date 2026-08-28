@@ -1111,6 +1111,7 @@ function chassisStock(g, kind, rec, poly, core) {
 // ---- barrel assemblies (ahead of the handguard, x > 10) ----
 function chassisBarrel(g, kind, rec, core) {
   const [cr, cg, cb] = core || [140, 190, 255];
+  const g0 = g;
   const emissive = (x, y, w, h, a) => {
     g.save(); g.globalCompositeOperation = 'lighter';
     g.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
@@ -1187,14 +1188,22 @@ function chassisBarrel(g, kind, rec, core) {
     }
     emissive(20, -5.4, 28, 1.1, 0.5);
   } else if (kind === 'twin') {
-    // twin accelerator rails with an open gap between them
-    g.fillStyle = metal(g, -8.4, -6, shade(rec, 0.06));
-    rr(g, 20, -8.6, 26, 2.4, 0.9); g.fill();
-    g.fillStyle = metal(g, -3.4, -1, shade(rec, -0.18));
-    rr(g, 20, -3.6, 26, 2.4, 0.9); g.fill();
-    emissive(20, -6.4, 26, 2.6, 0.42);
-    g.fillStyle = shade(rec, -0.28);
-    g.fillRect(43, -9.4, 2.2, 8);                 // muzzle bridge
+    // Twin accelerator rails. The gap used to be 2.6 units between rails that
+    // were each 2.4 thick, which at real size closed up into one solid bar —
+    // the hole that makes this outline is only worth drawing if it survives.
+    // Thinner rails, a wider gap, and struts that read as struts.
+    g.fillStyle = metal(g, -10.2, -7.4, shade(rec, 0.10));
+    rr(g, 20, -10.2, 26, 2.0, 0.7); g.fill();
+    g.fillStyle = metal(g, -2.4, -0.2, shade(rec, -0.20));
+    rr(g, 20, -2.4, 26, 2.0, 0.7); g.fill();
+    // two struts across the gap, near and far
+    g.fillStyle = shade(rec, -0.3);
+    for (const sx of [26.5, 35.5]) g.fillRect(sx, -8.6, 1.6, 6.4);
+    emissive(20.6, -8.2, 25, 5.8, 0.16);
+    // muzzle bridge closing the rails
+    g.fillStyle = metal(g, -10.6, 0, shade(rec, 0.04));
+    rr(g, 43.4, -10.6, 2.8, 10.6, 0.8); g.fill();
+    emissive(43.8, -8.6, 2.0, 6.6, 0.45);
   } else if (kind === 'nozzle') {
     // flared emitter bell
     g.fillStyle = metal(g, -6, -3, shade(rec, -0.06));
@@ -1207,14 +1216,118 @@ function chassisBarrel(g, kind, rec, core) {
     g.fillStyle = 'rgba(8,9,12,0.5)';
     g.fillRect(37, -8.4, 0.9, 9.4);
   } else if (kind === 'vent') {
-    // ported heat-vent block over a short barrel
-    g.fillStyle = metal(g, -7.2, -3.4, shade(rec, -0.04));
-    rr(g, 21, -7.6, 17, 5, 1.4); g.fill();
-    g.fillStyle = 'rgba(8,9,12,0.72)';
-    for (let i = 0; i < 4; i++) g.fillRect(23.5 + i * 3.6, -7.6, 1.5, 3.4);
-    emissive(23.5, -4.6, 13, 1.2, 0.45);
-    g.fillStyle = metal(g, -6.2, -4.2, rec);
-    rr(g, 38, -6.6, 5.5, 3.2, 1); g.fill();
+    // Ported heat block. The ports used to be dark rectangles painted onto a
+    // plain bar, so in silhouette this was indistinguishable from every other
+    // energy barrel. They are cut clean through the top now — the outline is
+    // castellated, which is the whole point of the part.
+    g.fillStyle = metal(g, -9.4, -3.4, shade(rec, -0.04));
+    rr(g, 21, -9.4, 17, 6.8, 1.4); g.fill();
+    // knock the ports out of the block itself
+    g.save();
+    g.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 4; i++) rr(g, 23.2 + i * 3.7, -10.2, 2.0, 4.4, 0.5), g.fill();
+    g.restore();
+    // lit walls inside each port
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    for (let i = 0; i < 4; i++) {
+      g.fillRect(22.9 + i * 3.7, -5.9, 2.6, 0.35);
+    }
+    emissive(22.4, -5.6, 15, 1.3, 0.5);
+    // stepped muzzle
+    g.fillStyle = metal(g, -6.6, -3.8, rec);
+    rr(g, 38, -7.0, 5.5, 3.6, 1); g.fill();
+    g.fillStyle = '#0c0e11';
+    g.beginPath(); g.ellipse(43.2, -5.2, 0.6, 1.4, 0, 0, Math.PI * 2); g.fill();
+  } else if (kind === 'arc') {
+    // ---- LIGHTNING: a pair of tesla prongs with a discharge between them.
+    // Nothing else in the arsenal forks at the muzzle, so the outline says
+    // which gun this is before any colour does.
+    g.fillStyle = metal(g, -6.6, -3.2, shade(rec, -0.06));
+    g.fillRect(20, -6.6, 14, 3.4);
+    g.fillStyle = metal(g, -7.6, -2.2, shade(rec, 0.08));
+    rr(g, 32, -7.8, 4.4, 5.8, 1); g.fill();
+    // the two horns
+    g.fillStyle = metal(g, -12, 2, shade(rec, 0.02));
+    for (const dir of [-1, 1]) {
+      g.beginPath();
+      g.moveTo(35, -4.9 + dir * 0.9);
+      g.quadraticCurveTo(41, -4.9 + dir * 5.2, 45.6, -4.9 + dir * 5.6);
+      g.lineTo(45.6, -4.9 + dir * 4.0);
+      g.quadraticCurveTo(41.4, -4.9 + dir * 3.6, 37.4, -4.9 + dir * 0.5);
+      g.closePath(); g.fill();
+      // insulator collar at the root of each horn
+      g.fillStyle = shade(rec, -0.34);
+      rr(g, 35.4, -5.4 + dir * 1.6, 1.6, 1.8, 0.4); g.fill();
+      g.fillStyle = metal(g, -12, 2, shade(rec, 0.02));
+    }
+    // electrode tips + the arc jumping the gap
+    g.fillStyle = shade(rec, 0.3);
+    g.beginPath(); g.arc(45.6, -10.5, 1.0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(45.6, 0.7, 1.0, 0, Math.PI * 2); g.fill();
+    emissive(45.0, -10.2, 1.3, 10.6, 0.30);
+    g0.save(); g0.globalCompositeOperation = 'lighter';
+    const ar = makeRng(613);
+    g0.beginPath(); g0.moveTo(45.6, -10.0);
+    for (let i = 1; i <= 6; i++) g0.lineTo(45.6 + (ar() - 0.5) * 2.4, -10.0 + (i / 6) * 10.0);
+    g0.strokeStyle = `rgba(${Math.min(255, cr + 70)},${Math.min(255, cg + 70)},${Math.min(255, cb + 70)},0.75)`;
+    g0.lineWidth = 0.45; g0.lineJoin = 'miter'; g0.stroke();
+    g0.restore();
+  } else if (kind === 'lens') {
+    // ---- GRAVITY: a heavy focusing ring on a short stem. A big open circle
+    // is the one outline no other weapon here has.
+    g.fillStyle = metal(g, -6.4, -3.4, shade(rec, -0.08));
+    g.fillRect(20, -6.4, 12, 3.2);
+    g.fillStyle = metal(g, -13, 4, shade(rec, 0.06));
+    g.beginPath(); g.arc(39, -4.8, 8.2, 0, Math.PI * 2); g.fill();
+    g.save();
+    g.globalCompositeOperation = 'destination-out';
+    g.beginPath(); g.arc(39, -4.8, 5.4, 0, Math.PI * 2); g.fill();
+    g.restore();
+    // three lobes clamping the ring to the stem
+    g.fillStyle = metal(g, -8, 0, shade(rec, -0.12));
+    for (const a of [Math.PI, Math.PI * 0.55, Math.PI * 1.45]) {
+      g.save(); g.translate(39, -4.8); g.rotate(a);
+      rr(g, 4.4, -1.5, 4.4, 3, 0.8); g.fill();
+      g.restore();
+    }
+    g.strokeStyle = 'rgba(226,232,240,0.22)'; g.lineWidth = 0.5;
+    g.beginPath(); g.arc(39, -4.8, 7.9, Math.PI * 1.1, Math.PI * 1.85); g.stroke();
+    // the field held inside the ring
+    g0.save(); g0.globalCompositeOperation = 'lighter';
+    const lg = g0.createRadialGradient(39, -4.8, 0.6, 39, -4.8, 5.4);
+    lg.addColorStop(0, `rgba(${cr},${cg},${cb},0.55)`);
+    lg.addColorStop(0.6, `rgba(${cr},${cg},${cb},0.16)`);
+    lg.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    g0.fillStyle = lg;
+    g0.beginPath(); g0.arc(39, -4.8, 5.4, 0, Math.PI * 2); g0.fill();
+    g0.restore();
+    g.strokeStyle = `rgba(${cr},${cg},${cb},0.5)`; g.lineWidth = 0.5;
+    g.beginPath(); g.arc(39, -4.8, 5.4, 0, Math.PI * 2); g.stroke();
+  } else if (kind === 'frost') {
+    // ---- CRYO: a condenser stack — vanes standing off a chilled core, with
+    // rime creeping along them. Reads as radiator fins, not a tube.
+    // Chilled core, thick enough that the vanes are standing on something.
+    g.fillStyle = metal(g, -7.4, -2.4, shade(rec, -0.04));
+    rr(g, 20, -7.4, 24, 5.0, 0.8); g.fill();
+    // Vanes: nine close-packed fins, darker than the core (they sit in its
+    // shadow) with rime only on the exposed tips. Six tall pale spikes spread
+    // wide read as a garden fence, not a radiator.
+    for (let i = 0; i < 9; i++) {
+      const x = 20.8 + i * 2.5, h = 3.2 + (i % 3 === 1 ? 1.5 : 0);
+      g.fillStyle = metal(g, -7.6 - h, -4.4, shade(rec, -0.22));
+      rr(g, x, -7.6 - h, 1.7, h + 1.6, 0.4); g.fill();
+      g.fillStyle = 'rgba(214,236,255,0.42)';
+      g.fillRect(x + 0.15, -7.5 - h, 1.4, 0.55);
+      g.fillStyle = 'rgba(6,10,16,0.32)';
+      g.fillRect(x + 1.7, -7.4 - h, 0.5, h + 1.2);
+    }
+    emissive(20.6, -5.2, 23, 1.4, 0.42);
+    // chilled muzzle ring
+    g.fillStyle = metal(g, -7.4, -2.2, shade(rec, 0.1));
+    rr(g, 43.4, -7.4, 3.6, 5.4, 1); g.fill();
+    g.fillStyle = '#0b1016';
+    g.beginPath(); g.ellipse(46.6, -4.7, 0.6, 1.7, 0, 0, Math.PI * 2); g.fill();
+    emissive(43.6, -6.9, 3.2, 4.4, 0.28);
   } else if (kind === 'stub') {
     // short heavy muzzle with a wide choke
     g.fillStyle = metal(g, -7.6, -2.6, shade(rec, -0.02));
@@ -1709,107 +1822,184 @@ function paintRocketLauncher(finish) {
   });
 }
 
+// ---- GAUSS RAILGUN ---------------------------------------------------
+// Redesigned. The first pass built it as two thin rails with a wide open gap
+// between them, so the front half of the weapon was an empty rectangle — a
+// picture frame bolted to a receiver, with three drums dangling underneath on
+// straps. At the size these are actually seen it read as a hole, not a gun.
+//
+// What it is now: one solid accelerator housing with a narrow slot milled
+// along it, the arc visible *inside* that slot, and the capacitor bank as a
+// stepped block faired into the underside instead of luggage hanging off it.
+// Heavy, closed, and unmistakable in silhouette.
 function paintRailgun(finish) {
   const rec = (finish && finish.rec) || '#2e3238';
   const poly = (finish && finish.poly) || '#202429';
   const core = (finish && finish.core) || [150, 220, 255];
   const [cr, cg, cb] = core;
-  // The rails, the muzzle arc and the capacitor drums all ran past x=40; at
-  // 60 wide the whole business end was sheared off square.
-  return makeSprite(70, 24, 20, 14, (g) => {
-    g.translate(20, 14);
+  const emissive = (fn, a) => {
+    g0.save(); g0.globalCompositeOperation = 'lighter';
+    g0.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
+    fn(); g0.restore();
+  };
+  let g0;
+  return makeSprite(76, 32, 22, 19, (g) => {
+    g0 = g;
+    g.translate(22, 19);
 
-    // shoulder brace instead of a stock
-    g.fillStyle = metal(g, -8, 2, shade(rec, -0.12));
+    // ---- shoulder brace ------------------------------------------------
+    g.fillStyle = metal(g, -8.6, 2.6, shade(rec, -0.16));
     g.beginPath();
-    g.moveTo(-6, -6.4); g.lineTo(-15, -6.4);
-    g.quadraticCurveTo(-18.4, -6.2, -18.2, -2.6);
-    g.lineTo(-18.4, 2.4); g.lineTo(-15.4, 2.4); g.lineTo(-14.6, -2);
-    g.lineTo(-6, -2);
+    g.moveTo(-6, -7.0); g.lineTo(-14.6, -7.0);
+    g.quadraticCurveTo(-17.8, -6.8, -17.6, -3.4);
+    g.lineTo(-17.8, 2.6); g.lineTo(-14.8, 2.6); g.lineTo(-14.2, -2.2);
+    g.lineTo(-6, -2.2);
     g.closePath(); g.fill();
+    // recoil pad on the butt
+    g.fillStyle = polymer(g, -7, 3, poly);
+    rr(g, -18.6, -7.2, 2.2, 10.2, 0.8); g.fill();
+    // brace cutout, so it is a frame rather than a slab
+    g.fillStyle = 'rgba(8,10,14,0.85)';
+    rr(g, -15.4, -5.4, 7.4, 2.4, 0.6); g.fill();
 
-    // body block + grip
-    g.fillStyle = metal(g, -7, 3, rec);
-    rr(g, -6.5, -7.4, 17, 7, 1); g.fill();
+    // ---- receiver ------------------------------------------------------
+    g.fillStyle = metal(g, -8.6, 3.4, rec);
+    rr(g, -7.0, -8.8, 20, 9.2, 1.2); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.10)';
+    g.fillRect(-6.6, -8.7, 19.2, 1.0);
+    // charge readout on the receiver flank
+    g.fillStyle = 'rgba(6,8,12,0.75)';
+    rr(g, -4.4, -6.6, 8.4, 2.6, 0.5); g.fill();
+    emissive(() => {
+      for (let i = 0; i < 5; i++) g0.fillRect(-3.8 + i * 1.6, -6.1, 1.0, 1.6);
+    }, 0.55);
     energyGrip(g, poly, rec);
 
-    // Capacitor bank slung under the rails — three stacked drums.
-    //
-    // Each drum needs the strap that carries it. The drums sit at y -1.2 and
-    // the lower rail's underside is at -4.2, so without one they hung three
-    // units clear of the weapon with nothing joining them to it: the only
-    // genuinely detached geometry left in the whole roster.
-    for (let i = 0; i < 3; i++) {
-      const cx = 12 + i * 6.4;
-      // Lit like the rest of the receiver, not shaded down: at -0.34 the strap
-      // was so close to the background that the bank still read as floating
-      // even though it was physically joined.
-      g.fillStyle = metal(g, -4.6, -0.8, shade(rec, 0.12));
-      g.fillRect(cx + 1.6, -4.6, 2.2, 3.8);       // hanger, rail down to drum
-      g.fillStyle = metal(g, -1, 4, shade(rec, -0.2));
-      rr(g, cx, -1.2, 5.4, 5, 1.6); g.fill();
-      g.fillStyle = `rgba(${cr},${cg},${cb},0.5)`;
-      g.fillRect(cx + 1, 0.4, 3.4, 1.1);
-    }
-
-    // Breech block: the rails have to come out of something. The upper rail
-    // used to start in clear air above the receiver, so the whole assembly
-    // read as a bar hovering over the gun rather than bolted into it.
-    g.fillStyle = metal(g, -11.4, -4, shade(rec, -0.06));
-    rr(g, 5.4, -11.4, 6.4, 7.6, 1); g.fill();
+    // ---- accelerator housing -------------------------------------------
+    // One closed block from the receiver to the muzzle. The rails live inside
+    // it; the slot is what you see of them.
+    const H0 = 11, H1 = 46;
+    g.fillStyle = metal(g, -10.4, -0.6, shade(rec, 0.04));
+    rr(g, H0, -10.4, H1 - H0, 9.8, 1.4); g.fill();
+    // top face light + underside shadow so the housing reads as a solid prism
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    g.fillRect(H0 + 0.6, -10.3, H1 - H0 - 1.2, 1.1);
+    g.fillStyle = 'rgba(0,0,0,0.30)';
+    g.fillRect(H0 + 0.6, -1.6, H1 - H0 - 1.2, 1.0);
+    // panel seams
     g.fillStyle = 'rgba(0,0,0,0.34)';
-    g.fillRect(7.0, -10.2, 3.2, 0.7);
-    g.fillRect(7.0, -7.0, 3.2, 0.7);
+    for (const sx of [19, 28, 37]) g.fillRect(sx, -10.2, 0.8, 9.4);
 
-    // twin rails: long, parallel, thin — the whole read of the weapon
-    g.fillStyle = metal(g, -11, -8.6, shade(rec, 0.2));
-    rr(g, 8, -11, 32, 2.2, 0.6); g.fill();
-    rr(g, 8, -6.4, 32, 2.2, 0.6); g.fill();
-
-    // rail spacers (drawn before the arc so the discharge crosses in front)
-    g.fillStyle = shade(rec, -0.3);
-    for (const sx of [16, 26, 35]) g.fillRect(sx, -9.4, 1.6, 3.6);
-
-    // Arcing charge. Four identical chevrons read as arrows stencilled on the
-    // gun; a discharge is a jagged line that walks the gap, with a soft bloom
-    // under it. Deterministic — this is baked once, not animated.
+    // ---- the slot: rails inside, arc between them -----------------------
+    const S0 = H0 + 2.6, S1 = H1 - 3.2, SY = -7.2, SH = 3.4;
+    g.fillStyle = '#080a0d';
+    rr(g, S0, SY, S1 - S0, SH, 0.5); g.fill();
+    // rail faces, top and bottom of the slot
+    g.fillStyle = lingrad(g, 0, SY, 0, SY + 1.0, [
+      [0, shade(rec, 0.34)], [1, shade(rec, -0.1)],
+    ]);
+    g.fillRect(S0, SY, S1 - S0, 0.85);
+    g.fillStyle = lingrad(g, 0, SY + SH - 0.9, 0, SY + SH, [
+      [0, shade(rec, -0.1)], [1, shade(rec, 0.2)],
+    ]);
+    g.fillRect(S0, SY + SH - 0.85, S1 - S0, 0.85);
+    // arc walking the slot, clipped so it can never spill onto the housing
     g.save();
+    g.beginPath(); g.rect(S0, SY + 0.85, S1 - S0, SH - 1.7); g.clip();
     g.globalCompositeOperation = 'lighter';
-    // Centred in the gap between the rails (-8.8 and -6.4) and kept inside it:
-    // struck along the upper rail it read as a cable lying on the gun.
-    const MID = -7.65;
-    const arc = (x0, x1, seed, wide, alpha) => {
+    const MID = SY + SH / 2;
+    const arc = (x0, x1, seed, alpha) => {
       const r = makeRng(seed);
       g.beginPath();
       g.moveTo(x0, MID);
-      const steps = 7;
-      for (let i = 1; i <= steps; i++) {
-        const t = i / steps;
-        g.lineTo(x0 + (x1 - x0) * t, MID + (r() - 0.5) * 1.7);
+      for (let i = 1; i <= 8; i++) {
+        const t = i / 8;
+        g.lineTo(x0 + (x1 - x0) * t, MID + (r() - 0.5) * 1.5);
       }
-      g.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.26})`;
-      g.lineWidth = wide; g.stroke();
+      g.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.30})`;
+      g.lineWidth = 1.9; g.stroke();
       g.strokeStyle = `rgba(${Math.min(255, cr + 70)},${Math.min(255, cg + 70)},${Math.min(255, cb + 70)},${alpha})`;
       g.lineWidth = 0.42; g.stroke();
     };
-    g.lineCap = 'round'; g.lineJoin = 'miter';
-    arc(11.5, 24, 91, 1.7, 0.45);
-    arc(26, 38.5, 137, 1.7, 0.4);
-    // muzzle arc between the rail tips
-    g.strokeStyle = `rgba(${Math.min(255, cr + 60)},${Math.min(255, cg + 60)},${Math.min(255, cb + 60)},0.7)`;
-    g.lineWidth = 1.4;
-    g.beginPath(); g.moveTo(39.4, -9.4); g.lineTo(39.4, -4.6); g.stroke();
+    g.lineJoin = 'miter'; g.lineCap = 'round';
+    arc(S0 - 1, (S0 + S1) / 2, 91, 0.55);
+    arc((S0 + S1) / 2 - 1, S1 + 1, 137, 0.5);
     g.restore();
+    // slot lip highlight, drawn last so the arc sits behind it
+    g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 0.35;
+    g.strokeRect(S0, SY, S1 - S0, SH);
 
-    // support-hand grip below the rails
-    g.fillStyle = polymer(g, -3, 2, poly);
-    rr(g, 14.5, -4.2, 9, 3, 1); g.fill();
+    // ---- capacitor bank, faired into the underside ----------------------
+    // Three drums on straps looked like luggage. This is one stepped pack
+    // that belongs to the housing, with a charge window per cell.
+    g.fillStyle = metal(g, -1.2, 5.0, shade(rec, -0.18));
+    g.beginPath();
+    g.moveTo(13.5, -1.0);
+    g.lineTo(41.5, -1.0);
+    g.lineTo(40.0, 4.4);
+    g.quadraticCurveTo(39.2, 5.2, 37.8, 5.2);
+    g.lineTo(17.4, 5.2);
+    g.quadraticCurveTo(16.0, 5.2, 15.4, 4.4);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.12)';
+    g.fillRect(14.2, -0.9, 26.6, 0.7);
+    for (let i = 0; i < 3; i++) {
+      const cx = 17.6 + i * 7.4;
+      g.fillStyle = 'rgba(6,8,12,0.75)';
+      rr(g, cx, 0.9, 5.4, 2.6, 0.5); g.fill();
+      emissive(() => { g0.fillRect(cx + 0.5, 1.4, 4.4, 1.6); }, 0.5);
+      g.fillStyle = 'rgba(0,0,0,0.32)';
+      g.fillRect(cx + 6.0, 0.2, 0.7, 4.4);
+    }
+
+    // ---- support grip under the housing ---------------------------------
+    g.fillStyle = polymer(g, 4.6, 11.4, poly);
+    g.beginPath();
+    g.moveTo(20.6, 5.0); g.lineTo(25.4, 5.0);
+    g.lineTo(24.6, 11.2); g.quadraticCurveTo(23.0, 12.0, 21.4, 11.2);
+    g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.36)'; g.lineWidth = 0.45;
+    for (let i = 0; i < 3; i++) {
+      g.beginPath(); g.moveTo(20.9, 6.6 + i * 1.5); g.lineTo(24.9, 6.6 + i * 1.5); g.stroke();
+    }
+
+    // ---- muzzle collar ---------------------------------------------------
+    g.fillStyle = metal(g, -11.4, 0.4, shade(rec, 0.1));
+    rr(g, 44.6, -11.4, 4.6, 11.8, 1); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.20)';
+    g.fillRect(45.0, -11.3, 3.8, 0.8);
+    g.fillStyle = '#07090c';
+    rr(g, 46.2, SY + 0.3, 3.4, SH - 0.6, 0.4); g.fill();
+    emissive(() => {
+      g0.fillRect(46.4, SY + 0.6, 3.0, SH - 1.2);
+      // Bloom kept inside the collar's own width. At r=2.6 centred past the
+      // muzzle face it ballooned into a pale bubble hanging off the end.
+      const mg = g0.createRadialGradient(49.2, MID, 0.3, 49.2, MID, 2.2);
+      mg.addColorStop(0, `rgba(${cr},${cg},${cb},0.9)`);
+      mg.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+      g0.fillStyle = mg;
+      g0.beginPath(); g0.arc(49.2, MID, 2.2, 0, Math.PI * 2); g0.fill();
+    }, 0.42);
+
+    // ---- optic on the housing deck ---------------------------------------
+    g.fillStyle = shade(rec, -0.26);
+    g.fillRect(15.5, -12.4, 11, 2.2);
+    g.fillStyle = metal(g, -15.8, -12.2, shade(rec, 0.08));
+    rr(g, 14.5, -15.8, 13, 3.6, 1); g.fill();
+    g.fillStyle = '#0b0f14';
+    rr(g, 25.4, -15.4, 1.4, 2.8, 0.4); g.fill();
+    emissive(() => { g0.fillRect(25.6, -14.8, 1.0, 1.0); }, 0.7);
+    g.fillStyle = 'rgba(226,232,240,0.20)';
+    g.fillRect(15.0, -15.7, 12, 0.4);
 
     g.save();
     g.globalCompositeOperation = 'source-atop';
-    scratches(g, -14, -11, 52, 14, rng, { n: 16, color: 'rgba(210,225,240,0.14)' });
+    // Short marks. Long straight strokes across a flat receiver stop reading
+    // as wear and start reading as cracks in the panel.
+    scratches(g, -14, -12, 60, 16, rng, { n: 22, len: 3.2, color: 'rgba(210,225,240,0.11)' });
+    grunge(g, -16, -13, 64, 18, rng, { n: 54, dark: 0.1 });
     g.restore();
-    formLight(g, -20, -14, 70, 24);
+    formLight(g, -22, -19, 76, 32);
   });
 }
 
@@ -2136,9 +2326,14 @@ export function buildWeapons() {
     eshotgun:  { stock: 'folded',   barrel: 'stub',   mag: 'drum',  top: 'none',    hg: 20 },
     ion:       { stock: 'tank',     barrel: 'twin',   mag: 'cell',  top: 'emitter', hg: 20 },
     emp:       { stock: 'brace',    barrel: 'nozzle', mag: 'cell',  top: 'fins',    hg: 20 },
-    gravity:   { stock: 'tank',     barrel: 'coil',   mag: 'none',  top: 'emitter', hg: 20 },
-    lightning: { stock: 'none',     barrel: 'twin',   mag: 'cell',  top: 'fins',    hg: 20 },
-    cryo:      { stock: 'tank',     barrel: 'shroud', mag: 'cell',  top: 'none',    hg: 21 },
+    // Gravity, lightning and cryo used to share 'coil', 'twin' and 'shroud'
+    // with other weapons, so seven energy guns came out of this table with the
+    // same outline: receiver, grip, and a bar pointing forward. Each of the
+    // three now has a forward mass nothing else in the arsenal has — a focus
+    // ring, a forked electrode, a condenser stack.
+    gravity:   { stock: 'tank',     barrel: 'lens',   mag: 'none',  top: 'emitter', hg: 20 },
+    lightning: { stock: 'none',     barrel: 'arc',    mag: 'cell',  top: 'fins',    hg: 20 },
+    cryo:      { stock: 'tank',     barrel: 'frost',  mag: 'cell',  top: 'none',    hg: 21 },
   };
   // ---- attachment geometry --------------------------------------------
   //
@@ -2160,6 +2355,9 @@ export function buildWeapons() {
     twin:   { x: 46.0, y: -4.9 },   // twin rails 20..46, bridge at 43..45.2
     nozzle: { x: 44.0, y: -3.4 },   // flared bell mouth, wide and low
     vent:   { x: 43.5, y: -5.0 },   // vent block to 38 + muzzle to 43.5
+    arc:    { x: 46.0, y: -4.9 },   // discharge jumps between the horn tips
+    lens:   { x: 47.2, y: -4.8 },   // focus ring centred at 39, r 8.2
+    frost:  { x: 47.0, y: -4.7 },   // vane stack to 43.4 + chill ring to 47
     stub:   { x: 35.6, y: -5.0 },   // short tube to 31 + choke to 35.6
   };
 
