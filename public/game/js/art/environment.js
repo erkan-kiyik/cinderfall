@@ -4,7 +4,7 @@
 
 import {
   makeSprite, makeCanvas, lingrad, radgrad, rr, grunge, streaks, scratches,
-  ao, rivet, rim, shade, mix, withA, COL,
+  ao, rivet, rim, shade, mix, withA, COL, makeWideSprite,
 } from './paint.js';
 import { makeRng } from '../engine/math.js';
 
@@ -824,7 +824,11 @@ export function facade(wid = 560, hei = 190, opts = {}) {
 // faded lane paint, manholes. Anchor at top-left of strip (y = ground line).
 export function groundStrip(w, depth = 80) {
   const rng = nextRng();
-  return makeSprite(w, depth, 0, 0, (g) => {
+  // makeWideSprite, not makeSprite: at MAP_W the street is 19,750 device
+  // pixels across, well past the texture width every mobile GPU will hold, and
+  // a source canvas over that limit puts every draw from it on the software
+  // rasteriser. See the note in paint.js.
+  return makeWideSprite(w, depth, 0, 0, (g) => {
     // asphalt body
     g.fillStyle = lingrad(g, 0, 0, 0, depth, [
       [0, shade(COL.asphalt, 0.06)], [0.25, COL.asphalt], [1, shade(COL.asphalt, -0.4)],

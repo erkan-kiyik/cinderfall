@@ -48,10 +48,116 @@ export function drawSprite(g, spr, x, y, rot = 0, sx = 1, sy = 1) {
 // by more than an order of magnitude and draws exactly the same pixels.
 //
 // Returns without drawing if the requested slice misses the sprite.
+// ---------------------------------------------------------------- wide strips
+//
+// Mobile GPUs cap texture width. 4096 is the common floor, 2048 still exists
+// in the field, and Chromium does not scale a canvas down to fit: a source
+// canvas wider than the limit drops every draw *from* it onto the software
+// rasteriser. The street was one 19,750 x 225 canvas (17 MB) and the decal
+// surface 7,400 x 380 (10.7 MB), so the two biggest things on screen were
+// being composited in software on every frame — measured at ~9.4 ms of a
+// 13 ms frame, and scaling linearly with CPU throttle rather than with GPU
+// load, which is the signature of exactly that fallback.
+//
+// A wide strip is stored as a row of chunks that every GPU can hold. Only the
+// chunks that intersect the view are drawn, so the per-frame cost is two or
+// three small blits instead of one software-rastered monster.
+export const MAX_TEXTURE_W = 2048;
+
+export function makeWideSprite(w, h, ax, ay, painter) {
+  const S = ASSET_SCALE;
+  const fullW = Math.ceil(w * S);
+  const chunkW = MAX_TEXTURE_W;
+  const n = Math.max(1, Math.ceil(fullW / chunkW));
+  const chunks = [];
+  for (let i = 0; i < n; i++) {
+    const sx0 = i * chunkW;
+    const cw = Math.min(chunkW, fullW - sx0);
+    const { cv, g } = makeCanvas(cw, Math.ceil(h * S));
+    g.scale(S, S);
+    // The painter draws the whole strip in its own coordinates; the translate
+    // is what makes each chunk keep only its own window of it. Seams line up
+    // because every chunk is the same drawing, cropped differently.
+    g.translate(-sx0 / S, 0);
+    painter(g, w, h);
+    chunks.push({ cv, sx0, w: cw });
+  }
+  return {
+    cv: chunks[0].cv, chunks,
+    ax: ax * S, ay: ay * S, s: 1 / S, w, h,
+  };
+}
+
+// A wide surface that is WRITTEN to at runtime (the decal layer), split the
+// same way and for the same reason as makeWideSprite. Stamps are routed to the
+// chunks they actually touch, so a blood splat still costs one draw.
+export class ChunkedSurface {
+  constructor(w, h, chunkW = MAX_TEXTURE_W) {
+    this.w = w; this.h = h; this.chunkW = chunkW;
+    this.chunks = [];
+    for (let x0 = 0; x0 < w; x0 += chunkW) {
+      const cw = Math.min(chunkW, w - x0);
+      const { cv, g } = makeCanvas(cw, h);
+      this.chunks.push({ cv, x0, w: cw, g });
+    }
+  }
+
+  // `fn(g)` draws in surface coordinates; each chunk's context is translated
+  // so the same call lands in the right place in every chunk it crosses.
+  // `x0`/`x1` bound the stamp — without them every chunk is visited, which is
+  // correct but pays for chunks the stamp never touches.
+  stamp(fn, x0 = -Infinity, x1 = Infinity) {
+    for (const c of this.chunks) {
+      if (x1 < c.x0 || x0 > c.x0 + c.w) continue;
+      const g = c.g;
+      g.save();
+      g.translate(-c.x0, 0);
+      fn(g);
+      g.restore();
+    }
+  }
+
+  clear() {
+    for (const c of this.chunks) c.g.clearRect(0, 0, c.w, this.h);
+  }
+
+  // Blit the [wx0, wx1) column to (destX, destY) in the caller's space.
+  drawSlice(g, destX, destY, wx0, wx1) {
+    const a = Math.max(0, Math.floor(wx0));
+    const b = Math.min(this.w, Math.ceil(wx1));
+    if (b <= a) return;
+    for (const c of this.chunks) {
+      const cs = Math.max(a, c.x0);
+      const ce = Math.min(b, c.x0 + c.w);
+      if (ce <= cs) continue;
+      g.drawImage(c.cv, cs - c.x0, 0, ce - cs, this.h, destX + cs, destY, ce - cs, this.h);
+    }
+  }
+}
+
 export function drawSpriteSlice(g, spr, x, y, wx0, wx1) {
   const scale = spr.s;                       // world units per source pixel
   const left = x - spr.ax * scale;           // world x of the sprite's left edge
-  const srcW = spr.cv.width, srcH = spr.cv.height;
+  const srcH = spr.cv.height;
+
+  if (spr.chunks) {
+    // Virtual source coordinates across the whole strip, then per chunk.
+    const vx0 = Math.max(0, Math.floor((wx0 - left) / scale));
+    const vx1 = Math.ceil((wx1 - left) / scale);
+    if (vx1 <= 0) return;
+    for (const c of spr.chunks) {
+      const cs = Math.max(vx0, c.sx0);
+      const ce = Math.min(vx1, c.sx0 + c.w);
+      if (ce <= cs) continue;
+      g.drawImage(
+        c.cv, cs - c.sx0, 0, ce - cs, srcH,
+        left + cs * scale, y - spr.ay * scale, (ce - cs) * scale, srcH * scale,
+      );
+    }
+    return;
+  }
+
+  const srcW = spr.cv.width;
   let sx = (wx0 - left) / scale;
   let ex = (wx1 - left) / scale;
   if (ex <= 0 || sx >= srcW) return;

@@ -8,7 +8,7 @@
 import * as env from '../art/environment.js';
 import { buildBackground } from '../art/background.js';
 import { makeShadowSprite } from '../art/soldier.js';
-import { makeCanvas, drawSprite, drawSpriteSlice, lingrad, radgrad, rr } from '../art/paint.js';
+import { makeCanvas, drawSprite, drawSpriteSlice, lingrad, radgrad, rr, ChunkedSurface } from '../art/paint.js';
 import { clamp, rand, randSpread, makeRng } from '../engine/math.js';
 import { gradeAt, pickWeather, START_HOUR } from '../engine/daycycle.js';
 import { enemyCount, lootCount } from './difficulty.js';
@@ -122,8 +122,11 @@ export class World {
     // decal surface covering the playfield (persists across a stage, wiped
     // by Game.reset()/regenerate on a fresh mission)
     this.decalTop = GROUND_Y - 300;
-    const d = makeCanvas(MAP_W, 380);
-    this.decalCv = d.cv; this.decalG = d.g;
+    // Chunked for the same reason as the street: at MAP_W this surface is
+    // 7,400 px across, past the texture width mobile GPUs will hold, so every
+    // frame's blit from it was software-rastered.
+    this.decalTop = GROUND_Y - 300;
+    this.decals = new ChunkedSurface(MAP_W, 380);
 
     this.regenerate(stage);
   }
@@ -159,7 +162,7 @@ export class World {
     else this.buildProceduralLevel(stage);
 
     this.deriveCoverSpots();
-    if (this.decalG) this.decalG.clearRect(0, 0, this.decalCv.width, this.decalCv.height);
+    if (this.decals) this.decals.clear();
   }
 
   // Re-derives the sky wash and the weather from the clock. Split out from
@@ -657,12 +660,15 @@ export class World {
 
   // ---------------- decals ----------------
 
-  stamp(fn) {
-    const g = this.decalG;
-    g.save();
-    g.translate(0, -this.decalTop);
-    fn(g);
-    g.restore();
+  // `x0`/`x1` are the world-x bounds of the stamp, so it only visits the
+  // chunks it actually lands on.
+  stamp(fn, x0, x1) {
+    this.decals.stamp((g) => {
+      g.save();
+      g.translate(0, -this.decalTop);
+      fn(g);
+      g.restore();
+    }, x0, x1);
   }
 
   bloodDecal(x, y, size = 8) {
@@ -673,7 +679,7 @@ export class World {
         g.ellipse(x + randSpread(size), y + randSpread(size * 0.4), rand(1.5, size * 0.55), rand(1, size * 0.3), rand(0, 3), 0, Math.PI * 2);
         g.fill();
       }
-    });
+    }, x - size * 2, x + size * 2);
   }
 
   bulletHole(x, y) {
@@ -683,7 +689,7 @@ export class World {
       g.strokeStyle = 'rgba(210,205,190,0.2)';
       g.lineWidth = 0.7;
       g.beginPath(); g.arc(x, y, rand(2.2, 2.9), 0, Math.PI * 2); g.stroke();
-    });
+    }, x - 4, x + 4);
   }
 
   scorch(x, y, r = 30) {
@@ -694,7 +700,7 @@ export class World {
       gr.addColorStop(1, 'rgba(16,13,11,0)');
       g.fillStyle = gr;
       g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-    });
+    }, x - r - 2, x + r + 2);
   }
 
   // ---------------- rendering ----------------
@@ -877,14 +883,7 @@ export class World {
     // Decals over ground/props, under characters. Same story as the street: the
     // decal surface is the width of the whole map, so only the visible column
     // of it is blitted.
-    const dx0 = Math.max(0, Math.floor(spanL));
-    const dx1 = Math.min(this.decalCv.width, Math.ceil(spanR));
-    if (dx1 > dx0) {
-      g.drawImage(
-        this.decalCv, dx0, 0, dx1 - dx0, this.decalCv.height,
-        dx0, this.decalTop, dx1 - dx0, this.decalCv.height,
-      );
-    }
+    this.decals.drawSlice(g, 0, this.decalTop, spanL, spanR);
   }
 
   // Soft elliptical pools under every prop, barrel and pickup.
