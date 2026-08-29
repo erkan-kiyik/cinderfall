@@ -482,7 +482,10 @@ function paintKnife(finish) {
       : lingrad(g, 0, -3, 0, 2.4, [
           [0, '#c9ced6'], [0.42, '#9aa1aa'], [0.55, '#585d64'], [1, '#3a3e44'],
         ]);
-    if (blade) { g.shadowColor = blade; g.shadowBlur = 5; }
+    // 5 units is 15 device pixels of coloured bloom baked into the body
+    // sprite, before the skin system adds its own halo on top. Two glows
+    // stacked is what turned the emissive blades into blobs.
+    if (blade) { g.shadowColor = blade; g.shadowBlur = 2.2; }
     // Clip point. The spine used to curve smoothly into the edge belly, which
     // gave the blade a rounded nose — it read as a spoon rather than something
     // that stabs. The spine now runs flat, breaks at the clip and comes to an
@@ -513,6 +516,18 @@ function paintKnife(finish) {
     g.quadraticCurveTo(11.5, 1.7, 7, 1.95);
     g.quadraticCurveTo(3, 2.2, 1, 1.9);
     g.closePath(); g.fill();
+    // Structure lines. An emissive blade has no natural shading of its own,
+    // so without these the whole thing flattens into one lit shape and stops
+    // reading as a knife at all.
+    if (blade) {
+      g.strokeStyle = withA(shade(blade, -0.62), 0.85); g.lineWidth = 0.42;
+      g.beginPath(); g.moveTo(1.2, -2.55); g.lineTo(11.4, -2.85); g.stroke();  // spine
+      g.beginPath();
+      g.moveTo(2.2, -1.5); g.quadraticCurveTo(7.5, -1.7, 12.4, -1.1); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 0.3;
+      g.beginPath();
+      g.moveTo(1.4, 1.35); g.quadraticCurveTo(8, 1.5, 15.6, -0.55); g.stroke();  // edge
+    }
     // fuller groove
     g.strokeStyle = 'rgba(30,33,38,0.6)'; g.lineWidth = 0.6;
     g.beginPath(); g.moveTo(1.6, -1.5); g.lineTo(9.8, -1.7); g.stroke();
@@ -2197,8 +2212,11 @@ export function buildWeapons() {
   // base the skin id selects.
   const KNIFE_BOWIE = new Set(['ravage', 'voidedge', 'bloodmoon']);
   const KNIFE_BLADE_COL = {
-    ravage: undefined, voidedge: '#b26bff', volt: '#38e0ff',
-    bloodmoon: '#ff3b5c', eventide: '#f2f6ff',
+    // Kept out of the top of the value range. '#f2f6ff' is white: an emissive
+    // blade fill at that value has no darker tone left to draw a spine, a
+    // fuller or a grind against, so the knife came out as a glowing lozenge.
+    ravage: undefined, voidedge: '#9d4dff', volt: '#22c8ea',
+    bloodmoon: '#e02748', eventide: '#7fe4d8',
   };
   const knifeBody = paintKnife();
   const knifeFinishes = buildSkinSet('knife', knifeBody, (pal, id) => (

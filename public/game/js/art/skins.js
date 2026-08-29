@@ -169,33 +169,55 @@ function coatingPass(g, kind, span, palette, rng) {
   g.globalCompositeOperation = 'source-atop';
 
   if (kind === 'hydrodip') {
-    // multicam-style blotches
+    // Multicam blotches. The skin tables pick four colours close to the base
+    // coat — which is what a real dip looks like on a paint chip and what it
+    // looked like on the gun: nothing at all. Each blotch is now pushed away
+    // from the base value, alternately lighter and darker, and given a
+    // darker rim, so the pattern survives being 60 pixels wide on screen.
     const cols = palette.camo || ['#4c5340', '#3a4030', '#6b6a52', '#26291f'];
-    for (let i = 0; i < 26; i++) {
-      g.fillStyle = withA(cols[rng.int(0, cols.length - 1)], rng.range(0.35, 0.7));
+    for (let i = 0; i < 30; i++) {
+      const c = cols[rng.int(0, cols.length - 1)];
+      const lift = i % 2 ? rng.range(0.16, 0.34) : -rng.range(0.20, 0.40);
       const bx = x0 + rng() * w, by = y0 + rng() * h;
-      g.beginPath();
-      g.ellipse(bx, by, rng.range(1.6, 5.2), rng.range(1.2, 3.4), rng.range(0, 3), 0, Math.PI * 2);
-      g.fill();
+      const rx = rng.range(2.0, 6.0), ry = rng.range(1.4, 3.8), rot = rng.range(0, 3);
+      g.fillStyle = withA(shade(c, lift), rng.range(0.55, 0.85));
+      g.beginPath(); g.ellipse(bx, by, rx, ry, rot, 0, Math.PI * 2); g.fill();
+      // rim, so neighbouring blotches read as separate shapes
+      g.strokeStyle = withA(shade(c, lift - 0.3), 0.4); g.lineWidth = 0.4;
+      g.beginPath(); g.ellipse(bx, by, rx, ry, rot, 0, Math.PI * 2); g.stroke();
     }
   } else if (kind === 'carbon') {
-    // fine twill weave: two crossing hatch sets
-    g.strokeStyle = 'rgba(255,255,255,0.10)'; g.lineWidth = 0.45;
-    for (let i = -30; i < w + 30; i += 1.8) {
+    // Twill weave. At 1.8-unit spacing and 0.10/0.22 contrast this came out
+    // as a black-and-white fishnet thrown over the gun rather than a woven
+    // surface. Half the pitch, a third of the contrast, and a soft sheen
+    // across the middle so it reads as a material and not as a pattern.
+    g.lineWidth = 0.3;
+    g.strokeStyle = 'rgba(255,255,255,0.055)';
+    for (let i = -30; i < w + 30; i += 0.9) {
       g.beginPath(); g.moveTo(x0 + i, y0); g.lineTo(x0 + i + h, y0 + h); g.stroke();
     }
-    g.strokeStyle = 'rgba(0,0,0,0.22)';
-    for (let i = -30; i < w + 30; i += 1.8) {
+    g.strokeStyle = 'rgba(0,0,0,0.085)';
+    for (let i = -30; i < w + 30; i += 0.9) {
       g.beginPath(); g.moveTo(x0 + i + h, y0); g.lineTo(x0 + i, y0 + h); g.stroke();
     }
-  } else if (kind === 'chrome') {
-    // mirror finish: a hard specular band across the middle of the body
     g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [
-      [0, 'rgba(255,255,255,0.05)'],
-      [0.36, 'rgba(255,255,255,0.62)'],
-      [0.46, 'rgba(255,255,255,0.16)'],
-      [0.58, 'rgba(20,26,38,0.55)'],
-      [1, 'rgba(160,180,210,0.30)'],
+      [0, 'rgba(255,255,255,0.10)'], [0.42, 'rgba(255,255,255,0.02)'],
+      [0.7, 'rgba(0,0,0,0.10)'], [1, 'rgba(0,0,0,0.22)'],
+    ]);
+    g.fillRect(x0, y0, w, h);
+  } else if (kind === 'chrome') {
+    // Mirror finish. The old ramp went from 5% to 62% white over the whole
+    // upper half, which is not a mirror — it is a bucket of white paint, and
+    // it erased every engraved detail underneath. A mirror is *contrast*: a
+    // narrow blown specular, a hard horizon, and a dark reflected floor.
+    g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [
+      [0, 'rgba(196,214,236,0.30)'],
+      [0.26, 'rgba(120,140,168,0.14)'],
+      [0.34, 'rgba(255,255,255,0.72)'],   // specular band, deliberately thin
+      [0.40, 'rgba(255,255,255,0.10)'],
+      [0.47, 'rgba(14,18,26,0.62)'],      // horizon
+      [0.72, 'rgba(30,38,52,0.34)'],
+      [1, 'rgba(150,172,200,0.26)'],      // bounce off the ground
     ]);
     g.fillRect(x0, y0, w, h);
   } else if (kind === 'lacquer') {
@@ -210,16 +232,30 @@ function coatingPass(g, kind, span, palette, rng) {
     g.fillStyle = 'rgba(255,255,255,0.4)';
     g.fillRect(x0, -9.4, w, 0.5);
   } else if (kind === 'weathered') {
-    // edge wear: bare metal scratches and chipped corners
-    for (let i = 0; i < 30; i++) {
-      g.fillStyle = `rgba(190,196,205,${rng.range(0.12, 0.4)})`;
-      const sx = x0 + rng() * w, sy = y0 + rng() * h;
-      g.fillRect(sx, sy, rng.range(0.6, 3.4), rng.range(0.3, 0.7));
+    // Edge wear. Thirty specks scattered at random over a 60x30 field put
+    // most of the wear in the middle of flat panels, where nothing rubs, and
+    // at 0.12 alpha none of it showed. Wear concentrates on the two edges the
+    // gun is actually handled and holstered by.
+    for (const [ey, n] of [[-9.6, 26], [-1.6, 18]]) {
+      for (let i = 0; i < n; i++) {
+        g.fillStyle = `rgba(198,204,214,${rng.range(0.22, 0.6)})`;
+        const sx = x0 + rng() * w, sy = ey + rng.range(-1.1, 1.1);
+        g.fillRect(sx, sy, rng.range(0.8, 4.2), rng.range(0.3, 0.65));
+      }
     }
-    for (let i = 0; i < 10; i++) {
-      g.fillStyle = `rgba(70,60,48,${rng.range(0.2, 0.45)})`;
-      const sx = x0 + rng() * w, sy = y0 + rng() * h;
-      g.beginPath(); g.arc(sx, sy, rng.range(0.5, 1.6), 0, Math.PI * 2); g.fill();
+    // chipped corners down to bare metal
+    for (let i = 0; i < 14; i++) {
+      g.fillStyle = `rgba(176,182,192,${rng.range(0.3, 0.6)})`;
+      const sx = x0 + rng() * w, sy = -12 + rng() * 12;
+      g.beginPath(); g.arc(sx, sy, rng.range(0.4, 1.2), 0, Math.PI * 2); g.fill();
+    }
+    // rust bleeding down from the chips
+    for (let i = 0; i < 12; i++) {
+      const sx = x0 + rng() * w, sy = -10 + rng() * 7;
+      g.fillStyle = lingrad(g, 0, sy, 0, sy + 4, [
+        [0, `rgba(122,74,48,${rng.range(0.3, 0.5)})`], [1, 'rgba(122,74,48,0)'],
+      ]);
+      g.fillRect(sx, sy, rng.range(0.5, 1.3), 4);
     }
   }
   g.restore();
@@ -246,15 +282,28 @@ function engravingPass(g, kind, span, color, rng) {
       g.beginPath(); g.arc(cx, cy, 0.7, 0, Math.PI * 2); g.fill();
     }
   } else if (kind === 'runes') {
-    // angular glyph band along the receiver
-    for (let i = 0; i < 16; i++) {
-      const gx = x0 + 3 + i * ((x1 - x0 - 6) / 16), gy = -8 + rng.range(-1, 1);
+    // Angular glyph band. Every glyph used to be the same chevron with an
+    // optional crossbar, sixteen in a row — which is a sawtooth ribbon, not
+    // writing. Six different marks, drawn from a set, spaced irregularly.
+    const GLYPHS = [
+      [[0, 0], [0, -2.6], [1.5, -1.3], [0, 0]],                  // flag
+      [[0, -2.6], [0, 0], [1.6, 0]],                             // L
+      [[0, 0], [1.6, -2.6], [0, -2.6], [1.6, 0]],                // Z through
+      [[0.8, 0], [0.8, -2.6], [-0.3, -1.6], [1.9, -1.6]],        // cross-staff
+      [[0, 0], [0.9, -2.6], [1.8, 0]],                           // caret
+      [[0, -2.6], [1.6, -2.6], [1.6, -1.3], [0, -1.3], [0, 0], [1.6, 0]], // S
+    ];
+    let gx = x0 + 3;
+    const end = x1 - 4;
+    let i = 0;
+    while (gx < end) {
+      const gl = GLYPHS[(i * 3 + Math.floor(rng() * 2)) % GLYPHS.length];
+      const gy = -8 + rng.range(-0.4, 0.4);
       g.beginPath();
-      g.moveTo(gx, gy);
-      g.lineTo(gx + 1.4, gy - 2.2);
-      g.lineTo(gx + 2.6, gy);
-      if (rng.chance(0.5)) { g.moveTo(gx + 0.6, gy - 1); g.lineTo(gx + 2, gy - 1); }
+      gl.forEach(([px, py], k) => (k ? g.lineTo(gx + px, gy + py) : g.moveTo(gx + px, gy + py)));
       g.stroke();
+      gx += 2.2 + rng.range(0.7, 1.8);
+      i++;
     }
   } else if (kind === 'tally') {
     // kill tally scratched into the stock
@@ -287,13 +336,16 @@ function muzzleDevice(g, kind, mount, palette, glow) {
     g.fillStyle = '#0c0d10';
     g.beginPath(); g.ellipse(11, 0, 1.1, 2.4, 0, 0, Math.PI * 2); g.fill();
   } else if (kind === 'suppressor') {
-    // long can with heat-wrap ribbing
-    g.fillStyle = lingrad(g, 0, -4, 0, 4, [[0, shade(met, 0.22)], [0.45, shade(met, -0.06)], [1, shade(met, -0.45)]]);
-    rr(g, 0, -4, 20, 8, 3.4); g.fill();
-    g.strokeStyle = 'rgba(8,9,12,0.45)'; g.lineWidth = 0.6;
-    for (let i = 1; i < 7; i++) { g.beginPath(); g.moveTo(i * 2.7, -4); g.lineTo(i * 2.7, 4); g.stroke(); }
+    // Can with heat-wrap ribbing. 20 units long put a suppressor on the C-9
+    // that was two-thirds the length of the pistol itself.
+    g.fillStyle = lingrad(g, 0, -3.4, 0, 3.4, [[0, shade(met, 0.22)], [0.45, shade(met, -0.06)], [1, shade(met, -0.45)]]);
+    rr(g, 0, -3.4, 15, 6.8, 2.9); g.fill();
+    g.strokeStyle = 'rgba(8,9,12,0.45)'; g.lineWidth = 0.55;
+    for (let i = 1; i < 6; i++) { g.beginPath(); g.moveTo(i * 2.5, -3.4); g.lineTo(i * 2.5, 3.4); g.stroke(); }
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    g.fillRect(1.2, -3.3, 12.6, 0.45);
     g.fillStyle = '#0c0d10';
-    g.beginPath(); g.ellipse(20, 0, 1.2, 3, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(15, 0, 1.0, 2.4, 0, 0, Math.PI * 2); g.fill();
   } else if (kind === 'plasmaVent') {
     // coil stack around an emissive core — the energy-tier silhouette
     const c = (glow && glow.color) || '#3fd2ff';
@@ -309,13 +361,15 @@ function muzzleDevice(g, kind, mount, palette, glow) {
       g.fillRect(cx, -1.1, 2.3, 2.2);
       g.restore();
     }
-    // core beam channel
+    // Core beam channel. A 1.8-unit solid bar at 0.75 alpha running the full
+    // length, plus an r=6 bloom off the end, buried the coil stack it is
+    // supposed to be threaded through.
     g.save();
     g.globalCompositeOperation = 'lighter';
-    g.fillStyle = withA(c, 0.75);
-    g.fillRect(0, -0.9, 20, 1.8);
-    g.fillStyle = radgrad(g, 20, 0, 6, [[0, withA(c, 0.8)], [1, withA(c, 0)]]);
-    g.fillRect(12, -7, 16, 14);
+    g.fillStyle = withA(c, 0.5);
+    g.fillRect(0, -0.55, 16, 1.1);
+    g.fillStyle = radgrad(g, 16.4, 0, 3.6, [[0, withA(c, 0.7)], [1, withA(c, 0)]]);
+    g.fillRect(12, -4.5, 9, 9);
     g.restore();
   } else if (kind === 'prongFlash') {
     // three-prong flash hider — open, aggressive silhouette
@@ -335,16 +389,23 @@ function muzzleDevice(g, kind, mount, palette, glow) {
       g.restore();
     }
   } else if (kind === 'railTip') {
-    // twin accelerator rails, emissive gap between them
+    // Twin accelerator prongs with an emissive gap. At 16 units long, with a
+    // 2.4-unit solid bar of light down the middle and an r=8 bloom on the
+    // end, this stopped reading as a muzzle device and started reading as a
+    // lightsaber blade bolted to the gun. Shorter, with the light confined to
+    // a thin filament between the prongs and a bloom that stays at the tip.
     const c = (glow && glow.color) || '#9fd4ff';
-    g.fillStyle = lingrad(g, 0, -5, 0, 5, [[0, shade(met, 0.3)], [1, shade(met, -0.4)]]);
-    rr(g, 0, -5.4, 16, 2.4, 0.8); g.fill();
-    rr(g, 0, 3.0, 16, 2.4, 0.8); g.fill();
+    g.fillStyle = lingrad(g, 0, -4.4, 0, 4.4, [[0, shade(met, 0.3)], [1, shade(met, -0.4)]]);
+    rr(g, 0, -4.4, 10, 2.0, 0.7); g.fill();
+    rr(g, 0, 2.4, 10, 2.0, 0.7); g.fill();
+    // cross-brace at the root, so the prongs come out of something
+    g.fillStyle = shade(met, -0.2);
+    rr(g, 0, -4.4, 2.2, 8.8, 0.7); g.fill();
     g.save(); g.globalCompositeOperation = 'lighter';
-    g.fillStyle = withA(c, 0.6);
-    g.fillRect(0, -1.2, 16, 2.4);
-    g.fillStyle = radgrad(g, 16, 0, 8, [[0, withA(c, 0.7)], [1, withA(c, 0)]]);
-    g.fillRect(8, -9, 18, 18);
+    g.fillStyle = withA(c, 0.55);
+    g.fillRect(1.8, -0.5, 8.2, 1.0);
+    g.fillStyle = radgrad(g, 10.4, 0, 3.4, [[0, withA(c, 0.75)], [1, withA(c, 0)]]);
+    g.fillRect(7, -4, 7, 8);
     g.restore();
   }
   g.restore();
@@ -401,21 +462,44 @@ function railDevice(g, kind, mount, palette, glow) {
 // Emissive rim on the weapon body itself. Runs `source-atop` + `lighter`, so
 // it can only ever add light inside the silhouette — it cannot darken, and it
 // cannot bleed outside the weapon.
-function edgeGlowPass(g, span, glow) {
+function edgeGlowPass(g, span, glow, base) {
   if (!glow) return;
   const [x0, x1] = span;
+  // The two lines were pinned at y -8.4 and -1.2, which are the rifle
+  // chassis' rail and belly. On the knife (which spans about -4.5..4.5) the
+  // top line missed the weapon entirely and the belly line cut across the
+  // blade. Placed off the body's own extent instead.
+  const S = ASSET_SCALE;
+  const top = base ? -base.ay / S : -8.4;
+  const bot = base ? top + base.h : 0;
+  const inset = (bot - top) * 0.18;
+  // Small weapons take a weaker rim. Two full-span bands at 0.39 alpha are a
+  // detail on a 60-unit rifle and most of the visible surface of a 22-unit
+  // knife — which is why the mythic blade came out as a red lozenge with no
+  // knife in it.
+  const k = sizeFactor(base);
   g.save();
   g.globalCompositeOperation = 'source-atop';
   const grad = lingrad(g, x0, 0, x1, 0, [
-    [0, withA(glow.color, 0.05 * glow.intensity)],
-    [0.45, withA(glow.color, 0.30 * glow.intensity)],
-    [1, withA(glow.color, 0.10 * glow.intensity)],
+    [0, withA(glow.color, 0.05 * glow.intensity * k)],
+    [0.45, withA(glow.color, 0.30 * glow.intensity * k)],
+    [1, withA(glow.color, 0.10 * glow.intensity * k)],
   ]);
   g.fillStyle = grad;
-  g.fillRect(x0, -8.4, x1 - x0, 1.1);        // top rail line
-  g.fillRect(x0, -1.2, x1 - x0, 0.9);        // belly line
+  g.fillRect(x0, top + inset, x1 - x0, Math.min(1.1, Math.max(0.45, inset * 0.5)));
+  g.fillRect(x0, bot - inset * 1.4, x1 - x0, Math.min(0.9, Math.max(0.4, inset * 0.4)));
   g.restore();
 }
+
+// How much of a full-size rifle this weapon is, clamped. Every emissive pass
+// scales by it, so a knife does not get a rifle's worth of light laid over a
+// third of the surface area.
+function sizeFactor(base) {
+  if (!base) return 1;
+  return Math.max(0.42, Math.min(1, base.w / 52));
+}
+
+function glowIntensity(glow) { return glow ? glow.intensity : 0; }
 
 // ------------------------------------------------------------- skin tables
 // The data structure the whole system reads from. One entry per skin; the
@@ -855,26 +939,32 @@ export function buildSkin(kind, base, skin, seed = 1) {
   const mounts = MOUNTS[kind] || MOUNTS.rifle;
   const pad = PAD_BY_KIND[kind] || PAD_BY_KIND.rifle;
   const rng = makeRng(seed);
-  const palette = skin.palette || {};
+  const palette = readablePalette(skin.palette || {});
   const glow = skin.glow || null;
   const span = mounts.span;
 
   // Outer bloom: the base silhouette stamped in the glow colour, under the
   // body, with `lighter`. Composite-add only — structurally incapable of
   // producing a dark halo, which is the failure mode a plain offset stamp has.
+  // Outer bloom radius scales with the weapon. A flat 1.6 units is 3% of a
+  // rifle's length and 8% of the knife's — on the knife eight stamps at that
+  // radius fused into a lozenge of pure colour with the blade nowhere in it,
+  // so the priciest finishes were the ones you could least identify. Small
+  // weapons now get a proportionally smaller, dimmer halo.
+  const bloomR = Math.max(0.55, Math.min(1.5, base.w * 0.022));
+  const bloomA = 0.085 * sizeFactor(base) * glowIntensity(glow);
   const under = glow ? (g) => {
     const sil = silhouette(base, glow.color);
     const S = ASSET_SCALE;
     const ax = base.ax / S, ay = base.ay / S;
     g.save();
     g.globalCompositeOperation = 'lighter';
-    g.globalAlpha = 0.10 * glow.intensity;
+    g.globalAlpha = bloomA;
     for (let a = 0; a < 8; a++) {
       const th = (a / 8) * Math.PI * 2;
-      const r = 1.6;
       g.drawImage(
         sil,
-        -ax + Math.cos(th) * r, -ay + Math.sin(th) * r,
+        -ax + Math.cos(th) * bloomR, -ay + Math.sin(th) * bloomR,
         base.w, base.h,
       );
     }
@@ -888,7 +978,7 @@ export function buildSkin(kind, base, skin, seed = 1) {
     if (skin.engraving) {
       engravingPass(g, skin.engraving, span, skin.engravingColor || 'rgba(220,220,230,0.35)', rng);
     }
-    edgeGlowPass(g, span, glow);
+    edgeGlowPass(g, span, glow, base);
     railDevice(g, skin.rail, mounts.rail, palette, glow);
     muzzleDevice(g, skin.muzzle, mounts.muzzle, palette, glow);
   };
@@ -905,6 +995,38 @@ export function buildSkin(kind, base, skin, seed = 1) {
 // weapon uses (many weapons share the rifle chassis, so they share its mount
 // points but get their own skins). Defaults to the weapon id when the weapon
 // has a body all of its own.
+// Lowest luminance a skin's base coat is allowed to reach.
+//
+// Several tiers were authored down at luminance 10-27 (`#0a0a14` is
+// effectively black), which on the game's own night-street background is not a
+// dark gun — it is a hole. The weapon still has to read as an object with a
+// top and an underside, and metal()/polymer()'s own highlights cannot build a
+// value range out of nothing. Palettes above the floor are passed through
+// untouched; the ones below it are lifted along their own hue, so a "black"
+// skin still reads as the darkest thing in the arsenal.
+const COAT_FLOOR = 30;
+
+function liftToFloor(hex) {
+  if (typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  if (lum >= COAT_FLOOR) return hex;
+  // Lift toward the hue's own bright end rather than toward grey, so the
+  // colour identity of the skin survives the correction.
+  const k = (COAT_FLOOR - lum) / 255;
+  const up = (v) => Math.min(255, Math.round(v + (255 - v) * k * 1.35 + 6));
+  r = up(r); g = up(g); b = up(b);
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function readablePalette(pal) {
+  const out = {};
+  for (const [k, v] of Object.entries(pal)) out[k] = liftToFloor(v);
+  return out;
+}
+
 export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weaponId, paintMag = null, paintSlide = null) {
   const table = WEAPON_SKINS[weaponId] || {};
   const finishes = { default: defaultBody };
@@ -913,13 +1035,14 @@ export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weapo
     // paintBase gets the skin id too, so a weapon whose variants use
     // genuinely different base geometry (the knife's straight blade vs its
     // bowie) can pick the right painter rather than being forced onto one.
-    const body = paintBase(skin.palette || {}, id, skin);
+    const pal = readablePalette(skin.palette || {});
+    const body = paintBase(pal, id, skin);
     finishes[id] = buildSkin(mountKind, body, skin, seed);
     // Detachable magazines are drawn as their own sprite, so a skin has to
     // repaint them too — otherwise a Mythic coating ships with the drab
     // default magazine still hanging off it, which reads as a mismatched part.
     if (paintMag) {
-      const mag = paintMag(skin.palette || {}, id, skin);
+      const mag = paintMag(pal, id, skin);
       if (mag) finishes[id].mag = mag;
     }
     // Same reasoning as the magazine: the pistol's slide is a separate sprite
@@ -927,7 +1050,7 @@ export function buildSkinSet(weaponId, defaultBody, paintBase, mountKind = weapo
     // — including the priciest tiers — shows a plain gunmetal slide bolted
     // onto a fully coated frame.
     if (paintSlide) {
-      const slide = paintSlide(skin.palette || {}, id, skin);
+      const slide = paintSlide(pal, id, skin);
       if (slide) finishes[id].slide = slide;
     }
     // Every composited skin carries its own sprite identity, so nothing
