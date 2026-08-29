@@ -11,10 +11,22 @@
 // backdrop), so it never has to reach into another screen's internals.
 
 import { RANKS } from './progression.js';
+import { CATALOG, itemById } from './meta.js';
 import { WEAPON_SKINS } from '../art/skins.js';
 import { t, onLangChange } from '../engine/i18n.js';
 
 const $ = (id) => document.getElementById(id);
+
+// Rarity accents, matching the loadout cards' own RARITY table in meta.js.
+// Kept local rather than imported so the profile card never has to reach into
+// the loadout screen's internals — the same reasoning as the module note above.
+const RARITY_TINT = {
+  common: 'rgba(237,234,226,0.55)',
+  rare: '#5aa9d6',
+  epic: '#b26bff',
+  legendary: '#e0a63a',
+  mythic: '#ff5c46',
+};
 
 export class ProfileUI {
   // deps: { progression, weapons, previewItem, audio }
@@ -22,6 +34,7 @@ export class ProfileUI {
     this.p = deps.progression;
     this.weapons = deps.weapons || {};
     this.previewItem = deps.previewItem || null;
+    this.previewOperator = deps.previewOperator || null;
     this.audio = deps.audio || null;
   }
 
@@ -61,10 +74,47 @@ export class ProfileUI {
 
   render() {
     const info = this.p.profile();
+    this.renderIdentity();
     this.renderScore(info);
     this.renderRank(info.rank, info.score);
     this.renderStats(info);
     this.renderWeapon(info.favoriteWeapon);
+  }
+
+  // Who the player is: equipped operator, their level and the distance to the
+  // next one. The card carried none of this — it opened on a sector score
+  // derived from three narrow counters, while the number the rest of the game
+  // actually shows (stats screen, deploy strip, level-up toast) is the level.
+  renderIdentity() {
+    const equipped = this.p.equipped('operator');
+    const item = equipped ? itemById(equipped) : null;
+    const variant = (item && item.apply && item.apply.variant) || 'ranger';
+
+    const nameEl = $('profile-op-name');
+    if (nameEl) nameEl.textContent = item ? item.name : t('profile.opDefault');
+    const tagEl = $('profile-op-tag');
+    if (tagEl) {
+      tagEl.textContent = (item && item.tag) || t('profile.opTagDefault');
+      // Tint the tag with the operator's rarity so the card says at a glance
+      // whether this is the starting kit or something out of a crate.
+      const r = item && RARITY_TINT[item.rarity];
+      tagEl.style.color = r || 'var(--ink-dim)';
+    }
+
+    const lvl = $('profile-lvl');
+    if (lvl) lvl.textContent = String(this.p.data.level);
+    const pct = Math.round(this.p.xpProgress() * 100);
+    const pctEl = $('profile-xp-pct');
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    const fill = $('profile-xp-fill');
+    if (fill) fill.style.width = `${pct}%`;
+
+    const cv = $('profile-portrait');
+    if (cv && this.previewOperator) {
+      // The canvas is sized from its laid-out box, which is only correct once
+      // the overlay is visible — open() unhides before calling render().
+      requestAnimationFrame(() => this.previewOperator(variant, cv));
+    }
   }
 
   renderScore(info) {
@@ -116,8 +166,16 @@ export class ProfileUI {
   renderStats(info) {
     const host = $('profile-stats');
     if (!host) return;
+    const d = this.p.data;
+    // Six counters, not three. The old set was highest sector / bosses /
+    // deaths — the three least interesting numbers the game keeps, and two of
+    // them read "—" and "0" for most of a playthrough. These lead with what a
+    // player actually wants to show someone.
     const rows = [
-      { key: 'profile.maxLevel', value: info.maxLevelReached ? String(info.maxLevelReached) : '—' },
+      { key: 'profile.kills', value: (d.totalKills || 0).toLocaleString() },
+      { key: 'profile.accuracy', value: `${this.p.accuracy()}%` },
+      { key: 'profile.headshots', value: (d.totalHeadshots || 0).toLocaleString() },
+      { key: 'profile.streak', value: String(d.longestKillStreak || 0) },
       { key: 'profile.bossKills', value: String(info.bossKills) },
       { key: 'profile.deaths', value: info.totalDeaths.toLocaleString() },
     ];

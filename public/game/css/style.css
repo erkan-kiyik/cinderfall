@@ -2220,12 +2220,89 @@ html.no-backdrop-filter .profile-card {
   letter-spacing: 0.16em; color: var(--ink);
 }
 
+/* ---- identity: the operator this file is actually about ----------------
+   Portrait on the left, name / tag / level on the right. The card carried
+   none of this: it was an "operator file" with no operator on it, and the
+   level — the number the rest of the game leads with — appeared nowhere. */
+.profile-id {
+  display: flex; align-items: center;
+  gap: calc(12px * var(--ui-scale));
+  padding: calc(12px * var(--ui-scale)) 0 calc(10px * var(--ui-scale));
+  text-align: left;
+}
+.profile-portrait {
+  flex: 0 0 auto;
+  width: calc(70px * var(--ui-scale)); height: calc(94px * var(--ui-scale));
+  border-radius: var(--r3);
+  background:
+    radial-gradient(ellipse at 50% 92%, rgba(214,69,58,0.16), rgba(214,69,58,0) 62%),
+    linear-gradient(180deg, rgba(30,36,46,0.72), rgba(12,15,20,0.85));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px var(--rank-glow);
+}
+.profile-id-text { min-width: 0; flex: 1 1 auto; }
+.profile-op-name {
+  font-family: var(--font); font-weight: 700;
+  font-size: calc(14px * var(--ui-scale));
+  letter-spacing: 0.10em; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.profile-op-tag {
+  margin-top: calc(2px * var(--ui-scale));
+  font-family: var(--font); font-weight: 700;
+  font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.22em; text-transform: uppercase;
+}
+.profile-lvl-row {
+  display: flex; align-items: center;
+  gap: calc(10px * var(--ui-scale));
+  margin-top: calc(11px * var(--ui-scale));
+}
+.profile-lvl-badge {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  /* min-width, not width: at a fixed 34px a two-digit level in Orbitron 800
+     with the card's letter-spacing ran out of the box on its left. */
+  min-width: calc(24px * var(--ui-scale)); height: calc(34px * var(--ui-scale));
+  padding: 0 calc(8px * var(--ui-scale));
+  border-radius: var(--r3);
+  background: linear-gradient(180deg, rgba(214,69,58,0.22), rgba(214,69,58,0.06));
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  /* Rajdhani, not Orbitron: Orbitron's "1" is a bare vertical stroke, so a
+     two-digit level read as a glyph rather than a number. Every other numeric
+     readout in the game (stats cards, deploy strip) is already on this face. */
+  font-family: var(--font); font-weight: 700;
+  font-size: calc(19px * var(--ui-scale)); line-height: 1;
+  letter-spacing: 0.02em; color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.profile-lvl-meter { flex: 1 1 auto; min-width: 0; }
+.profile-lvl-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font); font-weight: 700;
+  font-size: calc(8px * var(--ui-scale));
+  letter-spacing: 0.18em; color: rgba(237,234,226,0.44);
+  margin-bottom: calc(4px * var(--ui-scale));
+}
+.profile-lvl-track {
+  height: calc(5px * var(--ui-scale)); border-radius: 999px; overflow: hidden;
+  background: rgba(6, 8, 11, 0.72);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(237,234,226,0.07);
+}
+.profile-lvl-fill {
+  height: 100%; width: 0%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--amber), var(--amber-bright));
+  box-shadow: 0 0 calc(8px * var(--ui-scale)) rgba(214,69,58,0.55);
+  transition: width 480ms var(--ease-out);
+}
+
 /* Score — the number the card leads with. Rajdhani at display weight, with
    tabular figures so it doesn't jitter as digits change. */
-.profile-score-block { padding: calc(18px * var(--ui-scale)) 0 calc(14px * var(--ui-scale)); }
+.profile-score-block {
+  padding: calc(13px * var(--ui-scale)) 0 calc(12px * var(--ui-scale));
+  background: linear-gradient(90deg, rgba(233,226,210,0.12), rgba(233,226,210,0)) top / 100% 1px no-repeat;
+}
 .profile-score {
   font-family: var(--font); font-weight: 700;
-  font-size: calc(58px * var(--ui-scale));
+  font-size: calc(46px * var(--ui-scale));
   line-height: 0.94; letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -2283,21 +2360,23 @@ html.no-backdrop-filter .profile-card {
   color: rgba(237, 234, 226, 0.44);
 }
 
-/* Three headline counters. */
+/* Six counters on two rows. Three fitted, but they were the three least
+   interesting numbers the game keeps and two of them read "—" and "0" for
+   most of a playthrough. */
 .profile-stats {
   display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: calc(8px * var(--ui-scale));
-  margin: calc(16px * var(--ui-scale)) 0 calc(4px * var(--ui-scale));
+  gap: calc(7px * var(--ui-scale));
+  margin: calc(14px * var(--ui-scale)) 0 calc(4px * var(--ui-scale));
 }
 .profile-stat {
-  padding: calc(11px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  padding: calc(9px * var(--ui-scale)) calc(5px * var(--ui-scale));
   border-radius: var(--r3);
   background: rgba(8, 10, 14, 0.40);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .profile-stat-value {
   font-family: var(--font); font-weight: 700;
-  font-size: calc(22px * var(--ui-scale));
+  font-size: calc(19px * var(--ui-scale));
   font-variant-numeric: tabular-nums;
   line-height: 1.05; color: var(--ink);
 }
@@ -2311,8 +2390,8 @@ html.no-backdrop-filter .profile-card {
 
 /* Favourite weapon, drawn with the same painted sprite the loadout uses. */
 .profile-weapon {
-  margin-top: calc(14px * var(--ui-scale));
-  padding: calc(12px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  margin-top: calc(10px * var(--ui-scale));
+  padding: calc(9px * var(--ui-scale)) calc(10px * var(--ui-scale));
   border-radius: var(--r3);
   background: rgba(8, 10, 14, 0.40);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
@@ -2323,8 +2402,8 @@ html.no-backdrop-filter .profile-card {
   color: rgba(237, 234, 226, 0.40);
 }
 .profile-weapon-art {
-  display: block; margin: calc(8px * var(--ui-scale)) auto;
-  width: calc(180px * var(--ui-scale)); height: calc(64px * var(--ui-scale));
+  display: block; margin: calc(6px * var(--ui-scale)) auto;
+  width: calc(170px * var(--ui-scale)); height: calc(50px * var(--ui-scale));
   max-width: 100%;
 }
 /* Before any weapon has been logged the plate held a blank 64px canvas above
@@ -2348,6 +2427,10 @@ html.no-backdrop-filter .profile-card {
 }
 
 .profile-actions {
-  display: flex; justify-content: flex-end;
-  margin-top: calc(14px * var(--ui-scale));
+  display: flex; justify-content: center;
+  margin-top: calc(12px * var(--ui-scale));
 }
+/* The close button inherits .btn.quiet's 200px fixed width and 24px top
+   margin, which stacked with the actions row's own margin and left a band of
+   empty card under the last panel. */
+.profile-actions .btn.quiet { margin-top: 0; width: 100%; }

@@ -33,6 +33,7 @@ import { ArchivesUI } from './game/archives.js';
 import { Barks } from './game/barks.js';
 import { Tutorial } from './game/tutorial.js';
 import { ProfileUI } from './game/profile.js';
+import { drawSoldier as rigDrawSoldier, newWeaponState } from './game/rig.js';
 import { intelTitleKey } from './game/intel.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd } from './engine/ads.js';
@@ -211,6 +212,35 @@ function previewItem(item, cv) {
   g.restore();
 }
 
+// Draws a full operator into a canvas, using the same rig the game plays
+// with. The profile card is an operator file, so it should show the operator
+// the player equipped rather than describe them in text.
+function previewOperator(variant, cv) {
+  const parts = assets[variant] || assets.ranger;
+  if (!parts || !cv) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 96, H = cv.clientHeight || 128;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  // Idle stance, weapon lowered — a portrait, not a firing pose.
+  const ent = {
+    x: 0, y: 0, facing: 1, aimLocal: 0.12, gaitPhase: 0, speedNorm: 0,
+    onGround: true, airTime: 0, vy: 0, crouchSpring: 0, breathT: 0,
+    lean: 0, hurtT: 0, deadT: 0,
+  };
+  // The rig is about 131 units tall from the sole to the crown; fit it with a
+  // margin so head gear (an antenna, an NVG arm) is not cropped.
+  const k = Math.min(W / 74, H / 142);
+  g.save();
+  g.translate(W * 0.52, H - 6 * k);
+  g.scale(k, k);
+  rigDrawSoldier(g, parts, assets.shadow, ent,
+    { wpn: assets.weapons.rifle, ws: newWeaponState() });
+  g.restore();
+}
+
 async function boot() {
   applyTranslations();          // fill static markup before the first paint
   hud.show('loading');
@@ -268,7 +298,8 @@ async function boot() {
   game.archivesUI = new ArchivesUI({ progression: game.progression, audio });
   game.archivesUI.mount();
   game.profileUI = new ProfileUI({
-    progression: game.progression, weapons: assets.weapons, previewItem, audio,
+    progression: game.progression, weapons: assets.weapons,
+    previewItem, previewOperator, audio,
   });
   game.profileUI.mount();
   game.touch = new TouchControls(input, { force: params.has('touch') });

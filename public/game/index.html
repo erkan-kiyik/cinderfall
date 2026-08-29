@@ -414,6 +414,27 @@
         <span class="profile-title" data-i18n="profile.title">PROFILE</span>
       </div>
 
+      <!-- Identity. The card is called an operator file and used to contain
+           no operator at all: the equipped skin, the one thing the player
+           actually picked, appeared nowhere on it. -->
+      <div class="profile-id">
+        <canvas id="profile-portrait" class="profile-portrait" aria-hidden="true"></canvas>
+        <div class="profile-id-text">
+          <div id="profile-op-name" class="profile-op-name"></div>
+          <div id="profile-op-tag" class="profile-op-tag"></div>
+          <div class="profile-lvl-row">
+            <span class="profile-lvl-badge"><span id="profile-lvl">1</span></span>
+            <div class="profile-lvl-meter">
+              <div class="profile-lvl-head">
+                <span data-i18n="play.nextRank">NEXT LEVEL</span>
+                <span id="profile-xp-pct">0%</span>
+              </div>
+              <div class="profile-lvl-track"><div id="profile-xp-fill" class="profile-lvl-fill"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="profile-score-block">
         <div id="profile-score" class="profile-score">0</div>
         <div id="profile-score-label" class="profile-score-label" data-i18n="profile.score">SECTOR SCORE</div>
