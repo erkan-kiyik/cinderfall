@@ -1418,19 +1418,37 @@ html, body {
 .tc-label { display: none; }
 .tc-btn {
   position: absolute; pointer-events: auto; touch-action: none; z-index: 3;
-  width: clamp(40px, 7.6vw, 52px); height: clamp(40px, 7.6vw, 52px); border-radius: 50%;
+  width: clamp(44px, 8vw, 54px); height: clamp(44px, 8vw, 54px); border-radius: 50%;
   background: rgba(18,21,26,0.34); border: 1px solid rgba(232,228,218,0.30);
   color: var(--ink); font-family: var(--font); font-size: clamp(8px, 1.3vw, 10px); letter-spacing: 0.1em;
   display: flex; align-items: center; justify-content: center; text-align: center;
   opacity: var(--tc-alpha);
   transition: opacity var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
 }
+/* Touch target vs. drawn size. The visible circles stay small — they sit on
+   top of the fight, and a 390px-tall screen cannot spare the furniture — but
+   every one of them carries an invisible box 12px larger in each direction,
+   which puts the smallest of them at 56px against the 48dp floor a thumb
+   actually hits reliably. Growing the circles to 56px instead would cover
+   about half again as much of the screen for the same result. Positions below
+   are spaced so no two of these enlarged boxes touch. */
+.tc-btn::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  background: transparent;
+}
 .tc-btn:active { background: rgba(217,179,108,0.34); opacity: 0.9; }
-.tc-jump { right: calc(130px + env(safe-area-inset-right)); bottom: calc(74px + env(safe-area-inset-bottom)); }
+.tc-jump { right: calc(130px + env(safe-area-inset-right)); bottom: calc(84px + env(safe-area-inset-bottom)); }
 .tc-reload { right: calc(130px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom)); }
-.tc-swap { right: calc(20px + env(safe-area-inset-right)); bottom: calc(128px + env(safe-area-inset-bottom)); }
+.tc-swap { right: calc(20px + env(safe-area-inset-right)); bottom: calc(140px + env(safe-area-inset-bottom)); }
 .tc-crouch { left: calc(130px + env(safe-area-inset-left)); bottom: calc(14px + env(safe-area-inset-bottom)); }
-.tc-crouch.on { background: rgba(217,179,108,0.34); border-color: rgba(217,179,108,0.55); }
+/* Lit while the crouch is held, and again for as long as a slide is running —
+   the slide is usually entered by flicking the move stick down rather than by
+   this button, and without the readback there is nothing on screen that says
+   the input was taken. */
+.tc-crouch.on, .tc-crouch.sliding {
+  background: rgba(217,179,108,0.34); border-color: rgba(217,179,108,0.55);
+}
+.tc-crouch.sliding { background: rgba(217,179,108,0.5); }
 .tc-takedown {
   left: 50%; bottom: calc(106px + env(safe-area-inset-bottom)); transform: translateX(-50%);
   width: auto; height: 44px; border-radius: var(--r-pill); padding: 0 18px;

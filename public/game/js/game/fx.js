@@ -181,6 +181,15 @@ export class FX {
     this.audio.land(hard);
   }
 
+  // Grit thrown up behind a slide. Emitted continuously while the operator is
+  // down, kicked *backwards* along the direction of travel so the trail reads
+  // as something he is leaving behind rather than running into, and scaled by
+  // how much speed is left — the plume thins out as the slide bleeds off,
+  // which is the cue that tells the player the move is about to end.
+  slideDust(x, y, dir, k) {
+    kickDust(this.ps, x - dir * 8, y, -dir, 1 + Math.round(k * 3));
+  }
+
   slash(x, y, a0, a1, r, facing) {
     this.slashes.push({ x, y, a0, a1, r, life: 0.16, age: 0, facing });
   }

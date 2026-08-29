@@ -52,6 +52,52 @@ const RUN_KNEE_LIFT = 5.5;
 // Heel-strike to toe-off: the planted foot rolls instead of staying flat.
 const FOOT_ROLL = 2.4;
 
+// ---- idle ----
+// At rest the gait cycle contributes nothing at all, so everything that made
+// the operator look alive while moving — bob, sway, counter-rotation, hip
+// drive — goes to zero and what is left is a statue breathing 0.4px. This is
+// the layer that replaces it: a slow weight shift between the feet, a lazy
+// postural drift, real breathing depth, and a bladed weight-forward stance
+// instead of two feet planted 10px apart.
+//
+// The amplitudes are all small on purpose. A combat-ready idle is a man
+// holding a position, not a man swaying; anything larger reads as drunk.
+const IDLE_SWAY = 2.1;        // px, hip-to-hip weight shift
+const IDLE_DRIFT = 0.024;     // radians of slow postural drift
+const IDLE_BREATH = 2.2;      // px of vertical breathing at rest (0.4 while moving)
+const IDLE_SINK = 3.0;        // px the hips settle onto soft knees
+const IDLE_SHOULDER = 1.1;    // px the shoulders lag the hip shift
+// Muzzle wander. Held weapons are never still, and at a third of a degree this
+// is the cheapest "the operator is alive" signal in the whole rig — it moves
+// the far end of a long sprite, so a rotation far too small to see on the body
+// is plainly visible at the muzzle. Deliberately on a period that shares no
+// factor with the breathing, so the two never stack into one obvious bob.
+const IDLE_AIM_DRIFT = 0.035; // radians at full idle
+// Feet at rest. Bladed and wider than the old ±5: weight forward over a lead
+// foot, rear foot back and carrying the turn. Only applies standing — it is
+// lerped out by `mv` the moment the operator moves.
+const STANCE_FRONT = 8.5;
+const STANCE_REAR = -9.5;
+
+// ---- slide ----
+// Authored as a complete alternative pose and cross-faded against the gait,
+// the same way the vault is: no phase to fight and nothing to unwind. Hips
+// near the deck, torso rocked back over them, lead leg driven out front and
+// the trail leg folded under.
+// Numbers picked off a sweep rather than guessed: hips much lower than this
+// and the pose stops reading as a slide and starts reading as sitting on the
+// floor, because the weight ends up behind the hips instead of over the
+// trailing knee. The give-away is the lead leg — it has to be genuinely
+// extended, not folded, which is what SLIDE_LEAD_X is for.
+const SLIDE_HIP_Y = -24;      // hip height above the street (standing is -64)
+const SLIDE_LEAN = -0.62;     // radians; negative is back, against the direction of travel
+const SLIDE_NECK_HOLD = 0.45; // fraction of the torso rock the neck follows — eyes stay up
+const SLIDE_TORSO = 37;       // shortened torso: the operator is folded, not stretched out
+const SLIDE_LEAD_X = 50;      // lead ankle driven out front — nearly a straight leg
+const SLIDE_LEAD_Y = -4;      // …and skimming the deck
+const SLIDE_TRAIL_X = -14;    // trail ankle folded back under the hips
+const SLIDE_TRAIL_Y = -4;     // …with the knee down on the street, taking the weight
+
 // 0.995 keeps ik2 off its own singularity (a perfectly straight two-bone chain
 // has no defined bend direction).
 const REACH_LIMIT = 0.995;
@@ -109,6 +155,15 @@ export function computePose(ent) {
   const sway = strideSide * 1.4 * sp * (1 - air);
   const pelvicList = strideSide * PELVIC_LIST * sp * (1 - air);
 
+  // Idle life. `settle` is how close to a standstill the operator is; it is
+  // the exact complement of the gait terms above, so the two layers hand off
+  // to each other and neither is ever paying for the other. Two incommensurate
+  // periods (0.62 and 0.41) keep the loop from reading as a loop.
+  const settle = clamp(1 - sp * 4, 0, 1) * (1 - air);
+  const idleShift = Math.sin(ent.breathT * 0.62) * settle;
+  const idleDrift = Math.sin(ent.breathT * 0.41 + 1.7) * settle;
+  const idleAim = Math.sin(ent.breathT * 0.83 + 0.6) * settle;
+
   // stumbleLean is a transient the Player adds on top of its damped lean —
   // kept separate so the tilt can't feed back into the damping and linger.
   //
@@ -119,7 +174,8 @@ export function computePose(ent) {
   const posture = (STANCE_PITCH + RUN_PITCH * sp * sp) * (1 - air * 0.7)
                   * (1 - clamp(crouch * 0.4, 0, 0.55));
   const lean = ent.lean + (ent.stumbleLean || 0)
-               + air * clamp(ent.vy * 0.00035, -0.12, 0.2) + posture;
+               + air * clamp(ent.vy * 0.00035, -0.12, 0.2) + posture
+               + idleDrift * IDLE_DRIFT;
 
   // Shoulders counter-rotate against the hips, once per full stride. Pure
   // horizontal offset rather than a real twist — in a side view that is what
@@ -128,8 +184,13 @@ export function computePose(ent) {
   // Hips drive forward as the stance leg extends.
   const drive = Math.abs(stride) * HIP_DRIVE * sp * (1 - air);
 
-  const hipX = lean * 13 + sway + noise * 1.6 + drive;
-  const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4 + breath * 0.4 + pelvicList;
+  const hipX = lean * 13 + sway + noise * 1.6 + drive + idleShift * IDLE_SWAY;
+  // Breathing is worth 0.4px under load and IDLE_BREATH standing still — a
+  // chest actually moves when a man is not running, and this is most of what
+  // sells a stationary operator as a living one.
+  const breathLift = breath * lerp(0.4, IDLE_BREATH, settle);
+  const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4
+               + breathLift + pelvicList + IDLE_SINK * settle;
 
   const torsoLen = BONES.torso - crouch * 2.5;
   // Head holds its line while the chest drops — the operator is looking at
@@ -141,8 +202,10 @@ export function computePose(ent) {
   };
   const shLen = torsoLen - BONES.shoulderDrop;
   const shoulder = {
-    x: hipX + Math.sin(lean) * shLen + counter,
-    y: hipY - Math.cos(lean) * shLen + breath * 0.4,
+    // The shoulders lag the hip shift rather than riding it: the torso is a
+    // mass on a spine, not a plank bolted to the pelvis.
+    x: hipX + Math.sin(lean) * shLen + counter - idleShift * IDLE_SHOULDER,
+    y: hipY - Math.cos(lean) * shLen + breathLift * 0.6,
   };
 
   // legs
@@ -169,7 +232,7 @@ export function computePose(ent) {
     // Planted foot rolls heel→toe across its stance phase instead of staying
     // pinned flat to the street.
     const roll = (1 - sw) * Math.sin(ph) * FOOT_ROLL * sp;
-    const standX = i ? -4.5 : 5.5;
+    const standX = i ? STANCE_REAR : STANCE_FRONT;
     let fx = lerp(standX, gx + roll, mv) + noise * 0.8;
     let fy = -lerp(0, lift, mv);
     if (air > 0) {
@@ -193,6 +256,19 @@ export function computePose(ent) {
   // hard over the obstacle, hips high and forward, both legs swept to one
   // side and tucked. It blends in and out rather than snapping, so the
   // transition out of the run cycle reads continuously.
+  // ---- slide blend ----
+  // Checked before the vault, and cheap to check: the two are mutually
+  // exclusive at the Player (a vault cancels a slide), so whichever is live
+  // owns the body outright.
+  const sk = ent.slideBlend || 0;
+  if (sk > 0.001) {
+    const pose = slidePose(hipX, lean, Math.sign(ent.vx || 0) * (ent.facing || 1));
+    return blendPose(
+      { hipX, hipY, neck, shoulder, lean, legs, breath, air, idleAim, vaultW: 0, slideW: 0 },
+      pose, smootherstep(clamp(sk, 0, 1)), 'slide',
+    );
+  }
+
   const vk = ent.vaultK || 0;
   if (vk > 0.001) {
     // eased in over the first fifth and out over the last quarter, so the
@@ -201,12 +277,62 @@ export function computePose(ent) {
                        smootherstep(clamp((1 - vk) / 0.25, 0, 1)));
     const pose = vaultPose(ent, vk, hipX, hipY, lean);
     return blendPose(
-      { hipX, hipY, neck, shoulder, lean, legs, breath, air },
-      pose, w,
+      { hipX, hipY, neck, shoulder, lean, legs, breath, air, idleAim, vaultW: 0, slideW: 0 },
+      pose, w, 'vault',
     );
   }
 
-  return { hipX, hipY, neck, shoulder, lean, legs, breath, air };
+  return { hipX, hipY, neck, shoulder, lean, legs, breath, air, idleAim, vaultW: 0, slideW: 0 };
+}
+
+// ---- slide pose ----
+// A knee slide: hips dropped almost to the street, torso rocked back over
+// them so the operator's weight is behind the lead foot, lead leg driven out
+// front and the trail leg folded up underneath. `dir` is +1 when the slide is
+// going the way the operator faces and -1 when it is not — sliding backwards
+// out of a reversal has to lead with the other leg or the pose reads inside
+// out.
+function slidePose(hipX, lean, dir) {
+  const d = dir < 0 ? -1 : 1;
+  const sHipX = hipX * 0.35 + 3 * d;
+  const sHipY = SLIDE_HIP_Y;
+  // Sliding *against* the facing (aiming back over the shoulder) rocks the
+  // torso the other way, which is physically right but visually extreme —
+  // taken at full strength it reads as a dive rather than a slide, so the
+  // reversed case gets a little over half the rock.
+  const sLean = lean * 0.25 + SLIDE_LEAN * d * (d < 0 ? 0.55 : 1);
+
+  // Eyes stay up and downrange: the neck gives back most of the torso's rock.
+  const neckLean = sLean * SLIDE_NECK_HOLD;
+  const neck = {
+    x: sHipX + Math.sin(neckLean) * SLIDE_TORSO,
+    y: sHipY - Math.cos(neckLean) * SLIDE_TORSO,
+  };
+  const shLen = SLIDE_TORSO - BONES.shoulderDrop;
+  const shoulder = {
+    x: sHipX + Math.sin(sLean) * shLen,
+    y: sHipY - Math.cos(sLean) * shLen,
+  };
+
+  const legs = [];
+  for (let i = 0; i < 2; i++) {
+    const lead = i === 0;
+    const hip = { x: sHipX + (lead ? 1.4 : -1.4) * d, y: sHipY + 1.5 };
+    const target = lead
+      ? { x: sHipX + SLIDE_LEAD_X * d, y: SLIDE_LEAD_Y }
+      : { x: sHipX + SLIDE_TRAIL_X * d, y: SLIDE_TRAIL_Y };
+    const ankle = clampReach(hip, target, LEG_REACH);
+    // Lead leg bends the opposite way to the trail leg — one knee is driving
+    // forward and the other is folded under the hips, which is the whole
+    // silhouette of the move.
+    const knee = ik2(hip.x, hip.y, ankle.x, ankle.y, BONES.thigh, BONES.shin,
+                     lead ? -1 : 1);   // opposite bends: lead knee up, trail knee down
+    legs.push({ hip, knee, ankle });
+  }
+  return {
+    hipX: sHipX, hipY: sHipY, neck, shoulder, lean: sLean,
+    legs, breath: 0, air: 0, idleAim: 0, vaultW: 0, slideW: 0,
+  };
 }
 
 
@@ -253,11 +379,18 @@ function vaultPose(ent, k, hipX, hipY, lean) {
     const knee = ik2(hip.x, hip.y, ankle.x, ankle.y, BONES.thigh, BONES.shin, -1);
     legs.push({ hip, knee, ankle });
   }
-  return { hipX: vHipX, hipY: vHipY, neck, shoulder, lean: vLean, legs, breath: 0, air: 0 };
+  return {
+    hipX: vHipX, hipY: vHipY, neck, shoulder, lean: vLean,
+    legs, breath: 0, air: 0, idleAim: 0, vaultW: 0, slideW: 0,
+  };
 }
 
 // Linear cross-fade between two poses. Only the fields the renderer reads.
-function blendPose(a, b, w) {
+// `kind` says which of the two exclusive full-body overrides is fading in, so
+// the consumers that key off one of them (the vault's support-hand tuck, the
+// slide's weapon carry) can tell them apart. Both fields are always written,
+// so every pose object leaves this function with the same shape.
+function blendPose(a, b, w, kind) {
   const mixPt = (p, q) => ({ x: lerp(p.x, q.x, w), y: lerp(p.y, q.y, w) });
   return {
     hipX: lerp(a.hipX, b.hipX, w),
@@ -272,7 +405,9 @@ function blendPose(a, b, w) {
     })),
     breath: lerp(a.breath, b.breath, w),
     air: lerp(a.air, b.air, w),
-    vaultW: w,
+    idleAim: lerp(a.idleAim, b.idleAim, w),
+    vaultW: kind === 'vault' ? w : 0,
+    slideW: kind === 'slide' ? w : 0,
   };
 }
 
@@ -285,19 +420,30 @@ const RELAX_MUZZLE_DIP = 0.62;   // radians, toward the ground
 const RELAX_DROP_Y = 7.5;        // px, weapon carried lower on the body
 const RELAX_DROP_X = -3.5;       // px, drawn back toward the hip
 
+// High ready (port arms): the sprinting carry. Opposite sign to relax — the
+// muzzle comes *up* and the weapon is pulled back across the chest so it
+// clears the operator's own stride, and both hands stay on it, because the
+// whole point of the position is that the weapon can be presented in one
+// motion. Driven by ws.highReady, see player.js.
+const HIGHREADY_MUZZLE_RISE = 0.54;  // radians, muzzle toward the sky
+const HIGHREADY_DROP_Y = 2.6;        // px, buttstock rides down to the ribs
+const HIGHREADY_DROP_X = -5.2;       // px, drawn back against the chest
+
 // Anchor of the weapon (its grip origin) in character-local space.
 export function weaponAnchor(pose, wpn, ws, aim) {
   const relax = ws.relax || 0;
+  const high = ws.highReady || 0;
   const pivot = {
-    x: pose.shoulder.x + 2.2 + RELAX_DROP_X * relax,
-    y: pose.shoulder.y + 2.2 + RELAX_DROP_Y * relax,
+    x: pose.shoulder.x + 2.2 + RELAX_DROP_X * relax + HIGHREADY_DROP_X * high,
+    y: pose.shoulder.y + 2.2 + RELAX_DROP_Y * relax + HIGHREADY_DROP_Y * high,
   };
   // Muzzle dips toward the ground as the weapon comes off aim. The pose is
   // built in facing-neutral local space (the horizontal flip happens at draw
   // time, see g.scale(ent.facing, 1)), so a positive angle is always "down"
   // here — folding `facing` in would invert the dip when facing left.
-  const dip = RELAX_MUZZLE_DIP * relax;
-  const ang = aim + ws.rot + ws.recoilRot + dip;
+  const dip = RELAX_MUZZLE_DIP * relax - HIGHREADY_MUZZLE_RISE * high;
+  const ang = aim + ws.rot + ws.recoilRot + dip
+              + IDLE_AIM_DRIFT * (pose.idleAim || 0);
   const off = rot2(
     ws.offX - ws.recoil - (wpn.shoulder ? wpn.shoulder.x : 0),
     ws.offY - (wpn.shoulder ? wpn.shoulder.y : 0),
@@ -586,6 +732,12 @@ export function newWeaponState() {
     recoil: 0, recoilVel: 0, recoilRot: 0, recoilRotVel: 0,
     magVisible: true, magOffX: 0, magOffY: 0, magRot: 0, magHand: false,
     boltBack: 0, slideBack: 0,
+    // Carry blends, declared here rather than sprung into existence on the
+    // first frame that needs them: every weapon state then has one shape, so
+    // the rig's hot path never re-optimises against a second hidden class.
+    // 0 = weapon up in a two-handed ready grip; relax → carried one-handed at
+    // the side; highReady → port arms across the chest. See player.js.
+    relax: 0, highReady: 0,
     flashT: 0, flashIdx: 0, flashScale: 1,
     knifeAng: 0.35, knifeWrist: 0.3, knifeReach: 26,
     // energy weapons: heat 0..1 (overheat lock), charge 0..1 (charge shots)

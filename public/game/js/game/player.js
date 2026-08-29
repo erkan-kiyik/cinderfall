@@ -154,6 +154,43 @@ const STEALTH_RANGE = 56;      // reach for a takedown from directly behind
 // not just the pose, so crouching fits under cover and shrinks the target.
 const STAND_H = 126, CROUCH_H = 63;
 
+// ---- slide -------------------------------------------------------------
+// A slide is a sprint that goes to the floor. Everything about it is *spent*
+// momentum: it can only be entered above SLIDE_MIN_SPEED, its speed only ever
+// decays from what the operator had already earned, and steering is gone for
+// the duration. That is deliberate — a slide that can be steered, or that can
+// be entered from a standstill, stops being a commitment and becomes the
+// default way to cross a room.
+//
+// What the player gets for the commitment is the collider: SLIDE_H is below
+// CROUCH_H, so a slide genuinely passes under cover a crouch-walk does not,
+// and presents a much smaller target while it lasts.
+const SLIDE_MIN_SPEED = 250;   // px/s entry floor — below this a crouch is just a crouch
+const SLIDE_BOOST = 1.16;      // one-off kick on entry (the "accelerated" part)
+const SLIDE_MAX_SPEED = 620;   // ceiling, so the boost can never stack into a launch
+const SLIDE_FRICTION = 520;    // px/s² bleed along the slide
+const SLIDE_TIME = 0.62;       // s, hard cap on the duration
+const SLIDE_EXIT_SPEED = 155;  // px/s, below this he is back on his feet
+const SLIDE_COOLDOWN = 0.5;    // s between slides — no chaining one across a map
+const SLIDE_STAMINA = 16;      // cost on entry
+const SLIDE_H = 48;            // collider height while down (vs CROUCH_H 63)
+const SLIDE_CRAWL = 70;        // px/s, top speed when stuck under cover too low to crouch in
+const SLIDE_SQUASH = 0.13;     // entry compression through the squash spring
+const SLIDE_DUST_EVERY = 0.055; // s between grit puffs, so the plume is frame-rate independent
+// Collider blend rate. Fast in (the drop is the point of the move) and slower
+// out, so the operator does not pop back to full height on the last frame.
+const SLIDE_BLEND_IN = 22;
+const SLIDE_BLEND_OUT = 13;
+
+// ---- high ready (port arms) --------------------------------------------
+// The sprinting carry: muzzle up, weapon back across the chest, both hands on
+// it. Blends in only once the sprint is genuinely established (so a half-step
+// at speed does not swing the weapon around), and drops out several times
+// faster than it builds — coming off a sprint to shoot must never wait for an
+// animation.
+const HIGHREADY_IN = 0.22;     // s to reach the carry
+const HIGHREADY_OUT = 0.085;   // s to come off it and back on target
+
 // ---- squash & stretch --------------------------------------------------
 // One signed value drives it: positive squashes (wide + short), negative
 // stretches (tall + narrow). It's a spring, so impulses overshoot and settle
@@ -265,6 +302,14 @@ export class Player {
     this.stealthMul = 1;   // <1 = enemies gain awareness slower
     this.luckMul = 1;      // loot roll multiplier
     this.stamina = 100; this.sprinting = false; this.sprintBlend = 0;
+    // slide state — see SLIDE_* above
+    this.sliding = false;      // in a slide right now
+    this.slideT = 0;           // seconds left on this slide
+    this.slideCd = 0;          // cooldown before another can start
+    this.slideBlend = 0;       // 0..1 collider/pose blend, damped so nothing snaps
+    this.slideStuck = false;   // slide over, but no headroom to come up yet
+    this.slideDustT = 0;       // countdown to the next grit puff
+    this.crouchPrev = false;   // last frame's crouch input, for the rising edge
     this.kills = 0; this.headshots = 0; this.shots = 0; this.hits = 0;
     this.lastHurtT = -99; this.lastShotT = -99;
     this.stunT = 0;
@@ -341,14 +386,35 @@ export class Player {
     this.aimLocal = clamp(raw, -1.15, 1.2) - this.spray;
     this.aimSmooth = damp(this.aimSmooth, this.aimLocal, 15, dt);
 
+    // ---- slide entry ----
+    // Read before the crouch block, because a slide overrides it: the crouch
+    // input that starts a slide must not also be spent as an ordinary crouch.
+    // The gate is the previous frame's sprint plus the speed actually on the
+    // clock, so both the keyboard (Shift + C) and the touch layer (sprint tilt
+    // + crouch button, or a downward flick on the move stick, which synthesises
+    // the same KeyC edge) enter it through one path.
+    this.slideCd = Math.max(0, this.slideCd - dt);
+    const crouchDown = !!input.crouch;
+    const crouchEdge = crouchDown && !this.crouchPrev;
+    this.crouchPrev = crouchDown;
+    if (!this.sliding && crouchEdge && this.onGround && this.slideCd <= 0 &&
+        !this.vault && !this.reload && this.stunT <= 0 &&
+        (this.sprinting || input.sprint) &&
+        Math.abs(this.vx) >= SLIDE_MIN_SPEED && this.stamina >= SLIDE_STAMINA) {
+      this.startSlide();
+    }
+    if (this.sliding) this.updateSlide(dt);
+    this.slideBlend = damp(this.slideBlend, this.sliding ? 1 : 0,
+                           this.sliding ? SLIDE_BLEND_IN : SLIDE_BLEND_OUT, dt);
+
     // ---- crouch: hold to lower stance (slower, steadier, harder to spot).
     // Smoothly blended so the pose eases down/up rather than snapping.
     let wantCrouch = input.crouch && this.onGround && this.stunT <= 0 && !this.reload;
+    // A slide is a crouch the operator does not get a vote on.
+    if (this.sliding) wantCrouch = true;
     // Standing back up is refused when there's no headroom, so releasing the
     // key under a low ledge can't shove the operator's head into geometry.
-    if (!wantCrouch && this.crouchHold > 0.02 &&
-        this.world.rectHit(this.x - this.halfW, this.y - STAND_H,
-                           this.halfW * 2, STAND_H - CROUCH_H)) {
+    if (!wantCrouch && this.crouchHold > 0.02 && !this.hasHeadroom(CROUCH_H, STAND_H)) {
       wantCrouch = true;
     }
     this.crouchHold = damp(this.crouchHold, wantCrouch ? 1 : 0, 12, dt);
@@ -356,6 +422,11 @@ export class Player {
     // The collision box shrinks with the pose — crouching genuinely fits under
     // low cover and presents a smaller target, rather than only looking lower.
     this.h = lerp(STAND_H, CROUCH_H, this.crouchHold);
+    // …and a slide takes it below the crouch box. This is what makes the move
+    // a real piece of traversal rather than a fast crouch-walk with a pose on
+    // top: there is cover a sliding operator fits under and a crouching one
+    // does not.
+    if (this.slideBlend > 0.001) this.h = lerp(this.h, SLIDE_H, this.slideBlend);
 
     // ---- movement
     this.stunT = Math.max(0, this.stunT - dt);
@@ -373,7 +444,7 @@ export class Player {
     // Hard reversal: cutting from a run into the opposite direction throws the
     // operator's weight against the turn before it catches. Rate-limited so
     // flicking the stick can't chain-stumble.
-    if (this.onGround && mx !== 0 && Math.abs(this.vx) > REVERSAL_SPEED &&
+    if (this.onGround && !this.sliding && mx !== 0 && Math.abs(this.vx) > REVERSAL_SPEED &&
         Math.sign(mx) !== Math.sign(this.vx) &&
         this.time - this.lastReversalT > REVERSAL_COOLDOWN) {
       this.lastReversalT = this.time;
@@ -388,16 +459,31 @@ export class Player {
                   : mx === 0 ? DECEL
                   : turning ? TURN_ACCEL
                   : ACCEL) * stunMul;
-    this.vx = this.vx > target
-      ? Math.max(target, this.vx - rate * dt)
-      : Math.min(target, this.vx + rate * dt);
+    if (this.sliding) {
+      // Steering is locked for the duration — giving it up is what the speed
+      // and the low profile are bought with; updateSlide owns vx instead.
+      //
+      // The one exception is a slide that has run out under cover too low to
+      // even crouch in. Pinning the player there with no way out would be a
+      // soft lock, so he crawls out on the stick at walking-pace-over-three.
+      if (this.slideStuck) {
+        const crawl = mx * SLIDE_CRAWL;
+        this.vx = this.vx > crawl
+          ? Math.max(crawl, this.vx - DECEL * dt)
+          : Math.min(crawl, this.vx + DECEL * dt);
+      }
+    } else {
+      this.vx = this.vx > target
+        ? Math.max(target, this.vx - rate * dt)
+        : Math.min(target, this.vx + rate * dt);
+    }
 
     // ---- vault ----
     // Checked before the jump so a run-up into chest cover vaults instead of
     // hopping. Only fires while genuinely moving at pace; at a walk the
     // ordinary jump/step-up still handles the same obstacle.
     this.vaultCdT = Math.max(0, this.vaultCdT - dt);
-    if (!this.vault && this.onGround && this.vaultCdT <= 0 &&
+    if (!this.vault && !this.sliding && this.onGround && this.vaultCdT <= 0 &&
         Math.abs(this.vx) >= VAULT_MIN_SPEED && mx !== 0 &&
         Math.sign(mx) === Math.sign(this.vx)) {
       this.tryVault();
@@ -410,7 +496,11 @@ export class Player {
     // in mid-air — this cannot become an accidental double jump.
     if (input.jump) this.jumpBufT = JUMP_BUFFER_T;
     const canJump = this.onGround || this.coyoteT > 0;
-    if (this.jumpBufT > 0 && canJump && !this.vault) {
+    // Jump-cancelling a slide is allowed — it is the skill expression the move
+    // wants — but not into a ceiling: under cover the slide simply continues.
+    const slideBlocksJump = this.sliding && !this.hasHeadroom(SLIDE_H, STAND_H);
+    if (this.jumpBufT > 0 && canJump && !this.vault && !slideBlocksJump) {
+      if (this.sliding) this.endSlide();
       this.vy = JUMP;
       this.onGround = false;
       this.coyoteT = 0;
@@ -646,6 +736,84 @@ export class Player {
     if (k >= 1) { this.stealth = null; this.lean = 0; }
   }
 
+  // ---------------------------------------------------------------- slide
+
+  // Is there room above the operator to grow the collider from height `from`
+  // to height `to`? Every stand-up in the game asks this before it happens —
+  // crouch→stand, slide→crouch, slide→jump — so none of them can shove a head
+  // into geometry the collision sweep would then have to push back out of.
+  hasHeadroom(from, to) {
+    return !this.world.rectHit(
+      this.x - this.halfW, this.y - to, this.halfW * 2, to - from,
+    );
+  }
+
+  startSlide() {
+    this.sliding = true;
+    this.slideStuck = false;
+    this.slideT = SLIDE_TIME;
+    this.slideDustT = 0;
+    // The kick is applied once, on entry, and clamped. A slide is allowed to
+    // be a little faster than the sprint that fed it — that is the reward for
+    // timing it — but never fast enough to be worth chaining, which is what
+    // SLIDE_COOLDOWN and the stamina cost close off.
+    this.vx = clamp(this.vx * SLIDE_BOOST, -SLIDE_MAX_SPEED, SLIDE_MAX_SPEED);
+    this.stamina = Math.max(0, this.stamina - SLIDE_STAMINA);
+    // Sprint ends here: the operator is on the deck, and leaving the flag up
+    // would keep draining stamina and keep the high-ready carry on a body that
+    // is no longer running.
+    this.sprinting = false;
+    this.sprintBlend = 0;
+    this.squash = SLIDE_SQUASH;
+    this.squashVel = 0;
+    this.fx.landDust(this.x, this.y, false);
+    this.cam.landBounce(-0.85);
+  }
+
+  updateSlide(dt) {
+    this.slideT -= dt;
+    // Grit off the heels, on a timer rather than per-frame so the particle
+    // budget does not depend on the frame rate — a phone at 30fps and a
+    // desktop at 120 get the same plume.
+    this.slideDustT -= dt;
+    if (this.slideDustT <= 0 && this.onGround) {
+      this.slideDustT = SLIDE_DUST_EVERY;
+      this.fx.slideDust(this.x, this.y, Math.sign(this.vx) || this.facing,
+                        clamp(Math.abs(this.vx) / SLIDE_MAX_SPEED, 0, 1));
+    }
+    // Friction only — there is no input term here on purpose (see the movement
+    // block, which hands vx over for the duration).
+    const dir = Math.sign(this.vx);
+    const next = this.vx - dir * SLIDE_FRICTION * dt;
+    // Never let friction push the operator backwards through zero.
+    this.vx = Math.sign(next) === dir ? next : 0;
+
+    const done = this.slideT <= 0
+      || !this.onGround                       // ran off a ledge: a slide is a ground move
+      || Math.abs(this.vx) < SLIDE_EXIT_SPEED
+      || this.stunT > 0
+      || !!this.vault;
+    if (!done) return;
+
+    // Coming up is refused without the room for it. Under cover too low even
+    // to crouch in he stays down, and `slideStuck` re-opens just enough
+    // steering to crawl back out — see the movement block.
+    if (this.onGround && !this.hasHeadroom(SLIDE_H, CROUCH_H)) {
+      this.slideStuck = true;
+      this.slideT = 0;
+      return;
+    }
+    this.endSlide();
+  }
+
+  endSlide() {
+    if (!this.sliding) return;
+    this.sliding = false;
+    this.slideStuck = false;
+    this.slideT = 0;
+    this.slideCd = SLIDE_COOLDOWN;
+  }
+
   // Knocks the operator off balance for a moment: the torso pitches, the
   // camera takes a jolt, and movement authority dips (stunT feeds stunMul in
   // update). `dir` is +1 to pitch forward, -1 to rock back; `strength` 0..1
@@ -877,6 +1045,37 @@ export class Player {
       (ws.relax || 0) + (idle ? dt / RELAX_IN : -dt / RELAX_OUT),
       0, 1,
     );
+
+    // High ready (port arms): the other end of the same axis as `relax`. Where
+    // relax drops the muzzle and releases the support hand, high ready brings
+    // the muzzle *up* and keeps both hands on the weapon — it is a carry you
+    // can shoot from in one motion, which is exactly why soldiers run in it.
+    //
+    // Conditions are deliberately narrow. Firing, aiming, reloading or the
+    // magazine hand all cancel it outright, because in every one of those the
+    // weapon belongs on the target and not across the chest. `sprintBlend`
+    // rather than `sprinting` is the gate, so the carry follows the same
+    // wind-up the legs do instead of snapping on with the first Shift frame.
+    // A slide takes the same carry for a different reason: the operator is
+    // rocked back with his hips at street level, and a weapon left on the
+    // horizontal would be dragging through the road. Firing still overrides
+    // it — sliding into a room and shooting on the way through is exactly the
+    // move the mechanic exists to enable.
+    const wantHighReady = (this.sprintBlend > 0.35 || this.sliding)
+      && !holdingFire
+      && !this.reload
+      && ws.magHand !== true
+      && !this.vault
+      && this.time - (ws.lastFireT || -99) > RELAX_DELAY * 0.5;
+    ws.highReady = clamp(
+      (ws.highReady || 0) + (wantHighReady ? dt / HIGHREADY_IN : -dt / HIGHREADY_OUT),
+      0, 1,
+    );
+    // The two carries are mutually exclusive positions, not a blend — a weapon
+    // cannot be hanging at the hip and up across the chest at once. Whichever
+    // is winning suppresses the other, which matters only in the couple of
+    // frames where one is falling as the other rises.
+    if (ws.highReady > 0.001) ws.relax *= 1 - ws.highReady;
     ws.slideBack = Math.max(0, ws.slideBack - dt * 10);
     // Energy-weapon vibration envelope: emitters don't buck like a cartridge
     // gun, they hum. This decays much faster than the recoil spring and is

@@ -1030,9 +1030,11 @@ class Game {
         hud.setStealthPrompt(true, sx, sy);
       } else hud.setStealthPrompt(false);
       if (this.touch) this.touch.setTakedownAvailable(!!target);
+      if (this.touch) this.touch.setSliding(p.sliding);
     } else {
       hud.setStealthPrompt(false);
       if (this.touch) this.touch.setTakedownAvailable(false);
+      if (this.touch) this.touch.setSliding(p.sliding);
     }
 
     if (this.state === 'play') {

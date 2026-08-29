@@ -47,8 +47,25 @@ const isTouch = () =>
 const MOVE_DEADZONE = 0.15;
 const MOVE_CURVE = 1.4;
 const SPRINT_TILT = 0.84;
+// Sprint LOCK. A bare tilt threshold is the wrong shape for a floating stick:
+// holding a thumb at 84% of a ring it cannot feel means the sprint drops out
+// every time the thumb drifts, which on a phone is constantly. So the tilt
+// only has to be *reached* — hold it past SPRINT_LOCK_T and the sprint latches
+// on, and it then survives all the way back down to SPRINT_KEEP. Coming off
+// the sprint stays instant in the direction that matters: releasing the stick,
+// or pulling back below SPRINT_KEEP, drops it on the same frame.
+const SPRINT_LOCK_T = 0.18;   // seconds at full tilt before the lock takes
+const SPRINT_KEEP = 0.46;     // deflection the lock survives down to
 // Above this the stick counts as a jump flick (rising edge only).
 const JUMP_FLICK = 0.62;
+// …and its mirror: a downward flick on the move stick is a slide. Set higher
+// than JUMP_FLICK because down is the direction a thumb drifts anyway as it
+// tires on the glass, and a slide fired by accident costs the player their
+// steering for half a second. It also requires real horizontal deflection —
+// a slide from a standstill is not a move, and the Player refuses it anyway
+// (see SLIDE_MIN_SPEED), so firing the input there would only be noise.
+const SLIDE_FLICK = 0.70;
+const SLIDE_FLICK_TILT = 0.45;
 
 // Aim feel. FIRE_DEADZONE is where the aim stick starts shooting — holding
 // near centre is how a player stops firing without lifting off. SETTLE is a
@@ -131,7 +148,7 @@ export class TouchControls {
     this.applyAim(dt);
   }
 
-  applyMove() {
+  applyMove(dt = 0) {
     const m = this.move;
     const raw = m.active ? clamp(m.x, -1, 1) : 0;
     const mag = Math.abs(raw);
@@ -147,11 +164,30 @@ export class TouchControls {
     // (animation triggers, the vault check) — axisX is what actually sets speed.
     this.key('KeyD', a > 0.05);
     this.key('KeyA', a < -0.05);
-    this.key('ShiftLeft', mag > SPRINT_TILT);
+
+    // Sprint lock (see SPRINT_LOCK_T / SPRINT_KEEP).
+    if (!m.active) {
+      this._sprintHeld = 0; this._sprintLock = false;
+    } else if (mag > SPRINT_TILT) {
+      this._sprintHeld = (this._sprintHeld || 0) + dt;
+      if (this._sprintHeld >= SPRINT_LOCK_T) this._sprintLock = true;
+    } else {
+      this._sprintHeld = 0;
+      if (mag < SPRINT_KEEP) this._sprintLock = false;
+    }
+    this.key('ShiftLeft', this._sprintLock || mag > SPRINT_TILT);
 
     const wantJump = m.active && m.y < -JUMP_FLICK;
     if (wantJump && !this._jumpLatch) { this.input.pressed.add('Space'); this._jumpLatch = true; }
     if (!wantJump) this._jumpLatch = false;
+
+    // Slide flick. Synthesises the same momentary KeyC the crouch button holds,
+    // so both routes into a slide go through one path in the Player and there
+    // is no second slide trigger to keep in sync. Rising edge only, like the
+    // jump — holding the stick down must not chain slides.
+    const wantSlide = m.active && m.y > SLIDE_FLICK && mag > SLIDE_FLICK_TILT;
+    if (wantSlide && !this._slideLatch) { this.press('KeyC'); this._slideLatch = true; }
+    if (!wantSlide) this._slideLatch = false;
   }
 
   applyAim(dt) {
@@ -195,6 +231,14 @@ export class TouchControls {
     mouse.y = inset.y;
   }
 
+  // Slide readback. The move that most needs on-screen confirmation is the one
+  // with no button press behind it — a stick flick leaves nothing lit — so the
+  // crouch button doubles as the slide indicator.
+  setSliding(on) {
+    const el = document.getElementById('tc-crouch');
+    if (el) el.classList.toggle('sliding', !!on);
+  }
+
   setTakedownAvailable(on) {
     const el = document.getElementById('tc-takedown');
     if (el) el.classList.toggle('avail', !!on);
@@ -218,7 +262,8 @@ export class TouchControls {
     this.input.axisX = 0;
     this.key('KeyA', false); this.key('KeyD', false); this.key('ShiftLeft', false);
     this.input.mouse.down = false;
-    this._aimLatch = false; this._jumpLatch = false;
+    this._aimLatch = false; this._jumpLatch = false; this._slideLatch = false;
+    this._sprintHeld = 0; this._sprintLock = false;
     this.releaseStick('tc-move'); this.releaseStick('tc-aim');
   }
 
