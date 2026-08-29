@@ -944,6 +944,15 @@ html, body {
 .item-row {
   display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s1);
   -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+  /* Thumb ergonomics: a flick on glass has no braking, so an unsnapped row
+     stops wherever momentum ran out — usually with a card half under the
+     screen edge, which then has to be nudged before it can be tapped.
+     `proximity` rather than `mandatory` so a long flick still crosses the
+     whole row instead of being caught by the next card along. The scroll
+     padding is what keeps the settled card clear of the fading mask on the
+     right and of a landscape notch on the left. */
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--s2) 38px;
   -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
           mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
 }
@@ -956,6 +965,7 @@ html, body {
    set inline per-card by JS (metaui.js / storeui.js) from the item's rarity. */
 .item-card {
   flex: 0 0 auto; width: 116px; padding: var(--s2); border-radius: var(--r2); cursor: pointer;
+  scroll-snap-align: start;
   position: relative; overflow: hidden;
   background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
   border: none;
@@ -1109,7 +1119,13 @@ html, body {
    right edge and the scrollbar is hidden, so without it there is nothing on
    screen saying the list continues. */
 .store-cats {
-  display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s3); margin-bottom: var(--s6);
+  /* padding-top is not decoration: an overflow container clips at its padding
+     box, so without it the chips' invisible hit expander (see
+     .store-cat-chip::before) is sliced off at the top and the target stays
+     short of 44px however large the expander is declared. */
+  display: flex; gap: var(--s2); overflow-x: auto;
+  padding-top: var(--s2); padding-bottom: var(--s3); margin-bottom: var(--s6);
+  scroll-snap-type: x proximity; scroll-padding-inline: 0 38px;
   -webkit-overflow-scrolling: touch; scrollbar-width: none;
   -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
           mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 34px), transparent 100%);
@@ -2452,3 +2468,183 @@ html.no-backdrop-filter .profile-card {
    margin, which stacked with the actions row's own margin and left a band of
    empty card under the last panel. */
 .profile-actions .btn.quiet { margin-top: 0; width: 100%; }
+
+/* ==================================================================
+   Touch targets: hit box vs. drawn box
+   ==================================================================
+   Four controls in the menu were measurably below the 44px a fingertip
+   hits reliably — the PROFILE pill at 62x19, the category chips at 30
+   tall, a weapon card's inspect dot at 17-21px, and, worst of all, the
+   trader's BUY button at 26. Growing them all to 44 would blow out
+   layouts that are already tight on a 390px-tall landscape phone, so
+   each one keeps the size it is drawn at and carries an invisible
+   ::before that extends the hit box to 44. Same trick as the on-screen
+   gameplay buttons above; see .tc-btn::before.
+   ================================================================== */
+/* The header has to paint above the body for this one to work at all: the
+   pill's expander reaches past the header's own box, and .home-body is a
+   later sibling, so without a stacking order the panel below simply covers
+   the bottom half of the target. */
+.home-top { position: relative; z-index: 2; }
+.profile-pill { position: relative; }
+.profile-pill::before {
+  content: ''; position: absolute; inset: -14px -8px; border-radius: 999px;
+}
+/* Chips sit in a horizontally scrolling strip, so the expander is vertical
+   only — spilling sideways would let one chip swallow the edge of the next. */
+.store-cat-chip { position: relative; min-height: 32px; scroll-snap-align: start; }
+.store-cat-chip::before { content: ''; position: absolute; inset: -8px 0; }
+/* The card these two live in is `overflow: hidden` — for the rarity bar and
+   the preview's rounded corners — so an expander that reaches outward is
+   simply sliced off. Both of these therefore grow INWARD, over their own
+   card, and both are shaped around what they would otherwise steal.
+
+   The inspect dot sits in the card's top-right corner. A full 44x44 there
+   would put a sixth of a 116px card on "inspect" when the card's own job is
+   "equip", so it takes the full 44 vertically and stops at 34 across — the
+   axis a fingertip is least precise on, for the smaller cost. */
+.item-info::before { content: ''; position: absolute; inset: -2px -2px -25px -15px; }
+/* The single most important control on the trader screen was the smallest one
+   on it. This grows upward into the card's price line, which is text, not
+   another target — nothing is taken away from anything. */
+.item-card .btn.trade-buy { position: relative; }
+.item-card .btn.trade-buy::before { content: ''; position: absolute; inset: -16px -2px -5px -2px; }
+
+/* ==================================================================
+   Landscape phone: reclaim the vertical budget
+   ==================================================================
+   A 19.5:9 or 20:9 phone held sideways is 390-410 CSS px tall. Measured
+   on that viewport the chrome took 260 of it — header 70, panel title
+   and subtitle 82, tab bar 70, legal strip 25 — leaving 130px for the
+   only part of the screen the player opened it for. On the Loadout that
+   is not even one full row of weapon cards: the row is cut in half by
+   the tab bar.
+
+   Everything below trades chrome for content rather than shrinking the
+   content to fit what was left over. It is keyed on HEIGHT, because
+   height is the entire problem — the same 844px width on a tablet held
+   in portrait has no issue at all.
+   ================================================================== */
+/* ---- purchase -> inventory flight (see TraderUI.flyToInventory) ---------
+   Fixed, not absolute: the card it is cloned from is `overflow: hidden` and
+   lives inside a scroll container, so anything animated in flow is clipped
+   before it leaves the card. z-index sits above the panel AND above the tab
+   bar it is flying into. pointer-events off, because it crosses the whole
+   screen and must never eat a tap on the way. */
+.buy-fly {
+  position: fixed; z-index: 60; pointer-events: none;
+  border-radius: var(--r2);
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.55));
+  will-change: transform, opacity;
+}
+/* The destination says so. Fires on reduced-motion too — that setting asks for
+   less movement, not for less information. */
+.home-tab.got { color: var(--amber); }
+.home-tab.got .tab-ico { animation: tab-got 0.72s var(--ease-out); }
+@keyframes tab-got {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-tab.got .tab-ico { animation: none; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  /* The shared content column is sized for a portrait phone; on a landscape
+     one it leaves ~100px of dead margin down each side of a screen that is
+     already short. Take the width, since width is the axis with room. */
+  :root { --col: min(100% - 24px, 900px); }
+
+  /* Header down to one line. The SECTOR 9 kicker is the first thing to
+     go: it is a wordmark flourish, and it costs a row. */
+  .home-top {
+    padding-top: calc(var(--s2) + env(safe-area-inset-top));
+    padding-bottom: var(--s2);
+  }
+  .home-brand { font-size: 13px; }
+  .home-brand span { display: none; }
+  .token-pill { padding: 3px var(--s3); font-size: 13px; }
+  .token-pill .cur-icon { width: 16px; height: 16px; }
+
+  /* Panel heading becomes a caption rather than a title card, and the
+     subtitles go entirely: on this screen the thing being explained is
+     worth more space than the explanation. */
+  .panel-title { font-size: 13px; letter-spacing: 0.22em; margin-bottom: var(--s2); }
+  .panel-sub { display: none; }
+
+  /* Tabs: icon beside the label instead of stacked above it. Keeps both
+     readable, and still clears 44px. */
+  .home-tabs { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .home-tab { flex-direction: row; justify-content: center; gap: 6px; padding: 0 4px; min-height: 44px; }
+  .home-tab .tab-ico { font-size: 13px; }
+
+  /* Store-required, so it stays reachable — just quieter and thinner. */
+  .home-legal {
+    padding: 2px var(--s4); font-size: 8px;
+    padding-bottom: calc(2px + env(safe-area-inset-bottom));
+  }
+
+  /* CROW: banner and name plate side by side, the same treatment a wide
+     desktop already gets, plus a hard cap on the banner's height. Driven
+     off height rather than width so the aspect ratio is preserved and
+     the scene inside the canvas is not stretched — a canvas has no
+     object-fit to fall back on. */
+  .trader-hero {
+    display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--s5); align-items: center;
+    padding: var(--s3) var(--s4);
+  }
+  .trader-id { margin-top: 0; }
+  .trader-scene { width: auto; max-width: 100%; height: 24vh; margin: 0 auto; }
+  .trader-line { margin-top: var(--s2); font-size: 11px; line-height: 1.5; }
+  .store-section { margin-bottom: var(--s6); }
+  .store-section-head { padding-top: var(--s3); margin-bottom: var(--s3); }
+
+  /* ---- Crates ----
+     Stacked vertically — crate, OPEN, WATCH AD — the hero is 300px tall, so
+     on a 390px screen the crate fills the content area and the button that
+     opens it is cut in half by the tab bar. The primary action of a screen
+     cannot be below the fold.
+
+     Same answer as CROW's stall: a wide-short viewport has width to spend, so
+     the crate moves beside its buttons instead of above them. Laid out as
+     explicit grid areas rather than a row of flex children, because the two
+     buttons and the status line have to stack against the crate rather than
+     line up next to it. */
+  .crate-hero {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "box open" "box ad" "box msg";
+    align-items: center; gap: var(--s2) var(--s6);
+    /* Narrower than the shared column on purpose: stretched to 820px the two
+       buttons stop reading as buttons and start reading as banners. */
+    max-width: min(620px, var(--col)); margin: 0 auto var(--s6);
+  }
+  #crate-box { grid-area: box; align-self: center; margin: 0; width: 148px; height: 114px; }
+  #btn-open-crate { grid-area: open; }
+  #btn-watch-ad { grid-area: ad; }
+  #crate-msg { grid-area: msg; margin: 0; }
+  .crate-hero > .btn { width: 100%; min-width: 0; margin: 0; }
+
+  /* ---- Loadout, thumb zone ----
+     Held in two hands in landscape, the reachable band is the middle of the
+     screen: the top strip is behind the phone's own top edge and the bottom
+     strip is under the tab bar. A loadout slot is ~200px tall and the panel
+     scrolls freely, so the usual resting position for a flick is one slot
+     straddling that band with half of it out of reach.
+
+     Snapping the vertical scroll to slot boundaries puts exactly one slot in
+     the comfortable band per flick. `proximity`, not `mandatory`, so a long
+     drag still crosses several; and scoped to this panel, because the trader
+     and archive panels are prose and would fight a snap.
+
+     The snap has to be declared on the scroll container, which is .home-body
+     and not the panel — hence :has(), which is also how it stays scoped: a
+     browser without :has() simply scrolls the way it does today. */
+  .home-body:has(> #tab-loadout.active) {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: var(--s3);
+  }
+  .loadout-slot { scroll-snap-align: start; }
+}

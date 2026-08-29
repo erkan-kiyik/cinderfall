@@ -243,7 +243,7 @@ export class TraderUI {
     btn.className = 'btn quiet trade-buy';
     btn.appendChild(this.priceLabel(price, base));
     btn.disabled = this.p.scrap < price;
-    btn.addEventListener('click', (e) => { e.stopPropagation(); this.trade(item, price); });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); this.trade(item, price, cv); });
     card.appendChild(btn);
 
     requestAnimationFrame(() => this.previewItem(item, cv));
@@ -374,7 +374,7 @@ export class TraderUI {
         buyBtn.className = 'btn quiet trade-buy';
         buyBtn.appendChild(this.priceLabel(price));
         buyBtn.disabled = this.p.scrap < price;
-        buyBtn.addEventListener('click', (e) => { e.stopPropagation(); this.trade(item, price); });
+        buyBtn.addEventListener('click', (e) => { e.stopPropagation(); this.trade(item, price, cv); });
         card.appendChild(buyBtn);
       } else if (owned) {
         const tag = document.createElement('div');
@@ -391,7 +391,7 @@ export class TraderUI {
   // Price is passed in rather than re-derived, because a stall piece is not
   // worth its list price — but it is re-validated against the offer table so a
   // discounted price can only ever be paid for a piece actually on the stall.
-  trade(item, price) {
+  trade(item, price, preview = null) {
     if (this.busy || this.p.owns(item.id)) return;
     const list = priceOf(item);
     if (price < list) {
@@ -413,10 +413,82 @@ export class TraderUI {
       this.p.grant(item.id);
     }
     if (this.audio) (this.audio.equip ? this.audio.equip() : this.audio.ui());
+    // Snapshot the card's artwork BEFORE the repaint below deletes the card it
+    // is drawn on — the flight is what tells the player where the thing went.
+    this.flyToInventory(preview);
     // Owning it removes it from the stall, so both grids need a repaint.
     this.renderScrapBalance();
     this.renderStall();
     this.renderItemGrid();
     this.renderTraderLine();
+  }
+
+  // ---- purchase -> inventory ----
+  // A bought item used to be repainted out of existence on the same frame the
+  // scrap left the balance. That is the one moment the screen has to answer
+  // "where did it go?", and it answered by blinking.
+  //
+  // Three things had to be true for the answer to work at all, and each was a
+  // bug waiting to happen if done the obvious way:
+  //
+  //   Z-INDEX. The card is `overflow: hidden` (for its rarity bar and the
+  //     preview's rounded corners) and sits inside .home-body, which is a
+  //     scroll container. Animating the real preview would clip it twice
+  //     before it left the card. The clone is therefore a fixed-position
+  //     element parented to <body>, above the panel AND above the tab bar it
+  //     is flying to.
+  //   SCALE. The clone is sized in CSS pixels from the source's own
+  //     getBoundingClientRect, not from the canvas backing store — those are
+  //     different numbers on every device with a DPR above 1, and using the
+  //     backing store is how a 116px card becomes a 232px projectile.
+  //   PLACEMENT. Start and end are both centres, and the transform is built
+  //     around the element's own centre, so the artwork converges on the tab
+  //     rather than landing with its corner there.
+  flyToInventory(src) {
+    if (!src || typeof src.getBoundingClientRect !== 'function') return;
+    if (typeof document === 'undefined' || !document.body) return;
+    if (typeof Element === 'undefined' || !Element.prototype.animate) return;
+    const reduce = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const from = src.getBoundingClientRect();
+    if (from.width < 1 || from.height < 1) return;
+    const tab = document.querySelector('.home-tab[data-tab="loadout"]');
+    const to = tab ? tab.getBoundingClientRect() : null;
+
+    // Pulse the destination whether or not the flight itself runs, so a player
+    // on reduced motion still gets told which tab the item landed in.
+    if (tab) {
+      tab.classList.remove('got');
+      // reflow, so re-triggering the animation on a second purchase restarts it
+      void tab.offsetWidth;
+      tab.classList.add('got');
+      setTimeout(() => tab.classList.remove('got'), 900);
+    }
+    if (!to || reduce) return;
+
+    // One blit off the live canvas — the source is about to be destroyed.
+    const ghost = document.createElement('canvas');
+    ghost.width = src.width; ghost.height = src.height;
+    try { ghost.getContext('2d').drawImage(src, 0, 0); } catch { return; }
+    ghost.className = 'buy-fly';
+    ghost.style.width = `${from.width}px`;
+    ghost.style.height = `${from.height}px`;
+    ghost.style.left = `${from.left}px`;
+    ghost.style.top = `${from.top}px`;
+    document.body.appendChild(ghost);
+
+    const dx = (to.left + to.width / 2) - (from.left + from.width / 2);
+    const dy = (to.top + to.height / 2) - (from.top + from.height / 2);
+    const anim = ghost.animate([
+      { transform: 'translate(0px, 0px) scale(1)', opacity: 1 },
+      // Lifts before it falls: a straight line between two points on a phone
+      // screen reads as a glitch, an arc reads as a thing being put away.
+      { transform: `translate(${dx * 0.45}px, ${dy * 0.3 - 26}px) scale(0.78)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.22)`, opacity: 0 },
+    ], { duration: 520, easing: 'cubic-bezier(0.32, 0.72, 0.3, 1)', fill: 'forwards' });
+    const done = () => ghost.remove();
+    anim.addEventListener('finish', done);
+    anim.addEventListener('cancel', done);
   }
 }
