@@ -20,6 +20,18 @@ export const BONES = {
   shoulderDrop: 5,       // shoulder below neck top
 };
 
+// Every operator used to be the same model in a different colour: same
+// helmet, same pack, same pouches, so a Mythic skin was a recolour of the
+// Common one and read as exactly that at gameplay distance. `headGear` and
+// `backGear` give each one a piece of kit that changes its OUTLINE, which is
+// the only thing that survives being 40 pixels tall on a phone.
+//
+//   headGear  none | nvg | hood | crest | antenna | visor
+//   backGear  pack | slim | radio | tanks | plates | cloak
+//
+// They are spread so no two operators share a pair, and so the expensive
+// tiers carry the additions that change the silhouette most (a full visor and
+// pauldrons, a cloak) while the cheap ones stay close to the reference shape.
 const VARIANTS = {
   ranger: {
     seed: 1337,
@@ -31,6 +43,7 @@ const VARIANTS = {
     skin: COL.skin,
     masked: false,
     pad: '#35342c',
+    headGear: 'none', backGear: 'pack',
   },
   phantom: {
     seed: 9021,
@@ -42,6 +55,7 @@ const VARIANTS = {
     skin: '#a07a5c',
     masked: true,
     pad: '#24262a',
+    headGear: 'nvg', backGear: 'slim',
   },
   nomad: {
     seed: 4477,
@@ -53,6 +67,7 @@ const VARIANTS = {
     skin: COL.skin,
     masked: true,
     pad: '#453b29',
+    headGear: 'hood', backGear: 'pack',
   },
   // -- equippable operator skins (crate/store cosmetics; see meta.js CATALOG) --
   viper: {
@@ -65,6 +80,7 @@ const VARIANTS = {
     skin: '#8a6f52',
     masked: true,
     pad: '#1a2417',
+    headGear: 'hood', backGear: 'slim',
   },
   arctic: {
     seed: 8842,
@@ -76,6 +92,7 @@ const VARIANTS = {
     skin: COL.skin,
     masked: false,
     pad: '#9fabb1',
+    headGear: 'antenna', backGear: 'slim',
   },
   // The roster above ran green / grey / tan / green / white, which is two
   // pairs that read alike at gameplay distance — an operator you cannot name
@@ -94,6 +111,7 @@ const VARIANTS = {
     skin: '#8a6a4e',
     masked: true,
     pad: '#42241a',
+    headGear: 'crest', backGear: 'pack',
   },
   midnight: {
     seed: 5158,
@@ -105,6 +123,7 @@ const VARIANTS = {
     skin: '#7d6249',
     masked: true,
     pad: '#161c29',
+    headGear: 'nvg', backGear: 'radio',
   },
   rust: {
     seed: 7724,
@@ -116,6 +135,7 @@ const VARIANTS = {
     skin: COL.skin,
     masked: false,
     pad: '#4a3323',
+    headGear: 'crest', backGear: 'tanks',
   },
   vanguard: {
     seed: 2276,
@@ -127,6 +147,7 @@ const VARIANTS = {
     skin: COL.skin,
     masked: false,
     pad: '#333b43',
+    headGear: 'visor', backGear: 'plates',
   },
   // Gold pads against near-black kit: the one variant whose accent colour is
   // not a shade of its own uniform, which is what makes it read as the
@@ -141,8 +162,333 @@ const VARIANTS = {
     skin: '#6f563f',
     masked: true,
     pad: '#8a6a2e',
+    headGear: 'visor', backGear: 'cloak',
   },
 };
+
+// ---- head gear -----------------------------------------------------------
+// Drawn last on the head sprite, in the head's own coordinates: the helmet
+// crown sits around y 0.4..10 and the face fills y 8..21, with the front of
+// the head at +x. Each of these is chosen to break the outline somewhere
+// different — forward, backward, or up — so two operators never read alike
+// even in pure silhouette.
+function headGear(g, cx, V) {
+  const kind = V.headGear;
+  if (!kind || kind === 'none') return;
+  const shell = V.helmet;
+
+  if (kind === 'nvg') {
+    // Quad-tube night vision, folded down over the eyes. The one piece of kit
+    // that pushes the outline forward, so it is unmistakable side-on.
+    g.fillStyle = shade(shell, -0.42);
+    rr(g, cx + 4.6, 1.6, 5.2, 3.0, 0.8); g.fill();          // helmet shroud
+    g.fillStyle = lingrad(g, 0, 2, 0, 9, [[0, shade(shell, 0.1)], [1, shade(shell, -0.4)]]);
+    g.beginPath();                                           // arm
+    g.moveTo(cx + 8.4, 2.4); g.lineTo(cx + 12.6, 4.6);
+    g.lineTo(cx + 12.0, 6.2); g.lineTo(cx + 8.0, 4.2);
+    g.closePath(); g.fill();
+    for (const [ox, oy] of [[0, 0], [0, 3.4]]) {             // two tube pairs
+      g.fillStyle = lingrad(g, 0, 4 + oy, 0, 9 + oy, [
+        [0, '#3b4046'], [0.5, '#22262b'], [1, '#14171a'],
+      ]);
+      rr(g, cx + 11.0 + ox, 4.4 + oy, 5.6, 3.0, 1.3); g.fill();
+      g.fillStyle = '#0a0c0e';
+      g.beginPath(); g.ellipse(cx + 16.2 + ox, 5.9 + oy, 0.9, 1.2, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(122,220,190,0.5)';                 // phosphor
+      g.beginPath(); g.ellipse(cx + 16.1 + ox, 5.9 + oy, 0.5, 0.8, 0, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = 'rgba(226,232,240,0.18)';
+    g.fillRect(cx + 11.4, 4.5, 5.0, 0.5);
+    g.fillRect(cx + 11.4, 7.9, 5.0, 0.5);
+  } else if (kind === 'hood') {
+    // Shemagh / shroud pulled over the helmet and down the neck — the outline
+    // grows backward and loses the helmet's hard rim.
+    const c = V.uniform;
+    g.fillStyle = lingrad(g, 0, -1, 0, 20, [
+      [0, shade(c, 0.2)], [0.45, c], [1, shade(V.uniformDark, -0.2)],
+    ]);
+    g.beginPath();
+    g.moveTo(cx + 8.4, 3.2);
+    g.quadraticCurveTo(cx + 6, -2.4, cx - 3, -1.8);
+    g.quadraticCurveTo(cx - 13, -1.0, cx - 13.4, 8);
+    g.quadraticCurveTo(cx - 14.2, 16, cx - 9.6, 21.5);
+    g.lineTo(cx - 4.6, 22.6);
+    g.quadraticCurveTo(cx - 8.4, 15, cx - 7.6, 8.4);
+    g.quadraticCurveTo(cx - 6.6, 3.4, cx + 1, 2.6);
+    g.closePath(); g.fill();
+    // fold shadows so the cloth is not a flat plate
+    g.strokeStyle = withA(shade(V.uniformDark, -0.4), 0.55); g.lineWidth = 0.8;
+    for (const [ax0, ay0, ax1, ay1] of [[-11.6, 3.4, -8.4, 10], [-13, 9.6, -9.2, 16]]) {
+      g.beginPath();
+      g.moveTo(cx + ax0, ay0);
+      g.quadraticCurveTo(cx + (ax0 + ax1) / 2 - 1, (ay0 + ay1) / 2, cx + ax1, ay1);
+      g.stroke();
+    }
+    g.strokeStyle = 'rgba(255,224,180,0.20)'; g.lineWidth = 0.7;
+    g.beginPath();
+    g.moveTo(cx + 1.4, 1.0); g.quadraticCurveTo(cx - 6, -0.6, cx - 11.6, 4.2); g.stroke();
+  } else if (kind === 'crest') {
+    // Longitudinal rail spine with a strobe on the back plate: reads as a
+    // ridge along the top of the skull.
+    g.fillStyle = lingrad(g, 0, -3.4, 0, 2, [
+      [0, shade(shell, 0.22)], [1, shade(shell, -0.36)],
+    ]);
+    g.beginPath();
+    g.moveTo(cx - 7.4, 2.0);
+    g.quadraticCurveTo(cx - 3, -3.6, cx + 3.4, -3.2);
+    g.quadraticCurveTo(cx + 7.6, -2.6, cx + 8.6, 1.4);
+    g.quadraticCurveTo(cx + 3, -1.0, cx - 3.6, -0.4);
+    g.closePath(); g.fill();
+    g.fillStyle = shade(shell, -0.5);
+    for (let i = 0; i < 5; i++) rr(g, cx - 5.4 + i * 2.7, -2.6, 1.1, 2.0, 0.3), g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.24)';
+    g.fillRect(cx - 6.6, -2.4, 14.4, 0.5);
+    // IR strobe on the rear plate
+    g.fillStyle = shade(shell, -0.44);
+    rr(g, cx - 10.4, 1.6, 3.4, 3.0, 0.7); g.fill();
+    g.fillStyle = 'rgba(240,120,90,0.75)';
+    g.beginPath(); g.arc(cx - 8.7, 3.1, 0.75, 0, Math.PI * 2); g.fill();
+  } else if (kind === 'antenna') {
+    // Whip antenna off the back of the helmet plus a small counterweight —
+    // the outline gains a thin vertical, which nothing else here has.
+    g.fillStyle = shade(shell, -0.4);
+    rr(g, cx - 10.4, 2.0, 4.0, 3.4, 0.8); g.fill();          // radio mount
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    g.fillRect(cx - 10.1, 2.2, 3.4, 0.5);
+    g.strokeStyle = '#181a1e'; g.lineWidth = 0.85; g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(cx - 8.6, 2.2);
+    g.quadraticCurveTo(cx - 10.6, -5.2, cx - 6.4, -9.4);
+    g.stroke();
+    g.strokeStyle = 'rgba(226,232,240,0.28)'; g.lineWidth = 0.35;
+    g.beginPath();
+    g.moveTo(cx - 8.4, 1.8); g.quadraticCurveTo(cx - 10.2, -5.0, cx - 6.6, -9.0);
+    g.stroke();
+    g.fillStyle = '#2c3036';
+    g.beginPath(); g.arc(cx - 6.3, -9.6, 0.8, 0, Math.PI * 2); g.fill();
+    // counterweight pouch on the rear of the shell
+    g.fillStyle = lingrad(g, 0, 5, 0, 10, [[0, shade(shell, -0.14)], [1, shade(shell, -0.42)]]);
+    rr(g, cx - 11.0, 5.2, 4.6, 4.6, 1.2); g.fill();
+  } else if (kind === 'visor') {
+    // Full-face armoured visor. The most expensive silhouette change in the
+    // set: it closes the face off entirely, so the head becomes one smooth
+    // mass instead of helmet-plus-jaw.
+    g.fillStyle = lingrad(g, 0, 6, 0, 22, [
+      [0, shade(shell, 0.12)], [0.42, shade(shell, -0.14)], [1, shade(shell, -0.46)],
+    ]);
+    g.beginPath();
+    g.moveTo(cx - 8.6, 8.6);
+    g.quadraticCurveTo(cx + 2, 9.6, cx + 9.2, 8.2);
+    g.quadraticCurveTo(cx + 11.4, 13, cx + 9.4, 17.4);
+    g.quadraticCurveTo(cx + 6, 22.4, cx - 1, 22.6);
+    g.quadraticCurveTo(cx - 6.6, 22.4, cx - 8.2, 18.6);
+    g.closePath(); g.fill();
+    // the lens band
+    g.fillStyle = '#0a0c10';
+    g.beginPath();
+    g.moveTo(cx - 6.6, 11.0);
+    g.quadraticCurveTo(cx + 2, 12.0, cx + 9.4, 10.6);
+    g.lineTo(cx + 8.8, 15.0);
+    g.quadraticCurveTo(cx + 2, 16.4, cx - 6.4, 15.2);
+    g.closePath(); g.fill();
+    g.fillStyle = withA(V.pad, 0.55);
+    g.beginPath();
+    g.moveTo(cx - 5.6, 11.8);
+    g.quadraticCurveTo(cx + 2, 12.7, cx + 8.6, 11.4);
+    g.lineTo(cx + 8.2, 13.4);
+    g.quadraticCurveTo(cx + 2, 14.6, cx - 5.4, 13.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.22)';
+    g.beginPath();
+    g.moveTo(cx + 1.6, 11.9); g.lineTo(cx + 6.6, 11.4);
+    g.lineTo(cx + 6.2, 12.6); g.lineTo(cx + 1.4, 13.0);
+    g.closePath(); g.fill();
+    // filter vents on the jaw
+    g.fillStyle = shade(shell, -0.55);
+    for (let i = 0; i < 3; i++) rr(g, cx + 1.6 + i * 2.2, 18.0, 1.5, 2.6, 0.4), g.fill();
+    g.strokeStyle = 'rgba(226,232,240,0.20)'; g.lineWidth = 0.5;
+    g.beginPath();
+    g.moveTo(cx - 8.2, 9.4); g.quadraticCurveTo(cx + 1, 10.4, cx + 9.0, 9.0); g.stroke();
+  }
+}
+
+// ---- back gear -----------------------------------------------------------
+// Drawn FIRST on the torso sprite, so the body covers whatever overlaps it.
+// Torso coordinates: hip pivot at (hipX, 46), shoulders around y 2..10, the
+// chest faces +x and the back is -x. These change the outline where it counts
+// on a side-on character — behind the shoulders and above them.
+function backGear(g, hipX, V, ao) {
+  const kind = V.backGear || 'pack';
+  const packGrad = (y0, y1) => lingrad(g, 0, y0, 0, y1, [
+    [0, shade(V.vest, -0.02)], [1, shade(V.vestDark, -0.25)],
+  ]);
+
+  if (kind === 'pack') {
+    // Standard assault pack — the reference shape.
+    g.fillStyle = packGrad(6, 34);
+    rr(g, hipX - 15.5, 7, 10, 26, 3.5); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.9;
+    rr(g, hipX - 15.5, 7, 10, 26, 3.5); g.stroke();
+    g.fillStyle = shade(V.vestDark, -0.3);
+    g.fillRect(hipX - 15, 12, 9, 1.6);
+    g.fillRect(hipX - 15, 22, 9, 1.6);
+    g.fillStyle = shade(V.uniformDark, -0.1);
+    rr(g, hipX - 15, 3.8, 9, 4.5, 2); g.fill();
+    ao(g, hipX - 10, 33, 7, 3, 0.35);
+  } else if (kind === 'slim') {
+    // Low-profile plate bag: short, tight to the spine. Reads as a lighter
+    // operator without changing where the body sits.
+    g.fillStyle = packGrad(9, 28);
+    rr(g, hipX - 12.4, 10, 7, 18, 2.4); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.8;
+    rr(g, hipX - 12.4, 10, 7, 18, 2.4); g.stroke();
+    g.fillStyle = shade(V.vestDark, -0.32);
+    g.fillRect(hipX - 12, 17, 6.2, 1.3);
+    // two compression straps running down it
+    g.strokeStyle = withA(shade(V.uniformDark, -0.3), 0.8); g.lineWidth = 0.7;
+    for (const sx of [hipX - 10.6, hipX - 7.6]) {
+      g.beginPath(); g.moveTo(sx, 10.6); g.lineTo(sx, 27.4); g.stroke();
+    }
+    ao(g, hipX - 8, 28, 5, 2.4, 0.3);
+  } else if (kind === 'radio') {
+    // Manpack radio with a folded whip: a tall box plus a vertical, which is
+    // the tallest outline in the set.
+    g.fillStyle = packGrad(4, 32);
+    rr(g, hipX - 15.5, 5, 10, 27, 2.0); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.4)'; g.lineWidth = 0.9;
+    rr(g, hipX - 15.5, 5, 10, 27, 2.0); g.stroke();
+    // handset pouch and faceplate
+    g.fillStyle = shade(V.vestDark, -0.38);
+    rr(g, hipX - 14.4, 8.4, 7.6, 6.2, 0.8); g.fill();
+    g.fillStyle = 'rgba(120,200,150,0.42)';
+    g.fillRect(hipX - 13.4, 10.0, 5.4, 1.5);
+    g.fillStyle = shade(V.vest, 0.14);
+    for (let i = 0; i < 3; i++) g.fillRect(hipX - 13.6 + i * 2.6, 17.4, 1.7, 1.7);
+    // whip antenna
+    g.strokeStyle = '#181a1e'; g.lineWidth = 0.9; g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(hipX - 13.2, 5.6);
+    g.quadraticCurveTo(hipX - 16.6, -3.4, hipX - 12.4, -7.4);
+    g.stroke();
+    g.strokeStyle = 'rgba(226,232,240,0.26)'; g.lineWidth = 0.35;
+    g.beginPath();
+    g.moveTo(hipX - 13.0, 5.2);
+    g.quadraticCurveTo(hipX - 16.2, -3.2, hipX - 12.6, -7.0);
+    g.stroke();
+    ao(g, hipX - 10, 32, 7, 3, 0.35);
+  } else if (kind === 'tanks') {
+    // Twin scavenged cylinders on a frame — a bumpy, industrial back line
+    // that no other operator has.
+    g.fillStyle = shade(V.vestDark, -0.34);
+    rr(g, hipX - 14.2, 8, 8.6, 22, 1.4); g.fill();     // frame
+    for (const cy of [13.2, 23.4]) {
+      g.fillStyle = lingrad(g, hipX - 15, 0, hipX - 6, 0, [
+        [0, shade(V.vest, -0.24)], [0.4, shade(V.vest, 0.16)], [1, shade(V.vestDark, -0.34)],
+      ]);
+      rr(g, hipX - 16.4, cy - 4.4, 9.4, 8.8, 4.2); g.fill();
+      g.fillStyle = 'rgba(226,232,240,0.16)';
+      rr(g, hipX - 15.4, cy - 3.6, 2.0, 7.2, 1.0); g.fill();
+      g.fillStyle = shade(V.uniformDark, -0.25);      // collar
+      rr(g, hipX - 8.4, cy - 2.0, 2.2, 4.0, 0.6); g.fill();
+    }
+    // hose looping from the top tank to the shoulder
+    g.strokeStyle = '#1a1c1f'; g.lineWidth = 1.3; g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(hipX - 7.4, 11.4);
+    g.quadraticCurveTo(hipX - 2.6, 6.2, hipX + 1.6, 9.4);
+    g.stroke();
+    ao(g, hipX - 10, 30, 7, 3, 0.35);
+  } else if (kind === 'plates') {
+    // Breacher armour: a hard pauldron over the near shoulder and a heavy
+    // back plate. The one outline in the set that gets visibly *wider*.
+    g.fillStyle = packGrad(9, 30);
+    rr(g, hipX - 13.6, 10, 8, 20, 1.6); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.4)'; g.lineWidth = 0.9;
+    rr(g, hipX - 13.6, 10, 8, 20, 1.6); g.stroke();
+    // segmented back plate
+    g.fillStyle = shade(V.vest, 0.1);
+    for (let i = 0; i < 3; i++) {
+      rr(g, hipX - 13.0, 11.4 + i * 6.0, 6.8, 4.6, 1.0); g.fill();
+    }
+    ao(g, hipX - 9, 30, 6, 2.6, 0.32);
+    // The pauldron itself is not drawn here — it sits ON the shoulder, so it
+    // goes in backGearOver() after the torso body, or the body would bury it.
+  } else if (kind === 'cloak') {
+    // Short shoulder cloak. Falls from the collar to mid-thigh behind the
+    // body: a long soft mass where every other operator has a hard box, which
+    // is why it is on the one skin at the top of the table.
+    const c = shade(V.uniformDark, -0.12);
+    g.fillStyle = lingrad(g, 0, 2, 0, 48, [
+      [0, shade(c, 0.24)], [0.35, c], [1, shade(c, -0.42)],
+    ]);
+    // Swept well clear of the body. Hugging the spine at -16 the cloak merged
+    // with the legs in silhouette and the one skin at the top of the table
+    // read as the reference shape again; it has to stand off the back to be
+    // an outline of its own.
+    g.beginPath();
+    g.moveTo(hipX + 2.0, 3.0);
+    g.quadraticCurveTo(hipX - 9.0, 1.0, hipX - 13.6, 8.0);
+    g.quadraticCurveTo(hipX - 22.6, 24, hipX - 21.0, 46);
+    g.quadraticCurveTo(hipX - 17.0, 49.6, hipX - 10.4, 47.4);
+    g.quadraticCurveTo(hipX - 10.0, 26, hipX - 5.4, 12.0);
+    g.quadraticCurveTo(hipX - 2.4, 5.4, hipX + 2.6, 5.2);
+    g.closePath(); g.fill();
+    // folds
+    g.strokeStyle = withA(shade(c, -0.5), 0.6); g.lineWidth = 0.9;
+    for (const [x0, y0, x1, y1] of [[-12.4, 12, -17.4, 42], [-8.6, 16, -11.4, 44]]) {
+      g.beginPath();
+      g.moveTo(hipX + x0, y0);
+      g.quadraticCurveTo(hipX + (x0 + x1) / 2 - 1.6, (y0 + y1) / 2, hipX + x1, y1);
+      g.stroke();
+    }
+    // trim along the leading edge, in the variant's accent colour
+    g.strokeStyle = withA(V.pad, 0.75); g.lineWidth = 0.8;
+    g.beginPath();
+    g.moveTo(hipX + 2.2, 4.2);
+    g.quadraticCurveTo(hipX - 3.0, 5.6, hipX - 6.0, 12.6);
+    g.quadraticCurveTo(hipX - 10.0, 27, hipX - 10.6, 46.8);
+    g.stroke();
+    // collar clasp
+    g.fillStyle = V.pad;
+    g.beginPath(); g.arc(hipX + 1.2, 4.6, 1.5, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.3)';
+    g.beginPath(); g.arc(hipX + 0.7, 4.1, 0.6, 0, Math.PI * 2); g.fill();
+    ao(g, hipX - 16, 47, 8, 3, 0.3);
+  }
+}
+
+// Back gear that belongs in FRONT of the torso body — a pauldron sits on the
+// shoulder, not behind it. Called at the end of the torso painter.
+function backGearOver(g, hipX, V) {
+  if (V.backGear !== 'plates') return;
+  g.fillStyle = lingrad(g, 0, -2, 0, 16, [
+    [0, shade(V.vest, 0.30)], [0.45, V.vest], [1, shade(V.vestDark, -0.32)],
+  ]);
+  g.beginPath();
+  g.moveTo(hipX - 8.6, 5.4);
+  g.quadraticCurveTo(hipX + 0.5, -3.4, hipX + 11.4, 3.6);
+  g.quadraticCurveTo(hipX + 13.2, 8.6, hipX + 10.6, 13.6);
+  g.quadraticCurveTo(hipX + 0.5, 7.8, hipX - 7.8, 13.2);
+  g.closePath(); g.fill();
+  // lames
+  g.strokeStyle = 'rgba(0,0,0,0.42)'; g.lineWidth = 0.85;
+  for (const t of [0.34, 0.62]) {
+    g.beginPath();
+    g.moveTo(hipX - 8.4 + t * 3.2, 6.0 + t * 6.2);
+    g.quadraticCurveTo(hipX + 0.5, -2.2 + t * 9, hipX + 11.0 - t * 1.0, 4.4 + t * 8);
+    g.stroke();
+  }
+  g.strokeStyle = 'rgba(255,224,180,0.30)'; g.lineWidth = 0.8;
+  g.beginPath();
+  g.moveTo(hipX - 8.0, 4.8); g.quadraticCurveTo(hipX + 0.5, -2.8, hipX + 10.9, 3.2); g.stroke();
+  // rivets along the edge
+  g.fillStyle = 'rgba(226,232,240,0.28)';
+  for (let i = 0; i < 4; i++) {
+    const t = 0.18 + i * 0.22;
+    const px = hipX - 8.0 + t * 19, py = 4.8 - Math.sin(t * Math.PI) * 6.4 + t * 2;
+    g.beginPath(); g.arc(px, py, 0.5, 0, Math.PI * 2); g.fill();
+  }
+}
 
 // Fabric base fill: lit from top with warm key, cool shadow at bottom.
 function cloth(g, x, y, w, h, base) {
@@ -159,8 +505,15 @@ export function buildSoldier(name) {
   const parts = {};
 
   // ---------------- head (facing +x) ----------------
-  // box 26x28, anchor at neck base (13, 26)
-  parts.head = makeSprite(26, 28, 13, 26, (g) => {
+  // Box 26x28 anchored at the neck base (13,26), padded out to 42x38 so head
+  // gear has somewhere to go: an NVG arm reaches forward past the old right
+  // wall, a hood falls behind the old left one and an antenna stands above
+  // the old ceiling. The painter translates by the pad and the anchor moves
+  // with it, so every coordinate below is unchanged and the head still hangs
+  // off the same point on the neck.
+  const HP = { l: 8, t: 15 };
+  parts.head = makeSprite(26 + HP.l + 10, 28 + HP.t, 13 + HP.l, 26 + HP.t, (g) => {
+    g.translate(HP.l, HP.t);
     const cx = 13;
     // neck
     g.fillStyle = lingrad(g, 0, 18, 0, 27, [
@@ -283,27 +636,21 @@ export function buildSoldier(name) {
       g.fillStyle = '#111214';
       g.beginPath(); g.ellipse(cx + 5.6, 18.5, 1.3, 0.9, 0.3, 0, Math.PI * 2); g.fill();
     }
+    headGear(g, cx, V);
     grunge(g, 4, 0, 18, 11, rng, { n: 40, dark: 0.12, light: 0.06 });
   });
 
   // ---------------- torso ----------------
   // box 34x50, anchor at hip pivot (16, 46). Chest faces +x, backpack -x.
-  parts.torso = makeSprite(34, 50, 16, 46, (g) => {
+  // Padded out from 34x50 so back gear has room: a radio antenna stands above
+  // the old ceiling, a cloak falls past the old left wall and pauldrons reach
+  // past the old right one. Same trick as the head — translate by the pad and
+  // move the anchor with it, so every coordinate below is untouched.
+  const TP = { l: 22, t: 10, r: 8 };
+  parts.torso = makeSprite(34 + TP.l + TP.r, 50 + TP.t, 16 + TP.l, 46 + TP.t, (g) => {
+    g.translate(TP.l, TP.t);
     const hipX = 16;
-    // assault pack (behind body)
-    g.fillStyle = lingrad(g, 0, 6, 0, 34, [
-      [0, shade(V.vest, -0.02)], [1, shade(V.vestDark, -0.25)],
-    ]);
-    rr(g, hipX - 15.5, 7, 10, 26, 3.5); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.9;
-    rr(g, hipX - 15.5, 7, 10, 26, 3.5); g.stroke();
-    // pack straps + roll
-    g.fillStyle = shade(V.vestDark, -0.3);
-    g.fillRect(hipX - 15, 12, 9, 1.6);
-    g.fillRect(hipX - 15, 22, 9, 1.6);
-    g.fillStyle = shade(V.uniformDark, -0.1);
-    rr(g, hipX - 15, 3.8, 9, 4.5, 2); g.fill();
-    ao(g, hipX - 10, 33, 7, 3, 0.35);
+    backGear(g, hipX, V, ao);
 
     // torso core (shirt) — hip to neck
     cloth(g, hipX - 8, 0, 17, 46, V.uniform);
@@ -395,6 +742,7 @@ export function buildSoldier(name) {
     g.strokeStyle = 'rgba(255,214,160,0.2)'; g.lineWidth = 1;
     g.beginPath(); g.moveTo(hipX + 8.6, 12); g.quadraticCurveTo(hipX + 9.8, 22, hipX + 7.6, 31); g.stroke();
     grunge(g, hipX - 8, 4, 18, 42, rng, { n: 90, dark: 0.1, light: 0.04 });
+    backGearOver(g, hipX, V);
   });
 
   // ---------------- pelvis ----------------
