@@ -880,6 +880,11 @@ class Game {
   explodeBarrel(b) {
     if (!b.alive) return;
     b.alive = false;
+    // The drum was cover a second ago; it is scrap now. Dropping the collider
+    // here rather than testing `alive` inside rectHit keeps the collision scan
+    // a plain loop over a dense array.
+    this.world.removeCollider(b.col);
+    b.col = null;
     this.fx.explosion(b.x, b.y);
     this.barks.fire('barrel');
     const hurtRadius = 160;
@@ -1286,6 +1291,16 @@ class Game {
     const charOpts = this.characterDrawOpts();
     const halfVis = vw / (2 * this.cam.zoom) + 220;
     const onScreen = (e) => Math.abs(e.x - this.cam.x) < halfVis;
+    // Same treatment for particles, which are seeded across the whole map
+    // (ambient ash, the chimney columns) and were all being drawn regardless.
+    // A grown smoke puff is ~40 units across, so the margin is generous;
+    // culling still happens at draw time only, never at update time.
+    const halfPx = vw / (2 * this.cam.zoom) + 90;
+    const halfPy = vh / (2 * this.cam.zoom) + 90;
+    this.particles.setView(
+      this.cam.x - halfPx, this.cam.x + halfPx,
+      this.cam.y - halfPy, this.cam.y + halfPy,
+    );
     for (const e of this.enemies) if (e.deadT > 0 && onScreen(e)) e.draw(ctx);
     for (const e of this.enemies) if (e.deadT <= 0 && onScreen(e)) e.draw(ctx);
     if (this.state !== 'menu') this.player.draw(ctx, charOpts);

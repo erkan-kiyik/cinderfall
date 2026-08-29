@@ -62,6 +62,11 @@ function blankParticle() {
     kind: 0, x: 0, y: 0, vx: 0, vy: 0, life: 1, age: 0, size: 3, grow: 0,
     grav: 0, drag: 0, rot: 0, vrot: 0, color: '#888', alpha: 1,
     bounce: 0, bounces: 0, seed: 0, _rgb: null,
+    // Per-particle caches, all derived from `color` and therefore fixed for
+    // the particle's life. They exist because the draw loop was rebuilding
+    // them sixty times a second: a template string per baked-disc lookup, in
+    // the one file whose whole design is about not allocating per frame.
+    _add: false, _disc: null, _body: null, _core: null,
   };
 }
 
@@ -76,6 +81,22 @@ export class Particles {
     this.solidAt = () => false;
     this.time = 0;
     this.wind = 0;           // smooth gusty crosswind, drives smoke drift
+    // Visible world span, set once per frame by the renderer. Particles live
+    // across the whole map — ambient ash and the smoke columns are seeded map
+    // wide — and drawing the ones behind the camera costs exactly as much as
+    // drawing the ones in front of it. Defaults are open, so a caller that
+    // never sets a view keeps the old behaviour.
+    this.viewL = -Infinity; this.viewR = Infinity;
+    this.viewT = -Infinity; this.viewB = Infinity;
+  }
+
+  // Visible world rect for culling. The margin is the caller's to choose: a
+  // grown smoke puff can be 40 units across and is still worth drawing when
+  // its centre is just off screen.
+  setView(l, r, t, b) {
+    this.viewL = l; this.viewR = r;
+    this.viewT = t === undefined ? -Infinity : t;
+    this.viewB = b === undefined ? Infinity : b;
   }
 
   // Backwards-compat accessor for external code that iterates particles
@@ -111,6 +132,8 @@ export class Particles {
     p.bounces = 0;
     p.seed = Math.random() * TAU;
     p._rgb = null;
+    p._add = ADDITIVE.has(kind);
+    p._disc = null; p._body = null; p._core = null;
   }
 
   update(dt) {
@@ -165,9 +188,14 @@ export class Particles {
   }
 
   draw(g, additivePass) {
+    const vl = this.viewL, vr = this.viewR, vt = this.viewT, vb = this.viewB;
     for (let idx = 0; idx < this.count; idx++) {
       const p = this.items[idx];
-      if (ADDITIVE.has(p.kind) !== additivePass) continue;
+      if (p._add !== additivePass) continue;
+      // Off-screen particles are skipped here and only here: they still
+      // update, so a smoke column the camera pans back to is where it should
+      // be rather than frozen where it was left.
+      if (p.x < vl || p.x > vr || p.y < vt || p.y > vb) continue;
       const t = p.age / p.life;
       const fade = t > 0.65 ? 1 - (t - 0.65) / 0.35 : 1;
       const a = clamp(p.alpha * fade, 0, 1);
@@ -196,7 +224,11 @@ export class Particles {
         case K.DUST: {
           const r = Math.max(0.5, p.size);
           g.globalAlpha = a * 0.55;
-          const disc = bakeDisc(`d:${p.color}`, [[0, p.color], [1, 'rgba(0,0,0,0)']]);
+          let disc = p._disc;
+          if (disc === null) {
+            disc = bakeDisc(`d:${p.color}`, [[0, p.color], [1, 'rgba(0,0,0,0)']]);
+            p._disc = disc === null ? false : disc;   // false = baking refused, stop asking
+          }
           if (disc) { blitDisc(g, disc, p.x, p.y, r); break; }
           const grad = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
           grad.addColorStop(0, p.color);
@@ -220,14 +252,19 @@ export class Particles {
           const fout = t > 0.5 ? 1 - (t - 0.5) / 0.5 : 1;      // gradual dissipation
           const base = clamp(p.alpha * fin * fout, 0, 1);
           if (base <= 0.01) break;
-          const rgb = `${cr},${cg},${cb}`;
           const ox = Math.cos(p.seed) * r * 0.18, oy = Math.sin(p.seed) * r * 0.18;
-          const body = bakeDisc(`sb:${rgb}`, [
-            [0, `rgba(${rgb},0.5)`], [0.55, `rgba(${rgb},0.22)`], [1, `rgba(${rgb},0)`],
-          ]);
-          const core = bakeDisc(`sc:${rgb}`, [
-            [0, `rgba(${rgb},0.75)`], [1, `rgba(${rgb},0)`],
-          ]);
+          let body = p._body, core = p._core;
+          if (body === null) {
+            const rgb = `${cr},${cg},${cb}`;
+            body = bakeDisc(`sb:${rgb}`, [
+              [0, `rgba(${rgb},0.5)`], [0.55, `rgba(${rgb},0.22)`], [1, `rgba(${rgb},0)`],
+            ]);
+            core = bakeDisc(`sc:${rgb}`, [
+              [0, `rgba(${rgb},0.75)`], [1, `rgba(${rgb},0)`],
+            ]);
+            p._body = body === null ? false : body;
+            p._core = core === null ? false : core;
+          }
           if (body && core) {
             g.globalAlpha = base * 0.6;
             blitDisc(g, body, p.x, p.y, r);
@@ -235,7 +272,9 @@ export class Particles {
             blitDisc(g, core, p.x + ox, p.y + oy, r * 0.6);
             break;
           }
-          // wide faint body
+          // Fallback for the case bakeDisc refused (too many distinct colours):
+          // the original live-gradient path, unchanged.
+          const rgb = `${cr},${cg},${cb}`;
           let grad = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
           grad.addColorStop(0, `rgba(${rgb},0.5)`);
           grad.addColorStop(0.55, `rgba(${rgb},0.22)`);
