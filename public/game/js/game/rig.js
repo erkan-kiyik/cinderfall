@@ -79,6 +79,27 @@ const IDLE_AIM_DRIFT = 0.035; // radians at full idle
 const STANCE_FRONT = 8.5;
 const STANCE_REAR = -9.5;
 
+// ---- weapon-weight stance ----
+// `ent.weaponBulk` is 0 for a sidearm and 1 for a battle rifle (see the bulk
+// block in player.js, which also explains why the RIFLE is the neutral point:
+// at BULK_NEUTRAL every term here evaluates to exactly what it was before
+// this existed, so the weapon the player holds most of the game is untouched
+// and everything else departs from it).
+//
+// Three things change with how much gun is in the hands, all of them things
+// a person actually does:
+//   WIDTH    — you widen your base to carry and fight a heavier weapon.
+//   SQUARE   — a long gun held in two hands ties the shoulders to the
+//              weapon, so they counter-rotate against the hips less; a
+//              pistol leaves the upper body free to swing with the stride.
+//   STEADY   — a weapon braced across the body damps the operator's own
+//              idle sway and muzzle wander. This is the "stability" a big
+//              weapon buys you, and it is why a sidearm looks twitchier.
+const BULK_NEUTRAL_RIG = 0.7778;   // must match BULK_NEUTRAL in player.js
+const BULK_STANCE_WIDTH = 0.42;    // fraction wider per unit bulk over neutral
+const BULK_SHOULDER_SQUARE = 0.55; // how much bulk suppresses counter-rotation
+const BULK_STEADY = 0.45;          // how much bulk damps the idle layer
+
 // ---- slide ----
 // Authored as a complete alternative pose and cross-faded against the gait,
 // the same way the vault is: no phase to fight and nothing to unwind. Hips
@@ -159,7 +180,15 @@ export function computePose(ent) {
   // the exact complement of the gait terms above, so the two layers hand off
   // to each other and neither is ever paying for the other. Two incommensurate
   // periods (0.62 and 0.41) keep the loop from reading as a loop.
-  const settle = clamp(1 - sp * 4, 0, 1) * (1 - air);
+  // Weapon bulk, relative to the rifle. Entities that never declare one (the
+  // hostiles, the menu previews) sit exactly at neutral and are unaffected.
+  const bulk = ent.weaponBulk === undefined ? BULK_NEUTRAL_RIG : ent.weaponBulk;
+  const bulkD = bulk - BULK_NEUTRAL_RIG;
+  // A braced weapon steadies the operator: the idle layer is damped in
+  // proportion to how much gun is being held against the body.
+  const steady = clamp(1 - bulkD * BULK_STEADY, 0.55, 1.5);
+
+  const settle = clamp(1 - sp * 4, 0, 1) * (1 - air) * steady;
   const idleShift = Math.sin(ent.breathT * 0.62) * settle;
   const idleDrift = Math.sin(ent.breathT * 0.41 + 1.7) * settle;
   const idleAim = Math.sin(ent.breathT * 0.83 + 0.6) * settle;
@@ -180,7 +209,10 @@ export function computePose(ent) {
   // Shoulders counter-rotate against the hips, once per full stride. Pure
   // horizontal offset rather than a real twist — in a side view that is what
   // a torso rotation looks like, and it costs nothing.
-  const counter = -strideSide * SHOULDER_COUNTER * sp * (1 - air);
+  // Squared up to the weapon: the more gun there is in two hands, the less
+  // the shoulders are free to twist against the hips.
+  const square = clamp(1 - bulkD * BULK_SHOULDER_SQUARE, 0.4, 1.6);
+  const counter = -strideSide * SHOULDER_COUNTER * sp * (1 - air) * square;
   // Hips drive forward as the stance leg extends.
   const drive = Math.abs(stride) * HIP_DRIVE * sp * (1 - air);
 
@@ -232,7 +264,9 @@ export function computePose(ent) {
     // Planted foot rolls heel→toe across its stance phase instead of staying
     // pinned flat to the street.
     const roll = (1 - sw) * Math.sin(ph) * FOOT_ROLL * sp;
-    const standX = i ? STANCE_REAR : STANCE_FRONT;
+    // Resting stance widens with the weapon: a base you can fight a battle
+    // rifle from, or the compact one you stand in with a sidearm.
+    const standX = (i ? STANCE_REAR : STANCE_FRONT) * (1 + bulkD * BULK_STANCE_WIDTH);
     let fx = lerp(standX, gx + roll, mv) + noise * 0.8;
     let fy = -lerp(0, lift, mv);
     if (air > 0) {

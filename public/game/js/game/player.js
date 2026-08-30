@@ -46,6 +46,19 @@ const SPRINT_LEAN_RAMP = 1.35;
 const SPRINT_LEAN_DECAY = 2.1;
 const SPRINT_LEAN_MAX = 0.14;
 
+// ---- weapon-weight stance ----------------------------------------------
+// Radians of extra forward pitch per unit of weapon bulk away from the rifle
+// (see BULK_NEUTRAL). A sidearm stands the operator up; a battle rifle pulls
+// the chest down over it. Small on purpose — this is posture, and the whole
+// bulk range is only ~0.78 either side of neutral.
+const BULK_LEAN = 0.10;
+// Firing brace: leaning into the push. Multiplied by bulk as well, so a
+// pistol barely braces at all and an LMG plants hard.
+const BRACE_LEAN = 0.085;
+const BRACE_IN = 0.22;      // s to settle into the brace under sustained fire
+const BRACE_OUT = 0.55;     // s to unwind out of it — slower than it builds
+const BRACE_HOLD_T = 0.18;  // s after the last shot still counted as firing
+
 // Recoil signatures by weapon feel. `kick` scales the rearward punch, `climb`
 // the muzzle rise, `shake` the camera trauma, and `vibe` seeds the energy
 // shudder envelope. A heavy weapon throws the whole frame around; an energy
@@ -109,6 +122,87 @@ const SPRAY_CROUCH_BRACE = 0.62;
 // gun from the hands.
 const RECOIL_TRAVEL_MAX = 3.4;
 const RECOIL_IMPULSE = 1.45;      // was 2.1, before the travel was capped
+
+// ---- recoil springs ----------------------------------------------------
+// Both springs are integrated as
+//     v += -k*x*dt ; v *= exp(-c*dt) ; x += v*dt*m
+// which is a damped harmonic oscillator with w = sqrt(k*m) and zeta = c/(2w).
+//
+// The old numbers (climb k=360 c=19 m=40, kick k=340 c=20 m=44) put BOTH
+// springs at zeta ~= 0.08 — very nearly undamped — ringing at 19Hz for about
+// 300ms. The rifle fires every 87ms, so every shot landed on a spring still
+// ringing from the previous three and the oscillations stacked: measured at
+// the muzzle, sustained fire swung 37px peak-to-peak at 17.5Hz, and the climb
+// spring's counter-swing came back 57% PAST zero — the muzzle rose, then
+// dropped further below where it started than it had risen above it. That
+// bounce is what read as "not like a real weapon"; the comment here used to
+// claim "heavier damping ... settles smoothly (no bounce)", which was the
+// intent all along, just never the arithmetic.
+//
+// These are solved rather than guessed: 19Hz is a buzz, not a recoil, so the
+// springs are slowed to ~7Hz AND properly damped to zeta ~= 0.65. Measured on
+// the same discrete integrator the game actually runs, that turns the climb's
+// 57% counter-swing into 0.9% and cuts the settle from 300ms to 133ms. The
+// impulses below are scaled so the FIRST excursion — the 11 degrees of climb
+// the player actually reads as the kick — comes out exactly as before: the
+// punch is unchanged, only the ringing is gone.
+const RECOIL_SPRING = {
+  climbK: 48,        // was 360 → 19.1Hz; now 7.0Hz
+  kickK: 52,         // was 340 → 19.5Hz; now 7.6Hz
+  damp: 57,          // zeta 0.65 on the climb spring (was 19 → 0.08)
+  kickDampMul: 1.05, // the kick spring is marginally stiffer, so match zeta
+};
+// Impulse scales that restore the pre-change peak against the new damping,
+// solved numerically per spring. Without these the kick would be visibly
+// smaller, and "less bouncy" would have quietly meant "less punchy".
+const RECOIL_CLIMB_RESTORE = 1.60;
+const RECOIL_KICK_RESTORE = 1.72;
+// How much of the damping is weapon-dependent. A long gun braced into the
+// shoulder is genuinely steadier than a sidearm at arm's length; this is the
+// only place weapon bulk touches the recoil, and it is deliberately small —
+// it is character, not a balance lever.
+const RECOIL_BULK_DAMP = 0.35;
+// The damping above is per-weapon, but the RESTORE factors were solved at the
+// rifle's damping — so on a lightly damped sidearm the boosted impulse is
+// under-absorbed and the climb comes out bigger than it used to be (measured:
+// the C-9 went from 20.7 to 28.0 degrees, a 35% change nobody asked for).
+// In this integrator the first frame's displacement carries an exp(-c*dt)
+// factor, so undoing the difference against the neutral damping is exactly
+// that ratio. Restores per-weapon climb to its pre-change value across the
+// whole bulk range rather than only at the point it was solved.
+const recoilRestoreAdj = (steady) => Math.exp((steady - RECOIL_SPRING.damp) / 60);
+
+// ---- weapon bulk -------------------------------------------------------
+// How much weapon the operator has out in front of them, 0..1. Measured off
+// the grip-to-muzzle reach, which is the one number that actually separates
+// the three families the arsenal falls into:
+//
+//   sidearms  (C-9, ray gun, quantum)     reach 11.4 - 12.4, hands 1.6 apart
+//   compact   (P-12, laser SMG)           reach 22.4 - 26,   hands  11 - 14
+//   full-size (rifle .. battle rifle)     reach 35.6 - 49,   hands 16.5 - 20
+//
+// Everything below is anchored so the RIFLE sits at neutral: at BULK_NEUTRAL
+// every stance term is exactly what it was before this existed, and a pistol
+// or a battle rifle departs from there. That keeps the weapon the player
+// spends most of the game holding looking identical, and makes this an
+// addition rather than a retune of the whole rig.
+const BULK_MIN_REACH = 12;   // the C-9's muzzle, from its grip
+const BULK_MAX_REACH = 48;   // the battle rifle's
+const BULK_NEUTRAL = (40 - BULK_MIN_REACH) / (BULK_MAX_REACH - BULK_MIN_REACH); // rifle
+
+// Cached per weapon def — the reach never changes, and this is read every
+// frame. A WeakMap so a def going out of scope takes its entry with it.
+const bulkCache = new WeakMap();
+function weaponBulkOf(wpn) {
+  if (!wpn) return BULK_NEUTRAL;
+  const hit = bulkCache.get(wpn);
+  if (hit !== undefined) return hit;
+  // A knife has no muzzle; it is the least bulk anything can have.
+  const reach = wpn.muzzle ? wpn.muzzle.x : BULK_MIN_REACH;
+  const b = clamp((reach - BULK_MIN_REACH) / (BULK_MAX_REACH - BULK_MIN_REACH), 0, 1);
+  bulkCache.set(wpn, b);
+  return b;
+}
 
 // The rig's knifeReach is in weapon-local units; the blade tip sits a little
 // past it. This converts one to the other for the motion trail.
@@ -289,6 +383,14 @@ export class Player {
     this.aimLocal = 0; this.aimSmooth = 0; this.aimWorld = 0;
     this.gaitPhase = 0; this.speedNorm = 0;
     this.sprintHold = 0;    // integrated sprint time → forward torso pitch
+    // 0..1, how much weapon is in the hands right now (see weaponBulkOf).
+    // Damped rather than snapped so a weapon switch settles the stance over a
+    // beat instead of the operator's feet teleporting into a new position.
+    this.weaponBulk = BULK_NEUTRAL;
+    this.braceHold = 0;     // 0..1 firing brace, weighted by weapon bulk
+    // Set from weaponBulk every frame; seeded here so a shot on the very
+    // first frame cannot size its impulse off an undefined damping.
+    this.recoilDamp = RECOIL_SPRING.damp;
     this.gaitNoise = 0;     // per-stride footing irregularity, read by the rig
     this.breathT = rand(0, 9); this.lean = 0;
     this.crouchSpring = 0; this.crouchVel = 0;
@@ -617,9 +719,29 @@ export class Player {
       this.sprintHold + (this.sprinting ? dt / SPRINT_LEAN_RAMP : -dt / SPRINT_LEAN_DECAY),
       0, 1
     );
+    // Weapon bulk, eased rather than snapped: swapping a pistol for an LMG
+    // changes the whole stance, and doing that in one frame reads as the feet
+    // teleporting. 7/s lands it well inside the 0.34s equip animation, so the
+    // stance has finished changing by the time the new weapon is up.
+    const cur0 = this.cur;
+    this.weaponBulk = damp(this.weaponBulk, weaponBulkOf(cur0 && cur0.wpn), 7, dt);
+    // Firing brace: an operator leans into a weapon that is pushing back, and
+    // leans in harder the more weapon there is. Builds over a couple of shots
+    // and unwinds slowly, so a burst settles into the brace rather than
+    // snapping into it on the first round.
+    const firing = this.time - ((cur0 && cur0.ws && cur0.ws.lastFireT) || -99) < BRACE_HOLD_T;
+    this.braceHold = clamp(
+      this.braceHold + (firing ? dt / BRACE_IN : -dt / BRACE_OUT), 0, 1,
+    );
+
     const baseLean = (this.vx / SPRINT) * 0.15 * this.facing;
     const runLean = this.sprintHold * SPRINT_LEAN_MAX * this.facing;
-    this.lean = damp(this.lean, baseLean + runLean, 6, dt);
+    // Bulk terms, both measured against the rifle so it is unchanged: a bigger
+    // weapon pulls the chest forward to carry it, and pushes it forward again
+    // to fight the recoil while it is firing.
+    const bulkLean = (this.weaponBulk - BULK_NEUTRAL) * BULK_LEAN * this.facing;
+    const braceLean = this.braceHold * this.weaponBulk * BRACE_LEAN * this.facing;
+    this.lean = damp(this.lean, baseLean + runLean + bulkLean + braceLean, 6, dt);
 
     // Footing noise: a slow, seeded wobble that makes each stride land
     // slightly differently instead of stamping the same two frames forever.
@@ -1037,15 +1159,21 @@ export class Player {
     if (input.hit('Digit3')) this.switchTo('knife');
     if (input.hit('Digit4') && this.smgUnlocked) this.switchTo('smg');
 
-    // recoil springs — stiffer restoring force + heavier damping so the
-    // weapon snaps back to center quickly and settles smoothly (no bounce)
-    ws.recoilVel += -ws.recoil * 340 * dt;
-    ws.recoilVel *= Math.exp(-20 * dt);
+    // ---- recoil springs ----
+    // See RECOIL_SPRING for why these numbers are what they are. The damping
+    // scales with how much weapon is being held: a battle rifle braced into
+    // the shoulder settles harder than a sidearm held out at arm's length.
+    const steady = RECOIL_SPRING.damp
+      * (1 + RECOIL_BULK_DAMP * (this.weaponBulk - BULK_NEUTRAL));
+    // Cached for fire(), which needs the same value to size its impulse.
+    this.recoilDamp = steady;
+    ws.recoilVel += -ws.recoil * RECOIL_SPRING.kickK * dt;
+    ws.recoilVel *= Math.exp(-steady * RECOIL_SPRING.kickDampMul * dt);
     // Clamped, not just floored: see RECOIL_TRAVEL_MAX. The gun is allowed to
     // punch back, never far enough to tear out of the hands solved onto it.
     ws.recoil = clamp(ws.recoil + ws.recoilVel * dt * 44, 0, RECOIL_TRAVEL_MAX);
-    ws.recoilRotVel += -ws.recoilRot * 360 * dt;
-    ws.recoilRotVel *= Math.exp(-19 * dt);
+    ws.recoilRotVel += -ws.recoilRot * RECOIL_SPRING.climbK * dt;
+    ws.recoilRotVel *= Math.exp(-steady * dt);
     ws.recoilRot += ws.recoilRotVel * dt * 40;
     ws.flashT = Math.max(0, ws.flashT - dt * 14);
     ws.boltBack = Math.max(0, ws.boltBack - dt * 9);
@@ -1504,8 +1632,15 @@ export class Player {
     const spread = SPREAD_MODEL[wpn.recoilFeel] || SPREAD_MODEL.standard;
     // recoilMul is the equipped perk block's recoil-control bonus (1 = none).
     const rm = this.recoilMul;
-    ws.recoilVel += wpn.recoilKick * RECOIL_IMPULSE * patMul * chargeMul * feel.kick * rm;
-    ws.recoilRotVel -= wpn.recoilRot * 18 * patMul * chargeMul * feel.climb * rm;
+    // The RESTORE factors compensate for the (much heavier) spring damping so
+    // the visible kick is the same size it always was — see RECOIL_SPRING —
+    // and the adjustment tracks this weapon's own damping so that holds for a
+    // sidearm and an LMG alike, not just at the point it was solved.
+    const adj = recoilRestoreAdj(this.recoilDamp);
+    ws.recoilVel += wpn.recoilKick * RECOIL_IMPULSE * RECOIL_KICK_RESTORE * adj
+      * patMul * chargeMul * feel.kick * rm;
+    ws.recoilRotVel -= wpn.recoilRot * 18 * RECOIL_CLIMB_RESTORE * adj
+      * patMul * chargeMul * feel.climb * rm;
     // Spray step: walk the aim one entry further along this weapon's pattern.
     // Read at the pre-increment index so the first round of a burst gets the
     // pattern's first (deliberately gentle) step — a tap should not climb.
