@@ -186,29 +186,64 @@ function previewItem(item, cv) {
     g.beginPath(); g.moveTo(W / 2 - 9, H / 2); g.lineTo(W / 2 + 9, H / 2); g.stroke();
     return;
   }
-  let spr = null;
-  if (item.apply.type === 'finish') {
-    const base = assets.weapons[item.apply.weapon];
-    spr = (base.finishes && base.finishes[item.apply.finish]) || base.body;
-  } else if (item.apply.type === 'weaponBody') {
+  // A weapon is not one sprite. The rig draws it as an assembly — magazine
+  // behind the receiver, then the body, then the cycling bolt, then (on the
+  // pistols) the slide, which is a separate sprite precisely because it has
+  // to move under blowback. This preview drew only the body, so every card
+  // showed a partial gun, and on the C-9 that meant the ENTIRE TOP HALF was
+  // missing: the frame and grip rendered, the slide did not, and the muzzle
+  // device — mounted at the slide's muzzle point — hung in mid-air with a gap
+  // where the gun should have been. Rifles and SMGs lost their magazines the
+  // same way, just less visibly.
+  //
+  // `parts` is [sprite, offsetX, offsetY] in weapon-local units, in the same
+  // order and from the same fields as rig.drawGun(), so a card and the gun in
+  // the operator's hands can never disagree about what the weapon looks like.
+  const parts = [];
+  if (item.apply.type === 'finish' || item.apply.type === 'weaponBody') {
     const def = assets.weapons[item.apply.weapon];
-    spr = def && def.body;
+    if (!def) return;
+    const body = item.apply.type === 'finish'
+      ? ((def.finishes && def.finishes[item.apply.finish]) || def.body)
+      : def.body;
+    if (!body) return;
+    // A skin repaints the magazine and the slide too, so prefer the finish's
+    // own parts and fall back to the default weapon's.
+    const mag = body.mag || def.mag;
+    if (mag && def.magPos) parts.push([mag, def.magPos.x, def.magPos.y]);
+    parts.push([body, 0, 0]);
+    if (def.bolt && def.boltPos) parts.push([def.bolt, def.boltPos.x, def.boltPos.y]);
+    const slide = body.slide || def.slide;
+    if (slide) parts.push([slide, 0, 0]);
   } else if (item.apply.type === 'operator') {
-    const parts = assets[item.apply.variant];
-    spr = parts && parts.head;
+    const op = assets[item.apply.variant];
+    if (!op || !op.head) return;
+    parts.push([op.head, 0, 0]);
   }
-  if (!spr) return;
-  const scale = Math.min((W * 0.84) / spr.w, (H * 0.84) / spr.h);
-  // Centre the sprite's *box*, not its anchor. drawSprite() places the art
-  // relative to the rig attachment point (a head hangs below its neck joint,
-  // a gun sits behind its grip), so translating straight to the middle of the
-  // canvas pushed the art off-centre and clipped tall previews — visibly so on
-  // the operator cards, which were cropped through the helmet.
-  const cx = (spr.ax * spr.s - spr.w / 2) * scale;
-  const cy = (spr.ay * spr.s - spr.h / 2) * scale;
+  if (!parts.length) return;
+
+  // Frame the union of every part's box rather than the body's alone —
+  // otherwise a magazine hanging below the receiver, or a slide standing
+  // above it, is scaled off the edge of the card.
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [sp, px, py] of parts) {
+    const l = px - sp.ax * sp.s, t = py - sp.ay * sp.s;
+    x0 = Math.min(x0, l); y0 = Math.min(y0, t);
+    x1 = Math.max(x1, l + sp.w); y1 = Math.max(y1, t + sp.h);
+  }
+  const bw = x1 - x0, bh = y1 - y0;
+  if (!(bw > 0 && bh > 0)) return;
+  const scale = Math.min((W * 0.84) / bw, (H * 0.84) / bh);
+  // Centre that union box, not any one sprite's anchor. drawSprite() places
+  // art relative to its rig attachment point (a head hangs below its neck
+  // joint, a gun sits behind its grip), so translating straight to the middle
+  // of the canvas pushes the art off-centre and clips tall previews — it was
+  // visibly cropping the operator cards through the helmet.
   g.save();
-  g.translate(W / 2 + cx, H / 2 + cy);
-  drawSprite(g, spr, 0, 0, 0, scale, scale);
+  g.translate(W / 2 - (x0 + x1) / 2 * scale, H / 2 - (y0 + y1) / 2 * scale);
+  for (const [sp, px, py] of parts) {
+    drawSprite(g, sp, px * scale, py * scale, 0, scale, scale);
+  }
   g.restore();
 }
 
