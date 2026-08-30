@@ -422,12 +422,20 @@ function paintPistolSlide(finish) {
     g.beginPath();
     g.moveTo(10.2, -5.8); g.lineTo(11.6, -5.8); g.lineTo(11.5, -4.6);
     g.closePath(); g.fill();
-    // sights
+    // sights. The slide's own top surface is the flat run at y=-5.8 (the
+    // moveTo/lineTo pair above); these have to be seated INTO it, not just
+    // placed above it — at -6.7 they sat almost a full unit clear of that
+    // line with only its last tenth grazing the metal, which read as the
+    // rear sight's tritium vial floating in mid-air over every single finish
+    // (they're colour-only reskins of this same slide). Now the blade is
+    // seated 60% into the slide and rises 40% of its own height above the
+    // spine, which is roughly a real pistol sight's proportion to slide
+    // height.
     g.fillStyle = '#17181b';
-    g.fillRect(-4.3, -6.7, 1.4, 1);
-    g.fillRect(9.8, -6.7, 1, 1);
+    g.fillRect(-4.3, -6.2, 1.4, 1);
+    g.fillRect(9.8, -6.2, 1, 1);
     g.fillStyle = '#7ec26a';
-    g.fillRect(-4.0, -6.5, 0.6, 0.6);
+    g.fillRect(-4.0, -6.0, 0.6, 0.6);
     // Cool hairline, not the old warm one: stacked on metal()'s bright top
     // stop, a cream stroke widened into a tan band across the whole slide.
     g.strokeStyle = 'rgba(198,212,228,0.16)'; g.lineWidth = 0.35;
