@@ -32,7 +32,10 @@ export class Input {
       if (e.repeat) return;
       this.keys.add(e.code);
       this.pressed.add(e.code);
-      if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+      // F3 opens the browser's own find bar in some builds, which steals the
+      // keystroke the debug overlay is bound to. Everything else here is
+      // swallowed because the page would otherwise scroll under the game.
+      if (['Space', 'ArrowUp', 'ArrowDown', 'F3'].includes(e.code)) e.preventDefault();
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => { this.keys.clear(); this.mouse.down = false; this.axisX = 0; });

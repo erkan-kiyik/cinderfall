@@ -37,6 +37,7 @@ import { drawSoldier as rigDrawSoldier, newWeaponState } from './game/rig.js';
 import { intelTitleKey } from './game/intel.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd, initAds, isRewardedAdReady } from './engine/ads.js';
+import { debug } from './engine/debug.js';
 import { mountCurrencyIcons } from './art/currency.js';
 import { dailyStatus, claimDaily, DAILY_REWARDS } from './game/retention.js';
 import { paintShareCard, shareCard } from './game/sharecard.js';
@@ -980,6 +981,9 @@ class Game {
 
   update(dt) {
     this.time += dt;
+    // Sampled unconditionally, so switching the overlay on shows a populated
+    // frame-time history rather than a second of empty graph.
+    debug.sample(dt);
     const inp = DEMO ? demoDriver : input;
     if (DEMO) demoDriver.tick(dt);
 
@@ -987,6 +991,11 @@ class Game {
       if (this.state === 'play') this.setState('pause');
       else if (this.state === 'pause') this.setState('play');
     }
+    // Developer overlay. Read off the real Input rather than `inp`, so it
+    // still works while the attract-mode demo driver is holding the controls,
+    // and read before the pause gate below so it can be toggled from a paused
+    // frame — which is exactly when you want to read a number off it.
+    if (input.hit('F3')) debug.toggle();
     if (this.state === 'pause') { input.endFrame(); return; }
     if (this.state === 'revive') { input.endFrame(); return; }
     // MOTH's ambient barks (low health, recovery, a long lull). Ticked above
@@ -1385,9 +1394,23 @@ class Game {
     ctx.restore();
     ctx.restore();
 
+    // World-space debug geometry goes inside the camera transform, before the
+    // lighting composite: it describes the scene, so it should be graded with
+    // the scene rather than floating over it as a separate UI layer.
+    if (debug.on) {
+      ctx.save();
+      this.cam.applyTransform(ctx, vw, vh);
+      this.vw = vw;
+      debug.drawWorld(ctx, this);
+      ctx.restore();
+    }
+
     this.compositeLighting();
     this.grade();
     if (this.state === 'play' && this.player.deadT <= 0) this.crosshair();
+    // The readout goes last, after the grade, so the numbers stay legible
+    // whatever the day cycle is doing behind them.
+    debug.drawHud(ctx, this, dpr);
   }
 
   // Per-frame character draw options (ground-accent colour/width), rebuilt

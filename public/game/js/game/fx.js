@@ -26,12 +26,14 @@ const TRAIL_WIDTH = 7;
 //   light    the brief flash at the point of impact (metal strikes glow)
 const MATERIALS = {
   metal: {
+    kick: 1.25,
     sparks: 9, sparkSpread: 1.5, sparkSpeed: 480,
     chips: 2, chipColor: ['#6e6a63', '#8a8279'], chipSize: [1.0, 2.0],
     dust: 'rgba(140,138,134,0.42)', dustSize: 0.45,
     light: [255, 214, 150], lightR: 62, lightA: 0.6,
   },
   wood: {
+    kick: 1.0,
     // Splinters, not sparks: a couple of stray embers at most, and long thin
     // fragments that tumble further than stone chips.
     sparks: 1, sparkSpread: 0.7, sparkSpeed: 200,
@@ -40,12 +42,14 @@ const MATERIALS = {
     light: null, lightR: 0, lightA: 0,
   },
   concrete: {
+    kick: 0.5,
     sparks: 3, sparkSpread: 1.1, sparkSpeed: 330,
     chips: 4, chipColor: ['#55524a', '#6a675e', '#43413b'], chipSize: [1.4, 2.8],
     dust: 'rgba(150,146,138,0.8)', dustSize: 1.05,
     light: [255, 200, 130], lightR: 36, lightA: 0.3,
   },
   sand: {
+    kick: 0.28,
     // A sandbag swallows a round: no sparks, no fragments, just a heavy
     // grain-coloured cloud and a spray of fill.
     sparks: 0, sparkSpread: 0, sparkSpeed: 0,
@@ -153,6 +157,10 @@ export class FX {
       });
     }
     if (m.light) this.addLight(x + nx * 3, y + ny * 3, m.lightR, m.light, m.lightA, 0.05);
+    // The thing that was hit registers the hit. `kick` scales with how much
+    // the material gives: a sandbag swallows the round and barely moves, sheet
+    // metal rings and jumps, wood is in between.
+    this.world.nudgeProp(x, y, -nx, -ny, m.kick);
     this.world.bulletHole(x, y);
     this.audio.impact();
   }

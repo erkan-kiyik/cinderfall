@@ -13,6 +13,23 @@ import { clamp, rand, randSpread, makeRng } from '../engine/math.js';
 import { gradeAt, pickWeather, START_HOUR } from '../engine/daycycle.js';
 import { enemyCount, lootCount } from './difficulty.js';
 
+// ---- prop impact response ----------------------------------------------
+// How hard a round shoves a prop's *drawing* (never its collider — see
+// nudgeProp), how far that is allowed to go, and the spring that puts it
+// back. The travel is small by design: this is the object registering the
+// hit, not the object being moved. Anything larger and cover stops lining up
+// with the collider the player is actually standing behind.
+const PROP_NUDGE = 62;         // impulse per unit of hit power
+const PROP_NUDGE_MAX = 2.6;    // px of travel, hard cap
+const PROP_ROCK_MAX = 0.028;   // radians, ~1.6 degrees
+const PROP_SPRING_K = 620;     // stiff: it snaps back inside ~0.2s
+const PROP_SPRING_DAMP = 11;
+// Sprite footprint, in world units, that counts as "one crate" of mass.
+// Bigger props take the same impulse proportionally less far, so a shipping
+// container barely twitches under a rifle round and a crate visibly jumps —
+// read off the art rather than authored per prop.
+const PROP_MASS_REF = 34;
+
 export const GROUND_Y = 640;
 // Map width. Stages were clearing in well under a minute at 4600; the wider
 // field gives a run room to breathe (more cover to work, more ground to lose)
@@ -987,7 +1004,22 @@ export class World {
     // has the neighbour's shadow painted over its face.
     this.drawContactShadows(g, visible);
 
-    for (const p of this.props) { if (visible(p.x)) drawSprite(g, p.spr, p.x, p.y); }
+    for (const p of this.props) {
+      if (!visible(p.x)) continue;
+      // hx/hy/hr are the impact spring (see nudgeProp). Zero for anything that
+      // has not been shot, so the common case pays one branch.
+      if (p.hr) {
+        // Rock about the base, not the sprite centre: these things stand on
+        // the ground and pivot on the edge the round pushed them away from.
+        g.save();
+        g.translate(p.x + p.hx, p.y + p.hy);
+        g.rotate(p.hr);
+        drawSprite(g, p.spr, 0, 0);
+        g.restore();
+      } else {
+        drawSprite(g, p.spr, p.x + (p.hx || 0), p.y + (p.hy || 0));
+      }
+    }
     for (const b of this.barrels) if (b.alive && visible(b.x)) drawSprite(g, b.spr, b.x, b.y);
     this.drawShafts(g, visible);
     this.drawPickups(g, visible);
@@ -1093,7 +1125,67 @@ export class World {
     return this.lights;
   }
 
+  // ---------------- prop hit response ----------------
+  // A round striking a crate used to spawn particles and a decal in front of
+  // a completely inert sprite: the world made a noise about being hit but the
+  // thing that was hit never moved. This is the missing half — the object
+  // itself takes the impulse.
+  //
+  // It is deliberately a nudge and not a physics body. These props are cover;
+  // knocking them out of position would move the collider out from under the
+  // art, and the collider is what the whole level is laid out around. What
+  // moves is the drawing, by a couple of pixels, on a spring that returns it
+  // exactly where it started.
+  //
+  // Heavier props take the same impulse less far — PROP_MASS is read off the
+  // sprite's own footprint, so a shipping container barely registers a rifle
+  // round and a wooden crate visibly jumps, with nothing to author per prop.
+  nudgeProp(x, y, nx, ny, power = 1) {
+    let best = null, bestArea = Infinity;
+    for (const p of this.props) {
+      // cheap x-reject first: props are numerous and this runs per impact
+      if (Math.abs(p.x - x) > 140) continue;
+      const spr = p.spr;
+      const l = p.x - spr.ax * spr.s, t = p.y - spr.ay * spr.s;
+      if (x < l || x > l + spr.w || y < t || y > t + spr.h) continue;
+      // Smallest containing sprite wins, so a crate sitting against a
+      // container takes the hit rather than the container behind it.
+      const area = spr.w * spr.h;
+      if (area < bestArea) { bestArea = area; best = p; }
+    }
+    if (!best) return;
+    const mass = Math.max(1, Math.sqrt(bestArea) / PROP_MASS_REF);
+    const k = (PROP_NUDGE * power) / mass;
+    best.hvx = (best.hvx || 0) + nx * k;
+    best.hvy = (best.hvy || 0) + ny * k * 0.55;   // less vertical: they sit on the ground
+    // A little rotation off centre reads as the object rocking rather than
+    // sliding — signed by which side of the prop the round landed on.
+    best.hvr = (best.hvr || 0) + nx * k * 0.0016 + (x - best.x) * ny * k * 0.00012;
+  }
+
+  updateProps(dt) {
+    for (const p of this.props) {
+      if (!p.hvx && !p.hvy && !p.hvr && !p.hx && !p.hy && !p.hr) continue;
+      p.hx = (p.hx || 0); p.hy = (p.hy || 0); p.hr = (p.hr || 0);
+      p.hvx = (p.hvx || 0) - p.hx * PROP_SPRING_K * dt;
+      p.hvy = (p.hvy || 0) - p.hy * PROP_SPRING_K * dt;
+      p.hvr = (p.hvr || 0) - p.hr * PROP_SPRING_K * 1.4 * dt;
+      const d = Math.exp(-PROP_SPRING_DAMP * dt);
+      p.hvx *= d; p.hvy *= d; p.hvr *= d;
+      p.hx = clamp(p.hx + p.hvx * dt, -PROP_NUDGE_MAX, PROP_NUDGE_MAX);
+      p.hy = clamp(p.hy + p.hvy * dt, -PROP_NUDGE_MAX, PROP_NUDGE_MAX);
+      p.hr = clamp(p.hr + p.hvr * dt, -PROP_ROCK_MAX, PROP_ROCK_MAX);
+      // Park it exactly at rest rather than leaving a residue to iterate over
+      // forever — this loop skips anything fully settled.
+      if (Math.abs(p.hx) < 0.01 && Math.abs(p.hy) < 0.01 && Math.abs(p.hr) < 0.0002
+          && Math.abs(p.hvx) < 0.05 && Math.abs(p.hvy) < 0.05 && Math.abs(p.hvr) < 0.0008) {
+        p.hx = p.hy = p.hr = p.hvx = p.hvy = p.hvr = 0;
+      }
+    }
+  }
+
   update(dt) {
     this.time += dt;
+    this.updateProps(dt);
   }
 }
