@@ -30,6 +30,15 @@ const PROP_SPRING_DAMP = 11;
 // read off the art rather than authored per prop.
 const PROP_MASS_REF = 34;
 
+// The impact-spring fields are declared at construction rather than being
+// added the first time a prop is shot. Same reasoning as newWeaponState in
+// rig.js: every prop then has one shape, so the draw loop — which reads hx/hy
+// on all of them, every frame — never re-optimises against a second hidden
+// class the moment the player opens fire.
+function newProp(spr, x, y) {
+  return { spr, x, y, hx: 0, hy: 0, hr: 0, hvx: 0, hvy: 0, hvr: 0 };
+}
+
 export const GROUND_Y = 640;
 // Map width. Stages were clearing in well under a minute at 4600; the wider
 // field gives a run room to breathe (more cover to work, more ground to lose)
@@ -210,7 +219,7 @@ export class World {
   // see BARREL_W and friends for why those are different numbers. Returns the
   // collider so a destructible piece can drop it again later.
   solidProp(spr, x, y, w, h, mat) {
-    this.props.push({ spr, x, y });
+    this.props.push(newProp(spr, x, y));
     const c = { x: x - w / 2, y: y - h, w, h, mat };
     this.colliders.push(c);
     return c;
@@ -254,7 +263,7 @@ export class World {
 
   buildLevel() {
     const GY = GROUND_Y;
-    const P = (spr, x, y = GY) => this.props.push({ spr, x, y });
+    const P = (spr, x, y = GY) => this.props.push(newProp(spr, x, y));
     const L = (x, y, r, c, a, flicker = 0) => this.lights.push({ x, y, r, c, a, flicker, seed: rand(0, 100) });
     const S = (x, y) => this.shafts.push({ x, y });
 
@@ -433,7 +442,7 @@ export class World {
   buildProceduralLevel(stage) {
     const GY = GROUND_Y;
     const rng = makeRng(stage * 92821 + 17);
-    const P = (spr, x, y = GY) => this.props.push({ spr, x, y });
+    const P = (spr, x, y = GY) => this.props.push(newProp(spr, x, y));
     const L = (x, y, r, c, a, flicker = 0) => this.lights.push({ x, y, r, c, a, flicker, seed: rng.range(0, 100) });
     const S = (x, y) => this.shafts.push({ x, y });
 
@@ -1008,7 +1017,7 @@ export class World {
       if (!visible(p.x)) continue;
       // hx/hy/hr are the impact spring (see nudgeProp). Zero for anything that
       // has not been shot, so the common case pays one branch.
-      if (p.hr) {
+      if (p.hr !== 0) {
         // Rock about the base, not the sprite centre: these things stand on
         // the ground and pivot on the edge the round pushed them away from.
         g.save();
@@ -1017,7 +1026,7 @@ export class World {
         drawSprite(g, p.spr, 0, 0);
         g.restore();
       } else {
-        drawSprite(g, p.spr, p.x + (p.hx || 0), p.y + (p.hy || 0));
+        drawSprite(g, p.spr, p.x + p.hx, p.y + p.hy);
       }
     }
     for (const b of this.barrels) if (b.alive && visible(b.x)) drawSprite(g, b.spr, b.x, b.y);
@@ -1156,20 +1165,20 @@ export class World {
     if (!best) return;
     const mass = Math.max(1, Math.sqrt(bestArea) / PROP_MASS_REF);
     const k = (PROP_NUDGE * power) / mass;
-    best.hvx = (best.hvx || 0) + nx * k;
-    best.hvy = (best.hvy || 0) + ny * k * 0.55;   // less vertical: they sit on the ground
+    best.hvx += nx * k;
+    best.hvy += ny * k * 0.55;   // less vertical: they sit on the ground
     // A little rotation off centre reads as the object rocking rather than
     // sliding — signed by which side of the prop the round landed on.
-    best.hvr = (best.hvr || 0) + nx * k * 0.0016 + (x - best.x) * ny * k * 0.00012;
+    best.hvr += nx * k * 0.0016 + (x - best.x) * ny * k * 0.00012;
   }
 
   updateProps(dt) {
     for (const p of this.props) {
-      if (!p.hvx && !p.hvy && !p.hvr && !p.hx && !p.hy && !p.hr) continue;
-      p.hx = (p.hx || 0); p.hy = (p.hy || 0); p.hr = (p.hr || 0);
-      p.hvx = (p.hvx || 0) - p.hx * PROP_SPRING_K * dt;
-      p.hvy = (p.hvy || 0) - p.hy * PROP_SPRING_K * dt;
-      p.hvr = (p.hvr || 0) - p.hr * PROP_SPRING_K * 1.4 * dt;
+      if (p.hvx === 0 && p.hvy === 0 && p.hvr === 0
+          && p.hx === 0 && p.hy === 0 && p.hr === 0) continue;
+      p.hvx -= p.hx * PROP_SPRING_K * dt;
+      p.hvy -= p.hy * PROP_SPRING_K * dt;
+      p.hvr -= p.hr * PROP_SPRING_K * 1.4 * dt;
       const d = Math.exp(-PROP_SPRING_DAMP * dt);
       p.hvx *= d; p.hvy *= d; p.hvr *= d;
       p.hx = clamp(p.hx + p.hvx * dt, -PROP_NUDGE_MAX, PROP_NUDGE_MAX);
