@@ -43,18 +43,89 @@ const EVT_DISMISSED = 'onRewardedVideoAdDismissed';
 const EVT_FAILED_TO_SHOW = 'onRewardedVideoAdFailedToShow';
 
 let admobReady = null;   // AdMob plugin object once initialized | false (unavailable)
+let initPromise = null;  // in-flight initialize(), so concurrent callers share one
 
 async function getAdmob() {
   if (admobReady !== null) return admobReady;
-  try {
-    const AdMob = window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.AdMob;
-    if (!AdMob) { admobReady = false; return admobReady; }
-    await AdMob.initialize({ initializeForTesting: true });
-    admobReady = AdMob;
-  } catch (e) {
-    admobReady = false;
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    try {
+      const AdMob = window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.AdMob;
+      if (!AdMob) { admobReady = false; return admobReady; }
+      await AdMob.initialize({ initializeForTesting: true });
+      admobReady = AdMob;
+    } catch (e) {
+      admobReady = false;
+    }
+    return admobReady;
+  })();
+  return initPromise;
+}
+
+// ---------------------------------------------------------------------------
+// Preloading — why the ad used to take so long to appear
+// ---------------------------------------------------------------------------
+// prepareRewardVideoAd() is a network round trip to Google's ad servers, and
+// it used to sit on the tap path: the player pressed WATCH AD and only THEN
+// did the game start fetching an ad. Worse, getAdmob() was on that same path,
+// so the first ad of a session also waited on AdMob.initialize() first — two
+// SDK/network operations in series, with no feedback on screen, in front of a
+// button that just looked frozen.
+//
+// So the fetch moves off the tap entirely. initAds() warms the SDK at startup
+// and loads the first ad; every show queues the next one immediately after, so
+// by the time a player reaches the next WATCH AD the ad is already in memory
+// and showRewardVideoAd() can run on its own.
+//
+// `loaded` is the state that matters: it is only true once prepare has
+// actually resolved, so the UI can tell "ready now" from "still fetching"
+// rather than guessing.
+let loaded = false;
+let loading = null;     // in-flight prepare(), shared by concurrent callers
+let lastPrepareFail = 0;
+// After a failed fetch (no fill, no network) wait this long before trying
+// again, so a screen that polls readiness cannot spin the SDK in a tight loop.
+const PREPARE_RETRY_MS = 20000;
+
+function adUnitId() {
+  const platform = window.Capacitor?.getPlatform?.();
+  return platform === 'ios' ? REWARDED_UNIT_IOS : REWARDED_UNIT_ANDROID;
+}
+
+// Fetches one rewarded ad into memory. Safe to call at any time: it no-ops if
+// an ad is already loaded or a fetch is already running.
+export function preloadRewardedAd() {
+  if (loaded || loading) return loading || Promise.resolve(loaded);
+  if (lastPrepareFail && Date.now() - lastPrepareFail < PREPARE_RETRY_MS) {
+    return Promise.resolve(false);
   }
-  return admobReady;
+  loading = (async () => {
+    const AdMob = await getAdmob();
+    if (!AdMob) { loading = null; return false; }
+    try {
+      await AdMob.prepareRewardVideoAd({ adId: adUnitId(), isTesting: true });
+      loaded = true;
+      lastPrepareFail = 0;
+    } catch (e) {
+      // No fill or no network. Not fatal and not surfaced — the next call
+      // tries again, and a tap while unloaded still falls through to a live
+      // prepare below. The timestamp just stops a tight retry loop.
+      loaded = false;
+      lastPrepareFail = Date.now();
+    }
+    loading = null;
+    return loaded;
+  })();
+  return loading;
+}
+
+// True when a tap would open an ad immediately rather than fetching one.
+export function isRewardedAdReady() { return loaded; }
+
+// Called once at startup. Warms the SDK and pulls the first ad down long
+// before the player can reach a WATCH AD button.
+export function initAds() {
+  getAdmob().then((AdMob) => { if (AdMob) preloadRewardedAd(); });
 }
 
 // Shows a rewarded ad and calls exactly one of the callbacks:
@@ -65,8 +136,6 @@ export async function watchRewardedAd(onReward, onClose) {
   const AdMob = await getAdmob();
   if (AdMob) {
     try {
-      const platform = window.Capacitor.getPlatform();
-      const adId = platform === 'ios' ? REWARDED_UNIT_IOS : REWARDED_UNIT_ANDROID;
       let rewarded = false;
       let rewardHandle, dismissHandle, failHandle;
       const cleanup = () => { rewardHandle.remove(); dismissHandle.remove(); failHandle.remove(); };
@@ -77,10 +146,23 @@ export async function watchRewardedAd(onReward, onClose) {
       });
       failHandle = await AdMob.addListener(EVT_FAILED_TO_SHOW, () => {
         cleanup();
+        // The ad was consumed without playing, so fetch a replacement rather
+        // than leaving the next tap to pay for the round trip again.
+        loaded = false;
+        preloadRewardedAd();
         onClose?.();
       });
-      await AdMob.prepareRewardVideoAd({ adId, isTesting: true });
+      // The ad is normally already in memory (see preloadRewardedAd). Only
+      // fetch here if the preload has not landed yet — first tap of a cold
+      // start, or a previous fetch that found no fill.
+      if (!loaded) {
+        if (loading) await loading;
+        else await AdMob.prepareRewardVideoAd({ adId: adUnitId(), isTesting: true });
+      }
+      loaded = false;               // this ad is being spent
       await AdMob.showRewardVideoAd();
+      // Queue the next one straight away so the following tap is instant too.
+      preloadRewardedAd();
       return;
     } catch (e) {
       // Native path failed: no fill, no network, or a plugin error. Inside the

@@ -170,6 +170,13 @@
             <span class="profile-pill-ico">◎</span>
             <span class="profile-pill-label" data-i18n="profile.short">PROFILE</span>
           </button>
+          <!-- Language is reachable from the front screen, not only from the
+               pause menu. A player who cannot read the interface cannot be
+               asked to start a mission and pause it in order to fix that. -->
+          <button id="btn-lang-pill" class="profile-pill" type="button" data-i18n-attr="title:lang.title" title="LANGUAGE">
+            <span class="profile-pill-ico">⊕</span>
+            <span class="profile-pill-label" id="lang-pill-label">EN</span>
+          </button>
           <div class="token-pill scrap-pill"><canvas class="cur-icon cur-scrap" width="20" height="20"></canvas><span id="scrap-count">0</span></div>
         </div>
       </header>
@@ -243,10 +250,69 @@
               <div id="crate-burst" class="crate-burst"></div>
               <span class="crate-mark">◈</span>
             </div>
-            <button id="btn-open-crate" class="btn primary big">OPEN — <span id="crate-cost">300</span> <canvas class="cur-icon cur-scrap" width="16" height="16"></canvas></button>
-            <button id="btn-watch-ad" class="btn secondary big">▶ WATCH AD — FREE CRATE<span class="ad-remaining"></span></button>
+            <!-- The labels sit in their own spans: the buttons also carry a
+                 painted canvas and a live counter, which data-i18n on the
+                 button itself would overwrite. -->
+            <button id="btn-open-crate" class="btn primary big"><span data-i18n="crates.open">OPEN</span> — <span id="crate-cost">300</span> <canvas class="cur-icon cur-scrap" width="16" height="16"></canvas></button>
+            <button id="btn-watch-ad" class="btn secondary big"><span data-i18n="crates.watchAdFree">▶ WATCH AD — FREE CRATE</span><span class="ad-remaining"></span></button>
             <div id="crate-msg" class="crate-msg"></div>
           </div>
+          <!-- Invite codes. Placed in CRATES because that is where the game's
+               other free-scrap paths live (the ad crate above), so a player
+               looking for a way to open a crate without paying finds both in
+               the same place. See js/game/referral.js for why this is built
+               out of two codes rather than one link. -->
+          <section id="invite-panel" class="invite-panel">
+            <div class="collection-head"><span data-i18n="invite.title">INVITE FRIENDS</span> <span id="invite-friends" class="invite-friends"></span></div>
+            <p class="invite-sub" data-i18n="invite.sub">Trade codes with a friend and you both get scrap. Works offline — no account needed.</p>
+
+            <div class="invite-card">
+              <div class="invite-label" data-i18n="invite.yourCode">YOUR INVITE CODE</div>
+              <!-- dir="ltr" on every code and input: the codes are Latin
+                   characters and digits and must read the same way round in
+                   Arabic as anywhere else, or they get copied out reversed. -->
+              <div id="invite-code" class="invite-code" dir="ltr">······</div>
+              <div class="invite-actions">
+                <button id="btn-invite-copy" class="btn" data-i18n="invite.copy">COPY</button>
+                <button id="btn-invite-share" class="btn secondary" data-i18n="invite.share">SHARE</button>
+              </div>
+            </div>
+
+            <div id="invite-enter" class="invite-card">
+              <div class="invite-label" data-i18n="invite.enterTitle">GOT A FRIEND'S CODE?</div>
+              <p class="invite-hint" data-i18n="invite.enterHint">Enter it once to claim your joining bonus.</p>
+              <div class="invite-actions">
+                <input id="invite-input" class="invite-input" type="text" inputmode="latin" maxlength="7" dir="ltr"
+                       autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                       data-i18n-attr="placeholder:invite.placeholder" placeholder="ENTER CODE">
+                <button id="btn-invite-redeem" class="btn primary" data-i18n="invite.redeem">REDEEM</button>
+              </div>
+              <div id="invite-enter-msg" class="invite-msg"></div>
+            </div>
+
+            <div id="invite-thanks" class="invite-card hidden">
+              <div class="invite-label" data-i18n="invite.thanksTitle">SEND THIS BACK TO YOUR FRIEND</div>
+              <p class="invite-hint" data-i18n="invite.thanksSub">They enter this code to collect their half of the reward.</p>
+              <div id="invite-thanks-code" class="invite-code" dir="ltr">······</div>
+              <div class="invite-actions">
+                <button id="btn-thanks-copy" class="btn" data-i18n="invite.copy">COPY</button>
+                <button id="btn-thanks-share" class="btn secondary" data-i18n="invite.share">SHARE</button>
+              </div>
+            </div>
+
+            <div class="invite-card">
+              <div class="invite-label" data-i18n="invite.claimTitle">FRIEND SENT A THANK-YOU CODE?</div>
+              <p class="invite-hint" data-i18n="invite.claimHint">Enter it to collect your reward for inviting them.</p>
+              <div class="invite-actions">
+                <input id="invite-claim-input" class="invite-input" type="text" inputmode="latin" maxlength="7" dir="ltr"
+                       autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                       data-i18n-attr="placeholder:invite.placeholder" placeholder="ENTER CODE">
+                <button id="btn-invite-claim" class="btn primary" data-i18n="invite.claim">CLAIM</button>
+              </div>
+              <div id="invite-claim-msg" class="invite-msg"></div>
+            </div>
+          </section>
+
           <div class="collection">
             <div class="collection-head"><span data-i18n="crates.collection">COLLECTION</span> <span id="collection-count"></span></div>
             <div id="collection-grid" class="collection-grid"></div>
@@ -481,6 +547,18 @@
       <button id="btn-graphics" class="btn quiet"><span data-i18n="pause.graphics">GRAPHICS:</span> <span id="graphics-tier">HIGH</span></button>
       <button id="btn-brightness" class="btn quiet"><span data-i18n="pause.brightness">BRIGHTNESS:</span> <span id="brightness-label">NORMAL</span></button>
       <button id="btn-language" class="btn quiet"><span data-i18n="pause.language">LANGUAGE:</span> <span id="language-label">ENGLISH</span></button>
+    </div>
+  </div>
+
+  <!-- Language picker. Seven languages is past the point where cycling works:
+       a player wanting Hindi would have to tap through six others and read
+       each one to know where they are. The list shows every language at once,
+       each in its own script, so it is one tap and no reading. -->
+  <div id="langpick" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div class="title-small" data-i18n="lang.title">LANGUAGE</div>
+      <div id="langpick-list" class="langpick-list"></div>
+      <button id="btn-langpick-close" class="btn quiet" data-i18n="invite.close">CLOSE</button>
     </div>
   </div>
 

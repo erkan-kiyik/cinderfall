@@ -6,6 +6,10 @@ import { STARTER_WEAPON_IDS, weaponVariantIds } from './meta.js';
 import { rollBossDrop } from './loot.js';
 import { isBossStage } from './difficulty.js';
 import { rollIntelDrop } from './intel.js';
+import {
+  REDEEM, INVITE_JOIN_REWARD, INVITE_THANKS_REWARD, INVITE_MAX_CLAIMS,
+  isWellFormed, normalize, myInviteCode, isThanksForMe, thanksTag, thanksCodeFor,
+} from './referral.js';
 
 const KEY = 'cinderfall.progress.v1';
 // Separate key for the in-progress run snapshot (stage + operator vitals), so
@@ -78,6 +82,10 @@ function defaultProgress() {
     cratesOpened: 0,
     bossesDefeated: 0,
     adCrateDay: 0, adCratesToday: 0,   // rewarded-ad free crates, capped per day
+    // ---- invite codes (see referral.js) ----
+    inviteRedeemed: null,     // the friend's code this install entered, once ever
+    inviteThanksCode: null,   // what to send back to that friend
+    inviteThanksTags: [],     // friend tags already paid, one payout each
     // live-service meta
     missions: null, missionDay: 0,     // regenerated daily
     weekly: null, missionWeek: 0,
@@ -452,6 +460,60 @@ export class Progression {
     this.data.scrap -= n;
     this.save();
     return true;
+  }
+
+  // ---- invite codes ----
+  // See referral.js for why this is shaped the way it is (no backend, so the
+  // loop runs on two codes and the defence against abuse is the caps here
+  // rather than server-side verification).
+
+  // Everything the invite screen needs, in one read.
+  inviteState() {
+    const d = this.data;
+    return {
+      myCode: myInviteCode(),
+      redeemed: d.inviteRedeemed || null,       // the code THIS install entered
+      thanksCode: d.inviteThanksCode || null,   // what to send back to the inviter
+      friendsPaid: (d.inviteThanksTags || []).length,
+      maxFriends: INVITE_MAX_CLAIMS,
+      joinReward: INVITE_JOIN_REWARD,
+      thanksReward: INVITE_THANKS_REWARD,
+    };
+  }
+
+  // Enter a friend's invite code. Pays the joining bonus once, ever.
+  redeemInvite(code) {
+    const c = normalize(code);
+    if (!isWellFormed(c)) return { status: REDEEM.BAD_FORMAT };
+    // A player cannot invite themselves. This is the one abuse the offline
+    // design can shut down completely, since both codes derive from the same
+    // install id on the same device.
+    if (c === myInviteCode()) return { status: REDEEM.OWN_CODE };
+    if (this.data.inviteRedeemed) return { status: REDEEM.ALREADY };
+    this.data.inviteRedeemed = c;
+    // Minted here rather than on demand so the player is shown the same code
+    // every time they open the screen — a code that changed between visits
+    // would look broken.
+    this.data.inviteThanksCode = thanksCodeFor(c);
+    this.addScrap(INVITE_JOIN_REWARD);          // saves
+    return { status: REDEEM.OK, granted: INVITE_JOIN_REWARD,
+             thanksCode: this.data.inviteThanksCode };
+  }
+
+  // Enter the thank-you code a friend sends back after redeeming your invite.
+  claimInviteThanks(code) {
+    const c = normalize(code);
+    if (!isWellFormed(c)) return { status: REDEEM.BAD_FORMAT };
+    // Must have been minted against THIS install's invite code.
+    if (!isThanksForMe(c)) return { status: REDEEM.NOT_MINE };
+    const tags = this.data.inviteThanksTags || (this.data.inviteThanksTags = []);
+    const tag = thanksTag(c);
+    if (tags.includes(tag)) return { status: REDEEM.ALREADY };
+    if (tags.length >= INVITE_MAX_CLAIMS) return { status: REDEEM.CAP };
+    tags.push(tag);
+    this.addScrap(INVITE_THANKS_REWARD);        // saves
+    return { status: REDEEM.OK, granted: INVITE_THANKS_REWARD,
+             friendsPaid: tags.length, maxFriends: INVITE_MAX_CLAIMS };
   }
 
   // ---- inventory / loadout ----

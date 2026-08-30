@@ -48,6 +48,7 @@ export class Hud {
       dailyStreak: $('daily-streak'), dailyClaim: $('btn-daily-claim'),
       shareBtn: $('btn-share'),
       shareCard: $('sharecard'), shareCanvas: $('sharecard-canvas'),
+      langpick: $('langpick'), langpickList: $('langpick-list'),
     };
     this._loreTimers = [];
     this._lastAmmo = null;
@@ -64,6 +65,7 @@ export class Hud {
     if (h.graphics) $('btn-graphics').onclick = h.graphics;
     if (h.language) $('btn-language').onclick = h.language;
     if (h.brightness) $('btn-brightness').onclick = h.brightness;
+    if (h.langClose) $('btn-langpick-close').onclick = h.langClose;
     this._onPickStage = h.pickStage || null;
     if (h.share) $('btn-share').onclick = h.share;
     if (h.shareSend) $('btn-sharecard-send').onclick = h.shareSend;
@@ -165,10 +167,37 @@ export class Hud {
   }
 
   setLanguage() {
-    const el = $('language-label');
-    if (!el) return;
     const entry = LANGS.find((l) => l.code === getLang());
-    el.textContent = entry ? entry.label : getLang().toUpperCase();
+    const el = $('language-label');
+    if (el) el.textContent = entry ? entry.label : getLang().toUpperCase();
+    // The header pill has room for a code, not a name. It only has to say
+    // which language is on; the picker itself spells all seven out.
+    const pill = $('lang-pill-label');
+    if (pill) pill.textContent = getLang().toUpperCase();
+  }
+
+  // Builds the picker list once and re-marks the active row. Each label is
+  // written in its own script, so it also carries its own lang/dir: an Arabic
+  // label inside an English document still has to render right-to-left, and
+  // Devanagari needs the right font stack picked for it.
+  buildLangPicker(onPick) {
+    const list = this.el.langpickList;
+    if (!list) return;
+    list.innerHTML = '';
+    const active = getLang();
+    for (const l of LANGS) {
+      const b = document.createElement('button');
+      b.className = 'btn lang-opt' + (l.code === active ? ' active' : '');
+      b.textContent = l.label;
+      b.setAttribute('lang', l.code);
+      b.setAttribute('dir', l.rtl ? 'rtl' : 'ltr');
+      b.onclick = () => onPick(l.code);
+      list.appendChild(b);
+    }
+  }
+
+  showLangPicker(on) {
+    if (this.el.langpick) this.el.langpick.classList.toggle('hidden', !on);
   }
 
   // Brightness step label. Takes the level rather than reading the module so
@@ -230,6 +259,24 @@ export class Hud {
 
   setReviveCountdown(n) {
     this.el.reviveCount.textContent = n > 0 ? `${n}s` : '';
+  }
+
+  // The prompt while a rewarded ad is being fetched. Tearing the overlay down
+  // first left the player looking at a dead screen for however long the fetch
+  // took, with nothing saying an ad was on its way; this keeps the prompt up,
+  // says so, and locks both buttons so the request cannot be fired twice.
+  setReviveLoading() {
+    this.el.reviveCount.textContent = t('ad.loading');
+    const ad = $('btn-revive-ad'), skip = $('btn-revive-skip');
+    if (ad) ad.disabled = true;
+    if (skip) skip.disabled = true;
+  }
+
+  clearReviveLoading() {
+    const ad = $('btn-revive-ad'), skip = $('btn-revive-skip');
+    if (ad) ad.disabled = false;
+    if (skip) skip.disabled = false;
+    this.el.reviveCount.textContent = '';
   }
 
   // Draws a small preview of a weapon's painted body sprite into a slot's

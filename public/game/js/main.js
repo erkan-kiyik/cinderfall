@@ -14,7 +14,7 @@ import { device, applyDeviceProfile } from './engine/device.js';
 import { Intro } from './engine/intro.js';
 import { brightness, LEVELS as BRIGHTNESS_LEVELS } from './engine/brightness.js';
 import { Interlude } from './engine/interlude.js';
-import { t, applyTranslations, cycleLang, getLang, LANGS, onLangChange } from './engine/i18n.js';
+import { t, applyTranslations, setLang, getLang, onLangChange } from './engine/i18n.js';
 import { buildSoldier, makeShadowSprite } from './art/soldier.js';
 import { buildWeapons } from './art/weapons.js';
 import { World, GROUND_Y, MAP_W } from './game/world.js';
@@ -36,7 +36,7 @@ import { ProfileUI } from './game/profile.js';
 import { drawSoldier as rigDrawSoldier, newWeaponState } from './game/rig.js';
 import { intelTitleKey } from './game/intel.js';
 import { TouchControls } from './engine/touch.js';
-import { watchRewardedAd } from './engine/ads.js';
+import { watchRewardedAd, initAds, isRewardedAdReady } from './engine/ads.js';
 import { mountCurrencyIcons } from './art/currency.js';
 import { dailyStatus, claimDaily, DAILY_REWARDS } from './game/retention.js';
 import { paintShareCard, shareCard } from './game/sharecard.js';
@@ -338,6 +338,10 @@ async function boot() {
   });
   game.profileUI.mount();
   game.touch = new TouchControls(input, { force: params.has('touch') });
+  // Warm the ad SDK and pull the first rewarded ad down now, while the player
+  // is still on the menu. Both used to happen on the WATCH AD tap itself, in
+  // series, which is why the button sat there doing nothing for seconds.
+  initAds();
   game.touch.mount();
 
   hud.setLoad(1, 'READY');
@@ -443,9 +447,12 @@ class Game {
       },
       watchAdRevive: () => { audio.ui(); this.reviveViaAd(); },
       skipRevive: () => { audio.ui(); this.declineRevive(); },
-      // Cycles TR ⇄ EN. The static markup is re-filled by i18n itself; the
-      // screens that build their labels in JS repaint through onLangChange.
-      language: () => { audio.ui(); cycleLang(); hud.setLanguage(); },
+      // Opens the language list. The static markup is re-filled by i18n
+      // itself; the screens that build their labels in JS repaint through
+      // onLangChange. The list is rebuilt on every open so the active row is
+      // always right, and closed on pick so the change is visible at once.
+      language: () => this.openLangPicker(),
+      langClose: () => { audio.ui(); hud.showLangPicker(false); },
       // Cycles the screen brightness lift. Takes effect on the very next
       // frame — grade() reads the module directly, so there is nothing to
       // rebuild and the player can judge the change while the menu is open.
@@ -457,11 +464,36 @@ class Game {
     });
     hud.setGraphicsTier(quality.preset.name);
     hud.setLanguage();
+    // The same picker is reachable from the main menu's header pill, so a
+    // player who cannot read the interface does not have to deploy and pause
+    // to change it.
+    document.getElementById('btn-lang-pill')?.addEventListener('click', () => this.openLangPicker());
     hud.setBrightness(brightness.level);
     // The brightness label resolves through t(), so a language switch has to
     // repaint it — applyTranslations only refills static data-i18n nodes.
-    onLangChange(() => hud.setBrightness(brightness.level));
+    onLangChange(() => {
+      hud.setBrightness(brightness.level);
+      // The stage label is written once, when the stage starts — changing
+      // language from the pause menu mid-mission would otherwise leave it in
+      // the old one until the next stage. (The objective count is rewritten
+      // every frame by the update loop, so it needs nothing here.)
+      if (this.stage) hud.setStage(this.stage);
+    });
     canvas.addEventListener('mousedown', () => audio.resume(), { once: true });
+  }
+
+  // Opens the language list. Rebuilt on every open so the active row is
+  // always the current language, and closed on pick so the change is visible
+  // immediately behind it rather than under a still-open dialog.
+  openLangPicker() {
+    audio.ui();
+    hud.buildLangPicker((code) => {
+      audio.ui();
+      setLang(code);
+      hud.setLanguage();
+      hud.showLangPicker(false);
+    });
+    hud.showLangPicker(true);
   }
 
   spawnEnemiesForStage() {
@@ -1123,10 +1155,16 @@ class Game {
 
   reviveViaAd() {
     if (this._reviveTimer) { clearInterval(this._reviveTimer); this._reviveTimer = null; }
-    hud.showRevive(false);
+    // Only tear the prompt down once there is something to replace it with.
+    // With the ad preloaded that is immediate and nothing changes on screen;
+    // when it is not — a cold start, or a fetch that found no fill — the
+    // player now waits in front of LOADING AD rather than a blank screen.
+    // Both callbacks below hide the prompt themselves.
+    if (isRewardedAdReady()) hud.showRevive(false);
+    else hud.setReviveLoading();
     watchRewardedAd(
-      () => { this.progression.recordAdWatched(); this.doRevive(); },
-      () => this.declineRevive()
+      () => { hud.clearReviveLoading(); this.progression.recordAdWatched(); this.doRevive(); },
+      () => { hud.clearReviveLoading(); this.declineRevive(); }
     );
   }
 

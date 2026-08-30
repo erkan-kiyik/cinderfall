@@ -8,9 +8,10 @@ import {
 } from './meta.js';
 import { weaponStatRows, weaponForItem } from './weaponstats.js';
 import { AD_CRATE_DAILY_LIMIT } from './progression.js';
-import { watchRewardedAd } from '../engine/ads.js';
+import { watchRewardedAd, isRewardedAdReady } from '../engine/ads.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { t, onLangChange } from '../engine/i18n.js';
+import { REDEEM, formatCode, normalize } from './referral.js';
 
 
 // A horizontally scrolling item row is masked at its right edge so the card
@@ -26,6 +27,26 @@ function syncRowFades() {
 }
 
 const $ = (id) => document.getElementById(id);
+
+// Clipboard fallback for webviews without navigator.clipboard (or where the
+// page is not a secure context). execCommand is deprecated, but it is the only
+// thing that works there, and a copy button that silently does nothing is
+// worse than a deprecated API.
+function legacyCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
 
 export class MetaUI {
   // deps: { progression, previewItem(item, canvas), onDeploy, audio }
@@ -69,10 +90,139 @@ export class MetaUI {
       this.closeInspect();
       this.renderLoadout();
     });
+    this.mountInvite();
     // Labels built here (slot heads, rarity chips, ad button) aren't static
     // markup, so they need an explicit repaint when the language changes.
     onLangChange(() => this.refresh());
     this.refresh();
+  }
+
+  // ---- invite codes -------------------------------------------------------
+  // The screen is deliberately dumb: every rule about what a code means lives
+  // in referral.js and every payout in progression.js. This only turns a
+  // result status into a sentence and repaints.
+  mountInvite() {
+    if (!$('invite-panel')) return;
+    const st = this.p.inviteState();
+    $('btn-invite-copy').addEventListener('click', () => this.copyCode(st.myCode, $('btn-invite-copy')));
+    $('btn-thanks-copy').addEventListener('click', () => {
+      const s2 = this.p.inviteState();
+      if (s2.thanksCode) this.copyCode(s2.thanksCode, $('btn-thanks-copy'));
+    });
+    $('btn-invite-share').addEventListener('click', () => this.shareInvite());
+    $('btn-thanks-share').addEventListener('click', () => {
+      const s2 = this.p.inviteState();
+      if (s2.thanksCode) this.shareText(formatCode(s2.thanksCode));
+    });
+    $('btn-invite-redeem').addEventListener('click', () => this.redeemInvite());
+    $('btn-invite-claim').addEventListener('click', () => this.claimThanks());
+    // Codes are typed from another phone's screen, so the field forgives what
+    // a human actually types — lower case, spaces, dashes, and the letters the
+    // alphabet drops — and shows back the canonical form as they go.
+    for (const id of ['invite-input', 'invite-claim-input']) {
+      const el = $(id);
+      el.addEventListener('input', () => {
+        const at = el.selectionStart === el.value.length;
+        el.value = normalize(el.value).slice(0, 6);
+        if (at) el.selectionStart = el.selectionEnd = el.value.length;
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (id === 'invite-input') this.redeemInvite(); else this.claimThanks();
+      });
+    }
+  }
+
+  renderInvite() {
+    if (!$('invite-panel')) return;
+    const st = this.p.inviteState();
+    $('invite-code').textContent = formatCode(st.myCode);
+    $('invite-friends').textContent = t('invite.friendsPaid', { n: st.friendsPaid, max: st.maxFriends });
+    // Once a code has been redeemed there is nothing left to enter — the
+    // entry card is replaced by the thank-you code the friend needs back.
+    const done = !!st.redeemed;
+    $('invite-enter').classList.toggle('hidden', done);
+    $('invite-thanks').classList.toggle('hidden', !done);
+    if (done && st.thanksCode) $('invite-thanks-code').textContent = formatCode(st.thanksCode);
+  }
+
+  // Result status -> message. Only OK is a success; everything else is a
+  // normal thing for a player to do and gets its own sentence rather than a
+  // generic failure.
+  inviteMessage(el, res, okKey, reward) {
+    const KEY = {
+      [REDEEM.BAD_FORMAT]: 'invite.badFormat', [REDEEM.OWN_CODE]: 'invite.ownCode',
+      [REDEEM.ALREADY]: 'invite.already', [REDEEM.NOT_MINE]: 'invite.notMine',
+      [REDEEM.CAP]: 'invite.cap',
+    };
+    const ok = res.status === REDEEM.OK;
+    el.textContent = ok ? t(okKey, { n: reward }) : t(KEY[res.status] || 'invite.badFormat');
+    el.classList.toggle('warn', !ok);
+    el.classList.toggle('good', ok);
+  }
+
+  redeemInvite() {
+    const el = $('invite-enter-msg');
+    const res = this.p.redeemInvite($('invite-input').value);
+    this.inviteMessage(el, res, 'invite.okJoin', res.granted);
+    if (res.status !== REDEEM.OK) return;
+    $('invite-input').value = '';
+    if (this.audio) this.audio.ui();
+    this.renderScrap();
+    this.renderInvite();
+  }
+
+  claimThanks() {
+    const el = $('invite-claim-msg');
+    const res = this.p.claimInviteThanks($('invite-claim-input').value);
+    this.inviteMessage(el, res, 'invite.okThanks', res.granted);
+    if (res.status !== REDEEM.OK) return;
+    $('invite-claim-input').value = '';
+    if (this.audio) this.audio.ui();
+    this.renderScrap();
+    this.renderInvite();
+  }
+
+  // Clipboard, with a visible confirmation on the button itself — a copy that
+  // gives no feedback gets pressed three times.
+  copyCode(code, btn) { return this.copyText(formatCode(code), btn); }
+
+  async copyText(text, btn) {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch (e) {
+      // Older webviews, or a page without clipboard permission. The classic
+      // hidden-textarea route still works there.
+      ok = legacyCopy(text);
+    }
+    if (this.audio) this.audio.ui();
+    if (!ok) return;
+    const label = btn.textContent;
+    btn.textContent = t('invite.copied');
+    clearTimeout(btn._copyT);
+    btn._copyT = setTimeout(() => { btn.textContent = label; }, 1400);
+  }
+
+  // The native share sheet if the shell exposes one, otherwise the clipboard.
+  // On Android this is what puts the code into WhatsApp in one tap, which is
+  // the whole point of the feature.
+  shareInvite() {
+    const st = this.p.inviteState();
+    this.shareText(t('invite.shareBody', { code: formatCode(st.myCode) }));
+  }
+
+  shareText(text) {
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => { /* user dismissed the sheet */ });
+      return;
+    }
+    // No share sheet (desktop browser, older webview): the clipboard is the
+    // next best thing — the player still gets the message in one tap, they
+    // just paste it themselves.
+    this.copyText(text, $('btn-invite-share'));
   }
 
   // Re-read progression and repaint everything (call on menu show / after runs).
@@ -81,6 +231,7 @@ export class MetaUI {
     this.renderLoadout();
     this.renderCollection();
     this.renderAdButton();
+    this.renderInvite();
   }
 
   // The PLAY tab's operator readout: rank, XP to the next level, what the
@@ -443,7 +594,10 @@ export class MetaUI {
       return;
     }
     msg.classList.remove('warn');
-    msg.textContent = t('crates.loadingAd');
+    // Only claim to be loading when something is actually being fetched. With
+    // the ad preloaded the overlay comes up in the same frame, and a LOADING
+    // line that flashes for one frame reads as a glitch.
+    msg.textContent = isRewardedAdReady() ? '' : t('crates.loadingAd');
     this.busy = true;
     watchRewardedAd(
       () => {

@@ -11,18 +11,36 @@
 
 import { TR } from './lang/tr.js';
 import { EN } from './lang/en.js';
+import { ES } from './lang/es.js';
+import { DE } from './lang/de.js';
+import { RU } from './lang/ru.js';
+import { AR } from './lang/ar.js';
+import { HI } from './lang/hi.js';
 
 const KEY = 'cinderfall.lang.v1';
-const DICTS = { tr: TR, en: EN };
+const DICTS = { tr: TR, en: EN, es: ES, de: DE, ru: RU, ar: AR, hi: HI };
+// Labels are in each language's own script — a player looking for their
+// language scans for the word they recognise, not for its English name.
 export const LANGS = [
-  { code: 'tr', label: 'TÜRKÇE' },
   { code: 'en', label: 'ENGLISH' },
+  { code: 'tr', label: 'TÜRKÇE' },
+  { code: 'es', label: 'ESPAÑOL' },
+  { code: 'de', label: 'DEUTSCH' },
+  { code: 'ru', label: 'РУССКИЙ' },
+  { code: 'ar', label: 'العربية', rtl: true },
+  { code: 'hi', label: 'हिन्दी' },
 ];
+
+const RTL = new Set(LANGS.filter((l) => l.rtl).map((l) => l.code));
+export function isRtl(code = current) { return RTL.has(code); }
 
 function detectDefault() {
   try {
     const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-    if (nav.startsWith('tr')) return 'tr';
+    // Match the base subtag, so es-MX, de-AT, ar-EG and pt-BR all land
+    // somewhere sensible rather than only exact matches working.
+    const base = nav.split('-')[0];
+    if (DICTS[base]) return base;
   } catch (e) { /* non-browser context */ }
   return 'en';
 }
@@ -46,12 +64,6 @@ export function setLang(code) {
   try { localStorage.setItem(KEY, code); } catch (e) { /* ignore */ }
   applyTranslations();
   for (const fn of listeners) fn(code);
-}
-
-export function cycleLang() {
-  const i = LANGS.findIndex((l) => l.code === current);
-  setLang(LANGS[(i + 1) % LANGS.length].code);
-  return current;
 }
 
 // Register a callback for language changes — used by the screens that build
@@ -92,4 +104,12 @@ export function applyTranslations(root = document) {
     }
   });
   document.documentElement.setAttribute('lang', current);
+  // ---- writing direction ----
+  // Arabic is right-to-left, so the menu has to mirror. The gameplay layers
+  // must NOT: #hud and #touch position the move stick on the left and the aim
+  // stick on the right in CSS, and mirroring those would hand an Arabic player
+  // swapped controls. That is not a language preference, it is a different
+  // game. They are pinned back to ltr in the stylesheet; this only flips the
+  // document, and the two CSS rules keep the thumbs where they belong.
+  document.documentElement.setAttribute('dir', isRtl(current) ? 'rtl' : 'ltr');
 }

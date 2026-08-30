@@ -20,7 +20,7 @@ import {
   TRADER_CATEGORIES, itemCategories, rollStall, msUntilRestock,
   formatCountdown, traderLineKey, DEEP_CUT,
 } from './trader.js';
-import { watchRewardedAd } from '../engine/ads.js';
+import { watchRewardedAd, isRewardedAdReady } from '../engine/ads.js';
 import { renderTraderScene } from '../art/trader.js';
 import { renderScrapIcon } from '../art/currency.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
@@ -304,6 +304,14 @@ export class TraderUI {
     const prog = this.p.scrapAdProgress();
     if (prog.capped || prog.cooldownMs > 0) return;
     this.busy = true;
+    // Say what is happening while the ad is fetched. Normally the preload has
+    // already landed and this line is replaced within a frame; when it has
+    // not, the button is disabled and unexplained, which is what made the wait
+    // feel broken rather than merely slow.
+    if (!isRewardedAdReady()) {
+      const status = $('trade-ad-status');
+      if (status) { status.textContent = t('ad.loading'); status.className = 'ad-status'; }
+    }
     watchRewardedAd(
       () => {
         // Only the ad provider's real reward callback can credit a watch —
