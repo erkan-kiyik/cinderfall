@@ -1394,6 +1394,13 @@ class Game {
     ctx.restore();
     ctx.restore();
 
+    // Near-plane parallax. Outside the camera transform (it is a screen-space
+    // tiled blit like the rest of the stack) but after the characters, because
+    // it is in front of them — and before the lighting composite, so it is lit
+    // by the same map as the street. Dropped on LOW, where the whole tier's
+    // job is to hold 60 and one more full-width blit is not worth it.
+    if (quality.preset.richGrade) this.world.drawForeground(ctx, this.cam, vw, vh);
+
     // World-space debug geometry goes inside the camera transform, before the
     // lighting composite: it describes the scene, so it should be graded with
     // the scene rather than floating over it as a separate UI layer.

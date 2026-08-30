@@ -35,6 +35,11 @@ export const DEPTH_GRADE = {
   // on, without the backdrop turning into mush. Baked once at boot, so the
   // focus pull costs nothing per frame.
   city:   { brightness: 0.62, saturate: 0.72, blur: 1.8, wrap: true },
+  // Depth of field cuts both ways: the near plane is out of focus too, and
+  // more so than the far one, because it is closer to the lens than the
+  // subject is. Darkened rather than brightened for the same reason the
+  // building layer is — the characters stay the brightest thing on screen.
+  fore:   { brightness: 0.55, saturate: 0.6, blur: 2.4, wrap: true },
 };
 
 // Applies a depth grade to a finished layer, in place.
@@ -88,9 +93,133 @@ export function buildBackground() {
     clouds: paintClouds(),
     city: paintCityBlock(),
     haze: paintHazeBank(),
+    fore: paintForeground(),
   };
   for (const layer of Object.keys(DEPTH_GRADE)) depthTreat(bg[layer], DEPTH_GRADE[layer]);
   return bg;
+}
+
+// ---------------- foreground kerb ----------------
+// The stack ran sky 0.05, apartments 0.42, haze 0.55, street 1.0 — and then
+// stopped. There was nothing in FRONT of the play surface at all, which is
+// the single strongest depth cue a side-scroller has: the eye reads depth
+// from differential motion, and differential motion only exists in one
+// direction if nothing ever moves faster than the subject.
+//
+// So this is the near plane: the far kerb of the road, seen across it, with
+// the rubble and cable spans that collect against a kerb in a district nobody
+// has cleared in forty days. It scrolls at 1.24, so it visibly outruns the
+// street the operator is standing on.
+//
+// It lives strictly BELOW the play surface. That is the whole design
+// constraint: a foreground layer that crosses the characters looks superb in
+// a screenshot and is indefensible in a shooter, where the player has to read
+// their own feet and a hostile's hitbox at all times. Everything here is
+// painted downward from the anchor, and the tallest element stops short of
+// the road — see FORE_TOP_CLEAR. Nothing in this layer can ever occlude a
+// target.
+//
+// It is also near-black by design. This is a silhouette band catching a
+// little bounce light off the road, not a second scene: the moment it carries
+// readable detail it competes with the characters, which is the opposite of
+// what a foreground is for.
+const FORE_W = 2048;
+const FORE_H = 240;
+const FORE_TOP_CLEAR = 12;   // px of empty margin at the top of the strip
+function paintForeground() {
+  const { cv, g } = makeCanvas(FORE_W, FORE_H);
+  const rng = makeRng(9137);
+
+  // Kerb face: the flat top edge the eye reads as "this is a solid surface
+  // between me and the street", then the shadowed face falling away from it.
+  const kerbTop = FORE_TOP_CLEAR + 10;
+  g.fillStyle = lingrad(g, 0, kerbTop, 0, kerbTop + 26, [
+    [0, '#171a20'], [0.16, '#0f1217'], [1, '#070910'],
+  ]);
+  g.fillRect(0, kerbTop, FORE_W, FORE_H - kerbTop);
+
+  // The lit lip along the top of the kerb — the only genuinely bright line in
+  // the layer, and what keeps the band from reading as a black bar across the
+  // bottom of the screen.
+  g.fillStyle = 'rgba(164,178,200,0.42)';
+  g.fillRect(0, kerbTop, FORE_W, 1.6);
+  g.fillStyle = 'rgba(104,116,138,0.20)';
+  g.fillRect(0, kerbTop + 1.6, FORE_W, 2.4);
+
+  // Kerb stones: the joints between them are what stop the lip being one
+  // unbroken 2048px line, which is what would give the tiling away.
+  let x = rng.range(0, 60);
+  while (x < FORE_W) {
+    const wSeg = rng.range(90, 190);
+    g.fillStyle = 'rgba(4,5,8,0.75)';
+    g.fillRect(x, kerbTop, 2.2, rng.range(9, 18));
+    // a stone sitting slightly proud of its neighbours
+    if (rng.range(0, 1) < 0.3) {
+      const lift = rng.range(0.8, 2.4);
+      g.fillStyle = '#12151b';
+      g.fillRect(x + 2.2, kerbTop - lift, wSeg - 2.2, lift + 3);
+      g.fillStyle = 'rgba(150,164,186,0.22)';
+      g.fillRect(x + 2.2, kerbTop - lift, wSeg - 2.2, 1.2);
+    }
+    x += wSeg;
+  }
+
+  // Rubble heaped against the kerb. Wrap-aware — a mound straddling the seam
+  // is drawn on both sides so the repeat has no visible edge, same rule the
+  // cloud and haze banks follow.
+  const mound = (mx, w, h) => {
+    for (const ox of [mx, mx - FORE_W, mx + FORE_W]) {
+      if (ox + w < 0 || ox - w > FORE_W) continue;
+      g.fillStyle = '#0b0d13';
+      g.beginPath();
+      g.moveTo(ox - w, kerbTop + 4);
+      let px = ox - w;
+      while (px < ox + w) {
+        const t = (px - (ox - w)) / (2 * w);
+        const yy = kerbTop + 4 - Math.sin(t * Math.PI) * h * rng.range(0.86, 1.06);
+        g.lineTo(px, yy);
+        px += rng.range(4, 11);
+      }
+      g.lineTo(ox + w, kerbTop + 4);
+      g.closePath();
+      g.fill();
+      // A couple of chunks catching the same top light as the kerb lip, so the
+      // mound reads as broken masonry rather than a black hill.
+      for (let i = 0; i < 4; i++) {
+        const cx2 = ox + rng.range(-w * 0.8, w * 0.8);
+        const cy2 = kerbTop + 2 - rng.range(0, h * 0.7);
+        g.fillStyle = `rgba(126,138,158,${rng.range(0.05, 0.14).toFixed(3)})`;
+        g.fillRect(cx2, cy2, rng.range(2, 7), rng.range(1, 2.2));
+      }
+    }
+  };
+  for (let i = 0; i < 9; i++) {
+    mound(rng.range(0, FORE_W), rng.range(50, 150), rng.range(6, FORE_TOP_CLEAR + 8));
+  }
+
+  // Downed cable spans, hanging from off the top of the strip into the kerb.
+  // These are the fastest-reading depth cue in the layer because they are the
+  // only thing in it with a curve.
+  g.lineCap = 'round';
+  for (let i = 0; i < 7; i++) {
+    const x0 = rng.range(0, FORE_W), len = rng.range(120, 330);
+    const sag = rng.range(10, 26);
+    g.strokeStyle = `rgba(3,4,7,${rng.range(0.6, 0.85).toFixed(2)})`;
+    g.lineWidth = rng.range(1.4, 3.2);
+    g.beginPath();
+    g.moveTo(x0, kerbTop - rng.range(0, FORE_TOP_CLEAR));
+    g.quadraticCurveTo(x0 + len / 2, kerbTop + sag, x0 + len, kerbTop - rng.range(0, FORE_TOP_CLEAR));
+    g.stroke();
+  }
+
+  // Ground haze pooling along the kerb, so the band does not end on a hard
+  // horizontal edge at the bottom of the frame.
+  const fade = lingrad(g, 0, kerbTop - 6, 0, kerbTop + 40, [
+    [0, 'rgba(18,22,30,0.5)'], [1, 'rgba(18,22,30,0)'],
+  ]);
+  g.fillStyle = fade;
+  g.fillRect(0, kerbTop - 6, FORE_W, 46);
+  return cv;
 }
 
 // ---------------- drifting haze ----------------

@@ -30,6 +30,34 @@ const PROP_SPRING_DAMP = 11;
 // read off the art rather than authored per prop.
 const PROP_MASS_REF = 34;
 
+// ---- foreground parallax ------------------------------------------------
+// How much faster the near plane scrolls than the play surface, and how far
+// below the road its top edge sits. FORE_DROP is measured from the ground
+// line, so the layer can never reach up into the strip the characters fight
+// on however the camera moves.
+const FORE_PARALLAX = 1.24;
+// Where the near plane sits, measured down from the ground line.
+//
+// FORE_DROP clears the road strip's own depth, not just the ground line: the
+// street sprite is 90 units deep (see World's groundStrip call), and a
+// smaller drop puts the kerb across the middle of the asphalt, where it reads
+// as a seam rather than as a kerb on the far side of the road.
+//
+// But a phone in landscape has almost no screen below the ground line — 78px
+// of a 390px frame, which the road alone fills — so at that drop the layer
+// lands entirely off the bottom of the frame and the feature does nothing on
+// the platform that matters most. Measured: layer top at y=394.8 of a 390px
+// viewport.
+//
+// So the drop is clamped. FORE_MIN_BAND is how much of the band we insist on
+// showing, and FORE_MIN_DROP is the floor it can never rise above. The real
+// constraint was never "stay off the road sprite" — it was "never occlude a
+// character or the surface they stand on", and no entity geometry exists
+// below the ground line. Occluding the bottom of the asphalt costs nothing.
+const FORE_DROP = 92;
+const FORE_MIN_DROP = 34;
+const FORE_MIN_BAND = 46;
+
 // The impact-spring fields are declared at construction rather than being
 // added the first time a prop is shot. Same reasoning as newWeaponState in
 // rig.js: every prop then has one shape, so the draw loop — which reads hx/hy
@@ -792,6 +820,37 @@ export class World {
   // ---------------- rendering ----------------
 
   // Screen-space parallax composite (call with identity transform).
+  // The near plane. Drawn in screen space like the rest of the parallax stack,
+  // but AFTER the characters — it is in front of them in the world, so it has
+  // to be in front of them in the draw order. It goes in before the lighting
+  // composite, so the same light map that lands on the street lands on this;
+  // a foreground lit differently from the scene reads as a UI element pasted
+  // over the game.
+  //
+  // FORE_PARALLAX is the whole point of the layer: at 1.24 it outruns the
+  // street the operator is standing on, which is what the eye reads as "this
+  // is nearer than he is". It is anchored under the road and cannot rise to
+  // meet him — see paintForeground for why that constraint is not negotiable.
+  drawForeground(g, cam, vw, vh) {
+    const img = this.bg && this.bg.fore;
+    if (!img) return;
+    const z = cam.zoom;
+    const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
+    const s = Math.max(vw / 1600, 0.7) * z;
+    // Preferred position, then pulled up far enough to be seen, then stopped
+    // dead at the floor that keeps it clear of the play surface. On a wide
+    // viewport the first term wins and nothing is clamped.
+    const y = Math.max(
+      groundY + FORE_MIN_DROP * z,
+      Math.min(groundY + FORE_DROP * z, vh - FORE_MIN_BAND),
+    );
+    if (y > vh) return;                       // no room at all
+    const w = img.width * s, h = img.height * s;
+    const ox = -cam.x * FORE_PARALLAX * z;
+    let x = ((ox % w) + w) % w - w;
+    for (; x < vw; x += w) g.drawImage(img, x, y, w, h);
+  }
+
   drawBackground(g, cam, vw, vh, time) {
     const z = cam.zoom;
     const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
