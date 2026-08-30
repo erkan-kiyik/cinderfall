@@ -8,7 +8,10 @@ import {
   clamp, lerp, damp, rand, randSpread, easeOutCubic, easeInOutQuad, easeInCubic,
   smootherstep, TAU, makeNoise1D,
 } from '../engine/math.js';
-import { newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld } from './rig.js';
+import {
+  newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld,
+  weaponBulkOf, BULK_NEUTRAL,
+} from './rig.js';
 import { drawSoldier } from './rig.js';
 
 // Footing wobble. Seeded and continuous, so the irregularity is repeatable
@@ -181,29 +184,8 @@ const recoilRestoreAdj = (steady) => Math.exp((steady - RECOIL_SPRING.damp) / 60
 //   compact   (P-12, laser SMG)           reach 22.4 - 26,   hands  11 - 14
 //   full-size (rifle .. battle rifle)     reach 35.6 - 49,   hands 16.5 - 20
 //
-// Everything below is anchored so the RIFLE sits at neutral: at BULK_NEUTRAL
-// every stance term is exactly what it was before this existed, and a pistol
-// or a battle rifle departs from there. That keeps the weapon the player
-// spends most of the game holding looking identical, and makes this an
-// addition rather than a retune of the whole rig.
-const BULK_MIN_REACH = 12;   // the C-9's muzzle, from its grip
-const BULK_MAX_REACH = 48;   // the battle rifle's
-const BULK_NEUTRAL = (40 - BULK_MIN_REACH) / (BULK_MAX_REACH - BULK_MIN_REACH); // rifle
-
-// Cached per weapon def — the reach never changes, and this is read every
-// frame. A WeakMap so a def going out of scope takes its entry with it.
-const bulkCache = new WeakMap();
-function weaponBulkOf(wpn) {
-  if (!wpn) return BULK_NEUTRAL;
-  const hit = bulkCache.get(wpn);
-  if (hit !== undefined) return hit;
-  // A knife has no muzzle; it is the least bulk anything can have.
-  const reach = wpn.muzzle ? wpn.muzzle.x : BULK_MIN_REACH;
-  const b = clamp((reach - BULK_MIN_REACH) / (BULK_MAX_REACH - BULK_MIN_REACH), 0, 1);
-  bulkCache.set(wpn, b);
-  return b;
-}
-
+// The bulk model itself now lives in rig.js — the rig is what consumes it,
+// and the hostiles need to produce it too. See weaponBulkOf there.
 // The rig's knifeReach is in weapon-local units; the blade tip sits a little
 // past it. This converts one to the other for the motion trail.
 const BLADE_TIP_SCALE = 1.32;
@@ -1562,7 +1544,7 @@ export class Player {
       this.hits++;
       if (headshot) this.headshots++;
       const killed = hitEnemy.hp <= d;
-      hitEnemy.damage(d, Math.sign(ex - mzl.x), this);
+      hitEnemy.damage(d, Math.sign(ex - mzl.x), this, false, hy);
       this.fx.blood(hx, hy, Math.sign(ex - mzl.x));
       this.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
       if (killed) this.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');
@@ -1597,7 +1579,7 @@ export class Player {
       this.hits++;
       if (headshot) this.headshots++;
       const killed = hitEnemy.hp <= d;
-      hitEnemy.damage(d, Math.sign(ex - mzl.x), this);
+      hitEnemy.damage(d, Math.sign(ex - mzl.x), this, false, hy);
       this.fx.energyImpact(hx, hy, col, 0);
       this.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
       if (killed) this.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');

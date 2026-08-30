@@ -95,7 +95,37 @@ const STANCE_REAR = -9.5;
 //   STEADY   — a weapon braced across the body damps the operator's own
 //              idle sway and muzzle wander. This is the "stability" a big
 //              weapon buys you, and it is why a sidearm looks twitchier.
-const BULK_NEUTRAL_RIG = 0.7778;   // must match BULK_NEUTRAL in player.js
+//
+// The model itself lives here rather than in player.js, where it started: the
+// rig is what consumes it, and both the Player and the Enemy need to produce
+// it. Keeping the neutral point in two files with a "must match" comment was
+// one edit away from being wrong.
+//
+// Bulk is read off the weapon's own geometry — how far the muzzle sits from
+// the grip — so it needs no per-weapon authoring and cannot drift out of sync
+// with the art. Anchored so the RIFLE is neutral: at BULK_NEUTRAL every term
+// below evaluates to exactly what it did before any of this existed, so the
+// weapon the player holds most of the game is untouched, and a pistol or a
+// battle rifle departs from it.
+const BULK_MIN_REACH = 12;   // the C-9's muzzle, from its grip
+const BULK_MAX_REACH = 48;   // the battle rifle's
+export const BULK_NEUTRAL = (40 - BULK_MIN_REACH) / (BULK_MAX_REACH - BULK_MIN_REACH);
+
+// Cached per weapon def — the reach never changes and this is read every
+// frame, by every entity on screen. A WeakMap so a def going out of scope
+// takes its entry with it.
+const bulkCache = new WeakMap();
+export function weaponBulkOf(wpn) {
+  if (!wpn) return BULK_NEUTRAL;
+  const hit = bulkCache.get(wpn);
+  if (hit !== undefined) return hit;
+  // A knife has no muzzle; it is the least bulk anything can have.
+  const reach = wpn.muzzle ? wpn.muzzle.x : BULK_MIN_REACH;
+  const b = clamp((reach - BULK_MIN_REACH) / (BULK_MAX_REACH - BULK_MIN_REACH), 0, 1);
+  bulkCache.set(wpn, b);
+  return b;
+}
+
 const BULK_STANCE_WIDTH = 0.42;    // fraction wider per unit bulk over neutral
 const BULK_SHOULDER_SQUARE = 0.55; // how much bulk suppresses counter-rotation
 const BULK_STEADY = 0.45;          // how much bulk damps the idle layer
@@ -182,8 +212,8 @@ export function computePose(ent) {
   // periods (0.62 and 0.41) keep the loop from reading as a loop.
   // Weapon bulk, relative to the rifle. Entities that never declare one (the
   // hostiles, the menu previews) sit exactly at neutral and are unaffected.
-  const bulk = ent.weaponBulk === undefined ? BULK_NEUTRAL_RIG : ent.weaponBulk;
-  const bulkD = bulk - BULK_NEUTRAL_RIG;
+  const bulk = ent.weaponBulk === undefined ? BULK_NEUTRAL : ent.weaponBulk;
+  const bulkD = bulk - BULK_NEUTRAL;
   // A braced weapon steadies the operator: the idle layer is damped in
   // proportion to how much gun is being held against the body.
   const steady = clamp(1 - bulkD * BULK_STEADY, 0.55, 1.5);

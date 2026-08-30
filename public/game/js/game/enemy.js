@@ -6,12 +6,97 @@
 // Burst fire with settling accuracy, animated reloads, flinch reactions, and
 // a scripted collapse on death that leaves the body in the scene.
 
-import { clamp, lerp, damp, rand, randSpread, easeInOutQuad, angleDiff } from '../engine/math.js';
+import { clamp, lerp, damp, rand, randSpread, easeInOutQuad, angleDiff, makeNoise1D } from '../engine/math.js';
 import { bossHp, bossDmgMul, bossSkill, BOSS_INTERVAL } from './difficulty.js';
-import { newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld, drawSoldier } from './rig.js';
+import {
+  newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld, drawSoldier,
+  weaponBulkOf,
+} from './rig.js';
 import { segVsBox } from './player.js';
 
 const WALK = 95, CHASE = 210;
+
+// ---- locomotion --------------------------------------------------------
+// Hostiles used to move by a single damp() toward a target speed: one rate
+// for starting, one rate for stopping, one rate for turning around, all the
+// same number. The Player has had three separate accelerations since the
+// movement pass (ACCEL / DECEL / TURN_ACCEL in player.js) precisely because
+// those three cases do not want the same answer — and a hostile that starts,
+// stops and reverses on one exponential curve is the definition of moving on
+// rails. It is also *symmetric*, which nothing with mass is: an exponential
+// approach never actually arrives, so a hostile asked to stop kept creeping.
+//
+// So they get the same model, scaled down. The numbers sit below the
+// player's on purpose: the operator should out-accelerate the people shooting
+// at him, and the gap is what makes flanking feel like it worked.
+const ENEMY_MOVE = {
+  accel: 1500,     // px/s², pressing into a direction
+  decel: 2300,     // planting the feet
+  turn: 3100,      // reversing at pace
+  turnEps: 20,     // below this a direction change is a step, not a reversal
+};
+
+// Per-enemy mass. Drives how briskly the accelerations above are actually
+// spent, so two hostiles crossing the same ground do not do it in lockstep.
+// A boss is deliberately heavy: slow to start, slow to stop, and the weight
+// is readable before it reaches you.
+const MASS_SPREAD = 0.16;        // ±, ordinary hostiles
+const BOSS_MASS = 1.7;
+
+// ---- squash & stretch --------------------------------------------------
+// The same one-value spring the Player runs (see JUMP_SQUASH there): positive
+// squashes, negative stretches, and the rig scales around the feet. Hostiles
+// drop off cover and get shoved constantly and used to absorb all of it
+// rigidly, which is most of what read as "robot".
+const E_SQUASH_K = 240;
+const E_SQUASH_DAMP = 12.5;
+const E_SQUASH_LIMIT = 0.18;
+const E_LAND_SPEED = 420;        // impact speed that starts registering as a landing
+const E_LAND_MAX = 0.13;         // hardest landing compression
+
+// Footing irregularity. The rig reads `ent.gaitNoise` and zeroes it for
+// anything that does not track it — which was every hostile in the game, so
+// they all walked the same tidy two-pose cycle in perfect sync with each
+// other. Each hostile now carries its own seeded noise, so a squad crossing
+// the same street no longer marches.
+const GAIT_NOISE_SEED = 5501;
+let gaitSeedCounter = 0;
+
+// ---- hit reactions -----------------------------------------------------
+// A round used to do exactly one thing to a hostile's body regardless of
+// where it landed or which side it came from: `rot += flinchT * 0.8`, a
+// weapon-space nudge with no direction in it at all. Two hits, one through
+// the head and one through the shin, moved the body identically.
+//
+// The hitbox is already divided — the headshot multiplier reads off the same
+// height — so the reaction reads off it too. Each region answers the way that
+// part of a body answers, and every term is scaled by where the round came
+// from, so being shot in the back pitches a hostile forward and being shot in
+// the chest rocks him back.
+//
+//   rock    torso pitch away from the shooter, in radians
+//   squash  compression impulse: positive folds, negative snaps upright
+//   shove   how much of the impact translates into ground speed
+//   flinch  multiplier on the existing suppression timer
+const HIT_REGIONS = [
+  // Head: the whole body snaps back and up off a head hit — a stretch, not a
+  // compression — and the suppression is the strongest of the three.
+  { min: 0.80, name: 'head',  rock: 0.30, squash: -7, shove: 1.25, flinch: 1.35 },
+  // Torso: folds over the round. The reference reaction; everything else is
+  // measured against it.
+  { min: 0.45, name: 'torso', rock: 0.19, squash: 5,  shove: 1.0,  flinch: 1.0 },
+  // Legs: barely moves the upper body, buckles the stance, and carries the
+  // least suppression — a man shot in the leg can still shoot back.
+  { min: 0.00, name: 'legs',  rock: 0.07, squash: 10, shove: 0.6,  flinch: 0.7 },
+];
+const HIT_BOX_H = 134;           // must match the hitbox in Player.fireShot
+function hitRegionAt(ent, hy) {
+  if (hy === undefined || hy === null) return HIT_REGIONS[1];   // unknown → torso
+  const h = HIT_BOX_H * (ent.hitboxScale || 1);
+  const up = clamp((ent.y - hy) / h, 0, 1);                     // 0 feet, 1 crown
+  for (const r of HIT_REGIONS) if (up >= r.min) return r;
+  return HIT_REGIONS[HIT_REGIONS.length - 1];
+}
 
 // Radians of muzzle climb a hostile's burst gains per round fired, reset
 // between bursts.
@@ -57,6 +142,21 @@ export class Enemy {
     this.breathT = rand(0, 9); this.lean = 0;
     this.crouchSpring = 0; this.crouchVel = 0;
     this.hurtT = 0; this.deadT = 0;
+    // Own noise function, own seed: two hostiles never stumble on the same
+    // stride. Read by the rig as ent.gaitNoise.
+    this._gaitNoise = makeNoise1D(GAIT_NOISE_SEED + (gaitSeedCounter += 733));
+    this.gaitNoise = 0;
+    // Mass, and the mobility it buys. Kept as a multiplier rather than baked
+    // into the accelerations so a Boss can raise it in one place.
+    this.mass = 1 + randSpread(MASS_SPREAD);
+    this.squash = 0; this.squashVel = 0;
+    this.squashX = 1; this.squashY = 1;
+    this.stumbleLean = 0;
+    this._wasAir = false;
+    // How much weapon is in the hands, read off the weapon's own geometry.
+    // Hostiles used to leave this undefined, which parked every one of them at
+    // the rifle's neutral stance whatever they were actually carrying.
+    this.weaponBulk = weaponBulkOf(rifle);
 
     this.hp = 100; this.maxHp = 100;
     this.difficulty = 0;          // set by Game from the current stage
@@ -95,10 +195,23 @@ export class Enemy {
     this.meleeT = rand(0.4, 1.2);
   }
 
-  damage(dmg, dirX, player, melee = false) {
+  // `hy` is the world y the round actually landed at. Optional, because not
+  // every damage source has one (an explosion has no entry point) — those
+  // fall through to a torso reaction, which is what they used to get.
+  damage(dmg, dirX, player, melee = false, hy = null) {
     if (this.deadT > 0) return;
     this.hp -= dmg;
     this.hurtT = 0.35;
+    const region = melee ? HIT_REGIONS[1] : hitRegionAt(this, hy);
+    // Which way the body is rocked. dirX is the direction the round was
+    // travelling, so dirX * facing is +1 when it came from behind and -1 when
+    // it came from the front — pitching him forward or rocking him back
+    // exactly as the geometry demands, with no special case for either.
+    const fromBehind = dirX * this.facing;
+    this.stumbleLean = clamp(
+      this.stumbleLean + fromBehind * region.rock * clamp(dmg / 22, 0.45, 1.6),
+      -0.42, 0.42);
+    this.addSquash(region.squash * clamp(dmg / 22, 0.4, 1.5));
     // Flinch is rate-limited, because a hostile that flinches on every single
     // round is not suppressed, it is disabled. The fire gate below requires
     // `flinchT <= 0`, and a rifle lands a round every ~0.09s — so once the
@@ -113,10 +226,12 @@ export class Enemy {
     // Melee is exempt: a knife is a deliberate close-range commitment and
     // stunning with it is the point.
     if (melee || this.flinchCd <= 0) {
-      this.flinchT = melee ? 0.55 : 0.3;
+      this.flinchT = (melee ? 0.55 : 0.3) * region.flinch;
       this.flinchCd = melee ? 0.3 : FLINCH_REFRACTORY;
     }
-    this.vx += dirX * (melee ? 210 : 60);
+    // Knockback is divided by mass like every other force on this body, so a
+    // heavy hostile is shifted less by the same round.
+    this.vx += dirX * (melee ? 210 : 60) * region.shove / this.mass;
     this.audio.hitFlesh();
     // getting shot reveals the shooter immediately, wherever it came from
     if (this.state === 'patrol' || this.state === 'suspicious') {
@@ -245,12 +360,42 @@ export class Enemy {
     return best;
   }
 
+  // Accelerate toward a target ground speed under real, asymmetric
+  // acceleration: starting, easing off, planting and reversing each get their
+  // own rate (see ENEMY_MOVE). `urgency` carries the intent the old damp rates
+  // encoded — a hostile breaking for cover plants harder than one ambling a
+  // patrol route — and mass scales all of it, so a heavy hostile is heavy in
+  // every direction rather than only in its top speed.
+  //
+  // Unlike the exponential approach this replaces, this one arrives: the step
+  // is clamped to the remaining difference, so "stop" means stopped rather
+  // than asymptotically-nearly-stopped.
+  driveTo(target, dt, urgency = 1) {
+    const v = this.vx;
+    const dv = target - v;
+    if (dv === 0) return;
+    let a;
+    if (Math.abs(target) < 1) a = ENEMY_MOVE.decel;                     // halting
+    else if (v * target < 0 && Math.abs(v) > ENEMY_MOVE.turnEps) a = ENEMY_MOVE.turn;  // reversing
+    else if (Math.abs(target) < Math.abs(v)) a = ENEMY_MOVE.decel;      // easing off
+    else a = ENEMY_MOVE.accel;                                           // pressing on
+    const step = (a * urgency / this.mass) * dt;
+    this.vx = Math.abs(dv) <= step ? target : v + Math.sign(dv) * step;
+  }
+
+  // Squash impulse. Positive compresses, negative stretches; the spring in
+  // update() does the rest. Shared by landings and shoves, so both read as the
+  // same body answering two different forces.
+  addSquash(k) { this.squashVel += k; }
+
   update(dt, player, game) {
     if (this.deadT > 0) {
       // the moment we go down, alert squadmates who can see (or, for a loud
       // death, hear) it — a body is a strong "investigate here" signal
       if (!this._deathSeen) { this._deathSeen = true; this.broadcastDeath(game); }
       this.deadT += dt;
+      // A body sliding to a halt is friction, not locomotion — driveTo would
+      // plant it back on its feet.
       this.vx = damp(this.vx, 0, 8, dt);
       this.world.moveEntity(this, dt);
       this.hurtT = Math.max(0, this.hurtT - dt);
@@ -289,11 +434,11 @@ export class Enemy {
       this.lookT = (this.lookT || 0) - dt;
       if (this.waitT > 0) {
         this.waitT -= dt;
-        this.vx = damp(this.vx, 0, 10, dt);
+        this.driveTo(0, dt, 1.67);
         // glance around while halted — natural area scan, not a dead stare
         if (this.lookT <= 0) { this.lookT = rand(0.7, 1.5); if (rand() < 0.55) this.facing *= -1; }
       } else {
-        this.vx = damp(this.vx, this.facing * WALK, 6, dt);
+        this.driveTo(this.facing * WALK, dt);
         // occasionally reverse early or pause mid-route so patrols vary
         if (this.lookT <= 0) {
           this.lookT = rand(2.6, 5.2);
@@ -306,7 +451,7 @@ export class Enemy {
       if (per.visible || per.heard) { this.state = 'suspicious'; this.suspiciousT = 0; }
     } else if (this.state === 'suspicious') {
       this.suspiciousT += dt;
-      this.vx = damp(this.vx, 0, 8, dt);
+      this.driveTo(0, dt, 1.33);
       if (player && player.deadT <= 0) this.facing = Math.sign(player.x - this.x) || this.facing;
       rot += 0.15;
       const thresh = Math.max(0.2, 0.55 - this.difficulty * 0.04);
@@ -325,9 +470,9 @@ export class Enemy {
       const dx = tx - this.x;
       if (Math.abs(dx) > 24) {
         this.facing = Math.sign(dx) || this.facing;
-        this.vx = damp(this.vx, this.facing * WALK * 1.35, 6, dt);
+        this.driveTo(this.facing * WALK * 1.35, dt);
       } else {
-        this.vx = damp(this.vx, 0, 8, dt);
+        this.driveTo(0, dt, 1.33);
         this.facing = Math.sin(this.searchT * 1.4) > 0 ? 1 : -1;   // scan left/right
       }
       rot += 0.2;
@@ -343,7 +488,7 @@ export class Enemy {
     } else if (this.state === 'alert') {
       // snap toward the threat, brief shoulder-up delay before opening fire
       this.alertT += dt;
-      this.vx = damp(this.vx, 0, 10, dt);
+      this.driveTo(0, dt, 1.67);
       if (player && player.deadT <= 0) this.facing = Math.sign(player.x - this.x) || this.facing;
       this.aimLocal = damp(this.aimLocal, 0, 8, dt);
       const reactT = Math.max(0.1, 0.32 - this.difficulty * 0.018);
@@ -359,7 +504,7 @@ export class Enemy {
         const dist = Math.abs(dx);
         this.facing = Math.sign(dx) || this.facing;
         const away = -Math.sign(dx) || -this.facing;
-        this.vx = damp(this.vx, away * CHASE * 1.05, 5, dt);
+        this.driveTo(away * CHASE * 1.05, dt, 0.83);
         this.aimErr = damp(this.aimErr, 0.05, 0.5, dt);
         const ty = (player.y - 92) - (this.y - 97);
         this.aimLocal = damp(this.aimLocal, clamp(Math.atan2(ty, Math.abs(dx)), -1, 1), 7, dt);
@@ -410,9 +555,9 @@ export class Enemy {
             const cdx = this.coverTarget.x - this.x;
             if (Math.abs(cdx) < 16) {
               this.coverTarget = null;   // arrived — hold here a moment
-              this.vx = damp(this.vx, 0, 8, dt);
+              this.driveTo(0, dt, 1.33);
             } else {
-              this.vx = damp(this.vx, Math.sign(cdx) * CHASE, 5, dt);
+              this.driveTo(Math.sign(cdx) * CHASE, dt, 0.83);
             }
           } else {
             // hold useful range, strafing laterally instead of freezing
@@ -421,7 +566,7 @@ export class Enemy {
             let move = this.strafeDir * 0.5;
             if (dist > 470) move = this.facing;
             else if (dist < 130) move = -this.facing;
-            this.vx = damp(this.vx, move * CHASE, 5, dt);
+            this.driveTo(move * CHASE, dt, 0.83);
           }
 
           // aim at the player's chest with settling error (tighter at higher difficulty)
@@ -465,14 +610,41 @@ export class Enemy {
     // physics + gait
     const landed = this.world.moveEntity(this, dt);
     if (landed > 300) { this.crouchVel += landed / 1000; this.fx.landDust(this.x, this.y, false); }
+    // Landing compression, on the same spring the shove impulses use. Scaled
+    // by mass, so a heavy hostile hits the ground harder than a light one off
+    // the same ledge.
+    if (landed > E_LAND_SPEED) {
+      this.addSquash(clamp((landed - E_LAND_SPEED) / 2600, 0.02, E_LAND_MAX) * this.mass * 26);
+    }
     this.airTime = this.onGround ? 0 : this.airTime + dt;
     const sp = Math.abs(this.vx);
     this.gaitPhase += sp * dt / 23;
     this.speedNorm = sp / 450;
+    // Footing wobble, sampled off the stride rather than the clock so it is
+    // repeatable frame to frame and never lands on the same step twice.
+    this.gaitNoise = this._gaitNoise(this.gaitPhase * 0.37) * this.speedNorm;
     this.lean = damp(this.lean, (this.vx / 450) * 0.14 * this.facing, 6, dt);
     this.crouchVel += -this.crouchSpring * 120 * dt;
     this.crouchVel *= Math.exp(-10 * dt);
     this.crouchSpring = Math.max(0, this.crouchSpring + this.crouchVel * dt * 34);
+
+    // Squash & stretch. One signed value: positive squashes (wide and short),
+    // negative stretches. Airborne it is driven straight off vertical speed so
+    // a falling hostile elongates; on the ground the spring runs free and
+    // settles whatever the last impulse left behind.
+    if (!this.onGround) {
+      this.squash = damp(this.squash, clamp(-Math.abs(this.vy) / 5200, -0.09, 0), 9, dt);
+      this.squashVel *= Math.exp(-6 * dt);
+    } else {
+      this.squashVel += -this.squash * E_SQUASH_K * dt;
+      this.squashVel *= Math.exp(-E_SQUASH_DAMP * dt);
+      this.squash = clamp(this.squash + this.squashVel * dt, -E_SQUASH_LIMIT, E_SQUASH_LIMIT);
+    }
+    this.squashX = 1 + this.squash;
+    this.squashY = 1 - this.squash;
+    // The stumble transient unwinds on its own — the rig adds it on top of the
+    // damped lean precisely so it cannot feed back into the damping and linger.
+    this.stumbleLean = damp(this.stumbleLean, 0, 5.5, dt);
 
     ws.offX = 0; ws.offY = offY; ws.rot = rot;
   }
@@ -613,6 +785,10 @@ export class Boss extends Enemy {
     this.weaponId = BOSS_WEAPONS[tier % BOSS_WEAPONS.length];
     this.visualScale = 1.5;
     this.hitboxScale = 1.32;
+    // A boss is 1.5x the size, so it is heavy in every direction: slower to
+    // start, slower to plant, and shifted noticeably less by the same round.
+    // Readable before it is in range, which is the point of the silhouette.
+    this.mass = BOSS_MASS;
     // Boss stats ride the shared endless curves (game/difficulty.js) instead
     // of the old `clamp(stage/3, 3, 10)` and a flat `420 + stage * 55`, both
     // of which stopped meaning anything deep into a run.

@@ -341,7 +341,7 @@ export class FX {
     const killed = hitEnemy.hp <= dmg;
     p.hits++;
     if (headshot) p.headshots++;
-    hitEnemy.damage(dmg, dirX, p);
+    hitEnemy.damage(dmg, dirX, p, false, hy);
     this.blood(hx, hy, dirX);
     p.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
     if (killed) p.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');
