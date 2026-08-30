@@ -237,7 +237,21 @@ const STUMBLE_TILT_BACK = 0.087;  // ~5deg, rocked backward
 // sprint reversal costs composure now.
 const REVERSAL_SPEED = 340;       // vx above which flipping input trips a stumble
 const REVERSAL_COOLDOWN = 0.6;    // keeps a wiggling stick from chain-stumbling
-const HARD_LAND_SPEED = 620;      // impact speed that starts costing composure
+// Same class of bug as REVERSAL_SPEED above: this was tuned against the flat
+// gravity curve, and the asymmetric jump-arc gravity (gravityFeel, set in the
+// constructor) landed everything harder without anyone revisiting it. An
+// ordinary flat jump — straight up, straight back down, no gap crossed — now
+// hits the ground at ~1110px/s under that curve, and a hop off a single crate
+// or barrel lands around 700-840; both were clearing the old 620 outright, so
+// every jump and every step off cover was quietly costing composure. Verified
+// by driving World.moveEntity() with the real constants rather than assumed:
+// jump 1110, single cover 700-840, a double-stacked container 1178, anything
+// past a ~230px drop pinned at the 1500 cap moveEntity itself imposes.
+// Re-set above the tallest routine hop (the double-container drop) so a stumble
+// is once again something that happens on a genuinely hard landing, not on
+// every jump.
+const HARD_LAND_SPEED = 1150;     // impact speed that starts costing composure
+const FALL_DAMAGE_SPEED = 1400;   // impact speed that starts costing HP
 
 // ---- energy emitter glow ----
 // The light an energy weapon's aperture throws while it is simply held, and
@@ -536,10 +550,13 @@ export class Player {
       // Impact shake, on top of the spring dip. The dip alone is a smooth
       // vertical glide — it reads as the camera easing down, not as the
       // operator hitting concrete. The trauma adds the short high-frequency
-      // rattle that makes the landing feel like it has weight. Only real drops
-      // qualify: a hop off a crate stays clean, so the shake keeps meaning
-      // something when it does fire.
-      if (landed > 620) this.cam.addTrauma(clamp((landed - 620) / 2600, 0.05, 0.34));
+      // rattle that makes the landing feel like it has weight. Shares
+      // HARD_LAND_SPEED with the stumble below rather than its own number —
+      // two independent magic numbers meant to move together is exactly how
+      // this landing tuning went stale the first time (see HARD_LAND_SPEED).
+      if (landed > HARD_LAND_SPEED) {
+        this.cam.addTrauma(clamp((landed - HARD_LAND_SPEED) / 2600, 0.05, 0.34));
+      }
       // impact compression, proportional to how hard the landing was
       this.squash = clamp(landed / 900, 0.05, LAND_SQUASH_MAX);
       this.squashVel = 0;
@@ -547,7 +564,14 @@ export class Player {
       if (landed > HARD_LAND_SPEED) {
         this.stumble(1, clamp((landed - HARD_LAND_SPEED) / 700, 0.15, 1));
       }
-      if (landed > 1000) this.hurt(Math.floor((landed - 1000) / 40), 0);
+      // Fall damage. Set well past HARD_LAND_SPEED — a hard landing (a
+      // double-stacked container, 1178) already costs composure; this is for
+      // the rare drop that goes past what moveEntity's fall multiplier can
+      // reach from ordinary level geometry (~230px+, nearing the 1500 impact
+      // cap) — a real plunge, not parkour off cover.
+      if (landed > FALL_DAMAGE_SPEED) {
+        this.hurt(Math.floor((landed - FALL_DAMAGE_SPEED) / 40), 0);
+      }
     }
     this.airTime = this.onGround ? 0 : this.airTime + dt;
     // Grace timers, refreshed here — after the sweep has resolved onGround for
