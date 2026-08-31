@@ -77,12 +77,42 @@ recommended path since it also covers iOS.
 
 - **Android** — create an upload keystore and enable Play App Signing:
   ```bash
-  keytool -genkey -v -keystore cinderfall-upload.keystore \
+  keytool -genkeypair -v -keystore cinderfall-upload.keystore -storetype PKCS12 \
     -alias cinderfall -keyalg RSA -keysize 2048 -validity 10000
   ```
   Keep the keystore + passwords **secret and backed up** (never commit them).
+  PKCS12 keystores use one password for both the store and the key — keytool
+  silently ignores a separate `-keypass` and reuses the store password, so
+  don't record two different values expecting both to work.
 - **iOS** — signing is handled in Xcode with your Apple Developer team;
   let Xcode manage the distribution certificate + provisioning profile.
+
+### Building a signed `.aab` via GitHub Actions
+
+`.github/workflows/release-android-aab.yml` builds a release-signed `.aab`
+entirely in CI, so a signing key never needs to sit on a laptop or in this
+repo. It needs three repository secrets (**Settings → Secrets and variables →
+Actions → New repository secret**):
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | the keystore file, base64-encoded (`base64 -w0 cinderfall-upload.keystore`) |
+| `ANDROID_KEYSTORE_PASS` | the store password |
+| `ANDROID_KEY_PASS` | the key password (same as the store password for a PKCS12 keystore) |
+
+Once those exist, run the workflow from the **Actions** tab (`Build signed
+Android release AAB` → *Run workflow*) or trigger it via the API. It publishes
+the `.aab` as a draft-off, prerelease GitHub Release (`release-aab-N`) and as a
+build artifact — it is never written back into the repository. The keystore
+itself is decoded to a runner-local temp file for the build only and deleted
+before the job ends; it is not logged or uploaded anywhere.
+
+**Losing this keystore means you can never publish another update to the same
+Play Store listing** (a new keystore is a new, unrelated app to Google, unless
+you've enrolled in Play App Signing's key-upgrade process — which itself
+starts from your original upload key). Save a copy of the keystore and both
+passwords somewhere durable — a password manager, not just this CI secret —
+the moment you receive them.
 
 ## 6. Store asset specs (re-export at these sizes)
 
