@@ -1,20 +1,22 @@
-name: Build signed Android release AAB
+name: Build Android release AAB
 
 # Separate from build-cinderfall-android.yml on purpose: that one runs on
 # every push and produces a debug-signed APK for quick device testing. This
-# one produces a release-signed .aab — the format Play Console requires — and
-# only runs on request, because it touches signing secrets and there is no
-# reason to spend that on every commit.
+# one produces a release .aab — the format Play Console requires.
 #
-# Requires three repository secrets (Settings -> Secrets and variables ->
-# Actions -> New repository secret), documented in docs/RELEASE.md:
+# Signing is OPTIONAL and entirely secret-driven, never required to get a
+# build out of this workflow:
 #   ANDROID_KEYSTORE_BASE64  the upload keystore, base64-encoded
 #   ANDROID_KEYSTORE_PASS    its store password
 #   ANDROID_KEY_PASS         its key password (PKCS12: same as the store password)
-#
-# The keystore is written to a runner-local temp file for the duration of the
-# build and never committed, logged, or uploaded as an artifact — only the
-# signed .aab it produces is.
+# (Settings -> Secrets and variables -> Actions -> New repository secret;
+# documented in docs/RELEASE.md.) If all three are set, the bundle is signed
+# on the runner and is ready for direct Play Console upload. If they are not
+# set, Gradle still produces a perfectly valid .aab — just unsigned — which
+# can be signed afterward, by anyone holding the keystore, with:
+#   jarsigner -keystore cinderfall-upload.keystore app-release.aab cinderfall
+# (`jarsigner` ships with any JDK; no Android SDK needed for that step.) The
+# keystore itself is never generated, logged, committed, or uploaded here.
 on:
   workflow_dispatch: {}
 
@@ -67,29 +69,39 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      # Both of the next two steps are conditional on the signing secrets
+      # actually being set. Neither failing nor silently no-op'ing when only
+      # one of the three is present — that would sign with a wrong/missing
+      # password and produce a corrupt bundle — so this checks all three
+      # together and skips CI-side signing as a group if any is absent.
+      - name: Check whether signing secrets are configured
+        id: signing
+        run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && \
+             [ -n "${{ secrets.ANDROID_KEYSTORE_PASS }}" ] && \
+             [ -n "${{ secrets.ANDROID_KEY_PASS }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No signing secrets configured — building an UNSIGNED .aab. See docs/RELEASE.md to sign in CI, or sign the downloaded bundle yourself with jarsigner."
+          fi
+
       - name: Decode signing keystore
+        if: steps.signing.outputs.enabled == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: |
-          if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set. See docs/RELEASE.md." >&2
-            exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+        run: echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
 
       # Written directly into app/build.gradle rather than committed as a
       # signingConfig — this repo never carries real signing material, only
       # the recipe for the runner to assemble it from secrets on demand.
       - name: Configure release signing
+        if: steps.signing.outputs.enabled == 'true'
         working-directory: mobile/android/app
         env:
           KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
           KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
         run: |
-          if [ -z "$KEYSTORE_PASS" ] || [ -z "$KEY_PASS" ]; then
-            echo "::error::ANDROID_KEYSTORE_PASS / ANDROID_KEY_PASS secrets are not set. See docs/RELEASE.md." >&2
-            exit 1
-          fi
           python3 - "$KEYSTORE_PASS" "$KEY_PASS" <<'PY'
           import re, sys
           store_pass, key_pass = sys.argv[1], sys.argv[2]
@@ -134,12 +146,9 @@ jobs:
           tag_name: release-aab-${{ github.run_number }}
           name: "Cinderfall release AAB #${{ github.run_number }}"
           body: |
-            Signed release Android App Bundle, built from commit ${{ github.sha }}.
+            Android App Bundle, built from commit ${{ github.sha }}.
 
-            Signed with the upload keystore in ANDROID_KEYSTORE_BASE64 — ready
-            for direct upload to Play Console. Enroll in Play App Signing on
-            first upload so Google re-signs the app for distribution while
-            this stays your upload key.
+            ${{ steps.signing.outputs.enabled == 'true' && 'Signed with the upload keystore in ANDROID_KEYSTORE_BASE64 — ready for direct upload to Play Console. Enroll in Play App Signing on first upload so Google re-signs the app for distribution while this stays your upload key.' || 'UNSIGNED — the signing secrets were not set for this run. Sign before uploading to Play Console: jarsigner -keystore cinderfall-upload.keystore app-release.aab cinderfall (see docs/RELEASE.md).' }}
           files: mobile/android/app/build/outputs/bundle/release/app-release.aab
           draft: false
           prerelease: true
