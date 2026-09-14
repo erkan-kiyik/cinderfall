@@ -2,6 +2,7 @@
 // landing bounce, sprint sway. All offsets are composed in applyTransform().
 
 import { clamp, damp, lerp, makeNoise1D } from './math.js';
+import { settings } from './settings.js';
 
 export class Camera {
   constructor() {
@@ -30,7 +31,10 @@ export class Camera {
     this.y = damp(this.y, gy, 4.2, dt);
   }
 
-  addTrauma(t) { this.trauma = clamp(this.trauma + t, 0, 1); }
+  // Every shake impulse in the game arrives here, so scaling at this one
+  // point is what makes the setting complete: at 'off' the multiplier is 0 and
+  // no call site anywhere needs to know shake was turned off.
+  addTrauma(t) { this.trauma = clamp(this.trauma + t * settings.shakeMul, 0, 1); }
   recoil(v) { this.kickVel -= v; }
   landBounce(v) { this.kickVel += v; }
 

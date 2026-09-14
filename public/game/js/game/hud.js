@@ -7,11 +7,24 @@ import { drawSprite } from '../art/paint.js';
 import { audio } from '../engine/audio.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { t, getLang, LANGS } from '../engine/i18n.js';
+import { quality, QUALITY_ORDER, PRESETS as QUALITY_PRESETS } from '../engine/quality.js';
+import { brightness, LEVELS as BRIGHTNESS_LEVELS } from '../engine/brightness.js';
+import { settings, SHAKE_LEVELS } from '../engine/settings.js';
 
 const $ = (id) => document.getElementById(id);
 
 // Detection states map to dictionary keys rather than literals so the threat
 // meter reads in the player's language like everything else.
+// Graphics tier display names. Translated like every other label in the
+// panel: the preset's own `name` is authored English, and leaving one row in
+// Latin inside an otherwise fully localised screen is just an oversight the
+// player has to read around. Falls back to the preset name if a dictionary
+// is ever missing the key.
+const gfxLabel = (tier) =>
+  t(`set.gfx.${tier}`, null) !== `set.gfx.${tier}`
+    ? t(`set.gfx.${tier}`)
+    : (QUALITY_PRESETS[tier] && QUALITY_PRESETS[tier].name) || tier.toUpperCase();
+
 const DET_KEY = {
   hidden: 'det.hidden', suspicious: 'det.suspicious', searching: 'det.searching',
   detected: 'det.detected', combat: 'det.combat',
@@ -41,7 +54,6 @@ export class Hud {
       endTitle: $('end-title'), endDetail: $('end-detail'),
       cineBars: $('cine-bars'), introKicker: $('intro-kicker'), introLine: $('intro-line'),
       introSkip: $('intro-skip'), sceneFade: $('scene-fade'),
-      graphicsTier: $('graphics-tier'),
       bossBar: $('boss-bar'), bossName: $('boss-name'), bossHpFill: $('boss-hp-fill'),
       lore: $('lore'), loreAttempt: $('lore-attempt'), attemptBadge: $('attempt-badge'),
       daily: $('daily'), dailySub: $('daily-sub'), dailyTrack: $('daily-track'),
@@ -49,34 +61,47 @@ export class Hud {
       shareBtn: $('btn-share'),
       shareCard: $('sharecard'), shareCanvas: $('sharecard-canvas'),
       langpick: $('langpick'), langpickList: $('langpick-list'),
+      settings: $('settings'),
     };
     this._loreTimers = [];
     this._lastAmmo = null;
     this._lastDetState = null;
   }
 
+  // Every binding goes through `on`, which tolerates a missing element.
+  //
+  // It used to assign onclick directly, so removing a button from the markup
+  // threw at boot and took the whole menu down with it — which is exactly
+  // what happened when the pause menu's three cycling controls were replaced
+  // by one settings button and this kept binding #btn-language. A handler
+  // with nothing to attach to is a dead handler, not a fatal error, and the
+  // rest of the interface should still come up.
   bind(h) {
-    $('btn-deploy').onclick = h.deploy;
-    $('btn-resume').onclick = h.resume;
-    $('btn-restart').onclick = h.restart;
-    $('btn-quit').onclick = h.quit;
-    $('btn-redeploy').onclick = h.restart;
-    $('btn-menu').onclick = h.quit;
-    if (h.graphics) $('btn-graphics').onclick = h.graphics;
-    if (h.language) $('btn-language').onclick = h.language;
-    if (h.brightness) $('btn-brightness').onclick = h.brightness;
-    if (h.langClose) $('btn-langpick-close').onclick = h.langClose;
+    const on = (id, fn) => { if (!fn) return; const el = $(id); if (el) el.onclick = fn; };
+    on('btn-deploy', h.deploy);
+    on('btn-resume', h.resume);
+    on('btn-restart', h.restart);
+    on('btn-quit', h.quit);
+    on('btn-redeploy', h.restart);
+    on('btn-menu', h.quit);
+    on('btn-langpick-close', h.langClose);
+    on('btn-settings', h.settings);
+    on('btn-settings-close', h.settingsClose);
     this._onPickStage = h.pickStage || null;
-    if (h.share) $('btn-share').onclick = h.share;
-    if (h.shareSend) $('btn-sharecard-send').onclick = h.shareSend;
-    if (h.shareClose) $('btn-sharecard-close').onclick = h.shareClose;
-    if (h.claimDaily) $('btn-daily-claim').onclick = h.claimDaily;
-    if (h.watchAdRevive) $('btn-revive-ad').onclick = h.watchAdRevive;
-    if (h.skipRevive) $('btn-revive-skip').onclick = h.skipRevive;
+    on('btn-share', h.share);
+    on('btn-sharecard-send', h.shareSend);
+    on('btn-sharecard-close', h.shareClose);
+    on('btn-daily-claim', h.claimDaily);
+    on('btn-revive-ad', h.watchAdRevive);
+    on('btn-revive-skip', h.skipRevive);
   }
 
-  setGraphicsTier(name) {
-    if (this.el.graphicsTier) this.el.graphicsTier.textContent = name;
+  // The graphics tier used to have its own label in the pause menu. It lives
+  // in the settings panel now, so this repaints that instead — and matters
+  // because the runtime can lower the tier on its own under load, which the
+  // control has to reflect if the panel happens to be open.
+  setGraphicsTier() {
+    if (this._settingsBuilt) this.renderSettings();
   }
 
   // Boss encounter health bar — hidden the rest of the time.
@@ -200,12 +225,107 @@ export class Hud {
     if (this.el.langpick) this.el.langpick.classList.toggle('hidden', !on);
   }
 
-  // Brightness step label. Takes the level rather than reading the module so
-  // the HUD stays a pure view — same shape as setLanguage above.
-  setBrightness(level) {
-    const el = $('brightness-label');
-    if (!el || !level) return;
-    el.textContent = t(level.label);
+  // ---- settings -----------------------------------------------------------
+  // Built once, then refreshed on open. Every row is a radiogroup of visible
+  // options rather than a cycling button, so the control answers "what are my
+  // choices" and "which one am I on" at a glance instead of on the fourth tap.
+  //
+  // The HUD stays a pure view: it reads quality/brightness/settings to render
+  // and calls back out through `on` to change anything. Nothing here decides
+  // what a tier means.
+  buildSettings(on) {
+    if (!this.el.settings || this._settingsBuilt) { this.renderSettings(); return; }
+    this._settingsOn = on;
+
+    const seg = (host, opts, get, set) => {
+      host.innerHTML = '';
+      for (const o of opts) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'seg-opt';
+        b.dataset.val = String(o.val);
+        b.setAttribute('role', 'radio');
+        b.onclick = () => { set(o.val); this.renderSettings(); on.changed && on.changed(); };
+        host.appendChild(b);
+      }
+      host._get = get;
+      host._opts = opts;
+    };
+
+    seg($('set-graphics'),
+      QUALITY_ORDER.map((tier) => ({ val: tier, labelKey: null, text: () => gfxLabel(tier) })),
+      () => quality.data.tier,
+      (tier) => { quality.set(tier); on.graphics && on.graphics(); });
+
+    seg($('set-brightness'),
+      BRIGHTNESS_LEVELS.map((l, i) => ({ val: i, text: () => t(l.label) })),
+      () => brightness.index,
+      (i) => { brightness.set(i); });
+
+    seg($('set-shake'),
+      SHAKE_LEVELS.map((l, i) => ({ val: i, text: () => t(l.label) })),
+      () => settings.shakeIndex,
+      (i) => { settings.setShake(i); });
+
+    const vol = $('set-volume');
+    // `input` rather than `change`: the gain follows the thumb, so the player
+    // hears the level they are setting while they are setting it.
+    vol.addEventListener('input', () => {
+      settings.setVolume(vol.value / 100);
+      this.renderSettingsVolume();
+    });
+    $('set-language').onclick = () => { on.language && on.language(); };
+
+    this._settingsBuilt = true;
+    this.renderSettings();
+  }
+
+  renderSettingsVolume() {
+    const vol = $('set-volume'); const out = $('set-volume-val');
+    if (!vol || !out) return;
+    const pct = Math.round(settings.volume * 100);
+    if (document.activeElement !== vol) vol.value = String(pct);
+    out.textContent = settings.muted ? t('set.muted') : `${pct}%`;
+    vol.classList.toggle('muted', settings.muted);
+  }
+
+  renderSettings() {
+    if (!this.el.settings) return;
+    for (const id of ['set-graphics', 'set-brightness', 'set-shake']) {
+      const host = $(id);
+      if (!host || !host._opts) continue;
+      const cur = String(host._get());
+      for (let i = 0; i < host._opts.length; i++) {
+        const b = host.children[i];
+        if (!b) continue;
+        b.textContent = host._opts[i].text();
+        const on = b.dataset.val === cur;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+      }
+    }
+    this.renderSettingsVolume();
+    const entry = LANGS.find((l) => l.code === getLang());
+    const ll = $('set-language-label');
+    if (ll) {
+      ll.textContent = entry ? entry.label : getLang().toUpperCase();
+      // The label is written in its own script, so it carries its own
+      // direction — an Arabic label inside an English panel still reads RTL.
+      ll.setAttribute('lang', getLang());
+      ll.setAttribute('dir', entry && entry.rtl ? 'rtl' : 'ltr');
+    }
+  }
+
+  showSettings(on) {
+    if (!this.el.settings) return;
+    if (on) this.renderSettings();
+    this.el.settings.classList.toggle('hidden', !on);
+  }
+
+  // The brightness labels resolve through t(), so a language switch has to
+  // repaint the settings panel if it is open.
+  setBrightness() {
+    if (this._settingsBuilt) this.renderSettings();
   }
 
   // ---- daily reward ----

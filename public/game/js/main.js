@@ -440,12 +440,10 @@ class Game {
       // cycles Low → Medium → High → Ultra; render scale, dpr, light-map
       // resolution, bloom, grain and the particle cap all take effect
       // immediately, ASSET_SCALE only on the next full reload
-      graphics: () => {
-        audio.ui();
-        quality.cycle();
-        resize();
-        hud.setGraphicsTier(quality.preset.name);
-      },
+      // Opens the settings panel. Reachable from the pause menu and from the
+      // menu header alike — see openSettings.
+      settings: () => this.openSettings(),
+      settingsClose: () => { audio.ui(); hud.showSettings(false); },
       watchAdRevive: () => { audio.ui(); this.reviveViaAd(); },
       skipRevive: () => { audio.ui(); this.declineRevive(); },
       // Opens the language list. The static markup is re-filled by i18n
@@ -453,27 +451,26 @@ class Game {
       // onLangChange. The list is rebuilt on every open so the active row is
       // always right, and closed on pick so the change is visible at once.
       language: () => this.openLangPicker(),
-      langClose: () => { audio.ui(); hud.showLangPicker(false); },
-      // Cycles the screen brightness lift. Takes effect on the very next
-      // frame — grade() reads the module directly, so there is nothing to
-      // rebuild and the player can judge the change while the menu is open.
-      brightness: () => { audio.ui(); hud.setBrightness(brightness.cycle()); },
+      langClose: () => {
+        audio.ui();
+        hud.showLangPicker(false);
+        if (this._langFromSettings) hud.showSettings(true);
+      },
       share: () => { audio.ui(); this.openShareCard(); },
       shareSend: () => { audio.ui(); this.sendShareCard(); },
       shareClose: () => { audio.ui(); hud.showShareCard(false); },
       claimDaily: () => { audio.ui(); this.claimDailyReward(); },
     });
-    hud.setGraphicsTier(quality.preset.name);
     hud.setLanguage();
     // The same picker is reachable from the main menu's header pill, so a
     // player who cannot read the interface does not have to deploy and pause
     // to change it.
-    document.getElementById('btn-lang-pill')?.addEventListener('click', () => this.openLangPicker());
-    hud.setBrightness(brightness.level);
-    // The brightness label resolves through t(), so a language switch has to
-    // repaint it — applyTranslations only refills static data-i18n nodes.
+    document.getElementById('btn-settings-pill')?.addEventListener('click', () => this.openSettings());
+    // The settings panel's option labels resolve through t(), so a language
+    // switch has to repaint them — applyTranslations only refills static
+    // data-i18n nodes, not the ones the segmented rows build.
     onLangChange(() => {
-      hud.setBrightness(brightness.level);
+      hud.setBrightness();
       // The stage label is written once, when the stage starts — changing
       // language from the pause menu mid-mission would otherwise leave it in
       // the old one until the next stage. (The objective count is rewritten
@@ -483,17 +480,41 @@ class Game {
     canvas.addEventListener('mousedown', () => audio.resume(), { once: true });
   }
 
+  // Opens the settings panel.
+  //
+  // Graphics is the one setting that needs more than a stored number: the
+  // render targets are sized from the preset, so a tier change has to resize
+  // before the next frame or the scene is drawn at the old resolution. Every
+  // other row takes effect on the very next frame on its own — the grade,
+  // the camera and the gain node all read their modules directly — which is
+  // why the panel can stay open while the player judges the change.
+  openSettings() {
+    audio.ui();
+    hud.buildSettings({
+      graphics: () => { resize(); },
+      language: () => { hud.showSettings(false); this.openLangPicker(true); },
+      changed: () => audio.ui(),
+    });
+    hud.showSettings(true);
+  }
+
   // Opens the language list. Rebuilt on every open so the active row is
   // always the current language, and closed on pick so the change is visible
   // immediately behind it rather than under a still-open dialog.
-  openLangPicker() {
+  //
+  // `fromSettings` sends the player back to the settings panel on close
+  // rather than dropping them out to whatever was behind it — a picker opened
+  // from a menu should return to that menu.
+  openLangPicker(fromSettings = false) {
     audio.ui();
     hud.buildLangPicker((code) => {
       audio.ui();
       setLang(code);
       hud.setLanguage();
       hud.showLangPicker(false);
+      if (fromSettings) hud.showSettings(true);
     });
+    this._langFromSettings = fromSettings;
     hud.showLangPicker(true);
   }
 

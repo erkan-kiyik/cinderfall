@@ -2790,3 +2790,174 @@ html.no-backdrop-filter .profile-card {
 /* A language's own name in the picker follows its own script, not the
    document's — РУССКИЙ keeps its tracking inside an Arabic UI. */
 :root:is([lang="ar"], [lang="hi"]) .lang-opt:not([lang="ar"]):not([lang="hi"]) { letter-spacing: 0.08em !important; }
+
+/* ==================================================================
+   Settings
+   ==================================================================
+   Replaces three stacked cycling buttons. The rules that shape this:
+
+   1. Every option is visible. A cycling control works for two states and
+      breaks at three — the player cannot see what exists, cannot tell how
+      many taps away a value is, and on the old language button could not
+      even read the labels going past.
+   2. Nothing is under 44px. The controls it replaces were 32px tall, which
+      is below every published minimum tap target and felt like it.
+   3. The panel fits a 390px-tall landscape phone. Header and DONE are
+      pinned; only the rows between them scroll, so the way out is never
+      the thing that scrolled off screen. */
+#settings .settings-inner {
+  width: min(560px, 94vw);
+  max-height: min(560px, calc(100dvh - 24px));
+  display: flex; flex-direction: column;
+  background: var(--surface-2); border: 1px solid var(--line-2);
+  border-radius: 14px; box-shadow: var(--sh-3);
+  padding: var(--s5) var(--s5) var(--s4);
+  text-align: left;
+}
+/* Darker than the shared scrim: this opens over the bright menu as well as
+   over the game, and 82% still let the DEPLOY red read through the rows. */
+#settings { background: rgba(6, 8, 11, 0.94); }
+
+.settings-head { flex: 0 0 auto; text-align: center; }
+.settings-head .title-small { margin-bottom: var(--s4); }
+
+.settings-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* room for the scrollbar so a row's right edge never sits under it */
+  padding-right: var(--s1);
+  /* Scroll shadows. On a landscape phone two of the five rows sit below the
+     fold, and a list that cuts off cleanly at a divider gives no sign that
+     anything is under it — a player would never find SCREEN SHAKE. The two
+     `local` layers scroll with the content and mask the shadow away at each
+     end, so the shadow appears only on the edge that actually has more
+     behind it. No JS and no scroll listener. */
+  background:
+    linear-gradient(var(--surface-2) 30%, rgba(25, 31, 40, 0)) top / 100% 22px no-repeat local,
+    linear-gradient(rgba(25, 31, 40, 0), var(--surface-2) 70%) bottom / 100% 22px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0)) top / 100% 11px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0)) bottom / 100% 11px no-repeat scroll;
+}
+
+.set-row {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.set-row:last-child { border-bottom: none; }
+
+.set-label {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 12px; letter-spacing: 0.16em; color: var(--ink);
+}
+/* The hint is what makes a setting self-explanatory — "raise this if the
+   screen reads too dark" is the whole reason the control exists, and it is
+   not obvious from the word BRIGHTNESS alone. */
+.set-hint {
+  font-size: 11px; letter-spacing: 0.01em; line-height: 1.35;
+  color: var(--ink-dim); text-transform: none;
+}
+
+/* ---- segmented control ---- */
+.seg {
+  flex: 0 0 auto;
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--surface-1); border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.seg-opt {
+  min-height: 38px; padding: 0 var(--s3);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: inherit; font-size: 11px; letter-spacing: 0.1em;
+  color: var(--ink-dim); background: transparent;
+  border: 0; border-radius: 7px; cursor: pointer;
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+.seg-opt:hover { color: var(--ink); background: var(--surface-3); }
+.seg-opt:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(214, 69, 58, 0.45); }
+/* The selected option is filled, not merely tinted: this is the one piece of
+   state the whole control exists to communicate. */
+.seg-opt.active {
+  color: #f5ede8;
+  background: linear-gradient(180deg, var(--amber-bright), var(--amber));
+  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.seg-opt.active:hover { background: linear-gradient(180deg, #ff7860, var(--amber-bright)); }
+
+/* ---- slider ---- */
+.set-slider { flex: 0 0 auto; display: flex; align-items: center; gap: var(--s3); }
+.set-value {
+  min-width: 42px; text-align: right;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px; color: var(--ink);
+}
+.slider {
+  -webkit-appearance: none; appearance: none;
+  width: 168px; height: 38px;          /* 38px of grab area, 4px of visible track */
+  background: transparent; cursor: pointer;
+}
+.slider::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 2px;
+  background: var(--surface-1); border: 1px solid var(--line);
+}
+.slider::-moz-range-track {
+  height: 4px; border-radius: 2px;
+  background: var(--surface-1); border: 1px solid var(--line);
+}
+/* A thumb big enough to hit with a thumb. 22px against a 4px track is the
+   whole point — the track is the readout, the thumb is the control. */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; margin-top: -10px;
+  border-radius: 50%; border: 2px solid #f5ede8;
+  background: linear-gradient(180deg, var(--amber-bright), var(--amber));
+  box-shadow: var(--sh-1);
+}
+.slider::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%; border: 2px solid #f5ede8;
+  background: linear-gradient(180deg, var(--amber-bright), var(--amber));
+  box-shadow: var(--sh-1);
+}
+.slider:focus-visible { outline: none; }
+.slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(214, 69, 58, 0.45); }
+/* Muted reads as muted: the thumb goes grey at zero so "off" is visible
+   without reading the percentage. */
+.slider.muted::-webkit-slider-thumb { background: var(--surface-3); border-color: var(--ink-dim); }
+.slider.muted::-moz-range-thumb { background: var(--surface-3); border-color: var(--ink-dim); }
+
+/* ---- the language row, which opens a picker rather than segmenting ---- */
+.btn.set-open {
+  flex: 0 0 auto; width: auto; min-width: 150px; margin-top: 0;
+  /* 44px like everything else here. Its own padding made it 34px, which the
+     tap-target check caught — the point of the rule is that it has no
+     exceptions. */
+  min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: space-between;
+  gap: var(--s3); padding: var(--s2) var(--s3); font-size: 12px;
+}
+.set-open-chevron { color: var(--ink-dim); font-size: 16px; line-height: 1; }
+
+#btn-settings-close { width: 100%; margin-top: var(--s4); flex: 0 0 auto; }
+.btn-ico { margin-right: var(--s2); opacity: 0.85; }
+
+/* Narrow screens stack the control under its label rather than squeezing a
+   four-option segment into whatever is left beside the text. */
+@media (max-width: 560px) {
+  .set-row { flex-direction: column; align-items: stretch; gap: var(--s2); }
+  .seg { width: 100%; }
+  .seg-opt { flex: 1 1 0; padding: 0 var(--s1); }
+  .set-slider { width: 100%; }
+  .slider { flex: 1 1 auto; width: auto; }
+  .btn.set-open { width: 100%; }
+}
+
+/* ==================================================================
+   Minimum tap target
+   ==================================================================
+   The quiet button variant was 32px tall, which is what the pause menu's
+   settings controls were built from. 44px is the smallest target that can be
+   hit reliably with a thumb, and every published guideline agrees on roughly
+   that number; there is no reason for a control in this game to be under it. */
+.btn.quiet { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }

@@ -70,6 +70,15 @@ class Brightness {
     return this.level;
   }
 
+  // Direct selection, for a control that shows every level at once rather
+  // than cycling blindly through them.
+  set(i) {
+    if (!Number.isInteger(i) || i < 0 || i >= LEVELS.length) return this.level;
+    this.index = i;
+    this.save();
+    return this.level;
+  }
+
   // Final lift, drawn as the very last step of the grade so it raises
   // everything — background wash, world layer, lighting multiply and vignette
   // alike. 'lighter' rather than a flat white fill: adding a small constant to

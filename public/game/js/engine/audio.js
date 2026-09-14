@@ -4,6 +4,7 @@
 // gesture to satisfy autoplay policy; every call is failure-safe.
 
 import { rand } from './math.js';
+import { settings } from './settings.js';
 
 class AudioSys {
   constructor() {
@@ -21,7 +22,10 @@ class AudioSys {
       const comp = this.ctx.createDynamicsCompressor();
       comp.threshold.value = -18; comp.ratio.value = 6;
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.7;
+      // Follows the player's volume setting rather than a hardcoded 0.7, and
+      // keeps following it: onVolume fires immediately with the stored value
+      // and again on every change, so the slider moves this gain live.
+      settings.onVolume((v) => { if (this.master) this.master.gain.value = v; });
       this.master.connect(comp);
       comp.connect(this.ctx.destination);
 

@@ -173,9 +173,14 @@
           <!-- Language is reachable from the front screen, not only from the
                pause menu. A player who cannot read the interface cannot be
                asked to start a mission and pause it in order to fix that. -->
-          <button id="btn-lang-pill" class="profile-pill" type="button" data-i18n-attr="title:lang.title" title="LANGUAGE">
-            <span class="profile-pill-ico">⊕</span>
-            <span class="profile-pill-label" id="lang-pill-label">EN</span>
+          <!-- Settings belong on the front screen too. Graphics and
+               brightness used to live only inside the pause menu, so changing
+               either meant starting a mission first — the two settings most
+               likely to be wrong on a phone you have just installed the game
+               on, reachable only after you had already deployed. -->
+          <button id="btn-settings-pill" class="profile-pill" type="button" data-i18n-attr="title:set.title" title="SETTINGS">
+            <span class="profile-pill-ico">⚙</span>
+            <span class="profile-pill-label" data-i18n="set.short">SETTINGS</span>
           </button>
           <div class="token-pill scrap-pill"><canvas class="cur-icon cur-scrap" width="20" height="20"></canvas><span id="scrap-count">0</span></div>
         </div>
@@ -544,9 +549,78 @@
       <button id="btn-resume" class="btn primary" data-i18n="pause.resume">RESUME</button>
       <button id="btn-restart" class="btn" data-i18n="pause.restart">RESTART MISSION</button>
       <button id="btn-quit" class="btn" data-i18n="pause.quit">ABORT TO MENU</button>
-      <button id="btn-graphics" class="btn quiet"><span data-i18n="pause.graphics">GRAPHICS:</span> <span id="graphics-tier">HIGH</span></button>
-      <button id="btn-brightness" class="btn quiet"><span data-i18n="pause.brightness">BRIGHTNESS:</span> <span id="brightness-label">NORMAL</span></button>
-      <button id="btn-language" class="btn quiet"><span data-i18n="pause.language">LANGUAGE:</span> <span id="language-label">ENGLISH</span></button>
+      <!-- One door to every option, instead of three 32px cycling buttons
+           stacked under the real ones. Those were below the 44px tap minimum,
+           hid their own options until you cycled blindly through them, and on
+           a 844x390 phone pushed the panel far enough that the title clipped
+           off the top of the screen. -->
+      <button id="btn-settings" class="btn"><span class="btn-ico">⚙</span><span data-i18n="set.title">SETTINGS</span></button>
+    </div>
+  </div>
+
+  <!-- Settings.
+       Every row shows all of its options at once. A cycling button is fine
+       for two states and stops working at three: the player cannot see what
+       is available, cannot tell how many taps back a setting is, and on the
+       language control could not even read the labels they were cycling past.
+       Language keeps a picker of its own because seven options is past what a
+       segmented row can hold on a phone. -->
+  <div id="settings" class="overlay dim hidden">
+    <div class="ov-inner settings-inner">
+      <div class="settings-head">
+        <div class="title-small" data-i18n="set.title">SETTINGS</div>
+      </div>
+
+      <div class="settings-body">
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.graphics">GRAPHICS</span>
+            <span class="set-hint" data-i18n="set.graphicsHint">Higher tiers cost frame rate.</span>
+          </div>
+          <div class="seg" id="set-graphics" role="radiogroup" data-i18n-attr="aria-label:set.graphics"></div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.brightness">BRIGHTNESS</span>
+            <span class="set-hint" data-i18n="set.brightnessHint">Raise this if the screen reads too dark.</span>
+          </div>
+          <div class="seg" id="set-brightness" role="radiogroup" data-i18n-attr="aria-label:set.brightness"></div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.volume">VOLUME</span>
+            <span class="set-hint" data-i18n="set.volumeHint">Drag to zero to mute.</span>
+          </div>
+          <div class="set-slider">
+            <input id="set-volume" class="slider" type="range" min="0" max="100" step="1" value="70"
+                   data-i18n-attr="aria-label:set.volume">
+            <span class="set-value" id="set-volume-val">70%</span>
+          </div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.shake">SCREEN SHAKE</span>
+            <span class="set-hint" data-i18n="set.shakeHint">Turn down if camera movement is uncomfortable.</span>
+          </div>
+          <div class="seg" id="set-shake" role="radiogroup" data-i18n-attr="aria-label:set.shake"></div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="lang.title">LANGUAGE</span>
+            <span class="set-hint" data-i18n="set.languageHint">Seven languages available.</span>
+          </div>
+          <button id="set-language" class="btn set-open">
+            <span id="set-language-label">ENGLISH</span>
+            <span class="set-open-chevron" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
+
+      <button id="btn-settings-close" class="btn primary" data-i18n="set.done">DONE</button>
     </div>
   </div>
 
