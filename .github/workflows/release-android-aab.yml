@@ -74,7 +74,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # The action's default package list includes the legacy 'tools'
+      # package, which the SDK repository behind cmdline-tools 16 no longer
+      # carries: sdkmanager exits 1 on it and the job dies in setup. Only
+      # platform-tools is needed here; the next step adds the platform and
+      # build-tools the build uses.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install SDK platform + build-tools
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
