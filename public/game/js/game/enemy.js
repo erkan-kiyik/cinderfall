@@ -150,6 +150,8 @@ const REACQUIRE_T = 2.5;
 // chest line). Following the real height is what lets a crouch behind cover
 // actually take him out of the line of fire.
 const CHEST_K = 92 / 126;
+// Where on him a hostile looks for him — see perceive().
+const SIGHT_K = 0.75;
 // Height above a hostile's feet that his aim is solved from, and where
 // fireShot starts tracing the barrel: the shoulder line (the rig's
 // pose.shoulder.y is ≈ -98).
@@ -300,7 +302,10 @@ export class Enemy {
     if (!player || player.deadT > 0) return { visible: false, heard: false, shot: false, dist: 99999 };
     const dist = Math.abs(player.x - this.x);
     // a crouched operator presents a lower profile — spotted later and closer
-    const visible = this.canSee(player.x, player.y - 95, player.crouchHold || 0);
+    // Sighted at three quarters of his current height: 95 standing, as it
+    // always was, but it now comes down with a crouch (47), so a crouched
+    // operator behind a crate is behind the crate, as he is drawn.
+    const visible = this.canSee(player.x, player.y - (player.h || 126) * SIGHT_K, player.crouchHold || 0);
     const heardShot = player.time - player.lastShotT < 1.4 && dist < 560 + this.difficulty * 40;
     const heardMove = player.sprinting && dist < 280;
     return { visible, heard: heardShot || heardMove, shot: heardShot, dist };

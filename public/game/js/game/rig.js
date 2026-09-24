@@ -39,6 +39,13 @@ const RUN_PITCH = 0.20;       // extra radians at a full sprint
 // The head does NOT follow the torso all the way down — eyes stay on the
 // threat. This is how much of the torso pitch the neck cancels.
 const HEAD_COUNTER = 0.62;
+// Extra hip drop for a HELD crouch, on top of the shared landing/crouch dip
+// below (which the landing spring also drives, so it stays shallow). The
+// crouch collider is half the standing one (63 vs 126, player.js), and
+// hostile fire aims at that box; with the shared dip alone the drawn crouch
+// was a slight knee bend ~118px tall, so rounds stopped by a crate visibly
+// passed through a torso standing well clear of it.
+const CROUCH_DEEP = 17;
 
 // ---- run cycle ----
 // Counter-rotation: the shoulders twist against the hips once per stride.
@@ -257,7 +264,7 @@ export function computePose(ent) {
   // chest actually moves when a man is not running, and this is most of what
   // sells a stationary operator as a living one.
   const breathLift = breath * lerp(0.4, IDLE_BREATH, settle);
-  const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4
+  const hipY = -BONES.hipStand + crouch * 9 + (ent.crouchHold || 0) * CROUCH_DEEP * (1 - air) - bob + air * 4
                + breathLift + pelvicList + IDLE_SINK * settle;
 
   const torsoLen = BONES.torso - crouch * 2.5;

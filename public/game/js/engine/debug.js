@@ -140,11 +140,12 @@ class Debug {
       const eyeX = e.x, eyeY = e.y - 112 * hs;
       const p = game.player;
       if (p) {
-        const sees = world.hasLineOfSight(eyeX, eyeY, p.x, p.y - 95);
+        const sy = p.y - (p.h || 126) * 0.75;   // the point hostiles sight (Enemy.perceive)
+        const sees = world.hasLineOfSight(eyeX, eyeY, p.x, sy);
         g.strokeStyle = sees
           ? `${VISION_COLOR}${(0.15 + e.awareness * 0.7).toFixed(2)})`
           : 'rgba(120,130,145,0.18)';
-        g.beginPath(); g.moveTo(eyeX, eyeY); g.lineTo(p.x, p.y - 95); g.stroke();
+        g.beginPath(); g.moveTo(eyeX, eyeY); g.lineTo(p.x, sy); g.stroke();
       }
       // Facing tick + state label.
       g.strokeStyle = STATE_COLOR[e.state] || '#fff';
