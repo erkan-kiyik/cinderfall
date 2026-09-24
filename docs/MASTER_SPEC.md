@@ -67,48 +67,59 @@ No frameworks (React, Vue, etc.) anywhere in the game layer. The DOM HUD is hand
 ```
 public/game/
   index.html            — single entry point; DOM HUD markup + <canvas>
-  css/style.css          — ~2000 lines; design tokens + every screen's styles
-  manifest.webmanifest, sw.js — installable PWA + offline cache
+  css/style.css          — ~3100 lines; design tokens + every screen's styles
+  manifest.webmanifest, sw.js — installable PWA + offline cache (sw.js precaches
+                          every module; its list is regenerated, see its header)
   legal/                — privacy.html, terms.html (linked from the menu footer)
+  assets/               — platform icons, PWA screenshots, woff2 fonts; nothing
+                          the game draws (see §1.1)
   js/
-    main.js              — ~1600 lines. Game class: states, fixed-step loop,
+    main.js              — ~1900 lines. Game class: states, fixed-step loop,
                             render pipeline orchestration, all UI wiring.
     engine/               — platform-agnostic primitives, zero game knowledge
-      math.js             — clamp/lerp/damp/ik2/RNG/noise
+      math.js             — clamp/lerp/damp/ik2/RNG/noise/easing
       camera.js           — spring-follow + trauma-based screen shake
       particles.js        — pooled particle system, kind-tagged (spark/ember/smoke/…)
       audio.js            — synthesized SFX + music bus
-      input.js             — keyboard/mouse, unified with touch
+      input.js             — keyboard/mouse/gamepad, one logical surface
       touch.js              — virtual sticks + buttons, analog
       quality.js            — 4-tier performance presets + auto-downgrade
       daycycle.js           — time-of-day grade + weather state
+      ads.js, ads-config.js — rewarded ads (AdMob) and the ids they use
+      settings.js, brightness.js, debug.js (F3 overlay)
       device.js, interlude.js, intro.js, i18n.js — platform glue, cinematics, localization
+      lang/{en,tr,de,es,ru,ar,hi}.js — flat key→string dictionaries
     art/                  — pure painters: (params) → canvas. No game logic.
       paint.js             — sprite factory + shared brushes (grunge/streaks/rim/AO/…)
       soldier.js            — character part atlas (skeleton constants + painters)
-      weapons.js            — ~1900 lines. Every gun/blade, painted, per finish.
+      weapons.js            — ~2700 lines. Every gun/blade, painted, per finish.
       skins.js              — operator + weapon skin variants
       environment.js         — props: crates, barrels, sandbags, signage, facades
       background.js          — sky/cloud/skyline/haze parallax layers
       trader.js, currency.js — NPC portrait, currency icon
     game/                  — simulation + meta systems (the actual gameplay)
-      player.js  (~1350L)   — movement, weapon state machines, combat
-      enemy.js    (~610L)   — perception, FSM, combat AI
-      rig.js      (~590L)   — procedural pose solver + IK, shared by player & enemy
-      world.js    (~965L)   — level data, physics/raycasts, decals, lights
-      fx.js       (~600L)   — impact recipes, tracers, explosions, screen effects
-      hud.js      (~520L)   — DOM HUD: bars, ammo, menus, all overlay screens
+      player.js  (~2000L)   — movement, weapon state machines, combat
+      enemy.js    (~1000L)  — perception, FSM, combat AI
+      rig.js      (~820L)   — procedural pose solver + IK, shared by player & enemy
+      world.js    (~1330L)  — level data, physics/raycasts, decals, lights
+      hitbox.js             — the one hostile hit box and head line
+      fx.js       (~630L)   — impact recipes, tracers, explosions, screen effects
+      hud.js      (~700L)   — DOM HUD: bars, ammo, menus, all overlay screens
       progression.js         — XP/level, unlocks, persistent stats
       meta.js, trader.js, loot.js — item catalog, rarity, crate rolls, trader shelf
       metaui.js, traderui.js, statsui.js, profile.js — screen controllers
       difficulty.js          — endless-mode scaling curves
-      barks.js, tutorial.js, achievements.js, archives.js, sharecard.js, retention.js
-mobile/                  — Capacitor shell only; no game code
+      referral.js            — offline two-code invites (§8.5)
+      barks.js, tutorial.js, achievements.js, archives.js, intel.js,
+      sharecard.js, retention.js, currencyfx.js, weaponstats.js
+mobile/                  — Capacitor shell only; no game code (scripts/ holds the
+                          www sync, the native patches and the AdMob id resolver)
 docs/RELEASE.md          — store submission + signing runbook
-store/listing.md         — store copy
+docs/MASTER_SPEC.md      — this document
+store/listing.md         — store copy (store/icon-source.png: original icon art)
 ```
 
-**~19,500 lines of JavaScript, zero binary art assets.** That ratio is the whole point of §1.1.
+**~25,000 lines of JavaScript (plus ~4,000 of language dictionaries), zero binary art in the visual pipeline.** That ratio is the whole point of §1.1.
 
 The `engine/` vs `art/` vs `game/` boundary is load-bearing, not decorative:
 - `engine/*` never imports from `art/` or `game/` — it knows nothing about soldiers or weapons.
@@ -325,9 +336,11 @@ Concretely, for a rebuild: budget real time for small `.mjs` scripts under a scr
 --line: rgba(233,226,210,0.10);                  /* hairline separators */
 --sh-1/2/3: soft, directional, low-opacity black shadows — never colored glow as a default finish
 --s1..s16: 4/8/12/16/20/24/32/40/48/64px          /* one 8px spacing scale, no ad-hoc values */
---r1/2/3: tight radii (2–7px)                     /* a tactical shooter reads harder-edged than a consumer app */
+--r1/2/3: tight radii (2–7px)                     /* a tactical shooter reads harder-edged than a consumer app;
+                                                     pills (999px) for chips/pills, and a few large cards at 8–14px */
 --font-display: "Orbitron", …                     /* headlines only */
---font: "Rajdhani", …                              /* everything else */
+--font: "Rajdhani", …                              /* labels, buttons, HUD */
+--font-ui: "Inter", …                              /* longer body copy, where a condensed face tires the eye */
 ```
 
 ### 13.2 The trap to actively avoid: gradient-and-glow-on-everything
@@ -342,7 +355,7 @@ A near-black military palette with one warm accent is a genuinely strong directi
 ### 13.3 Layout discipline
 
 - A shared content-column width, so a panel's heading never sits flush against one edge while the cards beneath it float centered in a much wider viewport — pick one column width and center every screen's content on it.
-- Every tap target ≥ 44px in *both* dimensions, checked with an automated pass (`getBoundingClientRect()` on every interactive element, headless, across both a landscape-phone and a desktop viewport) rather than assumed — a 200×32px "cycling" settings button is invisible to the eye in a screenshot review and immediately obvious to a script that measures it.
+- Every tap target ≥ 44px in *both* dimensions, checked with an automated pass across both a landscape-phone and a desktop viewport rather than assumed. Measure the *real* hit area (`elementFromPoint` sampling), not `getBoundingClientRect()`: a small drawn control with an invisible `::before` enlargement is a correct 44px target that a bounding-box check wrongly fails — a 200×32px "cycling" settings button is invisible to the eye in a screenshot review and immediately obvious to a script that measures it.
 - A cycling control (tap to advance through N states) is acceptable at N=2, actively bad at N≥3: the player cannot see what the other options are, cannot tell how many taps away the one they want is, and — worst case — cannot even read the label of the option they're currently cycling past if labels are long. Past two states, show every option at once (a segmented control, a picker with all choices visible) instead.
 - Every settings/options screen needs to fit a 390px-tall landscape phone viewport with its "confirm/close" affordance always on screen — verify by measuring the panel's actual bounding box against the viewport, not by assuming a design comp scales down cleanly.
 
@@ -449,4 +462,4 @@ Non-negotiables once you go past a single LTR language:
 
 ---
 
-*Grounded against the live `public/game` source tree (~24,500 lines of JS across `engine/`, `art/` and `game/`, plus ~3,700 lines of language dictionaries), and re-audited section by section against it: every number, constant and data shape quoted above is copied from the shipped code, and where the two disagreed, either the code was fixed to meet the rule or the text was corrected to what the code does.*
+*Grounded against the live `public/game` source tree (~25,000 lines of JS across `engine/`, `art/` and `game/`, plus ~4,000 lines of language dictionaries), and re-audited section by section against it: every number, constant and data shape quoted above is copied from the shipped code, and where the two disagreed, either the code was fixed to meet the rule or the text was corrected to what the code does.*
