@@ -58,8 +58,11 @@ jobs:
       - name: Patch Android theme (dark, edge-to-edge)
         run: node ./scripts/patch-android-theme.mjs
 
-      - name: Patch Android manifest (AdMob test App ID)
-        run: node ./scripts/patch-android-admob.mjs
+      # Debug builds never get the ADMOB_* secrets, so this always writes
+      # Google's test App ID — test ads are what a development build should
+      # show. It also locks the activity to landscape.
+      - name: Patch Android manifest (AdMob test App ID, landscape)
+        run: node ./scripts/patch-android-manifest.mjs
 
       - name: Sync Capacitor
         run: npx cap sync android

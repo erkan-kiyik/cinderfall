@@ -6,8 +6,10 @@
   "scripts": {
     "sync:www": "node ./scripts/sync-www.mjs",
     "postinstall": "npm run sync:www",
-    "add:android": "npm run sync:www && npx cap add android",
-    "add:ios": "npm run sync:www && npx cap add ios",
+    "add:android": "npm run sync:www && npx cap add android && npm run patch:android",
+    "add:ios": "npm run sync:www && npx cap add ios && npm run patch:ios",
+    "patch:android": "node ./scripts/patch-android-theme.mjs && node ./scripts/patch-android-manifest.mjs",
+    "patch:ios": "node ./scripts/patch-ios.mjs",
     "sync": "npm run sync:www && npx cap sync",
     "assets": "npx @capacitor/assets generate --iconBackgroundColor \"#07090c\" --iconBackgroundColorDark \"#07090c\" --splashBackgroundColor \"#07090c\" --splashBackgroundColorDark \"#07090c\"",
     "open:android": "npx cap open android",
