@@ -4,7 +4,7 @@
 
 import {
   CATALOG, RARITY, CRATE_COST, DUPLICATE_REFUND, LOADOUT_SLOTS,
-  rollCrate, itemsForSlot, itemById, weaponVariantIds, LOOT_POOL, describePerk,
+  rollCrate, itemsForSlot, itemById, weaponVariantIds, describePerk,
 } from './meta.js';
 import { weaponStatRows, weaponForItem } from './weaponstats.js';
 import { AD_CRATE_DAILY_LIMIT } from './progression.js';
@@ -27,6 +27,25 @@ function syncRowFades() {
 }
 
 const $ = (id) => document.getElementById(id);
+
+// A loadout slot's heading. Skin slots carry a templated key plus the
+// weapon's name; a slot with no key at all falls back to its English label
+// rather than printing "undefined".
+const slotLabel = (slot) => (slot.labelKey ? t(slot.labelKey, slot.labelVars) : slot.label);
+
+// Catalog rows carry `kind` and `tag` as English data; these route them
+// through the dictionaries for display. Anything unmapped shows as authored.
+const KIND_KEYS = {
+  Operator: 'kind.operator', Weapon: 'kind.weapon',
+  'Weapon Skin': 'kind.weaponSkin', 'Boss Redeemable': 'kind.bossRedeemable',
+};
+const TAG_KEYS = {
+  STEALTH: 'tag.stealth', RECON: 'tag.recon', SALVAGE: 'tag.salvage',
+  ASSAULT: 'tag.assault', 'NIGHT OPS': 'tag.nightOps', BREACHER: 'tag.breacher',
+  ELITE: 'tag.elite', GLOW: 'tag.glow', ENERGY: 'tag.energy', BOSS: 'tag.boss',
+};
+const kindLabel = (kind) => (KIND_KEYS[kind] ? t(KIND_KEYS[kind]) : kind || '');
+const tagLabel = (tag) => (TAG_KEYS[tag] ? t(TAG_KEYS[tag]) : tag);
 
 // Clipboard fallback for webviews without navigator.clipboard (or where the
 // page is not a secure context). execCommand is deprecated, but it is the only
@@ -246,9 +265,20 @@ export class MetaUI {
     $('ds-xp-fill').style.width = `${pct}%`;
 
     const lb = this.p.levelBonuses();
-    $('ds-buffs').innerHTML =
-      `<span class="ds-buff"><i class="ds-buff-hp"></i>+${lb.maxHp} HP</span>` +
-      `<span class="ds-buff"><i class="ds-buff-dmg"></i>+${Math.round(lb.damage * 100)}% DMG</span>`;
+    const buffs = $('ds-buffs');
+    buffs.innerHTML = '';
+    for (const [icon, text] of [
+      ['ds-buff-hp', t('play.buffHp', { n: lb.maxHp })],
+      ['ds-buff-dmg', t('play.buffDmg', { n: Math.round(lb.damage * 100) })],
+    ]) {
+      const chip = document.createElement('span');
+      chip.className = 'ds-buff';
+      const i = document.createElement('i');
+      i.className = icon;
+      chip.appendChild(i);
+      chip.appendChild(document.createTextNode(text));
+      buffs.appendChild(chip);
+    }
 
     const kit = $('ds-kit');
     kit.innerHTML = '';
@@ -272,7 +302,7 @@ export class MetaUI {
       cell.appendChild(lbl);
       const kind = document.createElement('div');
       kind.className = 'ds-slot-kind';
-      kind.textContent = t(slot.labelKey);
+      kind.textContent = slotLabel(slot);
       cell.appendChild(kind);
       if (item) {
         const rarity = RARITY[item.rarity];
@@ -326,7 +356,7 @@ export class MetaUI {
       const head = document.createElement('div');
       head.className = 'loadout-slot-head';
       const eqItem = equippedId && itemById(equippedId);
-      head.innerHTML = `<span class="loadout-slot-label">${t(slot.labelKey)}</span>` +
+      head.innerHTML = `<span class="loadout-slot-label">${slotLabel(slot)}</span>` +
         `<span class="loadout-slot-equipped">${eqItem ? this.itemLabel(eqItem) : t('item.stock')}</span>`;
       box.appendChild(head);
 
@@ -372,7 +402,7 @@ export class MetaUI {
       if (item.tag) {
         const tagEl = document.createElement('div');
         tagEl.className = 'item-tag';
-        tagEl.textContent = item.tag;
+        tagEl.textContent = tagLabel(item.tag);
         card.appendChild(tagEl);
       }
     }
@@ -643,7 +673,10 @@ export class MetaUI {
     const WIN_INDEX = 44;
     const total = 52;
     for (let i = 0; i < total; i++) {
-      const item = i === WIN_INDEX ? winner : LOOT_POOL[Math.floor(Math.random() * LOOT_POOL.length)];
+      // Filler is rolled exactly like a real crate, so the reel shows the
+      // odds a crate actually has. Drawing uniformly from LOOT_POOL painted
+      // it ~30% legendary against a real 4% — the reel lying about the odds.
+      const item = i === WIN_INDEX ? winner : rollCrate();
       const rarity = RARITY[item.rarity];
       const cell = document.createElement('div');
       cell.className = 'reel-cell';
@@ -653,7 +686,7 @@ export class MetaUI {
       cell.appendChild(cv);
       const nm = document.createElement('div');
       nm.className = 'rc-name';
-      nm.textContent = item.name;
+      nm.textContent = this.itemLabel(item);   // weapons carry no name of their own
       cell.appendChild(nm);
       track.appendChild(cell);
       const it = item;
@@ -688,8 +721,8 @@ export class MetaUI {
     card.style.boxShadow = `0 0 40px ${rarity.glow}`;
     $('reveal-rarity').textContent = t(rarity.labelKey);
     $('reveal-rarity').style.color = rarity.color;
-    $('reveal-name').textContent = item.name;
-    $('reveal-kind').textContent = item.kind + (item.tag ? ` · ${item.tag}` : '');
+    $('reveal-name').textContent = this.itemLabel(item);
+    $('reveal-kind').textContent = kindLabel(item.kind) + (item.tag ? ` · ${tagLabel(item.tag)}` : '');
     const status = $('reveal-status');
     if (isDup) { status.textContent = t('reveal.duplicate', { n: refund }); status.style.color = 'var(--ink-dim)'; }
     else { status.textContent = t('reveal.new'); status.style.color = rarity.color; }
@@ -707,8 +740,7 @@ export class MetaUI {
     this.busy = false;
     this.renderScrap();
     this.renderCollection();
-    this.renderLoadout();
-    this.renderLoadoutChips();
+    this.renderLoadout();   // also repaints the PLAY tab's kit strip
     if (this.audio) this.audio.ui();
   }
 }

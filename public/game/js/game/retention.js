@@ -32,11 +32,22 @@ function daysBetween(aStamp, bStamp) {
   return Math.round((b - a) / 86400000);
 }
 
+// What dayStamp() writes. Anything else in lastClaim is corruption.
+const STAMP_RE = /^\d{4}-\d{1,2}-\d{1,2}$/;
+
+// The save is checked for shape, not trusted: this runs at boot, before the
+// first frame, so a stored `null` or a numeric lastClaim used to throw here
+// and leave the game frozen on every launch. Anything malformed reads as a
+// fresh record — at worst that offers a day-1 reward, never a dead menu.
 function load() {
   try {
     const raw = localStorage.getItem(DAILY_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { /* private browsing */ }
+    const d = raw ? JSON.parse(raw) : null;
+    if (d && typeof d === 'object' && typeof d.lastClaim === 'string' && STAMP_RE.test(d.lastClaim)) {
+      const streak = Number.isFinite(d.streak) && d.streak > 0 ? Math.floor(d.streak) : 0;
+      return { lastClaim: d.lastClaim, streak };
+    }
+  } catch (e) { /* private browsing, or unparseable */ }
   return { lastClaim: null, streak: 0 };
 }
 
@@ -48,12 +59,27 @@ function save(d) {
 //   available — a reward can be claimed today
 //   day       — position in the 7-day cycle this claim would be
 //   streak    — consecutive days already claimed
+//
+// This trusts the device clock, and offline there is nothing better to trust:
+// stepping the clock forward a day at a time does farm the cycle, and no
+// amount of local bookkeeping can tell that apart from a player who really
+// did come back tomorrow. What it must not do is punish the other direction.
 export function dailyStatus() {
   const d = load();
   const today = dayStamp();
   if (!d.lastClaim) return { available: true, day: 1, streak: 0 };
   const gap = daysBetween(d.lastClaim, today);
-  if (gap <= 0) return { available: false, day: d.streak, streak: d.streak };
+  if (gap < 0) {
+    // The last claim is dated in the future: the clock was rolled back, or a
+    // clock that ran ahead got corrected. Waiting for real time to catch up
+    // with the furthest date ever faked locked claims out for as long as the
+    // clock had been wrong. Re-anchor to today instead, with no payout — a
+    // rollback costs at most today's claim, the streak survives, and
+    // tomorrow is claimable as normal.
+    save({ lastClaim: today, streak: d.streak });
+    return { available: false, day: d.streak, streak: d.streak };
+  }
+  if (gap === 0) return { available: false, day: d.streak, streak: d.streak };
   // A missed day resets the cycle. One day's grace only — that's what makes
   // the streak mean anything.
   const streak = gap === 1 ? d.streak : 0;

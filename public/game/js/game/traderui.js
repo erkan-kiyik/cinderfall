@@ -220,7 +220,11 @@ export class TraderUI {
     if (deep) {
       const flag = document.createElement('div');
       flag.className = 'trade-flag';
-      flag.textContent = t('trader.deal', { pct: Math.round(DEEP_CUT * 100) });
+      // The markdown actually applied, not DEEP_CUT: the crate-price floor
+      // (trader.js) can hold a cheap piece above 45% off, and the flag must
+      // not promise more than the price delivers.
+      const pct = base > 0 ? Math.round((1 - price / base) * 100) : Math.round(DEEP_CUT * 100);
+      flag.textContent = t('trader.deal', { pct });
       card.appendChild(flag);
     }
 
