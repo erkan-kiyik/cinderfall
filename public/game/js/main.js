@@ -292,7 +292,7 @@ async function boot() {
   // bake sprites at the resolution the chosen quality tier calls for — set
   // once, before the first paint call, since assets are only built here
   setAssetScale(quality.preset.assetScale);
-  hud.setLoad(0.05, 'PAINTING OPERATORS…');
+  hud.setLoad(0.05, t('loading.operators'));
   await raf();
   assets.ranger = buildSoldier('ranger');
   assets.phantom = buildSoldier('phantom');
@@ -305,13 +305,13 @@ async function boot() {
   assets.vanguard = buildSoldier('vanguard');
   assets.sable = buildSoldier('sable');
   assets.shadow = makeShadowSprite();
-  hud.setLoad(0.3, 'MACHINING WEAPONS…');
+  hud.setLoad(0.3, t('loading.weapons'));
   await raf();
   assets.weapons = buildWeapons();
-  hud.setLoad(0.5, 'BUILDING SECTOR 9…');
+  hud.setLoad(0.5, t('loading.sector'));
   await raf();
   assets.world = new World();
-  hud.setLoad(0.9, 'CALIBRATING OPTICS…');
+  hud.setLoad(0.9, t('loading.optics'));
   await raf();
   game = new Game();
   if (DEMO) window.__game = game;  // scripted-screenshot / test hook only
@@ -349,7 +349,7 @@ async function boot() {
   initAds();
   game.touch.mount();
 
-  hud.setLoad(1, 'READY');
+  hud.setLoad(1, t('loading.ready'));
   // hand the intro its cue, then wait for it to finish its fade
   intro.assetsDone();
   await introDone;
@@ -600,7 +600,7 @@ class Game {
       if (dDmg > 0) p.dmgMul = (p.dmgMul || 1) + dDmg;
       p.levelBonusApplied = lb;
       if (dHp > 0 || dDmg > 0) {
-        buff = ` (+${dHp} HP, +${Math.round(dDmg * 100)}% DMG)`;
+        buff = ' ' + t('notify.levelBuff', { hp: dHp, dmg: Math.round(dDmg * 100) });
       }
     }
     const extra = res.newUnlocks.length ? ' — ' + res.newUnlocks.map((u) => u.label).join(', ') : '';
@@ -897,7 +897,9 @@ class Game {
     const t = this.introT;
     const cs = this.cutscene;
 
-    if (input.pressed.size > 0 || input.mouse.clicked) {
+    // Any real key, tap, click or gamepad button skips; F-keys (F3 is the debug
+    // overlay) and bare modifiers do not — see Input.skipHit.
+    if (input.skipHit) {
       this.introEnding = true;
       this.finishIntro();
       return;
@@ -1087,21 +1089,23 @@ class Game {
     // play / end
     const p = this.player;
     // Touch drives Input once per frame rather than once per pointer event —
-    // see engine/touch.js. The aim stick works outward from the operator's own
-    // screen position, so it is handed that first: push the stick at 2
-    // o'clock, the shot goes to 2 o'clock. Shake is deliberately excluded, or
-    // an explosion would drag the crosshair around with the camera.
-    if (this.touch && this.touch.visible) {
-      // AIM_ORIGIN_Y mirrors player.js's `oy = this.y - 95` — the chest, which
-      // is the point aimWorld is measured from. Anchoring anywhere else would
-      // make the stick angle and the shot angle differ by a few degrees at
-      // close range, which is exactly where it would be noticed.
-      this.touch.setAimAnchor(
-        (p.x - this.cam.x) * this.cam.zoom + vw / 2,
-        (p.y - 95 - this.cam.y) * this.cam.zoom + vh / 2,
-      );
-      this.touch.update(dt);
-    }
+    // see engine/touch.js. Both direction-only aims (the touch aim stick and a
+    // gamepad's right stick) work outward from the operator's own screen
+    // position, so Input is handed that first: push the stick at 2 o'clock,
+    // the shot goes to 2 o'clock. Shake is deliberately excluded, or an
+    // explosion would drag the crosshair around with the camera. The gamepad
+    // used to aim from the screen centre instead, which on a 390px-tall phone
+    // put a full vertical push off screen.
+    //
+    // The anchor mirrors player.js's `oy = this.y - 95` — the chest, which is
+    // the point aimWorld is measured from. Anchoring anywhere else would make
+    // the stick angle and the shot angle differ by a few degrees at close
+    // range, which is exactly where it would be noticed.
+    input.setAimAnchor(
+      (p.x - this.cam.x) * this.cam.zoom + vw / 2,
+      (p.y - 95 - this.cam.y) * this.cam.zoom + vh / 2,
+    );
+    if (this.touch && this.touch.visible) this.touch.update(dt);
     hud.setAimScreen(inp.mouse.x, inp.mouse.y);
     if (this.state === 'play') {
       p.update(dt, { input: inp, enemies: this.enemies, game: this, vw, vh });
@@ -1137,10 +1141,13 @@ class Game {
       } else hud.setStealthPrompt(false);
       if (this.touch) this.touch.setTakedownAvailable(!!target);
       if (this.touch) this.touch.setSliding(p.sliding);
+      // HEAVY takes RELOAD's slot while the knife is out (touch.js)
+      if (this.touch) this.touch.setMeleeEquipped(p.cur.wpn.kind === 'melee');
     } else {
       hud.setStealthPrompt(false);
       if (this.touch) this.touch.setTakedownAvailable(false);
       if (this.touch) this.touch.setSliding(p.sliding);
+      if (this.touch) this.touch.setMeleeEquipped(false);
     }
 
     if (this.state === 'play') {
@@ -1240,11 +1247,11 @@ class Game {
     this.lastRunStats = { stage: this.stage, attempts: nextAttempt - 1, kills: p.kills };
     this.progression.clearRun();   // the run is over — nothing to resume
     hud.end([
-      `STAGE REACHED — ${this.stage}`,
-      `HOSTILES ELIMINATED — ${p.kills} &nbsp;(${p.headshots} HEADSHOTS)`,
-      `ACCURACY — ${acc}%`,
-      `MISSION TIME — ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`,
-      `OPERATOR LEVEL — ${this.progression.data.level}`,
+      t('end.stage', { n: this.stage }),
+      `${t('end.kills', { n: p.kills })} &nbsp;<span class="end-aside">${t('end.headshots', { n: p.headshots })}</span>`,
+      t('end.accuracy', { n: acc }),
+      t('end.time', { t: `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` }),
+      t('end.level', { n: this.progression.data.level }),
     ].join('<br>'), t('hud.attempt', { n: nextAttempt - 1 }));
     this.setState('end');
   }
@@ -1681,13 +1688,12 @@ class Game {
   // touch is driving, the test becomes "does the aim ray pass through anyone",
   // which is the question the reticle is actually answering on a phone.
   aimOnTarget(wx, wy) {
-    const directional = !!(this.touch && this.touch.visible);
+    const directional = input.aimDirectional || !!(this.touch && this.touch.visible);
     if (directional && this.player) return this.aimRayOnTarget(wx, wy);
     for (const e of this.enemies) {
       if (e.deadT > 0) continue;
-      const hs = e.hitboxScale || 1;
-      if (wx >= e.x - 13 * hs && wx <= e.x + 13 * hs &&
-          wy >= e.y - 134 * hs && wy <= e.y) return true;
+      const b = e.hitRect();
+      if (wx >= b.x && wx <= b.x + b.w && wy >= b.y && wy <= b.y + b.h) return true;
     }
     return false;
   }
@@ -1705,8 +1711,8 @@ class Game {
     const ux = dx / len, uy = dy / len;
     for (const e of this.enemies) {
       if (e.deadT > 0) continue;
-      const hs = e.hitboxScale || 1;
-      const ex = e.x - ox, ey = (e.y - 67 * hs) - oy;
+      const b = e.hitRect(), hs = e.hitboxScale || 1;
+      const ex = e.x - ox, ey = (b.y + b.h / 2) - oy;
       const along = ex * ux + ey * uy;
       if (along <= 0 || along > AIM_RAY_RANGE) continue;    // behind, or too far
       const perp = Math.abs(ex * uy - ey * ux);

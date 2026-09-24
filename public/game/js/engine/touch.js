@@ -1,8 +1,17 @@
 // On-screen touch controls. Rather than a parallel input path, this drives the
 // existing Input instance — synthesising key presses (KeyA/KeyD/Space/KeyR/
-// Digit1-4, ShiftLeft), an analog move axis, and mouse state (aim position +
-// fire) — so the whole gameplay layer reads input exactly as it does with a
-// keyboard + mouse.
+// ShiftLeft, a logical WeaponNext), an analog move axis, and mouse state (aim
+// position + fire + heavy strike) — so the whole gameplay layer reads input
+// exactly as it does with a keyboard + mouse.
+//
+// It SHARES that Input with a real mouse, keyboard and gamepad, which is the
+// whole point of one input surface, so it owns only what it is holding: its
+// keys go in Input.touchKeys, its trigger and heavy strike are holds (see
+// Input.hold), and it writes the crosshair only while its aim stick is
+// actually under a thumb. An idle touch layer used to write mouse.down=false
+// and a parked crosshair every frame, which on any touch-CAPABLE device — a
+// touchscreen laptop, a Chromebook, a phone with a controller — silently
+// disabled the mouse and the gamepad's aim and trigger.
 //
 // ---------------------------------------------------------------------------
 // What was wrong with the first version, and what each fix is for
@@ -36,9 +45,17 @@
 //      digitiser, so that was both jittery and a layout-thrash source. Reads
 //      are now accumulated and applied once per frame.
 
+import { AIM_REACH, shrinkToView } from './input.js';
+import { t } from './i18n.js';
+
 const isTouch = () =>
   (typeof window !== 'undefined') &&
   (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+// Is a finger the device's PRIMARY pointer? True on phones and tablets, false
+// on a touchscreen laptop, whose primary pointer is its mouse or trackpad.
+const coarsePrimary = () => {
+  try { return window.matchMedia('(pointer: coarse)').matches; } catch { return false; }
+};
 
 // Movement feel. DEADZONE kills thumb tremor; CURVE > 1 gives fine control
 // near centre without costing top speed at full tilt; SPRINT_TILT is where a
@@ -77,15 +94,14 @@ const FIRE_DEADZONE = 0.24;
 const AIM_SETTLE = 0.09;   // seconds
 const AIM_SMOOTH = 26;     // higher = snappier; ~2 frames to converge at 60fps
 
-// How far out the reticle sits at full tilt, as a fraction of the SHORTER
-// viewport axis. Only the *direction* decides where a shot goes, so this is
-// purely about where the crosshair is drawn — and it has to be the shorter
-// axis: on a 844x390 phone held in landscape, a reach scaled off the long
-// edge puts the crosshair 400px above a chest that is 250px up the screen,
-// i.e. off the top of the display entirely. The reticle is also clamped into
-// the viewport below, so it stays visible at every aspect ratio.
-const AIM_REACH = 0.4;
-const AIM_MARGIN = 26;   // px kept clear of every screen edge
+// How far out the reticle sits at full tilt is AIM_REACH (input.js, shared
+// with the gamepad's right stick), a fraction of the SHORTER viewport axis.
+// Only the *direction* decides where a shot goes, so this is purely about
+// where the crosshair is drawn — and it has to be the shorter axis: on a
+// 844x390 phone held in landscape, a reach scaled off the long edge puts the
+// crosshair 400px above a chest that is 250px up the screen, i.e. off the top
+// of the display entirely. The reticle is also clamped into the viewport
+// (shrinkToView), so it stays visible at every aspect ratio.
 
 export class TouchControls {
   constructor(input, { force = false } = {}) {
@@ -93,14 +109,27 @@ export class TouchControls {
     this.enabled = force || isTouch();
     this.el = document.getElementById('touch');
     this.visible = false;
-    this.swapIndex = 0;
+    // What the game has asked for (play running or not) — `visible` is this
+    // AND a device that can show the layer AND a finger being what is in use.
+    this.wanted = false;
+    this.melee = false;
+
+    // Which pointer the player is actually using. A touchscreen laptop or a
+    // Chromebook is touch-CAPABLE but usually driven by a mouse, and showing
+    // the layer there puts two invisible capture zones over the lower two
+    // thirds of the screen: every mouse click that landed in one started a
+    // thumbstick instead of firing. So the layer shows while the last pointer
+    // to press the page was a finger (or a pen), and a real mouse hides it
+    // again. Phones and tablets, whose primary pointer is a finger, start in
+    // touch mode, so the controls are up from the first frame of play.
+    this.touchMode = force || coarsePrimary();
 
     // live stick state, written by pointer handlers and consumed in update()
     this.move = { x: 0, y: 0, active: false };
     this.aim = { x: 0, y: 0, active: false, heldT: 0 };
-    // where the operator is on screen right now; the aim stick works outward
-    // from here. Falls back to screen centre until the game reports one.
-    this.anchor = { x: window.innerWidth / 2, y: window.innerHeight / 2, set: false };
+    // Where the operator is on screen right now lives on Input (aimAnchor):
+    // the aim stick works outward from it, and so does a gamepad's right
+    // stick. Screen centre until the game reports one.
     // smoothed reticle position, so the crosshair glides rather than snaps
     this.reticle = { x: window.innerWidth * 0.68, y: window.innerHeight * 0.46 };
 
@@ -116,6 +145,34 @@ export class TouchControls {
     this._onResize = () => { this.vw = window.innerWidth; this.vh = window.innerHeight; };
     window.addEventListener('resize', this._onResize);
     window.addEventListener('orientationchange', this._onResize);
+
+    if (this.enabled && !force) {
+      // Capture phase, so a control that stops propagation still counts.
+      window.addEventListener('pointerdown', (e) => this.noteModality(e.pointerType), true);
+      // A mouse announces itself by moving, too — but only a real move counts:
+      // browsers can fire a zero-length pointermove when the page changes under
+      // a parked cursor, and that must not yank the controls out from under a
+      // thumb.
+      window.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'mouse' && (Math.abs(e.movementX) + Math.abs(e.movementY)) > 1) {
+          this.noteModality('mouse');
+        }
+      }, true);
+      // Older WebViews without pointer events still report touches.
+      window.addEventListener('touchstart', () => this.noteModality('touch'), { capture: true, passive: true });
+    }
+  }
+
+  // Switches between touch mode (layer shown) and mouse mode (hidden). Never
+  // while a stick is under a thumb: a palm brushing the trackpad mid-fight must
+  // not take the sticks away.
+  noteModality(type) {
+    const touchy = type === 'touch' || type === 'pen';
+    if (!touchy && type !== 'mouse') return;
+    if (touchy === this.touchMode) return;
+    if (!touchy && (this.move.active || this.aim.active)) return;
+    this.touchMode = touchy;
+    this.sync();
   }
 
   mount() {
@@ -131,12 +188,71 @@ export class TouchControls {
     this.bindHold('tc-crouch', 'KeyC');
     this.bindButton('tc-takedown', () => this.press('KeyE'));
     this.bindButton('tc-pause', () => this.press('Escape'));
+    this.mountHeavy();
+  }
+
+  // Heavy strike (knife only) — right-click on a mouse, RB on a pad, and until
+  // now nothing at all on touch. It is not in the page markup, so it is built
+  // here, as the same .tc-btn every other control is. It takes RELOAD's slot
+  // while the knife is out (see #touch.melee in style.css): a knife has
+  // nothing to reload, the right thumb already knows where that button is,
+  // and the aim zone keeps every pixel it had.
+  mountHeavy() {
+    if (document.getElementById('tc-heavy')) return;
+    const el = document.createElement('button');
+    el.id = 'tc-heavy';
+    el.className = 'tc-btn tc-heavy';
+    el.type = 'button';
+    el.setAttribute('data-i18n', 'ctrl.heavy');   // relabelled on a language switch
+    el.textContent = t('ctrl.heavy');
+    const reload = document.getElementById('tc-reload');
+    this.el.insertBefore(el, reload ? reload.nextSibling : null);
+    // Held like a mouse button: keep it down and the strikes chain, stamina
+    // permitting — the same as holding right-click.
+    this._heavy = { held: false, releasing: false, seen: false };
+    this.bindPress(el, () => {
+      this._heavy.held = true; this._heavy.releasing = false; this._heavy.seen = false;
+      this.input.hold('heavy', 'touch', true);
+    }, () => {
+      if (!this._heavy.held) return;
+      this._heavy.held = false; this._heavy.releasing = true;
+    });
+  }
+
+  // A tap shorter than a frame must still land, so letting go is deferred
+  // until at least one game update has seen the button down. update() runs
+  // just before the Player's, so "seen" here means the Player saw it too.
+  tickHeavy() {
+    const h = this._heavy;
+    if (!h || (!h.held && !h.releasing)) return;
+    if (h.releasing && h.seen) this.releaseHeavy();
+    else h.seen = true;
+  }
+
+  releaseHeavy() {
+    if (!this._heavy) return;
+    this._heavy.held = false; this._heavy.releasing = false; this._heavy.seen = false;
+    this.input.hold('heavy', 'touch', false);
+    const el = document.getElementById('tc-heavy');
+    if (el) el.classList.remove('on');
+  }
+
+  // The game reports whether the equipped weapon is a melee one; the layer
+  // swaps RELOAD for HEAVY while it is.
+  setMeleeEquipped(on) {
+    on = !!on;
+    if (on === this.melee) return;
+    this.melee = on;
+    if (this.el) this.el.classList.toggle('melee', on);
+    if (!on) this.releaseHeavy();
   }
 
   // The operator's screen position, reported by the game each frame. Aim works
   // outward from here so stick direction and shot direction are the same thing.
+  // Stored on Input, which the gamepad's right stick aims from as well — the
+  // game may report it there directly (input.setAimAnchor) or through here.
   setAimAnchor(sx, sy) {
-    this.anchor.x = sx; this.anchor.y = sy; this.anchor.set = true;
+    this.input.setAimAnchor(sx, sy);
   }
 
   // ---- per-frame: turn accumulated stick state into Input state ----
@@ -146,10 +262,15 @@ export class TouchControls {
     if (!this.enabled || !this.visible) return;
     this.applyMove(dt);
     this.applyAim(dt);
+    this.tickHeavy();
   }
 
   applyMove(dt = 0) {
     const m = this.move;
+    // Nothing under the thumb and nothing left to let go of: leave the shared
+    // Input alone (a keyboard or a pad may be driving it).
+    if (!m.active && !this._moveOwns) return;
+    this._moveOwns = m.active;
     const raw = m.active ? clamp(m.x, -1, 1) : 0;
     const mag = Math.abs(raw);
     // deadzone, then rescale so the first live input is a crawl rather than a
@@ -192,14 +313,33 @@ export class TouchControls {
 
   applyAim(dt) {
     const a = this.aim;
-    const mouse = this.input.mouse;
+    const input = this.input;
+    const mouse = input.mouse;
+    if (!a.active) {
+      // Released: let go of the trigger once, on the release edge, and
+      // otherwise leave the crosshair and trigger to whoever else is driving
+      // them. The crosshair stays where it was left, so the operator keeps
+      // facing where they were pointed.
+      a.heldT = 0;
+      this._aimLatch = false;
+      if (this._aimOwns) { this._aimOwns = false; input.hold('fire', 'touch', false); }
+      return;
+    }
+    if (!this._aimOwns) {
+      // Fresh touch: glide from wherever the crosshair actually is now — a
+      // mouse or a gamepad may have moved it since this stick last had it.
+      this._aimOwns = true;
+      this.reticle.x = mouse.x; this.reticle.y = mouse.y;
+    }
+    input.aimDirectional = true;
     const vw = this.vw, vh = this.vh;
     const reach = Math.min(vw, vh) * AIM_REACH;
-    const ax = this.anchor.set ? this.anchor.x : vw / 2;
-    const ay = this.anchor.set ? this.anchor.y : vh / 2;
+    const an = input.aimAnchor;
+    const ax = an.set ? an.x : vw / 2;
+    const ay = an.set ? an.y : vh / 2;
 
     const mag = Math.hypot(a.x, a.y);
-    if (a.active && mag > 0.08) {
+    if (mag > 0.08) {
       a.heldT += dt;
       // Direction is what aims the shot; magnitude only decides how far out
       // the reticle sits, capped at full tilt.
@@ -213,19 +353,15 @@ export class TouchControls {
       const firing = mag > FIRE_DEADZONE && a.heldT > AIM_SETTLE;
       if (firing && !this._aimLatch) { mouse.clicked = true; this._aimLatch = true; }
       if (!firing) this._aimLatch = false;
-      mouse.down = firing;
+      input.hold('fire', 'touch', firing);
     } else {
-      // Released or centred: hold the last aim (so the operator keeps facing
-      // where they were pointed) and stop firing.
-      if (!a.active) a.heldT = 0;
-      mouse.down = false;
+      // Centred under a thumb: hold the last aim and stop firing.
+      input.hold('fire', 'touch', false);
       this._aimLatch = false;
     }
     // Keep the crosshair on screen whatever the aspect ratio, and wherever the
     // camera has the operator. This pulls the reticle back ALONG the aim ray
-    // rather than clamping x and y separately — a per-axis clamp would bend a
-    // diagonal shot toward the nearest edge, which is the one thing the aim
-    // must never do.
+    // rather than clamping x and y separately — see shrinkToView (input.js).
     const inset = shrinkToView(ax, ay, this.reticle.x - ax, this.reticle.y - ay, vw, vh);
     mouse.x = inset.x;
     mouse.y = inset.y;
@@ -244,8 +380,17 @@ export class TouchControls {
     if (el) el.classList.toggle('avail', !!on);
   }
 
+  // The game's "play is running / isn't" signal (main.js calls it on every
+  // state change). Input hears it too: it is what tells a Ctrl+R mid-fight
+  // (crouch + reload) apart from a Ctrl+R in the menu (reload the page).
   setVisible(on) {
-    const next = on && this.enabled;
+    this.wanted = !!on;
+    this.input.gameplay = this.wanted;
+    this.sync();
+  }
+
+  sync() {
+    const next = this.wanted && this.enabled && this.touchMode;
     if (next === this.visible) return;
     this.visible = next;
     if (this.el) this.el.classList.toggle('on', this.visible);
@@ -256,12 +401,19 @@ export class TouchControls {
     this.resetSticks();
   }
 
+  // Lets go of everything this layer holds — and only that: the keyboard's
+  // keys, a mouse button and a gamepad trigger are not the touch layer's to
+  // release.
   resetSticks() {
     this.move.active = false; this.move.x = 0; this.move.y = 0;
     this.aim.active = false; this.aim.x = 0; this.aim.y = 0; this.aim.heldT = 0;
     this.input.axisX = 0;
-    this.key('KeyA', false); this.key('KeyD', false); this.key('ShiftLeft', false);
-    this.input.mouse.down = false;
+    this.input.touchKeys.clear();
+    this.input.hold('fire', 'touch', false);
+    this.releaseHeavy();
+    const crouch = document.getElementById('tc-crouch');
+    if (crouch) crouch.classList.remove('on');
+    this._moveOwns = false; this._aimOwns = false;
     this._aimLatch = false; this._jumpLatch = false; this._slideLatch = false;
     this._sprintHeld = 0; this._sprintLock = false;
     this.releaseStick('tc-move'); this.releaseStick('tc-aim');
@@ -269,21 +421,23 @@ export class TouchControls {
 
   // ---- helpers driving the shared Input ----
   key(code, down) {
-    if (down) this.input.keys.add(code); else this.input.keys.delete(code);
+    if (down) this.input.touchKeys.add(code); else this.input.touchKeys.delete(code);
   }
   // Momentary tap. `pressed` is the edge set the game consumes once per frame;
-  // `keys` is held briefly as well so anything reading the held state during
+  // the key is held briefly as well so anything reading the held state during
   // that frame agrees with it.
   press(code) {
-    this.input.keys.add(code);
+    this.input.touchKeys.add(code);
     this.input.pressed.add(code);
-    setTimeout(() => this.input.keys.delete(code), 70);
+    setTimeout(() => this.input.touchKeys.delete(code), 70);
   }
 
+  // SWAP: a logical "next weapon", not a guessed digit. The Player knows what
+  // is equipped and what is unlocked, so it decides what "next" is — a private
+  // 1→4 counter here wasted every fourth tap on the locked SMG and drifted
+  // away from whatever the player had picked with the keyboard.
   cycleWeapon() {
-    const codes = ['Digit1', 'Digit2', 'Digit3', 'Digit4'];
-    this.swapIndex = (this.swapIndex + 1) % codes.length;
-    this.press(codes[this.swapIndex]);
+    this.press('WeaponNext');
   }
 
   bindButton(id, fn) {
@@ -293,23 +447,28 @@ export class TouchControls {
   }
 
   // Holds a key down for as long as the touch button is pressed (unlike
-  // press(), which is a momentary tap) — used for crouch. Pointer capture
-  // means a thumb that slides a few pixels off the button keeps holding it,
-  // which `pointerleave` alone got wrong.
+  // press(), which is a momentary tap) — used for crouch.
   bindHold(id, code) {
     const el = document.getElementById(id);
     if (!el) return;
+    this.bindPress(el, () => this.key(code, true), () => this.key(code, false));
+  }
+
+  // Press-and-hold plumbing shared by crouch and heavy strike. Pointer capture
+  // means a thumb that slides a few pixels off the button keeps holding it,
+  // which `pointerleave` alone got wrong.
+  bindPress(el, onDown, onUp) {
     let pid = null;
     el.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation();
       pid = e.pointerId;
       try { el.setPointerCapture(pid); } catch { /* capture is best-effort */ }
-      this.key(code, true); el.classList.add('on');
+      onDown(); el.classList.add('on');
     });
     const up = (e) => {
       if (pid !== null && e.pointerId !== pid) return;
       pid = null;
-      this.key(code, false); el.classList.remove('on');
+      onUp(); el.classList.remove('on');
     };
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
@@ -405,23 +564,5 @@ export class TouchControls {
 }
 
 function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-
-// Shortens the vector (dx,dy) from (ax,ay) by whatever factor is needed to land
-// inside the viewport minus AIM_MARGIN, preserving its direction exactly.
-// Returns the endpoint. If the anchor itself is off screen there is nothing
-// useful to preserve, so the result is clamped per-axis as a last resort.
-function shrinkToView(ax, ay, dx, dy, vw, vh) {
-  const lo = AIM_MARGIN, hiX = vw - AIM_MARGIN, hiY = vh - AIM_MARGIN;
-  if (ax < lo || ax > hiX || ay < lo || ay > hiY) {
-    return { x: clamp(ax + dx, lo, hiX), y: clamp(ay + dy, lo, hiY) };
-  }
-  let t = 1;
-  if (dx > 0) t = Math.min(t, (hiX - ax) / dx);
-  else if (dx < 0) t = Math.min(t, (lo - ax) / dx);
-  if (dy > 0) t = Math.min(t, (hiY - ay) / dy);
-  else if (dy < 0) t = Math.min(t, (lo - ay) / dy);
-  t = clamp(t, 0, 1);
-  return { x: ax + dx * t, y: ay + dy * t };
-}
 // Frame-rate independent exponential approach — same helper the camera uses.
 function damp(a, b, rate, dt) { return b + (a - b) * Math.exp(-rate * dt); }

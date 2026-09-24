@@ -25,6 +25,7 @@
 // interstitial must never be able to strand a player between stages.
 
 import { t } from './i18n.js';
+import { isSkipKey } from './input.js';
 
 const BG = '#07090c';
 const MIN_RUN = 3.1;      // seconds before it will hand off
@@ -70,7 +71,14 @@ export class Interlude {
     this.cv = canvas;
     this.g = canvas.getContext('2d');
     this.reset(1, false);
-    this._skip = () => this.skip();
+    // Any tap or key skips — except function keys, bare modifiers and browser
+    // chords (see isSkipKey): toggling the F3 overlay mid-cinematic used to
+    // throw the player straight into the next stage.
+    this._skip = (e) => {
+      if (e && e.type === 'keydown' &&
+          (!isSkipKey(e.code) || e.ctrlKey || e.metaKey || e.altKey)) return;
+      this.skip();
+    };
   }
 
   reset(stage, isBoss) {

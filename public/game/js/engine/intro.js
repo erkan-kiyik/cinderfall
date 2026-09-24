@@ -13,6 +13,11 @@
 //
 // It is always skippable: any tap, click or key jumps straight to the handoff,
 // because the second time a player launches the app this is just latency.
+// "Any key" leaves out function keys and bare modifiers (see isSkipKey):
+// F3 toggles the debug overlay, and opening it to watch the intro run must
+// not be what ends it.
+
+import { isSkipKey } from './input.js';
 
 const BG = '#07090c';
 const AMBER = [255, 122, 60];
@@ -40,7 +45,12 @@ export class Intro {
     this._raf = 0;
     this._last = 0;
 
-    this._skip = () => this.skip();
+    this._skip = (e) => {
+      // a key chord (Ctrl+R, Alt+Tab…) is aimed at the browser, not the intro
+      if (e && e.type === 'keydown' &&
+          (!isSkipKey(e.code) || e.ctrlKey || e.metaKey || e.altKey)) return;
+      this.skip();
+    };
     // pointerdown rather than click: it fires on the first touch contact, so
     // the skip feels immediate rather than waiting for the tap to complete
     window.addEventListener('pointerdown', this._skip, { passive: true });
