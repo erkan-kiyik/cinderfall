@@ -4,6 +4,7 @@
 import { K, burstSparks, puffSmoke, kickDust } from '../engine/particles.js';
 import { rand, randSpread, clamp } from '../engine/math.js';
 import { segVsBox } from './player.js';
+import { hitBox, isHeadHit } from './hitbox.js';
 
 // Blade trail tuning. TRAIL_LIFE is how long a sampled point survives (the
 // ribbon's length in time), TRAIL_GAP how long without a new sample before the
@@ -390,14 +391,14 @@ export class FX {
       let hitEnemy = null;
       for (const e of enemies) {
         if (e.deadT > 0 || pr.hitSet.has(e)) continue;
-        const hs = e.hitboxScale || 1;
-        const t = segVsBox(pr.px, pr.py, dx, dy, e.x - 14 * hs, e.y - 134 * hs, 28 * hs, 134 * hs);
+        const b = hitBox(e);
+        const t = segVsBox(pr.px, pr.py, dx, dy, b.x, b.y, b.w, b.h);
         if (t !== null && t < bestT) { bestT = t; hitEnemy = e; }
       }
 
       if (hitEnemy) {
         const hx = pr.px + dx * bestT, hy = pr.py + dy * bestT;
-        const headshot = hy < hitEnemy.y - 108 * (hitEnemy.hitboxScale || 1);
+        const headshot = isHeadHit(hitEnemy, hy);
         this._dealDamage(hitEnemy, pr.dmg * (headshot ? pr.headMul : 1), Math.sign(pr.vx) || 1, hx, hy, headshot);
         this.energyImpact(hx, hy, pr.color, pr.blast);
         if (pr.blast > 0 && g) this._splash(pr, hx, hy);

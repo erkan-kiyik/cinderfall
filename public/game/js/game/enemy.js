@@ -6,13 +6,14 @@
 // Burst fire with settling accuracy, animated reloads, flinch reactions, and
 // a scripted collapse on death that leaves the body in the scene.
 
-import { clamp, lerp, damp, rand, randSpread, easeInOutQuad, angleDiff, makeNoise1D } from '../engine/math.js';
+import { clamp, lerp, damp, rand, randSpread, easeInOutQuad, easeOutBack, angleDiff, makeNoise1D } from '../engine/math.js';
 import { bossHp, bossDmgMul, bossSkill, BOSS_INTERVAL } from './difficulty.js';
 import {
   newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld, drawSoldier,
   weaponBulkOf,
 } from './rig.js';
 import { segVsBox } from './player.js';
+import { HIT_BOX_H, HEAD_LINE, hitBox, isHeadHit } from './hitbox.js';
 
 const WALK = 95, CHASE = 210;
 
@@ -86,7 +87,7 @@ let gaitSeedCounter = 0;
 const HIT_REGIONS = [
   // Head: the whole body snaps back and up off a head hit — a stretch, not a
   // compression — and the suppression is the strongest of the three.
-  { min: 0.80, name: 'head',  rock: 0.30, squash: -7, shove: 1.25, flinch: 1.35 },
+  { min: HEAD_LINE / HIT_BOX_H, name: 'head', rock: 0.30, squash: -7, shove: 1.25, flinch: 1.35 },
   // Torso: folds over the round. The reference reaction; everything else is
   // measured against it.
   { min: 0.45, name: 'torso', rock: 0.19, squash: 5,  shove: 1.0,  flinch: 1.0 },
@@ -94,12 +95,16 @@ const HIT_REGIONS = [
   // least suppression — a man shot in the leg can still shoot back.
   { min: 0.00, name: 'legs',  rock: 0.07, squash: 10, shove: 0.6,  flinch: 0.7 },
 ];
-const HIT_BOX_H = 134;           // must match the hitbox in Player.fireShot
+// HIT_BOX_H and HEAD_LINE come from hitbox.js, the one definition the shot
+// paths use too, so the head reaction and headshot damage start at one height.
 function hitRegionAt(ent, hy) {
   if (hy === undefined || hy === null) return HIT_REGIONS[1];   // unknown → torso
+  // The head is decided by the very test headshot damage uses, not by the
+  // ratio below, so the two can never disagree at the boundary.
+  if (isHeadHit(ent, hy)) return HIT_REGIONS[0];
   const h = HIT_BOX_H * (ent.hitboxScale || 1);
   const up = clamp((ent.y - hy) / h, 0, 1);                     // 0 feet, 1 crown
-  for (const r of HIT_REGIONS) if (up >= r.min) return r;
+  for (let i = 1; i < HIT_REGIONS.length; i++) if (up >= HIT_REGIONS[i].min) return HIT_REGIONS[i];
   return HIT_REGIONS[HIT_REGIONS.length - 1];
 }
 
@@ -298,6 +303,15 @@ export class Enemy {
 
   // Vision cone (narrow, long) + peripheral vision (wide, short) + point
   // blank + line-of-sight, plus hearing for gunfire and nearby sprinting.
+  // The box rounds are tested against, and the world heights where its hit
+  // regions change — surfaced here so the debug overlay (engine/, which never
+  // imports game code) draws the real thing rather than its own copy.
+  hitRect() { return hitBox(this); }
+  hitRegionLines() {
+    const b = hitBox(this);
+    return HIT_REGIONS.filter((r) => r.min > 0).map((r) => this.y - b.h * r.min);
+  }
+
   perceive(player) {
     if (!player || player.deadT > 0) return { visible: false, heard: false, shot: false, dist: 99999 };
     const dist = Math.abs(player.x - this.x);
@@ -769,15 +783,22 @@ export class Enemy {
     if (!r) return;
     r.t += dt;
     const k = clamp(r.t / r.T, 0, 1);
+    // Belt- and cell-fed weapons (a boss's minigun) have no magazine to drop
+    // or hand to seat — the same guard Player's reload uses.
+    const magFed = this.wpn.mag !== null && !!this.wpn.magPos;
     if (k < 0.3) {
       const e = easeInOutQuad(k / 0.3);
-      ws.magOffY = e * 15; ws.magRot = e * 0.45; ws.magHand = k > 0.08;
+      ws.magOffY = e * 15; ws.magRot = e * 0.45; ws.magHand = magFed && k > 0.08;
       if (!r.s0 && k > 0.1) { r.s0 = true; this.audio.reload(0); }
     } else if (k < 0.45) {
-      if (!r.dropped) { r.dropped = true; ws.magVisible = false; this.fx.magDrop(this.x + this.facing * 8, this.y - 62, this.facing); }
+      if (!r.dropped) {
+        r.dropped = true;
+        if (magFed) { ws.magVisible = false; this.fx.magDrop(this.x + this.facing * 8, this.y - 62, this.facing); }
+      }
     } else if (k < 0.66) {
-      const e = 1 - easeInOutQuad((k - 0.45) / 0.21);
-      ws.magVisible = true; ws.magOffY = e * 15; ws.magRot = e * -0.3; ws.magHand = true;
+      // seats with a slight overshoot and settles, as the player's does (§8.4)
+      const e = 1 - easeOutBack((k - 0.45) / 0.21);
+      ws.magVisible = true; ws.magOffY = e * 15; ws.magRot = e * -0.3; ws.magHand = magFed;
       if (!r.s1 && k > 0.6) { r.s1 = true; this.audio.reload(1); this.mag = 30; }
     } else {
       ws.magOffY = 0; ws.magRot = 0; ws.magHand = false;
@@ -882,8 +903,8 @@ export class Enemy {
 // are all inherited untouched. A boss just never retreats (see the
 // isBoss guard in the combat state), hits harder (dmgMul), reads as
 // visibly bigger (visualScale + a matching hitboxScale so it's fairly
-// hittable across its larger silhouette — see the hitboxScale reads in
-// player.js's hitscanShot/beamShot and fx.js's projectile hit test),
+// hittable across its larger silhouette — hitbox.js scales the one shared
+// hit box by it for every shot path),
 // and periodically ground-slams for a readable AOE "special attack"
 // beat. Spawned solo on every 5th stage — see spawnEnemiesForStage()
 // in main.js — so the regular squad encounters are untouched.

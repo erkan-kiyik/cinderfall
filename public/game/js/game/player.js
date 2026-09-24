@@ -6,13 +6,14 @@
 
 import {
   clamp, lerp, damp, rand, randSpread, easeOutCubic, easeInOutQuad, easeInCubic,
-  smootherstep, TAU, makeNoise1D,
+  easeOutBack, smootherstep, TAU, makeNoise1D,
 } from '../engine/math.js';
 import {
   newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld,
   weaponBulkOf, BULK_NEUTRAL,
 } from './rig.js';
 import { drawSoldier } from './rig.js';
+import { hitBox, isHeadHit } from './hitbox.js';
 
 // Footing wobble. Seeded and continuous, so the irregularity is repeatable
 // frame to frame (no per-frame jitter) but never lands on the same stride
@@ -55,9 +56,19 @@ const SPRINT_LEAN_MAX = 0.14;
 // the chest down over it. Small on purpose — this is posture, and the whole
 // bulk range is only ~0.78 either side of neutral.
 const BULK_LEAN = 0.10;
-// Firing brace: leaning into the push. Multiplied by bulk as well, so a
-// pistol barely braces at all and an LMG plants hard.
+// Firing brace: leaning into the push. Two layers, kept apart so the rifle's
+// share is provably not the bulk model's doing (spec §6.1). BRACE_BASE is the
+// brace every weapon starts from — the rifle's own, 0.0661 rad, which it has
+// always had and keeps — written as a number rather than read off
+// BULK_NEUTRAL so retuning the bulk model can never move it. BRACE_LEAN is
+// then only the departure from it per unit bulk, anchored at the rifle like
+// BULK_LEAN: zero for the rifle, and signed, so a pistol (bulk ~0) still
+// barely braces at all (0.0009) while an LMG plants harder than the rifle.
+// This used to be a single `bulk * BRACE_LEAN` presented as "measured against
+// the rifle", which it never was: the bulk term alone put 0.066 rad of pitch
+// on the rifle under sustained fire.
 const BRACE_LEAN = 0.085;
+const BRACE_BASE = BRACE_LEAN * 28 / 36;
 const BRACE_IN = 0.22;      // s to settle into the brace under sustained fire
 const BRACE_OUT = 0.55;     // s to unwind out of it — slower than it builds
 const BRACE_HOLD_T = 0.18;  // s after the last shot still counted as firing
@@ -109,6 +120,27 @@ const SPRAY_MAX = 0.14;           // ceiling, so a held trigger can't aim at the
 // Crouching braces the weapon: the same burst climbs noticeably less, which
 // gives the slow approach a mechanical payoff beyond the tighter cone.
 const SPRAY_CROUCH_BRACE = 0.62;
+
+// Past the end of a spray table. The tables are authored as one burst — a
+// climb, then a tail that alternates sign "so a long hold wanders rather than
+// rising forever" (weapons.js) — but they were indexed `% length`, so round 17
+// started the climb over: a full rifle mag climbed twice and finished at 0.135
+// rad, all but at SPRAY_MAX (now 0.078). Only the alternating tail repeats:
+// from the table's first reversal, trimmed to an even length so the sign
+// keeps alternating across the seam (rifle and SMG loop their last 6, the LMG
+// its last 4). A table with no reversal (pistol, the single heavy step) loops
+// whole, exactly as before.
+const sprayLoopStart = new WeakMap();
+function sprayStepAt(table, i) {
+  if (i < table.length) return table[i];
+  let start = sprayLoopStart.get(table);
+  if (start === undefined) {
+    const neg = table.findIndex((v) => v < 0);
+    start = neg < 0 ? 0 : neg + ((table.length - neg) % 2);
+    sprayLoopStart.set(table, start);
+  }
+  return table[start + ((i - table.length) % (table.length - start))];
+}
 
 // ---- recoil travel -----------------------------------------------------
 // How far, in weapon-local px, the gun is allowed to slam back toward the
@@ -164,6 +196,12 @@ const RECOIL_KICK_RESTORE = 1.72;
 // shoulder is genuinely steadier than a sidearm at arm's length; this is the
 // only place weapon bulk touches the recoil, and it is deliberately small —
 // it is character, not a balance lever.
+//
+// It only ever ADDS damping, above the rifle. Applied below neutral as well,
+// it took damping away from everything lighter: a sidearm (bulk ~0) came out
+// at c = 41.7, zeta 0.48 / 0.46 with an 11.8% counter-swing past zero, and the
+// SMGs at ~0.55 — the ringing RECOIL_SPRING exists to remove. The rifle's
+// zeta 0.65 is now the floor (sidearm counter-swing 0.9%, same as the rifle).
 const RECOIL_BULK_DAMP = 0.35;
 // The damping above is per-weapon, but the RESTORE factors were solved at the
 // rifle's damping — so on a lightly damped sidearm the boosted impulse is
@@ -172,7 +210,9 @@ const RECOIL_BULK_DAMP = 0.35;
 // In this integrator the first frame's displacement carries an exp(-c*dt)
 // factor, so undoing the difference against the neutral damping is exactly
 // that ratio. Restores per-weapon climb to its pre-change value across the
-// whole bulk range rather than only at the point it was solved.
+// whole bulk range rather than only at the point it was solved. (With the
+// damping floored at the rifle's, this is exactly 1 for anything lighter; the
+// C-9's single-shot climb lands at 20.8 degrees, back on its original 20.7.)
 const recoilRestoreAdj = (steady) => Math.exp((steady - RECOIL_SPRING.damp) / 60);
 
 // ---- weapon bulk -------------------------------------------------------
@@ -266,6 +306,15 @@ const SLIDE_BLEND_OUT = 13;
 // animation.
 const HIGHREADY_IN = 0.22;     // s to reach the carry
 const HIGHREADY_OUT = 0.085;   // s to come off it and back on target
+// sprintBlend at or above which the carry is still too far up to shoot from.
+// Fire intent drops the sprint outright (see wantSprint), so from a full
+// sprint this clears on the third frame after the press.
+const SPRINT_FIRE_BLOCK = 0.55;
+// A semi-auto pull is a single-frame edge. Made while the carry is still
+// coming down it landed on a blocked frame and was simply lost — on touch the
+// aim stick sends one edge per deflection, so a sprinting C-9 stayed silent
+// until the thumb came off. Held this long instead, which covers the carry.
+const PULL_BUFFER_T = 0.2;
 
 // ---- squash & stretch --------------------------------------------------
 // One signed value drives it: positive squashes (wide + short), negative
@@ -434,6 +483,7 @@ export class Player {
     this.pendingSwitch = null;
 
     this.fireCd = 0;
+    this.pullBufT = 0;        // held semi-auto pull, see PULL_BUFFER_T
     this.recoilAccum = 0;
     // Accumulated muzzle climb from the spray pattern, in radians. Rides on
     // top of the aim (never replaces it) and decays back to zero between
@@ -461,6 +511,11 @@ export class Player {
       this.world.moveEntity(this, dt);
       this.vx = damp(this.vx, 0, 8, dt);
       this.integrateSprings(dt);
+      // The spring keeps running on a corpse, so the scales it drives have to
+      // keep being written too. They were only set on the live path below and
+      // drawBody applies them to the body on the ground: dying mid-landing
+      // left the corpse frozen 14% wide and 15% short for good.
+      this.applySquash(0);
       return;
     }
 
@@ -530,7 +585,21 @@ export class Player {
     this.stunT = Math.max(0, this.stunT - dt);
     const stunMul = this.stunT > 0 ? 0.3 : 1;
     const mx = input.moveX;
-    const wantSprint = input.sprint && mx !== 0 && this.stamina > 1 && !this.reload && this.stunT <= 0 && !wantCrouch;
+    // Fire intent vetoes the sprint, and it has to be decided here, before the
+    // blend is damped. The firing gate refuses a shot while the carry is up
+    // (SPRINT_FIRE_BLOCK) and used to cancel the sprint from in there — but
+    // this line rebuilt the flag from input.sprint on the very next frame, so
+    // with sprint held (touch latches it at full stick tilt, a gamepad at full
+    // tilt) the carry never came down and the trigger did nothing at all:
+    // measured, 0 rounds in a second of sprint + fire; now 12, the first on
+    // the third frame after the press. Knife strikes are not gated by the
+    // carry, so they leave the sprint alone.
+    const mouse = input.mouse || {};
+    const curW = this.cur;
+    const fireIntent = curW.wpn.kind !== 'melee' && !!(
+      mouse.down || mouse.clicked || this.pullBufT > 0 || curW.ws.charging);
+    const wantSprint = input.sprint && mx !== 0 && this.stamina > 1 && !this.reload && this.stunT <= 0 && !wantCrouch
+      && !fireIntent;
     this.sprinting = wantSprint;
     // Asymmetric: winding a sprint up takes a moment, dropping out of it is
     // immediate. Committing to a run should cost something; coming off it to
@@ -674,9 +743,7 @@ export class Player {
     const airStretch = this.onGround
       ? 0
       : clamp(Math.abs(this.vy) / 850, 0, 1) * AIR_STRETCH * stretchRamp;
-    const s = clamp(this.squash - airStretch, -SQUASH_LIMIT, SQUASH_LIMIT);
-    this.squashY = 1 - s;
-    this.squashX = 1 + s * 0.95;
+    this.applySquash(airStretch);
 
     // stumble envelope: eases in and back out over the hit's lifetime
     if (this.stumbleT > 0) {
@@ -718,11 +785,13 @@ export class Player {
 
     const baseLean = (this.vx / SPRINT) * 0.15 * this.facing;
     const runLean = this.sprintHold * SPRINT_LEAN_MAX * this.facing;
-    // Bulk terms, both measured against the rifle so it is unchanged: a bigger
-    // weapon pulls the chest forward to carry it, and pushes it forward again
-    // to fight the recoil while it is firing.
-    const bulkLean = (this.weaponBulk - BULK_NEUTRAL) * BULK_LEAN * this.facing;
-    const braceLean = this.braceHold * this.weaponBulk * BRACE_LEAN * this.facing;
+    // Bulk terms, both zero at the rifle: a bigger weapon pulls the chest
+    // forward to carry it, and leans in harder to fight the recoil while it
+    // is firing. The brace itself is not a bulk term — every weapon braces
+    // from BRACE_BASE, the rifle's own — only its departure from that is.
+    const bulkD = this.weaponBulk - BULK_NEUTRAL;
+    const bulkLean = bulkD * BULK_LEAN * this.facing;
+    const braceLean = this.braceHold * (BRACE_BASE + bulkD * BRACE_LEAN) * this.facing;
     this.lean = damp(this.lean, baseLean + runLean + bulkLean + braceLean, 6, dt);
 
     // Footing noise: a slow, seeded wobble that makes each stride land
@@ -860,6 +929,7 @@ export class Player {
     }
 
     this.integrateSprings(dt);
+    this.applySquash(0);    // same as the corpse: the spring runs, so write its output
     this.hud.update(this);
     if (k >= 1) { this.stealth = null; this.lean = 0; }
   }
@@ -969,6 +1039,14 @@ export class Player {
     this.squashVel += -this.squash * SQUASH_K * dt;
     this.squashVel *= Math.exp(-SQUASH_DAMP * dt);
     this.squash = clamp(this.squash + this.squashVel * dt, -SQUASH_LIMIT, SQUASH_LIMIT);
+  }
+
+  // Spring value → the per-axis scales the rig reads. `stretch` is the
+  // airborne elongation, which pulls the same signed value toward tall.
+  applySquash(stretch) {
+    const s = clamp(this.squash - stretch, -SQUASH_LIMIT, SQUASH_LIMIT);
+    this.squashY = 1 - s;
+    this.squashX = 1 + s * 0.95;
   }
 
   // ------------------------------------------------------------- weapons
@@ -1140,13 +1218,21 @@ export class Player {
     if (input.hit('Digit2')) this.switchTo('pistol');
     if (input.hit('Digit3')) this.switchTo('knife');
     if (input.hit('Digit4') && this.smgUnlocked) this.switchTo('smg');
+    // Logical "next weapon" (touch SWAP, gamepad Y): steps through the slots
+    // the operator actually has, in 1-4 order, from whatever is equipped, so
+    // every press changes weapon and a locked SMG is never a dead press.
+    if (input.hit('WeaponNext')) {
+      const order = this.smgUnlocked ? ['rifle', 'pistol', 'knife', 'smg'] : ['rifle', 'pistol', 'knife'];
+      this.switchTo(order[(order.indexOf(this.current) + 1) % order.length]);
+    }
 
     // ---- recoil springs ----
     // See RECOIL_SPRING for why these numbers are what they are. The damping
     // scales with how much weapon is being held: a battle rifle braced into
-    // the shoulder settles harder than a sidearm held out at arm's length.
+    // the shoulder settles harder than the rifle, and nothing settles softer
+    // (see RECOIL_BULK_DAMP for why lighter weapons are floored here).
     const steady = RECOIL_SPRING.damp
-      * (1 + RECOIL_BULK_DAMP * (this.weaponBulk - BULK_NEUTRAL));
+      * (1 + RECOIL_BULK_DAMP * Math.max(0, this.weaponBulk - BULK_NEUTRAL));
     // Cached for fire(), which needs the same value to size its impulse.
     this.recoilDamp = steady;
     ws.recoilVel += -ws.recoil * RECOIL_SPRING.kickK * dt;
@@ -1216,6 +1302,8 @@ export class Player {
     // read below as a high-frequency shudder rather than a single kick.
     ws.vibe = Math.max(0, (ws.vibe || 0) - dt * VIBE_DECAY);
     this.fireCd -= dt;
+    this.fireDt = dt;         // fire() needs this frame's step to carry the remainder
+    this.pullBufT = Math.max(0, this.pullBufT - dt);
     // aim-drift bloom recovers faster → tighter sustained accuracy
     // Recovery rate is per-class too — a sidearm settles almost instantly,
     // an LMG stays open long after the trigger is released.
@@ -1225,7 +1313,19 @@ export class Player {
     // actually pointing once the trigger is released. Same per-class recovery
     // curve the cone uses, so a sidearm resets almost instantly and an LMG
     // stays high long after the last round.
-    if (this.time - (ws.lastFireT || -99) > SPRAY_RECOVER_DELAY) {
+    //
+    // For an automatic the grace has to outlast the weapon's own shot gap. At
+    // a flat 0.10s a 6-frame cadence tied with it on the accumulated float
+    // clock, and recovery won that tie on a large share of gaps: one frame of
+    // it is 0.077 rad, which wiped the whole climb mid-burst (measured: the
+    // rifle's spray back to 0 before nearly every round of a 30-round burst).
+    // Gaps are never more than a frame over 60/rpm, so 1.5 frames of margin
+    // means a held trigger never recovers at any rpm; semi-autos keep the flat
+    // grace, so a paced pull still resets and releasing is as generous as ever.
+    const recoverAfter = wpn.auto
+      ? Math.max(SPRAY_RECOVER_DELAY, 60 / wpn.rpm + 1.5 * dt)
+      : SPRAY_RECOVER_DELAY;
+    if (this.time - (ws.lastFireT || -99) > recoverAfter) {
       this.spray = Math.max(0, this.spray - dt * SPRAY_RECOVER * spreadModel.recover);
     }
     // energy weapons cool between shots; overheat clears once cooled enough
@@ -1329,6 +1429,14 @@ export class Player {
       const r = this.reload;
       r.t += dt;
       const k = clamp(r.t / r.T, 0, 1);
+      // Only a weapon with a magazine to change goes through the mag beats.
+      // weapons.js marks the belt, tube and emitter frames (minigun, rocket,
+      // railgun, gravity, laser SMG, particle, flame) with an explicit
+      // `mag: null`, and those were still dropping a magazine and sending the
+      // support hand to a magPos they only inherited from the rifle def. The
+      // C-9 family has no separate mag sprite but does have one in the grip
+      // (a magPos of its own), so it keeps its drop.
+      const magFed = wpn.mag !== null && !!wpn.magPos;
       // weapon dips and tilts toward the body
       rot += Math.sin(Math.min(k, 0.92) * Math.PI) * 0.34;
       offY += Math.sin(k * Math.PI) * 2;
@@ -1336,23 +1444,29 @@ export class Player {
       if (k < 0.3) {
         const e = easeInOutQuad(k / 0.3);
         ws.magOffY = e * 15; ws.magRot = e * 0.45;
-        ws.magHand = k > 0.08;
+        ws.magHand = magFed && k > 0.08;
         if (!r.s0 && k > 0.1) { r.s0 = true; this.audio.reload(0); }
       } else if (k < 0.45) {
         if (!r.dropped) {
           r.dropped = true;
-          ws.magVisible = false;
-          const pose = computePose(this);
-          const wa = weaponAnchor(pose, wpn, ws, this.aimSmooth);
-          const mp = toWorld(this, weaponPoint(wa, wpn.magPos));
-          this.fx.magDrop(mp.x, mp.y, this.facing);
+          if (magFed) {
+            ws.magVisible = false;
+            const pose = computePose(this);
+            const wa = weaponAnchor(pose, wpn, ws, this.aimSmooth);
+            const mp = toWorld(this, weaponPoint(wa, wpn.magPos));
+            this.fx.magDrop(mp.x, mp.y, this.facing);
+          }
         }
-        ws.magHand = true;
+        ws.magHand = magFed;
       } else if (k < 0.66) {
-        const e = 1 - easeOutCubic((k - 0.45) / 0.21);
+        // The new mag seats with a small overshoot and settles (spec §8.4):
+        // easeOutBack carries it ~0.8px past home at k = 0.58 and back by
+        // 0.66, just ahead of the seat click at 0.6. The plain ease-out it
+        // replaced arrived and stopped dead.
+        const e = 1 - easeOutBack((k - 0.45) / 0.21);
         ws.magVisible = true;
         ws.magOffY = e * 15; ws.magRot = e * -0.3;
-        ws.magHand = true;
+        ws.magHand = magFed;
         if (!r.s1 && k > 0.6) {
           r.s1 = true; this.audio.reload(1);
           const need = wpn.magSize - cur.mag;
@@ -1371,12 +1485,13 @@ export class Player {
     }
 
     // ---- firing
-    const blocked = this.reload || this.equipT >= 0 || this.sprintBlend >= 0.55;
+    // Fire intent has already dropped the sprint (see wantSprint in update),
+    // so the carry is on its way down by the time it is tested here.
+    const blocked = this.reload || this.equipT >= 0 || this.sprintBlend >= SPRINT_FIRE_BLOCK;
     if (wpn.charge) {
       // charge weapons: hold to build charge, release to fire (bigger = stronger)
       const holding = input.mouse.down && !blocked && !ws.overheated && cur.mag > 0;
       if (holding) {
-        if (this.sprinting) this.sprinting = false;
         ws.charging = true;
         ws.charge = Math.min(1, ws.charge + dt / wpn.charge.time);
       } else if (ws.charging) {
@@ -1390,10 +1505,13 @@ export class Player {
         ws.charge = Math.max(0, ws.charge - dt * 2);
       }
     } else {
-      const wantFire = wpn.auto ? input.mouse.down : input.mouse.clicked;
+      if (!wpn.auto && input.mouse.clicked && this.sprintBlend >= SPRINT_FIRE_BLOCK) {
+        this.pullBufT = PULL_BUFFER_T;
+      }
+      const wantFire = wpn.auto ? input.mouse.down : (input.mouse.clicked || this.pullBufT > 0);
       const canFire = !blocked && this.fireCd <= 0 && !ws.overheated;
-      if (wantFire && this.sprinting) this.sprinting = false;
       if (wantFire && canFire) {
+        this.pullBufT = 0;
         if (cur.mag <= 0) {
           this.audio.dryFire();
           this.fireCd = 0.25;
@@ -1402,6 +1520,7 @@ export class Player {
           this.fire(cur, enemies, game);
         }
       } else if (wantFire && ws.overheated && this.fireCd <= 0) {
+        this.pullBufT = 0;
         this.fireCd = 0.2;
         if (this.audio.overheat) this.audio.overheat();
       }
@@ -1466,13 +1585,36 @@ export class Player {
     // in-memory only (no I/O) — flushed to Progression once at run end via
     // Game.finish(), so a full-auto weapon never triggers per-shot writes
     if (game) game.recordWeaponShot(wpn.id);
-    this.fireCd = 60 / wpn.rpm;
+    // Carry the remainder rather than assigning. fireCd is decremented once a
+    // frame, so assigning rounded every gap UP to whole frames: 60/690 = 5.2
+    // frames always became 6, and the rifle fired at 600 rpm, not 690 (SMG
+    // 950 → 900, LMG 820 → 720, minigun 1400 → 1200, laser SMG 1100 → 900,
+    // cryo 700 → 600, flame 900 → 720). On a held trigger fireCd is in
+    // (-dt, 0] when it fires; the clamp only bites after idle time, which it
+    // throws away rather than banking as extra rounds.
+    const dt = this.fireDt || 1 / 60;
+    this.fireCd = Math.max(this.fireCd, -dt) + 60 / wpn.rpm;
     this.lastShotT = this.time;
 
     const pose = computePose(this);
     const wa = weaponAnchor(pose, wpn, ws, this.aimSmooth);
     const mzl = toWorld(this, weaponPoint(wa, wpn.muzzle));
     const ejl = toWorld(this, weaponPoint(wa, wpn.eject || wpn.muzzle));
+    // The gameplay trace starts at the shoulder, not the muzzle. World.raycast
+    // only reports a box it enters (tmin > 0), so a muzzle already inside or
+    // through cover — the operator flush against it — skipped that box
+    // outright: measured flush against the 230px container, a round hit the
+    // hostile standing behind it. The muzzle lies on the aim line out from the
+    // shoulder, so past the barrel both are the same line; starting further
+    // back only makes the barrel part of the trace, and a barrel buried in
+    // cover hits the cover. Horizontally the origin is held inside the
+    // operator's own collider (a sprint or slide pose carries the shoulder a
+    // few px outside it), which the sweep never lets overlap a solid. Height
+    // is left alone on purpose: crouched, the shoulder sits above the 63px box,
+    // and that is what lets a crouched operator fire over waist-high cover.
+    // Flash, tracer and beam are all still drawn from the muzzle.
+    const sh = toWorld(this, pose.shoulder);
+    const org = { x: clamp(sh.x, this.x - this.halfW + 1, this.x + this.halfW - 1), y: sh.y };
     // Two different angles, and keeping them apart is the whole point.
     //
     // `drawAng` is the weapon transform actually on screen this frame. It
@@ -1507,17 +1649,28 @@ export class Player {
     const n = wpn.pellets || 1;
     if (mode === 'projectile') {
       const pj = wpn.projectile;
+      // A bolt has the same problem: fx steps it with the same raycast from
+      // its spawn point, so one spawned inside cover flew straight out of it.
+      // With the barrel buried, it starts 2px short of the face instead and
+      // strikes that face on its first step.
+      let sx = mzl.x, sy = mzl.y;
+      const buried = this.world.raycast(org.x, org.y, mzl.x, mzl.y);
+      if (buried) {
+        const bx = org.x - buried.x, by = org.y - buried.y;
+        const bl = Math.hypot(bx, by) || 1, back = Math.min(2, bl);
+        sx = buried.x + (bx / bl) * back; sy = buried.y + (by / bl) * back;
+      }
       for (let i = 0; i < n; i++) {
-        this.fx.spawnProjectile(mzl.x, mzl.y, shotAng(), {
+        this.fx.spawnProjectile(sx, sy, shotAng(), {
           color: pj.color, radius: pj.radius, speed: pj.speed * (0.85 + 0.4 * chargeMul),
           dmg: wpn.dmg * chargeMul * this.dmgMul, headMul: pj.headMul || 1.6,
           blast: (pj.blast || 0) * chargeMul, pierce: pj.pierce || 0, life: pj.life || 1.6,
         });
       }
     } else if (mode === 'beam') {
-      for (let i = 0; i < n; i++) this.beamShot(mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul * this.dmgMul);
+      for (let i = 0; i < n; i++) this.beamShot(org, mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul * this.dmgMul);
     } else {
-      for (let i = 0; i < n; i++) this.hitscanShot(mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul * this.dmgMul);
+      for (let i = 0; i < n; i++) this.hitscanShot(org, mzl, shotAng(), wpn, enemies, game, wpn.dmg * chargeMul * this.dmgMul);
     }
 
     // Flash and casing take the drawn angle, not the ballistic one, so they
@@ -1525,27 +1678,39 @@ export class Player {
     this.presentShot(cur, mzl, ejl, drawAng, chargeMul);
   }
 
-  hitscanShot(mzl, ang, wpn, enemies, game, dmg) {
-    const range = 1600;
-    const ex = mzl.x + Math.cos(ang) * range, ey = mzl.y + Math.sin(ang) * range;
-    const wHit = this.world.raycast(mzl.x, mzl.y, ex, ey);
+  // One gameplay trace, shared by hitscan and beam: from `org` (the shoulder,
+  // see fire()) along `ang`, against the world and every live hostile. The
+  // range still counts from the muzzle, so moving the origin back does not
+  // shorten any weapon's reach. `past` is how far beyond the muzzle the round
+  // got; at or below zero it never left a barrel buried in cover.
+  shotTrace(org, mzl, ang, range, enemies) {
+    const c = Math.cos(ang), s = Math.sin(ang);
+    const lead = Math.max(0, (mzl.x - org.x) * c + (mzl.y - org.y) * s);
+    const len = range + lead;
+    const dx = c * len, dy = s * len;
+    const wHit = this.world.raycast(org.x, org.y, org.x + dx, org.y + dy);
     let bestT = wHit ? wHit.t : 1;
     let hitEnemy = null;
     for (const e of enemies) {
       if (e.deadT > 0) continue;
-      const hs = e.hitboxScale || 1;
-      const t = segVsBox(mzl.x, mzl.y, ex - mzl.x, ey - mzl.y, e.x - 13 * hs, e.y - 134 * hs, 26 * hs, 134 * hs);
+      const b = hitBox(e);
+      const t = segVsBox(org.x, org.y, dx, dy, b.x, b.y, b.w, b.h);
       if (t !== null && t < bestT) { bestT = t; hitEnemy = e; }
     }
-    const hx = mzl.x + (ex - mzl.x) * bestT, hy = mzl.y + (ey - mzl.y) * bestT;
+    return { wHit, hitEnemy, hx: org.x + dx * bestT, hy: org.y + dy * bestT,
+      dir: Math.sign(dx), past: bestT * len - lead };
+  }
+
+  hitscanShot(org, mzl, ang, wpn, enemies, game, dmg) {
+    const { wHit, hitEnemy, hx, hy, dir, past } = this.shotTrace(org, mzl, ang, 1600, enemies);
     if (hitEnemy) {
-      const headshot = hy < hitEnemy.y - 108 * (hitEnemy.hitboxScale || 1);
+      const headshot = isHeadHit(hitEnemy, hy);
       const d = dmg * (headshot ? 1.9 : 1);
       this.hits++;
       if (headshot) this.headshots++;
       const killed = hitEnemy.hp <= d;
-      hitEnemy.damage(d, Math.sign(ex - mzl.x), this, false, hy);
-      this.fx.blood(hx, hy, Math.sign(ex - mzl.x));
+      hitEnemy.damage(d, dir, this, false, hy);
+      this.fx.blood(hx, hy, dir);
       this.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
       if (killed) this.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');
       if (game && game.onPlayerHit) game.onPlayerHit(headshot, killed, hitEnemy);
@@ -1555,31 +1720,25 @@ export class Player {
     } else if (wHit) {
       this.fx.impactWall(hx, hy, wHit.nx, wHit.ny, wHit.mat);
     }
-    this.fx.tracer(mzl.x + Math.cos(ang) * 14, mzl.y + Math.sin(ang) * 14, hx, hy,
-      wpn.tracerColor || null, wpn.tracerWidth || 1.4);
+    // The tracer starts 14px out from the muzzle; a round stopped short of
+    // that (barrel in cover) has nothing to draw but its impact.
+    if (past > 14) {
+      this.fx.tracer(mzl.x + Math.cos(ang) * 14, mzl.y + Math.sin(ang) * 14, hx, hy,
+        wpn.tracerColor || null, wpn.tracerWidth || 1.4);
+    }
   }
 
-  beamShot(mzl, ang, wpn, enemies, game, dmg) {
+  beamShot(org, mzl, ang, wpn, enemies, game, dmg) {
     const range = (wpn.beam && wpn.beam.range) || 1600;
-    const ex = mzl.x + Math.cos(ang) * range, ey = mzl.y + Math.sin(ang) * range;
-    const wHit = this.world.raycast(mzl.x, mzl.y, ex, ey);
-    let bestT = wHit ? wHit.t : 1;
-    let hitEnemy = null;
-    for (const e of enemies) {
-      if (e.deadT > 0) continue;
-      const hs = e.hitboxScale || 1;
-      const t = segVsBox(mzl.x, mzl.y, ex - mzl.x, ey - mzl.y, e.x - 13 * hs, e.y - 134 * hs, 26 * hs, 134 * hs);
-      if (t !== null && t < bestT) { bestT = t; hitEnemy = e; }
-    }
-    const hx = mzl.x + (ex - mzl.x) * bestT, hy = mzl.y + (ey - mzl.y) * bestT;
+    const { wHit, hitEnemy, hx, hy, dir, past } = this.shotTrace(org, mzl, ang, range, enemies);
     const col = wpn.beam.color;
     if (hitEnemy) {
-      const headshot = hy < hitEnemy.y - 108 * (hitEnemy.hitboxScale || 1);
+      const headshot = isHeadHit(hitEnemy, hy);
       const d = dmg * (headshot ? 1.7 : 1);
       this.hits++;
       if (headshot) this.headshots++;
       const killed = hitEnemy.hp <= d;
-      hitEnemy.damage(d, Math.sign(ex - mzl.x), this, false, hy);
+      hitEnemy.damage(d, dir, this, false, hy);
       this.fx.energyImpact(hx, hy, col, 0);
       this.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
       if (killed) this.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');
@@ -1588,8 +1747,11 @@ export class Player {
       if (wHit.tag === 'barrel') game.damageBarrel(wHit.ref, dmg);
       this.fx.energyImpact(hx, hy, col, 0);
     }
-    if (wpn.beam.arc) this.fx.arc(mzl.x, mzl.y, hx, hy, col);
-    else this.fx.beam(mzl.x, mzl.y, hx, hy, col, wpn.beam.width || 3);
+    // Drawn from the muzzle, so not at all when the hit is behind it.
+    if (past > 0) {
+      if (wpn.beam.arc) this.fx.arc(mzl.x, mzl.y, hx, hy, col);
+      else this.fx.beam(mzl.x, mzl.y, hx, hy, col, wpn.beam.width || 3);
+    }
     if (wpn.beam.flame) this.fx.flameSpit(mzl.x, mzl.y, hx, hy, ang);
   }
 
@@ -1629,7 +1791,7 @@ export class Player {
     const spray = wpn.sprayPattern;
     if (spray) {
       const brace = lerp(1, SPRAY_CROUCH_BRACE, this.crouchHold);
-      const step = spray[(ws.shotIndex - 1) % spray.length] * feel.climb * rm * brace;
+      const step = sprayStepAt(spray, ws.shotIndex - 1) * feel.climb * rm * brace;
       this.spray = clamp(this.spray + step, 0, SPRAY_MAX);
     }
     if (feel.vibe) ws.vibe = Math.min(1, (ws.vibe || 0) + feel.vibe * chargeMul);
@@ -1722,7 +1884,10 @@ export class Player {
           s.sounded = true;
           this.audio.swish(s.heavy);
           this.fx.slash(this.x, this.y - 92, back * 0.8, fwd * 0.8, s.heavy ? 52 : 44, this.facing);
-          if (s.heavy) this.vx += this.facing * 260;
+          // Both strikes step into the cut (spec §8.4); the quick one only
+          // got a lunge on the heavy. Smaller, so a flurry does not walk the
+          // operator across the room.
+          this.vx += this.facing * (s.heavy ? 260 : 100);
         }
         if (!s.hitDone && e > 0.35) {
           s.hitDone = true;
