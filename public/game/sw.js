@@ -8,29 +8,37 @@
 //     refresh — instant loads, self-healing when files change.
 // Bump CACHE on any shipped change to retire the previous cache on activate.
 
-const CACHE = 'cinderfall-v2';
+const CACHE = 'cinderfall-v3';
 
 // The full game shell — every module is a static ES import, so precaching
 // them means the whole game is available offline from the very first visit,
 // rather than only once the fetch handler below has happened to see each file.
 //
-// This list is exhaustive on purpose, and it drifts when edited by hand: it had
-// gone stale by roughly half the modules. Regenerate it from inside
-// public/game with
+// This list is exhaustive on purpose, and it drifts when edited by hand: it has
+// gone stale twice (half the modules the first time; the five added languages,
+// settings, debug and referral the second). Regenerate the fonts and js/
+// entries from inside public/game with
 //
-//   find js -name '*.js' | sort | sed "s|^|  './|; s|$|',|"
+//   find assets/fonts js \( -name '*.woff2' -o -name '*.js' \) | sort | sed "s|^|  './|; s|$|',|"
 //
-// and paste the result over the js/ entries below.
+// and paste the result over those entries below.
 const SHELL = [
   './',
   './index.html',
   './css/style.css',
   './manifest.webmanifest',
-  './assets/icon.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
   './assets/favicon-32.png',
+  './assets/fonts/inter-400.woff2',
+  './assets/fonts/inter-600.woff2',
+  './assets/fonts/inter-700.woff2',
+  './assets/fonts/orbitron-700.woff2',
+  './assets/fonts/orbitron-800.woff2',
+  './assets/fonts/rajdhani-500.woff2',
+  './assets/fonts/rajdhani-600.woff2',
+  './assets/fonts/rajdhani-700.woff2',
   './js/art/background.js',
   './js/art/currency.js',
   './js/art/environment.js',
@@ -44,16 +52,23 @@ const SHELL = [
   './js/engine/brightness.js',
   './js/engine/camera.js',
   './js/engine/daycycle.js',
+  './js/engine/debug.js',
   './js/engine/device.js',
   './js/engine/i18n.js',
   './js/engine/input.js',
   './js/engine/interlude.js',
   './js/engine/intro.js',
+  './js/engine/lang/ar.js',
+  './js/engine/lang/de.js',
   './js/engine/lang/en.js',
+  './js/engine/lang/es.js',
+  './js/engine/lang/hi.js',
+  './js/engine/lang/ru.js',
   './js/engine/lang/tr.js',
   './js/engine/math.js',
   './js/engine/particles.js',
   './js/engine/quality.js',
+  './js/engine/settings.js',
   './js/engine/touch.js',
   './js/game/achievements.js',
   './js/game/archives.js',
@@ -70,6 +85,7 @@ const SHELL = [
   './js/game/player.js',
   './js/game/profile.js',
   './js/game/progression.js',
+  './js/game/referral.js',
   './js/game/retention.js',
   './js/game/rig.js',
   './js/game/sharecard.js',

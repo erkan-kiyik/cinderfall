@@ -87,7 +87,7 @@ CINDERFALL launches out of Sector 9.
 
 | Asset | Store spec | File |
 | --- | --- | --- |
-| App icon (source) | 1024×1024, no alpha | `public/game/assets/icon-1024.png` (+ `icon.svg`) |
+| App icon (source) | 1024×1024, no alpha | `public/game/assets/icon-1024.png` (full-resolution original art: `store/icon-source.png`) |
 | Adaptive/maskable icon | 512×512 | `public/game/assets/icon-maskable-512.png` |
 | Feature graphic (Play) | 1024×500 | `store/feature-graphic.png` |
 | Splash / launch source | 2732×2732 | `public/game/assets/splash.svg` |
