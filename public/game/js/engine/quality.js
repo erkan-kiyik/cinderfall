@@ -43,9 +43,14 @@ export const PRESETS = {
   ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, accentPx: 1.4, lightScale: 1,    richGrade: true,  renderScale: 1 },
 };
 const ORDER = ['low', 'medium', 'high', 'ultra'];
-// How many times the runtime may step the preset down on its own. Two is
-// enough to walk High -> Low, and bounded so a device having one bad minute
-// cannot end up permanently on the lowest tier over many sessions.
+// How many times the runtime may step the preset down on its own, ever. Two is
+// enough to walk High -> Low. The budget is not what keeps one bad minute from
+// stranding a device on Low; the frame loop in main.js is. It ignores single
+// long frames, needs four seconds of sustained sub-38fps play to act, and then
+// gives the new tier eight seconds of play before judging it again. A step
+// taken is saved, so a phone that genuinely cannot hold High is not made to
+// prove it again every launch, and the player can always raise it back from
+// Settings.
 const MAX_AUTO_LOWER = 2;
 
 // Auto-pick. Desktop (no touch) starts at High — the game's original baseline,
@@ -83,12 +88,18 @@ function load() {
       if (d && PRESETS[d.tier]) return d;
     }
   } catch (e) { /* private browsing / unavailable */ }
-  return { tier: detectDefaultTier(), pinned: false, autoLowered: 0 };
+  return null;
 }
 
 class Quality {
   constructor() {
-    this.data = load();
+    const stored = load();
+    this.data = stored || { tier: detectDefaultTier(), pinned: false, autoLowered: 0 };
+    // Detected once, at first boot, and kept. Re-detecting on every launch
+    // until something else happened to save let the default flip between
+    // sessions on a foldable, whose short edge crosses detectDefaultTier()'s
+    // 500px line as it folds.
+    if (!stored) this.save();
   }
   get tier() { return this.data.tier; }
   get preset() { return PRESETS[this.data.tier]; }

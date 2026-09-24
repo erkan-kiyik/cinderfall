@@ -14,7 +14,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CINDERFALL">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -98,10 +97,10 @@
       <div id="reload-hint" class="hidden" data-i18n="hud.reloading">RELOADING</div>
       <div id="wpn-meter" class="wpn-meter hidden"><div id="wpn-meter-fill" class="wpn-meter-fill"></div></div>
       <div class="slots">
-        <span id="slot-1" class="slot active"><canvas id="slot-1-icon" class="slot-icon"></canvas>1 RIFLE</span>
-        <span id="slot-2" class="slot"><canvas id="slot-2-icon" class="slot-icon"></canvas>2 SIDEARM</span>
-        <span id="slot-3" class="slot"><canvas id="slot-3-icon" class="slot-icon"></canvas>3 KNIFE</span>
-        <span id="slot-4" class="slot hidden"><canvas id="slot-4-icon" class="slot-icon"></canvas>4 SMG</span>
+        <span id="slot-1" class="slot active"><canvas id="slot-1-icon" class="slot-icon"></canvas>1 <span data-i18n="hud.slot.rifle">RIFLE</span></span>
+        <span id="slot-2" class="slot"><canvas id="slot-2-icon" class="slot-icon"></canvas>2 <span data-i18n="slot.sidearm">SIDEARM</span></span>
+        <span id="slot-3" class="slot"><canvas id="slot-3-icon" class="slot-icon"></canvas>3 <span data-i18n="hud.slot.knife">KNIFE</span></span>
+        <span id="slot-4" class="slot hidden"><canvas id="slot-4-icon" class="slot-icon"></canvas>4 <span data-i18n="hud.slot.smg">SMG</span></span>
       </div>
     </div>
 
@@ -148,7 +147,7 @@
   <div id="loading" class="overlay">
     <canvas id="intro-canvas" class="intro-canvas"></canvas>
     <div class="intro-status">
-      <div class="load-label" id="load-label">PAINTING ASSETS…</div>
+      <div class="load-label" id="load-label" data-i18n="loading.label">PAINTING ASSETS…</div>
       <div class="load-bar"><div id="load-fill"></div></div>
     </div>
   </div>
@@ -405,7 +404,7 @@
         <a href="legal/privacy.html" target="_blank" rel="noopener" data-i18n="legal.privacy">Privacy</a>
         <span>·</span>
         <a href="legal/terms.html" target="_blank" rel="noopener" data-i18n="legal.terms">Terms</a>
-        <span>·</span>
+        <span class="build-sep">·</span>
         <span class="build-tag">CINDERFALL v1.0</span>
       </div>
     </div>
@@ -422,7 +421,7 @@
         <div id="reveal-kind" class="reveal-kind"></div>
         <div id="reveal-status" class="reveal-status"></div>
       </div>
-      <button id="reveal-done" class="btn hidden">CONTINUE</button>
+      <button id="reveal-done" class="btn hidden" data-i18n="reveal.continue">CONTINUE</button>
     </div>
   </div>
 
@@ -487,42 +486,46 @@
         <span class="profile-title" data-i18n="profile.title">PROFILE</span>
       </div>
 
-      <!-- Identity. The card is called an operator file and used to contain
-           no operator at all: the equipped skin, the one thing the player
-           actually picked, appeared nowhere on it. -->
-      <div class="profile-id">
-        <canvas id="profile-portrait" class="profile-portrait" aria-hidden="true"></canvas>
-        <div class="profile-id-text">
-          <div id="profile-op-name" class="profile-op-name"></div>
-          <div id="profile-op-tag" class="profile-op-tag"></div>
-          <div class="profile-lvl-row">
-            <span class="profile-lvl-badge"><span id="profile-lvl">1</span></span>
-            <div class="profile-lvl-meter">
-              <div class="profile-lvl-head">
-                <span data-i18n="play.nextRank">NEXT LEVEL</span>
-                <span id="profile-xp-pct">0%</span>
+      <!-- Everything between the heading and CLOSE scrolls on its own, so the
+           way out is never the part that scrolled off a 390px-tall screen. -->
+      <div class="profile-body">
+        <!-- Identity. The card is called an operator file and used to contain
+             no operator at all: the equipped skin, the one thing the player
+             actually picked, appeared nowhere on it. -->
+        <div class="profile-id">
+          <canvas id="profile-portrait" class="profile-portrait" aria-hidden="true"></canvas>
+          <div class="profile-id-text">
+            <div id="profile-op-name" class="profile-op-name"></div>
+            <div id="profile-op-tag" class="profile-op-tag"></div>
+            <div class="profile-lvl-row">
+              <span class="profile-lvl-badge"><span id="profile-lvl">1</span></span>
+              <div class="profile-lvl-meter">
+                <div class="profile-lvl-head">
+                  <span data-i18n="play.nextRank">NEXT LEVEL</span>
+                  <span id="profile-xp-pct">0%</span>
+                </div>
+                <div class="profile-lvl-track"><div id="profile-xp-fill" class="profile-lvl-fill"></div></div>
               </div>
-              <div class="profile-lvl-track"><div id="profile-xp-fill" class="profile-lvl-fill"></div></div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="profile-score-block">
-        <div id="profile-score" class="profile-score">0</div>
-        <div id="profile-score-label" class="profile-score-label" data-i18n="profile.score">SECTOR SCORE</div>
-        <div id="profile-rank" class="profile-rank"></div>
-        <div class="profile-rank-track"><div id="profile-rank-fill" class="profile-rank-fill"></div></div>
-        <div id="profile-rank-next" class="profile-rank-next"></div>
-      </div>
+        <div class="profile-score-block">
+          <div id="profile-score" class="profile-score">0</div>
+          <div id="profile-score-label" class="profile-score-label" data-i18n="profile.score">SECTOR SCORE</div>
+          <div id="profile-rank" class="profile-rank"></div>
+          <div class="profile-rank-track"><div id="profile-rank-fill" class="profile-rank-fill"></div></div>
+          <div id="profile-rank-next" class="profile-rank-next"></div>
+        </div>
 
-      <div id="profile-stats" class="profile-stats"></div>
+        <div id="profile-stats" class="profile-stats"></div>
 
-      <div class="profile-weapon">
-        <div class="profile-weapon-head" data-i18n="profile.favorite">FAVOURITE WEAPON</div>
-        <canvas id="profile-weapon-art" class="profile-weapon-art" width="200" height="72"></canvas>
-        <div id="profile-weapon-name" class="profile-weapon-name"></div>
-        <div id="profile-weapon-skin" class="profile-weapon-skin"></div>
+        <div class="profile-weapon">
+          <div class="profile-weapon-head" data-i18n="profile.favorite">FAVOURITE WEAPON</div>
+          <canvas id="profile-weapon-art" class="profile-weapon-art" width="200" height="72"></canvas>
+          <div id="profile-weapon-name" class="profile-weapon-name"></div>
+          <div id="profile-weapon-skin" class="profile-weapon-skin"></div>
+        </div>
       </div>
 
       <div class="profile-actions">

@@ -120,6 +120,30 @@ function defaultProgress() {
   };
 }
 
+// Merges a stored save over the defaults, type-checking every field the
+// defaults define. A save is outside data: a `null` inventory or a string
+// scrap balance (hand-edited, or a half-written store) used to throw on the
+// first owns()/equip() — or silently concatenate "lots" + 8 — at boot.
+// Well-formed saves pass through untouched, and fields the defaults do not
+// know about (attempts, checkpoint, legacy currency) are kept as they are.
+function repairSave(saved) {
+  const base = defaultProgress();
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
+  const out = { ...base, ...saved };
+  for (const [k, def] of Object.entries(base)) {
+    const v = out[k];
+    if (typeof def === 'number') {
+      if (typeof v !== 'number' || !Number.isFinite(v)) out[k] = def;
+    } else if (Array.isArray(def)) {
+      if (!Array.isArray(v)) out[k] = def;
+    } else if (def && typeof def === 'object') {
+      if (!v || typeof v !== 'object' || Array.isArray(v)) out[k] = def;
+    }
+  }
+  if (out.level < 1) out.level = 1;
+  return out;
+}
+
 // ---- Sector Score: the one number the player card leads with ----
 // Deliberately simple and fully offline — reaching further and downing bosses
 // pays, dying costs a little. Deaths can never drag it negative, so a rough
@@ -181,19 +205,34 @@ export const SCRAP_AD_COOLDOWN_MS = 12000;
 export const SCRAP_PER_LEGACY_GEM = 30;
 
 
+// ---- device-clock day rollovers ----
+// Every daily cap here keys off the device clock, which the player controls.
+// Stepping it forward to reset a cap cannot be told apart from actually
+// waiting a day, so that stays possible offline. Stepping it BACK used to
+// count as a new day as well — a second free reset per round trip — and a
+// timestamp left in the future (a clock that ran ahead, then got corrected)
+// blocked the scrap-ad cooldown until real time caught up with it. So a day
+// only rolls over when it moves forward; a backwards move keeps what has
+// been used and just re-anchors the stored day to the clock.
+function epochDay(now = Date.now()) { return Math.floor(now / 86400000); }
+
+// True when `day` is a new day relative to the stored one. A stored value
+// that is not a number (older or damaged save) counts as a new day.
+function dayAdvanced(stored, day) { return !Number.isFinite(stored) || day > stored; }
+
 // Battle-pass: XP per tier and the reward table.
 export const BP_XP_PER_TIER = 1000;
 export const BP_TIERS = [
   { tier: 1, reward: { scrap: 150 }, label: '150 SCRAP' },
-  { tier: 2, reward: { scrap: 300 }, label: '300 SCRAP', premium: true },
+  { tier: 2, reward: { scrap: 300 }, label: '300 SCRAP' },
   { tier: 3, reward: { item: 'rifle_urban' }, label: 'VK-77 URBAN' },
   { tier: 4, reward: { scrap: 250 }, label: '250 SCRAP' },
   { tier: 5, reward: { energy: 10 }, label: '+10 ENERGY' },
-  { tier: 6, reward: { item: 'op_nomad' }, label: 'NOMAD SKIN', premium: true },
-  { tier: 7, reward: { scrap: 400 }, label: '400 PARA' },
-  { tier: 8, reward: { scrap: 750 }, label: '750 SCRAP', premium: true },
+  { tier: 6, reward: { item: 'op_nomad' }, label: 'NOMAD SKIN' },
+  { tier: 7, reward: { scrap: 400 }, label: '400 SCRAP' },
+  { tier: 8, reward: { scrap: 750 }, label: '750 SCRAP' },
   { tier: 9, reward: { item: 'pistol_gold' }, label: 'C-9 GILDED' },
-  { tier: 10, reward: { item: 'rifle_arc' }, label: 'ARC-9 PULSE', premium: true },
+  { tier: 10, reward: { item: 'rifle_arc' }, label: 'ARC-9 PULSE' },
 ];
 
 // Mission templates — combat goals sampled daily / weekly.
@@ -219,7 +258,7 @@ export class Progression {
   load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) return { ...defaultProgress(), ...JSON.parse(raw) };
+      if (raw) return repairSave(JSON.parse(raw));
     } catch (e) { /* storage unavailable — play this session only */ }
     return defaultProgress();
   }
@@ -401,7 +440,10 @@ export class Progression {
 
   xpProgress() {
     const d = this.data;
-    const cur = xpForLevel(d.level);
+    // Level 1 starts from nothing. xpForLevel(1) is not a threshold anyone
+    // crosses (see its comment), and using it as the floor left a fresh save
+    // sitting on an empty bar for its first 128 XP.
+    const cur = d.level <= 1 ? 0 : xpForLevel(d.level);
     const next = xpForLevel(d.level + 1);
     return clamp01((d.xp - cur) / Math.max(1, next - cur));
   }
@@ -534,8 +576,9 @@ export class Progression {
 
   // ---- rewarded-ad free crates ----
   _rolloverAdCrateDay() {
-    const day = Math.floor(Date.now() / 86400000);
-    if (this.data.adCrateDay !== day) { this.data.adCrateDay = day; this.data.adCratesToday = 0; }
+    const day = epochDay();
+    if (dayAdvanced(this.data.adCrateDay, day)) { this.data.adCrateDay = day; this.data.adCratesToday = 0; }
+    else if (day < this.data.adCrateDay) this.data.adCrateDay = day;   // clock went back: keep the count
   }
 
   adCratesRemaining() {
@@ -576,17 +619,30 @@ export class Progression {
 
   // ---- scrap from ads: one salvage bundle per watch, capped per day ----
   _rolloverScrapAdDay() {
-    const day = Math.floor(Date.now() / 86400000);
-    if (this.data.scrapAdDay !== day) {
+    const day = epochDay();
+    if (dayAdvanced(this.data.scrapAdDay, day)) {
       this.data.scrapAdDay = day;
       this.data.scrapAdWatched = 0;
       this.data.scrapAdGrantedToday = 0;
+    } else if (day < this.data.scrapAdDay) {
+      this.data.scrapAdDay = day;   // clock went back: keep today's count
     }
+  }
+
+  // Milliseconds until the next scrap-ad watch may pay. A last watch dated
+  // in the future can only mean the clock moved back since, and measuring
+  // the cooldown against it would block the offer until real time caught up
+  // — for a year, if the clock had been a year ahead. Treat it as expired and
+  // re-anchor it instead.
+  _scrapAdCooldownLeft(now = Date.now()) {
+    const last = Number.isFinite(this.data.lastScrapAdAt) ? this.data.lastScrapAdAt : 0;
+    if (now < last) { this.data.lastScrapAdAt = 0; return 0; }
+    return Math.max(0, SCRAP_AD_COOLDOWN_MS - (now - last));
   }
 
   scrapAdProgress() {
     this._rolloverScrapAdDay();
-    const cooldownLeft = Math.max(0, SCRAP_AD_COOLDOWN_MS - (Date.now() - this.data.lastScrapAdAt));
+    const cooldownLeft = this._scrapAdCooldownLeft();
     return {
       reward: SCRAP_AD_REWARD,
       grantedToday: this.data.scrapAdGrantedToday, dailyCap: SCRAP_AD_DAILY_CAP,
@@ -600,7 +656,7 @@ export class Progression {
   recordScrapAdWatch() {
     this._rolloverScrapAdDay();
     const now = Date.now();
-    if (now - this.data.lastScrapAdAt < SCRAP_AD_COOLDOWN_MS) return { rejected: 'cooldown' };
+    if (this._scrapAdCooldownLeft(now) > 0) return { rejected: 'cooldown' };
     if (this.data.scrapAdGrantedToday >= SCRAP_AD_DAILY_CAP) return { rejected: 'cap' };
     this.data.lastScrapAdAt = now;
     this.data.scrapAdWatched++;
@@ -645,23 +701,27 @@ export class Progression {
   // ---- daily / weekly missions ----
   // Regenerates the mission set when the calendar day / week rolls over. Each
   // mission stores a baseline stat snapshot so progress = current - baseline.
+  //
+  // Forward-only, like the ad caps (see dayAdvanced): moving the clock back
+  // keeps the current set — claimed rows stay claimed — rather than rolling
+  // a fresh one, and just re-anchors the stored day.
   ensureMissions() {
-    const day = Math.floor(Date.now() / 86400000);
+    const day = epochDay();
     const week = Math.floor(day / 7);
-    if (this.data.missionDay !== day || !this.data.missions) {
+    if (!Array.isArray(this.data.missions) || dayAdvanced(this.data.missionDay, day)) {
       this.data.missionDay = day;
       this.data.missions = this._roll(DAILY_TEMPLATES, day, 3);
-    }
-    if (this.data.missionWeek !== week || !this.data.weekly) {
+    } else if (day < this.data.missionDay) this.data.missionDay = day;
+    if (!Array.isArray(this.data.weekly) || dayAdvanced(this.data.missionWeek, week)) {
       this.data.missionWeek = week;
       this.data.weekly = this._roll(WEEKLY_TEMPLATES, week * 100 + 7, WEEKLY_TEMPLATES.length);
-    }
+    } else if (week < this.data.missionWeek) this.data.missionWeek = week;
     // daily login streak + energy refill
-    if (this.data.lastLogin !== day) {
+    if (dayAdvanced(this.data.lastLogin, day)) {
       this.data.loginStreak = this.data.lastLogin === day - 1 ? this.data.loginStreak + 1 : 1;
       this.data.lastLogin = day;
       this.data.energy = this.data.energyMax;
-    }
+    } else if (day < this.data.lastLogin) this.data.lastLogin = day;
     this.save();
   }
 

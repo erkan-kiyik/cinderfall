@@ -4,48 +4,64 @@
 // drift out of sync with the underlying stat. Only the claimed flag persists
 // (Progression.achievements[id]), since "have I collected the reward" is the
 // one thing that truly needs to survive independent of the stat's value.
+//
+// Names, descriptions and tier labels live in the dictionaries
+// (ach.<id>.name / ach.<id>.desc / ach.tier.<key>), not here: an English
+// literal in the catalog is a string no translation can ever reach.
+
+import { t } from '../engine/i18n.js';
 
 export const TIERS = {
-  easy:   { key: 'easy',   label: 'EASY',   color: '#8fae6a', glow: 'rgba(143,174,106,0.55)' },
-  medium: { key: 'medium', label: 'MEDIUM', color: '#4a90d9', glow: 'rgba(74,144,217,0.6)' },
-  hard:   { key: 'hard',   label: 'HARD',   color: '#e0446e', glow: 'rgba(224,68,110,0.7)' },
+  easy:   { key: 'easy',   color: '#8fae6a', glow: 'rgba(143,174,106,0.55)' },
+  medium: { key: 'medium', color: '#4a90d9', glow: 'rgba(74,144,217,0.6)' },
+  hard:   { key: 'hard',   color: '#e0446e', glow: 'rgba(224,68,110,0.7)' },
 };
+
+const HOUR_MS = 3600000;
+
+export const tierLabel = (tier) => t(`ach.tier.${tier.key}`);
+export const achievementName = (ach) => t(`ach.${ach.id}.name`);
+// The goal is the {n} in the description; playtime goals read in hours.
+export function achievementDesc(ach) {
+  const n = ach.stat === 'totalPlaytimeMs' ? ach.goal / HOUR_MS : ach.goal;
+  return t(`ach.${ach.id}.desc`, { n: n.toLocaleString() });
+}
 
 export const ACHIEVEMENTS = [
   // ---- EASY ----
-  { id: 'first_blood',   tier: 'easy', name: 'FIRST BLOOD',      desc: 'Eliminate your first hostile.',            icon: 'skull',   stat: 'totalKills', goal: 1 },
-  { id: 'window_shopper', tier: 'easy', name: 'WINDOW SHOPPER',  desc: 'Open your first supply crate.',            icon: 'crate',   stat: 'cratesOpened', goal: 1 },
-  { id: 'trigger_happy', tier: 'easy', name: 'TRIGGER HAPPY',    desc: 'Fire 500 rounds.',                         icon: 'bullet',  stat: 'shotsTotal', goal: 500 },
-  { id: 'attention_span', tier: 'easy', name: 'ATTENTION SPAN',  desc: 'Watch 10 rewarded ads.',                   icon: 'play',    stat: 'totalAdsWatched', goal: 10 },
-  { id: 'getting_started', tier: 'easy', name: 'GETTING STARTED', desc: 'Reach operator level 5.',                 icon: 'star',    stat: 'level', goal: 5 },
-  { id: 'first_streak',  tier: 'easy', name: 'ON A ROLL',        desc: 'Land a 3-kill streak without going down.', icon: 'fire',    stat: 'longestKillStreak', goal: 3 },
-  { id: 'boss_slayer',   tier: 'easy', name: 'BOSS SLAYER',      desc: 'Defeat your first boss.',                  icon: 'crown',   stat: 'bossesDefeated', goal: 1 },
+  { id: 'first_blood',   tier: 'easy', icon: 'skull',   stat: 'totalKills', goal: 1 },
+  { id: 'window_shopper', tier: 'easy', icon: 'crate',   stat: 'cratesOpened', goal: 1 },
+  { id: 'trigger_happy', tier: 'easy', icon: 'bullet',  stat: 'shotsTotal', goal: 500 },
+  { id: 'attention_span', tier: 'easy', icon: 'play',    stat: 'totalAdsWatched', goal: 10 },
+  { id: 'getting_started', tier: 'easy', icon: 'star',    stat: 'level', goal: 5 },
+  { id: 'first_streak',  tier: 'easy', icon: 'fire',    stat: 'longestKillStreak', goal: 3 },
+  { id: 'boss_slayer',   tier: 'easy', icon: 'crown',   stat: 'bossesDefeated', goal: 1 },
 
   // ---- MEDIUM ----
-  { id: 'centurion',     tier: 'medium', name: 'CENTURION',       desc: 'Eliminate 100 hostiles.',                  icon: 'skull',   stat: 'totalKills', goal: 100 },
-  { id: 'sharpshooter',  tier: 'medium', name: 'SHARPSHOOTER',    desc: 'Land 50 headshots.',                       icon: 'target',  stat: 'totalHeadshots', goal: 50 },
-  { id: 'combo_breaker', tier: 'medium', name: 'COMBO BREAKER',   desc: 'Reach a 5-kill combo.',                    icon: 'bolt',    stat: 'highestCombo', goal: 5 },
-  { id: 'unstoppable',   tier: 'medium', name: 'UNSTOPPABLE',     desc: 'Reach a 10-kill streak without going down.', icon: 'fire',  stat: 'longestKillStreak', goal: 10 },
-  { id: 'deep_cover',    tier: 'medium', name: 'DEEP COVER',      desc: 'Reach stage 10 in a single run.',          icon: 'flag',    stat: 'longestSurvivalStage', goal: 10 },
-  { id: 'crate_collector', tier: 'medium', name: 'CRATE COLLECTOR', desc: 'Open 25 supply crates.',                 icon: 'crate',   stat: 'cratesOpened', goal: 25 },
-  { id: 'big_spender',   tier: 'medium', name: 'SCRAPPER',       desc: 'Salvage 5,000 lifetime scrap.',            icon: 'scrap',    stat: 'lifetimeScrapEarned', goal: 5000 },
-  { id: 'arsenal',       tier: 'medium', name: 'ARSENAL',         desc: 'Fire 5 different weapons.',                icon: 'guns',    stat: 'weaponsUsedCount', goal: 5 },
-  { id: 'ad_regular',    tier: 'medium', name: 'AD REGULAR',      desc: 'Watch 100 rewarded ads.',                  icon: 'play',    stat: 'totalAdsWatched', goal: 100 },
-  { id: 'hour_one',      tier: 'medium', name: 'HOUR ONE',        desc: 'Play for 1 hour total.',                   icon: 'clock',   stat: 'totalPlaytimeMs', goal: 3600000 },
+  { id: 'centurion',     tier: 'medium', icon: 'skull',   stat: 'totalKills', goal: 100 },
+  { id: 'sharpshooter',  tier: 'medium', icon: 'target',  stat: 'totalHeadshots', goal: 50 },
+  { id: 'combo_breaker', tier: 'medium', icon: 'bolt',    stat: 'highestCombo', goal: 5 },
+  { id: 'unstoppable',   tier: 'medium', icon: 'fire',  stat: 'longestKillStreak', goal: 10 },
+  { id: 'deep_cover',    tier: 'medium', icon: 'flag',    stat: 'longestSurvivalStage', goal: 10 },
+  { id: 'crate_collector', tier: 'medium', icon: 'crate',   stat: 'cratesOpened', goal: 25 },
+  { id: 'big_spender',   tier: 'medium', icon: 'scrap',    stat: 'lifetimeScrapEarned', goal: 5000 },
+  { id: 'arsenal',       tier: 'medium', icon: 'guns',    stat: 'weaponsUsedCount', goal: 5 },
+  { id: 'ad_regular',    tier: 'medium', icon: 'play',    stat: 'totalAdsWatched', goal: 100 },
+  { id: 'hour_one',      tier: 'medium', icon: 'clock',   stat: 'totalPlaytimeMs', goal: HOUR_MS },
 
   // ---- HARD ----
-  { id: 'one_in_a_thousand', tier: 'hard', name: 'ONE IN A THOUSAND', desc: 'Eliminate 1,000 hostiles.',           icon: 'skull',   stat: 'totalKills', goal: 1000 },
-  { id: 'deadeye',       tier: 'hard', name: 'DEADEYE',           desc: 'Land 300 headshots.',                     icon: 'target',  stat: 'totalHeadshots', goal: 300 },
-  { id: 'chain_reaction', tier: 'hard', name: 'CHAIN REACTION',   desc: 'Reach a 10-kill combo.',                  icon: 'bolt',    stat: 'highestCombo', goal: 10 },
-  { id: 'ghost',         tier: 'hard', name: 'GHOST',             desc: 'Reach a 25-kill streak without going down.', icon: 'fire', stat: 'longestKillStreak', goal: 25 },
-  { id: 'sector_master', tier: 'hard', name: 'SECTOR MASTER',     desc: 'Reach stage 25 in a single run.',         icon: 'flag',    stat: 'longestSurvivalStage', goal: 25 },
+  { id: 'one_in_a_thousand', tier: 'hard', icon: 'skull',   stat: 'totalKills', goal: 1000 },
+  { id: 'deadeye',       tier: 'hard', icon: 'target',  stat: 'totalHeadshots', goal: 300 },
+  { id: 'chain_reaction', tier: 'hard', icon: 'bolt',    stat: 'highestCombo', goal: 10 },
+  { id: 'ghost',         tier: 'hard', icon: 'fire', stat: 'longestKillStreak', goal: 25 },
+  { id: 'sector_master', tier: 'hard', icon: 'flag',    stat: 'longestSurvivalStage', goal: 25 },
   // `id` is the persisted claim key, so it keeps its pre-scrap name — renaming
   // it would hand every existing player this achievement to claim a second time.
-  { id: 'diamond_mogul', tier: 'hard', name: 'SALVAGE BARON',     desc: 'Salvage 50,000 lifetime scrap.',          icon: 'scrap',   stat: 'lifetimeScrapEarned', goal: 50000 },
-  { id: 'ad_veteran',    tier: 'hard', name: 'AD VETERAN',        desc: 'Watch 500 rewarded ads.',                 icon: 'play',    stat: 'totalAdsWatched', goal: 500 },
-  { id: 'marathon',      tier: 'hard', name: 'MARATHON OPERATOR', desc: 'Play for 5 hours total.',                 icon: 'clock',   stat: 'totalPlaytimeMs', goal: 5 * 3600000 },
-  { id: 'sector9_legend', tier: 'hard', name: 'SECTOR 9 LEGEND',  desc: 'Reach operator level 20.',                icon: 'star',    stat: 'level', goal: 20 },
-  { id: 'boss_hunter',   tier: 'hard', name: 'BOSS HUNTER',       desc: 'Defeat 10 bosses.',                       icon: 'crown',   stat: 'bossesDefeated', goal: 10 },
+  { id: 'diamond_mogul', tier: 'hard', icon: 'scrap',   stat: 'lifetimeScrapEarned', goal: 50000 },
+  { id: 'ad_veteran',    tier: 'hard', icon: 'play',    stat: 'totalAdsWatched', goal: 500 },
+  { id: 'marathon',      tier: 'hard', icon: 'clock',   stat: 'totalPlaytimeMs', goal: 5 * HOUR_MS },
+  { id: 'sector9_legend', tier: 'hard', icon: 'star',    stat: 'level', goal: 20 },
+  { id: 'boss_hunter',   tier: 'hard', icon: 'crown',   stat: 'bossesDefeated', goal: 10 },
 ];
 
 // Resolves an achievement's `stat` key against live Progression data —

@@ -62,7 +62,8 @@ operator skins. Kit out your rifle, sidearm, blade and more in the loadout bay.
 - Adaptive graphics with Low / Medium / High / Ultra presets and automatic
   tuning, for smooth play from budget phones to flagships.
 - Safe-area aware UI for notches and rounded corners.
-- Plays fully offline. No account, no ads, no tracking.
+- Plays fully offline. No account, no purchases. Ads are optional rewarded
+  videos you choose to watch — never forced.
 
 Hold the line. Take the sector back.
 
@@ -78,7 +79,7 @@ CINDERFALL launches out of Sector 9.
 • Silent stealth takedowns + smarter enemy AI
 • Crouch, cover and responsive twin-stick touch controls
 • Gamepad support and Low→Ultra adaptive graphics
-• Plays fully offline — no ads, no tracking
+• Plays fully offline — no account; ads only when you choose to watch one
 ```
 
 ---
@@ -87,7 +88,7 @@ CINDERFALL launches out of Sector 9.
 
 | Asset | Store spec | File |
 | --- | --- | --- |
-| App icon (source) | 1024×1024, no alpha | `public/game/assets/icon-1024.png` (+ `icon.svg`) |
+| App icon (source) | 1024×1024, no alpha | `public/game/assets/icon-1024.png` (full-resolution original art: `store/icon-source.png`) |
 | Adaptive/maskable icon | 512×512 | `public/game/assets/icon-maskable-512.png` |
 | Feature graphic (Play) | 1024×500 | `store/feature-graphic.png` |
 | Splash / launch source | 2732×2732 | `public/game/assets/splash.svg` |
@@ -95,5 +96,5 @@ CINDERFALL launches out of Sector 9.
 
 **Still required from the developer** (device-specific, see `docs/RELEASE.md`):
 - Final store screenshots captured on target devices / required aspect ratios.
-- App Store 1024×1024 marketing icon export (from `icon.svg`, no transparency).
+- App Store 1024×1024 marketing icon export (from `store/icon-source.png`, no transparency).
 - Age-rating questionnaire responses (IARC / App Store).

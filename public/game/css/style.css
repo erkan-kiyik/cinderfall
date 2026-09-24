@@ -248,7 +248,7 @@ html, body {
    weapon panel on the right. */
 .objective {
   display: flex; gap: clamp(6px, 1.2vw, 12px); align-items: baseline; justify-content: center;
-  border-left: 2px solid var(--amber);
+  border-inline-start: 2px solid var(--amber);
   padding: 5px clamp(7px, 1.2vw, 12px); box-sizing: border-box;
   max-width: 100%; overflow: hidden;
   letter-spacing: 0.14em; font-size: var(--hud-fs); white-space: nowrap;
@@ -258,11 +258,11 @@ html, body {
    compact HUD — hide it to keep the top-centre cluster narrow */
 #obj-text { display: none; }
 #obj-count { color: var(--ink); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
-.stage-label { color: var(--amber-dim); font-weight: 700; padding-left: clamp(6px, 1vw, 10px); border-left: 1px solid var(--line-2); text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+.stage-label { color: var(--amber-dim); font-weight: 700; padding-inline-start: clamp(6px, 1vw, 10px); border-inline-start: 1px solid var(--line-2); text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
 
 .prog-row { display: flex; align-items: center; gap: var(--s2); padding: 4px clamp(6px, 1.1vw, 10px); width: 100%; }
 .lvl-label {
-  font-size: var(--hud-fs-sm); letter-spacing: 0.14em; width: 38px; white-space: nowrap;
+  font-size: var(--hud-fs-sm); letter-spacing: 0.14em; min-width: 38px; flex: none; white-space: nowrap;
   color: rgba(237, 234, 226, 0.62); font-weight: 700;
   text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
@@ -411,7 +411,7 @@ html, body {
 .det-ico { color: var(--ink-dim); }
 .det-track { width: 70px; height: 3px; }
 .bar-fill.det { background: var(--det-color); transition: width 0.25s var(--ease-out), background 0.3s; }
-#det-label { color: var(--det-color); font-weight: 700; min-width: 62px; text-align: left; }
+#det-label { color: var(--det-color); font-weight: 700; min-width: 62px; text-align: start; }
 .det-bar.det-hidden { --det-color: #7fae6e; }
 .det-bar.det-suspicious { --det-color: #d9c25a; }
 .det-bar.det-searching { --det-color: #d98a3f; }
@@ -461,8 +461,9 @@ html, body {
 
 /* shared bars (vitals + xp + threat fills)
    The empty track is nearly clear so the filled portion is what the eye
-   catches; each fill carries its own glow so the vitals stay readable at a
-   glance against the darkened scene. */
+   catches. Fills are flat: a glow on every bar all the time made the one
+   that matters — health running out — no louder than stamina, so only a
+   critical HP bar glows. */
 .bar {
   flex: 1; height: 8px;
   background: rgba(4, 6, 9, 0.22);
@@ -475,11 +476,11 @@ html, body {
   height: 100%; width: 100%; border-radius: var(--r-pill);
   transition: width 0.15s var(--ease-out), background 0.25s var(--ease);
 }
-.bar-fill.hp { background: #5fd77e; box-shadow: 0 0 7px rgba(70,209,106,0.55); }
+.bar-fill.hp { background: #5fd77e; }
 .bar-fill.hp.low { background: #ff4a3d; box-shadow: 0 0 9px rgba(255,59,48,0.7); animation: hp-crit 0.9s ease-in-out infinite; }
-.bar-fill.st { background: #49a9f5; box-shadow: 0 0 7px rgba(47,157,255,0.5); }
-.bar-fill.armor { background: #93bdff; box-shadow: 0 0 6px rgba(127,178,255,0.45); }
-.bar-fill.xp { background: #e5bd57; box-shadow: 0 0 6px rgba(217,168,63,0.45); }
+.bar-fill.st { background: #49a9f5; }
+.bar-fill.armor { background: #93bdff; }
+.bar-fill.xp { background: #e5bd57; }
 @keyframes hp-crit { 50% { box-shadow: 0 0 14px rgba(255,59,48,0.95); } }
 
 /* top-right weapon + ammo readout — a soft drop-shadow keeps every HUD
@@ -506,17 +507,16 @@ html, body {
   background: rgba(8, 11, 15, 0.3); border-radius: var(--r2);
   transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
 }
-/* Equipped slot: a full-strength border, a lit label and both an outer glow
-   and an inner sheen, so which weapon is live is unmistakable rather than a
-   faint tint difference. */
+/* Equipped slot: filled in bone, the same inverted chip the settings'
+   segmented rows use for "selected". It was red with a glow, which put the
+   live weapon in the colour that elsewhere means "press this". A filled chip
+   is just as unmistakable against the faint idle ones. */
 .slot.active {
-  border-color: var(--amber-bright); color: #ffd9d2;
-  background: rgba(214,69,58,0.22);
-  box-shadow: 0 0 10px rgba(255,92,70,0.45);
-  text-shadow: 0 0 6px rgba(255,92,70,0.6);
+  border-color: var(--ink); color: var(--bg-0);
+  background: rgba(237,234,226,0.9);
 }
 .slot-icon { width: 16px; height: 11px; opacity: 0.55; transition: opacity var(--dur-1) var(--ease); }
-.slot.active .slot-icon { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,92,70,0.55)); }
+.slot.active .slot-icon { opacity: 1; }
 
 #hitmark {
   position: absolute; left: 50%; top: 50%;
@@ -584,7 +584,17 @@ html, body {
   position: absolute; inset: 0; z-index: 20;
   display: flex; align-items: center; justify-content: center;
   pointer-events: auto;
+  /* Safety net. Every panel is laid out to fit a 390px-tall landscape phone
+     (see "Modal panels on a short screen"), but if one ever does not, the
+     overlay scrolls instead of clipping its title off the top and its way
+     out off the bottom. */
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
 }
+/* Auto margins, not align-items, do the centring: once a panel is taller
+   than the overlay they collapse to zero and the panel starts at the top,
+   where scrolling can reach it. align-items:center would push the overflow
+   off both ends, and the top half would be unreachable. */
+.overlay > :is(.ov-inner, .inspect-card, .intel-card, .profile-card, .sharecard-inner) { margin-top: auto; margin-bottom: auto; }
 .overlay.dim { background: rgba(6, 8, 11, 0.82); animation: overlay-in var(--dur-3) var(--ease); }
 @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
 
@@ -624,7 +634,7 @@ html, body {
 .btn.primary {
   color: #f5ede8; background: var(--amber);
   border-color: var(--amber);
-  box-shadow: var(--sh-2), 0 0 18px rgba(214,69,58,0.22);
+  box-shadow: var(--sh-2);
 }
 .btn.primary:hover { background: var(--amber-bright); border-color: var(--amber-bright); color: #f5ede8; box-shadow: var(--sh-3); }
 .btn.primary:active { background: var(--amber); box-shadow: var(--sh-1), inset 0 2px 6px rgba(0,0,0,0.25); }
@@ -638,7 +648,7 @@ html, body {
   margin-top: var(--s3);
   color: var(--green); background: rgba(143, 174, 106, 0.06); border-color: var(--green);
 }
-.btn.secondary:hover { background: rgba(143, 174, 106, 0.16); border-color: var(--green); color: var(--green); transform: translateY(-2px); box-shadow: 0 4px 14px rgba(143,174,106,0.18); }
+.btn.secondary:hover { background: rgba(143, 174, 106, 0.16); border-color: var(--green); color: var(--green); transform: translateY(-2px); box-shadow: var(--sh-2); }
 .btn.secondary:active { background: rgba(143, 174, 106, 0.22); transform: translateY(0); box-shadow: none; }
 .btn.secondary:disabled { color: var(--ink-dim); border-color: var(--line-2); background: transparent; box-shadow: none; }
 .ad-remaining { display: block; font-size: 9px; letter-spacing: 0.14em; opacity: 0.75; margin-top: 3px; font-weight: 600; }
@@ -653,6 +663,8 @@ html, body {
 .controls-grid span:nth-child(even) { color: var(--ink-dim); }
 
 .end-detail { font-size: 13px; letter-spacing: 0.22em; color: var(--ink-dim); margin-bottom: 30px; line-height: 2; }
+/* "(2 HEADSHOTS)" wraps as one unit; broken inside, it read as "(В" / "ГОЛОВУ: 2)". */
+.end-aside { white-space: nowrap; }
 
 /* ---------- Revive prompt (watch-ad continue) ---------- */
 #revive { z-index: 21; }   /* above #hud (10), below the ad overlay (70) */
@@ -752,7 +764,7 @@ html, body {
 /* Scrap is steel, not gold — the pill reads cool so a balance is never
    mistaken for an objective marker (those are the only amber things in the
    HUD). */
-.scrap-pill { color: #cfd4de; box-shadow: var(--sh-1), 0 0 12px rgba(150,160,175,0.10); }
+.scrap-pill { color: #cfd4de; }
 /* scale pulse + glow flash whenever a balance updates — toggled briefly via JS,
    shared by any currency readout (header pills, HUD tokens strip) */
 .bump { animation: pill-bump 0.4s var(--ease-out); }
@@ -809,12 +821,12 @@ html, body {
    sat on the text baseline and pushed the label off centre */
 #btn-open-crate { display: inline-flex; align-items: center; justify-content: center; gap: var(--s2); }
 #btn-open-crate .cur-icon { width: 18px; height: 18px; }
-.controls-fold { max-width: 420px; margin: var(--s6) auto 0; text-align: center; }
+.controls-fold { max-width: var(--col-play); margin: var(--s6) auto 0; text-align: center; }
 /* Was flat --amber-dim text on a near-black field, which read as a disabled
    control rather than a link. It is a real button now: readable ink, a quiet
    chassis behind it and a caret that turns when the fold opens. */
 .controls-fold summary {
-  cursor: pointer; display: inline-flex; align-items: center; gap: var(--s2);
+  cursor: pointer; display: inline-flex; align-items: center; gap: var(--s2); min-height: 44px;
   font-size: 11px; letter-spacing: 0.24em; font-weight: 600; color: var(--ink-2);
   list-style: none; padding: var(--s2) var(--s5); border-radius: var(--r-pill);
   background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line);
@@ -835,8 +847,12 @@ html, body {
    before a run: what rank they are and how close the next one is, what that
    rank is currently worth in health and damage, and the kit going with them.
    ------------------------------------------------------------------------ */
+/* Every block on the PLAY tab — this readout, the sector grid and the
+   controls fold — shares one column, derived from the global --col, so their
+   edges line up instead of three widths stacking under each other. */
+#tab-play { --col-play: min(560px, var(--col)); }
 .deploy-status {
-  max-width: min(560px, var(--col)); margin: var(--s6) auto 0;
+  max-width: var(--col-play); margin: var(--s6) auto 0;
   display: flex; flex-direction: column; gap: var(--s4);
 }
 .ds-rank {
@@ -870,7 +886,6 @@ html, body {
 .ds-xp-fill {
   height: 100%; width: 0%; border-radius: var(--r-pill);
   background: var(--amber);
-  box-shadow: 0 0 10px rgba(214,69,58,0.55);
   transition: width 480ms var(--ease-out);
 }
 .ds-buffs { display: flex; gap: var(--s4); margin-top: var(--s3); }
@@ -903,7 +918,6 @@ html, body {
 .ds-slot::after {
   content: ""; position: absolute; left: var(--s3); right: var(--s3); bottom: 0; height: 2px;
   border-radius: 2px; background: var(--rarity, transparent); opacity: 0.75;
-  box-shadow: 0 0 7px var(--rarity-glow, transparent);
 }
 .ds-slot.empty { background: rgba(12, 15, 20, 0.55); box-shadow: inset 0 0 0 1px var(--line); }
 .ds-slot-art { width: 100%; height: 40px; display: block; }
@@ -962,9 +976,10 @@ html, body {
 /* nothing to fade once the row fits — the mask would eat a real card's edge */
 .item-row.fits { -webkit-mask-image: none; mask-image: none; }
 /* Rarity used to read as a solid coloured border ring around every card —
-   replaced with a soft glow (box-shadow) plus a thin accent bar under the
-   preview, so cards separate from each other and the background through
-   shadow/gradient rather than a hard outline. `--rarity`/`--rarity-glow` are
+   replaced with a thin accent bar under the preview, so cards separate from
+   each other and the background through shadow rather than a hard outline.
+   The bar carries no glow: every card on screen has a rarity, so a glow on
+   all of them signalled nothing. `--rarity`/`--rarity-glow` are
    set inline per-card by JS (metaui.js / storeui.js) from the item's rarity. */
 .item-card {
   flex: 0 0 auto; width: 116px; padding: var(--s2); border-radius: var(--r2); cursor: pointer;
@@ -978,11 +993,12 @@ html, body {
 .item-card::after {
   content: ""; position: absolute; left: var(--s2); right: var(--s2); bottom: 0; height: 2px;
   border-radius: 2px; background: var(--rarity, transparent); opacity: 0.7;
-  box-shadow: 0 0 7px var(--rarity-glow, transparent);
 }
 .item-card:hover { transform: translateY(-3px); background: var(--surface-3); box-shadow: var(--sh-2); }
 .item-card:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(214, 69, 58, 0.4); }
-.item-card.equipped { background: var(--surface-3); box-shadow: var(--sh-2); }
+/* Equipped reads as selected-and-neutral: a bone hairline, the same
+   language as the settings' filled segment. Red is kept for actions. */
+.item-card.equipped { background: var(--surface-3); box-shadow: var(--sh-2), inset 0 0 0 1px rgba(237, 234, 226, 0.5); }
 /* The default/unequipped slot. Previously identical to a real item card with
    an empty preview, so it read as a broken entry; a dashed plate says
    "nothing fitted" the way an empty attachment slot should. */
@@ -993,7 +1009,7 @@ html, body {
   background:
     repeating-linear-gradient(135deg, rgba(237,234,226,0.05) 0 6px, transparent 6px 12px);
 }
-.item-card.stock.equipped { box-shadow: inset 0 0 0 1px var(--accent-line), 0 0 18px -6px rgba(214,69,58,0.45); }
+.item-card.stock.equipped { background: var(--surface-3); box-shadow: inset 0 0 0 1px rgba(237, 234, 226, 0.5); }
 .item-card.stock .item-name { color: var(--ink-2); }
 
 /* 0.38 + heavy grayscale made a locked card almost invisible, so a mostly
@@ -1141,7 +1157,9 @@ html, body {
   cursor: pointer; transition: all var(--dur-1) var(--ease);
 }
 .store-cat-chip:hover { color: var(--ink-2); }
-.store-cat-chip.active { background: var(--amber); border-color: var(--amber); color: #f5ede8; }
+/* Selected is filled bone, not the accent: a chip strip is state, and red
+   on this screen already means BUY / WATCH AD. Same treatment as .seg-opt. */
+.store-cat-chip.active { background: var(--ink); border-color: var(--ink); color: var(--bg-0); }
 
 .store-section { max-width: var(--col); margin: 0 auto var(--s10); }
 .store-section.hidden { display: none; }
@@ -1279,7 +1297,7 @@ html, body {
 .achievement-card:hover { transform: translateY(-2px); box-shadow: var(--sh-2); }
 .achievement-card.locked { opacity: 0.55; }
 .achievement-card.unlocked { animation: achievement-glow 2.4s ease-in-out infinite; }
-.achievement-card.claimed { opacity: 0.82; box-shadow: var(--sh-1), 0 0 14px var(--tier-glow); }
+.achievement-card.claimed { opacity: 0.82; }
 @keyframes achievement-glow {
   0%, 100% { box-shadow: var(--sh-1), 0 0 0 rgba(0,0,0,0); }
   50% { box-shadow: var(--sh-1), 0 0 18px var(--tier-glow); }
@@ -1301,6 +1319,11 @@ html, body {
   font-size: 8px; font-weight: 700; letter-spacing: 0.12em; background: var(--tier-color); color: #0a0c0f;
 }
 .achievement-claim-btn { width: 100%; padding: var(--s2) 0; font-size: 9px; margin: var(--s1) 0 0; letter-spacing: 0.1em; }
+/* Drawn at 29px so a claimable card is not taller than its neighbours; the
+   invisible expander takes the target to 45 over the card's own padding and
+   the progress caption above it, neither of which is a control. */
+/* -9, not -8: the inset is measured from inside .btn's 1px border. */
+.achievement-claim-btn::before { content: ''; position: absolute; inset: -9px 0; }
 
 /* bottom tab bar */
 .home-tabs {
@@ -1316,7 +1339,9 @@ html, body {
 }
 .home-tab .tab-ico { font-size: clamp(12px, 3.2vw, 15px); opacity: 0.9; }
 .home-tab:hover { color: var(--ink-2); }
-.home-tab.active { color: var(--amber); border-top-color: var(--amber); background: var(--surface-1); }
+/* The open tab is lit in ink on a raised surface — state, not an action,
+   so it stays out of the accent that DEPLOY and BUY own. */
+.home-tab.active { color: var(--ink); border-top-color: var(--ink); background: var(--surface-2); }
 .home-tab:focus-visible { outline: none; color: var(--amber); box-shadow: inset 0 0 0 2px rgba(214, 69, 58, 0.3); }
 
 /* legal footer (store-required privacy/terms access) — quiet, out of the way */
@@ -1327,7 +1352,14 @@ html, body {
   background: var(--bg-0); border-top: 1px solid var(--line);
   font-size: 9px; letter-spacing: 0.14em; color: var(--ink-dim);
 }
-.home-legal a { color: var(--ink-dim); text-decoration: none; transition: color var(--dur-1) var(--ease); }
+/* The links are text at 9px, but the target is a full 44px cell: the strip
+   is sized by the links rather than padded around them. */
+.home-legal { padding-top: 0; padding-bottom: env(safe-area-inset-bottom); }
+.home-legal a {
+  color: var(--ink-dim); text-decoration: none; transition: color var(--dur-1) var(--ease);
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; min-width: 44px; padding: 0 var(--s2);
+}
 .home-legal a:hover { color: var(--amber-dim); }
 .home-legal .build-tag { color: rgba(237, 234, 226, 0.28); letter-spacing: 0.1em; }
 
@@ -1440,6 +1472,9 @@ html, body {
   background: rgba(18,21,26,0.34); border: 1px solid rgba(232,228,218,0.30);
   color: var(--ink); font-family: var(--font); font-size: clamp(8px, 1.3vw, 10px); letter-spacing: 0.1em;
   display: flex; align-items: center; justify-content: center; text-align: center;
+  /* a label too long for one line breaks at a space or a soft hyphen in the
+     translation; touch.js fitLabel sizes the type to match */
+  white-space: normal; hyphens: manual; overflow-wrap: normal; line-height: 1.05; padding: 0 4px;
   opacity: var(--tc-alpha);
   transition: opacity var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
 }
@@ -1471,9 +1506,20 @@ html, body {
   left: 50%; bottom: calc(106px + env(safe-area-inset-bottom)); transform: translateX(-50%);
   width: auto; height: 44px; border-radius: var(--r-pill); padding: 0 18px;
   background: rgba(207,74,61,0.32); border-color: rgba(207,74,61,0.55);
-  display: none; font-size: 10px; letter-spacing: 0.18em;
+  display: none; font-size: 10px; letter-spacing: 0.18em; white-space: nowrap;
 }
 .tc-takedown.avail { display: flex; animation: sp-pulse 1.1s ease-in-out infinite; }
+/* Heavy strike, knife only. Built by touch.js (not in the markup) and shown in
+   RELOAD's slot while a melee weapon is out: a knife has nothing to reload,
+   the thumb already knows where that button is, and the aim zone loses
+   nothing. Tinted like the takedown, the other button that means "hit". */
+.tc-heavy {
+  right: calc(130px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom));
+  display: none; background: rgba(207,74,61,0.26); border-color: rgba(207,74,61,0.55);
+}
+#touch.melee .tc-heavy { display: flex; }
+#touch.melee .tc-reload { display: none; }
+.tc-heavy.on { background: rgba(207,74,61,0.5); opacity: 0.9; }
 .tc-pause {
   top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right));
   width: 42px; height: 42px; font-size: 9px; letter-spacing: 0.1em;
@@ -1542,8 +1588,8 @@ html, body {
 @media (max-width: 620px) {
   #hud { --hud-w-c: clamp(84px, 24vw, 150px); }
   .obj-label, .stage-label { display: none; }
-  .objective { border-left-width: 2px; padding: 4px 8px; }
-  .lvl-label { width: 30px; }
+  .objective { border-inline-start-width: 2px; padding: 4px 8px; }
+  .lvl-label { min-width: 30px; }
 }
 /* Short viewports (small phones in landscape): tighten vertical rhythm. */
 @media (max-height: 400px) {
@@ -1576,7 +1622,7 @@ html, body {
    accent bar, never from an outline. */
 .level-select {
   margin: calc(18px * var(--ui-scale)) auto 0;
-  max-width: calc(560px * var(--ui-scale));
+  max-width: var(--col-play);
   width: 100%;
 }
 .level-select-title {
@@ -1595,11 +1641,12 @@ html, body {
 }
 .level-cell {
   position: relative;
+  min-height: 44px;
   padding: calc(9px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(11px * var(--ui-scale));
   border: 0;
   border-radius: calc(9px * var(--ui-scale));
-  background: linear-gradient(180deg, rgba(38,42,52,0.92), rgba(20,23,30,0.94));
-  box-shadow: 0 calc(2px * var(--ui-scale)) calc(10px * var(--ui-scale)) rgba(0,0,0,0.45);
+  background: var(--surface-2);
+  box-shadow: var(--sh-1);
   color: var(--ink);
   font-family: var(--font-display);
   font-weight: 700;
@@ -1635,23 +1682,18 @@ html, body {
 /* Opened by the ⓘ chip on a loadout card. Deliberately a sheet rather than a
    modal box: on a phone it rises from the bottom edge and stays inside thumb
    reach, which is where the equip button needs to be. */
+/* Head and actions are pinned; only the stat list scrolls. When the whole
+   card scrolled, EQUIP and CLOSE were the part below the fold on a phone. */
 .inspect-card {
   width: min(calc(430px * var(--ui-scale)), 92vw);
-  max-height: 86vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  max-height: min(86vh, calc(100dvh - 16px));
+  display: flex; flex-direction: column; overflow: hidden;
   padding: calc(16px * var(--ui-scale)) calc(16px * var(--ui-scale)) calc(14px * var(--ui-scale));
   border-radius: calc(16px * var(--ui-scale));
-  /* soft translucent surface — no hard outline anywhere */
-  background: linear-gradient(180deg, rgba(28,33,42,0.90), rgba(14,17,23,0.94));
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
-  backdrop-filter: blur(14px) saturate(1.15);
-  box-shadow:
-    0 calc(18px * var(--ui-scale)) calc(48px * var(--ui-scale)) rgba(0,0,0,0.6);
-}
-/* the blur is the surface; without it fall back to a denser fill */
-html.no-backdrop-filter .inspect-card {
-  background: linear-gradient(180deg, rgba(24,29,37,0.985), rgba(12,15,20,0.99));
+  /* one flat modal surface, the same one settings and the language picker
+     sit on — a sheet does not need a gradient standing in for its shadow */
+  background: var(--surface-2);
+  box-shadow: var(--sh-3);
 }
 
 .inspect-head {
@@ -1685,7 +1727,18 @@ html.no-backdrop-filter .inspect-card {
   color: var(--rarity, var(--ink-dim));
 }
 
-.inspect-body { padding: calc(12px * var(--ui-scale)) 0 calc(4px * var(--ui-scale)); }
+.inspect-head, .inspect-actions { flex: 0 0 auto; }
+.inspect-body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: calc(12px * var(--ui-scale)) 0 calc(4px * var(--ui-scale));
+  /* scroll shadows, same technique as .settings-body: a shadow shows only on
+     an edge that has more behind it */
+  background:
+    linear-gradient(var(--surface-2) 30%, rgba(25, 31, 40, 0)) top / 100% 18px no-repeat local,
+    linear-gradient(rgba(25, 31, 40, 0), var(--surface-2) 70%) bottom / 100% 18px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0)) top / 100% 9px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0)) bottom / 100% 9px no-repeat scroll;
+}
 
 .stat-group-title {
   font-family: var(--font);
@@ -1729,7 +1782,6 @@ html.no-backdrop-filter .inspect-card {
   height: 100%;
   border-radius: 999px;
   background: var(--stat-color, #8b93a2);
-  box-shadow: 0 0 calc(8px * var(--ui-scale)) var(--stat-color, #8b93a2);
   /* animates from 0 when the sheet opens */
   width: 0;
   transition: width 0.42s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1771,7 +1823,8 @@ html.no-backdrop-filter .inspect-card {
   gap: calc(8px * var(--ui-scale));
   padding-top: calc(12px * var(--ui-scale));
 }
-.inspect-actions .btn { flex: 1; }
+/* margin 0: .btn.quiet's 24px top margin pushed CLOSE a row below EQUIP */
+.inspect-actions .btn { flex: 1; margin: 0; }
 
 /* the ⓘ affordance on a loadout card — tapping the card still equips, so
    inspect needs its own hit target, sized for a thumb */
@@ -1982,7 +2035,6 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
 .archives-fill {
   height: 100%; width: 0%;
   background: var(--amber);
-  box-shadow: 0 0 8px rgba(214, 69, 58, 0.5);
   transition: width 0.5s var(--ease-out);
 }
 
@@ -1993,7 +2045,7 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
    (amber once recovered, dead grey while locked) and the code sits in a fixed
    gutter so the titles all start on the same line. */
 .archive-row {
-  display: flex; align-items: center;
+  display: flex; align-items: center; min-height: 44px;
   gap: calc(12px * var(--ui-scale));
   width: 100%;
   text-align: left;
@@ -2001,8 +2053,8 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
   border: none; border-radius: var(--r3);
   background:
     linear-gradient(90deg, var(--amber) 0 3px, transparent 3px),
-    linear-gradient(180deg, rgba(30,36,46,0.72), rgba(16,20,26,0.82));
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    var(--surface-2);
+  box-shadow: var(--sh-1);
   font: inherit;
   cursor: pointer;
   overflow: hidden;
@@ -2011,11 +2063,11 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
 .archive-row.locked {
   background:
     linear-gradient(90deg, rgba(237,234,226,0.30) 0 3px, transparent 3px),
-    linear-gradient(180deg, rgba(24,29,37,0.68), rgba(14,17,23,0.80));
+    var(--surface-1);
 }
 .archive-row:hover:not(.locked) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.42);
+  box-shadow: var(--sh-2);
 }
 .archive-row.locked { cursor: default; opacity: 0.72; }
 
@@ -2093,24 +2145,16 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
 }
 
 /* ---- intel reader ------------------------------------------------------ */
-/* Same glass surface language as the weapon inspect sheet, so the two modals
-   read as one system. No hard outline anywhere — the edge is a blur plus an
-   inset highlight. */
+/* Same flat modal surface as the weapon inspect sheet, so the two modals
+   read as one system. No hard outline anywhere — the edge is the shadow. */
 .intel-card {
   width: min(calc(460px * var(--ui-scale)), 92vw);
-  max-height: 86vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  max-height: min(86vh, calc(100dvh - 16px));
+  display: flex; flex-direction: column; overflow: hidden;
   padding: calc(18px * var(--ui-scale)) calc(18px * var(--ui-scale)) calc(14px * var(--ui-scale));
   border-radius: calc(16px * var(--ui-scale));
-  background: linear-gradient(180deg, rgba(28,33,42,0.90), rgba(14,17,23,0.94));
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
-  backdrop-filter: blur(14px) saturate(1.15);
-  box-shadow:
-    0 calc(18px * var(--ui-scale)) calc(48px * var(--ui-scale)) rgba(0,0,0,0.6);
-}
-html.no-backdrop-filter .intel-card {
-  background: linear-gradient(180deg, rgba(24,29,37,0.985), rgba(12,15,20,0.99));
+  background: var(--surface-2);
+  box-shadow: var(--sh-3);
 }
 
 .intel-card-head {
@@ -2174,7 +2218,12 @@ html.no-backdrop-filter .intel-card {
   background: rgba(8, 10, 14, 0.42);
   box-shadow: inset 2px 0 0 rgba(214, 69, 58, 0.42);
 }
+/* Only the document scrolls — a long transcript can no longer push CLOSE
+   off the bottom of the card. */
+.intel-card-head, .intel-card-actions { flex: 0 0 auto; }
+.intel-read-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .intel-card-actions { display: flex; justify-content: flex-end; }
+.intel-card-actions .btn { margin: 0; }
 
 /* Six tabs instead of five: let the labels shrink and stop the icons forcing
    an overflow on a narrow handset. */
@@ -2200,8 +2249,8 @@ html.no-backdrop-filter .intel-card {
   font-size: calc(10px * var(--ui-scale));
   letter-spacing: 0.10em; text-transform: uppercase;
   color: rgba(237, 234, 226, 0.86);
-  background: linear-gradient(180deg, rgba(46,54,66,0.72), rgba(22,27,34,0.80));
-  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  background: var(--surface-3);
+  box-shadow: var(--sh-1);
   cursor: pointer;
   transition: transform 140ms var(--ease-out), color 140ms var(--ease-out);
 }
@@ -2216,25 +2265,19 @@ html.no-backdrop-filter .intel-card {
    those are modals the player is meant to deal with first. */
 #profile-overlay { z-index: 25; }
 
-/* The card itself. Same frosted treatment as the intel reader, plus a rank
+/* The card itself. Same flat modal surface as the intel reader, plus a rank
    accent that the JS drives through --rank-color / --rank-glow. */
 .profile-card {
   --rank-color: #8fae6a;
   --rank-glow: rgba(143,174,106,0.32);
   width: min(calc(420px * var(--ui-scale)), 92vw);
-  max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  max-height: min(88vh, calc(100dvh - 16px));
+  display: flex; flex-direction: column; overflow: hidden;
   padding: calc(20px * var(--ui-scale)) calc(18px * var(--ui-scale)) calc(15px * var(--ui-scale));
   border-radius: calc(18px * var(--ui-scale));
   text-align: center;
-  background: linear-gradient(180deg, rgba(30,35,45,0.90), rgba(13,16,22,0.95));
-  -webkit-backdrop-filter: blur(16px) saturate(1.18);
-  backdrop-filter: blur(16px) saturate(1.18);
-  box-shadow:
-    0 calc(20px * var(--ui-scale)) calc(52px * var(--ui-scale)) rgba(0,0,0,0.62),
-    inset 0 0 0 1px var(--rank-glow);
-}
-html.no-backdrop-filter .profile-card {
-  background: linear-gradient(180deg, rgba(26,31,40,0.985), rgba(11,14,19,0.99));
+  background: var(--surface-2);
+  box-shadow: var(--sh-3), inset 0 0 0 1px var(--rank-glow);
 }
 
 .profile-head {
@@ -2242,6 +2285,8 @@ html.no-backdrop-filter .profile-card {
   padding-bottom: calc(14px * var(--ui-scale));
   background: linear-gradient(90deg, rgba(233,226,210,0.14), rgba(233,226,210,0)) bottom / 100% 1px no-repeat;
 }
+.profile-head, .profile-actions { flex: 0 0 auto; }
+.profile-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .profile-kicker {
   font-family: var(--font); font-size: calc(9px * var(--ui-scale));
   letter-spacing: 0.30em; text-transform: uppercase;
@@ -2267,9 +2312,7 @@ html.no-backdrop-filter .profile-card {
   flex: 0 0 auto;
   width: calc(70px * var(--ui-scale)); height: calc(94px * var(--ui-scale));
   border-radius: var(--r3);
-  background:
-    radial-gradient(ellipse at 50% 92%, rgba(214,69,58,0.16), rgba(214,69,58,0) 62%),
-    linear-gradient(180deg, rgba(30,36,46,0.72), rgba(12,15,20,0.85));
+  background: var(--surface-1);
   box-shadow: inset 0 0 0 1px var(--rank-glow);
 }
 .profile-id-text { min-width: 0; flex: 1 1 auto; }
@@ -2481,11 +2524,14 @@ html.no-backdrop-filter .profile-card {
 /* The header has to paint above the body for this one to work at all: the
    pill's expander reaches past the header's own box, and .home-body is a
    later sibling, so without a stacking order the panel below simply covers
-   the bottom half of the target. */
+   the bottom half of the target.
+   The expander leans downward. On a landscape phone the pill sits ~10px from
+   the top of the screen, so a symmetric 14px reached off-screen and the
+   part that was left came to 43.5px. */
 .home-top { position: relative; z-index: 2; }
 .profile-pill { position: relative; }
 .profile-pill::before {
-  content: ''; position: absolute; inset: -14px -8px; border-radius: 999px;
+  content: ''; position: absolute; inset: -9px -8px -19px; border-radius: 999px;
 }
 /* Chips sit in a horizontally scrolling strip, so the expander is vertical
    only — spilling sideways would let one chip swallow the edge of the next. */
@@ -2496,11 +2542,18 @@ html.no-backdrop-filter .profile-card {
    simply sliced off. Both of these therefore grow INWARD, over their own
    card, and both are shaped around what they would otherwise steal.
 
-   The inspect dot sits in the card's top-right corner. A full 44x44 there
-   would put a sixth of a 116px card on "inspect" when the card's own job is
-   "equip", so it takes the full 44 vertically and stops at 34 across — the
-   axis a fingertip is least precise on, for the smaller cost. */
-.item-info::before { content: ''; position: absolute; inset: -2px -2px -25px -15px; }
+   The inspect dot sits in the card's top-right corner, and its target is a
+   44x44 square anchored there. That spends the corner of the preview on
+   "inspect" — the card's job is "equip" — but the whole name plate and the
+   left of the art still equip, and a target narrower than a fingertip is
+   one the player misses and then equips by accident. Sized in px, not by
+   --ui-scale: a finger does not shrink with the screen. 46 rather than 44
+   so rounding at fractional scales never lands it a pixel short. */
+.item-info::before {
+  content: ''; position: absolute; width: 46px; height: 46px;
+  /* offsets undo the dot's own inset, so the square starts at the card corner */
+  top: calc(-2px * var(--ui-scale)); right: calc(-2px * var(--ui-scale));
+}
 /* The single most important control on the trader screen was the smallest one
    on it. This grows upward into the card's price line, which is text, not
    another target — nothing is taken away from anything. */
@@ -2647,21 +2700,72 @@ html.no-backdrop-filter .profile-card {
 }
 
 /* ==================================================================
+   Legal links beside the tab bar
+   ==================================================================
+   Privacy and Terms have to stay reachable from every tab, and their targets
+   have to be 44px like everything else — but a 44px strip under a 44px tab
+   bar is a quarter of a landscape phone spent on chrome. Wherever the bar
+   has the width for it, the links move into the same row, at the right end,
+   and the strip under the tabs goes away. Portrait keeps the strip. */
+@media (min-width: 700px), (orientation: landscape) and (max-height: 500px) {
+  .home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .home-top, .home-body { grid-column: 1 / -1; }
+  .home-tabs {
+    grid-column: 1; grid-row: 3;
+    padding-right: 0; padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* The row is ~120px narrower now, so equal shares clipped the longest
+     labels (СНАРЯЖЕНИЕ, СТАТИСТИКА). Sized from their content, every label
+     fits and the spare width is still shared out evenly. */
+  .home-tab { flex: 1 1 auto; }
+  .home-legal {
+    grid-column: 2; grid-row: 3;
+    gap: var(--s1); padding: 0 var(--s3) env(safe-area-inset-bottom);
+    padding-right: calc(var(--s3) + env(safe-area-inset-right));
+    border-inline-start: 1px solid var(--line);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+  }
+  /* Under rtl the grid mirrors and the links sit at the left edge, so the
+     notch padding swaps sides with them. */
+  :root[dir="rtl"] .home-tabs { padding-left: 0; padding-right: env(safe-area-inset-right); }
+  :root[dir="rtl"] .home-legal { padding-right: var(--s3); padding-left: calc(var(--s3) + env(safe-area-inset-left)); }
+}
+/* On the phone the version tag is the first thing to go. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .home-legal .build-tag, .home-legal .build-sep { display: none; }
+}
+
+/* ==================================================================
    Right-to-left (Arabic)
    ==================================================================
    applyTranslations() sets dir="rtl" on <html> for Arabic, which mirrors
    the menu — headings, lists, the tab bar, reading order. That is correct
    for text.
 
-   It is emphatically NOT correct for the two gameplay layers. #touch places
-   the movement stick on the left of the screen and the aim stick on the
-   right, and #hud pins its clusters to specific corners; both are physical
-   positions tied to which thumb is where, not to reading order. Mirroring
-   them would hand an Arabic-speaking player swapped controls — a different
-   game, not a translated one. So both are pinned back to ltr, and every
-   left/right offset inside them keeps meaning what it says.
+   It is emphatically NOT correct for the touch layer. #touch places the
+   movement stick on the left of the screen and the aim stick on the right —
+   physical positions tied to which thumb is where, not to reading order.
+   Mirroring them would hand an Arabic-speaking player swapped controls — a
+   different game, not a translated one. So #touch is pinned back to ltr.
+
+   #hud is not. Its clusters are positioned with physical left/right offsets,
+   which direction does not move, so the only thing an ltr pin did there was
+   lay its TEXT out backwards: the briefing's full stop landed at the wrong
+   end of the sentence and THREAT / the objective read value-before-label.
+   Only the two corner readouts, whose contents are aligned towards their
+   own screen corner, keep ltr.
    ================================================================== */
-#hud, #touch { direction: ltr; }
+#touch { direction: ltr; }
+#hud .hud-tl, #hud .hud-tr { direction: ltr; }
+/* "0 / 11" is numerals only; as an rtl run it came out as "11 / 0". */
+#obj-count { direction: ltr; unicode-bidi: isolate; }
+/* The one-sided accent edges belong on the side the text starts from. */
+:root[dir="rtl"] .bark { box-shadow: inset -2px 0 0 #4ec4e0, 0 6px 20px rgba(0, 0, 0, 0.45); }
+:root[dir="rtl"] .intel-toast { box-shadow: inset -2px 0 0 var(--amber), 0 6px 20px rgba(0, 0, 0, 0.45); }
 /* The menu's own horizontal scrollers keep their natural direction too:
    under rtl a flex row reverses, which would send the category chips and the
    weapon rows scrolling the wrong way against the mask that fades their
@@ -2675,21 +2779,26 @@ html.no-backdrop-filter .profile-card {
    Two columns rather than one long list: seven rows in a single column
    overflows a landscape phone, which is the orientation the game is played
    in, and a list you have to scroll defeats the point of replacing the
-   cycle button. */
+   cycle button. Two columns alone did not make it fit, though — measured at
+   844x390 the card was 457px tall, because of the rows' stray margins and
+   the card's desktop padding; see "Modal panels on a short screen". */
 .langpick-list {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s2); margin-bottom: var(--s2);
 }
+/* margin 0: .btn's own 12px bottom margin stacked on the grid gap and made
+   the list 50px taller than its rows. */
 .btn.lang-opt {
-  width: 100%; margin-top: 0; padding: var(--s3) var(--s3);
+  width: 100%; margin: 0; padding: var(--s3) var(--s3); min-height: 44px;
   font-size: 13px; letter-spacing: 0.08em;
 }
 /* The active language is marked, not merely highlighted on hover — the
    picker has to answer "what am I on now?" before it answers "what can I
-   change to". */
-.btn.lang-opt.active {
-  border-color: var(--amber); color: var(--amber-bright);
-  box-shadow: inset 0 0 0 1px rgba(214, 69, 58, 0.35);
+   change to". Marked in filled bone like every other selected state: in red
+   it read as a second primary button next to CLOSE. */
+.btn.lang-opt.active, .btn.lang-opt.active:hover {
+  background: var(--ink); border-color: var(--ink); color: var(--bg-0);
+  box-shadow: none;
 }
 /* Each label is written in its own script and carries its own dir, so the
    letter-spacing that suits Latin caps is dropped for the scripts where it
@@ -2707,7 +2816,7 @@ html.no-backdrop-filter .profile-card {
    and in a face where 0/O and 1/l cannot be confused. The alphabet already
    drops the ambiguous letters (see referral.js) — this is the second half of
    the same job. */
-.invite-panel { margin-top: var(--s7); }
+.invite-panel { margin-top: var(--s8); }
 .invite-friends { float: right; color: var(--ink-dim); letter-spacing: 0.1em; }
 .invite-sub { font-size: 12px; color: var(--ink-dim); line-height: 1.5; margin: 0 0 var(--s4); }
 
@@ -2758,6 +2867,7 @@ html.no-backdrop-filter .profile-card {
   border-radius: 14px; padding: var(--s8) var(--s6);
   box-shadow: var(--sh-3);
 }
+#btn-langpick-close { margin-top: var(--s4); }
 /* Seven options in two columns leaves one on its own; spanning it reads as
    deliberate instead of as a layout that ran out. */
 .langpick-list > .lang-opt:last-child:nth-child(odd) { grid-column: 1 / -1; }
@@ -2797,8 +2907,9 @@ html.no-backdrop-filter .profile-card {
       breaks at three — the player cannot see what exists, cannot tell how
       many taps away a value is, and on the old language button could not
       even read the labels going past.
-   2. Nothing is under 44px. The controls it replaces were 32px tall, which
-      is below every published minimum tap target and felt like it.
+   2. Nothing is under 44px, in either dimension — segments, slider and
+      the language button alike. The controls it replaces were 32px tall,
+      which is below every published minimum tap target and felt like it.
    3. The panel fits a 390px-tall landscape phone. Header and DONE are
       pinned; only the rows between them scroll, so the way out is never
       the thing that scrolled off screen. */
@@ -2864,7 +2975,7 @@ html.no-backdrop-filter .profile-card {
   border-radius: var(--r2);
 }
 .seg-opt {
-  min-height: 38px; padding: 0 var(--s3);
+  min-height: 44px; min-width: 44px; padding: 0 var(--s3);
   display: inline-flex; align-items: center; justify-content: center;
   font-family: inherit; font-size: 11px; letter-spacing: 0.1em;
   color: var(--ink-dim); background: transparent;
@@ -2896,7 +3007,7 @@ html.no-backdrop-filter .profile-card {
 }
 .slider {
   -webkit-appearance: none; appearance: none;
-  width: 168px; height: 38px;          /* 38px of grab area, 4px of visible track */
+  width: 168px; height: 44px;          /* 44px of grab area, 4px of visible track */
   background: transparent; cursor: pointer;
 }
 .slider::-webkit-slider-runnable-track {
@@ -2953,6 +3064,72 @@ html.no-backdrop-filter .profile-card {
   .set-slider { width: 100%; }
   .slider { flex: 1 1 auto; width: auto; }
   .btn.set-open { width: 100%; }
+}
+
+/* ==================================================================
+   Modal panels on a short screen
+   ==================================================================
+   Every overlay has to fit a 390px-tall landscape phone with its way out on
+   screen. Measured at 844x390 before this block: the K.I.A. screen was 517px
+   tall (535 in Russian) with the title above the top edge and RETURN TO MENU
+   below the bottom; the language card was 457; the pause and revive panels
+   ran past 400 in Russian. The desktop rhythm — 40px of padding top and
+   bottom, 24px under every title — is what did not fit, so that is what
+   gives here, not the type or the tap targets.
+   ================================================================== */
+@media (orientation: landscape) and (max-height: 500px) {
+  .ov-inner {
+    padding: var(--s5) var(--s6);
+    padding-bottom: calc(var(--s5) + env(safe-area-inset-bottom));
+  }
+  .title-small { font-size: 22px; letter-spacing: 0.2em; margin-bottom: var(--s4); }
+  .ov-inner > .btn { margin-top: var(--s2); margin-bottom: var(--s2); }
+  .ov-inner > .btn.quiet { margin-top: var(--s3); }
+  .btn.big { padding: clamp(11px, 2.6vw, 15px) 0; }
+  .revive-sub { margin: var(--s2) auto var(--s4); }
+  .daily-track { margin-bottom: var(--s4); }
+
+  #langpick .ov-inner { padding: var(--s5) var(--s5) var(--s4); }
+  #btn-langpick-close { margin-top: var(--s3); }
+
+  /* K.I.A.: the run summary and the three ways out side by side. Stacked,
+     it is ten rows in 390px; beside each other the summary reads as the
+     result and the buttons as what to do about it, with room to spare in
+     every language. */
+  #end .ov-inner {
+    width: min(760px, 100%); max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(200px, 1fr);
+    grid-template-areas:
+      "title title"
+      "detail redeploy"
+      "detail share"
+      "detail menu";
+    align-items: center; column-gap: var(--s8); row-gap: var(--s3);
+  }
+  #end-title { grid-area: title; margin-bottom: var(--s2); }
+  #end-detail { grid-area: detail; margin: 0; line-height: 1.8; }
+  #end .end-attempt { margin-bottom: var(--s2); }
+  #btn-redeploy { grid-area: redeploy; }
+  #btn-share { grid-area: share; }
+  #btn-menu { grid-area: menu; }
+  /* a little less tracking so the longest label (ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ)
+     stays on one line in the narrower column */
+  #end .ov-inner > .btn { width: 100%; margin: 0; letter-spacing: 0.18em; padding-left: var(--s3); padding-right: var(--s3); }
+
+  /* Operator file: identity and score on the left, counters and weapon on
+     the right. One 490px column does not fit; two ~340px ones do, without
+     the card having to scroll at all. */
+  .profile-card { width: min(740px, 94vw); padding-top: var(--s4); }
+  .profile-body {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "id stats" "score weapon";
+    column-gap: var(--s5); align-content: start;
+  }
+  .profile-id { grid-area: id; }
+  .profile-score-block { grid-area: score; }
+  .profile-stats { grid-area: stats; margin-top: var(--s3); }
+  .profile-weapon { grid-area: weapon; align-self: start; }
 }
 
 /* ==================================================================

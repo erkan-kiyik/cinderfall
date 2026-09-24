@@ -7,12 +7,18 @@
 // accept. Where files can't be shared it degrades: text share, then a
 // download, then the clipboard.
 
-import { t } from '../engine/i18n.js';
+import { t, getLang } from '../engine/i18n.js';
 import { paintScrap } from '../art/currency.js';
 
 // Portrait 4:5 — the aspect both Instagram feed and WhatsApp preview crop
 // least aggressively.
 const CARD_W = 900, CARD_H = 1125;
+
+// Tracking for translated text. Wide letter-spacing is a Latin-caps look; in
+// Arabic it pulls joined letters apart and in Devanagari it knocks matras off
+// their consonant ("से क्ट र"), so those two scripts get none — the same rule
+// the stylesheet applies to the DOM. The Latin wordmark keeps its own.
+const track = (px) => (getLang() === 'ar' || getLang() === 'hi' ? '0px' : `${px}px`);
 
 function roundRect(g, x, y, w, h, r) {
   g.beginPath();
@@ -29,7 +35,7 @@ function statBlock(g, x, y, w, label, value, accent) {
   g.textAlign = 'center';
   g.fillStyle = 'rgba(237,234,226,0.45)';
   g.font = '600 22px Rajdhani, sans-serif';
-  g.letterSpacing = '3px';
+  g.letterSpacing = track(3);
   g.fillText(label, x + w / 2, y);
   g.fillStyle = accent;
   g.font = '700 64px Orbitron, Rajdhani, sans-serif';
@@ -60,7 +66,7 @@ export function paintShareCard(cv, stats) {
   g.textAlign = 'center';
   g.fillStyle = '#ff5c46';
   g.font = '700 26px Rajdhani, sans-serif';
-  g.letterSpacing = '10px';
+  g.letterSpacing = track(10);
   g.fillText(t('lore.tag'), CARD_W / 2, 120);
   g.fillStyle = '#edeae2';
   g.font = '700 76px Orbitron, Rajdhani, sans-serif';
@@ -78,7 +84,7 @@ export function paintShareCard(cv, stats) {
   // ---- hero stat: the attempt count. This is the number players screenshot.
   g.fillStyle = 'rgba(237,234,226,0.5)';
   g.font = '600 30px Rajdhani, sans-serif';
-  g.letterSpacing = '8px';
+  g.letterSpacing = track(8);
   g.fillText(t('share.attempts'), CARD_W / 2, 330);
   g.fillStyle = '#ff7860';
   g.font = '700 210px Orbitron, Rajdhani, sans-serif';
@@ -108,7 +114,7 @@ export function paintShareCard(cv, stats) {
   g.textAlign = 'center';
   g.fillStyle = 'rgba(237,234,226,0.34)';
   g.font = '600 24px Rajdhani, sans-serif';
-  g.letterSpacing = '5px';
+  g.letterSpacing = track(5);
   g.fillText(t('share.cta'), CARD_W / 2, 1030);
 
   // frame

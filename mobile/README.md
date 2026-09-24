@@ -19,8 +19,8 @@ Google both require those to be done by the account holder).
 ```bash
 cd mobile
 npm install                # installs Capacitor + copies the game into ./www
-npm run add:android        # creates ./android
-npm run add:ios            # creates ./ios   (macOS only)
+npm run add:android        # creates ./android, then patches it (see below)
+npm run add:ios            # creates ./ios   (macOS only), then patches it
 npm run assets             # generates all icon + splash densities from ./assets
 ```
 `npm run assets` reads `assets/icon.png` (1024²) and `assets/splash.png` (2732²)
@@ -53,12 +53,26 @@ npm run open:ios           # opens Xcode
 ## App identity (already configured in `capacitor.config.json`)
 - **App ID / bundle:** `com.cinderfall.sector9`  *(change to your own reverse-domain before shipping)*
 - **App name:** `CINDERFALL`
-- **Orientation:** landscape (set per-platform after `cap add`; see docs/RELEASE.md)
+- **Orientation:** landscape — locked by the patch scripts below, on both platforms
 - **Background / splash colour:** `#07090c`
 
+## Native patches
+`cap add` generates the native projects from Capacitor's templates, which lack
+things the game needs. `add:android` / `add:ios` apply them straight after, and
+`npm run patch:android` / `patch:ios` re-apply them whenever a native project is
+regenerated:
+- `scripts/patch-android-theme.mjs` — dark, edge-to-edge window theme.
+- `scripts/patch-android-manifest.mjs` — AdMob App ID + `sensorLandscape`.
+- `scripts/patch-ios.mjs` — `GADApplicationIdentifier` + landscape-only
+  orientations. The Google Mobile Ads SDK crashes at launch without the App ID.
+
+Ad ids come from `ADMOB_*` environment variables and default to Google's test
+ids; a store build refuses test ids. See `scripts/admob-ids.mjs` and
+docs/RELEASE.md §3a.
+
 ## Notes
-- The web build already ships a PWA manifest + service worker; those are for the
-  browser/TWA path and are intentionally skipped inside the Capacitor bundle
-  (see `scripts/sync-www.mjs`).
+- The service worker and the store-only art (PWA screenshots, the 1024px icon
+  source, the Markdown docs) are left out of the Capacitor bundle; the PWA
+  manifest is kept because `index.html` links it (see `scripts/sync-www.mjs`).
 - The full submission checklist — signing, store metadata, screenshots, ratings —
   is in [`../docs/RELEASE.md`](../docs/RELEASE.md).

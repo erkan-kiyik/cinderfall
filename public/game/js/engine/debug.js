@@ -117,21 +117,22 @@ class Debug {
     for (const e of game.enemies) {
       if (!near(e.x)) continue;
       const hs = e.hitboxScale || 1;
+      const b = e.hitRect();
       if (e.deadT > 0) {
         g.strokeStyle = 'rgba(255,90,74,0.25)';
-        g.strokeRect(e.x - 13 * hs, e.y - 134 * hs, 26 * hs, 134 * hs);
+        g.strokeRect(b.x, b.y, b.w, b.h);
         continue;
       }
       // The hitbox the player's rounds are actually tested against — which is
       // NOT the same box as the movement collider, and the difference is
       // worth being able to see.
       g.strokeStyle = HITBOX_COLOR;
-      g.strokeRect(e.x - 13 * hs, e.y - 134 * hs, 26 * hs, 134 * hs);
-      // The region boundaries the hit reaction reads off (see HIT_REGIONS).
+      g.strokeRect(b.x, b.y, b.w, b.h);
+      // The region boundaries the hit reaction reads off (see HIT_REGIONS);
+      // the top one is also where headshot damage starts.
       g.strokeStyle = 'rgba(255,90,74,0.4)';
-      for (const f of [0.80, 0.45]) {
-        const y = e.y - 134 * hs * f;
-        g.beginPath(); g.moveTo(e.x - 13 * hs, y); g.lineTo(e.x + 13 * hs, y); g.stroke();
+      for (const y of e.hitRegionLines()) {
+        g.beginPath(); g.moveTo(b.x, y); g.lineTo(b.x + b.w, y); g.stroke();
       }
 
       // Awareness, drawn as a filled sight line toward the player: opacity is
@@ -140,11 +141,12 @@ class Debug {
       const eyeX = e.x, eyeY = e.y - 112 * hs;
       const p = game.player;
       if (p) {
-        const sees = world.hasLineOfSight(eyeX, eyeY, p.x, p.y - 95);
+        const sy = p.y - (p.h || 126) * 0.75;   // the point hostiles sight (Enemy.perceive)
+        const sees = world.hasLineOfSight(eyeX, eyeY, p.x, sy);
         g.strokeStyle = sees
           ? `${VISION_COLOR}${(0.15 + e.awareness * 0.7).toFixed(2)})`
           : 'rgba(120,130,145,0.18)';
-        g.beginPath(); g.moveTo(eyeX, eyeY); g.lineTo(p.x, p.y - 95); g.stroke();
+        g.beginPath(); g.moveTo(eyeX, eyeY); g.lineTo(p.x, sy); g.stroke();
       }
       // Facing tick + state label.
       g.strokeStyle = STATE_COLOR[e.state] || '#fff';

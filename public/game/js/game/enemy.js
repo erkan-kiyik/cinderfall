@@ -6,13 +6,14 @@
 // Burst fire with settling accuracy, animated reloads, flinch reactions, and
 // a scripted collapse on death that leaves the body in the scene.
 
-import { clamp, lerp, damp, rand, randSpread, easeInOutQuad, angleDiff, makeNoise1D } from '../engine/math.js';
+import { clamp, lerp, damp, rand, randSpread, easeInOutQuad, easeOutBack, angleDiff, makeNoise1D } from '../engine/math.js';
 import { bossHp, bossDmgMul, bossSkill, BOSS_INTERVAL } from './difficulty.js';
 import {
   newWeaponState, computePose, weaponAnchor, weaponPoint, toWorld, drawSoldier,
   weaponBulkOf,
 } from './rig.js';
 import { segVsBox } from './player.js';
+import { HIT_BOX_H, HEAD_LINE, hitBox, isHeadHit } from './hitbox.js';
 
 const WALK = 95, CHASE = 210;
 
@@ -34,6 +35,11 @@ const ENEMY_MOVE = {
   decel: 2300,     // planting the feet
   turn: 3100,      // reversing at pace
   turnEps: 20,     // below this a direction change is a step, not a reversal
+  // Hard ceiling once urgency and mass are applied. Without it the lightest
+  // hostile planting at alert urgency came out at 2300 × 1.67 / 0.84 = 4573
+  // px/s², harder than the operator's own DECEL (4400, player.js) — the one
+  // case where the rule above ran backwards.
+  ceiling: 4200,
 };
 
 // Per-enemy mass. Drives how briskly the accelerations above are actually
@@ -81,7 +87,7 @@ let gaitSeedCounter = 0;
 const HIT_REGIONS = [
   // Head: the whole body snaps back and up off a head hit — a stretch, not a
   // compression — and the suppression is the strongest of the three.
-  { min: 0.80, name: 'head',  rock: 0.30, squash: -7, shove: 1.25, flinch: 1.35 },
+  { min: HEAD_LINE / HIT_BOX_H, name: 'head', rock: 0.30, squash: -7, shove: 1.25, flinch: 1.35 },
   // Torso: folds over the round. The reference reaction; everything else is
   // measured against it.
   { min: 0.45, name: 'torso', rock: 0.19, squash: 5,  shove: 1.0,  flinch: 1.0 },
@@ -89,12 +95,16 @@ const HIT_REGIONS = [
   // least suppression — a man shot in the leg can still shoot back.
   { min: 0.00, name: 'legs',  rock: 0.07, squash: 10, shove: 0.6,  flinch: 0.7 },
 ];
-const HIT_BOX_H = 134;           // must match the hitbox in Player.fireShot
+// HIT_BOX_H and HEAD_LINE come from hitbox.js, the one definition the shot
+// paths use too, so the head reaction and headshot damage start at one height.
 function hitRegionAt(ent, hy) {
   if (hy === undefined || hy === null) return HIT_REGIONS[1];   // unknown → torso
+  // The head is decided by the very test headshot damage uses, not by the
+  // ratio below, so the two can never disagree at the boundary.
+  if (isHeadHit(ent, hy)) return HIT_REGIONS[0];
   const h = HIT_BOX_H * (ent.hitboxScale || 1);
   const up = clamp((ent.y - hy) / h, 0, 1);                     // 0 feet, 1 crown
-  for (const r of HIT_REGIONS) if (up >= r.min) return r;
+  for (let i = 1; i < HIT_REGIONS.length; i++) if (up >= HIT_REGIONS[i].min) return HIT_REGIONS[i];
   return HIT_REGIONS[HIT_REGIONS.length - 1];
 }
 
@@ -125,6 +135,32 @@ const BURST_CLIMB = 0.135;
 // Enemy.damage — this is what keeps sustained fire suppressive rather than
 // paralysing.
 const FLINCH_REFRACTORY = 0.85;
+// A knife flinch is longer, so its refractory is measured from the end of it:
+// this many seconds of guaranteed recovery before the next stab can stun.
+const MELEE_FLINCH_GAP = 0.3;
+
+// Shortest continuous look, in seconds, that can take a hostile from
+// oblivious to alert. suspicious → alert is gated on awareness reaching 1, so
+// this caps how fast sight can fill it: above the half-second peek §9 says
+// must not escalate, still well under a second at the top of the curve.
+const SIGHT_FILL_MIN = 0.65;
+
+// A hostile that lost the operator and finds him again inside this many
+// seconds picks its settled aim back up instead of starting over from the
+// first-contact spread; past it the spread relaxes back to 0.12.
+const REACQUIRE_T = 2.5;
+
+// Where on the operator a hostile aims, as a fraction of his current collider
+// height up from the feet (92px on the 126px standing box, the old fixed
+// chest line). Following the real height is what lets a crouch behind cover
+// actually take him out of the line of fire.
+const CHEST_K = 92 / 126;
+// Where on him a hostile looks for him — see perceive().
+const SIGHT_K = 0.75;
+// Height above a hostile's feet that his aim is solved from, and where
+// fireShot starts tracing the barrel: the shoulder line (the rig's
+// pose.shoulder.y is ≈ -98).
+const AIM_ORIGIN_Y = 97;
 
 export class Enemy {
   constructor(parts, shadow, rifle, world, fx, audio, x, patrolMin, patrolMax) {
@@ -178,6 +214,8 @@ export class Enemy {
     this.burstGap = rand(0.6, 1.4);
     this.shotCd = 0;
     this.engagedT = 0;
+    this.unseenT = 0;             // combat: seconds since the operator was last in sight
+    this.sinceCombatT = Infinity; // seconds since last in combat/retreat (see REACQUIRE_T)
 
     // awareness
     this.awareness = 0;           // 0..1, backs the HUD detection meter
@@ -223,11 +261,14 @@ export class Enemy {
     // A hit inside the refractory window still hurts, still staggers the
     // sprite via hurtT, and still knocks the hostile back. It just cannot
     // restart the flinch, which leaves a real window to shoot back in.
-    // Melee is exempt: a knife is a deliberate close-range commitment and
-    // stunning with it is the point.
-    if (melee || this.flinchCd <= 0) {
+    // A knife stuns longer, but it is rate-limited too: it used to skip the
+    // gate and re-arm after 0.3s, inside its own 0.55s flinch, so stabbing
+    // every 0.40s held a hostile flinched 96% of the time and it fired zero
+    // rounds in 10s. Its refractory now outlasts the flinch by
+    // MELEE_FLINCH_GAP, so every stun is followed by a real window to act.
+    if (this.flinchCd <= 0) {
       this.flinchT = (melee ? 0.55 : 0.3) * region.flinch;
-      this.flinchCd = melee ? 0.3 : FLINCH_REFRACTORY;
+      this.flinchCd = melee ? this.flinchT + MELEE_FLINCH_GAP : FLINCH_REFRACTORY;
     }
     // Knockback is divided by mass like every other force on this body, so a
     // heavy hostile is shifted less by the same round.
@@ -236,7 +277,13 @@ export class Enemy {
     // getting shot reveals the shooter immediately, wherever it came from
     if (this.state === 'patrol' || this.state === 'suspicious') {
       this.state = 'alert'; this.alertT = 0; this.awareness = 1;
-      this.facing = -dirX || this.facing;
+      // stumbleLean is facing-local (the rig mirrors the body by facing), so
+      // turning to face the shooter flipped the pitch set above into a lurch
+      // *toward* him. Carry it across the turn: world direction is what the
+      // round decided, and a round in the back still throws him forward.
+      const turn = -dirX || this.facing;
+      if (turn !== this.facing) this.stumbleLean = -this.stumbleLean;
+      this.facing = turn;
       if (player) { this.lastKnownX = player.x; this.lastKnownY = player.y; }
     }
     if (this.hp <= 0) {
@@ -256,30 +303,51 @@ export class Enemy {
 
   // Vision cone (narrow, long) + peripheral vision (wide, short) + point
   // blank + line-of-sight, plus hearing for gunfire and nearby sprinting.
+  // The box rounds are tested against, and the world heights where its hit
+  // regions change — surfaced here so the debug overlay (engine/, which never
+  // imports game code) draws the real thing rather than its own copy.
+  hitRect() { return hitBox(this); }
+  hitRegionLines() {
+    const b = hitBox(this);
+    return HIT_REGIONS.filter((r) => r.min > 0).map((r) => this.y - b.h * r.min);
+  }
+
   perceive(player) {
-    if (!player || player.deadT > 0) return { visible: false, heard: false, dist: 99999 };
-    const dx = player.x - this.x;
-    const dist = Math.abs(dx);
-    const eyeX = this.x, eyeY = this.y - 112;
-    const toPlayer = Math.atan2((player.y - 95) - eyeY, dx);
-    const facingAng = this.facing === 1 ? 0 : Math.PI;
-    const off = Math.abs(angleDiff(facingAng, toPlayer));
-
+    if (!player || player.deadT > 0) return { visible: false, heard: false, shot: false, dist: 99999 };
+    const dist = Math.abs(player.x - this.x);
     // a crouched operator presents a lower profile — spotted later and closer
-    const crouch = player.crouchHold || 0;
-    const visionRange = (640 + this.difficulty * 20) * (1 - crouch * 0.32);
-    const visionHalf = 0.5;
-    const periRange = 260 * (1 - crouch * 0.42);
-    const periHalf = 2.4;
-    const closeRange = 130 - crouch * 30;
-
-    let visible = false;
-    if (dist < closeRange || (dist < visionRange && off < visionHalf) || (dist < periRange && off < periHalf)) {
-      visible = this.world.hasLineOfSight(eyeX, eyeY, player.x, player.y - 95);
-    }
+    // Sighted at three quarters of his current height: 95 standing, as it
+    // always was, but it now comes down with a crouch (47), so a crouched
+    // operator behind a crate is behind the crate, as he is drawn.
+    const visible = this.canSee(player.x, player.y - (player.h || 126) * SIGHT_K, player.crouchHold || 0);
     const heardShot = player.time - player.lastShotT < 1.4 && dist < 560 + this.difficulty * 40;
     const heardMove = player.sprinting && dist < 280;
-    return { visible, heard: heardShot || heardMove, dist };
+    return { visible, heard: heardShot || heardMove, shot: heardShot, dist };
+  }
+
+  // The eyes, on their own: vision cone, peripheral, point blank, then line
+  // of sight to (tx, ty). `low` 0..1 shrinks every range for a low profile.
+  // Shared by perceive() and by squadmates noticing a body (broadcastDeath),
+  // which used to test line of sight alone and so saw a corpse behind them.
+  canSee(tx, ty, low = 0) {
+    const dx = tx - this.x;
+    const dist = Math.abs(dx);
+    const eyeX = this.x, eyeY = this.y - 112;
+    const facingAng = this.facing === 1 ? 0 : Math.PI;
+    const off = Math.abs(angleDiff(facingAng, Math.atan2(ty - eyeY, dx)));
+    const visionRange = (640 + this.difficulty * 20) * (1 - low * 0.32);
+    const visionHalf = 0.5;
+    const periRange = 260 * (1 - low * 0.42);
+    const periHalf = 2.4;
+    // Point blank, any direction. A fully crouched operator gets inside the
+    // takedown reach (player.js STEALTH_RANGE, 56) before this notices him;
+    // at 130 - 30·crouch = 100 it never let a crouched approach get close
+    // enough, so a halted patrol could not be taken down from behind at all.
+    const closeRange = 130 - low * 80;
+    if (dist < closeRange || (dist < visionRange && off < visionHalf) || (dist < periRange && off < periHalf)) {
+      return this.world.hasLineOfSight(eyeX, eyeY, tx, ty);
+    }
+    return false;
   }
 
   // Tell nearby idle allies where to look — simulates radio chatter / shouts.
@@ -324,8 +392,7 @@ export class Enemy {
       if (o === this || o.deadT > 0) continue;
       if (o.state === 'combat' || o.state === 'alert' || o.state === 'retreat') continue;
       const dist = Math.abs(o.x - this.x);
-      const sees = dist < 640 && this.world.hasLineOfSight(o.x, o.y - 112, this.x, this.y - 60);
-      if (sees || dist < radius) {
+      if (dist < radius || o.canSee(this.x, this.y - 60)) {
         o.awareness = Math.max(o.awareness, 0.55);
         o.state = 'search'; o.searchT = 0;
         o.lastKnownX = this.x; o.lastKnownY = this.y;
@@ -379,7 +446,7 @@ export class Enemy {
     else if (v * target < 0 && Math.abs(v) > ENEMY_MOVE.turnEps) a = ENEMY_MOVE.turn;  // reversing
     else if (Math.abs(target) < Math.abs(v)) a = ENEMY_MOVE.decel;      // easing off
     else a = ENEMY_MOVE.accel;                                           // pressing on
-    const step = (a * urgency / this.mass) * dt;
+    const step = Math.min(a * urgency / this.mass, ENEMY_MOVE.ceiling) * dt;
     this.vx = Math.abs(dv) <= step ? target : v + Math.sign(dv) * step;
   }
 
@@ -399,6 +466,13 @@ export class Enemy {
       this.vx = damp(this.vx, 0, 8, dt);
       this.world.moveEntity(this, dt);
       this.hurtT = Math.max(0, this.hurtT - dt);
+      // This branch returns before the squash spring, so a hostile killed
+      // mid-squash kept that scale (e.g. 1.18 × 0.82) as a corpse forever.
+      // A body has nothing left to spring with: ease it out flat.
+      this.squashVel = 0;
+      this.squash = damp(this.squash, 0, 10, dt);
+      this.squashX = 1 + this.squash;
+      this.squashY = 1 - this.squash;
       return;
     }
 
@@ -426,6 +500,7 @@ export class Enemy {
 
     const per = this.perceive(player);
     this.updateAwareness(dt, per, player);
+    const facing0 = this.facing;   // see the stumbleLean hand-off below
 
     // ---------- state machine
     if (this.state === 'patrol') {
@@ -455,7 +530,13 @@ export class Enemy {
       if (player && player.deadT <= 0) this.facing = Math.sign(player.x - this.x) || this.facing;
       rot += 0.15;
       const thresh = Math.max(0.2, 0.55 - this.difficulty * 0.04);
-      if (per.visible && this.suspiciousT > thresh) {
+      // Sight escalates on awareness, which only climbs while he is actually
+      // seen and bleeds off while he is not (updateAwareness). This used to
+      // be `suspiciousT > thresh` — time since the first glimpse, not time
+      // spent seen — so a 0.5s peek escalated from stage 2 on, and two
+      // single-frame glimpses 0.6s apart escalated at every stage. A shot
+      // fired in plain view is no glimpse, so that keeps the quick timer.
+      if (per.visible && (this.awareness >= 1 || (per.shot && this.suspiciousT > thresh))) {
         this.state = 'alert'; this.alertT = 0;
         this.lastKnownX = player.x; this.lastKnownY = player.y;
       } else if (per.heard && !per.visible && this.suspiciousT > thresh * 1.5) {
@@ -493,7 +574,10 @@ export class Enemy {
       this.aimLocal = damp(this.aimLocal, 0, 8, dt);
       const reactT = Math.max(0.1, 0.32 - this.difficulty * 0.018);
       if (this.alertT > reactT) {
-        this.state = 'combat'; this.aimErr = 0.12; this.engagedT = 0;
+        // First contact starts wide; losing him for a moment and finding him
+        // again does not unlearn the settled aim (see REACQUIRE_T).
+        this.aimErr = lerp(this.aimErr, 0.12, clamp(this.sinceCombatT / REACQUIRE_T, 0, 1));
+        this.state = 'combat'; this.engagedT = 0; this.unseenT = 0;
         if (!this.hasAlerted) { this.hasAlerted = true; this.alertAllies(game); }
       }
     } else if (this.state === 'retreat') {
@@ -506,10 +590,11 @@ export class Enemy {
         const away = -Math.sign(dx) || -this.facing;
         this.driveTo(away * CHASE * 1.05, dt, 0.83);
         this.aimErr = damp(this.aimErr, 0.05, 0.5, dt);
-        const ty = (player.y - 92) - (this.y - 97);
+        const ty = this.chestY(player) - (this.y - AIM_ORIGIN_Y);
         this.aimLocal = damp(this.aimLocal, clamp(Math.atan2(ty, Math.abs(dx)), -1, 1), 7, dt);
         if (this.reload) {
-          this.updateReload(dt, ws);
+          // advanced once, below the state machine (it used to run here as
+          // well, which played every reload in combat at double speed)
         } else if (this.mag <= 0) {
           this.reload = { t: 0, T: 2.5, s0: false, s1: false, s2: false, dropped: false };
         } else {
@@ -521,8 +606,8 @@ export class Enemy {
           }
           if (this.burstLeft > 0 && this.shotCd <= 0) this.fireShot(player);
         }
-        if (this.retreatT > 2.2 && this.hp > this.maxHp * 0.5) { this.state = 'combat'; this.engagedT = 0; }
-        else if (this.retreatT > 4.5) { this.state = 'combat'; this.engagedT = 0; }
+        if (this.retreatT > 2.2 && this.hp > this.maxHp * 0.5) { this.state = 'combat'; this.engagedT = 0; this.unseenT = 0; }
+        else if (this.retreatT > 4.5) { this.state = 'combat'; this.engagedT = 0; this.unseenT = 0; }
       }
     } else if (this.state === 'combat') {
       if (!player || player.deadT > 0) {
@@ -572,20 +657,26 @@ export class Enemy {
           // aim at the player's chest with settling error (tighter at higher difficulty)
           const aimErrTarget = Math.max(0.009, 0.03 - this.difficulty * 0.0022);
           this.aimErr = damp(this.aimErr, aimErrTarget, 0.5, dt);
-          const ty = (player.y - 92) - (this.y - 97);
+          const ty = this.chestY(player) - (this.y - AIM_ORIGIN_Y);
           const targetAim = Math.atan2(ty, Math.abs(dx));
           this.aimLocal = damp(this.aimLocal, clamp(targetAim, -1, 1), 9, dt);
-          this.lastKnownX = player.x; this.lastKnownY = player.y;
 
-          // lost sight → go hunt at last position for a while
+          // lost sight → go hunt at last position for a while. The grace is
+          // measured from the last frame he was actually seen: it used to be
+          // compared against total time in combat, so a single frame of
+          // broken line of sight dropped a long engagement straight to search.
+          // lastKnown follows only what is seen, or that grace would hand the
+          // search his real position behind cover.
+          this.unseenT = per.visible ? 0 : this.unseenT + dt;
+          if (per.visible) { this.lastKnownX = player.x; this.lastKnownY = player.y; }
           const loseSightGrace = Math.max(0.9, 1.6 - this.difficulty * 0.1);
-          if (!per.visible && this.engagedT > loseSightGrace) {
+          if (this.unseenT > loseSightGrace) {
             this.state = 'search'; this.searchT = 0; this.coverTarget = null;
           }
 
           // ---------- fire control
           if (this.reload) {
-            this.updateReload(dt, ws);
+            // advanced once, below the state machine
           } else if (this.mag <= 0) {
             this.reload = { t: 0, T: 2.5, s0: false, s1: false, s2: false, dropped: false };
           } else if (this.flinchT <= 0 && this.engagedT > 0.18) {
@@ -594,7 +685,11 @@ export class Enemy {
             } else {
               this.burstGap -= dt;
               if (this.burstGap <= 0 && dist < 620 && per.visible) {
-                this.burstLeft = 3 + (rand() * 3 | 0) + Math.floor(this.difficulty * 0.4);
+                // 3–5 rounds at every stage (§9). Burst length used to grow
+                // with difficulty too, to 11–13 rounds by stage 25 — firing
+                // ~73% of the time, a stream rather than bursts. Difficulty
+                // already shortens the gap below and tightens the aim.
+                this.burstLeft = 3 + (rand() * 3 | 0);
                 this.burstClimb = 0;
                 this.burstGap = Math.max(0.3, rand(0.75, 1.5) - this.difficulty * 0.04);
               }
@@ -604,8 +699,10 @@ export class Enemy {
       }
     }
 
+    // The one place a reload advances, whatever state started it.
     if (this.reload) { this.updateReload(dt, ws); rot += 0.3; }
     if (this.flinchT > 0) { rot += this.flinchT * 0.8; offY += this.flinchT * 3; }
+    this.sinceCombatT = (this.state === 'combat' || this.state === 'retreat') ? 0 : this.sinceCombatT + dt;
 
     // physics + gait
     const landed = this.world.moveEntity(this, dt);
@@ -623,7 +720,7 @@ export class Enemy {
     // Footing wobble, sampled off the stride rather than the clock so it is
     // repeatable frame to frame and never lands on the same step twice.
     this.gaitNoise = this._gaitNoise(this.gaitPhase * 0.37) * this.speedNorm;
-    this.lean = damp(this.lean, (this.vx / 450) * 0.14 * this.facing, 6, dt);
+    this.lean = damp(this.lean, (this.vx / 450) * 0.15 * this.facing, 6, dt);   // player's baseLean
     this.crouchVel += -this.crouchSpring * 120 * dt;
     this.crouchVel *= Math.exp(-10 * dt);
     this.crouchSpring = Math.max(0, this.crouchSpring + this.crouchVel * dt * 34);
@@ -644,6 +741,10 @@ export class Enemy {
     this.squashY = 1 - this.squash;
     // The stumble transient unwinds on its own — the rig adds it on top of the
     // damped lean precisely so it cannot feed back into the damping and linger.
+    // It is stored facing-local, so any turn this frame (a searcher spotting
+    // the man who just shot him in the back, say) carries it across, keeping
+    // the pitch pointed where the round sent it — see damage().
+    if (this.facing !== facing0) this.stumbleLean = -this.stumbleLean;
     this.stumbleLean = damp(this.stumbleLean, 0, 5.5, dt);
 
     ws.offX = 0; ws.offY = offY; ws.rot = rot;
@@ -651,19 +752,30 @@ export class Enemy {
 
   // Continuous 0..1 awareness value backs the HUD detection meter and gives
   // states smooth, non-instant transitions instead of binary detection.
+  // Since it now gates suspicious → alert, sight is capped at SIGHT_FILL_MIN
+  // (it used to hit 1 in ~0.2s at high difficulty) and scaled by the stealth
+  // perk — player.stealthMul, 1 − perk fraction (meta.js applyPerks), which
+  // nothing read before. Hearing is untouched: a quiet operator's rifle is
+  // still loud.
   updateAwareness(dt, per, player) {
     if (per.visible) {
-      const rate = (per.dist < 200 ? 2.3 : 1.4) + this.difficulty * 0.15;
-      this.awareness = Math.min(1, this.awareness + rate * dt);
+      const rate = Math.min((per.dist < 200 ? 2.3 : 1.4) + this.difficulty * 0.15, 1 / SIGHT_FILL_MIN);
+      const sm = player && Number.isFinite(player.stealthMul) ? clamp(player.stealthMul, 0.2, 1) : 1;
+      this.awareness = Math.min(1, this.awareness + rate * sm * dt);
     } else if (per.heard) {
       this.awareness = Math.min(1, this.awareness + 2.2 * dt);
     } else if (this.state === 'patrol' || this.state === 'suspicious') {
       this.awareness = Math.max(0, this.awareness - (0.3 + this.difficulty * 0.02) * dt);
     } else if (this.state === 'combat' || this.state === 'alert') {
       this.awareness = 1;
-    } else {
-      this.awareness = Math.max(0, this.awareness - 0.18 * dt);
     }
+    // search / retreat hold it: §9 decays awareness only before alert, and a
+    // search that gives up drops it to 0.1 itself.
+  }
+
+  // World y a hostile aims at: the chest of the operator's *current* box.
+  chestY(player) {
+    return player.y - (player.h || 126) * CHEST_K;
   }
 
   updateReload(dt, ws) {
@@ -671,15 +783,22 @@ export class Enemy {
     if (!r) return;
     r.t += dt;
     const k = clamp(r.t / r.T, 0, 1);
+    // Belt- and cell-fed weapons (a boss's minigun) have no magazine to drop
+    // or hand to seat — the same guard Player's reload uses.
+    const magFed = this.wpn.mag !== null && !!this.wpn.magPos;
     if (k < 0.3) {
       const e = easeInOutQuad(k / 0.3);
-      ws.magOffY = e * 15; ws.magRot = e * 0.45; ws.magHand = k > 0.08;
+      ws.magOffY = e * 15; ws.magRot = e * 0.45; ws.magHand = magFed && k > 0.08;
       if (!r.s0 && k > 0.1) { r.s0 = true; this.audio.reload(0); }
     } else if (k < 0.45) {
-      if (!r.dropped) { r.dropped = true; ws.magVisible = false; this.fx.magDrop(this.x + this.facing * 8, this.y - 62, this.facing); }
+      if (!r.dropped) {
+        r.dropped = true;
+        if (magFed) { ws.magVisible = false; this.fx.magDrop(this.x + this.facing * 8, this.y - 62, this.facing); }
+      }
     } else if (k < 0.66) {
-      const e = 1 - easeInOutQuad((k - 0.45) / 0.21);
-      ws.magVisible = true; ws.magOffY = e * 15; ws.magRot = e * -0.3; ws.magHand = true;
+      // seats with a slight overshoot and settles, as the player's does (§8.4)
+      const e = 1 - easeOutBack((k - 0.45) / 0.21);
+      ws.magVisible = true; ws.magOffY = e * 15; ws.magRot = e * -0.3; ws.magHand = magFed;
       if (!r.s1 && k > 0.6) { r.s1 = true; this.audio.reload(1); this.mag = 30; }
     } else {
       ws.magOffY = 0; ws.magRot = 0; ws.magHand = false;
@@ -720,15 +839,35 @@ export class Enemy {
     const range = 1300;
     const ex = mzl.x + Math.cos(ang) * range;
     const ey = mzl.y + Math.sin(ang) * range;
-    const wHit = this.world.raycast(mzl.x, mzl.y, ex, ey);
-    let bestT = wHit ? wHit.t : 1;
-    let hitPlayer = false;
-    if (player.deadT <= 0) {
-      const t = segVsBox(mzl.x, mzl.y, ex - mzl.x, ey - mzl.y, player.x - 12, player.y - 130, 24, 130);
-      if (t !== null && t < bestT) { bestT = t; hitPlayer = true; }
+    // His real, current box: it was a fixed 24×130 standing box, so crouch
+    // (63px) and slide (48px) never took an inch off the target.
+    const hw = player.halfW || 12, ph = player.h || 130;
+    const alive = player.deadT <= 0;
+    const vsPlayer = (x, y, dx, dy) =>
+      alive ? segVsBox(x, y, dx, dy, player.x - hw, player.y - ph, hw * 2, ph) : null;
+    // The barrel first: shoulder (AIM_ORIGIN_Y, on the body's centre column,
+    // which the world never lets into a collider) to muzzle. The muzzle sits
+    // ~50px past the body's edge, so a hostile pressed against cover had it
+    // inside or through the box — and World.raycast only reports boxes it
+    // *enters* (t > 0), so a ray starting there passed straight through to
+    // the player behind. Only a clear barrel fires the muzzle ray. Tracing the
+    // whole round from the shoulder would also have fixed it, but gives
+    // BURST_CLIMB ~50px more lever arm: stage-1 hit rate at 200px fell from
+    // 78% to 47%, and that constant is tuned from the muzzle.
+    let ox = this.x, oy = this.y - AIM_ORIGIN_Y;
+    let dx = mzl.x - ox, dy = mzl.y - oy;
+    let wHit = this.world.raycast(ox, oy, mzl.x, mzl.y);
+    let tP = vsPlayer(ox, oy, dx, dy);
+    if (!wHit && tP === null) {
+      ox = mzl.x; oy = mzl.y; dx = ex - mzl.x; dy = ey - mzl.y;
+      wHit = this.world.raycast(mzl.x, mzl.y, ex, ey);
+      tP = vsPlayer(ox, oy, dx, dy);
     }
-    const hx = mzl.x + (ex - mzl.x) * bestT;
-    const hy = mzl.y + (ey - mzl.y) * bestT;
+    let bestT = wHit ? wHit.t : 1;
+    const hitPlayer = tP !== null && tP < bestT;
+    if (hitPlayer) bestT = tP;
+    const hx = ox + dx * bestT;
+    const hy = oy + dy * bestT;
 
     if (hitPlayer) {
       player.hurt(((7 + rand(0, 5) | 0) * this.dmgMul) | 0, Math.sign(ex - mzl.x), this.x);
@@ -745,7 +884,11 @@ export class Enemy {
     const distVol = clamp(1 - Math.abs(this.x - player.x) / 900, 0.3, 0.85);
     this.audio.shot('rifle', distVol);
     this.fx.muzzle(mzl.x, mzl.y, drawAng, 0.85);
-    this.fx.tracer(mzl.x + Math.cos(ang) * 14, mzl.y + Math.sin(ang) * 14, hx, hy);
+    // No tracer when the round stopped short of the muzzle (buried in cover):
+    // it would be drawn backwards through the gun.
+    if ((hx - mzl.x) * Math.cos(ang) + (hy - mzl.y) * Math.sin(ang) > 14) {
+      this.fx.tracer(mzl.x + Math.cos(ang) * 14, mzl.y + Math.sin(ang) * 14, hx, hy);
+    }
     this.fx.casing(ejl.x, ejl.y, this.facing, 4.6);
   }
 
@@ -760,8 +903,8 @@ export class Enemy {
 // are all inherited untouched. A boss just never retreats (see the
 // isBoss guard in the combat state), hits harder (dmgMul), reads as
 // visibly bigger (visualScale + a matching hitboxScale so it's fairly
-// hittable across its larger silhouette — see the hitboxScale reads in
-// player.js's hitscanShot/beamShot and fx.js's projectile hit test),
+// hittable across its larger silhouette — hitbox.js scales the one shared
+// hit box by it for every shot path),
 // and periodically ground-slams for a readable AOE "special attack"
 // beat. Spawned solo on every 5th stage — see spawnEnemiesForStage()
 // in main.js — so the regular squad encounters are untouched.

@@ -31,6 +31,8 @@
 // browse-by-category grid underneath, so a player hunting one specific skin is
 // never gated behind the roll.
 
+import { CRATE_COST } from './meta.js';
+
 // ---- restock cadence ----
 // One roll per UTC day, same as the daily-mission cadence in progression.js so
 // a player's whole "come back tomorrow" surface refreshes at one moment
@@ -48,6 +50,12 @@ export const STALL_SIZE = 4;
 // as a permanent sale that devalues the full-price grid.
 export const DEEP_CUT = 0.45;    // 45% off
 export const STALL_CUT = 0.15;   // 15% off
+
+// No markdown takes a piece below the price of one supply crate. Buying
+// certainty has to cost more than a pull, or the crate stops being the cheap
+// way in: a known rare at 45% off came to 250 against a 300-scrap crate. The
+// floor never lifts a piece above its own list price.
+export const STALL_PRICE_FLOOR = CRATE_COST;
 
 export function discountedPrice(base, cut) {
   return Math.max(1, Math.round((base * (1 - cut)) / 5) * 5);
@@ -88,7 +96,8 @@ export function rollStall(pool, priceOf, ownsFn = () => false, day = dayIndex())
     .map((item, i) => {
       const base = priceOf(item);
       const cut = i === 0 ? DEEP_CUT : STALL_CUT;
-      return { item, base, cut, deep: i === 0, price: discountedPrice(base, cut), owned: ownsFn(item.id) };
+      const price = Math.max(Math.min(base, STALL_PRICE_FLOOR), discountedPrice(base, cut));
+      return { item, base, cut, deep: i === 0, price, owned: ownsFn(item.id) };
     })
     .filter((offer) => !offer.owned);
 }

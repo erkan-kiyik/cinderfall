@@ -179,6 +179,11 @@ export function barrel(variant = 'rust', scale = 1) {
       };
       g.save();
       g.globalCompositeOperation = 'destination-out';
+      // destination-out removes by the SOURCE alpha, so the cut needs an
+      // opaque fill of its own; whatever was left in fillStyle (a 0.05-alpha
+      // grunge wash, a rim gradient that is transparent mid-way) removed
+      // almost nothing and left the "missing" corner standing.
+      g.fillStyle = '#000';
       path();
       g.fill();
       g.restore();
@@ -312,17 +317,24 @@ export function crate(w = 30, h = 25, scale = 1) {
       // The polygon has to CONTAIN the corner, or destination-out takes a
       // sliver out of the diagonal and leaves the corner itself standing —
       // which is exactly what the first version of this did, and why the
-      // measured silhouettes barely moved. The corner is the first vertex.
+      // measured silhouettes barely moved. It also has to reach past the
+      // sprite's own edge: the planks start half a unit in, but the rim light
+      // and grunge paint that outer half-unit band too, and a cut that stopped
+      // at the plank edge left it behind as a faint ghost of the corner.
+      const out = 1;
       const path = () => {
         g.beginPath();
-        g.moveTo(px, py);                                          // the corner
+        g.moveTo(px - sx * out, py - sy * out);                   // past the corner
+        g.lineTo(px - sx * out, py + sy * c.r * 1.35);
         g.lineTo(px, py + sy * c.r * 1.35);                        // down one edge
         g.lineTo(px + sx * c.r * 0.5, py + sy * c.r * 0.45);       // dent inward
         g.lineTo(px + sx * c.r, py);                               // along the other
+        g.lineTo(px + sx * c.r, py - sy * out);
         g.closePath();
       };
       g.save();
       g.globalCompositeOperation = 'destination-out';
+      g.fillStyle = '#000';   // opaque, for the reason given on the barrel dent above
       path();
       g.fill();
       g.restore();

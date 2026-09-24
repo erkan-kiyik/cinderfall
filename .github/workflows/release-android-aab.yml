@@ -17,6 +17,14 @@ name: Build Android release AAB
 #   jarsigner -keystore cinderfall-upload.keystore app-release.aab cinderfall
 # (`jarsigner` ships with any JDK; no Android SDK needed for that step.) The
 # keystore itself is never generated, logged, committed, or uploaded here.
+#
+# Ads are secret-driven too:
+#   ADMOB_ANDROID_APP_ID       your AdMob app id      (ca-app-pub-…~…)
+#   ADMOB_ANDROID_REWARDED_ID  your rewarded ad unit  (ca-app-pub-…/…)
+# Without them the bundle carries Google's TEST ids, which serve test ads and
+# earn nothing. That is fine for an unsigned bundle, and refused for a signed
+# one: a store-ready .aab can never ship test ads (see mobile/scripts/
+# admob-ids.mjs).
 on:
   workflow_dispatch: {}
 
@@ -29,8 +37,33 @@ jobs:
     defaults:
       run:
         working-directory: mobile
+    env:
+      ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
+      ADMOB_ANDROID_REWARDED_ID: ${{ secrets.ADMOB_ANDROID_REWARDED_ID }}
     steps:
       - uses: actions/checkout@v4
+
+      # Decided first, because it changes what every later step may produce.
+      # Secrets are read through env, never pasted into the script: a password
+      # containing a quote, a backtick or $( would otherwise break the step or
+      # run as a command. All three signing secrets or none — one or two of
+      # them would sign with a wrong or missing password and produce a corrupt
+      # bundle — and a signed bundle turns on the AdMob test-id guard for every
+      # step after this one.
+      - name: Check whether signing secrets are configured
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASS" ] && [ -n "$KEY_PASS" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "CINDERFALL_STORE_BUILD=android" >> "$GITHUB_ENV"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No signing secrets configured — building an UNSIGNED .aab. See docs/RELEASE.md to sign in CI, or sign the downloaded bundle yourself with jarsigner."
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -41,7 +74,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # The action's default package list includes the legacy 'tools'
+      # package, which the SDK repository behind cmdline-tools 16 no longer
+      # carries: sdkmanager exits 1 on it and the job dies in setup. Only
+      # platform-tools is needed here; the next step adds the platform and
+      # build-tools the build uses.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install SDK platform + build-tools
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
@@ -63,28 +103,11 @@ jobs:
       - name: Patch Android theme (dark, edge-to-edge)
         run: node ./scripts/patch-android-theme.mjs
 
-      - name: Patch Android manifest (AdMob App ID)
-        run: node ./scripts/patch-android-admob.mjs
+      - name: Patch Android manifest (AdMob App ID, landscape)
+        run: node ./scripts/patch-android-manifest.mjs
 
       - name: Sync Capacitor
         run: npx cap sync android
-
-      # Both of the next two steps are conditional on the signing secrets
-      # actually being set. Neither failing nor silently no-op'ing when only
-      # one of the three is present — that would sign with a wrong/missing
-      # password and produce a corrupt bundle — so this checks all three
-      # together and skips CI-side signing as a group if any is absent.
-      - name: Check whether signing secrets are configured
-        id: signing
-        run: |
-          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && \
-             [ -n "${{ secrets.ANDROID_KEYSTORE_PASS }}" ] && \
-             [ -n "${{ secrets.ANDROID_KEY_PASS }}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No signing secrets configured — building an UNSIGNED .aab. See docs/RELEASE.md to sign in CI, or sign the downloaded bundle yourself with jarsigner."
-          fi
 
       - name: Decode signing keystore
         if: steps.signing.outputs.enabled == 'true'
@@ -92,35 +115,32 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
 
-      # Written directly into app/build.gradle rather than committed as a
-      # signingConfig — this repo never carries real signing material, only
-      # the recipe for the runner to assemble it from secrets on demand.
+      # The signing config reads both passwords from the environment at build
+      # time, so neither is ever written into a file. (It used to splice them
+      # into build.gradle as Python-quoted literals, which Groovy interpolated
+      # or mis-escaped for a password containing $, a quote or a backslash.)
       - name: Configure release signing
         if: steps.signing.outputs.enabled == 'true'
         working-directory: mobile/android/app
-        env:
-          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
-          KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
         run: |
-          python3 - "$KEYSTORE_PASS" "$KEY_PASS" <<'PY'
-          import re, sys
-          store_pass, key_pass = sys.argv[1], sys.argv[2]
+          python3 - <<'PY'
+          import re
           p = 'build.gradle'
           src = open(p, encoding='utf-8').read()
-          signing = f"""
-              signingConfigs {{
-                  release {{
+          signing = """
+              signingConfigs {
+                  release {
                       storeFile file('release.keystore')
-                      storePassword {store_pass!r}
+                      storePassword System.getenv('ANDROID_KEYSTORE_PASS')
                       keyAlias 'cinderfall'
-                      keyPassword {key_pass!r}
-                  }}
-              }}
+                      keyPassword System.getenv('ANDROID_KEY_PASS')
+                  }
+              }
           """
-          src = re.sub(r'(android\s*\{)', r'\1' + signing, src, count=1)
+          src = re.sub(r'(android\s*\{)', lambda m: m.group(1) + signing, src, count=1)
           src = re.sub(
               r'(buildTypes\s*\{\s*release\s*\{)',
-              r'\1\n            signingConfig signingConfigs.release',
+              lambda m: m.group(1) + '\n            signingConfig signingConfigs.release',
               src, count=1,
           )
           open(p, 'w', encoding='utf-8').write(src)
@@ -128,6 +148,9 @@ jobs:
 
       - name: Build release AAB
         working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          ANDROID_KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
         run: ./gradlew bundleRelease --no-daemon
 
       - name: Remove the keystore from the workspace

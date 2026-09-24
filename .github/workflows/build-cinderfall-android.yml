@@ -31,7 +31,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # The action's default package list includes the legacy 'tools'
+      # package, which the SDK repository behind cmdline-tools 16 no longer
+      # carries: sdkmanager exits 1 on it and the job dies in setup. Only
+      # platform-tools is needed here; the next step adds the platform and
+      # build-tools the build uses.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install SDK platform + build-tools
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
@@ -58,8 +65,11 @@ jobs:
       - name: Patch Android theme (dark, edge-to-edge)
         run: node ./scripts/patch-android-theme.mjs
 
-      - name: Patch Android manifest (AdMob test App ID)
-        run: node ./scripts/patch-android-admob.mjs
+      # Debug builds never get the ADMOB_* secrets, so this always writes
+      # Google's test App ID — test ads are what a development build should
+      # show. It also locks the activity to landscape.
+      - name: Patch Android manifest (AdMob test App ID, landscape)
+        run: node ./scripts/patch-android-manifest.mjs
 
       - name: Sync Capacitor
         run: npx cap sync android

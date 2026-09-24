@@ -69,7 +69,10 @@ export const BOSS_DROPS = [
   {
     id: 'boss_kingmaker',
     name: 'KINGMAKER — BLACKOUT BLADE',
-    slot: 'knifeFinish',
+    // The knife's skin slot, same key the loadout lists (meta.js SKIN_SLOTS).
+    // It used to say 'knifeFinish', a pre-per-weapon key no loadout row
+    // offers, so the blade could be won but never equipped.
+    slot: 'skin_knife',
     rarity: 'ultraLimited',
     kind: 'Boss Redeemable',
     tag: 'BOSS',

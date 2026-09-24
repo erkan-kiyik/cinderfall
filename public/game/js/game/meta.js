@@ -103,7 +103,10 @@ export const CATALOG = [
   { id: 'op_vanguard', name: 'VANGUARD OPERATOR', slot: 'operator', rarity: 'legendary', kind: 'Operator', tag: 'BREACHER',
     perk: { maxArmor: 30, maxHp: 25, moveSpeed: -0.04 },
     apply: { type: 'operator', variant: 'vanguard' } },
+  // Mythic is a Trader-shelf tier (see RARITY), so storeOnly keeps it out of
+  // LOOT_POOL — rollCrate never lands on it, and the reel must not show it.
   { id: 'op_sable',   name: 'SABLE OPERATOR',     slot: 'operator', rarity: 'mythic', kind: 'Operator', tag: 'ELITE',
+    storeOnly: true,
     perk: { damage: 0.12, stealth: 0.20, reload: 0.15 },
     apply: { type: 'operator', variant: 'sable' } },
 ];
@@ -141,12 +144,19 @@ const WEAPON_SLOT_LABEL = {
   lightning: 'LIGHTNING', cryo: 'CRYO', flame: 'FLAME',
 };
 
-// One loadout slot per weapon that has skins.
-export const SKIN_SLOTS = Object.keys(WEAPON_SKINS).map((weaponId) => ({
-  key: `skin_${weaponId}`,
-  label: `${WEAPON_SLOT_LABEL[weaponId] || weaponId.toUpperCase()} SKIN`,
-  weaponId,
-}));
+// One loadout slot per weapon that has skins. The weapon's model name is a
+// proper name and stays as-is in every language; the "SKIN" around it is
+// translated through one templated key (`labelVars` fills {weapon}).
+export const SKIN_SLOTS = Object.keys(WEAPON_SKINS).map((weaponId) => {
+  const weapon = WEAPON_SLOT_LABEL[weaponId] || weaponId.toUpperCase();
+  return {
+    key: `skin_${weaponId}`,
+    label: `${weapon} SKIN`,
+    labelKey: 'slot.weaponSkin',
+    labelVars: { weapon },
+    weaponId,
+  };
+});
 
 // ---- weapon loadout: pick which weapon fills each arsenal slot. Only the
 // starter three (below) are owned from the start — every other weapon is

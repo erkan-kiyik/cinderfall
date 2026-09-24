@@ -201,9 +201,9 @@ export class World {
 
   baseColliders() {
     return [
-      { x: -500, y: GROUND_Y, w: MAP_W + 1000, h: 400 },   // ground
-      { x: -60, y: GROUND_Y - 800, w: 60, h: 800 },        // map bounds
-      { x: MAP_W, y: GROUND_Y - 800, w: 60, h: 800 },
+      { x: -500, y: GROUND_Y, w: MAP_W + 1000, h: 400, mat: 'concrete' },   // ground
+      { x: -60, y: GROUND_Y - 800, w: 60, h: 800, mat: 'concrete' },        // map bounds
+      { x: MAP_W, y: GROUND_Y - 800, w: 60, h: 800, mat: 'concrete' },
     ];
   }
 
@@ -228,6 +228,14 @@ export class World {
 
     if (stage <= 1) this.buildLevel();
     else this.buildProceduralLevel(stage);
+
+    // Explosive barrels are placed as they are generated, but props laid down
+    // after them (burn barrels, the fire hazards) can still land on one, so
+    // they are settled once more against the finished collider list.
+    for (const b of this.barrels) {
+      const nx = this.barrelSpot(b.x, b.y, b.col);
+      if (nx !== b.x) { b.col.x += nx - b.x; b.x = nx; }
+    }
 
     this.deriveCoverSpots();
     if (this.decals) this.decals.clear();
@@ -262,6 +270,55 @@ export class World {
     const c = { x: x - w / 2, y: y - h, w, h, mat };
     this.colliders.push(c);
     return c;
+  }
+
+  // An explosive barrel. Solid while it stands: taking cover behind something
+  // that is about to go off is the trade the object exists to offer. Its
+  // collider is dropped in explodeBarrel (main.js).
+  //
+  // The collider carries the barrel back-reference so raycast() reports a hit
+  // on it as the barrel. It used to be tested as a separate, older 16x21 box
+  // after the colliders — a box that sat wholly inside this one, so every ray
+  // stopped on the collider first, came back as plain 'world', and no barrel
+  // could ever be shot.
+  addBarrel(x, y, spr) {
+    x = this.barrelSpot(x, y);
+    const b = { x, y, hp: 30, alive: true, spr, col: null };
+    b.col = this.pushCollider(x, y, BARREL_W, BARREL_H, 'metal');
+    b.col.barrel = b;
+    this.barrels.push(b);
+    return b;
+  }
+
+  // Where a barrel asked for at `x` actually stands: the nearest spot that
+  // overlaps no other collider and has open ground on at least one side, so
+  // there is a line to it from somewhere a player can stand.
+  //
+  // Barrel positions were written before the cover props were scaled up, and
+  // the procedural ones are dropped within 60px of a cover cluster's centre.
+  // Measured on stage 1, two of the five sat inside a crate stack and a
+  // container (drawn on top of them, unreachable from every angle) and a third
+  // was wedged between two taller props; procedural stages did the same to
+  // any barrel that landed on a container. A hazard nobody can shoot is
+  // scenery.
+  barrelSpot(x, y, self = null) {
+    const half = BARREL_W / 2;
+    const OPEN = 90;   // px of clear approach needed on the open side
+    // Colliders that share the barrel's height band, other than the barrel's
+    // own; the street itself is excluded because it starts at y.
+    const band = this.colliders.filter((c) => c !== self && c.y < y && c.y + c.h > y - BARREL_H);
+    const hits = (x0, x1, minH) => band.some((c) => c.x < x1 && c.x + c.w > x0 && y - c.y > minH);
+    const clear = (cx) => !hits(cx - half, cx + half, 0);
+    const open = (cx) => !hits(cx - half - OPEN, cx - half, BARREL_H * 0.8) ||
+                         !hits(cx + half, cx + half + OPEN, BARREL_H * 0.8);
+    let fallback = null;
+    for (let k = 0; k <= 80; k++) {
+      const cx = x + (k & 1 ? 1 : -1) * Math.ceil(k / 2) * 8;
+      if (cx < 80 || cx > MAP_W - 80 || !clear(cx)) continue;
+      if (open(cx)) return cx;
+      if (fallback === null) fallback = cx;
+    }
+    return fallback === null ? x : fallback;
   }
 
   removeCollider(c) {
@@ -361,15 +418,13 @@ export class World {
     P(env.crate(22, 16, OB_SCALE), 1140, GY - 40);   // crates up on the dock
     this.solidProp(env.barrel('rust', BARREL_SCALE), 1210, GY - 40, BARREL_W, BARREL_H, 'metal');
 
-    // explosive barrels (entities — shootable)
-    for (const bx of [1685, 2620, 3260]) {
-      this.barrels.push({
-        x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE),
-        // Solid while it stands: taking cover behind something that is about
-        // to go off is the trade the object exists to offer. Dropped in
-        // explodeBarrel — see main.js.
-        col: this.pushCollider(bx, GY, BARREL_W, BARREL_H, 'metal'),
-      });
+    // explosive barrels (entities — shootable). Positions measured, not
+    // guessed: 1685/2620/3260 sat in a pocket between two taller props, inside
+    // a crate stack and inside a container once the cover art was scaled up,
+    // and could not be hit from anywhere. Each of these is clear, backs onto
+    // cover, and is reachable from ~40-60% of standing shooter positions.
+    for (const bx of [2060, 2540, 3332]) {
+      this.addBarrel(bx, GY, env.barrel('red', BARREL_SCALE));
     }
 
     // burn barrel: painted barrel + fire emitter + strong flicker light
@@ -440,13 +495,7 @@ export class World {
       S(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y);
     }
     for (const bx of [5320, 6340]) {
-      this.barrels.push({
-        x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE),
-        // Solid while it stands: taking cover behind something that is about
-        // to go off is the trade the object exists to offer. Dropped in
-        // explodeBarrel — see main.js.
-        col: this.pushCollider(bx, GY, BARREL_W, BARREL_H, 'metal'),
-      });
+      this.addBarrel(bx, GY, env.barrel('red', BARREL_SCALE));
     }
     this.emitters.push({ kind: 'chimney', x: 5500, y: GY - 275, tint: 'soot', rate: 0.3, t: 0.45 });
     this.emitters.push({ kind: 'chimney', x: 6700, y: GY - 245, tint: 'steam', rate: 0.28, t: 0.6 });
@@ -531,13 +580,7 @@ export class World {
     const barrelCount = rng.int(2, 4);
     for (let i = 0; i < barrelCount; i++) {
       const bx = clusters[rng.int(0, clusters.length - 1)] + rng.range(-60, 60);
-      this.barrels.push({
-        x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE),
-        // Solid while it stands: taking cover behind something that is about
-        // to go off is the trade the object exists to offer. Dropped in
-        // explodeBarrel — see main.js.
-        col: this.pushCollider(bx, GY, BARREL_W, BARREL_H, 'metal'),
-      });
+      this.addBarrel(bx, GY, env.barrel('red', BARREL_SCALE));
     }
 
     // -- street lamps --
@@ -727,10 +770,23 @@ export class World {
   }
 
   // segment raycast vs colliders + explosive barrels
+  //
+  // A segment that STARTS inside a box hits that box at t=0. The slab test
+  // alone reports tmin = 0 there, and this used to skip it (`tmin > 0`), so a
+  // muzzle pressed into cover, or a bolt spawned inside it, went straight
+  // through the one thing between the shooter and the target.
   raycast(x0, y0, x1, y1) {
     let best = null, bestT = 1;
     const dx = x1 - x0, dy = y1 - y0;
     const testRect = (rx, ry, rw, rh, tag, ref, mat) => {
+      if (x0 > rx && x0 < rx + rw && y0 > ry && y0 < ry + rh) {
+        if (bestT > 0 || !best) {
+          const alongX = Math.abs(dx) >= Math.abs(dy);
+          bestT = 0;
+          best = { x: x0, y: y0, nx: alongX ? -Math.sign(dx) : 0, ny: alongX ? 0 : -Math.sign(dy), tag, ref, mat, t: 0 };
+        }
+        return;
+      }
       let tmin = 0, tmax = 1, nx = 0, ny = 0;
       for (let axis = 0; axis < 2; axis++) {
         const o = axis ? y0 : x0, d = axis ? dy : dx;
@@ -748,18 +804,18 @@ export class World {
         best = { x: x0 + dx * tmin, y: y0 + dy * tmin, nx, ny, tag, ref, mat, t: tmin };
       }
     };
-    // `mat` picks the impact particle recipe (FX.impactWall). Colliders without
-    // one — the ground plane and the map bounds — fall back to concrete.
-    for (const c of this.colliders) testRect(c.x, c.y, c.w, c.h, 'world', c, c.mat || 'concrete');
-    for (const b of this.barrels) {
-      if (b.alive) testRect(b.x - 8, b.y - 21, 16, 21, 'barrel', b, 'metal');
+    // `mat` picks the impact particle recipe (FX.impactWall). A standing
+    // explosive barrel's collider reports as the barrel (see addBarrel).
+    for (const c of this.colliders) {
+      if (c.barrel) testRect(c.x, c.y, c.w, c.h, 'barrel', c.barrel, 'metal');
+      else testRect(c.x, c.y, c.w, c.h, 'world', c, c.mat || 'concrete');
     }
     return best;
   }
 
+  // A barrel is full-size solid cover now, so it blocks sight like any other.
   hasLineOfSight(x0, y0, x1, y1) {
-    const hit = this.raycast(x0, y0, x1, y1);
-    return !hit || hit.tag === 'barrel';
+    return !this.raycast(x0, y0, x1, y1);
   }
 
   // ---------------- pickups ----------------
@@ -851,7 +907,7 @@ export class World {
     for (; x < vw; x += w) g.drawImage(img, x, y, w, h);
   }
 
-  drawBackground(g, cam, vw, vh, time) {
+  drawBackground(g, cam, vw, vh, time, dpr = 1) {
     const z = cam.zoom;
     const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
     // The sky is a 1600x900 painting stretched over the viewport, redrawn
@@ -859,8 +915,10 @@ export class World {
     // a second before anything else has drawn — it measured as the single
     // most expensive blit in the background pass. It only ever depends on the
     // viewport, so it is rescaled once per resize into a canvas the exact size
-    // of the frame and copied 1:1 from then on.
-    g.drawImage(this._skyFor(vw, vh), 0, 0);
+    // of the frame in device pixels and copied 1:1 from then on. (Baked at CSS
+    // size, it was still resampled by `dpr` every frame under the scene
+    // transform, and softer than the canvas it was drawn into.)
+    g.drawImage(this._skyFor(vw * dpr, vh * dpr), 0, 0, vw, vh);
     if (this.weather === 'overcast' || this.weather === 'rain') {
       g.fillStyle = 'rgba(60,64,72,0.22)';
       g.fillRect(0, 0, vw, vh * 0.7);
@@ -898,20 +956,22 @@ export class World {
     tile(this.bg.haze, -(cam.x * 0.55 + time * 7), groundY - HAZE_FLOOR - this.bg.haze.height * hs, hs);
 
     // cool fog settling at street level
-    // Both this and the atmospheric body below are anchored to groundY, which
-    // moves with the camera — but only by whole pixels, and a gradient rebuilt
-    // for a two-pixel shift is two CanvasGradient allocations a frame in the
-    // hottest loop in the game. Cached against the value they are built from
-    // and rebuilt only when it actually changes.
-    if (this._fogY !== groundY) {
-      this._fogY = groundY;
-      this._fogGrad = lingrad(g, 0, groundY - 150, 0, groundY + 30, [
+    // Both this and the atmospheric body below are anchored to the horizon,
+    // which moves with the camera. The camera eases, so the raw value changes
+    // by a fraction of a pixel on every frame it is moving, and a cache keyed
+    // on it rebuilt two CanvasGradients a frame in the hottest loop in the
+    // game. Both gradients are soft over 150+ px; they follow the horizon in
+    // whole pixels, and are rebuilt only when that actually changes.
+    const fogY = Math.round(groundY);
+    if (this._fogY !== fogY) {
+      this._fogY = fogY;
+      this._fogGrad = lingrad(g, 0, fogY - 150, 0, fogY + 30, [
         [0, 'rgba(150,155,175,0)'], [0.8, 'rgba(150,150,168,0.13)'], [1, 'rgba(150,150,168,0.05)'],
       ]);
       this._atmosGrad = null;
     }
     g.fillStyle = this._fogGrad;
-    g.fillRect(0, groundY - 150, vw, 190);
+    g.fillRect(0, fogY - 150, vw, 190);
 
     this.drawWeather(g, cam, vw, vh, time);
 
@@ -920,7 +980,7 @@ export class World {
     // not just as dimness.
     if (!this._atmosGrad || this._atmosVh !== vh) {
       this._atmosVh = vh;
-      this._atmosGrad = lingrad(g, 0, groundY - vh, 0, groundY + 40, [
+      this._atmosGrad = lingrad(g, 0, fogY - vh, 0, fogY + 40, [
         [0, 'rgba(96,116,150,0.05)'],
         [0.55, 'rgba(112,132,164,0.17)'],
         [0.88, 'rgba(126,144,172,0.30)'],
@@ -928,7 +988,7 @@ export class World {
       ]);
     }
     g.fillStyle = this._atmosGrad;
-    g.fillRect(0, 0, vw, groundY + 40);
+    g.fillRect(0, 0, vw, fogY + 40);
 
     // ---- TimeShift wash + night scrim, as ONE fill ----
     // The whole backdrop is repainted toward the hour of day, then pushed down
@@ -985,9 +1045,13 @@ export class World {
     const w = this.weather;
     if (w === 'clear') return;
     if (w === 'fog') {
-      g.fillStyle = lingrad(g, 0, vh * 0.2, 0, vh, [
-        [0, 'rgba(150,158,172,0.06)'], [1, 'rgba(158,166,180,0.30)'],
-      ]);
+      if (this._weatherFogVh !== vh) {
+        this._weatherFogVh = vh;
+        this._weatherFog = lingrad(g, 0, vh * 0.2, 0, vh, [
+          [0, 'rgba(150,158,172,0.06)'], [1, 'rgba(158,166,180,0.30)'],
+        ]);
+      }
+      g.fillStyle = this._weatherFog;
       g.fillRect(0, 0, vw, vh);
       return;
     }
@@ -1143,12 +1207,15 @@ export class World {
     for (const s of this.shafts) {
       if (!visible(s.x)) continue;
       const h = GROUND_Y - s.y;
-      const grad = lingrad(g, 0, s.y, 0, GROUND_Y, [
-        [0, `rgba(255,214,158,${SHAFT_ALPHA})`],
-        [0.55, `rgba(255,206,150,${SHAFT_ALPHA * 0.42})`],
-        [1, 'rgba(255,200,145,0)'],
-      ]);
-      g.fillStyle = grad;
+      // World-space and fixed for the shaft's life: built once, not per frame.
+      if (!s._grad) {
+        s._grad = lingrad(g, 0, s.y, 0, GROUND_Y, [
+          [0, `rgba(255,214,158,${SHAFT_ALPHA})`],
+          [0.55, `rgba(255,206,150,${SHAFT_ALPHA * 0.42})`],
+          [1, 'rgba(255,200,145,0)'],
+        ]);
+      }
+      g.fillStyle = s._grad;
       g.beginPath();
       g.moveTo(s.x - SHAFT_TOP_W / 2, s.y);
       g.lineTo(s.x + SHAFT_TOP_W / 2, s.y);

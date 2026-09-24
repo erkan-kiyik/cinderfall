@@ -4,6 +4,7 @@
 import { K, burstSparks, puffSmoke, kickDust } from '../engine/particles.js';
 import { rand, randSpread, clamp } from '../engine/math.js';
 import { segVsBox } from './player.js';
+import { hitBox, isHeadHit } from './hitbox.js';
 
 // Blade trail tuning. TRAIL_LIFE is how long a sampled point survives (the
 // ribbon's length in time), TRAIL_GAP how long without a new sample before the
@@ -58,6 +59,8 @@ const MATERIALS = {
     light: null, lightR: 0, lightA: 0,
   },
 };
+// Unknown `mat` names already reported, so each warns once — see impactWall.
+const warnedMats = new Set();
 
 export class FX {
   constructor(particles, audio, camera, world) {
@@ -139,10 +142,15 @@ export class FX {
 
   // ---- impacts ----
   // `mat` names the surface struck — see MATERIALS. Callers pass the hit's
-  // material straight through from the raycast; anything unrecognised falls
-  // back to concrete, which is what the old single recipe approximated.
+  // material straight through from the raycast, and every collider declares
+  // one. An unknown name still renders (as concrete) but says so once, so a
+  // mistyped tag shows up as a warning instead of passing as the default.
   impactWall(x, y, nx, ny, mat = 'concrete') {
-    const m = MATERIALS[mat] || MATERIALS.concrete;
+    let m = MATERIALS[mat];
+    if (!m) {
+      if (!warnedMats.has(mat)) { warnedMats.add(mat); console.warn(`[fx] unknown impact material "${mat}"`); }
+      m = MATERIALS.concrete; mat = 'concrete';
+    }
     const ang = Math.atan2(ny, nx);
     // sparks fly back along the surface normal, away from the impact
     if (m.sparks) burstSparks(this.ps, x + nx * 2, y + ny * 2, ang, m.sparks, m.sparkSpread, m.sparkSpeed);
@@ -162,7 +170,7 @@ export class FX {
     // metal rings and jumps, wood is in between.
     this.world.nudgeProp(x, y, -nx, -ny, m.kick);
     this.world.bulletHole(x, y);
-    this.audio.impact();
+    this.audio.impact(mat);
   }
 
   blood(x, y, dirX) {
@@ -383,14 +391,14 @@ export class FX {
       let hitEnemy = null;
       for (const e of enemies) {
         if (e.deadT > 0 || pr.hitSet.has(e)) continue;
-        const hs = e.hitboxScale || 1;
-        const t = segVsBox(pr.px, pr.py, dx, dy, e.x - 14 * hs, e.y - 134 * hs, 28 * hs, 134 * hs);
+        const b = hitBox(e);
+        const t = segVsBox(pr.px, pr.py, dx, dy, b.x, b.y, b.w, b.h);
         if (t !== null && t < bestT) { bestT = t; hitEnemy = e; }
       }
 
       if (hitEnemy) {
         const hx = pr.px + dx * bestT, hy = pr.py + dy * bestT;
-        const headshot = hy < hitEnemy.y - 108 * (hitEnemy.hitboxScale || 1);
+        const headshot = isHeadHit(hitEnemy, hy);
         this._dealDamage(hitEnemy, pr.dmg * (headshot ? pr.headMul : 1), Math.sign(pr.vx) || 1, hx, hy, headshot);
         this.energyImpact(hx, hy, pr.color, pr.blast);
         if (pr.blast > 0 && g) this._splash(pr, hx, hy);

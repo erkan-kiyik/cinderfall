@@ -183,7 +183,22 @@ class AudioSys {
     this._tone({ freq: 220, f1: 90, dur: 0.16, gain: 0.22, type: 'sawtooth' });
     this._noise({ dur: 0.12, gain: 0.18, f0: 800, f1: 200 });
   }
-  impact() { this._noise({ dur: 0.06, gain: 0.14, f0: 2400, f1: 700 }); }
+  // A round striking the world, voiced by what it struck (colliders carry a
+  // `mat`; see FX.impactWall). Metal rings, wood knocks, sand swallows the
+  // round, and concrete keeps the dry crack that used to stand in for all four.
+  impact(mat = 'concrete') {
+    if (mat === 'metal') {
+      this._noise({ dur: 0.05, gain: 0.12, f0: 5200, f1: 1800 });
+      this._tone({ freq: 1700 + Math.random() * 600, f1: 1400, dur: 0.14, gain: 0.05, type: 'triangle' });
+    } else if (mat === 'wood') {
+      this._noise({ dur: 0.07, gain: 0.15, f0: 1300, f1: 380 });
+      this._tone({ freq: 230, f1: 140, dur: 0.06, gain: 0.08, type: 'triangle' });
+    } else if (mat === 'sand') {
+      this._noise({ dur: 0.08, gain: 0.12, f0: 650, f1: 200 });
+    } else {
+      this._noise({ dur: 0.06, gain: 0.14, f0: 2400, f1: 700 });
+    }
+  }
 
   explosion() {
     this._noise({ dur: 1.1, gain: 0.9, f0: 1500, f1: 60 });
