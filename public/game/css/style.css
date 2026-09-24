@@ -1322,7 +1322,8 @@ html, body {
 /* Drawn at 29px so a claimable card is not taller than its neighbours; the
    invisible expander takes the target to 45 over the card's own padding and
    the progress caption above it, neither of which is a control. */
-.achievement-claim-btn::before { content: ''; position: absolute; inset: -8px 0; }
+/* -9, not -8: the inset is measured from inside .btn's 1px border. */
+.achievement-claim-btn::before { content: ''; position: absolute; inset: -9px 0; }
 
 /* bottom tab bar */
 .home-tabs {
@@ -2722,9 +2723,13 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
     grid-column: 2; grid-row: 3;
     gap: var(--s1); padding: 0 var(--s3) env(safe-area-inset-bottom);
     padding-right: calc(var(--s3) + env(safe-area-inset-right));
-    border-left: 1px solid var(--line);
+    border-inline-start: 1px solid var(--line);
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
   }
+  /* Under rtl the grid mirrors and the links sit at the left edge, so the
+     notch padding swaps sides with them. */
+  :root[dir="rtl"] .home-tabs { padding-left: 0; padding-right: env(safe-area-inset-right); }
+  :root[dir="rtl"] .home-legal { padding-right: var(--s3); padding-left: calc(var(--s3) + env(safe-area-inset-left)); }
 }
 /* On the phone the version tag is the first thing to go. */
 @media (orientation: landscape) and (max-height: 500px) {
