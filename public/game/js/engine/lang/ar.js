@@ -531,6 +531,10 @@ export const AR = {
   'loading.optics': 'جارٍ معايرة المناظير…',
   'loading.ready': 'جاهز',
   'notify.levelBuff': '(+{hp} صحة، +{dmg}% ضرر)',
+  // desktop HUD weapon-slot chips (slot 2 reuses slot.sidearm)
+  'hud.slot.rifle': 'البندقية',
+  'hud.slot.knife': 'السكين',
+  'hud.slot.smg': 'الرشاش',
   'ach.first_blood.name': 'الدم الأول',
   'ach.first_blood.desc': 'أسقِط أول عدو لك.',
   'ach.window_shopper.name': 'مجرد نظرة',

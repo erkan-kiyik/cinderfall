@@ -588,7 +588,7 @@ html, body {
      (see "Modal panels on a short screen"), but if one ever does not, the
      overlay scrolls instead of clipping its title off the top and its way
      out off the bottom. */
-  overflow-y: auto; overscroll-behavior: contain;
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
 }
 /* Auto margins, not align-items, do the centring: once a panel is taller
    than the overlay they collapse to zero and the panel starts at the top,
@@ -2543,8 +2543,13 @@ html.no-backdrop-filter .bark { background: rgba(11, 14, 19, 0.94); }
    "inspect" — the card's job is "equip" — but the whole name plate and the
    left of the art still equip, and a target narrower than a fingertip is
    one the player misses and then equips by accident. Sized in px, not by
-   --ui-scale: a finger does not shrink with the screen. */
-.item-info::before { content: ''; position: absolute; top: -2px; right: -2px; width: 44px; height: 44px; }
+   --ui-scale: a finger does not shrink with the screen. 46 rather than 44
+   so rounding at fractional scales never lands it a pixel short. */
+.item-info::before {
+  content: ''; position: absolute; width: 46px; height: 46px;
+  /* offsets undo the dot's own inset, so the square starts at the card corner */
+  top: calc(-2px * var(--ui-scale)); right: calc(-2px * var(--ui-scale));
+}
 /* The single most important control on the trader screen was the smallest one
    on it. This grows upward into the card's price line, which is text, not
    another target — nothing is taken away from anything. */

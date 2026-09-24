@@ -521,6 +521,10 @@ export const RU = {
   'loading.optics': 'КАЛИБРОВКА ОПТИКИ…',
   'loading.ready': 'ГОТОВО',
   'notify.levelBuff': '(+{hp} ОЗ, +{dmg}% УРОНА)',
+  // desktop HUD weapon-slot chips (slot 2 reuses slot.sidearm)
+  'hud.slot.rifle': 'ВИНТОВКА',
+  'hud.slot.knife': 'НОЖ',
+  'hud.slot.smg': 'ПП',
   'ach.first_blood.name': 'ПЕРВАЯ КРОВЬ',
   'ach.first_blood.desc': 'Уничтожь первого противника.',
   'ach.window_shopper.name': 'ПРОСТО ПОСМОТРЕТЬ',

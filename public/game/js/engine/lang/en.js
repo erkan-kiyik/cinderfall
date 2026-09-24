@@ -519,6 +519,10 @@ export const EN = {
   'loading.optics': 'CALIBRATING OPTICS…',
   'loading.ready': 'READY',
   'notify.levelBuff': '(+{hp} HP, +{dmg}% DMG)',
+  // desktop HUD weapon-slot chips (slot 2 reuses slot.sidearm)
+  'hud.slot.rifle': 'RIFLE',
+  'hud.slot.knife': 'KNIFE',
+  'hud.slot.smg': 'SMG',
   'ach.first_blood.name': 'FIRST BLOOD',
   'ach.first_blood.desc': 'Eliminate your first hostile.',
   'ach.window_shopper.name': 'WINDOW SHOPPER',

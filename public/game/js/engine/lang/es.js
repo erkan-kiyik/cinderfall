@@ -518,6 +518,10 @@ export const ES = {
   'loading.optics': 'CALIBRANDO MIRAS…',
   'loading.ready': 'LISTO',
   'notify.levelBuff': '(+{hp} PS, +{dmg} % DAÑO)',
+  // desktop HUD weapon-slot chips (slot 2 reuses slot.sidearm)
+  'hud.slot.rifle': 'FUSIL',
+  'hud.slot.knife': 'CUCHILLO',
+  'hud.slot.smg': 'SUBFUSIL',
   'ach.first_blood.name': 'PRIMERA SANGRE',
   'ach.first_blood.desc': 'Elimina a tu primer enemigo.',
   'ach.window_shopper.name': 'MIRANDO ESCAPARATES',

@@ -521,6 +521,10 @@ export const TR = {
   'loading.optics': 'NİŞANGÂHLAR AYARLANIYOR…',
   'loading.ready': 'HAZIR',
   'notify.levelBuff': '(+{hp} CAN, +%{dmg} HASAR)',
+  // desktop HUD weapon-slot chips (slot 2 reuses slot.sidearm)
+  'hud.slot.rifle': 'TÜFEK',
+  'hud.slot.knife': 'BIÇAK',
+  'hud.slot.smg': 'MAKİNELİ',
   'ach.first_blood.name': 'İLK KAN',
   'ach.first_blood.desc': 'İlk düşmanını etkisiz hâle getir.',
   'ach.window_shopper.name': 'VİTRİN GEZGİNİ',

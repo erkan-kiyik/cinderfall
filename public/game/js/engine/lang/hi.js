@@ -519,6 +519,10 @@ export const HI = {
   'loading.optics': 'स्कोप कैलिब्रेट हो रहे हैं…',
   'loading.ready': 'तैयार',
   'notify.levelBuff': '(+{hp} जीवन, +{dmg}% नुक़सान)',
+  // desktop HUD weapon-slot chips (slot 2 reuses slot.sidearm)
+  'hud.slot.rifle': 'राइफ़ल',
+  'hud.slot.knife': 'चाकू',
+  'hud.slot.smg': 'SMG',
   'ach.first_blood.name': 'पहला ख़ून',
   'ach.first_blood.desc': 'अपना पहला दुश्मन ढेर करें।',
   'ach.window_shopper.name': 'बस देख रहे हैं',
