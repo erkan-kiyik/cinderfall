@@ -484,6 +484,7 @@ export class Player {
 
     this.fireCd = 0;
     this.pullBufT = 0;        // held semi-auto pull, see PULL_BUFFER_T
+    this.lungeT = 0; this.lungeV = 0;   // knife strike step, see updateKnife
     this.recoilAccum = 0;
     // Accumulated muzzle climb from the spray pattern, in radians. Rides on
     // top of the aim (never replaces it) and decays back to zero between
@@ -643,6 +644,11 @@ export class Player {
       this.vx = this.vx > target
         ? Math.max(target, this.vx - rate * dt)
         : Math.min(target, this.vx + rate * dt);
+      // A knife strike's lunge holds its speed for its short window.
+      if (this.lungeT > 0) {
+        this.lungeT -= dt;
+        if (this.stunT <= 0 && this.vx * Math.sign(this.lungeV) < Math.abs(this.lungeV)) this.vx = this.lungeV;
+      }
     }
 
     // ---- vault ----
@@ -868,7 +874,11 @@ export class Player {
     let best = null, bestD = Infinity;
     for (const e of enemies) {
       if (!e || e.deadT > 0) continue;
-      if (e.awareness > 0.45) continue;
+      // A searching hostile is hunting a last-known position, and holds its
+      // awareness at the alert level while it does (Enemy.updateAwareness),
+      // so the awareness gate would make every searcher immune. What matters
+      // there is the from-behind check below.
+      if (e.awareness > 0.45 && e.state !== 'search') continue;
       if (e.state === 'alert' || e.state === 'combat' || e.state === 'retreat') continue;
       const dx = e.x - this.x;
       const dist = Math.abs(dx);
@@ -1884,10 +1894,14 @@ export class Player {
           s.sounded = true;
           this.audio.swish(s.heavy);
           this.fx.slash(this.x, this.y - 92, back * 0.8, fwd * 0.8, s.heavy ? 52 : 44, this.facing);
-          // Both strikes step into the cut (spec §8.4); the quick one only
-          // got a lunge on the heavy. Smaller, so a flurry does not walk the
-          // operator across the room.
-          this.vx += this.facing * (s.heavy ? 260 : 100);
+          // Both strikes step into the cut (spec §8.4); the quick one's is
+          // smaller, so a flurry does not walk the operator across the room.
+          // Held as a speed floor for the strike window (see the movement
+          // block) rather than added once: as a one-frame impulse the ground
+          // DECEL ate it at once — 0.4px of travel on a quick strike, 5.7 on
+          // a heavy. Now about 10 and 36.
+          this.lungeV = this.facing * (s.heavy ? 260 : 110);
+          this.lungeT = s.heavy ? 0.14 : 0.09;
         }
         if (!s.hitDone && e > 0.35) {
           s.hitDone = true;
