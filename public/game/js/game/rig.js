@@ -187,8 +187,9 @@ export function computePose(ent) {
   const mv = clamp(sp * 5, 0, 1);
 
   const breath = Math.sin(ent.breathT * 1.8) * (1 - sp * 0.7);
-  // Footing irregularity the Player integrates (see gaitNoise there); zero
-  // for entities that don't track it, so hostiles keep the tidy cycle.
+  // Footing irregularity each walker integrates with its own seed (see
+  // gaitNoise in player.js and enemy.js); zero for anything that doesn't
+  // track it, such as the menu previews.
   const noise = (ent.gaitNoise || 0) * (1 - air);
 
   // Vertical bob. Real gait is not symmetric: the body rises less over the
@@ -196,7 +197,12 @@ export function computePose(ent) {
   // different amplitude. WEIGHT_BIAS is what stops the walk reading as a
   // two-frame piston loop.
   const stride = Math.sin(ent.gaitPhase);
-  const strideSide = Math.sin(ent.gaitPhase * 0.5);          // −1..1, one full stride
+  // +1 at the middle of leg 0's swing, −1 at leg 1's: one cycle per full
+  // stride (both steps). This was sin(gaitPhase * 0.5), which repeats every
+  // TWO strides and reads the same at both legs' mid-swing (π/2 and 3π/2 give
+  // 0.707 each), so the weight bias, sway, list and counter-rotation below
+  // treated left and right steps identically and only alternated per stride.
+  const strideSide = Math.sin(ent.gaitPhase);
   const bobAmp = 3.1 * (1 + WEIGHT_BIAS * strideSide);
   const bob = Math.abs(stride) * bobAmp * sp * (1 - air) + noise * 0.9;
 
@@ -211,7 +217,7 @@ export function computePose(ent) {
   // to each other and neither is ever paying for the other. Two incommensurate
   // periods (0.62 and 0.41) keep the loop from reading as a loop.
   // Weapon bulk, relative to the rifle. Entities that never declare one (the
-  // hostiles, the menu previews) sit exactly at neutral and are unaffected.
+  // menu previews) sit exactly at neutral and are unaffected.
   const bulk = ent.weaponBulk === undefined ? BULK_NEUTRAL : ent.weaponBulk;
   const bulkD = bulk - BULK_NEUTRAL;
   // A braced weapon steadies the operator: the idle layer is damped in
@@ -626,8 +632,8 @@ function drawBody(g, parts, ent, weapon) {
   g.scale(ent.facing, 1);
 
   // Squash & stretch, anchored at the feet (local origin) so the operator
-  // never sinks into or floats above the street. Entities that don't set
-  // these (hostiles) are untouched.
+  // never sinks into or floats above the street. The player and hostiles both
+  // set these; anything that doesn't (menu previews) is untouched.
   if (ent.squashX !== undefined && (ent.squashX !== 1 || ent.squashY !== 1)) {
     g.scale(ent.squashX, ent.squashY);
   }

@@ -103,13 +103,35 @@ function encode(n, len) {
 }
 
 // One checksum character over the payload. Catches every single-character
-// typo and every transposition of adjacent characters.
-function checkChar(payload) {
-  let sum = 0;
-  for (let i = 0; i < payload.length; i++) {
-    sum += (ALPHABET.indexOf(payload[i]) + 1) * (i + 2);
+// typo and every transposition of adjacent characters, checksum included.
+//
+// It is computed in GF(32), not as a weighted sum mod 32. The alphabet is 32
+// symbols, so each character is a 5-bit field element, and the check is the
+// XOR of w_i * c_i with the field's own multiply. A single substitution adds
+// w_i * e, which is never zero for a non-zero error e; swapping neighbours
+// adds (w_i + w_i+1) * (c_i + c_i+1), which is never zero for distinct weights
+// and distinct characters; and no weight is 1, so swapping the last payload
+// character with the check character is caught too. The mod-32 sum this
+// replaced used weights 2..6, and the even ones let an index change of 16
+// (or 8, or 24) cancel out: about 1 in 37 single typos still validated.
+function gfMul(a, b) {
+  let r = 0;
+  while (b) {
+    if (b & 1) r ^= a;
+    b >>= 1;
+    a <<= 1;
+    if (a & 32) a ^= 0b100101;   // reduce by x^5 + x^2 + 1 (primitive)
   }
-  return ALPHABET[sum % ALPHABET.length];
+  return r;
+}
+
+function checkChar(payload) {
+  let sum = 0, w = 1;
+  for (let i = 0; i < payload.length; i++) {
+    w = gfMul(w, 2);   // weights are successive powers of the generator: 2, 4, 8, 16, 5
+    sum ^= gfMul(w, ALPHABET.indexOf(payload[i]));
+  }
+  return ALPHABET[sum];
 }
 
 function build(payloadNum) {
