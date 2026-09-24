@@ -46,7 +46,60 @@
 //      are now accumulated and applied once per frame.
 
 import { AIM_REACH, shrinkToView } from './input.js';
-import { t } from './i18n.js';
+import { t, onLangChange } from './i18n.js';
+
+// ---- label fit ----
+// The buttons are small circles, their labels come from the dictionaries, and
+// several languages have no short word for these actions: ПЕРЕЗАРЯДКА is 84px
+// of type at the default size, on a 54px button. A label may take two lines,
+// broken at a space or at a soft hyphen the translation provides (see the
+// ctrl.* entries), and its type steps down to a legible floor until the wider
+// line fits. Measured with canvas text metrics rather than layout, so a button
+// that is hidden right now (HEAVY, until the knife is out) is fitted too.
+const LABEL_FLOOR_PX = 7;
+const LABEL_ROOM = 0.78;     // share of the diameter a line may use
+let labelCtx = null;
+
+// Every way to set `text` on one line or two.
+function labelLayouts(text) {
+  const strip = (x) => x.replace(/\u00AD/g, '');
+  const out = [[strip(text)]];
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c !== ' ' && c !== '\u00AD') continue;
+    const a = strip(text.slice(0, i)) + (c === '\u00AD' ? '-' : '');
+    const b = strip(text.slice(i + 1));
+    if (a.trim() && b.trim()) out.push([a, b]);
+  }
+  return out;
+}
+
+function fitLabel(btn, diameter) {
+  btn.style.fontSize = '';
+  btn.style.letterSpacing = '';
+  const text = btn.textContent.trim();
+  if (!text || !(diameter > 0)) return;
+  const cs = getComputedStyle(btn);
+  const base = parseFloat(cs.fontSize);
+  const track = (parseFloat(cs.letterSpacing) || 0) / base;   // 'normal' -> 0
+  labelCtx = labelCtx || document.createElement('canvas').getContext('2d');
+  const room = diameter * LABEL_ROOM;
+  const layouts = labelLayouts(text);
+  const widest = (lines, px, em) => {
+    labelCtx.font = `${cs.fontWeight} ${px}px ${cs.fontFamily}`;
+    let w = 0;
+    for (const l of lines) w = Math.max(w, labelCtx.measureText(l).width + em * px * l.length);
+    return w;
+  };
+  for (let px = base; px >= LABEL_FLOOR_PX; px -= 0.5) {
+    // tracking is the first thing a shrinking label gives up
+    const em = px < base ? Math.min(track, 0.04) : track;
+    if (layouts.some((lines) => widest(lines, px, em) <= room) || px - 0.5 < LABEL_FLOOR_PX) {
+      if (px < base) { btn.style.fontSize = `${px}px`; btn.style.letterSpacing = `${em}em`; }
+      return;
+    }
+  }
+}
 
 const isTouch = () =>
   (typeof window !== 'undefined') &&
@@ -142,7 +195,7 @@ export class TouchControls {
     // event. It only changes on resize, so it is read there instead.
     this.vw = window.innerWidth;
     this.vh = window.innerHeight;
-    this._onResize = () => { this.vw = window.innerWidth; this.vh = window.innerHeight; };
+    this._onResize = () => { this.vw = window.innerWidth; this.vh = window.innerHeight; this.fitLabels(); };
     window.addEventListener('resize', this._onResize);
     window.addEventListener('orientationchange', this._onResize);
 
@@ -189,6 +242,19 @@ export class TouchControls {
     this.bindButton('tc-takedown', () => this.press('KeyE'));
     this.bindButton('tc-pause', () => this.press('Escape'));
     this.mountHeavy();
+    onLangChange(() => this.fitLabels());
+    this.fitLabels();
+  }
+
+  // Fits every round button's label (see fitLabel). Needs the layer on screen
+  // to know the diameter, which the CSS sets from the viewport; a button
+  // hidden right now borrows it from one that is not.
+  fitLabels() {
+    if (!this.el || !this.visible) return;
+    const btns = [...this.el.querySelectorAll('.tc-btn:not(.tc-takedown)')];
+    const shown = btns.find((b) => b.offsetWidth > 0 && !b.classList.contains('tc-pause'));
+    const fallback = shown ? shown.offsetWidth : 0;
+    for (const b of btns) fitLabel(b, b.offsetWidth || fallback);
   }
 
   // Heavy strike (knife only) — right-click on a mouse, RB on a pad, and until
@@ -394,6 +460,7 @@ export class TouchControls {
     if (next === this.visible) return;
     this.visible = next;
     if (this.el) this.el.classList.toggle('on', this.visible);
+    this.fitLabels();
     // Reset in BOTH directions. Pausing mid-firefight hides the layer while a
     // thumb is still down, and the pause overlay swallows the pointerup — so
     // without a reset on the way back in, resuming would hand the player a

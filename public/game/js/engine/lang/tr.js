@@ -37,8 +37,8 @@ export const TR = {
   'ctrl.weapons': 'SİLAHLAR',
   'ctrl.heavyMelee': 'AĞIR VURUŞ',
   'ctrl.heavy': 'AĞIR',
-  'ctrl.pause': 'DURAKLAT',
-  'ctrl.swap': 'DEĞİŞTİR',
+  'ctrl.pause': 'DURAK\u00ADLAT',
+  'ctrl.swap': 'DEĞİŞ\u00ADTİR',
 
   // ---- loadout ----
   'loadout.title': 'TEÇHİZAT',
