@@ -3,16 +3,18 @@
 // Progression — this module never stores anything itself besides the
 // achievements' claimed flag (on Progression).
 
-import { ACHIEVEMENTS, TIERS, achievementProgress, drawAchievementIcon } from './achievements.js';
+import { ACHIEVEMENTS, TIERS, achievementProgress, drawAchievementIcon, achievementName, achievementDesc, tierLabel } from './achievements.js';
+import { ACHIEVEMENT_SCRAP } from './progression.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
+import { t, onLangChange } from '../engine/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 
 function formatDuration(ms) {
   const totalMin = Math.floor(ms / 60000);
   const h = Math.floor(totalMin / 60), m = totalMin % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  if (h > 0) return t('time.hm', { h, m });
+  return t('time.m', { m });
 }
 
 // Grouped rather than one 17-card wall. A flat grid left an orphan card on
@@ -22,31 +24,31 @@ function formatDuration(ms) {
 // distinct icon: `accuracy` and `headshots` both drew the same reticle before,
 // as did combo/XP, level/most-used and weapons-used/damage-bonus.
 const STAT_GROUPS = [
-  { label: 'COMBAT RECORD', fields: [
-    { key: 'kills',      label: 'TOTAL KILLS',             icon: 'skull',     value: (p) => p.data.totalKills.toLocaleString() },
-    { key: 'headshots',  label: 'HEADSHOTS',               icon: 'crosshair', value: (p) => p.data.totalHeadshots.toLocaleString() },
-    { key: 'accuracy',   label: 'ACCURACY',                icon: 'target',    value: (p) => `${p.accuracy()}%` },
-    { key: 'shots',      label: 'SHOTS FIRED',             icon: 'bullet',    value: (p) => p.data.shotsTotal.toLocaleString() },
-    { key: 'combo',      label: 'HIGHEST COMBO',           icon: 'bolt',      value: (p) => String(p.data.highestCombo) },
-    { key: 'streak',     label: 'LONGEST KILL STREAK',     icon: 'fire',      value: (p) => String(p.data.longestKillStreak) },
-    { key: 'missions',   label: 'MISSIONS COMPLETED',      icon: 'flag',      value: (p) => String(p.data.totalMissionsCompleted) },
-    { key: 'playtime',   label: 'TOTAL PLAYTIME',          icon: 'clock',     value: (p) => formatDuration(p.data.totalPlaytimeMs) },
+  { label: 'stats.group.combat', fields: [
+    { key: 'kills',      label: 'stats.kills',        icon: 'skull',     value: (p) => p.data.totalKills.toLocaleString() },
+    { key: 'headshots',  label: 'stats.headshots',    icon: 'crosshair', value: (p) => p.data.totalHeadshots.toLocaleString() },
+    { key: 'accuracy',   label: 'stats.accuracy',     icon: 'target',    value: (p) => `${p.accuracy()}%` },
+    { key: 'shots',      label: 'stats.shots',        icon: 'bullet',    value: (p) => p.data.shotsTotal.toLocaleString() },
+    { key: 'combo',      label: 'stats.combo',        icon: 'bolt',      value: (p) => String(p.data.highestCombo) },
+    { key: 'streak',     label: 'stats.streak',       icon: 'fire',      value: (p) => String(p.data.longestKillStreak) },
+    { key: 'missions',   label: 'stats.missions',     icon: 'flag',      value: (p) => String(p.data.totalMissionsCompleted) },
+    { key: 'playtime',   label: 'stats.playtime',     icon: 'clock',     value: (p) => formatDuration(p.data.totalPlaytimeMs) },
   ] },
-  { label: 'OPERATOR', fields: [
-    { key: 'level',      label: 'OPERATOR LEVEL',          icon: 'chevron',   value: (p) => String(p.data.level) },
-    { key: 'xp',         label: 'TOTAL XP',                icon: 'spark',     value: (p) => Math.round(p.data.xp).toLocaleString() },
+  { label: 'stats.group.operator', fields: [
+    { key: 'level',      label: 'stats.level',        icon: 'chevron',   value: (p) => String(p.data.level) },
+    { key: 'xp',         label: 'stats.xp',           icon: 'spark',     value: (p) => Math.round(p.data.xp).toLocaleString() },
     // What the level is actually worth in the field. Without these two rows
     // the per-level stat gain is invisible — the player would be getting
     // steadily tougher with nothing on screen ever saying so.
-    { key: 'lvlHp',      label: 'LEVEL BONUS — HEALTH',    icon: 'shield',    value: (p) => `+${p.levelBonuses().maxHp}` },
-    { key: 'lvlDmg',     label: 'LEVEL BONUS — DAMAGE',    icon: 'blade',     value: (p) => `+${Math.round(p.levelBonuses().damage * 100)}%` },
+    { key: 'lvlHp',      label: 'stats.lvlHp',        icon: 'shield',    value: (p) => `+${p.levelBonuses().maxHp}` },
+    { key: 'lvlDmg',     label: 'stats.lvlDmg',       icon: 'blade',     value: (p) => `+${Math.round(p.levelBonuses().damage * 100)}%` },
   ] },
-  { label: 'ARMOURY & SALVAGE', fields: [
-    { key: 'mostUsed',   label: 'MOST USED WEAPON',        icon: 'crown',     value: (p, weapons) => { const id = p.mostUsedWeapon(); return id ? (weapons[id]?.name || id) : '—'; } },
-    { key: 'weaponsUsed', label: 'WEAPONS USED',           icon: 'guns',      value: (p) => String(p.weaponsUsedCount()) },
-    { key: 'crates',     label: 'CRATES OPENED',           icon: 'crate',     value: (p) => String(p.data.cratesOpened) },
-    { key: 'scrap',      label: 'LIFETIME SCRAP SALVAGED', icon: 'scrap',     value: (p) => p.data.lifetimeScrapEarned.toLocaleString() },
-    { key: 'ads',        label: 'ADS WATCHED',             icon: 'play',      value: (p) => p.data.totalAdsWatched.toLocaleString() },
+  { label: 'stats.group.armoury', fields: [
+    { key: 'mostUsed',   label: 'stats.mostUsed',     icon: 'crown',     value: (p, weapons) => { const id = p.mostUsedWeapon(); return id ? (weapons[id]?.name || id) : '—'; } },
+    { key: 'weaponsUsed', label: 'stats.weaponsUsed',  icon: 'guns',      value: (p) => String(p.weaponsUsedCount()) },
+    { key: 'crates',     label: 'stats.crates',       icon: 'crate',     value: (p) => String(p.data.cratesOpened) },
+    { key: 'scrap',      label: 'stats.scrap',        icon: 'scrap',     value: (p) => p.data.lifetimeScrapEarned.toLocaleString() },
+    { key: 'ads',        label: 'stats.ads',          icon: 'play',      value: (p) => p.data.totalAdsWatched.toLocaleString() },
   ] },
 ];
 
@@ -72,6 +74,9 @@ export class StatsUI {
       });
     });
     this.refresh();
+    // Every label here is built in JS, so applyTranslations() never reaches
+    // it — without this a language switch left the whole tab in the old one.
+    onLangChange(() => this.refresh());
   }
 
   refresh() {
@@ -92,7 +97,7 @@ export class StatsUI {
     for (const group of STAT_GROUPS) {
       const head = document.createElement('div');
       head.className = 'stats-group-head';
-      head.textContent = group.label;
+      head.textContent = t(group.label);
       host.appendChild(head);
 
       const grid = document.createElement('div');
@@ -114,7 +119,7 @@ export class StatsUI {
     card.appendChild(val);
     const lbl = document.createElement('div');
     lbl.className = 'stat-card-label';
-    lbl.textContent = field.label;
+    lbl.textContent = t(field.label);
     card.appendChild(lbl);
     requestAnimationFrame(() => {
       const g = cv.getContext('2d');
@@ -136,7 +141,7 @@ export class StatsUI {
       const head = document.createElement('div');
       head.className = 'achievement-tier-head';
       head.style.color = tier.color;
-      head.textContent = `${tier.label} (${group.filter((a) => this.p.achievementClaimed(a.id)).length}/${group.length})`;
+      head.textContent = `${tierLabel(tier)} (${group.filter((a) => this.p.achievementClaimed(a.id)).length}/${group.length})`;
       host.appendChild(head);
 
       const grid = document.createElement('div');
@@ -170,12 +175,12 @@ export class StatsUI {
 
     const name = document.createElement('div');
     name.className = 'achievement-name';
-    name.textContent = ach.name;
+    name.textContent = achievementName(ach);
     card.appendChild(name);
 
     const desc = document.createElement('div');
     desc.className = 'achievement-desc';
-    desc.textContent = ach.desc;
+    desc.textContent = achievementDesc(ach);
     card.appendChild(desc);
 
     const track = document.createElement('div');
@@ -187,7 +192,7 @@ export class StatsUI {
     card.appendChild(track);
 
     const goalLabel = ach.stat === 'totalPlaytimeMs'
-      ? `${Math.round(prog.value / 60000)}m / ${Math.round(ach.goal / 60000)}m`
+      ? `${t('time.m', { m: Math.round(prog.value / 60000) })} / ${t('time.m', { m: Math.round(ach.goal / 60000) })}`
       : `${Math.min(prog.value, ach.goal).toLocaleString()} / ${ach.goal.toLocaleString()}`;
     const progLabel = document.createElement('div');
     progLabel.className = 'achievement-progress-label';
@@ -197,12 +202,14 @@ export class StatsUI {
     if (prog.claimed) {
       const badge = document.createElement('div');
       badge.className = 'achievement-badge';
-      badge.textContent = 'COMPLETED';
+      badge.textContent = t('stats.completed');
       card.appendChild(badge);
     } else if (prog.unlocked) {
       const btn = document.createElement('button');
       btn.className = 'btn primary achievement-claim-btn';
-      btn.textContent = 'CLAIM +1 DIAMOND';
+      // The reward is read from Progression rather than written here: this
+      // said "+1 DIAMOND" long after claiming started paying scrap.
+      btn.textContent = t('stats.claim', { n: ACHIEVEMENT_SCRAP });
       btn.addEventListener('click', () => this.claimAchievement(ach.id));
       card.appendChild(btn);
     }

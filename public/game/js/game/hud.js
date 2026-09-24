@@ -6,7 +6,7 @@
 import { drawSprite } from '../art/paint.js';
 import { audio } from '../engine/audio.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
-import { t, getLang, LANGS } from '../engine/i18n.js';
+import { t, getLang, LANGS, onLangChange } from '../engine/i18n.js';
 import { quality, QUALITY_ORDER, PRESETS as QUALITY_PRESETS } from '../engine/quality.js';
 import { brightness, LEVELS as BRIGHTNESS_LEVELS } from '../engine/brightness.js';
 import { settings, SHAKE_LEVELS } from '../engine/settings.js';
@@ -66,6 +66,10 @@ export class Hud {
     this._loreTimers = [];
     this._lastAmmo = null;
     this._lastDetState = null;
+    // setProgress only runs on XP events, so a language picked from the
+    // pause menu would leave the level cap in the old one until the next kill.
+    this._level = null;
+    onLangChange(() => { if (this._level != null) this.setProgress(this._level, this._xpFrac); });
   }
 
   // Every binding goes through `on`, which tolerates a missing element.
@@ -533,7 +537,8 @@ export class Hud {
   }
 
   setProgress(level, xpFrac) {
-    this.el.lvlLabel.textContent = `LVL ${level}`;
+    this._level = level; this._xpFrac = xpFrac;
+    this.el.lvlLabel.textContent = `${t('play.lvl')} ${level}`;
     this.el.xpFill.style.width = `${Math.round(xpFrac * 100)}%`;
   }
 
