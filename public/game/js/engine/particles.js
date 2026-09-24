@@ -106,6 +106,18 @@ export class Particles {
   // Drops every active particle instantly (level reset / stage transition).
   clear() { this.count = 0; }
 
+  // Re-sizes the pool when the quality tier changes mid-session. Live
+  // particles are packed into items[0..count), so shrinking keeps the first
+  // `max` of them and drops the rest; growing adds blank slots.
+  setMax(max) {
+    if (max === this.max) return;
+    if (max > this.max) for (let i = this.max; i < max; i++) this.items.push(blankParticle());
+    else this.items.length = max;
+    this.max = max;
+    if (this.count > max) this.count = max;
+    this._next %= max;
+  }
+
   spawn(kind, o) {
     let p;
     if (this.count < this.max) {

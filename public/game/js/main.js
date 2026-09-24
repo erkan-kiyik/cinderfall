@@ -106,6 +106,10 @@ function resize() {
   lightDpr = dpr * quality.preset.lightScale;
   const l = makeCanvas(vw * lightDpr, vh * lightDpr); lightCv = l.cv; lightG = l.g;
   const g = makeCanvas(vw * lightDpr, vh * lightDpr); glowCv = g.cv; glowG = g.g;
+  // The particle pool is sized by the tier too, and a tier change (Settings or
+  // the runtime step-down) lands here — without this the pool kept the size it
+  // was booted with until the next reload.
+  if (game && game.particles) game.particles.setMax(quality.preset.particleMax);
   // refresh --ui-scale so the DOM overlay tracks the new viewport
   applyDeviceProfile();
   // keep the framing right across orientation / resize (not mid-cinematic)
@@ -1379,7 +1383,7 @@ class Game {
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // background parallax stack (screen space)
-    this.world.drawBackground(ctx, this.cam, vw, vh, this.time);
+    this.world.drawBackground(ctx, this.cam, vw, vh, this.time, dpr);
 
     // world layer
     ctx.save();
@@ -1466,12 +1470,19 @@ class Game {
     // Warmer and brighter toward street level — reads as the low sun's fill.
     lightG.setTransform(1, 0, 0, 1, 0, 0);
     lightG.globalCompositeOperation = 'source-over';
-    const gsy = (vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom) * lightDpr;
-    const amb = lightG.createLinearGradient(0, 0, 0, Math.max(gsy, 1));
-    amb.addColorStop(0, 'rgb(182,188,206)');
-    amb.addColorStop(0.72, 'rgb(204,201,204)');
-    amb.addColorStop(1, 'rgb(224,214,200)');
-    lightG.fillStyle = amb;
+    // The ambient gradient depends only on where the ground sits in the map,
+    // so it is cached against that (in whole light-map pixels, and against the
+    // map itself, which resize() replaces) instead of rebuilt every frame.
+    const gsy = Math.max(1, Math.round((vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom) * lightDpr));
+    if (this._ambG !== lightG || this._ambY !== gsy) {
+      this._ambG = lightG; this._ambY = gsy;
+      const amb = lightG.createLinearGradient(0, 0, 0, gsy);
+      amb.addColorStop(0, 'rgb(182,188,206)');
+      amb.addColorStop(0.72, 'rgb(204,201,204)');
+      amb.addColorStop(1, 'rgb(224,214,200)');
+      this._amb = amb;
+    }
+    lightG.fillStyle = this._amb;
     lightG.fillRect(0, 0, lightCv.width, lightCv.height);
     lightG.setTransform(lightDpr, 0, 0, lightDpr, 0, 0);
     this.cam.applyTransform(lightG, vw, vh);
@@ -1570,10 +1581,16 @@ class Game {
   // Four full-screen passes, two of them on `overlay` and `soft-light`.
   gradeRich(gy) {
     ctx.globalCompositeOperation = 'source-over';
-    const haze = ctx.createLinearGradient(0, gy - vh * 0.5, 0, gy);
-    haze.addColorStop(0, 'rgba(150,158,172,0)');
-    haze.addColorStop(1, 'rgba(150,158,172,0.05)');
-    ctx.fillStyle = haze;
+    // Cached against the horizon in whole pixels, as gradeCheap's bake is.
+    gy = Math.round(gy);
+    if (this._hazeY !== gy || this._hazeVh !== vh) {
+      this._hazeY = gy; this._hazeVh = vh;
+      const haze = ctx.createLinearGradient(0, gy - vh * 0.5, 0, gy);
+      haze.addColorStop(0, 'rgba(150,158,172,0)');
+      haze.addColorStop(1, 'rgba(150,158,172,0.05)');
+      this._haze = haze;
+    }
+    ctx.fillStyle = this._haze;
     ctx.fillRect(0, 0, vw, gy);
 
     ctx.globalCompositeOperation = 'overlay';
@@ -1793,9 +1810,24 @@ document.addEventListener('visibilitychange', () => {
 // Lightweight runtime perf monitor: an exponentially-smoothed real frame
 // time, sampled only during active play (menu/pause frames aren't
 // representative). Sustained sub-~38fps for a few seconds steps the quality
-// preset down once (see quality.js — it never auto-raises or re-triggers).
+// preset down one tier; quality.js bounds how many steps it may ever take, and
+// nothing ever steps it back up on its own.
+//
+// Each sample is capped at PERF_SAMPLE_MAX. One long frame (a GC pause, an OS
+// sheet, the rewarded-ad overlay handing control back) is a hitch, not
+// sustained load, and uncapped it satisfied the whole four-second window by
+// itself: a single 4s frame stepped the tier down on the spot.
+//
+// After a step, the new tier gets PERF_SETTLE seconds of play before it is
+// judged. That used to be `lowPerfT = -8`, which the very next frame zeroed
+// again (the average had just been reset below the threshold), so the second
+// step followed the first ~4.5s later — High to Low, saved, in under ten
+// seconds of one bad stretch.
+const PERF_SAMPLE_MAX = 0.1;
+const PERF_SETTLE = 8;
 let perfAvg = 1 / 60;
 let lowPerfT = 0;
+let perfHoldT = 0;
 
 function frame(now) {
   if (document.hidden) { last = now; requestAnimationFrame(frame); return; }
@@ -1813,16 +1845,19 @@ function frame(now) {
   game.render();
 
   if (game.state === 'play' && !quality.autoLowerExhausted) {
-    perfAvg = perfAvg * 0.94 + rawDt * 0.06;
-    lowPerfT = perfAvg > 1 / 38 ? lowPerfT + rawDt : 0;
-    if (lowPerfT > 4) {
-      // Give the new preset a fair run before judging it again, rather than
-      // stepping down twice off the same bad stretch. The step-down budget in
-      // quality.js is what actually bounds this.
-      lowPerfT = -8;
-      perfAvg = 1 / 60;
-      const lowered = quality.tryAutoLower();
-      if (lowered) { hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name })); resize(); }
+    const perfDt = Math.min(rawDt, PERF_SAMPLE_MAX);
+    if (perfHoldT > 0) {
+      perfHoldT -= perfDt;
+    } else {
+      perfAvg = perfAvg * 0.94 + perfDt * 0.06;
+      lowPerfT = perfAvg > 1 / 38 ? lowPerfT + perfDt : 0;
+      if (lowPerfT > 4) {
+        lowPerfT = 0;
+        perfAvg = 1 / 60;
+        perfHoldT = PERF_SETTLE;
+        const lowered = quality.tryAutoLower();
+        if (lowered) { hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name })); resize(); }
+      }
     }
   }
 

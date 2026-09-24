@@ -851,7 +851,7 @@ export class World {
     for (; x < vw; x += w) g.drawImage(img, x, y, w, h);
   }
 
-  drawBackground(g, cam, vw, vh, time) {
+  drawBackground(g, cam, vw, vh, time, dpr = 1) {
     const z = cam.zoom;
     const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
     // The sky is a 1600x900 painting stretched over the viewport, redrawn
@@ -859,8 +859,10 @@ export class World {
     // a second before anything else has drawn — it measured as the single
     // most expensive blit in the background pass. It only ever depends on the
     // viewport, so it is rescaled once per resize into a canvas the exact size
-    // of the frame and copied 1:1 from then on.
-    g.drawImage(this._skyFor(vw, vh), 0, 0);
+    // of the frame in device pixels and copied 1:1 from then on. (Baked at CSS
+    // size, it was still resampled by `dpr` every frame under the scene
+    // transform, and softer than the canvas it was drawn into.)
+    g.drawImage(this._skyFor(vw * dpr, vh * dpr), 0, 0, vw, vh);
     if (this.weather === 'overcast' || this.weather === 'rain') {
       g.fillStyle = 'rgba(60,64,72,0.22)';
       g.fillRect(0, 0, vw, vh * 0.7);
@@ -898,20 +900,22 @@ export class World {
     tile(this.bg.haze, -(cam.x * 0.55 + time * 7), groundY - HAZE_FLOOR - this.bg.haze.height * hs, hs);
 
     // cool fog settling at street level
-    // Both this and the atmospheric body below are anchored to groundY, which
-    // moves with the camera — but only by whole pixels, and a gradient rebuilt
-    // for a two-pixel shift is two CanvasGradient allocations a frame in the
-    // hottest loop in the game. Cached against the value they are built from
-    // and rebuilt only when it actually changes.
-    if (this._fogY !== groundY) {
-      this._fogY = groundY;
-      this._fogGrad = lingrad(g, 0, groundY - 150, 0, groundY + 30, [
+    // Both this and the atmospheric body below are anchored to the horizon,
+    // which moves with the camera. The camera eases, so the raw value changes
+    // by a fraction of a pixel on every frame it is moving, and a cache keyed
+    // on it rebuilt two CanvasGradients a frame in the hottest loop in the
+    // game. Both gradients are soft over 150+ px; they follow the horizon in
+    // whole pixels, and are rebuilt only when that actually changes.
+    const fogY = Math.round(groundY);
+    if (this._fogY !== fogY) {
+      this._fogY = fogY;
+      this._fogGrad = lingrad(g, 0, fogY - 150, 0, fogY + 30, [
         [0, 'rgba(150,155,175,0)'], [0.8, 'rgba(150,150,168,0.13)'], [1, 'rgba(150,150,168,0.05)'],
       ]);
       this._atmosGrad = null;
     }
     g.fillStyle = this._fogGrad;
-    g.fillRect(0, groundY - 150, vw, 190);
+    g.fillRect(0, fogY - 150, vw, 190);
 
     this.drawWeather(g, cam, vw, vh, time);
 
@@ -920,7 +924,7 @@ export class World {
     // not just as dimness.
     if (!this._atmosGrad || this._atmosVh !== vh) {
       this._atmosVh = vh;
-      this._atmosGrad = lingrad(g, 0, groundY - vh, 0, groundY + 40, [
+      this._atmosGrad = lingrad(g, 0, fogY - vh, 0, fogY + 40, [
         [0, 'rgba(96,116,150,0.05)'],
         [0.55, 'rgba(112,132,164,0.17)'],
         [0.88, 'rgba(126,144,172,0.30)'],
@@ -928,7 +932,7 @@ export class World {
       ]);
     }
     g.fillStyle = this._atmosGrad;
-    g.fillRect(0, 0, vw, groundY + 40);
+    g.fillRect(0, 0, vw, fogY + 40);
 
     // ---- TimeShift wash + night scrim, as ONE fill ----
     // The whole backdrop is repainted toward the hour of day, then pushed down
@@ -985,9 +989,13 @@ export class World {
     const w = this.weather;
     if (w === 'clear') return;
     if (w === 'fog') {
-      g.fillStyle = lingrad(g, 0, vh * 0.2, 0, vh, [
-        [0, 'rgba(150,158,172,0.06)'], [1, 'rgba(158,166,180,0.30)'],
-      ]);
+      if (this._weatherFogVh !== vh) {
+        this._weatherFogVh = vh;
+        this._weatherFog = lingrad(g, 0, vh * 0.2, 0, vh, [
+          [0, 'rgba(150,158,172,0.06)'], [1, 'rgba(158,166,180,0.30)'],
+        ]);
+      }
+      g.fillStyle = this._weatherFog;
       g.fillRect(0, 0, vw, vh);
       return;
     }
@@ -1143,12 +1151,15 @@ export class World {
     for (const s of this.shafts) {
       if (!visible(s.x)) continue;
       const h = GROUND_Y - s.y;
-      const grad = lingrad(g, 0, s.y, 0, GROUND_Y, [
-        [0, `rgba(255,214,158,${SHAFT_ALPHA})`],
-        [0.55, `rgba(255,206,150,${SHAFT_ALPHA * 0.42})`],
-        [1, 'rgba(255,200,145,0)'],
-      ]);
-      g.fillStyle = grad;
+      // World-space and fixed for the shaft's life: built once, not per frame.
+      if (!s._grad) {
+        s._grad = lingrad(g, 0, s.y, 0, GROUND_Y, [
+          [0, `rgba(255,214,158,${SHAFT_ALPHA})`],
+          [0.55, `rgba(255,206,150,${SHAFT_ALPHA * 0.42})`],
+          [1, 'rgba(255,200,145,0)'],
+        ]);
+      }
+      g.fillStyle = s._grad;
       g.beginPath();
       g.moveTo(s.x - SHAFT_TOP_W / 2, s.y);
       g.lineTo(s.x + SHAFT_TOP_W / 2, s.y);
