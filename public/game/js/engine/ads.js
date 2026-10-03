@@ -31,6 +31,13 @@
 // ads. Swap both for the real ids from your own AdMob account before a
 // Play Store release.
 import { t } from './i18n.js';
+import { currentAdPolicy, onConsentChange } from '../legal/consent.js';
+import { openPrivacySettings, privacyLabels } from '../legal/gate.js';
+
+// Every ad request is governed by the player's legal choices (legal/consent.js):
+// no consent, wrong region or too young means the SDK is never initialised and
+// no request leaves the device; without personalisation consent every request
+// is non-personalised (npa).
 
 const REWARDED_UNIT_ANDROID = 'ca-app-pub-3940256099942544/5224354917';
 const REWARDED_UNIT_IOS = 'ca-app-pub-3940256099942544/1712485313';
@@ -42,17 +49,33 @@ const EVT_REWARDED = 'onRewardedVideoAdReward';
 const EVT_DISMISSED = 'onRewardedVideoAdDismissed';
 const EVT_FAILED_TO_SHOW = 'onRewardedVideoAdFailedToShow';
 
+// iOS requires an App Tracking Transparency prompt before any personalised
+// ad request, and the iOS shell does not configure one — so on iOS every
+// request is non-personalised, whatever the player chose.
+function personalisedAllowed() {
+  if (window.Capacitor?.getPlatform?.() === 'ios') return false;
+  return currentAdPolicy().personalized;
+}
+
 let admobReady = null;   // AdMob plugin object once initialized | false (unavailable)
 let initPromise = null;  // in-flight initialize(), so concurrent callers share one
 
 async function getAdmob() {
+  if (!currentAdPolicy().allowed) return false;
   if (admobReady !== null) return admobReady;
   if (initPromise) return initPromise;
   initPromise = (async () => {
     try {
       const AdMob = window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.AdMob;
       if (!AdMob) { admobReady = false; return admobReady; }
-      await AdMob.initialize({ initializeForTesting: true });
+      // Minors never reach this point (see adPolicy), and the rating cap keeps
+      // mature ad content away from a teen-rated audience regardless.
+      await AdMob.initialize({
+        initializeForTesting: true,
+        tagForChildDirectedTreatment: false,
+        tagForUnderAgeOfConsent: false,
+        maxAdContentRating: 'Teen',
+      });
       admobReady = AdMob;
     } catch (e) {
       admobReady = false;
@@ -103,7 +126,7 @@ export function preloadRewardedAd() {
     const AdMob = await getAdmob();
     if (!AdMob) { loading = null; return false; }
     try {
-      await AdMob.prepareRewardVideoAd({ adId: adUnitId(), isTesting: true });
+      await AdMob.prepareRewardVideoAd({ adId: adUnitId(), isTesting: true, npa: !personalisedAllowed() });
       loaded = true;
       lastPrepareFail = 0;
     } catch (e) {
@@ -125,14 +148,22 @@ export function isRewardedAdReady() { return loaded; }
 // Called once at startup. Warms the SDK and pulls the first ad down long
 // before the player can reach a WATCH AD button.
 export function initAds() {
+  if (!currentAdPolicy().allowed) return;
   getAdmob().then((AdMob) => { if (AdMob) preloadRewardedAd(); });
 }
+// Consent given later (Settings › Privacy) warms the SDK then; consent
+// withdrawn drops the preloaded ad so nothing fetched under it is shown.
+onConsentChange(() => {
+  if (currentAdPolicy().allowed) initAds();
+  else loaded = false;
+});
 
 // Shows a rewarded ad and calls exactly one of the callbacks:
 //   onReward() — the viewer earned the reward (watched to completion)
 //   onClose()  — the ad was dismissed early, failed to load, or the user
 //                cancelled — no reward
 export async function watchRewardedAd(onReward, onClose) {
+  if (!currentAdPolicy().allowed) { adsOffNotice(onClose); return; }
   const AdMob = await getAdmob();
   if (AdMob) {
     try {
@@ -157,7 +188,7 @@ export async function watchRewardedAd(onReward, onClose) {
       // start, or a previous fetch that found no fill.
       if (!loaded) {
         if (loading) await loading;
-        else await AdMob.prepareRewardVideoAd({ adId: adUnitId(), isTesting: true });
+        else await AdMob.prepareRewardVideoAd({ adId: adUnitId(), isTesting: true, npa: !personalisedAllowed() });
       }
       loaded = false;               // this ad is being spent
       await AdMob.showRewardVideoAd();
@@ -175,6 +206,26 @@ export async function watchRewardedAd(onReward, onClose) {
   // Not the native app: a browser with no ad SDK at all. Keep the simulated
   // ad so the reward path stays exercisable in development.
   simulateAd(onReward, onClose);
+}
+
+// Ads are off by the player's own choice, region or age: say so, offer the
+// privacy settings, grant nothing.
+function adsOffNotice(onClose) {
+  const L = privacyLabels();
+  const overlay = document.createElement('div');
+  overlay.className = 'ad-sim-overlay';
+  overlay.innerHTML = `
+    <div class="ad-sim-box">
+      <div class="ad-sim-sub">${escapeHtml(L.adsOff)}</div>
+      <button class="ad-sim-skip" id="ad-off-settings">${escapeHtml(L.title)}</button>
+      <button class="ad-sim-skip" id="ad-off-ok">${escapeHtml(t('ad.unavailableOk'))}</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  let settled = false;
+  const close = () => { if (settled) return; settled = true; overlay.remove(); onClose?.(); };
+  overlay.querySelector('#ad-off-ok')?.addEventListener('click', close);
+  overlay.querySelector('#ad-off-settings')?.addEventListener('click', () => { close(); openPrivacySettings(); });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 }
 
 // Honest "couldn't show an ad" notice. Deliberately not a reward path: it

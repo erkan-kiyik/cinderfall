@@ -34,9 +34,56 @@ code signing, and the store uploads — the steps only an account holder can do.
    (the ones in `store/screenshots/` are correct in content but should be
    re-shot at each store's mandated resolutions — see §6).
 5. **Fill the store questionnaires** — content/age rating (IARC + Apple),
-   data-safety form (answer: *no data collected/shared* — see the Privacy
-   Policy), and export-compliance (no non-standard encryption).
+   data-safety form / App Privacy labels (see §2a — the game ships the Google
+   Mobile Ads SDK, so the answer is NOT "no data collected"), and
+   export-compliance (no non-standard encryption).
 6. **Upload and submit** for review.
+
+---
+
+## 2a. Privacy, consent and store declarations
+
+The game shows a legal gate on first launch (`public/game/js/legal/`): country,
+year of birth, Terms of Service (required), Privacy Notice / KVKK Aydınlatma
+Metni (required acknowledgement), guardian confirmation for under-18s, and a
+separate, optional consent for rewarded ads (US: "Do Not Sell or Share" opt-out
+instead). The Google Mobile Ads SDK is never initialised without a valid basis,
+and every request is non-personalised (`npa`) unless the player opted in.
+Documents exist per regime (TR, EU/EEA, UK, CH, US, BR, CA, KR, JP, IN, AU, ZA,
+MENA, RU, CN, other) in 9 languages. Controller identity lives in
+`public/game/js/legal/controller.js`; bump `LEGAL_VERSION` there whenever a
+text changes and every player is asked to accept again.
+
+Store declarations that match what the app actually does:
+
+- **Google Play → App content → Ads:** *Yes, contains ads.*
+- **Google Play → Data safety:**
+  - Data collected: *Device or other IDs* (advertising ID) and *Approximate
+    location* (derived from IP by the ads SDK); *App interactions* (ad
+    interactions). Collected by the Google Mobile Ads SDK, only when the player
+    watches a rewarded ad.
+  - Purposes: *Advertising or marketing*, *Fraud prevention, security, and
+    compliance*, *Analytics* (ad measurement).
+  - Shared: yes, with Google (ad delivery).
+  - Processed ephemerally: no. Encrypted in transit: yes.
+  - Users can request deletion: yes (Settings › Privacy & legal › Delete my
+    data; advertising ID reset in device settings).
+- **Google Play → Target audience:** 13+ (do not select under-13 age groups;
+  the Families policy would then require a Families-certified ad setup).
+- **Apple → App Privacy:** Identifiers (Device ID) and Coarse Location, used
+  for Third-Party Advertising, linked to the user: no; used for tracking: no.
+  On iOS every ad request is non-personalised (`ads.js`), so no App Tracking
+  Transparency prompt is needed. If you later want personalised ads on iOS,
+  add `NSUserTrackingUsageDescription` and request ATT first.
+- **Privacy policy URL** for both stores: host `public/game/legal/privacy.html`
+  (it renders the right regime and language from `?c=XX&l=xx`).
+- **Real AdMob IDs:** replace Google's test IDs in `public/game/js/engine/ads.js`
+  and `mobile/scripts/patch-android-admob.mjs`, and configure the EU/UK
+  consent message (IAB TCF) in the AdMob console's Privacy & messaging section
+  before release.
+
+These texts are carefully drafted against the laws named in them, but they are
+not a substitute for review by a lawyer qualified in your jurisdiction.
 
 ---
 

@@ -37,6 +37,7 @@ import { drawSoldier as rigDrawSoldier, newWeaponState } from './game/rig.js';
 import { intelTitleKey } from './game/intel.js';
 import { TouchControls } from './engine/touch.js';
 import { watchRewardedAd, initAds, isRewardedAdReady } from './engine/ads.js';
+import { ensureAccepted, openPrivacySettings, openDocument, privacyLabels } from './legal/gate.js';
 import { debug } from './engine/debug.js';
 import { mountCurrencyIcons } from './art/currency.js';
 import { dailyStatus, claimDaily, DAILY_REWARDS } from './game/retention.js';
@@ -349,6 +350,9 @@ async function boot() {
   // hand the intro its cue, then wait for it to finish its fade
   intro.assetsDone();
   await introDone;
+  // Nobody plays before the current Terms are accepted and the Privacy Notice
+  // acknowledged (legal/gate.js). Scripted demo runs skip it.
+  if (!DEMO) await ensureAccepted();
   if (DEMO) game.deploy();
   else {
     hud.show('menu'); game.state = 'menu';
@@ -466,6 +470,19 @@ class Game {
     // player who cannot read the interface does not have to deploy and pause
     // to change it.
     document.getElementById('btn-settings-pill')?.addEventListener('click', () => this.openSettings());
+    document.getElementById('set-privacy')?.addEventListener('click', () => {
+      audio.ui();
+      hud.showSettings(false);
+      openPrivacySettings();
+    });
+    // The footer's Privacy / Terms links open the in-app reader, in the
+    // player's own regime and language, instead of a browser tab.
+    for (const a of document.querySelectorAll('.home-legal a[href*="legal/"]')) {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        openDocument(a.getAttribute('href').includes('terms') ? 'terms' : 'privacy');
+      });
+    }
     // The settings panel's option labels resolve through t(), so a language
     // switch has to repaint them — applyTranslations only refills static
     // data-i18n nodes, not the ones the segmented rows build.
@@ -490,6 +507,11 @@ class Game {
   // why the panel can stay open while the player judges the change.
   openSettings() {
     audio.ui();
+    const pl = privacyLabels();
+    const pt = document.getElementById('set-privacy-title');
+    const ph = document.getElementById('set-privacy-hint');
+    if (pt) pt.textContent = pl.title.toUpperCase();
+    if (ph) ph.textContent = pl.hint;
     hud.buildSettings({
       graphics: () => { resize(); },
       language: () => { hud.showSettings(false); this.openLangPicker(true); },

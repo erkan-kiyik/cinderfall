@@ -62,7 +62,8 @@ operator skins. Kit out your rifle, sidearm, blade and more in the loadout bay.
 - Adaptive graphics with Low / Medium / High / Ultra presets and automatic
   tuning, for smooth play from budget phones to flagships.
 - Safe-area aware UI for notches and rounded corners.
-- Plays fully offline. No account, no ads, no tracking.
+- Plays fully offline. No account needed. Optional rewarded ads, shown only
+  when you choose to watch one and only with your consent where the law requires it.
 
 Hold the line. Take the sector back.
 
@@ -78,7 +79,7 @@ CINDERFALL launches out of Sector 9.
 • Silent stealth takedowns + smarter enemy AI
 • Crouch, cover and responsive twin-stick touch controls
 • Gamepad support and Low→Ultra adaptive graphics
-• Plays fully offline — no ads, no tracking
+• Plays fully offline — no account, optional rewarded ads only with your consent
 ```
 
 ---

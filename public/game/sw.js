@@ -8,7 +8,7 @@
 //     refresh — instant loads, self-healing when files change.
 // Bump CACHE on any shipped change to retire the previous cache on activate.
 
-const CACHE = 'cinderfall-v2';
+const CACHE = 'cinderfall-v3';
 
 // The full game shell — every module is a static ES import, so precaching
 // them means the whole game is available offline from the very first visit,
@@ -30,8 +30,8 @@ const SHELL = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
-  './assets/favicon-32.png',
   './js/art/background.js',
+  './js/art/crate.js',
   './js/art/currency.js',
   './js/art/environment.js',
   './js/art/paint.js',
@@ -44,16 +44,23 @@ const SHELL = [
   './js/engine/brightness.js',
   './js/engine/camera.js',
   './js/engine/daycycle.js',
+  './js/engine/debug.js',
   './js/engine/device.js',
   './js/engine/i18n.js',
   './js/engine/input.js',
   './js/engine/interlude.js',
   './js/engine/intro.js',
+  './js/engine/lang/ar.js',
+  './js/engine/lang/de.js',
   './js/engine/lang/en.js',
+  './js/engine/lang/es.js',
+  './js/engine/lang/hi.js',
+  './js/engine/lang/ru.js',
   './js/engine/lang/tr.js',
   './js/engine/math.js',
   './js/engine/particles.js',
   './js/engine/quality.js',
+  './js/engine/settings.js',
   './js/engine/touch.js',
   './js/game/achievements.js',
   './js/game/archives.js',
@@ -70,6 +77,7 @@ const SHELL = [
   './js/game/player.js',
   './js/game/profile.js',
   './js/game/progression.js',
+  './js/game/referral.js',
   './js/game/retention.js',
   './js/game/rig.js',
   './js/game/sharecard.js',
@@ -79,7 +87,23 @@ const SHELL = [
   './js/game/tutorial.js',
   './js/game/weaponstats.js',
   './js/game/world.js',
+  './js/legal/consent.js',
+  './js/legal/controller.js',
+  './js/legal/docs.js',
+  './js/legal/gate.js',
+  './js/legal/jurisdictions.js',
+  './js/legal/text/ar.js',
+  './js/legal/text/de.js',
+  './js/legal/text/en.js',
+  './js/legal/text/es.js',
+  './js/legal/text/fr.js',
+  './js/legal/text/hi.js',
+  './js/legal/text/pt.js',
+  './js/legal/text/ru.js',
+  './js/legal/text/tr.js',
   './js/main.js',
+  './legal/privacy.html',
+  './legal/terms.html',
 ];
 
 self.addEventListener('install', (e) => {
