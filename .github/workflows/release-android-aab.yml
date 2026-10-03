@@ -78,6 +78,17 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      # Play Console rejects a bundle whose versionCode it has seen before, and
+      # the Capacitor template always ships versionCode 1 — so every bundle
+      # after the first would bounce. Derive it from the run number instead:
+      # strictly increasing, never reused.
+      - name: Set versionCode / versionName
+        working-directory: mobile/android/app
+        run: |
+          CODE=$(( ${{ github.run_number }} + 1 ))
+          sed -i -E "s/versionCode [0-9]+/versionCode ${CODE}/; s/versionName \"[^\"]*\"/versionName \"1.0.${CODE}\"/" build.gradle
+          grep -E "versionCode|versionName" build.gradle
+
       # Both of the next two steps are conditional on the signing secrets
       # actually being set. Neither failing nor silently no-op'ing when only
       # one of the three is present — that would sign with a wrong/missing
@@ -155,7 +166,7 @@ jobs:
           tag_name: release-aab-${{ github.run_number }}
           name: "Cinderfall release AAB #${{ github.run_number }}"
           body: |
-            Android App Bundle, built from commit ${{ github.sha }}.
+            Android App Bundle, built from commit ${{ github.sha }} — versionCode ${{ github.run_number }} + 1.
 
             ${{ steps.signing.outputs.enabled == 'true' && 'Signed with the upload keystore in ANDROID_KEYSTORE_BASE64 — ready for direct upload to Play Console. Enroll in Play App Signing on first upload so Google re-signs the app for distribution while this stays your upload key.' || 'UNSIGNED — the signing secrets were not set for this run. Sign before uploading to Play Console: jarsigner -keystore cinderfall-upload.keystore app-release.aab cinderfall (see docs/RELEASE.md).' }}
           files: mobile/android/app/build/outputs/bundle/release/app-release.aab
