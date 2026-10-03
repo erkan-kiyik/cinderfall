@@ -277,7 +277,18 @@ function pendantLight(g, x, y) {
 }
 
 // ------------------------------------------------------------- CROW
-// Drawn into his own layer so the neon rim can be cut from his silhouette.
+// A man, not a mask. The second design (a beaked plague-doctor respirator) was
+// rejected: a faceless figure gives the player nobody to deal with. CROW is an
+// old scavenger who has outlived the sector — weathered face, grey stubble,
+// a knit cap with one black crow feather tucked in it, a scar through the eye
+// he lost and replaced with a cheap red optic, a shearling-collared work coat,
+// a cigarette, and his hands folded on the counter waiting for your offer.
+const SKIN = '#ad7d5c';
+const SKIN_D = '#7a5038';
+const SKIN_L = '#d4a27c';
+const COAT_C = '#2f2b23';
+const FUR = '#8c7556';
+
 function feather(g, x, y, len, ang, w, sheen) {
   g.save(); g.translate(x, y); g.rotate(ang);
   g.fillStyle = lin(g, 0, -w, 0, w, [[0, sheen ? shade(SHEEN, 0.9) : '#1c1f26'], [0.5, FEATHER], [1, '#060608']]);
@@ -288,135 +299,259 @@ function feather(g, x, y, len, ang, w, sheen) {
   g.closePath(); g.fill();
   g.strokeStyle = 'rgba(120,150,170,0.18)'; g.lineWidth = 0.25;
   g.beginPath(); g.moveTo(0.5, 0); g.lineTo(len * 0.92, 0); g.stroke();
+  g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.18;
+  for (let t = 0.2; t < 0.9; t += 0.09) {
+    const x = len * t, hw = w * 0.8 * Math.sin(Math.PI * t);
+    g.beginPath(); g.moveTo(x, 0); g.lineTo(x + hw * 0.7, -hw); g.moveTo(x, 0); g.lineTo(x + hw * 0.7, hw); g.stroke();
+  }
   g.restore();
+}
+
+function skinPath(g) {
+  g.beginPath();
+  g.moveTo(-10, 31);
+  g.quadraticCurveTo(-11, 37, -10.6, 42);
+  g.quadraticCurveTo(-10.2, 48, -7.4, 53);
+  g.quadraticCurveTo(-3.4, 57.8, 1.4, 58);
+  g.quadraticCurveTo(6.4, 57.8, 9.6, 53);
+  g.quadraticCurveTo(12.4, 48, 12.6, 42);
+  g.quadraticCurveTo(13, 37, 12, 31);
+  g.closePath();
 }
 
 function crow(g) {
-  // ---- coat body, cut off by the counter
-  g.fillStyle = lin(g, -36, 0, 36, 0, [[0, '#0e0f12'], [0.55, COAT], [1, '#22242a']]);
+  const r = rng(0xc120);
+  // ---- coat: broad, a little hunched over the counter
+  g.fillStyle = lin(g, -44, 0, 44, 0, [[0, '#1a1814'], [0.55, COAT_C], [1, '#3e382d']]);
   g.beginPath();
-  g.moveTo(-38, COUNTER + 4);
-  g.quadraticCurveTo(-37, 70, -24, 60);
-  g.lineTo(-9, 53); g.lineTo(9, 53); g.lineTo(24, 60);
-  g.quadraticCurveTo(37, 70, 38, COUNTER + 4);
+  g.moveTo(-46, COUNTER + 4);
+  g.quadraticCurveTo(-46, 74, -34, 66);
+  g.quadraticCurveTo(-22, 60, -10, 60);
+  g.lineTo(12, 60);
+  g.quadraticCurveTo(24, 60, 36, 66);
+  g.quadraticCurveTo(48, 74, 48, COUNTER + 4);
   g.closePath(); g.fill();
-  // coat opening, scarf and the shirt of plates under it
-  g.fillStyle = '#0a0b0d';
-  g.beginPath(); g.moveTo(-7, 56); g.lineTo(7, 56); g.lineTo(4, COUNTER + 4); g.lineTo(-4, COUNTER + 4); g.closePath(); g.fill();
-  g.fillStyle = lin(g, 0, 54, 0, 66, [[0, '#4a2a26'], [1, '#2a1614']]);
-  g.beginPath(); g.moveTo(-10, 54); g.quadraticCurveTo(0, 62, 10, 54); g.lineTo(8, 64); g.quadraticCurveTo(0, 68, -6, 63); g.closePath(); g.fill();
-  // bandolier: shoulder to hip, shells in loops
+  // seams + a pocket flap so it reads as a work coat
+  g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.5;
+  g.beginPath(); g.moveTo(-30, 67); g.quadraticCurveTo(-27, 80, -29, COUNTER); g.stroke();
+  g.beginPath(); g.moveTo(32, 67); g.quadraticCurveTo(29, 80, 31, COUNTER); g.stroke();
+  g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(-26, 80, 11, 2.2); g.fillRect(17, 80, 11, 2.2);
+  g.fillStyle = 'rgba(255,215,170,0.07)'; g.fillRect(17, 80, 11, 0.5);
+  // sweater + satchel strap
+  g.fillStyle = '#1d1e20';
+  g.beginPath(); g.moveTo(-9, 60); g.lineTo(11, 60); g.lineTo(8, COUNTER + 4); g.lineTo(-6, COUNTER + 4); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.05)'; g.lineWidth = 0.4;
+  for (let y = 64; y < COUNTER; y += 2.2) { g.beginPath(); g.moveTo(-7, y); g.lineTo(9, y); g.stroke(); }
+  g.fillStyle = LEATHER;
+  g.beginPath(); g.moveTo(16, 60); g.lineTo(21, 60); g.lineTo(-30, COUNTER + 4); g.lineTo(-36, COUNTER + 4); g.closePath(); g.fill();
+  g.fillStyle = BRASS; g.fillRect(-1, 76, 3, 3.6); g.fillStyle = '#2a2018'; g.fillRect(-0.2, 76.8, 1.4, 2);
+
+  // ---- neck, with the crow inked on it
+  g.fillStyle = lin(g, -6, 0, 8, 0, [[0, SKIN_D], [0.6, SKIN], [1, SKIN_D]]);
+  g.beginPath(); g.moveTo(-6, 52); g.lineTo(8, 52); g.lineTo(9, 63); g.lineTo(-7, 63); g.closePath(); g.fill();
+  g.fillStyle = 'rgba(28,32,40,0.75)';
+  g.beginPath();   // tiny crow in flight
+  g.moveTo(-5.4, 59.4); g.quadraticCurveTo(-4.2, 57.6, -2.8, 58.8); g.quadraticCurveTo(-1.6, 57.4, -0.2, 58.6);
+  g.lineTo(-1.8, 59.4); g.lineTo(-2.8, 60.4); g.lineTo(-3.6, 59.4); g.closePath(); g.fill();
+
+  // ---- shearling collar, big and worn
+  g.fillStyle = lin(g, 0, 54, 0, 70, [[0, shade(FUR, 1.15)], [1, shade(FUR, 0.6)]]);
+  g.beginPath();
+  g.moveTo(-9, 58);
+  g.quadraticCurveTo(-20, 58, -26, 66);
+  g.quadraticCurveTo(-18, 71, -9, 68);
+  g.lineTo(-5, 62);
+  g.closePath(); g.fill();
+  g.beginPath();
+  g.moveTo(11, 58);
+  g.quadraticCurveTo(22, 58, 28, 66);
+  g.quadraticCurveTo(20, 71, 11, 68);
+  g.lineTo(7, 62);
+  g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(60,44,28,0.55)'; g.lineWidth = 0.35;
+  for (let i = 0; i < 40; i++) {
+    const side = i % 2 ? 1 : -1;
+    const t = r();
+    const x = side * (8 + t * 17) + 1, y = 60 + t * 6 + r() * 3;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + side * (0.6 + r()), y + 0.8 + r()); g.stroke();
+  }
+
+  // ---- head, drawn 1.22x about the chin: at 1:1 it sat on that coat
+  // like a doll's head
+  g.save(); g.translate(1, 57); g.scale(1.22, 1.22); g.translate(-1, -57);
+
+  // ---- ears
+  for (const [ex, flip] of [[-11, -1], [13, 1]]) {
+    g.fillStyle = flip < 0 ? SKIN_D : SKIN;
+    g.beginPath(); g.ellipse(ex, 42, 2.0, 3.6, flip * 0.15, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(70,40,26,0.5)';
+    g.beginPath(); g.ellipse(ex + flip * 0.3, 42, 0.9, 2.2, 0, 0, Math.PI * 2); g.fill();
+  }
+
+  // ---- face: lit from the pendant above-right, neon on the left
+  g.fillStyle = lin(g, -11, 0, 13, 0, [[0, SKIN_D], [0.35, SKIN], [0.75, SKIN_L], [1, SKIN]]);
+  skinPath(g); g.fill();
+  g.save(); skinPath(g); g.clip();
+  // form shadows: eye sockets, under the cheekbones, under the brow
+  g.fillStyle = 'rgba(80,46,30,0.38)';
+  g.beginPath(); g.ellipse(-4.4, 40, 4.2, 2.8, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(6.6, 40, 4.0, 2.8, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = 'rgba(80,46,30,0.3)';
+  g.beginPath(); g.ellipse(-7.4, 48, 3, 4, 0.2, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(9.4, 48, 2.6, 4, -0.2, 0, Math.PI * 2); g.fill();
+  // grey stubble and moustache over the jaw
+  g.fillStyle = 'rgba(132,128,122,0.72)';
+  g.beginPath();
+  g.moveTo(-10.4, 45); g.quadraticCurveTo(-9, 52, -4, 56); g.quadraticCurveTo(1.4, 59, 6.8, 56);
+  g.quadraticCurveTo(11.8, 52, 12.6, 45); g.lineTo(10, 47.5);
+  g.quadraticCurveTo(6, 47, 4, 48.4); g.quadraticCurveTo(1.4, 47.2, -1.2, 48.4);
+  g.quadraticCurveTo(-4, 47, -8, 47.5); g.closePath(); g.fill();
+  g.lineWidth = 0.22; g.lineCap = 'round';
+  for (let i = 0; i < 120; i++) {
+    const x = -9.6 + r() * 21.6, y = 47.5 + r() * 9.5;
+    const lit = x > 2;
+    g.strokeStyle = lit ? 'rgba(225,220,212,0.35)' : 'rgba(60,56,52,0.35)';
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + (x - 1) * 0.04, y + 0.9); g.stroke();
+  }
+  g.lineCap = 'butt';
+  g.fillStyle = 'rgba(150,146,138,0.85)';   // moustache
+  g.beginPath();
+  g.moveTo(-3.4, 49.6); g.quadraticCurveTo(1.4, 47.4, 6.2, 49.4);
+  g.quadraticCurveTo(6.6, 50.6, 5.6, 50.8); g.quadraticCurveTo(1.4, 49.4, -2.8, 51);
+  g.quadraticCurveTo(-3.8, 50.6, -3.4, 49.6); g.closePath(); g.fill();
+  g.restore();
+
+  // nose
+  g.fillStyle = 'rgba(90,52,34,0.45)';
+  g.beginPath(); g.moveTo(0.4, 39); g.quadraticCurveTo(-0.6, 43, -1.2, 46.2); g.lineTo(0.6, 46.4); g.closePath(); g.fill();
+  g.fillStyle = 'rgba(255,214,176,0.35)';
+  g.beginPath(); g.moveTo(1.8, 39.5); g.quadraticCurveTo(2.6, 43, 2.8, 45.4); g.lineTo(2.0, 45.6); g.quadraticCurveTo(1.8, 43, 1.4, 39.6); g.closePath(); g.fill();
+  g.fillStyle = 'rgba(70,38,24,0.6)';
+  g.beginPath(); g.ellipse(0.0, 46.8, 1.0, 0.45, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(3.4, 46.7, 0.9, 0.42, 0, 0, Math.PI * 2); g.fill();
+  // nasolabial folds and a mouth that has stopped smiling
+  g.strokeStyle = 'rgba(80,44,28,0.5)'; g.lineWidth = 0.4;
+  g.beginPath(); g.moveTo(-1.6, 46.4); g.quadraticCurveTo(-4.4, 49, -4, 52); g.stroke();
+  g.beginPath(); g.moveTo(4.8, 46.2); g.quadraticCurveTo(7.4, 48.8, 7.2, 52); g.stroke();
+  g.strokeStyle = '#4a2a1c'; g.lineWidth = 0.55;
+  g.beginPath(); g.moveTo(-2.2, 51.4); g.quadraticCurveTo(1.4, 51.0, 5.0, 51.6); g.stroke();
+  g.fillStyle = 'rgba(160,96,76,0.5)'; g.fillRect(-1, 52, 4.4, 0.6);
+
+  // brows: heavy, the left one lifted a touch — sizing you up
+  g.fillStyle = '#5c5650';
+  g.beginPath(); g.moveTo(-8.6, 36.6); g.quadraticCurveTo(-5, 34.6, -1.2, 36.2); g.lineTo(-1.4, 37.2); g.quadraticCurveTo(-5, 36, -8.4, 37.6); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(3.4, 36.8); g.quadraticCurveTo(7, 35.8, 10.6, 37.2); g.lineTo(10.4, 38); g.quadraticCurveTo(7, 37, 3.6, 37.8); g.closePath(); g.fill();
+
+  // his own eye
+  g.fillStyle = '#e6dccb';
+  g.beginPath(); g.moveTo(-7, 40); g.quadraticCurveTo(-4.4, 38.4, -1.8, 40); g.quadraticCurveTo(-4.4, 41.2, -7, 40); g.closePath(); g.fill();
+  g.fillStyle = '#4a3220'; g.beginPath(); g.arc(-4.2, 39.9, 1.05, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#0c0806'; g.beginPath(); g.arc(-4.2, 39.9, 0.5, 0, Math.PI * 2); g.fill();
+  g.fillStyle = 'rgba(255,240,220,0.9)'; g.fillRect(-3.8, 39.3, 0.45, 0.45);
+  g.strokeStyle = '#3a2216'; g.lineWidth = 0.6;
+  g.beginPath(); g.moveTo(-7.2, 40); g.quadraticCurveTo(-4.4, 38.1, -1.6, 39.8); g.stroke();   // heavy lid
+  g.strokeStyle = 'rgba(80,44,28,0.45)'; g.lineWidth = 0.35;
+  g.beginPath(); g.moveTo(-6.4, 41.8); g.quadraticCurveTo(-4.4, 42.6, -2.4, 41.6); g.stroke();  // bag
+  // crow's feet
+  g.beginPath(); g.moveTo(-7.6, 40); g.lineTo(-9.2, 39.2); g.moveTo(-7.6, 40.4); g.lineTo(-9.2, 41); g.stroke();
+
+  // scar through where the other eye was, then the optic bolted over it
+  g.strokeStyle = 'rgba(70,30,22,0.7)'; g.lineWidth = 1.1;
+  g.beginPath(); g.moveTo(10.2, 32.6); g.lineTo(3.4, 47.6); g.stroke();
+  g.strokeStyle = 'rgba(232,170,150,0.7)'; g.lineWidth = 0.45;
+  g.beginPath(); g.moveTo(10.0, 32.8); g.lineTo(3.3, 47.4); g.stroke();
+  g.fillStyle = lin(g, 3, 37, 10, 43, [[0, '#9aa1aa'], [0.5, '#5b626b'], [1, '#2b3036']]);
+  g.beginPath();
+  g.moveTo(3.4, 38.2); g.lineTo(6.2, 36.8); g.lineTo(10, 38); g.lineTo(10.4, 41.4); g.lineTo(7.6, 43.2); g.lineTo(4, 42.2);
+  g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 0.3; g.stroke();
+  g.fillStyle = '#111316'; g.beginPath(); g.arc(6.9, 40, 2.0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = rad(g, 6.9, 40, 0, 1.7, [[0, '#ffd2c4'], [0.3, '#ff4a3a'], [1, '#5a0c08']]);
+  g.beginPath(); g.arc(6.9, 40, 1.5, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#d0d4da';
+  for (const [x, y] of [[4.4, 38.6], [9.4, 38.6], [8.0, 42.4]]) { g.beginPath(); g.arc(x, y, 0.32, 0, Math.PI * 2); g.fill(); }
+
+  // ---- knit cap with the feather tucked under its cuff
+  feather(g, 9.4, 32, 17, -0.72, 3.0, true);
+  feather(g, 10.4, 32.4, 12, -0.5, 2.0, false);
+  g.fillStyle = lin(g, -12, 0, 13, 0, [[0, '#17181b'], [0.6, '#26282c'], [1, '#33363b']]);
+  g.beginPath();
+  g.moveTo(-12.2, 35);
+  g.quadraticCurveTo(-13, 22, 0.6, 19.6);
+  g.quadraticCurveTo(13.6, 20, 13.6, 35);
+  g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.35;
+  for (let x = -9; x <= 11; x += 2.4) { g.beginPath(); g.moveTo(x, 22.5); g.quadraticCurveTo(x * 1.05, 28, x * 1.08, 30); g.stroke(); }
+  g.fillStyle = lin(g, 0, 29, 0, 35, [[0, '#2e3035'], [1, '#1c1d20']]);
+  g.beginPath(); g.moveTo(-12.6, 29.6); g.quadraticCurveTo(0.6, 27.6, 14, 29.6); g.lineTo(14, 35); g.quadraticCurveTo(0.6, 33.4, -12.6, 35.2); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,0.4)'; g.lineWidth = 0.45;
+  for (let x = -11.6; x < 13.6; x += 1.3) { g.beginPath(); g.moveTo(x, 29.4 - Math.cos(x / 9) * 0.6); g.lineTo(x, 34.6 - Math.cos(x / 9) * 0.6); g.stroke(); }
+  g.fillStyle = 'rgba(255,214,170,0.12)';
+  g.beginPath(); g.ellipse(6, 23, 5, 2, 0.3, 0, Math.PI * 2); g.fill();
+
+  // ---- cigarette, in the corner of the mouth
+  g.save(); g.translate(4.6, 51.4); g.rotate(0.22);
+  g.fillStyle = '#e8e2d4'; g.fillRect(0, -0.5, 6.4, 1.0);
+  g.fillStyle = '#c08a52'; g.fillRect(0, -0.5, 1.4, 1.0);
+  g.fillStyle = '#6a6460'; g.fillRect(6.4, -0.5, 0.8, 1.0);
+  g.fillStyle = rad(g, 7.3, 0, 0, 2.2, [[0, 'rgba(255,170,90,0.95)'], [0.4, 'rgba(255,90,40,0.5)'], [1, 'rgba(255,90,40,0)']]);
+  g.beginPath(); g.arc(7.3, 0, 2.2, 0, Math.PI * 2); g.fill();
+  g.restore();
+  g.restore();   // head scale
+}
+
+// smoke drawn on the scene, not his layer, so it can drift above his head
+function smoke(g) {
   g.save();
-  g.beginPath(); g.moveTo(-26, 60); g.lineTo(-20, 58); g.lineTo(30, COUNTER + 2); g.lineTo(22, COUNTER + 4); g.closePath();
-  g.fillStyle = LEATHER; g.fill();
-  g.clip();
-  for (let i = 0; i < 9; i++) {
-    const t = i / 9, x = -22 + t * 50, y = 60 + t * 34;
-    g.fillStyle = '#9c2a22'; g.fillRect(x - 1.1, y - 2.6, 2.2, 3.4);
-    g.fillStyle = BRASS; g.fillRect(x - 1.1, y + 0.8, 2.2, 1.2);
+  g.lineCap = 'round';
+  const r = rng(0x5e0c);
+  for (let k = 0; k < 3; k++) {
+    g.strokeStyle = `rgba(200,205,212,${0.10 - k * 0.025})`;
+    g.lineWidth = 1.2 + k * 1.4;
+    g.beginPath();
+    let x = 11.6, y = 52.6;
+    g.moveTo(x, y);
+    for (let i = 0; i < 9; i++) {
+      const nx = x + (r() - 0.35) * 5 + k, ny = y - 5 - r() * 2;
+      g.quadraticCurveTo(x + (r() - 0.5) * 6, (y + ny) / 2, nx, ny);
+      x = nx; y = ny;
+    }
+    g.stroke();
   }
   g.restore();
-  // ---- feather mantle: two layers fanned over the shoulders
-  const r = rng(0xc205);
-  for (const layer of [0, 1]) {
-    const n = 11;
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1);                  // 0 left shoulder → 1 right
-      const side = t < 0.5 ? -1 : 1;
-      const k = Math.abs(t - 0.5) * 2;        // 0 at neck, 1 at shoulder tip
-      const x = side * (8 + k * 24) + (r() - 0.5) * 2;
-      const y = 56 + k * 9 + layer * 5 + (r() - 0.5) * 1.5;
-      // hang down and slightly out, the way a mantle falls — fanned any
-      // wider and the outer feathers stick out sideways like legs
-      const ang = Math.PI / 2 - side * (0.08 + k * 0.42) + (r() - 0.5) * 0.14;
-      const len = (layer ? 12 : 15) + r() * 5 - k * 3;
-      feather(g, x, y, len, ang, layer ? 2.4 : 2.9, r() > 0.45);
-    }
-  }
-  // ---- hood
-  g.fillStyle = lin(g, -18, 20, 18, 60, [[0, '#121317'], [0.6, '#1c1d22'], [1, '#26282e']]);
-  g.beginPath();
-  g.moveTo(-17, 60);
-  g.quadraticCurveTo(-21, 40, -15, 28);
-  g.quadraticCurveTo(-6, 16, 4, 17);
-  g.quadraticCurveTo(17, 19, 19, 34);
-  g.quadraticCurveTo(21, 48, 17, 60);
-  g.closePath(); g.fill();
-  // hood rim fold
-  g.strokeStyle = 'rgba(255,200,140,0.10)'; g.lineWidth = 0.6;
-  g.beginPath(); g.moveTo(-6, 18.4); g.quadraticCurveTo(12, 18, 18, 32); g.stroke();
-  // face cavity
-  g.fillStyle = '#050506';
-  g.beginPath(); g.ellipse(1, 40, 12, 15, 0.05, 0, Math.PI * 2); g.fill();
-  // ---- respirator: leather face plate
-  g.fillStyle = lin(g, -10, 28, 10, 54, [[0, '#2a221c'], [0.5, LEATHER], [1, '#1e1814']]);
-  g.beginPath(); g.ellipse(1, 41, 9.6, 12, 0.05, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 0.4;
-  g.beginPath(); g.moveTo(-6, 33); g.quadraticCurveTo(1, 36, 9, 33); g.stroke();
-  g.beginPath(); g.moveTo(-7, 47); g.quadraticCurveTo(1, 51, 9, 47); g.stroke();
-  // stitches
-  g.fillStyle = 'rgba(200,170,130,0.35)';
-  for (let i = 0; i < 6; i++) g.fillRect(-5 + i * 2.4, 34.6 + Math.sin(i) * 0.4, 0.8, 0.3);
-  // ---- goggles: brass rims, smoked lenses lit by the lamp
-  for (const [gx, gy, rr] of [[-3.6, 38.4, 3.6], [6.0, 38.0, 3.4]]) {
-    g.fillStyle = lin(g, gx - rr, gy - rr, gx + rr, gy + rr, [[0, '#d2b072'], [0.5, BRASS], [1, '#5a4524']]);
-    g.beginPath(); g.arc(gx, gy, rr + 1.1, 0, Math.PI * 2); g.fill();
-    g.fillStyle = rad(g, gx - 0.8, gy - 0.8, 0.2, rr, [[0, '#e05a3a'], [0.45, '#7a1e18'], [1, '#1a0806']]);
-    g.beginPath(); g.arc(gx, gy, rr, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(255,236,210,0.75)';
-    g.beginPath(); g.ellipse(gx + rr * 0.35, gy - rr * 0.4, rr * 0.28, rr * 0.16, -0.6, 0, Math.PI * 2); g.fill();
-  }
-  g.fillStyle = '#4a3a22'; g.fillRect(-0.2, 37.2, 2.6, 1.4);     // bridge
-  // ---- the beak: riveted nose cone turned toward the lamp
-  g.fillStyle = lin(g, 0, 40, 0, 56, [[0, '#7c838c'], [0.4, '#4b5158'], [1, '#22262b']]);
-  g.beginPath();
-  g.moveTo(-1.6, 41.5);
-  g.quadraticCurveTo(6, 40.5, 10, 42);
-  g.quadraticCurveTo(18, 47, 24, 55);
-  g.quadraticCurveTo(15, 53.5, 6, 51.6);
-  g.quadraticCurveTo(0, 50, -1.6, 47);
-  g.closePath(); g.fill();
-  // upper ridge highlight
-  g.strokeStyle = 'rgba(255,226,190,0.45)'; g.lineWidth = 0.45;
-  g.beginPath(); g.moveTo(1, 41.6); g.quadraticCurveTo(10, 42, 23, 54.4); g.stroke();
-  // seam + rivets + filter band
-  g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 0.35;
-  g.beginPath(); g.moveTo(0, 46); g.quadraticCurveTo(10, 47, 23.6, 54.8); g.stroke();
-  g.fillStyle = '#c9ced6';
-  for (const [x, y] of [[3, 43.4], [8, 44.2], [13, 46.6], [17.4, 49.6]]) { g.beginPath(); g.arc(x, y, 0.4, 0, Math.PI * 2); g.fill(); }
-  g.fillStyle = BRASS;
-  g.beginPath(); g.moveTo(3.6, 41.2); g.lineTo(6, 41.0); g.lineTo(5.6, 51.2); g.lineTo(3.2, 50.6); g.closePath(); g.fill();
-  // filter canister under the jaw
-  g.fillStyle = lin(g, -6, 0, 2, 0, [[0, '#2a2e33'], [1, '#4c535b']]);
-  rrect(g, -6.4, 48.4, 6.4, 5.4, 1.4); g.fill();
-  g.fillStyle = 'rgba(0,0,0,0.6)';
-  for (let i = 0; i < 3; i++) g.fillRect(-5.6, 49.6 + i * 1.4, 4.8, 0.5);
-  // ---- arms forward onto the counter
-  for (const side of [-1, 1]) {
-    g.fillStyle = side < 0 ? '#121317' : '#1d1f24';
-    g.beginPath();
-    g.moveTo(side * 30, 64);
-    g.quadraticCurveTo(side * 37, 78, side * 30, COUNTER - 2);
-    g.lineTo(side * 19, COUNTER - 1);
-    g.quadraticCurveTo(side * 24, 80, side * 21, 66);
-    g.closePath(); g.fill();
-    // cuff
-    g.fillStyle = '#2b2622';
-    g.beginPath(); g.moveTo(side * 31, COUNTER - 6); g.lineTo(side * 19, COUNTER - 5); g.lineTo(side * 19, COUNTER - 1); g.lineTo(side * 30.6, COUNTER - 2); g.closePath(); g.fill();
-  }
 }
 
 function gloves(g) {
-  // left hand flat on the counter, right hand on the stock of the rifle
-  for (const [x, y, w, a] of [[-26, COUNTER - 1.5, 10, 0.08], [22, COUNTER - 2.2, 9.5, -0.12]]) {
-    g.save(); g.translate(x, y); g.rotate(a);
-    g.fillStyle = lin(g, 0, -3, 0, 3, [[0, '#4a3c30'], [1, '#221a14']]);
-    rrect(g, -w / 2, -2.8, w, 5.2, 2.2); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.3;
-    for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(-w / 2 + i * w / 4, -2.4); g.lineTo(-w / 2 + i * w / 4 + 0.6, 2); g.stroke(); }
-    g.fillStyle = 'rgba(255,210,160,0.18)'; g.fillRect(-w / 2 + 1, -2.6, w - 2, 0.6);
-    g.restore();
+  g.save();
+  // forearms laid on the counter, hands folded in the middle
+  for (const side of [-1, 1]) {
+    g.fillStyle = lin(g, 0, COUNTER - 8, 0, COUNTER, [[0, side < 0 ? '#2a261f' : '#3a352b'], [1, '#1a1814']]);
+    g.beginPath();
+    g.moveTo(side * 40, COUNTER - 9);
+    g.quadraticCurveTo(side * 22, COUNTER - 9.6, side * 6, COUNTER - 6);
+    g.lineTo(side * 6, COUNTER - 0.6);
+    g.lineTo(side * 40, COUNTER - 0.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(255,214,170,0.07)'; g.fillRect(side > 0 ? 8 : -38, COUNTER - 9.2, 30, 0.6);
+    // cuff
+    g.fillStyle = '#4a3a2a';
+    g.fillRect(side > 0 ? 6 : -11, COUNTER - 6.4, 5, 5.8);
   }
+  // left fist under, right hand over it: fingerless gloves, bare knuckles
+  g.translate(1, COUNTER - 1); g.scale(1.4, 1.4); g.translate(-1, -(COUNTER - 1));
+  g.fillStyle = lin(g, 0, COUNTER - 7, 0, COUNTER, [[0, '#3a2e24'], [1, '#1e1812']]);
+  rrect(g, -7, COUNTER - 7, 9, 6.6, 2.4); g.fill();
+  g.fillStyle = lin(g, 0, COUNTER - 8, 0, COUNTER, [[0, SKIN_L], [1, SKIN_D]]);
+  rrect(g, -2.6, COUNTER - 8.4, 9.4, 4.4, 1.8); g.fill();
+  g.strokeStyle = 'rgba(70,40,26,0.6)'; g.lineWidth = 0.3;
+  for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(-2.6 + i * 2.35, COUNTER - 8.2); g.lineTo(-2.4 + i * 2.35, COUNTER - 4.2); g.stroke(); }
+  g.fillStyle = '#2a221a';
+  rrect(g, -1, COUNTER - 5, 9, 4.6, 1.6); g.fill();
+  // a hex nut turned over in his fingers — the only currency he takes
+  g.fillStyle = '#9aa0a8';
+  g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + 0.3; g.lineTo(9.6 + Math.cos(a) * 1.6, COUNTER - 6.4 + Math.sin(a) * 1.6); } g.closePath(); g.fill();
+  g.fillStyle = '#1a1c1f'; g.beginPath(); g.arc(9.6, COUNTER - 6.4, 0.6, 0, Math.PI * 2); g.fill();
+  g.restore();
 }
 
 // ------------------------------------------------------------- counter
@@ -454,7 +589,7 @@ function counter(g, halfW) {
 
 function counterGoods(g) {
   // the rifle he is selling, laid across the mat under his right hand
-  rifle(g, -6, COUNTER - 4.4, 40, '#454c55', true);
+  rifle(g, 20, COUNTER - 4.4, 38, '#454c55', true);
   // scrap: a heap of nuts, bolts and gears
   const r = rng(0x5c4a);
   for (let i = 0; i < 26; i++) {
@@ -466,12 +601,12 @@ function counterGoods(g) {
   }
   // ammo box, lid open
   g.fillStyle = lin(g, 0, COUNTER - 10, 0, COUNTER, [[0, '#5a6a46'], [1, '#2d3622']]);
-  g.fillRect(44, COUNTER - 8, 14, 7);
+  g.fillRect(64, COUNTER - 8, 14, 7);
   g.fillStyle = '#2a3320';
-  g.beginPath(); g.moveTo(44, COUNTER - 8); g.lineTo(58, COUNTER - 8); g.lineTo(60, COUNTER - 14); g.lineTo(46, COUNTER - 14); g.closePath(); g.fill();
-  for (let i = 0; i < 5; i++) { g.fillStyle = BRASS; g.fillRect(45.4 + i * 2.5, COUNTER - 10.4, 1.6, 2.6); g.fillStyle = '#6d5a3c'; g.fillRect(45.4 + i * 2.5, COUNTER - 11.4, 1.6, 1.0); }
+  g.beginPath(); g.moveTo(64, COUNTER - 8); g.lineTo(78, COUNTER - 8); g.lineTo(80, COUNTER - 14); g.lineTo(66, COUNTER - 14); g.closePath(); g.fill();
+  for (let i = 0; i < 5; i++) { g.fillStyle = BRASS; g.fillRect(65.4 + i * 2.5, COUNTER - 10.4, 1.6, 2.6); g.fillStyle = '#6d5a3c'; g.fillRect(65.4 + i * 2.5, COUNTER - 11.4, 1.6, 1.0); }
   // price card propped against the box
-  g.save(); g.translate(62, COUNTER - 1); g.rotate(-0.18);
+  g.save(); g.translate(82, COUNTER - 1); g.rotate(-0.18);
   g.fillStyle = '#d8cfb8'; g.fillRect(0, -7, 9, 7);
   g.fillStyle = '#b8302a'; g.fillRect(1, -6, 7, 1.6);
   g.fillStyle = 'rgba(40,30,20,0.75)'; g.fillRect(1, -3.4, 5, 0.6); g.fillRect(1, -2.2, 3.6, 0.6);
@@ -496,7 +631,7 @@ export function paintTraderScene(g, w, h) {
   if (halfW > 150) { neonSign(g, -halfW + 10, 22); floorStock(g, -halfW + 12); }
   else neonSign(g, -26, -40);        // too narrow for the sign: keep it off-frame
 
-  pendantLight(g, 18, 22);
+  pendantLight(g, 34, 22);
 
   // CROW in his own layer: the neon cuts a red rim down his left edge and the
   // pendant a warm one along his hood, both from his own silhouette
@@ -519,14 +654,15 @@ export function paintTraderScene(g, w, h) {
     rc.fillRect(0, 0, R.width, R.height);
     g.drawImage(R, -45 + dx, dy, 90, COUNTER + 8);
   };
-  rimLayer(NEON, -0.9, 0, 0.85, true);
-  rimLayer(LAMP, 0.7, -0.6, 0.5, false);
+  rimLayer(NEON, -0.6, 0, 0.42, true);
+  rimLayer(LAMP, 0.5, -0.4, 0.28, false);
   g.drawImage(L, -45, 0, 90, COUNTER + 8);
 
   counter(g, halfW);
   counterGoods(g);
   gloves(g);
-  pendant(g, 18, 22);
+  smoke(g);
+  pendant(g, 34, 22);
 
   // grade: cool haze lifts the darks a touch, vignette holds the edges
   g.fillStyle = rgba(HAZE, 0.035); g.fillRect(-halfW, 0, halfW * 2, 140);
