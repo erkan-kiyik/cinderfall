@@ -5,7 +5,7 @@
 // and animate the magazine / bolt as separate painted sprites.
 
 import {
-  makeSprite, lingrad, radgrad, rr, grunge, scratches, shade, withA, COL,
+  makeSprite, lingrad, radgrad, rr, grunge, scratches, shade, withA, COL, DETAIL,
 } from './paint.js';
 import { makeRng } from '../engine/math.js';
 import { buildSkinSet } from './skins.js';
@@ -76,6 +76,7 @@ function formLight(g, x, y, w, h) {
 
 // Fine speckle so polymer reads as textured, not flat.
 function speckle(g, x, y, w, h, n = 60) {
+  n = Math.round(n * DETAIL);
   for (let i = 0; i < n; i++) {
     g.fillStyle = rng.chance(0.5) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.12)';
     g.fillRect(x + rng() * w, y + rng() * h, 0.5, 0.5);

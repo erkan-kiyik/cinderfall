@@ -2,6 +2,7 @@
 // editor and the supply-crate reel. Reads/writes Progression; draws item art
 // through a preview callback supplied by main.js (which owns the asset bag).
 
+import { renderCrate } from '../art/crate.js';
 import {
   CATALOG, RARITY, CRATE_COST, DUPLICATE_REFUND, LOADOUT_SLOTS,
   rollCrate, itemsForSlot, itemById, weaponVariantIds, LOOT_POOL, describePerk,
@@ -227,6 +228,7 @@ export class MetaUI {
 
   // Re-read progression and repaint everything (call on menu show / after runs).
   refresh() {
+    renderCrate($('crate-body-cv'), $('crate-lid'));
     this.renderScrap();
     this.renderLoadout();
     this.renderCollection();
@@ -299,6 +301,7 @@ export class MetaUI {
   switchTab(name) {
     document.querySelectorAll('.home-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
     document.querySelectorAll('.home-panel').forEach((s) => s.classList.toggle('active', s.id === `tab-${name}`));
+    if (name === 'crates') renderCrate($('crate-body-cv'), $('crate-lid'));
     syncRowFades();
     if (this.audio) this.audio.ui();
   }
@@ -649,6 +652,7 @@ export class MetaUI {
     const card = $('reveal-card');
     const doneBtn = $('reveal-done');
     overlay.classList.remove('hidden');
+    overlay.classList.remove('revealed');
     card.classList.add('hidden');
     doneBtn.classList.add('hidden');
     track.style.transition = 'none';
@@ -664,6 +668,7 @@ export class MetaUI {
       const cell = document.createElement('div');
       cell.className = 'reel-cell';
       cell.style.borderBottomColor = rarity.color;
+      cell.style.setProperty('--rarity', rarity.color);
       const cv = document.createElement('canvas');
       cv.className = 'item-preview';
       cell.appendChild(cv);
@@ -702,6 +707,8 @@ export class MetaUI {
     const card = $('reveal-card');
     card.style.borderColor = rarity.color;
     card.style.boxShadow = `0 0 40px ${rarity.glow}`;
+    card.style.setProperty('--rarity', rarity.color);
+    card.style.setProperty('--rarity-glow', rarity.glow);
     $('reveal-rarity').textContent = t(rarity.labelKey);
     $('reveal-rarity').style.color = rarity.color;
     $('reveal-name').textContent = item.name;
@@ -710,6 +717,10 @@ export class MetaUI {
     if (isDup) { status.textContent = t('reveal.duplicate', { n: refund }); status.style.color = 'var(--ink-dim)'; }
     else { status.textContent = t('reveal.new'); status.style.color = rarity.color; }
     card.classList.remove('hidden');
+    // the reel has done its job; the card gets the whole screen
+    $('crate-reveal').classList.add('revealed');
+    const art = $('reveal-art');
+    if (art) requestAnimationFrame(() => this.previewItem(item, art));
     $('reveal-done').classList.remove('hidden');
     if (this.audio) {
       const big = item.rarity === 'legendary' || item.rarity === 'epic';

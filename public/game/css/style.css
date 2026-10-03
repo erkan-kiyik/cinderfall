@@ -279,7 +279,7 @@ html, body {
    by the device pixel ratio on every remount — the crate button's scrap
    icon ended up eight times its intended size and ran over the label. */
 .cur-icon { display: inline-block; flex: none; vertical-align: middle; width: 16px; height: 16px; }
-.cur-icon.cur-scrap { filter: drop-shadow(0 0 3px rgba(190,196,208,0.30)); }
+.cur-icon.cur-scrap { filter: drop-shadow(0 0 3px rgba(255,190,90,0.35)); }
 .hud-tokens-ico { width: 16px; height: 16px; }
 
 /* ---------- mission briefing: centre screen, auto-dismisses ----------
@@ -752,16 +752,16 @@ html, body {
 /* Scrap is steel, not gold — the pill reads cool so a balance is never
    mistaken for an objective marker (those are the only amber things in the
    HUD). */
-.scrap-pill { color: #cfd4de; box-shadow: var(--sh-1), 0 0 12px rgba(150,160,175,0.10); }
+.scrap-pill { color: #ffd27a; box-shadow: var(--sh-1), 0 0 12px rgba(242,169,59,0.12); }
 /* scale pulse + glow flash whenever a balance updates — toggled briefly via JS,
    shared by any currency readout (header pills, HUD tokens strip) */
 .bump { animation: pill-bump 0.4s var(--ease-out); }
 @keyframes pill-bump { 0% { transform: scale(1); } 35% { transform: scale(1.16); } 100% { transform: scale(1); } }
 .cur-flash { animation: cur-flash-glow 0.55s var(--ease-out); }
 @keyframes cur-flash-glow {
-  0% { filter: drop-shadow(0 0 0 rgba(214,221,232,0)); }
-  28% { filter: drop-shadow(0 0 10px rgba(214,221,232,0.85)); }
-  100% { filter: drop-shadow(0 0 0 rgba(214,221,232,0)); }
+  0% { filter: drop-shadow(0 0 0 rgba(255,196,90,0)); }
+  28% { filter: drop-shadow(0 0 10px rgba(255,196,90,0.85)); }
+  100% { filter: drop-shadow(0 0 0 rgba(255,196,90,0)); }
 }
 
 /* ---- currency collection burst: a handful of compositor-only particles
@@ -776,6 +776,18 @@ html, body {
 @keyframes cur-fx-fly {
   0% { transform: translate(0, 0) scale(1); opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+/* scrap tokens: pop out, hang, get pulled back into the pill */
+.cur-fx-coin {
+  position: fixed; width: 16px; height: 16px; margin: -8px 0 0 -8px; opacity: 0;
+  animation: cur-fx-collect 0.8s cubic-bezier(0.3, 0.7, 0.4, 1) forwards;
+  will-change: transform, opacity;
+}
+@keyframes cur-fx-collect {
+  0%   { transform: translate(0, 0) scale(0.4) rotate(0deg); opacity: 0; }
+  12%  { opacity: 1; }
+  45%  { transform: translate(var(--dx), var(--dy)) scale(1.05) rotate(var(--rot)); opacity: 1; }
+  100% { transform: translate(0, 0) scale(0.5) rotate(calc(var(--rot) * 1.6)); opacity: 0.2; }
 }
 
 .home-body { flex: 1 1 auto; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; }
@@ -3072,3 +3084,97 @@ html.no-backdrop-filter .profile-card {
 }
 /* the tab bar already rules the section off; a second rule under it doubled up */
 #tab-trader .store-section-head { border-top: 0; padding-top: 0; }
+
+/* ======================= SUPPLY CRATE (painted) =======================
+   The case is two canvases (art/crate.js): body and lid. The old CSS case —
+   bordered gradient box, glyph in the middle, rivets as radial dots — is
+   switched off here; only its float and contact shadow survive. */
+.crate-box {
+  width: 240px; height: 186px;
+  border: 0; border-radius: 0; background: none; box-shadow: none;
+}
+.crate-box::before { display: none; }
+.crate-box::after { left: 14%; right: 14%; bottom: 2px; }
+.crate-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.crate-lid { height: 100%; border: 0; border-radius: 0; background: none; transform-origin: 50% 36%; z-index: 2; }
+.crate-mark { display: none; }
+/* warm light leaking from the seam under the lid, breathing */
+.crate-glow {
+  inset: auto; left: 12%; right: 12%; top: 34%; height: 8%;
+  border-radius: 50%; box-shadow: none;
+  background: radial-gradient(ellipse at center, rgba(255,196,110,0.75), rgba(255,140,60,0) 70%);
+  filter: blur(4px); z-index: 1;
+  animation: crate-seam 2.4s ease-in-out infinite;
+}
+@keyframes crate-seam { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.85; } }
+/* god-rays behind the case: hidden at rest, spun up as it opens */
+.crate-rays {
+  position: absolute; left: 50%; top: 40%; width: 420px; height: 420px; margin: -210px 0 0 -210px;
+  border-radius: 50%; opacity: 0; pointer-events: none; z-index: 0;
+  background: repeating-conic-gradient(from 0deg, rgba(255,206,120,0.28) 0deg 8deg, rgba(255,206,120,0) 8deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 68%);
+          mask-image: radial-gradient(circle, #000 15%, transparent 68%);
+}
+.crate-box.opening .crate-rays { animation: crate-rays-spin 0.62s ease-out forwards; }
+@keyframes crate-rays-spin {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  40% { opacity: 1; }
+  100% { opacity: 0.0; transform: rotate(60deg) scale(1.15); }
+}
+.crate-lid.opening { animation: crate-lid-throw 0.6s cubic-bezier(0.3, 0.6, 0.4, 1) forwards; }
+@keyframes crate-lid-throw {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  25%  { transform: translateY(4px) rotate(0deg); opacity: 1; }
+  100% { transform: translate(40px, -90px) rotate(24deg); opacity: 0; }
+}
+.crate-glow.opening { animation: crate-seam-blast 0.6s ease-out; box-shadow: none; }
+@keyframes crate-seam-blast {
+  0% { opacity: 0.6; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.6, 3.2); }
+  100% { opacity: 0.4; transform: scale(1); }
+}
+
+/* reel: cells lit in their rarity, chevron markers top and bottom */
+.reel-window { height: 164px; border-color: rgba(214,69,58,0.35); }
+.reel-cell {
+  width: 120px; height: 132px; border-radius: var(--r2);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 45%, color-mix(in srgb, var(--rarity, #777) 26%, transparent), transparent 75%),
+    linear-gradient(180deg, #151a21, #0d1116);
+  border: 1px solid rgba(255,255,255,0.06); border-bottom: 4px solid var(--rarity, #666);
+}
+.reel-cell .item-preview { height: 56px; }
+.reel-cell .rc-name { font-size: 10px; font-weight: 600; color: var(--ink-2); }
+.reel-marker { width: 2px; background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+.reel-marker::before, .reel-marker::after {
+  content: ''; position: absolute; left: 50%; width: 0; height: 0; margin-left: -9px;
+  border-left: 9px solid transparent; border-right: 9px solid transparent;
+}
+.reel-marker::before { top: 0; border-top: 12px solid var(--amber); }
+.reel-marker::after { bottom: 0; border-bottom: 12px solid var(--amber); }
+
+/* reveal: the item itself, big, on rays in its rarity colour */
+.reveal-card { position: relative; overflow: hidden; padding: var(--s5) var(--s10) var(--s6); }
+.reveal-rays {
+  position: absolute; left: 50%; top: 34%; width: 520px; height: 520px; margin: -260px 0 0 -260px;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rarity, #fff) 30%, transparent) 0deg 7deg, transparent 7deg 20deg);
+  -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 60%);
+          mask-image: radial-gradient(circle, #000 10%, transparent 60%);
+  animation: reveal-rays-turn 14s linear infinite;
+  pointer-events: none; z-index: 0;
+}
+@keyframes reveal-rays-turn { to { transform: rotate(360deg); } }
+.reveal-card > :not(.reveal-rays) { position: relative; z-index: 1; }
+.reveal-art {
+  display: block; width: 220px; height: 96px; margin: 0 auto var(--s3);
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5));
+  animation: reveal-art-in 0.55s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes reveal-art-in { 0% { transform: scale(0.4) rotate(-8deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+.crate-reveal.revealed .reel-window { display: none; }
+@media (max-height: 460px) {
+  .reveal-art { width: 180px; height: 72px; }
+  .reveal-name { font-size: 20px; }
+  .crate-reveal { gap: 16px; }
+}

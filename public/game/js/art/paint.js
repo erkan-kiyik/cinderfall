@@ -259,8 +259,17 @@ export function rr(g, x, y, w, h, r) {
 
 // ---- painted wear & lighting -------------------------------------------
 
+// Global surface-detail level. The art direction is clean and stylised: shapes,
+// value and light carry the asset, not noise. Every painter calls the three
+// texture helpers below with counts tuned for a gritty, realistic finish, and
+// at game scale that much speckle, scratching and streaking reads as dirt and
+// stray lines on the sprite. One knob scales all of it, everywhere.
+export const DETAIL = 0.3;
+const detailN = (n) => Math.max(0, Math.round(n * DETAIL));
+
 // Speckled dirt/wear. Caller clips first if containment is needed.
 export function grunge(g, x, y, w, h, rng, { n = 120, dark = 0.14, light = 0.05, size = 1.6 } = {}) {
+  n = detailN(n);
   for (let i = 0; i < n; i++) {
     const px = x + rng() * w, py = y + rng() * h;
     const s = rng.range(0.3, size);
@@ -273,6 +282,7 @@ export function grunge(g, x, y, w, h, rng, { n = 120, dark = 0.14, light = 0.05,
 
 // Vertical weather streaks (rust drips, water stains).
 export function streaks(g, x, y, w, h, rng, { n = 8, color = 'rgba(40,26,16,0.16)', wMax = 2.4 } = {}) {
+  n = Math.max(n ? 1 : 0, Math.round(n * DETAIL * 1.6));
   for (let i = 0; i < n; i++) {
     const sx = x + rng() * w;
     const len = rng.range(h * 0.2, h * 0.85);
@@ -290,6 +300,8 @@ export function streaks(g, x, y, w, h, rng, { n = 8, color = 'rgba(40,26,16,0.16
 // strokes stop reading as wear and start reading as cracks in the metal, so a
 // caller with large uninterrupted surfaces can ask for shorter marks.
 export function scratches(g, x, y, w, h, rng, { n = 10, len: maxLen = 7, color = 'rgba(220,225,235,0.20)' } = {}) {
+  n = detailN(n);
+  maxLen = Math.min(maxLen, 3);
   g.strokeStyle = color;
   for (let i = 0; i < n; i++) {
     const sx = x + rng() * w, sy = y + rng() * h;

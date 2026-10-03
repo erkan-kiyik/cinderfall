@@ -1796,6 +1796,8 @@ document.addEventListener('visibilitychange', () => {
 // preset down once (see quality.js — it never auto-raises or re-triggers).
 let perfAvg = 1 / 60;
 let lowPerfT = 0;
+const MENU_FPS = 24;
+let nextRenderAt = 0;
 
 function frame(now) {
   if (document.hidden) { last = now; requestAnimationFrame(frame); return; }
@@ -1810,7 +1812,16 @@ function frame(now) {
     acc -= STEP;
     steps++;
   }
-  game.render();
+  // Draw no more often than the tier's cap (and only ~24fps behind the menu,
+  // where the scene is a backdrop under opaque panels). The simulation above
+  // still steps at its fixed rate; only rasterisation is rationed, which is
+  // where all of the frame's cost is.
+  const backdrop = game.state === 'menu' || game.state === 'pause' || game.state === 'end';
+  const cap = backdrop ? MENU_FPS : (quality.preset.fpsCap || 60);
+  if (now >= nextRenderAt - 1.5) {
+    game.render();
+    nextRenderAt = Math.max(nextRenderAt + 1000 / cap, now);
+  }
 
   if (game.state === 'play' && !quality.autoLowerExhausted) {
     perfAvg = perfAvg * 0.94 + rawDt * 0.06;

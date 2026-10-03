@@ -15,31 +15,47 @@ function getLayer() {
   return fxLayer;
 }
 
-// Warm steel, matching the scrap plate icon in art/currency.js.
-const SCRAP_COLORS = ['#cfd3dc', '#9aa0ab', '#eef1f6'];
+import { paintScrap } from '../art/currency.js';
 
+// Coin sprite for the burst, painted once from the same painter as every
+// other scrap icon so the flying tokens are the currency, not dots.
+let coinUrl = null;
+function coinSprite() {
+  if (coinUrl) return coinUrl;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 48;
+  paintScrap(cv.getContext('2d'), 48, 48);
+  coinUrl = cv.toDataURL('image/png');
+  return coinUrl;
+}
+
+// Tokens pop out of the pill, hang for a beat, then get pulled back into it —
+// the "collected" read, rather than sparks flying away and vanishing.
 function spawnBurst(el) {
   if (!el || !el.getBoundingClientRect) return;
   const rect = el.getBoundingClientRect();
   if (!rect.width && !rect.height) return;
-  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-  const colors = SCRAP_COLORS;
-  const count = 6;
+  const icon = el.querySelector && el.querySelector('.cur-icon');
+  const r2 = icon ? icon.getBoundingClientRect() : rect;
+  const cx = r2.left + r2.width / 2, cy = r2.top + r2.height / 2;
+  const count = 7;
   const layer = getLayer();
+  const url = coinSprite();
   for (let i = 0; i < count; i++) {
-    const p = document.createElement('span');
-    p.className = 'cur-fx-particle';
-    const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
-    const dist = 20 + Math.random() * 18;
+    const p = document.createElement('img');
+    p.className = 'cur-fx-coin';
+    p.src = url; p.alt = '';
+    const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+    const dist = 26 + Math.random() * 22;
     p.style.left = `${cx}px`; p.style.top = `${cy}px`;
     p.style.setProperty('--dx', `${Math.cos(ang) * dist}px`);
-    p.style.setProperty('--dy', `${Math.sin(ang) * dist}px`);
-    p.style.background = colors[i % colors.length];
-    p.style.color = colors[i % colors.length];
+    p.style.setProperty('--dy', `${Math.sin(ang) * dist + 10}px`);
+    p.style.setProperty('--rot', `${(Math.random() - 0.5) * 240}deg`);
+    p.style.animationDelay = `${i * 22}ms`;
     layer.appendChild(p);
     const cleanup = () => p.remove();
     p.addEventListener('animationend', cleanup, { once: true });
-    setTimeout(cleanup, 900);
+    setTimeout(cleanup, 1200);
   }
 }
 

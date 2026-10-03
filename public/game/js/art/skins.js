@@ -163,161 +163,105 @@ function silhouette(base, color) {
 // weapon already is. `span` is the body's x extent, used to size patterns.
 
 function coatingPass(g, kind, span, palette, rng) {
+  // Stylised finishes: big shapes and clean value steps. The first pass of
+  // these were textures — thirty rimmed camo blotches, a fine twill hatch,
+  // scattered chips and rust drips — which at game scale read as noise and
+  // stray lines over the gun rather than as a finish.
   const [x0, x1] = span;
   const w = x1 - x0, y0 = -16, h = 30;
   g.save();
   g.globalCompositeOperation = 'source-atop';
 
   if (kind === 'hydrodip') {
-    // Multicam blotches. The skin tables pick four colours close to the base
-    // coat — which is what a real dip looks like on a paint chip and what it
-    // looked like on the gun: nothing at all. Each blotch is now pushed away
-    // from the base value, alternately lighter and darker, and given a
-    // darker rim, so the pattern survives being 60 pixels wide on screen.
+    // stylised camo: a handful of large, soft-cornered patches, three tones
     const cols = palette.camo || ['#4c5340', '#3a4030', '#6b6a52', '#26291f'];
-    for (let i = 0; i < 30; i++) {
-      const c = cols[rng.int(0, cols.length - 1)];
-      const lift = i % 2 ? rng.range(0.16, 0.34) : -rng.range(0.20, 0.40);
-      const bx = x0 + rng() * w, by = y0 + rng() * h;
-      const rx = rng.range(2.0, 6.0), ry = rng.range(1.4, 3.8), rot = rng.range(0, 3);
-      g.fillStyle = withA(shade(c, lift), rng.range(0.55, 0.85));
-      g.beginPath(); g.ellipse(bx, by, rx, ry, rot, 0, Math.PI * 2); g.fill();
-      // rim, so neighbouring blotches read as separate shapes
-      g.strokeStyle = withA(shade(c, lift - 0.3), 0.4); g.lineWidth = 0.4;
-      g.beginPath(); g.ellipse(bx, by, rx, ry, rot, 0, Math.PI * 2); g.stroke();
+    for (let i = 0; i < 12; i++) {
+      const c = cols[i % cols.length];
+      const lift = i % 2 ? 0.22 : -0.26;
+      const bx = x0 + (i / 12) * w + rng.range(-2, 2), by = y0 + 6 + rng() * (h - 12);
+      g.fillStyle = withA(shade(c, lift), 0.78);
+      g.beginPath(); g.ellipse(bx, by, rng.range(4, 7), rng.range(2.4, 4), rng.range(-0.5, 0.5), 0, Math.PI * 2); g.fill();
     }
   } else if (kind === 'carbon') {
-    // Twill weave. At 1.8-unit spacing and 0.10/0.22 contrast this came out
-    // as a black-and-white fishnet thrown over the gun rather than a woven
-    // surface. Half the pitch, a third of the contrast, and a soft sheen
-    // across the middle so it reads as a material and not as a pattern.
-    g.lineWidth = 0.3;
-    g.strokeStyle = 'rgba(255,255,255,0.055)';
-    for (let i = -30; i < w + 30; i += 0.9) {
-      g.beginPath(); g.moveTo(x0 + i, y0); g.lineTo(x0 + i + h, y0 + h); g.stroke();
-    }
-    g.strokeStyle = 'rgba(0,0,0,0.085)';
-    for (let i = -30; i < w + 30; i += 0.9) {
-      g.beginPath(); g.moveTo(x0 + i + h, y0); g.lineTo(x0 + i, y0 + h); g.stroke();
-    }
-    g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [
-      [0, 'rgba(255,255,255,0.10)'], [0.42, 'rgba(255,255,255,0.02)'],
-      [0.7, 'rgba(0,0,0,0.10)'], [1, 'rgba(0,0,0,0.22)'],
-    ]);
+    // two-tone: darker lower half with a crisp break line
+    g.fillStyle = 'rgba(0,0,0,0.26)';
+    g.fillRect(x0, -4.2, w, 20);
+    g.fillStyle = 'rgba(255,255,255,0.10)';
+    g.fillRect(x0, -4.6, w, 0.4);
+    g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [[0, 'rgba(255,255,255,0.08)'], [0.45, 'rgba(255,255,255,0)'], [1, 'rgba(0,0,0,0.12)']]);
     g.fillRect(x0, y0, w, h);
   } else if (kind === 'chrome') {
-    // Mirror finish. The old ramp went from 5% to 62% white over the whole
-    // upper half, which is not a mirror — it is a bucket of white paint, and
-    // it erased every engraved detail underneath. A mirror is *contrast*: a
-    // narrow blown specular, a hard horizon, and a dark reflected floor.
+    // polished: one soft highlight band and a darker reflected belly
     g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [
-      [0, 'rgba(196,214,236,0.30)'],
-      [0.26, 'rgba(120,140,168,0.14)'],
-      [0.34, 'rgba(255,255,255,0.72)'],   // specular band, deliberately thin
-      [0.40, 'rgba(255,255,255,0.10)'],
-      [0.47, 'rgba(14,18,26,0.62)'],      // horizon
-      [0.72, 'rgba(30,38,52,0.34)'],
-      [1, 'rgba(150,172,200,0.26)'],      // bounce off the ground
+      [0, 'rgba(210,225,240,0.22)'], [0.33, 'rgba(255,255,255,0.40)'],
+      [0.42, 'rgba(255,255,255,0.06)'], [0.6, 'rgba(10,14,20,0.30)'],
+      [1, 'rgba(150,170,195,0.18)'],
     ]);
     g.fillRect(x0, y0, w, h);
   } else if (kind === 'lacquer') {
-    // deep gloss: bright top rail, dark belly, tight highlight line
+    // deep gloss: bright top, dark belly, one tight highlight line
     g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [
-      [0, 'rgba(255,255,255,0.30)'],
-      [0.3, 'rgba(255,255,255,0.06)'],
-      [0.75, 'rgba(0,0,0,0.30)'],
-      [1, 'rgba(0,0,0,0.45)'],
+      [0, 'rgba(255,255,255,0.26)'], [0.3, 'rgba(255,255,255,0.05)'],
+      [0.75, 'rgba(0,0,0,0.26)'], [1, 'rgba(0,0,0,0.4)'],
     ]);
     g.fillRect(x0, y0, w, h);
-    g.fillStyle = 'rgba(255,255,255,0.4)';
-    g.fillRect(x0, -9.4, w, 0.5);
+    g.fillStyle = 'rgba(255,255,255,0.32)';
+    g.fillRect(x0, -9.4, w, 0.45);
   } else if (kind === 'weathered') {
-    // Edge wear. Thirty specks scattered at random over a 60x30 field put
-    // most of the wear in the middle of flat panels, where nothing rubs, and
-    // at 0.12 alpha none of it showed. Wear concentrates on the two edges the
-    // gun is actually handled and holstered by.
-    for (const [ey, n] of [[-9.6, 26], [-1.6, 18]]) {
-      for (let i = 0; i < n; i++) {
-        g.fillStyle = `rgba(198,204,214,${rng.range(0.22, 0.6)})`;
-        const sx = x0 + rng() * w, sy = ey + rng.range(-1.1, 1.1);
-        g.fillRect(sx, sy, rng.range(0.8, 4.2), rng.range(0.3, 0.65));
-      }
+    // worn edges only: a few bare-metal rubs along the top line
+    for (let i = 0; i < 8; i++) {
+      g.fillStyle = 'rgba(200,206,214,0.35)';
+      g.fillRect(x0 + rng() * w, -9.6 + rng.range(-0.6, 0.6), rng.range(1.5, 4), 0.5);
     }
-    // chipped corners down to bare metal
-    for (let i = 0; i < 14; i++) {
-      g.fillStyle = `rgba(176,182,192,${rng.range(0.3, 0.6)})`;
-      const sx = x0 + rng() * w, sy = -12 + rng() * 12;
-      g.beginPath(); g.arc(sx, sy, rng.range(0.4, 1.2), 0, Math.PI * 2); g.fill();
-    }
-    // rust bleeding down from the chips
-    for (let i = 0; i < 12; i++) {
-      const sx = x0 + rng() * w, sy = -10 + rng() * 7;
-      g.fillStyle = lingrad(g, 0, sy, 0, sy + 4, [
-        [0, `rgba(122,74,48,${rng.range(0.3, 0.5)})`], [1, 'rgba(122,74,48,0)'],
-      ]);
-      g.fillRect(sx, sy, rng.range(0.5, 1.3), 4);
-    }
+    g.fillStyle = 'rgba(0,0,0,0.12)';
+    g.fillRect(x0, y0, w, h);
   }
   g.restore();
 }
 
-// Etched pattern over the body — also source-atop clipped.
-function engravingPass(g, kind, span, color, rng) {
+// Decals over the body — also source-atop clipped. Clean graphic marks in the
+// skin's accent colour instead of the old etched textures (random PCB traces,
+// a band of pseudo-glyphs, scratched tally marks), which read as scribbles.
+function engravingPass(g, kind, span, color, rng, base) {
   const [x0, x1] = span;
+  const w = x1 - x0;
+  const S = ASSET_SCALE;
+  const top = base ? -base.ay / S : -10;
+  const bot = base ? top + base.h : 6;
+  const y = top + (bot - top) * 0.42;
+  const col = color.replace(/[\d.]+\)$/, '0.85)');
   g.save();
   g.globalCompositeOperation = 'source-atop';
-  g.strokeStyle = color;
-  g.lineWidth = 0.5;
+  g.fillStyle = col;
   if (kind === 'circuit') {
-    // PCB traces: orthogonal runs with via pads
-    for (let i = 0; i < 9; i++) {
-      let cx = x0 + rng() * (x1 - x0), cy = -12 + rng() * 16;
-      g.beginPath(); g.moveTo(cx, cy);
-      for (let s = 0; s < 3; s++) {
-        if (rng.chance(0.5)) cx += rng.range(-6, 8); else cy += rng.range(-4, 4);
-        g.lineTo(cx, cy);
-      }
-      g.stroke();
-      g.fillStyle = color;
-      g.beginPath(); g.arc(cx, cy, 0.7, 0, Math.PI * 2); g.fill();
-    }
+    // racing stripes: one bold, one fine, running the length of the body
+    g.fillRect(x0 + w * 0.12, y - 0.5, w * 0.76, 1.0);
+    g.fillRect(x0 + w * 0.12, y + 1.0, w * 0.76, 0.35);
   } else if (kind === 'runes') {
-    // Angular glyph band. Every glyph used to be the same chevron with an
-    // optional crossbar, sixteen in a row — which is a sawtooth ribbon, not
-    // writing. Six different marks, drawn from a set, spaced irregularly.
-    const GLYPHS = [
-      [[0, 0], [0, -2.6], [1.5, -1.3], [0, 0]],                  // flag
-      [[0, -2.6], [0, 0], [1.6, 0]],                             // L
-      [[0, 0], [1.6, -2.6], [0, -2.6], [1.6, 0]],                // Z through
-      [[0.8, 0], [0.8, -2.6], [-0.3, -1.6], [1.9, -1.6]],        // cross-staff
-      [[0, 0], [0.9, -2.6], [1.8, 0]],                           // caret
-      [[0, -2.6], [1.6, -2.6], [1.6, -1.3], [0, -1.3], [0, 0], [1.6, 0]], // S
-    ];
-    let gx = x0 + 3;
-    const end = x1 - 4;
-    let i = 0;
-    while (gx < end) {
-      const gl = GLYPHS[(i * 3 + Math.floor(rng() * 2)) % GLYPHS.length];
-      const gy = -8 + rng.range(-0.4, 0.4);
+    // three chevrons stepping toward the muzzle
+    for (let i = 0; i < 3; i++) {
+      const cx = x0 + w * (0.34 + i * 0.07);
       g.beginPath();
-      gl.forEach(([px, py], k) => (k ? g.lineTo(gx + px, gy + py) : g.moveTo(gx + px, gy + py)));
-      g.stroke();
-      gx += 2.2 + rng.range(0.7, 1.8);
-      i++;
-    }
-  } else if (kind === 'tally') {
-    // kill tally scratched into the stock
-    for (let i = 0; i < 12; i++) {
-      const gx = x0 + 4 + i * 1.5;
-      g.beginPath(); g.moveTo(gx, -6.5); g.lineTo(gx - 0.4, -3.4); g.stroke();
+      g.moveTo(cx, y - 1.6); g.lineTo(cx + 1.6, y); g.lineTo(cx, y + 1.6);
+      g.lineTo(cx - 1.0, y + 1.6); g.lineTo(cx + 0.6, y); g.lineTo(cx - 1.0, y - 1.6);
+      g.closePath(); g.fill();
     }
   }
+  // 'tally' adds nothing now: scratched marks are exactly the detail we cut
   g.restore();
 }
 
 // ------------------------------------------------------------- attachments
 // Drawn over the base, in weapon-local coordinates. `s` scales the device so
 // the same part reads correctly on a pistol and on a rifle.
+
+// Energy weapons each have a barrel that IS their identity (a fork, a ring, a
+// coil stack); a second emitter screwed onto the end of it doubled the barrel
+// and made every energy skin share the same tip. Muzzle devices are for
+// conventional firearms only, and rail optics only for guns that do not
+// already carry one of their own.
+const MUZZLE_OK = new Set(['rifle', 'pistol', 'smg', 'battle', 'lmg', 'sniper']);
+const RAIL_OK = new Set(['rifle', 'pistol', 'smg']);
 
 function muzzleDevice(g, kind, mount, palette, glow) {
   if (!kind || !mount) return;
@@ -976,11 +920,11 @@ export function buildSkin(kind, base, skin, seed = 1) {
       coatingPass(g, skin.coating, span, { ...palette, camo: skin.camo }, rng);
     }
     if (skin.engraving) {
-      engravingPass(g, skin.engraving, span, skin.engravingColor || 'rgba(220,220,230,0.35)', rng);
+      engravingPass(g, skin.engraving, span, skin.engravingColor || 'rgba(220,220,230,0.35)', rng, base);
     }
     edgeGlowPass(g, span, glow, base);
-    railDevice(g, skin.rail, mounts.rail, palette, glow);
-    muzzleDevice(g, skin.muzzle, mounts.muzzle, palette, glow);
+    if (RAIL_OK.has(kind)) railDevice(g, skin.rail, mounts.rail, palette, glow);
+    if (MUZZLE_OK.has(kind)) muzzleDevice(g, skin.muzzle, mounts.muzzle, palette, glow);
   };
 
   return skinSprite(base, pad, under, over);

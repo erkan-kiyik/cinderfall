@@ -250,10 +250,11 @@
           <h2 class="panel-title" data-i18n="crates.title">SUPPLY CRATE</h2>
           <div class="crate-hero">
             <div id="crate-box" class="crate-box">
-              <div id="crate-lid" class="crate-lid"></div>
+              <div class="crate-rays" aria-hidden="true"></div>
               <div id="crate-glow" class="crate-glow"></div>
+              <canvas id="crate-body-cv" class="crate-cv" aria-hidden="true"></canvas>
+              <canvas id="crate-lid" class="crate-cv crate-lid" aria-hidden="true"></canvas>
               <div id="crate-burst" class="crate-burst"></div>
-              <span class="crate-mark">◈</span>
             </div>
             <!-- The labels sit in their own spans: the buttons also carry a
                  painted canvas and a live counter, which data-i18n on the
@@ -417,6 +418,8 @@
         <div class="reel-marker"></div>
       </div>
       <div id="reveal-card" class="reveal-card hidden">
+        <div class="reveal-rays" aria-hidden="true"></div>
+        <canvas id="reveal-art" class="reveal-art" aria-hidden="true"></canvas>
         <div id="reveal-rarity" class="reveal-rarity"></div>
         <div id="reveal-name" class="reveal-name"></div>
         <div id="reveal-kind" class="reveal-kind"></div>

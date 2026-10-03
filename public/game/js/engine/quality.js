@@ -36,11 +36,17 @@ const KEY = 'cinderfall.quality.v1';
 // cool-shadow passes use `overlay` and `soft-light`, which are the two most
 // expensive blend modes a mobile GPU has to service; the cheap path folds them
 // into one `source-over` fill of the same net tint.
+// `fpsCap` bounds how often the scene is drawn. A 120Hz phone otherwise
+// renders every frame twice for no visible gain, and Low holds a steady 30
+// rather than a ragged 40-50 — steadier, cooler and lighter on the battery.
+// Medium no longer runs the rich grade: its overlay and soft-light passes are
+// the two most expensive blend modes a mobile GPU services, for a tint the
+// cheap path reproduces closely.
 export const PRESETS = {
-  low:    { name: 'LOW',    dprCap: 1,   assetScale: 2,   particleMax: 900,  bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.4,  accentPx: 0,   lightScale: 0.5,  richGrade: false, renderScale: 0.7 },
-  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1600, bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.7,  accentPx: 1.2, lightScale: 0.75, richGrade: true,  renderScale: 0.85 },
-  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: true,  ambientMul: 1,    accentPx: 1.4, lightScale: 1,    richGrade: true,  renderScale: 1 },
-  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, accentPx: 1.4, lightScale: 1,    richGrade: true,  renderScale: 1 },
+  low:    { name: 'LOW',    dprCap: 1,   assetScale: 2,   particleMax: 900,  bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.4,  accentPx: 0,   lightScale: 0.5,  richGrade: false, renderScale: 0.7,  fpsCap: 30 },
+  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1600, bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.7,  accentPx: 1.2, lightScale: 0.6,  richGrade: false, renderScale: 0.8,  fpsCap: 60 },
+  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: true,  ambientMul: 1,    accentPx: 1.4, lightScale: 1,    richGrade: true,  renderScale: 1,    fpsCap: 60 },
+  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, accentPx: 1.4, lightScale: 1,    richGrade: true,  renderScale: 1,    fpsCap: 60 },
 };
 const ORDER = ['low', 'medium', 'high', 'ultra'];
 // How many times the runtime may step the preset down on its own. Two is
