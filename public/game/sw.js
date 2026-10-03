@@ -8,7 +8,7 @@
 //     refresh — instant loads, self-healing when files change.
 // Bump CACHE on any shipped change to retire the previous cache on activate.
 
-const CACHE = 'cinderfall-v3';
+const CACHE = 'cinderfall-v4';
 
 // The full game shell — every module is a static ES import, so precaching
 // them means the whole game is available offline from the very first visit,
@@ -25,6 +25,7 @@ const SHELL = [
   './',
   './index.html',
   './css/style.css',
+  './css/motion.css',
   './manifest.webmanifest',
   './assets/icon.svg',
   './assets/icon-192.png',
@@ -102,6 +103,7 @@ const SHELL = [
   './js/legal/text/ru.js',
   './js/legal/text/tr.js',
   './js/main.js',
+  './js/ui/motion.js',
   './legal/privacy.html',
   './legal/terms.html',
 ];

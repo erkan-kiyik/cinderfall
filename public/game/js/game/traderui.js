@@ -25,6 +25,9 @@ import { renderTraderScene } from '../art/trader.js';
 import { renderScrapIcon } from '../art/currency.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { t, onLangChange } from '../engine/i18n.js';
+import {
+  press, hold, deny, tilt, popIn, coinsTo, sparks, haptic, sfx, countTo, bump,
+} from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -54,6 +57,10 @@ export class TraderUI {
     this.busy = false;
     this._tick = null;
     this._stallDay = null;
+    // Set while a purchase is playing out, so the repaint it triggers does not
+    // re-run the whole grid's entrance animation under the player's finger.
+    this._quiet = false;
+    this._poke = 0;
   }
 
   // Display name for a card. Weapons resolve through the live defs; anything
@@ -68,6 +75,11 @@ export class TraderUI {
   mount() {
     this.renderCategories();
     $('btn-trade-ad').addEventListener('click', () => this.watchAdForScrap());
+    press($('btn-trade-ad'));
+    // CROW talks back when poked. Cheap: the scene canvas is static, so the
+    // reaction is the speech line, a squash of the canvas and a grunt.
+    const scene = $('trader-scene');
+    if (scene) scene.addEventListener('click', () => this.pokeCrow());
     this.refresh();
     // Ad cooldown and the restock clock both tick once a second. One timer
     // drives both so the panel never runs two intervals.
@@ -115,7 +127,10 @@ export class TraderUI {
     const n = this.p.scrap;
     const prev = this._lastScrapCount;
     this._lastScrapCount = n;
-    if (prev == null || n <= prev) { el.textContent = String(n); return; }   // init / spend: snap
+    if (prev == null || n === prev) { el.textContent = String(n); return; }
+    // A spend counts down too: money that blinks out of the balance is money
+    // the player did not see go.
+    if (n < prev) { countTo(el, prev, n); return; }
     animateCount(el, prev, n);
     playCurrencyGain(document.querySelector('.scrap-pill'), 'scrap', this.audio);
   }
@@ -143,16 +158,63 @@ export class TraderUI {
       const chip = document.createElement('button');
       chip.className = 'store-cat-chip' + (cat.key === this.category ? ' active' : '');
       chip.textContent = t(cat.labelKey);
+      chip.dataset.cat = cat.key;
+      press(chip, { scale: 0.9, sound: false });
       chip.addEventListener('click', () => {
+        if (this.category === cat.key) return;
         this.category = cat.key;
+        sfx('uiWhoosh');
         this.applyCategoryVisibility();
-        this.renderItemGrid();
-        this.renderCategories();
-        if (this.audio) this.audio.ui();
+        if (cat.key === 'stall') this.renderStall(); else this.renderItemGrid();
+        for (const c of host.querySelectorAll('.store-cat-chip')) c.classList.toggle('active', c.dataset.cat === cat.key);
+        this.movePill();
       });
       host.appendChild(chip);
     }
     this.applyCategoryVisibility();
+    this.movePill(true);
+  }
+
+  // The underline under the active category slides there on a spring rather
+  // than jumping. Positioned from offsetLeft so it scrolls with the strip.
+  movePill(instant = false) {
+    const host = $('trader-cats');
+    if (!host) return;
+    let pill = host.querySelector('.mo-chip-pill');
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.className = 'mo-chip-pill';
+      host.appendChild(pill);
+      host.classList.add('has-pill');
+      instant = true;
+    }
+    const active = host.querySelector('.store-cat-chip.active');
+    if (!active || !active.offsetWidth) { requestAnimationFrame(() => this.movePill(true)); return; }
+    if (instant) pill.style.transition = 'none';
+    pill.style.width = `${active.offsetWidth}px`;
+    pill.style.transform = `translateX(${active.offsetLeft}px)`;
+    if (instant) { void pill.offsetWidth; pill.style.transition = ''; }
+    if (active.scrollIntoView && !instant) active.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+  }
+
+  // Tapping CROW cycles through a few lines; each tap squashes the canvas.
+  pokeCrow() {
+    const line = $('trader-line');
+    const scene = $('trader-scene');
+    this._poke = (this._poke % 5) + 1;
+    if (line) {
+      line.textContent = t(`trader.poke.${this._poke}`);
+      line.classList.remove('mo-say');
+      void line.offsetWidth;
+      line.classList.add('mo-say');
+    }
+    if (scene && scene.animate) {
+      scene.animate([
+        { transform: 'scale(1)' }, { transform: 'scale(1.03, 0.97)', offset: 0.2 }, { transform: 'scale(1)' },
+      ], { duration: 480, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+    }
+    sfx('uiBoing');
+    haptic('soft');
   }
 
   applyCategoryVisibility() {
@@ -204,6 +266,7 @@ export class TraderUI {
       return;
     }
     for (const offer of offers) host.appendChild(this.offerCard(offer));
+    if (!this._quiet) popIn(host.children);
   }
 
   // One stall card: art, name, rarity, struck-through list price and the
@@ -239,10 +302,10 @@ export class TraderUI {
     const btn = document.createElement('button');
     btn.className = 'btn quiet trade-buy';
     btn.appendChild(this.priceLabel(price, base));
-    btn.disabled = this.p.scrap < price;
-    btn.addEventListener('click', (e) => { e.stopPropagation(); this.trade(item, price, cv); });
+    this.armBuy(btn, card, item, price, cv);
     card.appendChild(btn);
 
+    tilt(card);
     requestAnimationFrame(() => this.previewItem(item, cv));
     return card;
   }
@@ -397,8 +460,7 @@ export class TraderUI {
         const buyBtn = document.createElement('button');
         buyBtn.className = 'btn quiet trade-buy';
         buyBtn.appendChild(this.priceLabel(price));
-        buyBtn.disabled = this.p.scrap < price;
-        buyBtn.addEventListener('click', (e) => { e.stopPropagation(); this.trade(item, price, cv); });
+        this.armBuy(buyBtn, card, item, price, cv);
         card.appendChild(buyBtn);
       } else if (owned) {
         const tag = document.createElement('div');
@@ -406,16 +468,63 @@ export class TraderUI {
         tag.textContent = t('item.owned');
         card.appendChild(tag);
       }
+      tilt(card);
       requestAnimationFrame(() => this.previewItem(item, cv));
       grid.appendChild(card);
     }
+    if (!this._quiet) popIn(grid.children);
+  }
+
+  // Buy is press-and-hold: a short charge (with a rising tick) guards a
+  // thumb brushing past a price tag from spending scrap. When the player is
+  // short, the button stays tappable and answers with a wobble instead of
+  // being a dead grey control that says nothing.
+  armBuy(btn, card, item, price, preview) {
+    const short = this.p.scrap < price;
+    btn.classList.toggle('short', short);
+    btn.setAttribute('aria-disabled', short ? 'true' : 'false');
+    hold(btn, {
+      ms: 480,
+      canStart: () => {
+        if (this.busy) return false;
+        if (this.p.scrap < price) { this.refuse(btn); return false; }
+        return true;
+      },
+      onConfirm: () => this.trade(item, price, preview, { btn, card }),
+      onHint: () => this.hint(btn, t('trader.holdToBuy')),
+    });
+  }
+
+  refuse(btn) {
+    deny(btn);
+    const pill = document.querySelector('.scrap-pill');
+    if (pill) deny(pill, { sound: false });
+    const line = $('trader-line');
+    if (line) {
+      line.textContent = t('trader.line.short');
+      line.classList.remove('mo-say');
+      void line.offsetWidth;
+      line.classList.add('mo-say');
+    }
+  }
+
+  hint(anchor, text) {
+    const r = anchor.getBoundingClientRect();
+    const tip = document.createElement('div');
+    tip.className = 'mo-hint';
+    tip.textContent = text;
+    tip.style.left = `${r.left + r.width / 2}px`;
+    tip.style.top = `${r.top - 6}px`;
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 1350);
+    bump(anchor, 1.08);
   }
 
   // ---- the transaction ----
   // Price is passed in rather than re-derived, because a stall piece is not
   // worth its list price — but it is re-validated against the offer table so a
   // discounted price can only ever be paid for a piece actually on the stall.
-  trade(item, price, preview = null) {
+  trade(item, price, preview = null, ui = null) {
     if (this.busy || this.p.owns(item.id)) return;
     const list = priceOf(item);
     if (price < list) {
@@ -425,8 +534,11 @@ export class TraderUI {
     if (!this.p.spendScrap(price)) {
       const status = $('trade-ad-status');
       if (status) { status.textContent = t('trader.notEnough'); status.className = 'ad-status warn'; }
-      const line = $('trader-line');
-      if (line) line.textContent = t('trader.line.short');
+      if (ui && ui.btn) this.refuse(ui.btn);
+      else {
+        const line = $('trader-line');
+        if (line) line.textContent = t('trader.line.short');
+      }
       return;
     }
     // A gun occupies more than one loadout slot; buying it has to free every
@@ -436,15 +548,36 @@ export class TraderUI {
     } else {
       this.p.grant(item.id);
     }
-    if (this.audio) (this.audio.equip ? this.audio.equip() : this.audio.ui());
-    // Snapshot the card's artwork BEFORE the repaint below deletes the card it
-    // is drawn on — the flight is what tells the player where the thing went.
-    this.flyToInventory(preview);
-    // Owning it removes it from the stall, so both grids need a repaint.
+    // The beat, in order: scrap leaves the balance and arcs into the card,
+    // the card takes a SOLD stamp and a burst, then its art lifts off toward
+    // the loadout tab and the grid closes up behind it.
+    sfx('uiSpend');
+    haptic('success');
     this.renderScrapBalance();
-    this.renderStall();
-    this.renderItemGrid();
-    this.renderTraderLine();
+    const card = ui && ui.card;
+    const pill = document.querySelector('.scrap-pill');
+    if (card) {
+      coinsTo(pill, ui.btn || card, { count: 5 });
+      const stamp = document.createElement('div');
+      stamp.className = 'mo-stamp';
+      stamp.textContent = t('trader.sold');
+      card.appendChild(stamp);
+      sparks(card, { color: getComputedStyle(card).getPropertyValue('--rarity').trim() || '#ffd27a', count: 14 });
+    }
+    this.busy = true;
+    this._quiet = true;
+    setTimeout(() => {
+      // Snapshot the card's artwork BEFORE the repaint below deletes the card
+      // it is drawn on — the flight is what tells the player where it went.
+      this.flyToInventory(preview);
+      if (this.audio && this.audio.equip) this.audio.equip();
+      // Owning it removes it from the stall, so both grids need a repaint.
+      this.renderStall();
+      this.renderItemGrid();
+      this.renderTraderLine();
+      this._quiet = false;
+      this.busy = false;
+    }, card ? 620 : 0);
   }
 
   // ---- purchase -> inventory ----

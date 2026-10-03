@@ -204,6 +204,49 @@ class AudioSys {
     this._tone({ freq: 1240, dur: 0.16, gain: 0.08, type: 'sine', t0: 0.16 });
   }
 
+  // ---- springy UI family (js/ui/motion.js) ----
+  // Each interaction family gets its own voice so a press can be told apart by
+  // ear: a rubbery pop for a press, a falling "bwomp" for a refusal, a rising
+  // tick while a hold charges, a cash-drawer clink for a spend.
+  uiPress() {
+    this._tone({ freq: 380, f1: 620, dur: 0.06, gain: 0.07, type: 'sine' });
+  }
+  uiRelease() {
+    this._tone({ freq: 700, f1: 1050, dur: 0.05, gain: 0.05, type: 'triangle' });
+  }
+  uiDeny() {
+    this._tone({ freq: 300, f1: 170, dur: 0.16, gain: 0.1, type: 'triangle' });
+    this._tone({ freq: 240, f1: 140, dur: 0.14, gain: 0.06, type: 'sine', t0: 0.07 });
+  }
+  // `p` 0..1 — pitch climbs with the hold so the player hears it filling up
+  uiHoldTick(p) {
+    const f = 420 + p * 720;
+    this._tone({ freq: f, dur: 0.035, gain: 0.045, type: 'triangle' });
+  }
+  uiSpend() {
+    this._tone({ freq: 900, dur: 0.05, gain: 0.08, type: 'square' });
+    this._tone({ freq: 1350, dur: 0.07, gain: 0.07, type: 'triangle', t0: 0.04 });
+    this._tone({ freq: 1800, f1: 2400, dur: 0.12, gain: 0.06, type: 'sine', t0: 0.09 });
+  }
+  uiWhoosh() {
+    this._noise({ dur: 0.18, gain: 0.06, f0: 600, f1: 2600, type: 'bandpass', q: 0.9 });
+  }
+  uiBoing() {
+    this._tone({ freq: 220, f1: 330, dur: 0.12, gain: 0.08, type: 'sine' });
+    this._tone({ freq: 330, f1: 260, dur: 0.12, gain: 0.05, type: 'sine', t0: 0.08 });
+  }
+  // reel cell passing the marker; tiny so 30 of them in 4s never get tiring
+  reelTick(i = 0) {
+    this._tone({ freq: 1500 + (i % 2) * 120, dur: 0.018, gain: 0.035, type: 'square' });
+  }
+  // reveal sting, scaled by rarity tier 0 (common) .. 4 (legendary)
+  reveal(tier = 0) {
+    const base = 440 + tier * 60;
+    const steps = [1, 1.25, 1.5, 2, 2.5].slice(0, 2 + Math.min(3, tier));
+    steps.forEach((m, i) => this._tone({ freq: base * m, dur: 0.14 + i * 0.02, gain: 0.09, type: i % 2 ? 'sine' : 'triangle', t0: i * 0.07 }));
+    if (tier >= 3) this._noise({ dur: 0.5, gain: 0.05, f0: 7000, f1: 3000, type: 'highpass', t0: 0.05 });
+  }
+
   // ---- awareness / progression ----
   detectionBeep(state) {
     if (state === 'suspicious') this._tone({ freq: 720, dur: 0.09, gain: 0.09, type: 'triangle' });

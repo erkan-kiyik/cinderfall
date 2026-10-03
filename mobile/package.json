@@ -2,7 +2,7 @@
   "name": "cinderfall-mobile",
   "version": "1.0.0",
   "private": true,
-  "description": "Capacitor wrapper that packages the CINDERFALL web game as native Android (.aab/.apk) and iOS (.ipa) apps. The game itself lives in ../public/game and is copied into ./www at build time — this project adds no game code, only the native shell.",
+  "description": "Capacitor wrapper that packages the CINDERFALL web game as native Android (.aab/.apk) and iOS (.ipa) apps. The game itself lives in ../public/game and is copied into ./www at build time \u2014 this project adds no game code, only the native shell.",
   "scripts": {
     "sync:www": "node ./scripts/sync-www.mjs",
     "postinstall": "npm run sync:www",
@@ -19,6 +19,7 @@
     "@capacitor-community/admob": "^6.2.0",
     "@capacitor/android": "^6.1.2",
     "@capacitor/core": "^6.1.2",
+    "@capacitor/haptics": "^6.0.2",
     "@capacitor/ios": "^6.1.2",
     "@capacitor/splash-screen": "^6.0.3",
     "@capacitor/status-bar": "^6.0.2"

@@ -4,6 +4,9 @@
 
 import { renderCrate } from '../art/crate.js';
 import {
+  press, deny, tilt, coinsTo, sparks, haptic, sfx, countTo, spring, level,
+} from '../ui/motion.js';
+import {
   CATALOG, RARITY, CRATE_COST, DUPLICATE_REFUND, LOADOUT_SLOTS,
   rollCrate, itemsForSlot, itemById, weaponVariantIds, LOOT_POOL, describePerk,
 } from './meta.js';
@@ -77,6 +80,12 @@ export class MetaUI {
     $('btn-watch-ad').addEventListener('click', () => this.openCrateWithAd());
     $('reveal-done').addEventListener('click', () => this.closeReveal());
     $('crate-cost').textContent = String(CRATE_COST);
+    press($('btn-open-crate'), { scale: 0.94, buzz: 'soft' });
+    press($('btn-watch-ad'), { scale: 0.94 });
+    press($('reveal-done'));
+    tilt($('reveal-card'), { max: 12 });
+    // The crate is a toy as well as a button target: poke it and it rattles.
+    $('crate-box').addEventListener('click', () => this.pokeCrate());
     // inspect sheet
     $('btn-inspect-close').addEventListener('click', () => this.closeInspect());
     $('inspect').addEventListener('click', (e) => {
@@ -312,9 +321,33 @@ export class MetaUI {
     const n = this.p.scrap;
     const prev = this._lastScrapCount;
     this._lastScrapCount = n;
-    if (prev == null || n <= prev) { el.textContent = String(n); return; }   // init / spend: snap
+    if (prev == null || n === prev) { el.textContent = String(n); return; }
+    if (n < prev) { countTo(el, prev, n); return; }   // spends count down
     animateCount(el, prev, n);
     playCurrencyGain(document.querySelector('.scrap-pill'), 'scrap', this.audio);
+  }
+
+  // Poking the idle crate: a squash-and-wobble, a rattle sound and a buzz.
+  // Rate-limited so mashing it does not stack animations.
+  pokeCrate() {
+    if (this.busy) return;
+    const now = performance.now();
+    if (this._pokedAt && now - this._pokedAt < 380) return;
+    this._pokedAt = now;
+    const box = $('crate-box');
+    sfx('uiBoing');
+    haptic('soft');
+    if (!box || !box.animate || level() === 0) return;
+    box.classList.add('poked');
+    const a = box.animate([
+      { transform: 'scale(1) rotate(0)' },
+      { transform: 'scale(1.1, 0.88) rotate(0)', offset: 0.15 },
+      { transform: 'scale(0.94, 1.08) rotate(-4deg)', offset: 0.35 },
+      { transform: 'scale(1.03, 0.98) rotate(3deg)', offset: 0.55 },
+      { transform: 'scale(1) rotate(-1deg)', offset: 0.75 },
+      { transform: 'scale(1) rotate(0)' },
+    ], { duration: 620, easing: 'ease-out' });
+    a.onfinish = a.oncancel = () => box.classList.remove('poked');
   }
 
   renderLoadout() {
@@ -583,15 +616,20 @@ export class MetaUI {
     if (!free && this.p.scrap < CRATE_COST) {
       msg.textContent = t('crates.notEnough');
       msg.classList.add('warn');
+      deny($('btn-open-crate'));
+      deny(document.querySelector('.scrap-pill'), { sound: false });
       return;
     }
     msg.classList.remove('warn');
     msg.textContent = '';
     this.busy = true;
-    if (!free) this.p.spendScrap(CRATE_COST);
+    if (!free) {
+      this.p.spendScrap(CRATE_COST);
+      sfx('uiSpend');
+      coinsTo(document.querySelector('.scrap-pill'), $('crate-box'), { count: 7 });
+    }
     this.p.data.cratesOpened++;
     this.renderScrap();
-    if (this.audio) this.audio.ui();
 
     const drop = rollCrate();
     const isDup = this.p.owns(drop.id);
@@ -636,14 +674,31 @@ export class MetaUI {
   // Plays a short "case cracks open" beat on the static crate display — lid
   // pops off, a light burst flashes, the box kicks — before cutting to the
   // full-screen reel. Purely presentational; timing matches the CSS beat.
+  // Charge, then pop. The crate rattles harder and harder for 0.8s with light
+  // leaking from the seam and a buzz on every shudder, then the lid flies, a
+  // burst of sparks goes up and it cuts to the reel. Reduced motion skips the
+  // charge entirely.
   playCaseOpen(done) {
     const box = $('crate-box'), lid = $('crate-lid'), glow = $('crate-glow'), burst = $('crate-burst');
-    for (const el of [box, lid, glow, burst]) if (el) el.classList.add('opening');
-    if (this.audio && this.audio.equip) this.audio.equip();
+    const lv = level();
+    const charge = lv === 0 ? 0 : 800;
+    if (charge) {
+      box.classList.add('charging');
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => { haptic('tick'); sfx('uiHoldTick', i / 4); }, i * 160);
+      }
+    }
     setTimeout(() => {
-      for (const el of [box, lid, glow, burst]) if (el) el.classList.remove('opening');
-      done();
-    }, 620);
+      box.classList.remove('charging');
+      for (const el of [box, lid, glow, burst]) if (el) el.classList.add('opening');
+      haptic('heavy');
+      if (this.audio && this.audio.equip) this.audio.equip();
+      sparks(box, { count: 18, color: '#ffcf7a', spread: 120 });
+      setTimeout(() => {
+        for (const el of [box, lid, glow, burst]) if (el) el.classList.remove('opening');
+        done();
+      }, 620);
+    }, charge);
   }
 
   spinReel(winner, done) {
@@ -686,13 +741,51 @@ export class MetaUI {
     const jitter = (Math.random() - 0.5) * 70;
     const targetX = -(WIN_INDEX * CELL + 60 - win / 2) + jitter;
 
-    // force reflow, then transition
+    // force reflow, then transition. It runs a few pixels past the target and
+    // springs back — the "clunk" of a wheel settling into its detent.
     void track.offsetWidth;
+    const over = level() === 0 ? 0 : 14;
     track.style.transition = 'transform 4.4s cubic-bezier(0.12, 0.72, 0.16, 1)';
-    track.style.transform = `translateX(${targetX}px)`;
+    track.style.transform = `translateX(${targetX - over}px)`;
+
+    // Tick as each cell crosses the marker: a click, a nod of the marker and
+    // (rate-limited) a buzz. Reads the live transform once a frame; stops
+    // itself when the reel does.
+    const marker = overlay.querySelector('.reel-marker');
+    let lastIdx = -1, lastBuzz = 0, ticking = true;
+    const tick = () => {
+      if (!ticking) return;
+      const m = new DOMMatrixReadOnly(getComputedStyle(track).transform);
+      const idx = Math.floor((win / 2 - m.m41) / CELL);
+      if (idx !== lastIdx) {
+        if (lastIdx >= 0) {
+          sfx('reelTick', idx);
+          const now = performance.now();
+          if (now - lastBuzz > 70) { haptic('tick'); lastBuzz = now; }
+          if (marker) { marker.classList.remove('tick'); void marker.offsetWidth; marker.classList.add('tick'); }
+        }
+        lastIdx = idx;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
 
     let finished = false;
-    const finish = () => { if (finished) return; finished = true; done(); };
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      ticking = false;
+      const settle = () => {
+        const cell = track.children[WIN_INDEX];
+        if (cell) cell.classList.add('win');
+        haptic('soft');
+        setTimeout(done, 380);
+      };
+      if (!over) { settle(); return; }
+      track.style.transition = `transform 0.45s ${spring()}`;
+      track.style.transform = `translateX(${targetX}px)`;
+      setTimeout(settle, 300);
+    };
     track.addEventListener('transitionend', finish, { once: true });
     setTimeout(finish, 4700);   // fallback if transitionend doesn't fire
   }
@@ -718,15 +811,44 @@ export class MetaUI {
     else { status.textContent = t('reveal.new'); status.style.color = rarity.color; }
     card.classList.remove('hidden');
     // the reel has done its job; the card gets the whole screen
-    $('crate-reveal').classList.add('revealed');
+    const overlay = $('crate-reveal');
+    overlay.classList.add('revealed');
+    // 0 common .. 3 legendary (crates never roll the shelf-only tiers, but a
+    // mythic/ultra still lands on the top treatment if one ever does)
+    const tier = Math.min(4, Math.max(0, ['common', 'rare', 'epic', 'legendary', 'mythic'].indexOf(item.rarity)));
+    overlay.dataset.tier = String(tier);
     const art = $('reveal-art');
     if (art) requestAnimationFrame(() => this.previewItem(item, art));
     $('reveal-done').classList.remove('hidden');
-    if (this.audio) {
-      const big = item.rarity === 'legendary' || item.rarity === 'epic';
-      if (big && this.audio.levelUp) this.audio.levelUp();
-      else if (this.audio.ui) this.audio.ui();
+
+    // text lines pop in one after another
+    for (const id of ['reveal-rarity', 'reveal-name', 'reveal-status']) {
+      const el = $(id);
+      el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
     }
+    if (level() > 0 && card.animate) {
+      card.animate([
+        { transform: 'scale(0.3) rotate(-8deg)', opacity: 0 },
+        { transform: 'scale(1) rotate(0)', opacity: 1 },
+      ], { duration: 720, easing: spring() });
+      if (art && art.animate) {
+        art.animate([
+          { transform: 'translateY(-46px) scale(0.6)', opacity: 0 },
+          { transform: 'none', opacity: 1 },
+        ], { duration: 760, delay: 120, easing: spring(), fill: 'backwards' });
+      }
+    }
+    if (tier >= 1) {
+      const flash = document.createElement('div');
+      flash.className = 'mo-flash';
+      flash.style.setProperty('--rarity', rarity.color);
+      overlay.appendChild(flash);
+      setTimeout(() => flash.remove(), 800);
+      sparks(card, { count: 8 + tier * 6, color: rarity.color, spread: 110 + tier * 30, size: 5 + tier });
+    }
+    haptic(tier >= 2 ? 'heavy' : 'success');
+    if (this.audio && this.audio.reveal) this.audio.reveal(tier);
+    else if (this.audio && this.audio.ui) this.audio.ui();
   }
 
   closeReveal() {
@@ -735,7 +857,6 @@ export class MetaUI {
     this.renderScrap();
     this.renderCollection();
     this.renderLoadout();
-    this.renderLoadoutChips();
     if (this.audio) this.audio.ui();
   }
 }

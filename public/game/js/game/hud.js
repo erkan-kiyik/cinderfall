@@ -10,6 +10,7 @@ import { t, getLang, LANGS } from '../engine/i18n.js';
 import { quality, QUALITY_ORDER, PRESETS as QUALITY_PRESETS } from '../engine/quality.js';
 import { brightness, LEVELS as BRIGHTNESS_LEVELS } from '../engine/brightness.js';
 import { settings, SHAKE_LEVELS } from '../engine/settings.js';
+import { haptic } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -267,6 +268,11 @@ export class Hud {
       () => settings.shakeIndex,
       (i) => { settings.setShake(i); });
 
+    seg($('set-haptics'),
+      [{ val: 1, text: () => t('set.on') }, { val: 0, text: () => t('set.shake.off') }],
+      () => (settings.haptics ? 1 : 0),
+      (v) => { settings.setHaptics(!!v); if (v) haptic('soft'); });
+
     const vol = $('set-volume');
     // `input` rather than `change`: the gain follows the thumb, so the player
     // hears the level they are setting while they are setting it.
@@ -291,7 +297,7 @@ export class Hud {
 
   renderSettings() {
     if (!this.el.settings) return;
-    for (const id of ['set-graphics', 'set-brightness', 'set-shake']) {
+    for (const id of ['set-graphics', 'set-brightness', 'set-shake', 'set-haptics']) {
       const host = $(id);
       if (!host || !host._opts) continue;
       const cur = String(host._get());

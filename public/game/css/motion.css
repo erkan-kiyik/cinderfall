@@ -1,0 +1,206 @@
+/* Springy UI motion — the CSS half of js/ui/motion.js.
+   Loaded after style.css so these rules win where they overlap. Everything
+   here animates transform / opacity / a custom property only. */
+
+:root {
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-soft: cubic-bezier(0.25, 1.35, 0.5, 1);
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1.004 83.8%, 1);
+  }
+}
+
+/* ---- shared fx layer ---- */
+.mo-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
+.mo-coin { position: absolute; width: 18px; height: 18px; will-change: transform, opacity; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+.mo-spark { position: absolute; border-radius: 50%; will-change: transform, opacity; box-shadow: 0 0 8px currentColor; }
+.mo-ripple { position: absolute; border-radius: 50%; pointer-events: none; background: rgba(255, 240, 220, 0.5); }
+
+/* ---- press ---- */
+.mo-press { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.btn.mo-press:hover, .btn.mo-press:active { transform: none; }
+
+/* ---- deny ---- */
+.mo-deny { box-shadow: 0 0 0 2px rgba(255, 90, 80, 0.55), 0 0 18px rgba(255, 70, 60, 0.35) !important; }
+
+/* ---- tilt (cards) ---- */
+.mo-tilt {
+  transform: perspective(640px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg));
+  transition: transform 0.6s var(--spring), box-shadow 0.3s ease, background 0.2s ease;
+}
+.mo-tilt:hover { transform: perspective(640px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)) translateY(-3px); }
+.mo-tilt.tilting {
+  transform: perspective(640px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)) scale(0.97);
+  transition: transform 0.08s linear, box-shadow 0.2s ease;
+  box-shadow: 0 10px 24px -8px rgba(0,0,0,0.6), 0 0 18px -6px var(--rarity-glow, transparent);
+}
+.mo-glare {
+  position: absolute; inset: 0; pointer-events: none; z-index: 2; border-radius: inherit;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255,0.22), rgba(255,255,255,0) 55%);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.mo-tilt.tilting .mo-glare { opacity: 1; }
+
+/* ---- hold to confirm ---- */
+.mo-hold { --hold: 0; position: relative; isolation: isolate; }
+.mo-hold::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background: linear-gradient(90deg, rgba(214, 69, 58, 0.55) 0 calc(var(--hold) * 100%), transparent calc(var(--hold) * 100%));
+}
+.mo-hold.holding { transform: scale(0.95); transition: transform 0.5s cubic-bezier(0.3, 0, 0.6, 1); }
+.mo-hold.held { animation: mo-held 0.5s var(--spring); }
+.mo-hold.held::after { background: rgba(255, 210, 140, 0.55); transition: background 0.4s ease; }
+@keyframes mo-held { 0% { transform: scale(0.92); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+.mo-hint {
+  position: fixed; z-index: 9998; pointer-events: none;
+  padding: 5px 9px; border-radius: 9px;
+  font: 700 10px/1 var(--font-ui, sans-serif); letter-spacing: 0.08em; color: #1a0f0b;
+  background: #f2d9a0; box-shadow: 0 6px 16px rgba(0,0,0,0.45);
+  transform: translate(-50%, -100%);
+  animation: mo-hint 1.3s var(--spring) forwards;
+}
+.mo-hint::after {
+  content: ''; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px; margin-left: -4px;
+  background: inherit; transform: rotate(45deg);
+}
+@keyframes mo-hint {
+  0% { opacity: 0; transform: translate(-50%, -60%) scale(0.6); }
+  18% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -120%) scale(0.9); }
+}
+
+/* =========================================================================
+   SUPPLY CRATE
+   ========================================================================= */
+/* Idle: a slow bob, and every few seconds a little rattle — something inside
+   wants out. Medium intensity: it moves, but you have to be looking at it. */
+.crate-box { animation: crate-idle 6.5s ease-in-out infinite; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+@keyframes crate-idle {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  20% { transform: translateY(-6px) rotate(0); }
+  40% { transform: translateY(0) rotate(0); }
+  60% { transform: translateY(-6px) rotate(0); }
+  74% { transform: translateY(-2px) rotate(0); }
+  77% { transform: translateY(-3px) rotate(-3deg) scale(1.02, 0.98); }
+  80% { transform: translateY(-2px) rotate(2.6deg); }
+  83% { transform: translateY(-3px) rotate(-1.6deg); }
+  86% { transform: translateY(-1px) rotate(0.8deg); }
+  90% { transform: translateY(0) rotate(0); }
+}
+.crate-box.poked, .crate-box.charging, .crate-box.opening { animation-play-state: paused; }
+
+/* Charge-up before the lid goes: a rattle that grows, light leaking from the
+   seam. Followed by .opening (style.css) for the pop itself. */
+.crate-box.charging { animation: crate-charge 0.8s linear forwards; }
+@keyframes crate-charge {
+  0%   { transform: translate(0, 0) scale(1); }
+  10%  { transform: translate(-1px, 0) rotate(-0.6deg) scale(1.01, 0.99); }
+  20%  { transform: translate(1px, -1px) rotate(0.8deg); }
+  30%  { transform: translate(-2px, 0) rotate(-1.2deg) scale(1.02, 0.98); }
+  40%  { transform: translate(2px, -1px) rotate(1.4deg); }
+  50%  { transform: translate(-3px, 0) rotate(-2deg) scale(1.03, 0.96); }
+  60%  { transform: translate(3px, -2px) rotate(2.2deg); }
+  70%  { transform: translate(-4px, 0) rotate(-2.8deg) scale(1.05, 0.94); }
+  80%  { transform: translate(4px, -2px) rotate(3deg); }
+  90%  { transform: translate(-3px, 1px) rotate(-3deg) scale(1.08, 0.9); }
+  100% { transform: translate(0, 2px) rotate(0) scale(1.1, 0.86); }
+}
+.crate-box.charging .crate-glow { animation: crate-seam 0.8s ease-in forwards; }
+@keyframes crate-seam {
+  0% { box-shadow: inset 0 0 26px rgba(0,0,0,0.45); }
+  100% { box-shadow: inset 0 0 10px rgba(255,220,160,0.25), 0 0 34px 6px rgba(255,190,110,0.5); }
+}
+.crate-box.opening { animation: crate-kick-spring 0.62s var(--spring); }
+@keyframes crate-kick-spring {
+  0% { transform: scale(1.1, 0.86) translateY(2px); }
+  35% { transform: scale(0.94, 1.1) translateY(-10px); }
+  100% { transform: scale(1) translateY(0); }
+}
+.crate-lid.opening { animation: crate-lid-fly 0.62s cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
+@keyframes crate-lid-fly {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  45% { transform: translate(10px, -46px) rotate(-22deg); opacity: 1; }
+  100% { transform: translate(26px, -30px) rotate(-38deg); opacity: 0; }
+}
+
+/* Crate buttons */
+#btn-open-crate, #btn-watch-ad { position: relative; overflow: hidden; }
+#btn-watch-ad::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.14), transparent);
+  transform: skewX(-18deg); animation: mo-shimmer 4.5s ease-in-out infinite;
+}
+#btn-watch-ad:disabled::before { animation: none; }
+@keyframes mo-shimmer { 0%, 70% { left: -40%; } 100% { left: 130%; } }
+
+/* Reel: the marker nods on every cell it passes, the winner springs up. */
+.reel-marker.tick { animation: reel-tick 0.14s ease-out; }
+@keyframes reel-tick { 0% { transform: translateX(-1px) scaleY(1.06); box-shadow: 0 0 12px rgba(255, 170, 120, 0.9); } 100% { transform: translateX(-1px) scaleY(1); } }
+.reel-cell { transition: transform 0.5s var(--spring), box-shadow 0.4s ease; }
+.reel-cell.win { transform: scale(1.12) translateY(-4px); box-shadow: 0 0 0 2px var(--rarity), 0 0 26px var(--rarity); }
+
+/* Reveal: the card is animated from JS (spring + rarity), so the CSS pop is
+   switched off to avoid two animations fighting over transform. */
+.reveal-card { animation: none; position: relative; overflow: visible; }
+.reveal-card .reveal-art { animation: none; }
+.crate-reveal[data-tier="3"] .reveal-rays, .crate-reveal[data-tier="4"] .reveal-rays { animation-duration: 6s; }
+.crate-reveal[data-tier="4"] .reveal-rays { width: 680px; height: 680px; margin: -340px 0 0 -340px; }
+.mo-flash {
+  position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: radial-gradient(circle at 50% 42%, var(--rarity, #fff), transparent 65%);
+  animation: mo-flash 0.7s ease-out forwards;
+}
+@keyframes mo-flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+.reveal-status.pop { animation: mo-pop 0.6s var(--spring) both; animation-delay: 0.35s; }
+.reveal-rarity.pop { animation: mo-track 0.7s var(--spring) both; animation-delay: 0.1s; }
+.reveal-name.pop { animation: mo-pop 0.6s var(--spring) both; animation-delay: 0.2s; }
+@keyframes mo-pop { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: none; } }
+@keyframes mo-track { 0% { opacity: 0; letter-spacing: 0.9em; } 100% { opacity: 1; } }
+#reveal-done:not(.hidden) { animation: mo-pop 0.55s var(--spring) both; animation-delay: 0.55s; }
+
+/* =========================================================================
+   TRADER
+   ========================================================================= */
+/* Category tabs: the underline slides to the chosen one and overshoots a
+   little, instead of blinking from one tab to the next. */
+#trader-cats { position: relative; }
+.mo-chip-pill {
+  position: absolute; left: 0; bottom: 0; height: 2px; width: 0; border-radius: 2px; z-index: 2; pointer-events: none;
+  background: var(--amber); box-shadow: 0 0 8px rgba(214, 69, 58, 0.6);
+  transition: transform 0.6s var(--spring), width 0.6s var(--spring);
+}
+#tab-trader #trader-cats.has-pill .store-cat-chip.active { box-shadow: none; }
+#tab-trader .store-cat-chip { transition: color 0.25s ease; }
+
+/* Buy button: dim instead of disabled when you are short, so a tap can still
+   answer "why not?" with a wobble rather than doing nothing. */
+.item-card .btn.trade-buy.short { opacity: 0.45; }
+.item-card .btn.trade-buy.mo-hold { overflow: visible; }
+
+/* The sold stamp, punched onto a card the moment it is bought. */
+.mo-stamp {
+  position: absolute; left: 50%; top: 42%; z-index: 4; pointer-events: none;
+  padding: 4px 10px; border: 2px solid #f2d9a0; border-radius: 6px;
+  font: 800 13px/1 var(--font-ui, sans-serif); letter-spacing: 0.16em; color: #f2d9a0;
+  background: rgba(20, 12, 8, 0.75);
+  animation: mo-stamp 0.5s var(--spring) both;
+}
+@keyframes mo-stamp {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2.2) rotate(-14deg); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-8deg); }
+}
+
+/* CROW: tap him and the line bubbles. */
+#trader-scene { cursor: pointer; touch-action: manipulation; }
+#trader-line.mo-say { animation: mo-say 0.55s var(--spring); transform-origin: 20% 100%; }
+@keyframes mo-say { 0% { opacity: 0; transform: scale(0.7) translateY(6px); } 100% { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .crate-box { animation: none; }
+  #btn-watch-ad::before { animation: none; }
+  .mo-tilt, .mo-tilt.tilting { transform: none; transition: none; }
+}

@@ -41,13 +41,14 @@ class Settings {
     const d = this.load();
     this.volume = d.volume;
     this.shakeIndex = d.shakeIndex;
+    this.haptics = d.haptics;
     // Set by audio.js once the context exists, so a volume change made before
     // the first sound has played is not lost.
     this._onVolume = null;
   }
 
   load() {
-    const def = { volume: VOLUME_DEFAULT, shakeIndex: SHAKE_DEFAULT };
+    const def = { volume: VOLUME_DEFAULT, shakeIndex: SHAKE_DEFAULT, haptics: true };
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return def;
@@ -58,6 +59,7 @@ class Settings {
         shakeIndex: Number.isInteger(d.shakeIndex)
           && d.shakeIndex >= 0 && d.shakeIndex < SHAKE_LEVELS.length
           ? d.shakeIndex : SHAKE_DEFAULT,
+        haptics: d.haptics !== false,
       };
     } catch (e) {
       // Private mode, disabled storage, or a corrupt value. Run at the
@@ -69,7 +71,7 @@ class Settings {
   save() {
     try {
       localStorage.setItem(KEY, JSON.stringify({
-        volume: this.volume, shakeIndex: this.shakeIndex,
+        volume: this.volume, shakeIndex: this.shakeIndex, haptics: this.haptics,
       }));
     } catch (e) { /* not fatal */ }
   }
@@ -92,6 +94,13 @@ class Settings {
   setShake(i) {
     if (!Number.isInteger(i) || i < 0 || i >= SHAKE_LEVELS.length) return;
     this.shakeIndex = i;
+    this.save();
+  }
+
+  // Vibration on UI presses. Per-device like the rest: some people find it
+  // reassuring, others hear it buzz on a desk.
+  setHaptics(on) {
+    this.haptics = !!on;
     this.save();
   }
 
