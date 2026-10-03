@@ -334,8 +334,12 @@ export class MetaUI {
       row.className = 'item-row';
       // "STOCK" (unequip) card is always available
       row.appendChild(this.makeCard(null, slot.key, !equippedId));
+      // Only what the player actually has. Unowned weapons used to sit in the
+      // row as locked cards, which spoiled them before they were earned —
+      // they are revealed in the shop, in a crate, or once bought.
       for (const item of items) {
-        row.appendChild(this.makeCard(item, slot.key, equippedId === item.id, !this.itemOwned(item)));
+        if (!this.itemOwned(item)) continue;
+        row.appendChild(this.makeCard(item, slot.key, equippedId === item.id, false));
       }
       box.appendChild(row);
       host.appendChild(box);
@@ -540,7 +544,7 @@ export class MetaUI {
       card.appendChild(cv);
       const name = document.createElement('div');
       name.className = 'item-name';
-      name.textContent = item.name;
+      name.textContent = has ? item.name : '???';
       card.appendChild(name);
       const r = document.createElement('div');
       r.className = 'item-rarity';
@@ -552,7 +556,19 @@ export class MetaUI {
       // eight of nine slots are a placeholder dash tells the player nothing
       // about what they are chasing. `.item-card.locked` desaturates it, so it
       // still reads as unearned; the shape is the point.
-      requestAnimationFrame(() => this.previewItem(item, cv));
+      // Unowned pieces show as a dark silhouette only: the collection says
+      // something is there to find without giving the piece away.
+      requestAnimationFrame(() => {
+        this.previewItem(item, cv);
+        if (has) return;
+        const g = cv.getContext('2d');
+        g.save();
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.globalCompositeOperation = 'source-in';
+        g.fillStyle = '#20262e';
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.restore();
+      });
     }
     $('collection-count').textContent = `${owned} / ${CATALOG.length}`;
   }

@@ -335,8 +335,21 @@ function crow(g) {
   g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.5;
   g.beginPath(); g.moveTo(-30, 67); g.quadraticCurveTo(-27, 80, -29, COUNTER); g.stroke();
   g.beginPath(); g.moveTo(32, 67); g.quadraticCurveTo(29, 80, 31, COUNTER); g.stroke();
-  g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(-26, 80, 11, 2.2); g.fillRect(17, 80, 11, 2.2);
-  g.fillStyle = 'rgba(255,215,170,0.07)'; g.fillRect(17, 80, 11, 0.5);
+  // upper arms hanging into the elbows on the counter, split from the body
+  // by a shadow seam — without them the lower coat was one flat slab
+  for (const side of [-1, 1]) {
+    g.fillStyle = lin(g, side * 44, 0, side * 26, 0, side < 0 ? [[0, '#14120f'], [1, '#25221c']] : [[0, '#423c31'], [1, '#2f2b23']]);
+    g.beginPath();
+    g.moveTo(side * 34, 64);
+    g.quadraticCurveTo(side * 47, 72, side * 44, COUNTER - 6);
+    g.lineTo(side * 30, COUNTER - 6);
+    g.quadraticCurveTo(side * 30, 76, side * 26, 66);
+    g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.6;
+    g.beginPath(); g.moveTo(side * 27, 67); g.quadraticCurveTo(side * 31, 78, side * 30.5, COUNTER - 6); g.stroke();
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 0.4;
+    g.beginPath(); g.moveTo(side * 40, 74); g.quadraticCurveTo(side * 37, 80, side * 39, 86); g.stroke();
+  }
   // sweater + satchel strap
   g.fillStyle = '#1d1e20';
   g.beginPath(); g.moveTo(-9, 60); g.lineTo(11, 60); g.lineTo(8, COUNTER + 4); g.lineTo(-6, COUNTER + 4); g.closePath(); g.fill();
@@ -522,36 +535,63 @@ function smoke(g) {
 }
 
 function gloves(g) {
-  g.save();
-  // forearms laid on the counter, hands folded in the middle
+  // forearms laid along the counter from the elbows, meeting at folded hands
   for (const side of [-1, 1]) {
-    g.fillStyle = lin(g, 0, COUNTER - 8, 0, COUNTER, [[0, side < 0 ? '#2a261f' : '#3a352b'], [1, '#1a1814']]);
+    const lit = side > 0;
+    g.fillStyle = lin(g, 0, COUNTER - 12, 0, COUNTER, [[0, lit ? '#454033' : '#2e2a22'], [0.6, lit ? '#36312a' : '#24211b'], [1, '#17150f']]);
     g.beginPath();
-    g.moveTo(side * 40, COUNTER - 9);
-    g.quadraticCurveTo(side * 22, COUNTER - 9.6, side * 6, COUNTER - 6);
-    g.lineTo(side * 6, COUNTER - 0.6);
-    g.lineTo(side * 40, COUNTER - 0.6);
+    g.moveTo(side * 40, COUNTER - 13);
+    g.quadraticCurveTo(side * 42, COUNTER - 2, side * 37, COUNTER - 0.4);
+    g.lineTo(side * 11, COUNTER - 0.6);
+    g.quadraticCurveTo(side * 8, COUNTER - 5, side * 11, COUNTER - 10.4);
+    g.quadraticCurveTo(side * 26, COUNTER - 12.6, side * 40, COUNTER - 13);
     g.closePath(); g.fill();
-    g.fillStyle = 'rgba(255,214,170,0.07)'; g.fillRect(side > 0 ? 8 : -38, COUNTER - 9.2, 30, 0.6);
-    // cuff
-    g.fillStyle = '#4a3a2a';
-    g.fillRect(side > 0 ? 6 : -11, COUNTER - 6.4, 5, 5.8);
+    // cloth folds where the sleeve bunches at the elbow and wrist
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.45;
+    for (const fx of [31, 24, 17]) {
+      g.beginPath(); g.moveTo(side * fx, COUNTER - 11.6); g.quadraticCurveTo(side * (fx - 1.6), COUNTER - 6, side * (fx + 0.6), COUNTER - 1.4); g.stroke();
+    }
+    g.fillStyle = lit ? 'rgba(255,214,170,0.10)' : 'rgba(255,214,170,0.04)';
+    g.beginPath(); g.moveTo(side * 38, COUNTER - 12.6); g.quadraticCurveTo(side * 26, COUNTER - 12.2, side * 12, COUNTER - 10); g.lineTo(side * 12, COUNTER - 9.2); g.quadraticCurveTo(side * 26, COUNTER - 11.2, side * 38, COUNTER - 11.6); g.closePath(); g.fill();
+    // knit cuff
+    g.fillStyle = '#3d3226';
+    g.beginPath(); g.moveTo(side * 13.6, COUNTER - 10.4); g.lineTo(side * 9.6, COUNTER - 9.8); g.lineTo(side * 9.4, COUNTER - 0.8); g.lineTo(side * 13.2, COUNTER - 0.6); g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.3;
+    for (let k = 0; k < 4; k++) { const x = side * (10.2 + k * 0.9); g.beginPath(); g.moveTo(x, COUNTER - 10); g.lineTo(x, COUNTER - 1); g.stroke(); }
   }
-  // left fist under, right hand over it: fingerless gloves, bare knuckles
-  g.translate(1, COUNTER - 1); g.scale(1.4, 1.4); g.translate(-1, -(COUNTER - 1));
-  g.fillStyle = lin(g, 0, COUNTER - 7, 0, COUNTER, [[0, '#3a2e24'], [1, '#1e1812']]);
-  rrect(g, -7, COUNTER - 7, 9, 6.6, 2.4); g.fill();
-  g.fillStyle = lin(g, 0, COUNTER - 8, 0, COUNTER, [[0, SKIN_L], [1, SKIN_D]]);
-  rrect(g, -2.6, COUNTER - 8.4, 9.4, 4.4, 1.8); g.fill();
-  g.strokeStyle = 'rgba(70,40,26,0.6)'; g.lineWidth = 0.3;
-  for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(-2.6 + i * 2.35, COUNTER - 8.2); g.lineTo(-2.4 + i * 2.35, COUNTER - 4.2); g.stroke(); }
-  g.fillStyle = '#2a221a';
-  rrect(g, -1, COUNTER - 5, 9, 4.6, 1.6); g.fill();
-  // a hex nut turned over in his fingers — the only currency he takes
-  g.fillStyle = '#9aa0a8';
-  g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + 0.3; g.lineTo(9.6 + Math.cos(a) * 1.6, COUNTER - 6.4 + Math.sin(a) * 1.6); } g.closePath(); g.fill();
-  g.fillStyle = '#1a1c1f'; g.beginPath(); g.arc(9.6, COUNTER - 6.4, 0.6, 0, Math.PI * 2); g.fill();
-  g.restore();
+  // his left hand: a loose fist, fingerless glove, knuckles to the counter
+  g.fillStyle = lin(g, 0, COUNTER - 10, 0, COUNTER, [[0, '#3b2f25'], [1, '#1d1712']]);
+  rrect(g, -10, COUNTER - 10, 12, 9.4, 3.4); g.fill();
+  g.fillStyle = lin(g, 0, COUNTER - 6, 0, COUNTER, [[0, SKIN], [1, SKIN_D]]);
+  rrect(g, -3.6, COUNTER - 7.6, 6, 6.8, 2.2); g.fill();          // fingers curled under
+  // his right hand laid over it, fingers wrapping the left fist
+  g.fillStyle = lin(g, -2, COUNTER - 13, 10, COUNTER - 5, [[0, '#4a3b2e'], [1, '#261e17']]);
+  g.beginPath();
+  g.moveTo(10.4, COUNTER - 12.2);
+  g.quadraticCurveTo(3, COUNTER - 13.6, -2.4, COUNTER - 11.4);
+  g.lineTo(-1.6, COUNTER - 6.2);
+  g.quadraticCurveTo(4, COUNTER - 5, 10.4, COUNTER - 5.6);
+  g.closePath(); g.fill();
+  // bare fingers wrapping round the left fist, knuckles toward us
+  for (let i = 0; i < 4; i++) {
+    const y = COUNTER - 12.4 + i * 2.35, len = 11.4 - i * 0.9;
+    g.fillStyle = lin(g, 0, y, 0, y + 2.3, [[0, SKIN_L], [0.55, SKIN], [1, SKIN_D]]);
+    rrect(g, -7.4 + i * 0.5, y, len, 2.3, 1.15); g.fill();
+    g.strokeStyle = 'rgba(90,52,34,0.45)'; g.lineWidth = 0.22;
+    g.beginPath(); g.moveTo(-3.2 + i * 0.5, y + 0.3); g.lineTo(-3.2 + i * 0.5, y + 2.0); g.stroke();
+    g.fillStyle = 'rgba(255,226,196,0.30)';
+    g.fillRect(-6.4 + i * 0.5, y + 0.35, len - 3, 0.45);
+  }
+  // thumb along the top, turning a hex nut
+  g.fillStyle = lin(g, 0, COUNTER - 14, 0, COUNTER - 10, [[0, SKIN_L], [1, SKIN]]);
+  g.beginPath(); g.moveTo(10, COUNTER - 12); g.quadraticCurveTo(14, COUNTER - 14.4, 15.8, COUNTER - 12.6); g.quadraticCurveTo(14.6, COUNTER - 10.8, 10.6, COUNTER - 10.2); g.closePath(); g.fill();
+  g.fillStyle = '#a2a8b0';
+  g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + 0.3; g.lineTo(16.6 + Math.cos(a) * 2.0, COUNTER - 12.8 + Math.sin(a) * 2.0); } g.closePath(); g.fill();
+  g.fillStyle = 'rgba(255,240,220,0.35)'; g.fillRect(15.4, COUNTER - 14.4, 1.8, 0.5);
+  g.fillStyle = '#1a1c1f'; g.beginPath(); g.arc(16.6, COUNTER - 12.8, 0.75, 0, Math.PI * 2); g.fill();
+  // contact shadow on the counter
+  g.fillStyle = 'rgba(0,0,0,0.35)';
+  g.beginPath(); g.ellipse(0, COUNTER - 0.2, 40, 1.2, 0, 0, Math.PI * 2); g.fill();
 }
 
 // ------------------------------------------------------------- counter
@@ -589,7 +629,6 @@ function counter(g, halfW) {
 
 function counterGoods(g) {
   // the rifle he is selling, laid across the mat under his right hand
-  rifle(g, 20, COUNTER - 4.4, 38, '#454c55', true);
   // scrap: a heap of nuts, bolts and gears
   const r = rng(0x5c4a);
   for (let i = 0; i < 26; i++) {
