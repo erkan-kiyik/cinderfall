@@ -2963,3 +2963,112 @@ html.no-backdrop-filter .profile-card {
    hit reliably with a thumb, and every published guideline agrees on roughly
    that number; there is no reason for a control in this game to be under it. */
 .btn.quiet { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+
+/* ======================= CROW'S SHOP (restyle) =======================
+   The shop read as a template: a scene thumbnail floating inside a bordered
+   card inside a panel, pill chips, and stall cards whose prices faded to 35%
+   the moment you could not afford them. This pass makes it a storefront.
+   Scoped to #tab-trader so the loadout and collection cards keep their look. */
+#tab-trader .trader-hero {
+  padding: 0; overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--line-2); border-radius: var(--r3);
+  box-shadow: var(--sh-2);
+}
+#tab-trader .trader-scene {
+  border: 0; border-radius: 0; width: 100%;
+  border-bottom: 1px solid var(--line);
+}
+#tab-trader .trader-id {
+  margin: 0; padding: var(--s4) var(--s5) var(--s5);
+  display: grid; grid-template-columns: auto 1fr; column-gap: var(--s3); align-items: baseline;
+}
+#tab-trader .trader-name {
+  font-family: var(--font-display); font-size: 15px; letter-spacing: 0.24em; color: var(--ink);
+}
+#tab-trader .trader-role { margin: 0; color: var(--amber); opacity: 0.85; }
+#tab-trader .trader-line {
+  grid-column: 1 / -1;
+  margin: var(--s3) 0 0; padding: var(--s2) var(--s3);
+  font-style: normal; font-size: 12px; line-height: 1.55; color: var(--ink-2);
+  background: rgba(0, 0, 0, 0.22);
+  border-left: 2px solid var(--amber);
+  border-radius: 0 var(--r1) var(--r1) 0;
+}
+#tab-trader .trader-line::before { content: '\201C'; color: var(--amber); margin-right: 2px; }
+#tab-trader .trader-line::after { content: '\201D'; color: var(--amber); margin-left: 2px; }
+
+/* category strip: a tab bar with an underline, not a row of pills */
+#tab-trader .store-cats {
+  gap: 0; padding-top: 0; padding-bottom: 0; margin-bottom: var(--s5);
+  border-bottom: 1px solid var(--line);
+}
+#tab-trader .store-cat-chip {
+  border: 0; border-radius: 0; background: none;
+  padding: var(--s3) var(--s4); min-height: 40px;
+  color: var(--ink-dim); font-size: 11px; letter-spacing: 0.16em;
+  box-shadow: inset 0 -2px 0 transparent;
+}
+#tab-trader .store-cat-chip:hover { color: var(--ink); }
+#tab-trader .store-cat-chip.active {
+  background: none; color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+
+/* stall + catalogue cards: a lit display shelf with the price on a tag */
+#tab-trader .collection-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s3); }
+#tab-trader .item-card {
+  padding: 0; display: flex; flex-direction: column;
+  background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: var(--r2);
+  box-shadow: none;
+}
+#tab-trader .item-card::after { display: none; }
+#tab-trader .item-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--rarity, transparent);
+}
+#tab-trader .item-card:hover { transform: none; border-color: var(--line-2); background: var(--surface-3); }
+#tab-trader .item-preview {
+  height: 84px; margin: 0;
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 60%, color-mix(in srgb, var(--rarity, #888) 18%, transparent), transparent 70%),
+    linear-gradient(180deg, #0e1217, #151a21);
+  border-bottom: 1px solid var(--line);
+}
+#tab-trader .item-name {
+  display: flex; flex-direction: column; gap: 1px;
+  min-height: 0; padding: var(--s2) var(--s3) 0;
+  font-family: var(--font); font-size: 13px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink); line-height: 1.15;
+}
+#tab-trader .item-name-base { font-size: 9px; font-weight: 600; letter-spacing: 0.16em; color: var(--ink-dim); }
+#tab-trader .item-rarity { padding: 2px var(--s3) 0; margin: 0; font-size: 9px; }
+#tab-trader .item-tag { padding: 2px var(--s3) var(--s2); }
+#tab-trader .item-card .btn.trade-buy {
+  margin: auto 0 0; width: 100%;
+  padding: var(--s2) var(--s3);
+  border: 0; border-top: 1px solid var(--line); border-radius: 0;
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 14px; font-weight: 700; color: var(--ink);
+  justify-content: flex-start;
+}
+#tab-trader .item-card .btn.trade-buy:hover:not(:disabled) { background: var(--amber); color: #fff; border-color: transparent; }
+/* can't afford it yet: the number stays readable, the tag goes cold */
+#tab-trader .item-card .btn.trade-buy:disabled { opacity: 1; color: var(--ink-dim); background: rgba(0, 0, 0, 0.35); }
+#tab-trader .item-card .btn.trade-buy:disabled .trade-ico { opacity: 0.5; }
+#tab-trader .trade-price { justify-content: flex-start; gap: 6px; width: 100%; }
+#tab-trader .trade-was { order: 3; margin-left: auto; font-size: 11px; font-weight: 600; opacity: 0.7; }
+#tab-trader .item-card.equipped { border-color: rgba(143, 174, 106, 0.45); }
+
+/* the deep cut: a hard red frame and a corner tag, no glow */
+#tab-trader .trade-offer.deep { border-color: var(--amber); box-shadow: none; }
+#tab-trader .trade-flag {
+  top: 0; right: 0; left: auto;
+  border-radius: 0 0 0 var(--r2);
+  padding: 3px 8px; font-size: 10px;
+  background: var(--amber); color: #fff;
+}
+/* the tab bar already rules the section off; a second rule under it doubled up */
+#tab-trader .store-section-head { border-top: 0; padding-top: 0; }

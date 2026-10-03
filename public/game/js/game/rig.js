@@ -65,7 +65,12 @@ const FOOT_ROLL = 2.4;
 const IDLE_SWAY = 2.1;        // px, hip-to-hip weight shift
 const IDLE_DRIFT = 0.024;     // radians of slow postural drift
 const IDLE_BREATH = 2.2;      // px of vertical breathing at rest (0.4 while moving)
-const IDLE_SINK = 3.0;        // px the hips settle onto soft knees
+// Measured, not eyeballed: at a 3px sink with the feet 18px apart and the
+// breathing riding the hips, the standing knee angle swung between 41° and
+// 61° on every breath — the operator read as squatting and bouncing. A ready
+// stance is soft knees, about 30°, and holds still while the chest breathes.
+const IDLE_SINK = 0.4;        // px the hips settle onto soft knees
+const IDLE_RISE = 1.6;        // px the hips come up off the gait's bent-knee height at rest
 const IDLE_SHOULDER = 1.1;    // px the shoulders lag the hip shift
 // Muzzle wander. Held weapons are never still, and at a third of a degree this
 // is the cheapest "the operator is alive" signal in the whole rig — it moves
@@ -76,8 +81,8 @@ const IDLE_AIM_DRIFT = 0.035; // radians at full idle
 // Feet at rest. Bladed and wider than the old ±5: weight forward over a lead
 // foot, rear foot back and carrying the turn. Only applies standing — it is
 // lerped out by `mv` the moment the operator moves.
-const STANCE_FRONT = 8.5;
-const STANCE_REAR = -9.5;
+const STANCE_FRONT = 7.5;
+const STANCE_REAR = -7.5;
 
 // ---- weapon-weight stance ----
 // `ent.weaponBulk` is 0 for a sidearm and 1 for a battle rifle (see the bulk
@@ -250,9 +255,14 @@ export function computePose(ent) {
   // Breathing is worth 0.4px under load and IDLE_BREATH standing still — a
   // chest actually moves when a man is not running, and this is most of what
   // sells a stationary operator as a living one.
+  // The chest breathes; the hips barely do. Driving the full breath through
+  // the pelvis pumped the knees with every breath.
   const breathLift = breath * lerp(0.4, IDLE_BREATH, settle);
+  const hipBreath = breath * lerp(0.4, 0.6, settle);
+  const rest = clamp(1 - sp * 4, 0, 1) * (1 - air);
   const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4
-               + breathLift + pelvicList + IDLE_SINK * settle;
+               + hipBreath + pelvicList + IDLE_SINK * settle
+               - IDLE_RISE * rest * (1 - clamp(crouch, 0, 1));
 
   const torsoLen = BONES.torso - crouch * 2.5;
   // Head holds its line while the chest drops — the operator is looking at
@@ -267,7 +277,7 @@ export function computePose(ent) {
     // The shoulders lag the hip shift rather than riding it: the torso is a
     // mass on a spine, not a plank bolted to the pelvis.
     x: hipX + Math.sin(lean) * shLen + counter - idleShift * IDLE_SHOULDER,
-    y: hipY - Math.cos(lean) * shLen + breathLift * 0.6,
+    y: hipY - Math.cos(lean) * shLen + (breathLift - hipBreath) * 0.9,
   };
 
   // legs
@@ -300,10 +310,17 @@ export function computePose(ent) {
     let fx = lerp(standX, gx + roll, mv) + noise * 0.8;
     let fy = -lerp(0, lift, mv);
     if (air > 0) {
-      // tuck in the air; reach for the ground while falling fast
+      // The air pose follows the arc instead of holding one tuck for the whole
+      // jump (which read as sitting on an invisible chair): driving off the
+      // ground the lead knee comes up and the push-off leg trails long below
+      // the body, both fold in at the apex, and both reach for the street on
+      // the way down.
       const falling = clamp((ent.vy - 140) / 500, 0, 1);
-      const tx = i ? -7 : 10;
-      const ty = i ? -13 : lerp(-24, -8, falling);
+      const rise = clamp(-ent.vy / 450, 0, 1);
+      const tx = i ? lerp(-7, -11, rise) : 9;
+      const ty = i
+        ? lerp(lerp(-12, -3, rise), -5, falling)
+        : lerp(lerp(-16, -22, rise), -7, falling);
       fx = lerp(fx, tx, air);
       fy = lerp(fy, ty, air);
     }

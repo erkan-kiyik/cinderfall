@@ -228,10 +228,7 @@ export class TraderUI {
     cv.className = 'item-preview';
     card.appendChild(cv);
 
-    const name = document.createElement('div');
-    name.className = 'item-name';
-    name.textContent = this.itemLabel(item);
-    card.appendChild(name);
+    card.appendChild(this.nameBlock(item));
 
     const r = document.createElement('div');
     r.className = 'item-rarity';
@@ -248,6 +245,28 @@ export class TraderUI {
 
     requestAnimationFrame(() => this.previewItem(item, cv));
     return card;
+  }
+
+  // "SIEGEBREAKER · FOREMAN" read as one run-on line on a card. The finish is
+  // what is for sale, so it leads; the weapon it fits sits above it, small.
+  // Built with textContent so a name can never inject markup.
+  nameBlock(item) {
+    const name = document.createElement('div');
+    name.className = 'item-name';
+    const label = this.itemLabel(item);
+    const cut = label.indexOf(' · ');
+    if (cut > 0) {
+      const base = document.createElement('span');
+      base.className = 'item-name-base';
+      base.textContent = label.slice(0, cut);
+      const fin = document.createElement('span');
+      fin.className = 'item-name-fin';
+      fin.textContent = label.slice(cut + 3);
+      name.append(base, fin);
+    } else {
+      name.textContent = label;
+    }
+    return name;
   }
 
   // Price as icon + number, with the list price struck through when the piece
@@ -361,10 +380,7 @@ export class TraderUI {
       const cv = document.createElement('canvas');
       cv.className = 'item-preview';
       card.appendChild(cv);
-      const name = document.createElement('div');
-      name.className = 'item-name';
-      name.textContent = this.itemLabel(item);
-      card.appendChild(name);
+      card.appendChild(this.nameBlock(item));
       const r = document.createElement('div');
       r.className = 'item-rarity';
       r.style.color = rarity.color;

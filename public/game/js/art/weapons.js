@@ -487,8 +487,11 @@ function paintKnife(finish) {
       ? lingrad(g, 0, -3, 0, 2.4, [
           [0, '#d6f6ff'], [0.4, blade], [0.62, shade(blade, -0.35)], [1, shade(blade, -0.6)],
         ])
+      // Satin flat with a soft fall-off. The old ramp went from near-white to
+      // near-black across the middle of the blade, which at game scale read
+      // as a smeared chrome blob rather than a flat grind and an edge bevel.
       : lingrad(g, 0, -3, 0, 2.4, [
-          [0, '#c9ced6'], [0.42, '#9aa1aa'], [0.55, '#585d64'], [1, '#3a3e44'],
+          [0, '#b4bac2'], [0.5, '#8f959d'], [1, '#6f757d'],
         ]);
     // 5 units is 15 device pixels of coloured bloom baked into the body
     // sprite, before the skin system adds its own halo on top. Two glows
@@ -516,7 +519,7 @@ function paintKnife(finish) {
     // edge grind highlight
     g.fillStyle = blade
       ? lingrad(g, 0, 0.4, 0, 2.2, [[0, 'rgba(235,252,255,0.95)'], [1, withA(blade, 0.3)]])
-      : lingrad(g, 0, 0.4, 0, 2.2, [[0, 'rgba(240,244,250,0.85)'], [1, 'rgba(160,168,178,0.15)']]);
+      : lingrad(g, 0, 0.4, 0, 2.2, [[0, '#d2d7de'], [1, '#c2c8cf']]);
     g.beginPath();
     g.moveTo(1, 1.1);
     g.quadraticCurveTo(7, 1.4, 11.4, 0.5);
@@ -546,8 +549,15 @@ function paintKnife(finish) {
     for (let i = 0; i < 5; i++) g.fillRect(1 + i * 0.7, -3, 0.35, 0.7);
     g.save();
     g.globalCompositeOperation = 'source-atop';
-    scratches(g, 1, -2.4, 13, 4, rng, { n: 8, color: 'rgba(235,240,248,0.3)' });
+    scratches(g, 1, -2.4, 13, 4, rng, { n: 3, len: 2, color: 'rgba(235,240,248,0.14)' });
     g.restore();
+    // grind line where the flat meets the edge bevel, and a crisp edge
+    if (!blade) {
+      g.strokeStyle = 'rgba(40,44,50,0.55)'; g.lineWidth = 0.3;
+      g.beginPath(); g.moveTo(1, 1.1); g.quadraticCurveTo(7, 1.4, 11.4, 0.5); g.quadraticCurveTo(14, 0.05, 16.2, -0.52); g.stroke();
+      g.strokeStyle = 'rgba(250,252,255,0.8)'; g.lineWidth = 0.25;
+      g.beginPath(); g.moveTo(1, 1.95); g.quadraticCurveTo(7, 1.98, 11.5, 1.55); g.quadraticCurveTo(14.5, 0.6, 16.3, -0.5); g.stroke();
+    }
   });
 }
 
@@ -1127,6 +1137,56 @@ function chassisStock(g, kind, rec, poly, core) {
     g.fillStyle = `rgba(${cr},${cg},${cb},0.5)`;
     rr(g, -19, -6.6, 2.2, 7.6, 1); g.fill();
     g.restore();
+  } else if (kind === 'thumbhole') {
+    // marksman stock: high comb, deep belly, a thumbhole cut through it
+    g.fillStyle = polymer(g, -9, 4, poly);
+    g.beginPath();
+    g.moveTo(-6, -8.0); g.lineTo(-12, -7.9); g.lineTo(-20.8, -6.4);
+    g.lineTo(-21.4, 2.6); g.lineTo(-13.4, 2.2);
+    g.quadraticCurveTo(-8.6, 2.6, -5.6, 5.6);
+    g.lineTo(-3.6, 1.0); g.lineTo(-6, -0.6);
+    g.closePath(); g.fill();
+    g.save(); g.globalCompositeOperation = 'destination-out';
+    g.beginPath(); g.ellipse(-8.4, -1.4, 2.6, 1.7, -0.25, 0, Math.PI * 2); g.fill();
+    g.restore();
+    g.strokeStyle = 'rgba(226,232,240,0.10)'; g.lineWidth = 0.35;
+    g.beginPath(); g.moveTo(-6.4, -7.7); g.lineTo(-20.4, -6.1); g.stroke();
+    g.fillStyle = '#191a1c';
+    g.fillRect(-22.4, -6.6, 1.8, 9.4);
+  } else if (kind === 'pad') {
+    // buffer tube and an angular adjustable pad
+    g.fillStyle = metal(g, -6, -2.6, shade(rec, -0.1));
+    g.fillRect(-15.6, -6.0, 9.8, 2.8);
+    g.fillStyle = 'rgba(0,0,0,0.4)';
+    for (let i = 0; i < 4; i++) g.fillRect(-14.2 + i * 2.0, -4.0, 0.9, 0.6);
+    g.fillStyle = polymer(g, -9, 3, poly);
+    g.beginPath();
+    g.moveTo(-14.2, -8.8); g.lineTo(-19.4, -8.2); g.lineTo(-20.4, 2.6);
+    g.lineTo(-17.2, 2.6); g.lineTo(-15.4, -2.0); g.lineTo(-14.2, -2.6);
+    g.closePath(); g.fill();
+    g.fillStyle = '#191a1c';
+    g.fillRect(-21.4, -8.0, 1.4, 10.6);
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.55)`;
+    rr(g, -18.4, -6.6, 0.9, 3.4, 0.4); g.fill();
+    g.restore();
+  } else if (kind === 'coil') {
+    // tesla coil where the stock would be: copper windings on a core
+    g.fillStyle = metal(g, -7.4, -1.6, shade(rec, -0.16));
+    rr(g, -18.6, -7.4, 13, 6.2, 1.4); g.fill();
+    for (let i = 0; i < 6; i++) {
+      const x = -17.6 + i * 1.9;
+      g.fillStyle = lingrad(g, 0, -7.8, 0, -0.8, [[0, '#d99a62'], [0.45, '#a8653a'], [1, '#5a3218']]);
+      rr(g, x, -7.9, 1.2, 7.2, 0.5); g.fill();
+    }
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.35)`;
+    g.fillRect(-18, -4.9, 12, 1.2);
+    g.restore();
+    g.fillStyle = metal(g, -9, 1, shade(rec, 0.04));
+    rr(g, -21.2, -8.6, 3.0, 8.6, 1.2); g.fill();
+    g.fillStyle = '#191a1c';
+    g.fillRect(-22.0, -8.0, 1.0, 7.4);
   }
   // 'none' draws nothing — the receiver simply ends
 }
@@ -1359,6 +1419,12 @@ function chassisBarrel(g, kind, rec, core) {
     rr(g, 31, -8.6, 4.6, 7, 1.6); g.fill();
     g.fillStyle = '#0d0e10';
     g.beginPath(); g.ellipse(35.4, -5, 1.1, 3, 0, 0, Math.PI * 2); g.fill();
+    // heat-sink rings: the only thing that said "energy" on this gun was a
+    // name, the body itself was a plain brown tube
+    for (let i = 0; i < 3; i++) {
+      g.fillStyle = 'rgba(6,8,11,0.6)'; g.fillRect(22 + i * 2.8, -7.8, 1.2, 5.4);
+      emissive(22.2 + i * 2.8, -6.8, 0.8, 3.4, 0.55);
+    }
   }
 }
 
@@ -1439,6 +1505,64 @@ function chassisMag(g, kind, rec, poly, core) {
     g.restore();
     g.fillStyle = 'rgba(8,9,12,0.45)';
     g.fillRect(7, 4.4, 4.8, 0.8);
+  } else if (kind === 'short') {
+    // five-round precision box, barely proud of the well
+    const skin = shade(poly, -0.14);
+    g.fillStyle = polymer(g, 1, 7, skin);
+    rr(g, 6.6, 0.2, 5.4, 6.0, 0.8); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.42)';
+    rr(g, 7.8, 2.0, 1.5, 0.9, 0.4); g.fill();
+    g.fillStyle = shade(skin, -0.42);
+    rr(g, 6.3, 5.6, 6.0, 1.7, 0.5); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.15)';
+    g.fillRect(11.7, 0.6, 0.3, 5.0);
+  } else if (kind === 'slim') {
+    // forward-raked curved energy magazine with a charge strip
+    g.fillStyle = polymer(g, 1, 10, shade(poly, -0.06));
+    g.beginPath();
+    g.moveTo(6.6, 0.2); g.lineTo(11.6, 0.2);
+    g.quadraticCurveTo(13.8, 5, 13.6, 9.4);
+    g.lineTo(9.6, 10.2);
+    g.quadraticCurveTo(9.4, 5, 6.6, 0.2);
+    g.closePath(); g.fill();
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.6)`;
+    g.beginPath();
+    g.moveTo(9.4, 1.6); g.lineTo(10.6, 1.6);
+    g.quadraticCurveTo(12.4, 5, 12.3, 8.4); g.lineTo(11.3, 8.6);
+    g.quadraticCurveTo(11.2, 5, 9.4, 1.6);
+    g.closePath(); g.fill();
+    g.restore();
+    g.fillStyle = shade(poly, -0.4);
+    g.beginPath(); g.moveTo(9.4, 9.6); g.lineTo(13.8, 8.8); g.lineTo(13.9, 10.0); g.lineTo(9.6, 10.9); g.closePath(); g.fill();
+  } else if (kind === 'battery') {
+    // low, wide power pack with two terminals and a level window
+    g.fillStyle = metal(g, 0, 5.6, shade(rec, -0.1));
+    rr(g, 3.8, 0.2, 10.6, 5.2, 1.4); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.5)';
+    rr(g, 5.2, 1.8, 7.8, 1.8, 0.6); g.fill();
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.65)`;
+    for (let i = 0; i < 4; i++) g.fillRect(5.6 + i * 1.9, 2.15, 1.4, 1.1);
+    g.restore();
+    g.fillStyle = shade(rec, 0.22);
+    g.fillRect(4.6, 4.6, 1.6, 1.2); g.fillRect(12.0, 4.6, 1.6, 1.2);
+    g.fillStyle = 'rgba(226,232,240,0.14)';
+    g.fillRect(4.4, 0.6, 9.4, 0.35);
+  } else if (kind === 'canister') {
+    // vertical cryo canister with a frosted sight glass
+    g.fillStyle = metal(g, 0, 11, shade(rec, -0.04));
+    rr(g, 6.0, 0.2, 6.2, 11.4, 2.6); g.fill();
+    g.fillStyle = shade(rec, -0.3);
+    g.fillRect(6.0, 2.0, 6.2, 0.9); g.fillRect(6.0, 9.0, 6.2, 0.9);
+    g.fillStyle = 'rgba(200,230,250,0.28)';
+    rr(g, 7.4, 3.4, 3.4, 5.0, 1.0); g.fill();
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.45)`;
+    rr(g, 7.8, 5.2, 2.6, 3.0, 0.8); g.fill();
+    g.restore();
+    g.fillStyle = 'rgba(255,255,255,0.35)';
+    g.fillRect(7.8, 3.7, 0.5, 2.4);
   }
   // 'none' — no feed device at all (gravity/beam weapons)
 }
@@ -1481,7 +1605,9 @@ function chassisTop(g, kind, rec, core) {
     for (let i = 0; i < 7; i++) g.fillRect(2.6 + i * 1.2, TOP + 0.15, 0.55, 1.8);
     g.fillStyle = 'rgba(226,232,240,0.18)';
     g.fillRect(0.6, TOP + 0.05, 11.8, 0.3);
-  } else if (kind === 'scope') {
+  } else if (kind === 'scope' || kind === 'longscope') {
+    // the sniper's glass is longer and wider at the objective
+    const L = kind === 'longscope' ? 6 : 0, B = kind === 'longscope' ? 0.6 : 0;
     // Sat 3.2 units clear of the deck on two thin posts, with a tube as thick
     // as the receiver and a saturated cyan disc on its front face — a thermos
     // on scaffolding. Lower, slimmer, on solid rings, with the bells at the
@@ -1489,30 +1615,30 @@ function chassisTop(g, kind, rec, core) {
     const TUBE_T = -14.9, TUBE_B = -11.6, MID = (TUBE_T + TUBE_B) / 2;
     // one-piece mount: base plate on the deck plus two solid rings
     g.fillStyle = shade(rec, -0.2);
-    g.fillRect(0.4, DECK_Y - 1.5, 12.4, 1.7);
+    g.fillRect(0.4, DECK_Y - 1.5, 12.4 + L * 0.5, 1.7);
     g.fillStyle = shade(rec, -0.32);
     rr(g, 1.4, TUBE_B - 0.4, 2.6, DECK_Y - TUBE_B + 1.0, 0.5); g.fill();
-    rr(g, 9.2, TUBE_B - 0.4, 2.6, DECK_Y - TUBE_B + 1.0, 0.5); g.fill();
+    rr(g, 9.2 + L * 0.5, TUBE_B - 0.4, 2.6, DECK_Y - TUBE_B + 1.0, 0.5); g.fill();
     // tube
     g.fillStyle = metal(g, TUBE_T, TUBE_B, shade(rec, 0.06));
-    rr(g, 0.4, TUBE_T, 13.4, TUBE_B - TUBE_T, 1.5); g.fill();
+    rr(g, 0.4 - L * 0.3, TUBE_T, 13.4 + L, TUBE_B - TUBE_T, 1.5); g.fill();
     // ocular bell (rear, at the shooter) and objective bell (front)
     g.fillStyle = metal(g, TUBE_T - 0.7, TUBE_B + 0.7, shade(rec, 0.02));
-    rr(g, -1.6, TUBE_T - 0.7, 3.0, TUBE_B - TUBE_T + 1.4, 1.1); g.fill();
-    rr(g, 12.6, TUBE_T - 0.6, 3.2, TUBE_B - TUBE_T + 1.2, 1.1); g.fill();
+    rr(g, -1.6 - L * 0.3, TUBE_T - 0.7, 3.0, TUBE_B - TUBE_T + 1.4, 1.1); g.fill();
+    rr(g, 12.6 + L * 0.7, TUBE_T - 0.6 - B, 3.2 + B, TUBE_B - TUBE_T + 1.2 + B * 2, 1.1); g.fill();
     // turret
     g.fillStyle = shade(rec, -0.12);
-    rr(g, 5.6, TUBE_T - 1.5, 2.8, 1.7, 0.4); g.fill();
+    rr(g, 5.6 + L * 0.3, TUBE_T - 1.5, 2.8, 1.7, 0.4); g.fill();
     // glass: dark, with a cool sheen across it — not a bright chip of colour
     g.fillStyle = lingrad(g, 0, TUBE_T, 0, TUBE_B, [
       [0, 'rgba(96,132,152,0.85)'], [0.45, 'rgba(24,38,46,0.95)'], [1, 'rgba(12,18,22,0.95)'],
     ]);
-    rr(g, 14.4, TUBE_T + 0.2, 1.2, TUBE_B - TUBE_T + 0.4, 0.5); g.fill();
+    rr(g, 14.4 + L * 0.7 + B, TUBE_T + 0.2 - B, 1.2, TUBE_B - TUBE_T + 0.4 + B * 2, 0.5); g.fill();
     g.fillStyle = 'rgba(190,222,238,0.35)';
-    g.fillRect(14.6, TUBE_T + 0.5, 0.8, 0.7);
+    g.fillRect(14.6 + L * 0.7 + B, TUBE_T + 0.5 - B, 0.8, 0.7);
     // lit edge along the top of the tube
     g.fillStyle = 'rgba(226,232,240,0.20)';
-    g.fillRect(1.0, TUBE_T + 0.1, 12.2, 0.32);
+    g.fillRect(1.0 - L * 0.3, TUBE_T + 0.1, 12.2 + L, 0.32);
   } else if (kind === 'emitter') {
     // dorsal emitter fin with a lit slot
     g.fillStyle = metal(g, -15, -10, shade(rec, -0.1));
@@ -1523,6 +1649,40 @@ function chassisTop(g, kind, rec, core) {
     g.fillStyle = `rgba(${cr},${cg},${cb},0.6)`;
     g.fillRect(3.4, -13.4, 8, 1.5);
     g.restore();
+  } else if (kind === 'holo') {
+    // holographic sight: an open window frame with the reticle floating in it
+    g.fillStyle = shade(rec, -0.22);
+    g.fillRect(1.0, DECK_Y - 1.2, 9.6, 1.4);
+    g.fillStyle = metal(g, -14.4, DECK_Y, shade(rec, 0.02));
+    g.beginPath();
+    g.moveTo(2.0, DECK_Y - 1.0); g.lineTo(2.0, -13.0); g.quadraticCurveTo(2.0, -14.2, 3.2, -14.2);
+    g.lineTo(9.4, -14.2); g.lineTo(9.8, DECK_Y - 1.0);
+    g.closePath(); g.fill();
+    g.save(); g.globalCompositeOperation = 'destination-out';
+    rr(g, 3.4, -13.0, 4.8, 3.2, 0.5); g.fill();
+    g.restore();
+    g.fillStyle = 'rgba(120,170,190,0.22)';
+    rr(g, 3.4, -13.0, 4.8, 3.2, 0.5); g.fill();
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.95)`;
+    g.fillRect(5.5, -11.6, 0.6, 0.6);
+    g.restore();
+    g.fillStyle = 'rgba(226,232,240,0.18)';
+    g.fillRect(3.0, -14.1, 6.2, 0.3);
+  } else if (kind === 'capacitor') {
+    // twin capacitor bank along the deck, banded, with charge windows
+    for (const [y, h, s] of [[-12.4, 2.4, 0.06], [-10.2, 2.2, -0.08]]) {
+      g.fillStyle = metal(g, y, y + h, shade(rec, s));
+      rr(g, -0.6, y, 15.4, h, h / 2); g.fill();
+    }
+    g.fillStyle = shade(rec, -0.34);
+    for (const x of [1.8, 7.0, 12.2]) g.fillRect(x, -12.6, 1.0, DECK_Y + 12.8);
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.55)`;
+    g.fillRect(3.2, -11.7, 3.4, 0.8); g.fillRect(8.4, -11.7, 3.4, 0.8);
+    g.restore();
+    g.fillStyle = 'rgba(226,232,240,0.18)';
+    g.fillRect(0.4, -12.3, 13.4, 0.3);
   } else if (kind === 'fins') {
     // heat-sink fin stack on a base plate that sits flat on the deck
     g.fillStyle = shade(rec, -0.16);
@@ -1566,6 +1726,263 @@ function paintChassisMag(kind, rec, poly, core) {
   });
 }
 
+// ---- receiver, grip, trigger guard and handguard ----
+//
+// Every chassis weapon used to share one receiver block, one raked grip and
+// one slotted handguard, so eleven guns in the shop were the same gun from the
+// stock to the handguard with different things bolted on either end — the
+// thing that made the arsenal read as generated. The hand IK only needs a grip
+// at the origin and a handguard under gripB (hg - 4.5, -5.2); everything else
+// about the middle of the gun is free, and each family now has its own.
+//
+//   classic — machined upper/lower, open trigger guard (battle, lmg, sniper)
+//   wedge   — chamfered monocoque, one-piece grip with a closed guard
+//   slab    — flat-sided box, vertical grip, squared guard, panel bolts
+//   round   — tubular capsule with band rings and a pommel grip
+//   heavy   — deep armoured receiver, rubber-wrapped grip, ribbed shroud
+function chassisReceiver(g, kind, rec, poly, core, hgEnd) {
+  const glow = (fn, a) => {
+    if (!core) return;
+    const [cr, cg, cb] = core;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
+    fn(); g.restore();
+  };
+  const trigger = (x, y) => {
+    g.strokeStyle = '#15161a'; g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x - 0.4, y + 1.1, x + 0.4, y + 1.7); g.stroke();
+  };
+  const seam = () => {
+    g.fillStyle = 'rgba(0,0,0,0.30)';
+    g.fillRect(11.7, -8.4, 0.6, 7.2);
+  };
+
+  if (kind === 'wedge') {
+    g.fillStyle = metal(g, -9.4, 1, rec);
+    g.beginPath();
+    g.moveTo(-6.6, -6.2); g.lineTo(-3.4, -9.2); g.lineTo(12.4, -9.2);
+    g.lineTo(12.4, -0.6); g.lineTo(6.2, 0.4); g.lineTo(1.8, 0.2);
+    g.lineTo(-1, -0.6); g.lineTo(-6.6, -1.4);
+    g.closePath(); g.fill();
+    // lit chamfer facet + a single panel seam
+    g.fillStyle = 'rgba(226,232,240,0.12)';
+    g.beginPath();
+    g.moveTo(-6.6, -6.2); g.lineTo(-3.4, -9.2); g.lineTo(-2.2, -9.2); g.lineTo(-5.3, -6.0);
+    g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.38)'; g.lineWidth = 0.35;
+    g.beginPath(); g.moveTo(-4.6, -3.6); g.lineTo(10.6, -3.6); g.lineTo(10.6, -9.2); g.stroke();
+    g.fillStyle = 'rgba(0,0,0,0.5)';
+    rr(g, -2.6, -7.4, 11.4, 1.3, 0.6); g.fill();
+    glow(() => { rr(g, -2.2, -7.1, 10.6, 0.7, 0.35); g.fill(); }, 0.8);
+    // one-piece grip with a closed guard, trigger hole knocked through it
+    g.fillStyle = polymer(g, -1, 8.3, poly);
+    g.beginPath();
+    g.moveTo(-1.6, -0.8);
+    g.quadraticCurveTo(-3.2, 3.6, -4.6, 6.8);
+    g.quadraticCurveTo(-4.8, 8.3, -2.8, 8.3);
+    g.quadraticCurveTo(-0.6, 8.1, 0.2, 5.2);
+    g.lineTo(0.9, 2.9); g.lineTo(6.4, 2.9);
+    g.quadraticCurveTo(7.9, 2.9, 7.9, 1.4);
+    g.lineTo(7.9, 0); g.lineTo(1.6, -0.6);
+    g.closePath(); g.fill();
+    g.save(); g.globalCompositeOperation = 'destination-out';
+    rr(g, 1.8, 0.55, 4.9, 1.45, 0.7); g.fill();
+    g.restore();
+    trigger(3.7, 0.4);
+    g.strokeStyle = 'rgba(0,0,0,0.32)'; g.lineWidth = 0.4;
+    for (let i = 0; i < 3; i++) {
+      g.beginPath(); g.moveTo(-2.4 - i * 0.6, 2.6 + i * 1.6); g.lineTo(-0.2 - i * 0.55, 2.6 + i * 1.6); g.stroke();
+    }
+    // tapered shroud with one long lit slot
+    g.fillStyle = polymer(g, -9.2, -1, poly);
+    g.beginPath();
+    g.moveTo(12, -9.2); g.lineTo(hgEnd - 1.2, -8.2);
+    g.quadraticCurveTo(hgEnd, -8.1, hgEnd, -6.8);
+    g.lineTo(hgEnd, -2.6);
+    g.quadraticCurveTo(hgEnd, -1.6, hgEnd - 1.2, -1.6);
+    g.lineTo(12, -0.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(8,9,12,0.55)';
+    rr(g, 13.6, -5.7, hgEnd - 16.4, 1.4, 0.7); g.fill();
+    glow(() => { rr(g, 14, -5.4, hgEnd - 17.2, 0.8, 0.4); g.fill(); }, 0.7);
+    g.fillStyle = 'rgba(226,232,240,0.10)';
+    g.beginPath(); g.moveTo(12.4, -9.0); g.lineTo(hgEnd - 1.2, -8.0); g.lineTo(hgEnd - 1.2, -7.5); g.lineTo(12.4, -8.4); g.closePath(); g.fill();
+    seam();
+  } else if (kind === 'slab') {
+    g.fillStyle = metal(g, -9, 1, rec);
+    g.beginPath();
+    g.moveTo(-6.6, -9.0); g.lineTo(10.4, -9.0); g.lineTo(12.4, -7.4);
+    g.lineTo(12.4, 0.2); g.lineTo(1.6, 0.2); g.lineTo(-1, -0.6); g.lineTo(-6.6, -0.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.08)';
+    g.fillRect(-6.6, -9.0, 17, 0.8);
+    // inset side plate held by four bolts
+    g.fillStyle = shade(rec, -0.14);
+    rr(g, -5.0, -7.6, 8.6, 5.2, 0.4); g.fill();
+    g.strokeStyle = 'rgba(226,232,240,0.12)'; g.lineWidth = 0.3;
+    g.beginPath(); g.moveTo(-5.0, -2.4); g.lineTo(3.6, -2.4); g.lineTo(3.6, -7.6); g.stroke();
+    for (const [bx, by] of [[-4.2, -6.8], [2.8, -6.8], [-4.2, -3.2], [2.8, -3.2]]) {
+      g.fillStyle = shade(rec, 0.28);
+      g.beginPath(); g.arc(bx, by, 0.45, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(bx - 0.3, by - 0.06, 0.6, 0.14);
+    }
+    // vent grille ahead of the plate
+    for (let i = 0; i < 3; i++) {
+      g.fillStyle = 'rgba(6,8,12,0.65)'; g.fillRect(5.2, -7.4 + i * 1.6, 5.4, 0.7);
+      glow(() => g.fillRect(5.6, -7.2 + i * 1.6, 4.6, 0.3), 0.45);
+    }
+    // straight block grip with finger grooves on the front strap
+    g.fillStyle = polymer(g, -1, 8.4, poly);
+    g.beginPath();
+    g.moveTo(-2.4, -0.6); g.lineTo(-3.6, 7.6);
+    g.quadraticCurveTo(-3.6, 8.4, -2.8, 8.4); g.lineTo(0.2, 8.4);
+    g.quadraticCurveTo(0.9, 8.4, 0.9, 7.6); g.lineTo(1.4, -0.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.38)';
+    for (let i = 0; i < 3; i++) g.fillRect(0.4 - i * 0.12, 2.0 + i * 1.8, 0.9, 0.5);
+    g.fillStyle = 'rgba(226,232,240,0.08)';
+    g.fillRect(-2.6, 0, 0.5, 7.6);
+    // squared guard
+    g.strokeStyle = shade(rec, -0.12); g.lineWidth = 0.9; g.lineJoin = 'round';
+    g.beginPath(); g.moveTo(1.4, 0.2); g.lineTo(1.4, 2.8); g.lineTo(6.4, 2.8); g.lineTo(7.2, 0.2); g.stroke();
+    trigger(3.6, 0.3);
+    // boxy handguard with horizontal vent rows and a bevelled nose
+    g.fillStyle = polymer(g, -8.8, -1.2, shade(poly, 0.04));
+    g.beginPath();
+    g.moveTo(12, -8.8); g.lineTo(hgEnd - 1.4, -8.8); g.lineTo(hgEnd, -7.2);
+    g.lineTo(hgEnd, -1.2); g.lineTo(12, -1.2);
+    g.closePath(); g.fill();
+    for (let r = 0; r < 2; r++) {
+      g.fillStyle = 'rgba(8,9,12,0.55)';
+      g.fillRect(13.4, -6.9 + r * 2.6, hgEnd - 15.8, 0.9);
+      glow(() => g.fillRect(13.8, -6.7 + r * 2.6, hgEnd - 16.6, 0.4), 0.4);
+    }
+    g.fillStyle = 'rgba(226,232,240,0.10)';
+    g.fillRect(12.2, -8.8, hgEnd - 13.8, 0.5);
+    seam();
+  } else if (kind === 'round') {
+    g.fillStyle = metal(g, -9.2, -0.4, rec);
+    rr(g, -8.4, -9.2, 21.2, 8.8, 4.4); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.14)';
+    rr(g, -6.4, -8.6, 17, 1.0, 0.5); g.fill();
+    for (const bx of [-3.8, 4.6]) {
+      g.fillStyle = shade(rec, -0.28); g.fillRect(bx, -9.2, 1.3, 8.8);
+      g.fillStyle = 'rgba(226,232,240,0.16)'; g.fillRect(bx, -9.0, 0.35, 8.4);
+    }
+    // end cap boss with a charge eye
+    g.fillStyle = shade(rec, 0.1);
+    g.beginPath(); g.arc(-5.9, -4.8, 1.7, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    g.beginPath(); g.arc(-5.9, -4.8, 0.9, 0, Math.PI * 2); g.fill();
+    glow(() => { g.beginPath(); g.arc(-5.9, -4.8, 0.6, 0, Math.PI * 2); g.fill(); }, 0.9);
+    // organic grip ending in a pommel
+    g.fillStyle = polymer(g, -1, 8.6, poly);
+    g.beginPath();
+    g.moveTo(-1.4, -0.8);
+    g.bezierCurveTo(-2.6, 2.0, -4.0, 4.6, -3.9, 6.8);
+    g.lineTo(-1.0, 7.3);
+    g.bezierCurveTo(-0.3, 5.0, 0.6, 2.4, 1.8, -0.6);
+    g.closePath(); g.fill();
+    g.fillStyle = polymer(g, 5.6, 9.2, shade(poly, -0.08));
+    g.beginPath(); g.ellipse(-2.5, 7.4, 1.9, 1.3, -0.2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.35;
+    for (let i = 0; i < 3; i++) {
+      g.beginPath(); g.moveTo(-1.9 - i * 0.65, 1.8 + i * 1.5); g.lineTo(0.2 - i * 0.55, 1.8 + i * 1.5); g.stroke();
+    }
+    g.strokeStyle = shade(rec, -0.1); g.lineWidth = 0.95;
+    g.beginPath(); g.moveTo(1.8, -0.3); g.bezierCurveTo(2.2, 3.4, 7.0, 3.4, 7.4, -0.5); g.stroke();
+    trigger(3.8, 0.0);
+    // tubular forend with cooling rings
+    g.fillStyle = metal(g, -8.4, -1.6, shade(rec, -0.06));
+    rr(g, 11.6, -8.4, hgEnd - 11.6, 6.8, 3.4); g.fill();
+    for (let x = 14; x < hgEnd - 1.5; x += 2.6) {
+      g.fillStyle = 'rgba(6,8,12,0.5)'; g.fillRect(x, -8.2, 0.8, 6.4);
+      g.fillStyle = 'rgba(226,232,240,0.10)'; g.fillRect(x + 0.8, -8.0, 0.3, 6.0);
+    }
+    g.fillStyle = 'rgba(226,232,240,0.12)';
+    rr(g, 12.4, -7.9, hgEnd - 13.8, 0.7, 0.35); g.fill();
+  } else if (kind === 'heavy') {
+    g.fillStyle = metal(g, -9.8, 1.4, rec);
+    g.beginPath();
+    g.moveTo(-7, -9.8); g.lineTo(12.4, -9.8); g.lineTo(12.4, 1.4);
+    g.lineTo(5.8, 1.4); g.lineTo(1.8, 0.6); g.lineTo(-1.2, -0.4); g.lineTo(-7, -0.4);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.08)';
+    g.fillRect(-7, -9.8, 19.4, 1.0);
+    // armour plate with a chamfered rear corner
+    g.fillStyle = shade(rec, 0.07);
+    g.beginPath();
+    g.moveTo(-5.4, -8.4); g.lineTo(10.8, -8.4); g.lineTo(10.8, -2.4);
+    g.lineTo(-3.6, -2.4); g.lineTo(-5.4, -4.2);
+    g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.42)'; g.lineWidth = 0.35; g.stroke();
+    for (const [bx, by] of [[-3.8, -7.2], [9.6, -7.2], [9.6, -3.6]]) {
+      g.fillStyle = shade(rec, 0.32);
+      g.beginPath(); g.arc(bx, by, 0.7, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.55)';
+      g.beginPath(); g.arc(bx, by, 0.3, 0, Math.PI * 2); g.fill();
+    }
+    glow(() => { rr(g, -1.8, -5.8, 9.4, 1.0, 0.5); g.fill(); }, 0.6);
+    // thick grip with rubber wrap bands
+    g.fillStyle = polymer(g, -1, 8.6, poly);
+    g.beginPath();
+    g.moveTo(-1.8, -0.6); g.lineTo(-4.4, 7.2);
+    g.quadraticCurveTo(-4.6, 8.6, -2.8, 8.6); g.lineTo(-0.2, 8.6);
+    g.quadraticCurveTo(1.0, 8.4, 1.0, 7.0); g.lineTo(2.0, -0.2);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.36)';
+    for (let i = 0; i < 3; i++) {
+      g.beginPath();
+      const y = 2.2 + i * 1.9;
+      g.moveTo(-2.4 - i * 0.62, y); g.lineTo(1.5 - i * 0.2, y); g.lineTo(1.4 - i * 0.2, y + 0.7); g.lineTo(-2.6 - i * 0.62, y + 0.7);
+      g.closePath(); g.fill();
+    }
+    g.strokeStyle = shade(rec, -0.16); g.lineWidth = 1.3; g.lineJoin = 'round';
+    g.beginPath(); g.moveTo(2.0, 0.6); g.lineTo(2.2, 3.4); g.lineTo(6.6, 3.4); g.lineTo(7.4, 1.4); g.stroke();
+    trigger(3.9, 0.9);
+    // ribbed shroud
+    g.fillStyle = polymer(g, -9.6, -1.2, poly);
+    rr(g, 12, -9.6, hgEnd - 12, 8.4, 1.0); g.fill();
+    for (let x = 13.4; x < hgEnd - 1.6; x += 3) {
+      g.fillStyle = shade(poly, 0.16); g.fillRect(x, -9.6, 1.2, 8.4);
+      g.fillStyle = 'rgba(0,0,0,0.36)'; g.fillRect(x + 1.2, -9.6, 0.45, 8.4);
+    }
+    glow(() => g.fillRect(12.6, -2.4, hgEnd - 13.4, 0.6), 0.5);
+    seam();
+  } else {
+    // classic
+    g.fillStyle = metal(g, -6, 4, rec);
+    g.beginPath();
+    g.moveTo(-6.5, -8.2); g.lineTo(12, -8.2); g.lineTo(12, -0.4);
+    g.lineTo(6.2, 0.4); g.lineTo(1.8, 0.2); g.lineTo(-1, -0.6); g.lineTo(-6.5, -0.8);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.08)';
+    g.fillRect(-6.5, -8.2, 18.5, 1.1);
+    // pistol grip (hand anchors at 0,0)
+    g.fillStyle = polymer(g, -1, 8, poly);
+    g.beginPath();
+    g.moveTo(-1.2, -1); g.quadraticCurveTo(-2.8, 3.4, -4.4, 6.6);
+    g.quadraticCurveTo(-4.6, 8, -2.6, 8);
+    g.quadraticCurveTo(-0.4, 7.8, 0.4, 5); g.lineTo(1.6, -0.6);
+    g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.4;
+    for (let i = 0; i < 3; i++) {
+      g.beginPath();
+      g.moveTo(-1.8 - i * 0.8, 1.5 + i * 1.6);
+      g.lineTo(0.2 - i * 0.7, 2 + i * 1.6);
+      g.stroke();
+    }
+    g.strokeStyle = shade(rec, -0.15); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(1.6, 0); g.quadraticCurveTo(4.6, 3.6, 7.4, 0.4); g.stroke();
+    // Polymer handguard, a clear value step from the receiver.
+    g.fillStyle = polymer(g, -8.4, -1, poly);
+    rr(g, 12, -8.4, hgEnd - 12, 7.4, 1.2); g.fill();
+    g.fillStyle = 'rgba(8,9,12,0.46)';
+    for (let x = 14; x < hgEnd - 2; x += 3.4) g.fillRect(x, -6.6, 1.3, 4);
+    seam();
+  }
+}
+
 // Composes one complete weapon body from its structural parts.
 function paintChassis(cfg) {
   const rec = cfg.rec || COL.gunmetal;
@@ -1585,67 +2002,25 @@ function paintChassis(cfg) {
 
     chassisStock(g, cfg.stock, rec, poly, core);
 
-    // ---- receiver + grip: identical across every chassis so the hand IK
-    // keeps landing on the grips no matter which parts are bolted on ----
-    g.fillStyle = metal(g, -6, 4, rec);
-    g.beginPath();
-    g.moveTo(-6.5, -8.2); g.lineTo(12, -8.2); g.lineTo(12, -0.4);
-    g.lineTo(6.2, 0.4); g.lineTo(1.8, 0.2); g.lineTo(-1, -0.6); g.lineTo(-6.5, -0.8);
-    g.closePath(); g.fill();
-    g.fillStyle = 'rgba(255,255,255,0.08)';
-    g.fillRect(-6.5, -8.2, 18.5, 1.1);
-
-    // pistol grip (hand anchors at 0,0)
-    g.fillStyle = polymer(g, -1, 8, poly);
-    g.beginPath();
-    g.moveTo(-1.2, -1); g.quadraticCurveTo(-2.8, 3.4, -4.4, 6.6);
-    g.quadraticCurveTo(-4.6, 8, -2.6, 8);
-    g.quadraticCurveTo(-0.4, 7.8, 0.4, 5); g.lineTo(1.6, -0.6);
-    g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.4;
-    for (let i = 0; i < 3; i++) {
-      g.beginPath();
-      g.moveTo(-1.8 - i * 0.8, 1.5 + i * 1.6);
-      g.lineTo(0.2 - i * 0.7, 2 + i * 1.6);
-      g.stroke();
-    }
-    // trigger guard
-    g.strokeStyle = shade(rec, -0.15); g.lineWidth = 1;
-    g.beginPath(); g.moveTo(1.6, 0); g.quadraticCurveTo(4.6, 3.6, 7.4, 0.4); g.stroke();
-
     // The magazine is deliberately NOT painted here — it is a separate sprite
     // (paintChassisMag) so the reload animation can drop it out of the well.
     // Both are drawn from the same coordinates in chassisMag(), so the loaded
     // magazine sits in the well by construction rather than by a hand-tuned
     // offset that drifts the moment a chassis changes.
-
-    // handguard bridging receiver to barrel — length varies per chassis
     const hgEnd = cfg.hg || 22;
-    // Polymer, not another shade of the receiver. At shade(rec, -0.06) the
-    // handguard was within a hair of the receiver's own value, so the front
-    // half of every chassis weapon read as one continuous slab.
-    g.fillStyle = polymer(g, -8.4, -1, poly);
-    rr(g, 12, -8.4, hgEnd - 12, 7.4, 1.2); g.fill();
-    g.fillStyle = 'rgba(8,9,12,0.46)';
-    for (let x = 14; x < hgEnd - 2; x += 3.4) g.fillRect(x, -6.6, 1.3, 4);
-    // seam where the handguard meets the receiver
-    g.fillStyle = 'rgba(0,0,0,0.30)';
-    g.fillRect(11.7, -8.2, 0.6, 7.2);
+    chassisReceiver(g, cfg.rcv || 'classic', rec, poly, cfg.core ? core : null, hgEnd);
 
     chassisBarrel(g, cfg.barrel, rec, core);
     chassisTop(g, cfg.top, rec, core);
 
-    // Shared wear pass so a chassis never looks like clean vector art.
-    //
-    // Clipped to the silhouette with source-atop. The wear scatters over the
-    // whole box, and on the enlarged canvas that put loose speckle in the air
-    // around the gun — dirt with nothing under it, which at a glance reads as
-    // debris stuck to the weapon. source-atop can only mark pixels that are
-    // already painted, so wear lands on metal and nowhere else.
+    // Wear, clipped to the silhouette with source-atop so it only marks metal.
+    // Edge wear, not scratches: the old pass threw a dozen long pale strokes at
+    // random angles across the whole gun, and on the dark energy finishes they
+    // read as white slashes drawn over the art rather than worn metal.
     g.save();
     g.globalCompositeOperation = 'source-atop';
-    scratches(g, -22, -16, 72, 24, rng, { n: 12 });
-    grunge(g, -22, -16, 72, 24, rng, { n: 70, dark: 0.1 });
+    scratches(g, -22, -16, 72, 24, rng, { n: 6, len: 2.2, color: 'rgba(220,225,235,0.10)' });
+    grunge(g, -22, -16, 72, 24, rng, { n: 60, dark: 0.08 });
     g.restore();
     formLight(g, -24, -18, 76, 28);
   });
@@ -1665,31 +2040,50 @@ function paintMinigun(finish) {
   return makeSprite(80, 34, 24, 17, (g) => {
     g.translate(24, 17);
 
-    // ammo drum hanging below the receiver
-    g.fillStyle = metal(g, 2, 13, shade(rec, -0.2));
-    rr(g, -12, 1.5, 20, 12, 3.4); g.fill();
-    g.strokeStyle = 'rgba(8,9,12,0.55)'; g.lineWidth = 0.9;
-    for (let i = 1; i < 4; i++) {
-      g.beginPath(); g.moveTo(-12 + i * 5, 2.2); g.lineTo(-12 + i * 5, 12.8); g.stroke();
+    // Ammo drum slung under the rear of the receiver. It used to hang under
+    // the middle of the gun where the trigger hand has to go, and the gun had
+    // no grip at all — the rig's hands closed on bare receiver metal. The drum
+    // moves back, and a trigger grip and a vertical foregrip take its place.
+    g.fillStyle = metal(g, 3, 13.4, shade(rec, -0.2));
+    rr(g, -15.4, 2.4, 11.2, 11, 3.2); g.fill();
+    g.strokeStyle = 'rgba(8,9,12,0.55)'; g.lineWidth = 0.8;
+    for (let i = 1; i < 3; i++) {
+      g.beginPath(); g.moveTo(-15.4 + i * 3.7, 3.2); g.lineTo(-15.4 + i * 3.7, 12.6); g.stroke();
     }
-    // feed chute from drum up into the receiver
-    g.fillStyle = shade(rec, -0.32);
-    g.beginPath();
-    g.moveTo(4, 2.2); g.lineTo(10, -3.4); g.lineTo(13, -1.2); g.lineTo(7.5, 3.6);
-    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.12)';
+    g.fillRect(-14.6, 3.0, 9.6, 0.5);
+    g.fillStyle = shade(rec, 0.1);
+    rr(g, -12.2, 7.0, 4.6, 2.6, 0.6); g.fill();
 
-    // Spade grips at the rear, on a backplate. Standing on their own they
-    // read as an I-beam floating behind the gun with nothing joining them.
-    g.fillStyle = metal(g, -8, 3, shade(rec, -0.14));
-    rr(g, -17.5, -7, 4, 12, 1.2); g.fill();
-    g.fillStyle = poly;
-    rr(g, -20, -7.5, 4.2, 15, 1.6); g.fill();
-    g.fillStyle = shade(poly, -0.2);
-    rr(g, -21.5, -8.5, 7, 3.4, 1.2); g.fill();
-    rr(g, -21.5, 5.4, 7, 3.4, 1.2); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.5;
+    // motor housing at the rear, with the power lead dropping to the pack
+    g.strokeStyle = shade(poly, -0.25); g.lineWidth = 1.6; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-18.2, 2.6); g.quadraticCurveTo(-21.5, 8, -20.2, 14.6); g.stroke();
+    g.lineCap = 'butt';
+    g.fillStyle = metal(g, -8, 4, shade(rec, -0.14));
+    rr(g, -20, -7.2, 5.6, 11.4, 2.0); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.4)';
+    for (let i = 0; i < 4; i++) g.fillRect(-19.2, -5.2 + i * 2.2, 4.0, 0.7);
+
+    // trigger grip under the receiver (hand origin) and its guard
+    g.fillStyle = polymer(g, 2, 11.6, poly);
+    g.beginPath();
+    g.moveTo(-1.6, 2.6); g.lineTo(-3.4, 10.4);
+    g.quadraticCurveTo(-3.6, 11.6, -2.0, 11.6); g.lineTo(0.2, 11.6);
+    g.quadraticCurveTo(1.2, 11.4, 1.0, 10.2); g.lineTo(1.8, 2.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.34)';
+    for (let i = 0; i < 3; i++) g.fillRect(-2.2 - i * 0.3, 5.0 + i * 1.9, 3.2, 0.5);
+    g.strokeStyle = shade(rec, -0.2); g.lineWidth = 1.0;
+    g.beginPath(); g.moveTo(1.8, 3.0); g.quadraticCurveTo(4.2, 6.6, 6.8, 3.0); g.stroke();
+    g.strokeStyle = '#15161a'; g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(3.6, 3.0); g.quadraticCurveTo(3.2, 4.2, 4.0, 4.8); g.stroke();
+
+    // vertical foregrip under the rotor housing
+    g.fillStyle = polymer(g, 4, 13, shade(poly, 0.05));
+    rr(g, 10.6, 4.0, 3.8, 8.6, 1.6); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.34)'; g.lineWidth = 0.5;
     for (let i = 0; i < 4; i++) {
-      g.beginPath(); g.moveTo(-19.7, -4.6 + i * 2.6); g.lineTo(-16.1, -4.6 + i * 2.6); g.stroke();
+      g.beginPath(); g.moveTo(10.9, 6.2 + i * 1.6); g.lineTo(14.1, 6.2 + i * 1.6); g.stroke();
     }
 
     // receiver housing
@@ -2344,22 +2738,17 @@ export function buildWeapons() {
   // weapons share a silhouette — the outline differs at the stock, the barrel,
   // the feed device and the topside accessory, not just in colour.
   const CHASSIS = {
-    battle:    { stock: 'solid',    barrel: 'long',   mag: 'box',   top: 'scope',   hg: 24 },
-    lmg:       { stock: 'solid',    barrel: 'heavy',  mag: 'belt',  top: 'carry',   hg: 22 },
-    sniper:    { stock: 'skeleton', barrel: 'shroud', mag: 'stick', top: 'scope',   hg: 21 },
-    plasma:    { stock: 'tank',     barrel: 'vent',   mag: 'cell',  top: 'emitter', hg: 21 },
-    pulse:     { stock: 'brace',    barrel: 'coil',   mag: 'cell',  top: 'fins',    hg: 20 },
-    eshotgun:  { stock: 'folded',   barrel: 'stub',   mag: 'drum',  top: 'none',    hg: 20 },
-    ion:       { stock: 'tank',     barrel: 'twin',   mag: 'cell',  top: 'emitter', hg: 20 },
-    emp:       { stock: 'brace',    barrel: 'nozzle', mag: 'cell',  top: 'fins',    hg: 20 },
-    // Gravity, lightning and cryo used to share 'coil', 'twin' and 'shroud'
-    // with other weapons, so seven energy guns came out of this table with the
-    // same outline: receiver, grip, and a bar pointing forward. Each of the
-    // three now has a forward mass nothing else in the arsenal has — a focus
-    // ring, a forked electrode, a condenser stack.
-    gravity:   { stock: 'tank',     barrel: 'lens',   mag: 'none',  top: 'emitter', hg: 20 },
-    lightning: { stock: 'none',     barrel: 'arc',    mag: 'cell',  top: 'fins',    hg: 20 },
-    cryo:      { stock: 'tank',     barrel: 'frost',  mag: 'cell',  top: 'none',    hg: 21 },
+    battle:    { rcv: 'classic', stock: 'thumbhole', barrel: 'long',   mag: 'box',      top: 'scope',     hg: 24 },
+    lmg:       { rcv: 'classic', stock: 'solid',     barrel: 'heavy',  mag: 'belt',     top: 'carry',     hg: 22 },
+    sniper:    { rcv: 'classic', stock: 'skeleton',  barrel: 'shroud', mag: 'short',    top: 'longscope', hg: 21 },
+    plasma:    { rcv: 'wedge',   stock: 'brace',     barrel: 'vent',   mag: 'cell',     top: 'emitter',   hg: 21 },
+    pulse:     { rcv: 'wedge',   stock: 'pad',       barrel: 'coil',   mag: 'slim',     top: 'holo',      hg: 20 },
+    eshotgun:  { rcv: 'heavy',   stock: 'folded',    barrel: 'stub',   mag: 'drum',     top: 'none',      hg: 20 },
+    ion:       { rcv: 'heavy',   stock: 'solid',     barrel: 'twin',   mag: 'battery',  top: 'capacitor', hg: 20 },
+    emp:       { rcv: 'slab',    stock: 'skeleton',  barrel: 'nozzle', mag: 'cell',     top: 'fins',      hg: 20 },
+    lightning: { rcv: 'slab',    stock: 'coil',      barrel: 'arc',    mag: 'none',     top: 'none',      hg: 20 },
+    gravity:   { rcv: 'round',   stock: 'none',      barrel: 'lens',   mag: 'none',     top: 'none',      hg: 20 },
+    cryo:      { rcv: 'round',   stock: 'tank',      barrel: 'frost',  mag: 'canister', top: 'none',      hg: 21 },
   };
   // ---- attachment geometry --------------------------------------------
   //
@@ -2391,7 +2780,8 @@ export function buildWeapons() {
   // 'none' falls back to the bare receiver top, so a sight sits on metal
   // instead of hovering where a scope would have been.
   const TOP_RAIL_Y = {
-    carry: -15.4, scope: -16.2, emitter: -14.8, fins: -14.2, none: -8.6,
+    carry: -15.4, scope: -16.2, longscope: -16.2, emitter: -14.8, fins: -14.2,
+    holo: -14.4, capacitor: -12.6, none: -8.6,
   };
 
   // Conventional actions cycle a bolt; energy weapons have no reciprocating
@@ -2450,6 +2840,10 @@ export function buildWeapons() {
       recoilKick: 1.1, recoilRot: 0.012, camKick: 0.7, camTrauma: 0.075, muzzleBig: 1.6,
       magSize: 250, reserve: 500, reloadT: 5.2, reloadEmptyT: 6.0, shotSound: 'rifle',
       mag: null, bolt: null,
+      // its own grips: trigger grip under the receiver, foregrip under the
+      // rotor — the rifle's points it inherited were both on bare metal
+      gripA: { x: -0.4, y: 4.6 }, gripB: { x: 12.5, y: 7.4 },
+      muzzle: { x: 39.4, y: -2.3 }, eject: { x: 6, y: 2 },
       tracerColor: [255, 214, 150], tracerWidth: 2.2,
     },
     rocket: {
@@ -2460,6 +2854,11 @@ export function buildWeapons() {
       recoilKick: 3.6, recoilRot: 0.055, camKick: 2.8, camTrauma: 0.16, muzzleBig: 2.0,
       magSize: 1, reserve: 12, reloadT: 3.2, reloadEmptyT: 3.6, shotSound: 'rifle',
       mag: null, bolt: null,
+      // Hands on the launcher's own grips. The inherited rifle points put the
+      // trigger hand on the side of the tube and the support hand on top of it,
+      // a full grip-length above both handles.
+      gripA: { x: -2.4, y: 7.6 }, gripB: { x: 18.3, y: 7.8 },
+      muzzle: { x: 47.6, y: 0 }, eject: null,
     },
     sniper: {
       ...R, id: 'sniper', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'LRS-1 "TALON"', body: chassisBody('sniper', { rec: '#2a2e33', poly: '#20242a', core: null }),
@@ -2504,8 +2903,8 @@ export function buildWeapons() {
       recoilKick: 1.2, recoilRot: 0.018, camKick: 0.62, camTrauma: 0.036, shotSound: 'pulse',
     },
     eshotgun: {
-      ...R, id: 'eshotgun', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'ENERGY SHOTGUN', body: chassisBody('eshotgun', { rec: '#43301a', poly: '#2f2112', core: [255, 160, 60] }),
-      ...chassisMounts('eshotgun', { rec: '#43301a', poly: '#2f2112', core: [255, 160, 60] }),
+      ...R, id: 'eshotgun', sprayPattern: SPRAY_HEAVY, recoilFeel: 'heavy', name: 'ENERGY SHOTGUN', body: chassisBody('eshotgun', { rec: '#3a3734', poly: '#252321', core: [255, 150, 60] }),
+      ...chassisMounts('eshotgun', { rec: '#3a3734', poly: '#252321', core: [255, 150, 60] }),
       energy: true, fireMode: 'projectile', auto: false, rpm: 75, dmg: 15, spread: 0.14, pellets: 8,
       projectile: { color: [255, 160, 60], radius: 3.4, speed: 820, life: 0.55 },
       recoilKick: 2.8, recoilRot: 0.04, camKick: 1.6, camTrauma: 0.09, muzzleBig: 1.4,

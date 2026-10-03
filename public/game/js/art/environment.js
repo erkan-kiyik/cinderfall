@@ -64,7 +64,7 @@ export function container(colorKey = 'containerRed', label = 'HLC-407', w = 108,
     // weathering
     streaks(g, 0, y0, w, h, rng, { n: 14, color: 'rgba(48,30,18,0.22)', wMax: 3 });
     grunge(g, 0, y0, w, h, rng, { n: 160, dark: 0.14 });
-    scratches(g, 2, y0 + 2, w - 4, h - 4, rng, { n: 14 });
+    scratches(g, 2, y0 + 2, w - 4, h - 4, rng, { n: 8, len: 2.4, color: 'rgba(220,225,235,0.10)' });
     rim(g, 0, y0, w, h);
     ao(g, w / 2, y0 + h + 1, w * 0.55, 5, 0.4);
   });
@@ -84,7 +84,9 @@ export function container(colorKey = 'containerRed', label = 'HLC-407', w = 108,
 // leans, both of which read at a glance down a street lined with them.
 export function barrel(variant = 'rust', scale = 1) {
   const rng = nextRng();
-  const base = variant === 'red' ? '#8a3b2e' : variant === 'blue' ? '#3d5161' : '#8a5a34';
+  // 'rust' is a painted drum that has rusted, not a brown one: an all-brown
+  // cylinder with vertical streaks read as a wooden keg.
+  const base = variant === 'red' ? '#8a3b2e' : variant === 'blue' ? '#3d5161' : '#4f5545';
   // Dents, as bites out of one side. Kept off the very top and bottom so the
   // lid ellipse and the ground contact still read as a drum standing upright.
   const dents = [];
@@ -146,22 +148,33 @@ export function barrel(variant = 'rust', scale = 1) {
       g.fillText('H2O', 5, 10.6);
     }
     if (variant !== 'blue') {
-      // blotchy oxidation streaks down from each hoop join — rust runs from a
-      // seam outward, it does not spray evenly like generic grime
-      for (const y of [7.6, 13.6]) {
-        for (let i = 0; i < 3; i++) {
-          const sx = rng.range(2, 13);
-          const len = rng.range(4, 9);
-          const gr = g.createLinearGradient(0, y, 0, y + len);
-          gr.addColorStop(0, 'rgba(58,26,10,0.4)');
-          gr.addColorStop(1, 'rgba(58,26,10,0)');
-          g.fillStyle = gr;
-          g.fillRect(sx, y, rng.range(0.8, 1.8), len);
-        }
+      // Rust blooms where the paint is broken — under the hoops, round the
+      // chime at the base, at the lid rim — as patches, not vertical stripes.
+      g.save();
+      g.beginPath(); rr(g, 1, 1, 14, 20, 2); g.clip();
+      const blooms = variant === 'rust' ? 9 : 4;
+      for (let i = 0; i < blooms; i++) {
+        const bx = rng.range(2, 14);
+        const by = [7.4, 13.4, 19.2, 3.2][i % 4] + rng.range(-0.6, 1.4);
+        const r = rng.range(1.2, variant === 'rust' ? 3.4 : 2.2);
+        const gr = g.createRadialGradient(bx, by, 0, bx, by, r);
+        gr.addColorStop(0, 'rgba(132,62,24,0.75)');
+        gr.addColorStop(0.6, 'rgba(104,48,20,0.45)');
+        gr.addColorStop(1, 'rgba(90,40,16,0)');
+        g.fillStyle = gr;
+        g.beginPath(); g.ellipse(bx, by, r * 1.3, r * 0.8, 0, 0, Math.PI * 2); g.fill();
       }
+      // a few short drips below the worst patches
+      for (let i = 0; i < 3; i++) {
+        const sx = rng.range(2.5, 13.5), sy = [7.6, 13.6][i % 2];
+        const len = rng.range(1.8, 3.6);
+        const gr = g.createLinearGradient(0, sy, 0, sy + len);
+        gr.addColorStop(0, 'rgba(96,42,16,0.45)'); gr.addColorStop(1, 'rgba(96,42,16,0)');
+        g.fillStyle = gr; g.fillRect(sx, sy, 0.7, len);
+      }
+      g.restore();
     }
-    streaks(g, 1, 2, 14, 18, rng, { n: 5, color: 'rgba(20,14,8,0.28)', wMax: 1.6 });
-    scratches(g, 2, 5, 12, 14, rng, { n: 8, color: 'rgba(255,244,222,0.16)' });
+    scratches(g, 2, 5, 12, 14, rng, { n: 4, len: 2, color: 'rgba(255,244,222,0.12)' });
     grunge(g, 1, 1, 14, 20, rng, { n: 55 });
     // Dents last, cut out of the finished drum so the profile itself is
     // deformed rather than shaded to look that way — and painted back with a
@@ -293,11 +306,21 @@ export function crate(w = 30, h = 25, scale = 1) {
     g.fillRect(capX, 0.5, capW, capH * 0.44);
     // stencil, dark base + lighter overlay so it holds up against light and
     // dark boards alike
-    g.font = 'bold 4.4px monospace';
-    g.fillStyle = 'rgba(20,13,6,0.55)';
-    g.fillText('9-C', w / 2 - 4.6 + stencilDx, h / 2 + 1.7 + stencilDy);
-    g.fillStyle = 'rgba(232,220,195,0.62)';
-    g.fillText('9-C', w / 2 - 4.8 + stencilDx, h / 2 + 1.5 + stencilDy);
+    // Stencil varies per crate: every crate in a stack said "9-C" in the same
+    // spot, which is the stamped-out look the silhouette work was meant to
+    // kill. A few cargo marks, and some crates carry none at all.
+    const marks = ['9-C', 'C-14', 'AMMO', '7.62', 'FRAGILE', 'S9-04', '', 'MED'];
+    const mark = marks[Math.floor(rng.range(0, marks.length))];
+    if (mark) {
+      const fs = mark.length > 4 ? 3.2 : 4.4;
+      g.font = `bold ${fs}px monospace`;
+      const tw = g.measureText(mark).width;
+      const tx = Math.max(2.5, Math.min(w - tw - 2.5, w / 2 - tw / 2 + stencilDx));
+      g.fillStyle = 'rgba(20,13,6,0.55)';
+      g.fillText(mark, tx + 0.2, h / 2 + 1.7 + stencilDy);
+      g.fillStyle = mark === 'MED' ? 'rgba(196,70,58,0.7)' : 'rgba(232,220,195,0.58)';
+      g.fillText(mark, tx, h / 2 + 1.5 + stencilDy);
+    }
     for (const [nx, ny] of [[2.2, 2.2], [w - 2.2, 2.2], [2.2, h - 1.4], [w - 2.2, h - 1.4]]) rivet(g, nx, ny, 0.9);
     grunge(g, 1, 1, w - 2, h - 1, rng, { n: 45 });
     rim(g, 0, 0, w, h, { top: 0.16, bottom: 0.3 });
@@ -449,70 +472,54 @@ export function razorWire(w = 90, scale = 1) {
       g.stroke();
     }
 
-    // the coil itself: overlapping ellipses along the run, so it reads as a
-    // continuous spiral rather than a row of separate rings. Dulled steel,
-    // not bright chrome — a pale, even-alpha stroke reads as a bicycle-chain
-    // decoration rather than a hazard, so this leans darker with a real
-    // shadow/highlight pair per wrap and denser, spikier barb clusters.
-    const loops = Math.max(3, Math.floor(w / 13));
-    for (let i = 0; i < loops; i++) {
-      const cx = 6 + i * ((w - 12) / (loops - 1));
-      const ry = rng.range(8.5, 11.5);
-      const rx = rng.range(7, 9.5);
-      const cy = baseY - 12 + rng.range(-1.5, 1.5);
-      // drop shadow of the wrap onto the wrap behind it
-      g.strokeStyle = 'rgba(4,5,7,0.35)';
-      g.lineWidth = 2.4;
-      g.beginPath();
-      g.ellipse(cx, cy + 1.4, rx, ry, rng.range(-0.25, 0.25), 0, Math.PI * 2);
-      g.stroke();
-      // core strand: dark oxidised steel body
-      g.strokeStyle = 'rgba(58,64,72,0.85)';
-      g.lineWidth = 1.7;
-      g.beginPath();
-      g.ellipse(cx, cy, rx, ry, rng.range(-0.25, 0.25), 0, Math.PI * 2);
-      g.stroke();
-      // narrow specular pass along the top-facing arc only, not the full ring
-      g.strokeStyle = 'rgba(210,218,226,0.6)';
-      g.lineWidth = 0.7;
-      g.beginPath();
-      g.ellipse(cx, cy - 0.6, rx * 0.94, ry * 0.94, 0, Math.PI * 1.15, Math.PI * 1.85);
-      g.stroke();
-      // inner darker pass so the coil has depth
-      g.strokeStyle = 'rgba(20,22,26,0.55)';
-      g.lineWidth = 0.8;
-      g.beginPath();
-      g.ellipse(cx, cy + 1, rx * 0.8, ry * 0.8, 0, 0, Math.PI * 2);
-      g.stroke();
-
-      // barbs: angular 4-point clusters, not thin crosses — the shape that
-      // actually reads as "do not touch" at a glance
-      for (let bAng = 0; bAng < Math.PI * 2; bAng += Math.PI / 3.2) {
-        const bx = cx + Math.cos(bAng) * rx;
-        const by = cy + Math.sin(bAng) * ry;
-        for (const spin of [0, Math.PI / 2]) {
-          g.strokeStyle = 'rgba(8,9,11,0.55)';
-          g.lineWidth = 1.3;
-          g.beginPath();
-          g.moveTo(bx - Math.cos(bAng + spin) * 2.4, by - Math.sin(bAng + spin) * 2.4);
-          g.lineTo(bx + Math.cos(bAng + spin) * 2.4, by + Math.sin(bAng + spin) * 2.4);
-          g.stroke();
-          g.strokeStyle = 'rgba(196,202,212,0.7)';
-          g.lineWidth = 0.6;
-          g.beginPath();
-          g.moveTo(bx - Math.cos(bAng + spin) * 2.2, by - Math.sin(bAng + spin) * 2.2 - 0.3);
-          g.lineTo(bx + Math.cos(bAng + spin) * 2.2, by + Math.sin(bAng + spin) * 2.2 - 0.3);
-          g.stroke();
-        }
-      }
-      // faint rust bleed at a couple of wraps
-      if (rng.chance(0.4)) {
-        g.strokeStyle = 'rgba(120,60,28,0.28)'; g.lineWidth = 1;
+    // The coil: a concertina seen side-on is a helix, so each turn projects to
+    // a narrow upright ellipse, spaced tight enough to overlap its neighbours.
+    // Back halves are drawn first and darker, front halves after and lit, so
+    // the wire wraps round in depth. The old version was six fat rings with
+    // big X-shaped barbs, which read as a stack of tyres.
+    const cy = baseY - 11.5, R = 10.5;
+    const pitch = 3.0;
+    const turns = Math.floor((w - 14) / pitch);
+    const turn = [];
+    for (let i = 0; i <= turns; i++) {
+      turn.push({
+        cx: 7 + i * pitch + rng.range(-0.5, 0.5),
+        cy: cy + rng.range(-0.8, 0.8),
+        ry: R + rng.range(-1.0, 0.8),
+        rx: 3.6 + rng.range(-0.4, 0.6),
+        t: rng.range(-0.12, 0.12),
+      });
+    }
+    const arc = (o, a0, a1) => { g.beginPath(); g.ellipse(o.cx, o.cy, o.rx, o.ry, o.t, a0, a1); g.stroke(); };
+    g.lineCap = 'round';
+    for (const o of turn) {
+      g.strokeStyle = 'rgba(22,25,29,0.85)'; g.lineWidth = 0.75;
+      arc(o, Math.PI * 0.5, Math.PI * 1.5);
+    }
+    for (const o of turn) {
+      g.strokeStyle = 'rgba(4,5,7,0.35)'; g.lineWidth = 1.2;
+      g.beginPath(); g.ellipse(o.cx + 0.3, o.cy + 0.6, o.rx, o.ry, o.t, -Math.PI * 0.5, Math.PI * 0.5); g.stroke();
+      g.strokeStyle = 'rgba(92,99,108,0.95)'; g.lineWidth = 0.75;
+      arc(o, -Math.PI * 0.5, Math.PI * 0.5);
+      g.strokeStyle = 'rgba(214,220,228,0.55)'; g.lineWidth = 0.35;
+      arc(o, -Math.PI * 0.45, -Math.PI * 0.1);
+      // barbs: short blade pairs riding the front strand
+      for (const a of [-1.15, -0.35, 0.45, 1.2]) {
+        const c = Math.cos(o.t), sn = Math.sin(o.t);
+        const ex = Math.cos(a) * o.rx, ey = Math.sin(a) * o.ry;
+        const bx = o.cx + ex * c - ey * sn, by = o.cy + ex * sn + ey * c;
+        g.strokeStyle = 'rgba(178,186,196,0.85)'; g.lineWidth = 0.4;
         g.beginPath();
-        g.ellipse(cx, cy + 2, rx * 0.7, ry * 0.4, 0, 0, Math.PI);
+        g.moveTo(bx - 0.9, by - 0.7); g.lineTo(bx + 0.9, by + 0.7);
+        g.moveTo(bx - 0.9, by + 0.7); g.lineTo(bx + 0.9, by - 0.7);
         g.stroke();
       }
+      if (rng.chance(0.18)) {
+        g.strokeStyle = 'rgba(122,62,30,0.35)'; g.lineWidth = 0.8;
+        arc(o, Math.PI * 0.15, Math.PI * 0.45);
+      }
     }
+    g.lineCap = 'butt';
 
     // taut strand running the length, tying the coils together
     g.strokeStyle = 'rgba(30,33,38,0.6)'; g.lineWidth = 1.1;
@@ -556,11 +563,12 @@ export function fence(w = 70, scale = 1) {
     // sagging top + torn patch
     g.strokeStyle = 'rgba(120,128,138,0.5)'; g.lineWidth = 0.8;
     g.beginPath(); g.moveTo(2, 4.4); g.quadraticCurveTo(w / 2, 6.8, w - 2, 4.6); g.stroke();
-    g.strokeStyle = 'rgba(9,10,12,0.6)';
-    g.beginPath();
-    g.moveTo(w * 0.6, 20);
-    g.quadraticCurveTo(w * 0.66, 27, w * 0.58, 34);
-    g.stroke();
+    // middle post and a bottom tension wire, so a run reads as built, not
+    // a sheet of mesh pinned between two poles
+    g.fillStyle = lingrad(g, w / 2 - 1, 0, w / 2 + 1, 0, [[0, '#4e545c'], [1, '#22252a']]);
+    g.fillRect(w / 2 - 0.9, 3, 1.8, 37);
+    g.strokeStyle = 'rgba(30,33,38,0.7)'; g.lineWidth = 0.5;
+    g.beginPath(); g.moveTo(2, 34); g.lineTo(w - 2, 34.4); g.stroke();
     ao(g, w / 2, 41, w / 2, 2.6, 0.3);
   });
 }
