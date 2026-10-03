@@ -341,12 +341,12 @@ function crow(g) {
     g.fillStyle = lin(g, side * 44, 0, side * 26, 0, side < 0 ? [[0, '#14120f'], [1, '#25221c']] : [[0, '#423c31'], [1, '#2f2b23']]);
     g.beginPath();
     g.moveTo(side * 34, 64);
-    g.quadraticCurveTo(side * 47, 72, side * 44, COUNTER - 6);
-    g.lineTo(side * 30, COUNTER - 6);
+    g.quadraticCurveTo(side * 47, 72, side * 45, COUNTER + 4);
+    g.lineTo(side * 31, COUNTER + 4);
     g.quadraticCurveTo(side * 30, 76, side * 26, 66);
     g.closePath(); g.fill();
     g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.6;
-    g.beginPath(); g.moveTo(side * 27, 67); g.quadraticCurveTo(side * 31, 78, side * 30.5, COUNTER - 6); g.stroke();
+    g.beginPath(); g.moveTo(side * 27, 67); g.quadraticCurveTo(side * 31, 78, side * 31, COUNTER + 4); g.stroke();
     g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 0.4;
     g.beginPath(); g.moveTo(side * 40, 74); g.quadraticCurveTo(side * 37, 80, side * 39, 86); g.stroke();
   }
@@ -699,7 +699,6 @@ export function paintTraderScene(g, w, h) {
 
   counter(g, halfW);
   counterGoods(g);
-  gloves(g);
   smoke(g);
   pendant(g, 34, 22);
 
