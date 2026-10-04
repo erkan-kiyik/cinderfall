@@ -11,7 +11,7 @@ listings. All fields respect each store's current length limits.
 - **App Store – Subtitle** (max 30 chars): `2D Tactical Stealth Shooter`
 
 ## Short description (Google Play, max 80 chars)
-`Hand-painted 2D tactical shooter — cover, stealth takedowns, endless combat.`
+`Stealth, cover and loot crates in a 2D tactical shooter set in a burning city.`
 
 ## Promo text (App Store, max 170 chars — updatable without review)
 `New: adaptive graphics (Low→Ultra), gamepad support, silent takedowns, and an endless procedurally-generated campaign. Drop in and hold the line.`
@@ -28,47 +28,47 @@ listings. All fields respect each store's current length limits.
 
 ## Full description (Google Play max 4000 chars / App Store max 4000 chars)
 
-**CINDERFALL — one operator, one dark sector, no backup.**
+Copy-ready English and Turkish texts live in `store/play/` (`full-en.txt`, `full-tr.txt`, `short-en.txt`, `short-tr.txt`).
 
-Comms went dark over Sector 9 the moment the power plant did. An unmarked force
-has dug into the foundries and isn't answering hails. You go in first — and you
-go in alone.
+CINDERFALL: SECTOR 9 — one operator, one burning sector, no backup.
 
-CINDERFALL is a hand-painted 2D tactical shooter built for touch. Every frame —
-every operator, weapon, muzzle flash and cinder drifting over the skyline — is
-drawn procedurally, so it stays razor-sharp on any screen.
+Comms went dark over Sector 9 the moment the power plant did. An unmarked force has dug into the foundries and isn't answering hails. You go in first, and you go in alone.
 
-**■ TACTICAL COMBAT**
-Read the threat meter. Use cover. Pick your shots. Enemies patrol, investigate
-sounds, hunt your last known position, take cover and coordinate — pushing
-sloppy players and rewarding patient ones.
+CINDERFALL is a stylized 2D tactical shooter built for touch. Every operator, weapon, muzzle flash and drifting cinder is drawn in code, so it stays sharp on any screen and runs light on cheap phones.
 
-**■ STRIKE FROM THE SHADOWS**
-Slip behind an unaware hostile for a silent knife takedown. Stay unseen and the
-rest of the squad is none the wiser — get spotted and the whole sector lights up.
+■ TACTICAL COMBAT
+Read the threat meter, use cover and pick your shots. Enemies patrol, investigate noise, hunt your last known position and take cover, so sloppy play gets punished and patience pays off.
 
-**■ AN ENDLESS CAMPAIGN**
-Clear a stage and the next is generated fresh — new layouts, new cover, new
-firefights, every single run. Your level, loadout and progress carry over.
+■ STRIKE FROM THE SHADOWS
+Slip behind an unaware hostile for a silent knife takedown. Stay unseen and the rest of the squad is none the wiser. Get spotted and the whole sector lights up.
 
-**■ BUILD YOUR OPERATOR**
-Earn currency in combat and crack open supply crates for weapon finishes and
-operator skins. Kit out your rifle, sidearm, blade and more in the loadout bay.
+■ AN ENDLESS CAMPAIGN
+Clear a stage and the next one is generated fresh: new layouts, new cover, new firefights every run. Your level and loadout carry over.
 
-**■ BUILT FOR MOBILE**
-- Responsive twin-stick touch controls with jump, reload, crouch, sprint,
-  weapon-swap, silent-takedown and pause buttons.
-- External game-controller support.
-- Adaptive graphics with Low / Medium / High / Ultra presets and automatic
-  tuning, for smooth play from budget phones to flagships.
-- Safe-area aware UI for notches and rounded corners.
-- Plays fully offline. No account needed. Optional rewarded ads, shown only
-  when you choose to watch one and only with your consent where the law requires it.
+■ A BIG ARSENAL
+Rifles, pistols, SMGs, snipers, a rocket launcher, a minigun, a flamethrower, a railgun, energy weapons and a blade. Each one handles differently, with its own recoil, reload and sound.
+
+■ SUPPLY CRATES AND SKINS
+Strip scrap from fallen hostiles and crack open supply crates for weapon skins and operator looks. Rarities run from common to legendary, and duplicates pay scrap back.
+
+■ CROW, THE SCRAP TRADER
+Prefer to choose? Visit CROW's stall. His stock changes every day, with marked-down pieces if you catch them in time. Everything is paid for in scrap you earn in play.
+
+■ LIVELY, TACTILE MENUS
+Springy buttons, sliding tabs, cards that tilt under your thumb and optional vibration on every press. Turn vibration off in Settings if you prefer.
+
+■ BUILT FOR MOBILE
+• Twin-stick touch controls with jump, reload, crouch, sprint, weapon swap, silent takedown and pause
+• Game controller support
+• Low / Medium / High / Ultra graphics with automatic tuning for smooth play on budget phones and flagships
+• Safe-area aware UI for notches and rounded corners
+• Plays fully offline, no account needed
+• Optional rewarded ads you choose to watch, shown only with your consent where the law requires it
+• Privacy notice and terms for your country shown on first launch, with consent choices you can change any time in Settings
 
 Hold the line. Take the sector back.
 
-*CINDERFALL is a work of fiction. All characters, factions and locations are
-fictional.*
+CINDERFALL is a work of fiction. All characters, factions and locations are fictional.
 
 ---
 
