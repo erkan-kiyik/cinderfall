@@ -49,14 +49,17 @@ function pick(L, table, id, ctx, fallbackId) {
 }
 
 // kind: 'privacy' | 'terms' | 'consent'
-export function buildDoc(kind, lang, country) {
+// `opts.countryLabel` replaces the country name in running text; the public
+// web page uses it for its country-less default reading ("all countries and
+// regions") instead of printing a placeholder code.
+export function buildDoc(kind, lang, country, opts = {}) {
   const L = textsFor(lang);
   const P = profileOf(country);
   const ctx = {
     C: CONTROLLER,
     P,
     date: formatDate(LEGAL_VERSION, lang),
-    countryName: countryName(country, lang) || '—',
+    countryName: opts.countryLabel || countryName(country, lang) || '—',
     rights: (c) => pick(L, 'rights', P.id, c, 'other'),
     termsLocal: (c) => pick(L, 'termsLocal', P.id, c, 'other'),
   };

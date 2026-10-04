@@ -1,0 +1,49 @@
+# Publishes the privacy notice and terms as an ordinary public web page
+# (https://<user>.github.io/<repo>/privacy/) — the URL Google Play asks for in
+# the store listing. The page text is generated from the same legal modules the
+# game uses, so editing public/game/js/legal/** and pushing is the whole update.
+#
+# One-time setup, done by the repo owner in the GitHub UI:
+#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
+# Until that is switched on, this workflow's configure-pages step fails; once
+# it is on, run the workflow again (Actions -> Deploy legal pages -> Run).
+
+name: Deploy legal pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/game/js/legal/**'
+      - 'scripts/build-legal-site.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build legal site
+        run: node --experimental-default-type=module scripts/build-legal-site.mjs
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

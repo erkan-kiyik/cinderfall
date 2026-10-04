@@ -191,3 +191,18 @@ Sources to regenerate from: `public/game/assets/icon.svg` (icon),
 
 *CINDERFALL is a work of fiction. All characters, factions and locations are
 fictional. The app collects no personal data — see the in-app Privacy Policy.*
+
+## Privacy policy URL (Play Console)
+
+Play requires a public https privacy-policy URL. `.github/workflows/pages.yml`
+builds one from the in-game legal texts (`scripts/build-legal-site.mjs`) and
+publishes it to GitHub Pages:
+
+- one-time: repo **Settings -> Pages -> Source: GitHub Actions**, then run the
+  *Deploy legal pages* workflow
+- privacy policy URL: `https://<user>.github.io/<repo>/privacy/`
+- terms: `https://<user>.github.io/<repo>/terms/`
+
+The page already contains the full English text without scripts, and upgrades
+itself to the visitor's country and language when scripts run. Editing
+`public/game/js/legal/**` and pushing redeploys it.
