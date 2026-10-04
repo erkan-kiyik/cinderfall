@@ -204,8 +204,11 @@ function paintRifleBody(variant, finish) {
     g.closePath(); g.fill();
 
     // -- barrel + gas block + muzzle brake (26..40)
+    // Starts 2 units back inside the handguard and runs 1 unit into the brake:
+    // butted end to end at 26.5 and 35, the barrel was held on by a hairline
+    // at both ends.
     g.fillStyle = metal(g, -6.6, -4, shade(rec, -0.08));
-    g.fillRect(26.5, -6.4, 8.5, 2.3);
+    g.fillRect(24.5, -6.4, 11.6, 2.3);
     g.fillStyle = metal(g, -8.4, -4.4, rec);
     rr(g, 27.5, -8.6, 2.6, 3, 0.5); g.fill();  // gas block
     // muzzle brake with side ports
@@ -358,8 +361,11 @@ function paintPistolBody(finish) {
     // leaving the front of the slide hanging over open air. The frame now
     // carries it almost to the bushing, stepping down where the guard ends.
     g.beginPath();
-    g.moveTo(-4.4, -2.8);          // tang under the slide's rear overhang
-    g.lineTo(10.6, -2.8);
+    // Top edge raised to -3.6, under the slide (which draws over it). The two
+    // used to meet edge to edge at -2.9/-2.8 — slide and frame read as two
+    // pieces with a crack of light between them.
+    g.moveTo(-4.4, -3.6);          // tang under the slide's rear overhang
+    g.lineTo(10.6, -3.6);
     g.lineTo(10.6, -1.5);
     g.lineTo(8.8, -0.9);
     g.lineTo(6.4, -0.2);
@@ -463,11 +469,11 @@ function paintKnife(finish) {
       [0, '#3f4238'], [0.5, '#31342b'], [1, '#20221c'],
     ]);
     g.beginPath();
-    g.moveTo(-0.8, -2.2);
+    g.moveTo(0.2, -2.2);           // runs into the guard (was -0.8: a gap)
     g.lineTo(-4.6, -1.9);
     g.quadraticCurveTo(-6.2, -1.6, -5.8, 0.2);
     g.quadraticCurveTo(-5.6, 2.2, -3.8, 2.2);   // pommel curve
-    g.lineTo(-0.4, 2.4);
+    g.lineTo(0.2, 2.4);
     g.closePath(); g.fill();
     // scale texture + lanyard hole
     g.strokeStyle = 'rgba(0,0,0,0.4)'; g.lineWidth = 0.4;
@@ -502,12 +508,12 @@ function paintKnife(finish) {
     // that stabs. The spine now runs flat, breaks at the clip and comes to an
     // actual point.
     g.beginPath();
-    g.moveTo(0.7, -2.6);
+    g.moveTo(-0.2, -2.6);                       // tang seated in the guard
     g.lineTo(11.4, -2.9);                       // spine
     g.lineTo(14.2, -2.05);                      // clip break
     g.lineTo(16.4, -0.55);                      // point
     g.quadraticCurveTo(11.5, 1.6, 7, 1.9);      // edge belly
-    g.quadraticCurveTo(3, 2.2, 0.7, 1.9);
+    g.quadraticCurveTo(3, 2.2, -0.2, 1.9);
     g.closePath(); g.fill();
     g.shadowBlur = 0;
     // false edge along the clip
@@ -633,12 +639,18 @@ function paintLaserSmg(finish) {
     // pistol grip (hand anchors at 0,0 — same as the P-12 so the IK holds)
     g.fillStyle = polymer(g, -0.6, 7, poly);
     g.beginPath();
-    g.moveTo(-0.8, -1.4); g.quadraticCurveTo(-2.2, 2.6, -3.6, 5.6);
+    // Top starts 2 units up inside the housing (it met the housing's belly on
+    // a 0.2-unit sliver), and the guard's front end runs up into the housing
+    // instead of stopping short of it.
+    g.moveTo(-0.6, -3.4); g.lineTo(-0.8, -1.4); g.quadraticCurveTo(-2.2, 2.6, -3.6, 5.6);
     g.quadraticCurveTo(-3.8, 6.9, -2, 6.9);
-    g.quadraticCurveTo(-0.2, 6.7, 0.4, 4.2); g.lineTo(1.4, -1);
+    g.quadraticCurveTo(-0.2, 6.7, 0.4, 4.2); g.lineTo(1.4, -1); g.lineTo(1.6, -3.4);
     g.closePath(); g.fill();
-    g.strokeStyle = shade(rec, -0.15); g.lineWidth = 0.9;
-    g.beginPath(); g.moveTo(1.2, -0.4); g.quadraticCurveTo(3.4, 2.4, 5.6, 0); g.stroke();
+    g.save();
+    g.globalCompositeOperation = 'destination-over';
+    g.strokeStyle = shade(rec, -0.15); g.lineWidth = 1.1; g.lineJoin = 'round';
+    g.beginPath(); g.moveTo(1.2, -0.4); g.quadraticCurveTo(3.4, 2.6, 5.6, 0); g.lineTo(5.8, -2.6); g.stroke();
+    g.restore();
 
     // vertical foregrip — nothing else in the size class has one
     g.fillStyle = polymer(g, 9, 6, shade(poly, 0.06));
@@ -847,13 +859,19 @@ function paintKnifeBowie(finish) {
 // Shared: pistol grip + trigger guard at the origin. Every one of these is
 // held the same way, so the grip is drawn once.
 function energyGrip(g, poly, rec) {
+  // The grip starts 2.4 units up inside the receiver it hangs from. It used to
+  // start at y=-1 under receivers whose belly sits at -1.4, so the two met on
+  // a 0.4-unit sliver — at game scale a hairline of daylight between grip and
+  // gun.
   g.fillStyle = polymer(g, -1, 8, poly);
   g.beginPath();
-  g.moveTo(-1.2, -1);
+  g.moveTo(-0.9, -3.4);
+  g.lineTo(-1.2, -1);
   g.quadraticCurveTo(-2.8, 3.4, -4.4, 6.6);
   g.quadraticCurveTo(-4.6, 8, -2.6, 8);
   g.quadraticCurveTo(-0.4, 7.8, 0.4, 5);
   g.lineTo(1.6, -0.6);
+  g.lineTo(1.9, -3.4);
   g.closePath(); g.fill();
   g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.4;
   for (let i = 0; i < 3; i++) {
@@ -862,8 +880,15 @@ function energyGrip(g, poly, rec) {
     g.lineTo(0.2 - i * 0.7, 2 + i * 1.6);
     g.stroke();
   }
-  g.strokeStyle = shade(rec, -0.15); g.lineWidth = 1;
-  g.beginPath(); g.moveTo(1.6, 0); g.quadraticCurveTo(4.6, 3.6, 7.4, 0.4); g.stroke();
+  // Trigger guard. Its front end used to stop at y=0.4, a unit short of the
+  // receiver above it — a hook hanging in mid-air. Both ends now run up into
+  // the receiver, painted behind what is already there.
+  g.save();
+  g.globalCompositeOperation = 'destination-over';
+  g.strokeStyle = shade(rec, -0.15); g.lineWidth = 1.2; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(1.4, -2.8); g.lineTo(1.6, 0);
+  g.quadraticCurveTo(4.6, 3.8, 7.4, 0.4); g.lineTo(7.6, -2.8); g.stroke();
+  g.restore();
   g.strokeStyle = '#1a1b1e'; g.lineWidth = 1.1;
   g.beginPath(); g.moveTo(3.8, 0.2); g.quadraticCurveTo(3.4, 1.8, 4.4, 2.6); g.stroke();
 }
@@ -906,10 +931,10 @@ function paintParticleThrower(finish) {
     // main spine housing (grip mounts to this)
     g.fillStyle = metal(g, -6, 3, rec);
     g.beginPath();
-    g.moveTo(-7.4, -7);
-    g.lineTo(9.5, -7);
-    g.lineTo(9.5, -0.6);
-    g.lineTo(-7.4, -0.6);
+    g.moveTo(-9.4, -7);            // 2 units into the energy cell
+    g.lineTo(11.0, -7);
+    g.lineTo(11.0, -0.6);
+    g.lineTo(-9.4, -0.6);
     g.closePath(); g.fill();
     energyGrip(g, poly, rec);
 
@@ -923,9 +948,14 @@ function paintParticleThrower(finish) {
 
     // open accelerator cage: two rails with coil rings threaded along them,
     // deliberately skeletal so the silhouette is unmistakable
+    // Rails start 2 units back over the spine, and a solid back plate ties
+    // both rails into it: butted at x=9.5 the whole cage hung off the spine
+    // by a hairline at each rail.
     g.fillStyle = metal(g, -10.4, -8.6, shade(rec, 0.14));
-    g.fillRect(9.5, -10.2, 22, 1.8);
-    g.fillRect(9.5, 0.4, 22, 1.8);
+    g.fillRect(7.5, -10.2, 25, 1.8);
+    g.fillRect(7.5, 0.4, 25, 1.8);
+    g.fillStyle = metal(g, -10.4, 2.2, shade(rec, 0.02));
+    rr(g, 8.6, -10.2, 2.8, 12.4, 0.6); g.fill();
     for (let i = 0; i < 5; i++) {
       coilRing(g, 12.5 + i * 4.6, -10.4, 2.4, core, 2.6);
     }
@@ -1303,6 +1333,13 @@ function chassisBarrel(g, kind, rec, core) {
     g.fillStyle = shade(rec, -0.3);
     for (const sx of [26.5, 35.5]) g.fillRect(sx, -8.6, 1.6, 6.4);
     emissive(20.6, -8.2, 25, 5.8, 0.16);
+    // Mounting collar, 3 units back over the receiver and 1.8 into the rails.
+    // The rails used to start exactly where the receiver ended, so the whole
+    // cage hung off the gun by two hairlines.
+    g.fillStyle = metal(g, -10.6, 0, shade(rec, -0.08));
+    rr(g, 17, -10.6, 4.8, 10.6, 0.9); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.3)';
+    g.fillRect(19.2, -10.0, 0.6, 9.4);
     // muzzle bridge closing the rails
     g.fillStyle = metal(g, -10.6, 0, shade(rec, 0.04));
     rr(g, 43.4, -10.6, 2.8, 10.6, 0.8); g.fill();

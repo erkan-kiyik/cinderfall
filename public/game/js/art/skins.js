@@ -270,6 +270,12 @@ function muzzleDevice(g, kind, mount, palette, glow) {
   g.save();
   g.translate(x, y);
   g.scale(s, s);
+  // Coupling sleeve, 3.4 units back over the barrel. Every device used to
+  // start exactly at the muzzle point, which sits at (or just past) the
+  // barrel's end — so brakes, cans and coil stacks hung in front of the gun
+  // with a crack of daylight behind them.
+  g.fillStyle = lingrad(g, 0, -2.2, 0, 2.2, [[0, shade(met, 0.18)], [1, shade(met, -0.38)]]);
+  rr(g, -3.4, -2.0, 4.6, 4.0, 0.8); g.fill();
 
   if (kind === 'brake') {
     // ported compensator: blocky, three top vents
@@ -295,6 +301,10 @@ function muzzleDevice(g, kind, mount, palette, glow) {
     const c = (glow && glow.color) || '#3fd2ff';
     g.fillStyle = lingrad(g, 0, -4.6, 0, 4.6, [[0, shade(met, 0.24)], [1, shade(met, -0.42)]]);
     rr(g, 0, -3, 6, 6, 1); g.fill();
+    // solid core rod the coils are threaded on — the rings used to be joined
+    // only by a translucent light channel, i.e. not at all
+    g.fillStyle = shade(met, -0.3);
+    rr(g, 4, -1.6, 15.6, 3.2, 0.8); g.fill();
     for (let i = 0; i < 4; i++) {
       const cx = 6 + i * 3.4;
       g.fillStyle = shade(met, i % 2 ? -0.2 : 0.14);
@@ -345,6 +355,11 @@ function muzzleDevice(g, kind, mount, palette, glow) {
     // cross-brace at the root, so the prongs come out of something
     g.fillStyle = shade(met, -0.2);
     rr(g, 0, -4.4, 2.2, 8.8, 0.7); g.fill();
+    // Solid emitter rod out of the brace. The filament used to be light only,
+    // so where the tip bloom stacked on it the glow read as a solid sliver
+    // floating between the prongs.
+    g.fillStyle = shade(met, -0.32);
+    rr(g, 1, -0.8, 9, 1.6, 0.6); g.fill();
     g.save(); g.globalCompositeOperation = 'lighter';
     g.fillStyle = withA(c, 0.55);
     g.fillRect(1.8, -0.5, 8.2, 1.0);
@@ -362,6 +377,11 @@ function railDevice(g, kind, mount, palette, glow) {
   g.save();
   g.translate(x, y);
   g.scale(s, s);
+
+  // Mounting foot sunk 2 units into the deck, so no optic can sit on the gun
+  // by a hairline (the reaper/quantum sights did).
+  g.fillStyle = shade(met, -0.34);
+  rr(g, 1.5, -0.4, 8.5, 2.6, 0.5); g.fill();
 
   if (kind === 'holo') {
     // holographic sight: open frame with an emissive projected reticle
@@ -392,7 +412,7 @@ function railDevice(g, kind, mount, palette, glow) {
     // compact designator with a visible emitter
     const c = (glow && glow.color) || '#ff4d6d';
     g.fillStyle = lingrad(g, 0, -4, 0, 0, [[0, shade(met, 0.14)], [1, shade(met, -0.34)]]);
-    rr(g, 2, -4, 7.5, 4.4, 0.8); g.fill();
+    rr(g, 2, -4, 7.5, 5.0, 0.8); g.fill();
     g.save(); g.globalCompositeOperation = 'lighter';
     g.fillStyle = withA(c, 0.9);
     g.beginPath(); g.arc(9.4, -1.9, 0.85, 0, Math.PI * 2); g.fill();
