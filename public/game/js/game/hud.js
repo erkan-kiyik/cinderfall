@@ -452,9 +452,12 @@ export class Hud {
       }
     }
     this._hp = hpFrac;
-    this.el.hpFill.style.width = `${hpFrac * 100}%`;
-    this.el.hpFill.classList.toggle('low', hpFrac < 0.35);
-    this.el.stFill.style.width = `${player.stamina}%`;
+    const hpW = Math.round(hpFrac * 1000) / 10;
+    if (hpW !== this._hpW) { this._hpW = hpW; this.el.hpFill.style.width = `${hpW}%`; }
+    const low = hpFrac < 0.35;
+    if (low !== this._hpLow) { this._hpLow = low; this.el.hpFill.classList.toggle('low', low); }
+    const stW = Math.round(player.stamina);
+    if (stW !== this._stW) { this._stW = stW; this.el.stFill.style.width = `${stW}%`; }
 
     const hasArmor = player.maxArmor > 0;
     this.el.armorRow.classList.toggle('hidden', !hasArmor);
@@ -463,7 +466,8 @@ export class Hud {
       if (this._armor != null && af < this._armor - 0.004) flash(this.el.armorFill, { from: 'brightness(2.6)' });
       else if (this._armor != null && af > this._armor + 0.004) flash(this.el.armorFill, { from: 'brightness(1.8)', ms: 380 });
       this._armor = af;
-      this.el.armorFill.style.width = `${af * 100}%`;
+      const aw = Math.round(af * 1000) / 10;
+      if (aw !== this._armorW) { this._armorW = aw; this.el.armorFill.style.width = `${aw}%`; }
     }
 
     const cur = player.cur;
@@ -508,7 +512,10 @@ export class Hud {
       'hidden',
       !(player.reload || (isGun && cur.mag === 0 && cur.reserve > 0))
     );
-    this.el.reloadHint.textContent = t(player.reload ? 'hud.reloading' : 'hud.reloadHint');
+    // textContent replaces the text node even when the string is the same,
+    // which re-lays-out the panel; this ran every frame. Write on change only.
+    const rh = player.reload ? 'hud.reloading' : 'hud.reloadHint';
+    if (rh !== this._rhKey) { this._rhKey = rh; this.el.reloadHint.textContent = t(rh); }
     // reload progress: a thin bar under the counter and a ring on the button
     const rl = player.reload;
     if (this.el.reloadBar) {
@@ -527,13 +534,16 @@ export class Hud {
 
     // persistent low-hp vignette
     if (player.hurtT <= 0) {
-      this.el.damage.style.opacity = String((1 - hpFrac) * 0.45);
+      const op = ((1 - hpFrac) * 0.45).toFixed(3);
+      if (op !== this._dmgOp) { this._dmgOp = op; this.el.damage.style.opacity = op; }
     }
   }
 
   setObjective(done, total) {
     const txt = `${done} / ${total}`;
-    if (this.el.objCount.textContent !== txt) kick(this.el.objCount, { scale: 1.3, ms: 380 });
+    if (txt === this._objTxt) return;
+    if (this._objTxt != null) kick(this.el.objCount, { scale: 1.3, ms: 380 });
+    this._objTxt = txt;
     this.el.objCount.textContent = txt;
   }
 
@@ -548,7 +558,8 @@ export class Hud {
   // Detection meter: 5-state colour ramp with a distinct pulse on every
   // state change so escalation/de-escalation is always noticed.
   setDetection(state, value) {
-    this.el.detFill.style.width = `${Math.round(value * 100)}%`;
+    const dv = Math.round(value * 100);
+    if (dv !== this._detV) { this._detV = dv; this.el.detFill.style.width = `${dv}%`; }
     if (state !== this._lastDetState) {
       this._lastDetState = state;
       this.el.detLabel.textContent = t(DET_KEY[state] || 'det.hidden');
@@ -609,9 +620,10 @@ export class Hud {
       sparks(this.el.lvlLabel, { count: 10, color: '#e5bd57', spread: 60, size: 5 });
       haptic('success');
     }
+    if (level !== this._lvl) this.el.lvlLabel.textContent = `LVL ${level}`;
     this._lvl = level;
-    this.el.lvlLabel.textContent = `LVL ${level}`;
-    this.el.xpFill.style.width = `${Math.round(xpFrac * 100)}%`;
+    const xp = Math.round(xpFrac * 100);
+    if (xp !== this._xp) { this._xp = xp; this.el.xpFill.style.width = `${xp}%`; }
   }
 
   setScrap(n) {
@@ -675,9 +687,11 @@ export class Hud {
     const now = performance.now();
     if (now - this._buzzAt > 260) { this._buzzAt = now; haptic('warn'); }
     this.el.damage.style.opacity = String(0.55 + (1 - hpFrac) * 0.3);
+    this._dmgOp = null;   // the per-frame writer must not skip its next value
     clearTimeout(this._dmgT);
     this._dmgT = setTimeout(() => {
       this.el.damage.style.opacity = String((1 - hpFrac) * 0.45);
+      this._dmgOp = null;
     }, 140);
   }
 

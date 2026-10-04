@@ -998,11 +998,16 @@ export class World {
       const seed = (cam.x * 0.3) % 4000;
       const drops = heavy ? 190 : 90;
       const speed = heavy ? 1500 : 900;
+      // One path, one stroke: every drop is the same colour and width, so 90
+      // to 190 separate stroke calls a frame collapse into a single one.
+      const dx = heavy ? 10 : 6, dy = heavy ? 30 : 22;
+      g.beginPath();
       for (let i = 0; i < drops; i++) {
         const rx = ((i * 137 + seed * 0.4) % (vw + 200)) - 100;
         const ry = ((i * 71 + time * speed) % (vh + 100)) - 50;
-        g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx - (heavy ? 10 : 6), ry + (heavy ? 30 : 22)); g.stroke();
+        g.moveTo(rx, ry); g.lineTo(rx - dx, ry + dy);
       }
+      g.stroke();
       if (heavy) {
         // lightning: a short bright frame on a slow, seeded cadence
         const flash = Math.sin(time * 0.7) > 0.985 ? 1 : 0;

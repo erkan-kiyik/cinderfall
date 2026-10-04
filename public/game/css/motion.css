@@ -131,12 +131,13 @@
 /* Crate buttons */
 #btn-open-crate, #btn-watch-ad { position: relative; overflow: hidden; }
 #btn-watch-ad::before {
-  content: ''; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; pointer-events: none;
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 30%; pointer-events: none;
   background: linear-gradient(100deg, transparent, rgba(255,255,255,0.14), transparent);
-  transform: skewX(-18deg); animation: mo-shimmer 4.5s ease-in-out infinite;
+  transform: translateX(-140%) skewX(-18deg); animation: mo-shimmer 4.5s ease-in-out infinite;
 }
 #btn-watch-ad:disabled::before { animation: none; }
-@keyframes mo-shimmer { 0%, 70% { left: -40%; } 100% { left: 130%; } }
+/* transform, not `left`: animating `left` re-lays-out the button every frame */
+@keyframes mo-shimmer { 0%, 70% { transform: translateX(-140%) skewX(-18deg); } 100% { transform: translateX(440%) skewX(-18deg); } }
 
 /* Reel: the marker nods on every cell it passes, the winner springs up. */
 .reel-marker.tick { animation: reel-tick 0.14s ease-out; }
@@ -200,11 +201,11 @@
 /* room above the row so a lifted / scaled card is not clipped by it */
 #tab-loadout .item-row { padding-top: 8px; margin-top: -8px; }
 #tab-loadout .item-card.equipped::before {
-  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; z-index: 1; pointer-events: none;
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; z-index: 1; pointer-events: none;
   background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--rarity, #fff) 28%, transparent), transparent);
-  transform: skewX(-18deg); animation: mo-sweep 5s ease-in-out infinite;
+  transform: translateX(-160%) skewX(-18deg); animation: mo-sweep 5s ease-in-out infinite;
 }
-@keyframes mo-sweep { 0%, 55% { left: -60%; } 100% { left: 140%; } }
+@keyframes mo-sweep { 0%, 55% { transform: translateX(-160%) skewX(-18deg); } 100% { transform: translateX(360%) skewX(-18deg); } }
 #tab-loadout .item-card.equipped { box-shadow: 0 0 0 1px var(--rarity, var(--accent-line)), 0 0 18px -6px var(--rarity-glow, rgba(214,69,58,0.45)); }
 .loadout-slot-equipped { display: inline-block; }
 .item-card .item-info { transition: opacity var(--dur-1) var(--ease); }
@@ -346,3 +347,14 @@
   .mo-tilt, .mo-tilt.tilting { transform: none; transition: none; }
   #tab-loadout .item-card.equipped::before { animation: none; opacity: 0; }
 }
+
+/* =========================================================================
+   PERFORMANCE
+   ========================================================================= */
+/* No frosted glass anywhere (device.js always sets .no-backdrop-filter): over
+   a canvas that redraws every frame, each blurred panel is an extra blur pass
+   per frame on the GPU. Some panels' fallbacks only swapped the background and
+   left the filter on, so this clears it for all of them. */
+html.no-backdrop-filter * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* the in-game panels stay see-through enough to read the fight behind them */
+html.no-backdrop-filter #hud .glass { background: rgba(10, 13, 18, 0.72) !important; }

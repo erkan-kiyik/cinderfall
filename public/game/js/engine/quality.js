@@ -42,17 +42,33 @@ const KEY = 'cinderfall.quality.v1';
 // Medium no longer runs the rich grade: its overlay and soft-light passes are
 // the two most expensive blend modes a mobile GPU services, for a tint the
 // cheap path reproduces closely.
+// `bgScale` is the resolution of the parallax backdrop (sky, clouds, the
+// apartment block, haze, rain, the fog and time-of-day washes) relative to the
+// scene. That stack is seven full-screen passes and measured as the single
+// largest cost in the frame; it is distant, fogged and soft by design, so it
+// is drawn into its own smaller canvas and stretched back in one blit.
+//
+// High no longer runs the rich grade or film grain: the overlay / soft-light
+// passes and the tiled overlay grain measured as High's largest cost, and the
+// baked single-pass grade is within a hair of the same tint. Ultra keeps both.
+// `foreground` (the near-plane parallax strip) is its own flag now rather than
+// riding on richGrade, so High keeps it.
+//
+// Every tier targets 60fps now (Low used to cap at 30). Holding it is the job
+// of the dynamic resolution in main.js: when frames run long the scene
+// resolution steps down in small increments, and climbs back when there is
+// headroom, before the runtime ever drops a whole tier.
 export const PRESETS = {
-  low:    { name: 'LOW',    dprCap: 1,   assetScale: 2,   particleMax: 900,  bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.4,  accentPx: 0,   lightScale: 0.5,  richGrade: false, renderScale: 0.7,  fpsCap: 30 },
-  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1600, bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.7,  accentPx: 1.2, lightScale: 0.6,  richGrade: false, renderScale: 0.8,  fpsCap: 60 },
-  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: true,  ambientMul: 1,    accentPx: 1.4, lightScale: 1,    richGrade: true,  renderScale: 1,    fpsCap: 60 },
-  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, accentPx: 1.4, lightScale: 1,    richGrade: true,  renderScale: 1,    fpsCap: 60 },
+  low:    { name: 'LOW',    dprCap: 1,   assetScale: 2,   particleMax: 700,  bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.4,  accentPx: 0,   lightScale: 0.4,  richGrade: false, renderScale: 0.7,  bgScale: 0.5,  fpsCap: 60 },
+  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1200, bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.6,  accentPx: 1.2, lightScale: 0.5,  richGrade: false, renderScale: 0.72, bgScale: 0.6,  fpsCap: 60 },
+  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: false, ambientMul: 1,    accentPx: 1.4, lightScale: 0.75, richGrade: false, foreground: true, renderScale: 1,    bgScale: 0.75, fpsCap: 60 },
+  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, accentPx: 1.4, lightScale: 1,    richGrade: true,  foreground: true, renderScale: 1,    bgScale: 1,    fpsCap: 60 },
 };
 const ORDER = ['low', 'medium', 'high', 'ultra'];
 // How many times the runtime may step the preset down on its own. Two is
 // enough to walk High -> Low, and bounded so a device having one bad minute
 // cannot end up permanently on the lowest tier over many sessions.
-const MAX_AUTO_LOWER = 2;
+const MAX_AUTO_LOWER = 3;
 
 // Auto-pick. Desktop (no touch) starts at High — the game's original baseline,
 // and a desktop GPU is not the constraint here.
@@ -74,11 +90,12 @@ function detectDefaultTier() {
   const touch = (typeof window !== 'undefined') &&
     (('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0);
   if (!touch) return 'high';
-  const cores = navigator.hardwareConcurrency || 4;
-  const mem = navigator.deviceMemory;   // Chrome/Android only; undefined elsewhere
-  const shortEdge = Math.min(window.screen.width, window.screen.height);
-  const strong = cores >= 8 && (mem === undefined || mem >= 6) && shortEdge >= 500;
-  return strong ? 'high' : 'medium';
+  // Every phone starts on Medium. The "strong device" probe (8 cores, 6GB,
+  // big screen) matched most mid-range Android phones, whose GPUs cannot
+  // carry High's full-resolution bloom and grain — they started on High,
+  // stuttered, and waited for the runtime step-down to rescue them. High is
+  // one tap away in Settings for the phones that can hold it.
+  return 'medium';
 }
 
 function load() {
@@ -100,6 +117,19 @@ class Quality {
   get preset() { return PRESETS[this.data.tier]; }
   get pinned() { return this.data.pinned; }
 
+  // Dynamic-resolution multiplier (see main.js). Remembered per device so a
+  // phone that settled at 0.7 last session starts there instead of spending
+  // its first seconds stuttering its way back down.
+  get dyn() {
+    const v = this.data.dyn;
+    return typeof v === 'number' && v >= 0.5 && v <= 1 ? v : 1;
+  }
+  setDyn(v) {
+    this.data.dyn = Math.round(v * 1000) / 1000;
+    clearTimeout(this._dynSave);
+    this._dynSave = setTimeout(() => this.save(), 1500);   // debounced: steps come in runs
+  }
+
   save() {
     try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { /* ignore */ }
   }
@@ -110,6 +140,7 @@ class Quality {
     if (!PRESETS[tier]) return;
     this.data.tier = tier;
     this.data.pinned = true;
+    this.data.dyn = 1;        // a new tier is judged afresh
     this.save();
   }
 
@@ -135,6 +166,7 @@ class Quality {
     if (i <= 0) { this.data.autoLowered = MAX_AUTO_LOWER; this.save(); return null; }
     this.data.tier = ORDER[i - 1];
     this.data.autoLowered = used + 1;
+    this.data.dyn = 0.85;
     this.save();
     return this.data.tier;
   }

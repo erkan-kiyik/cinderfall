@@ -87,7 +87,11 @@ export function applyDeviceProfile() {
   const el = document.documentElement;
   el.classList.toggle('is-native', device.native);
   el.classList.toggle('is-touch', device.touch);
-  el.classList.toggle('no-backdrop-filter', !device.backdropFilter);
+  // Frosted glass is switched off everywhere, not only where it is missing.
+  // Every HUD panel sat over a canvas that changes every frame, so the GPU had
+  // to re-blur the scene behind each of them on every frame — up to ten extra
+  // blur passes for a look the opaque fallback panels match closely.
+  el.classList.toggle('no-backdrop-filter', true);
   el.classList.toggle('no-canvas-filter', !device.canvasFilter);
   el.classList.toggle('no-safe-area', !device.safeArea);
   el.style.setProperty('--ui-scale', computeUiScale().toFixed(3));

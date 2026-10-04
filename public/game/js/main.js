@@ -76,10 +76,17 @@ const AIM_RAY_RANGE = 1100;
 const LORE_HOLD = 3;
 
 let vw = 0, vh = 0, dpr = 1;
-let lightCv, lightG, glowCv, glowG, grainCv;
+let lightCv, lightG, glowCv, glowG, grainCv, bgCv, bgG;
+// Dynamic resolution: a multiplier on the tier's renderScale, stepped down
+// when frames run long and back up when there is headroom (see frame()).
+const DYN_MIN = 0.55;
 // Device pixels per CSS pixel in the light/glow maps. Lower than `dpr` on the
 // weaker tiers; see resize().
 let lightDpr = 1;
+// The glow map behind the bloom is drawn far smaller than the light map and
+// stretched back up: bilinear upsampling of a ~1/4-size buffer *is* the blur,
+// so the full-screen `filter: blur()` pass the bloom used to need is gone.
+let glowDpr = 1;
 let game = null;   // declared early so resize() can safely reference it
 
 // Responsive camera zoom: 1.25 at ~720p, eased down on short/narrow phone
@@ -99,7 +106,7 @@ function resize() {
   // far the cheapest frame time available on a rasterisation-bound canvas.
   // Everything downstream keeps working unchanged because every transform is
   // expressed in terms of this one number and every layout number in CSS px.
-  dpr = Math.min(window.devicePixelRatio || 1, quality.preset.dprCap) * quality.preset.renderScale;
+  dpr = Math.min(window.devicePixelRatio || 1, quality.preset.dprCap) * quality.preset.renderScale * quality.dyn;
   vw = window.innerWidth; vh = window.innerHeight;
   canvas.width = vw * dpr; canvas.height = vh * dpr;
   // The light and glow maps get their own, usually lower, resolution — see
@@ -107,7 +114,12 @@ function resize() {
   // composite, and being low-frequency they lose nothing visible for it.
   lightDpr = dpr * quality.preset.lightScale;
   const l = makeCanvas(vw * lightDpr, vh * lightDpr); lightCv = l.cv; lightG = l.g;
-  const g = makeCanvas(vw * lightDpr, vh * lightDpr); glowCv = g.cv; glowG = g.g;
+  glowDpr = dpr * 0.22;
+  const g = makeCanvas(Math.max(1, vw * glowDpr), Math.max(1, vh * glowDpr)); glowCv = g.cv; glowG = g.g;
+  // backdrop canvas, at `bgScale` of the scene resolution (quality.js)
+  const bs = quality.preset.bgScale ?? 1;
+  if (bs < 1) { const b = makeCanvas(Math.max(1, Math.round(vw * dpr * bs)), Math.max(1, Math.round(vh * dpr * bs))); bgCv = b.cv; bgG = b.g; }
+  else { bgCv = null; bgG = null; }
   // refresh --ui-scale so the DOM overlay tracks the new viewport
   applyDeviceProfile();
   // keep the framing right across orientation / resize (not mid-cinematic)
@@ -1401,9 +1413,21 @@ class Game {
     ctx.shadowColor = 'rgba(0,0,0,0)';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // background parallax stack (screen space)
-    this.world.drawBackground(ctx, this.cam, vw, vh, this.time);
+    // background parallax stack (screen space) — into the smaller backdrop
+    // canvas where the tier has one, then stretched over the frame in a
+    // single blit. The sky fill is opaque, so the canvas needs no clear.
+    if (bgCv) {
+      const k = bgCv.width / vw;
+      bgG.setTransform(k, 0, 0, k, 0, 0);
+      bgG.globalCompositeOperation = 'source-over';
+      bgG.globalAlpha = 1;
+      this.world.drawBackground(bgG, this.cam, vw, vh, this.time);
+      ctx.drawImage(bgCv, 0, 0, canvas.width, canvas.height);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    } else {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      this.world.drawBackground(ctx, this.cam, vw, vh, this.time);
+    }
 
     // world layer
     ctx.save();
@@ -1444,7 +1468,7 @@ class Game {
     // it is in front of them — and before the lighting composite, so it is lit
     // by the same map as the street. Dropped on LOW, where the whole tier's
     // job is to hold 60 and one more full-width blit is not worth it.
-    if (quality.preset.richGrade) this.world.drawForeground(ctx, this.cam, vw, vh);
+    if (quality.preset.foreground) this.world.drawForeground(ctx, this.cam, vw, vh);
 
     // World-space debug geometry goes inside the camera transform, before the
     // lighting composite: it describes the scene, so it should be graded with
@@ -1504,12 +1528,13 @@ class Game {
     // glow map only feeds the bloom pass below — skip filling it entirely
     // when bloom won't run, rather than painting into it and then discarding
     // the result (the device probe can veto bloom as well as the tier)
-    const bloomOn = quality.preset.bloom && device.canvasFilter;
+    // No longer needs ctx.filter (see glowDpr), so no capability probe either.
+    const bloomOn = quality.preset.bloom;
     if (bloomOn) {
       glowG.setTransform(1, 0, 0, 1, 0, 0);
       glowG.globalCompositeOperation = 'source-over';
       glowG.clearRect(0, 0, glowCv.width, glowCv.height);
-      glowG.setTransform(lightDpr, 0, 0, lightDpr, 0, 0);
+      glowG.setTransform(glowDpr, 0, 0, glowDpr, 0, 0);
       this.cam.applyTransform(glowG, vw, vh);
       glowG.globalCompositeOperation = 'lighter';
     }
@@ -1547,12 +1572,10 @@ class Game {
     // silent no-op, and this pass would screen the glow map over the scene
     // completely unblurred — a bright haze that appears only in the APK.
     // Better to ship no bloom there than a broken one.
-    if (quality.preset.bloom && device.canvasFilter) {
+    if (bloomOn) {
       ctx.globalCompositeOperation = 'screen';
       ctx.globalAlpha = 0.42;
-      ctx.filter = `blur(${quality.preset.bloomBlur}px)`;
-      ctx.drawImage(glowCv, 0, 0, canvas.width, canvas.height);
-      ctx.filter = 'none';
+      ctx.drawImage(glowCv, 0, 0, canvas.width, canvas.height);   // default bilinear = the blur
       ctx.globalAlpha = 1;
     }
     ctx.globalCompositeOperation = 'source-over';
@@ -1745,47 +1768,41 @@ class Game {
       const gap = 6 + p.visSpread * CROSSHAIR_SPREAD_GAIN + p.cur.ws.recoil * CROSSHAIR_RECOIL_GAIN;
       const len = hot ? 9 : 7;
       const ticks = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-      // backing pass
-      ctx.strokeStyle = 'rgba(3,5,8,0.85)'; ctx.lineWidth = 3.6; ctx.shadowBlur = 0;
+      // One path for all four ticks, stroked three times: dark backing, a
+      // wide translucent glow, then the lit line. This used to be a
+      // shadowBlur glow per stroke — a gaussian blur the canvas recomputes
+      // every frame, and on a phone GPU one of the dearest things a 2D
+      // context can be asked for. The wide stroke reads the same at reticle
+      // size and costs a plain line.
+      ctx.beginPath();
       for (const [dx, dy] of ticks) {
-        ctx.beginPath();
         ctx.moveTo(mx + dx * gap, my + dy * gap);
         ctx.lineTo(mx + dx * (gap + len), my + dy * (gap + len));
-        ctx.stroke();
       }
-      // lit pass
-      ctx.strokeStyle = neon; ctx.lineWidth = 1.7;
-      ctx.shadowColor = glow; ctx.shadowBlur = 7;
-      for (const [dx, dy] of ticks) {
-        ctx.beginPath();
-        ctx.moveTo(mx + dx * gap, my + dy * gap);
-        ctx.lineTo(mx + dx * (gap + len), my + dy * (gap + len));
-        ctx.stroke();
-      }
-      // centre dot
-      ctx.fillStyle = 'rgba(3,5,8,0.85)'; ctx.shadowBlur = 0;
-      ctx.beginPath(); ctx.arc(mx, my, 2.4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = neon; ctx.shadowColor = glow; ctx.shadowBlur = 6;
-      ctx.beginPath(); ctx.arc(mx, my, 1.3, 0, Math.PI * 2); ctx.fill();
-      // target brackets confirm a hostile is under the reticle
       if (hot) {
         const r = gap + len + 3;
-        ctx.strokeStyle = neon; ctx.lineWidth = 1.9; ctx.shadowBlur = 7;
         for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-          ctx.beginPath();
           ctx.moveTo(mx + sx * r, my + sy * (r - 4));
           ctx.lineTo(mx + sx * r, my + sy * r);
           ctx.lineTo(mx + sx * (r - 4), my + sy * r);
-          ctx.stroke();
         }
       }
+      ctx.strokeStyle = 'rgba(3,5,8,0.85)'; ctx.lineWidth = 3.6; ctx.stroke();
+      ctx.strokeStyle = glow; ctx.lineWidth = 5.5; ctx.globalAlpha = 0.45; ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = neon; ctx.lineWidth = hot ? 1.9 : 1.7; ctx.stroke();
+      // centre dot
+      ctx.fillStyle = 'rgba(3,5,8,0.85)';
+      ctx.beginPath(); ctx.arc(mx, my, 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = neon;
+      ctx.beginPath(); ctx.arc(mx, my, 1.3, 0, Math.PI * 2); ctx.fill();
     } else {
-      // melee: a simple ring, same two-pass treatment
-      ctx.strokeStyle = 'rgba(3,5,8,0.85)'; ctx.lineWidth = 3.4; ctx.shadowBlur = 0;
-      ctx.beginPath(); ctx.arc(mx, my, 3.8, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = neon; ctx.lineWidth = 1.6;
-      ctx.shadowColor = glow; ctx.shadowBlur = 7;
-      ctx.beginPath(); ctx.arc(mx, my, 3.8, 0, Math.PI * 2); ctx.stroke();
+      // melee: a simple ring, same treatment
+      ctx.beginPath(); ctx.arc(mx, my, 3.8, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(3,5,8,0.85)'; ctx.lineWidth = 3.4; ctx.stroke();
+      ctx.strokeStyle = glow; ctx.lineWidth = 5; ctx.globalAlpha = 0.45; ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = neon; ctx.lineWidth = 1.6; ctx.stroke();
     }
     ctx.shadowBlur = 0;
     ctx.lineCap = 'butt';
@@ -1814,14 +1831,17 @@ document.addEventListener('visibilitychange', () => {
   else { audio.resume(); last = performance.now(); acc = 0; }
 });
 
-// Lightweight runtime perf monitor: an exponentially-smoothed real frame
-// time, sampled only during active play (menu/pause frames aren't
-// representative). Sustained sub-~38fps for a few seconds steps the quality
-// preset down once (see quality.js — it never auto-raises or re-triggers).
-let perfAvg = 1 / 60;
-let lowPerfT = 0;
+// Runtime performance control, sampled only during active play (menu/pause
+// frames aren't representative): dynamic resolution first, a whole-tier step
+// down only once resolution is at its floor. See the block in frame().
 const MENU_FPS = 24;
 let nextRenderAt = 0;
+// Interval between drawn frames during play, smoothed (ms). This, not the
+// rAF interval, is what the player sees: on a 120Hz screen rAF fires twice
+// per drawn frame, and on a 60Hz one a missed vsync doubles the interval.
+let lastRenderAt = 0;
+let renderAvg = 1000 / 60;
+let slowT = 0, fastT = 0, dynCool = 0, dynCeil = 1, dynCeilT = 0;
 
 function frame(now) {
   if (document.hidden) { last = now; requestAnimationFrame(frame); return; }
@@ -1831,11 +1851,17 @@ function frame(now) {
   last = now;
   acc += dt;
   let steps = 0;
-  while (acc >= STEP && steps < 4) {
+  // At most three catch-up steps per frame. A slow frame used to allow four,
+  // and every extra update made the next frame slower still — on a weak
+  // phone the simulation could end up eating the time the renderer needed.
+  // Past the cap the remainder is dropped: the game runs a touch slow for a
+  // moment instead of spiralling.
+  while (acc >= STEP && steps < 3) {
     game.update(STEP);
     acc -= STEP;
     steps++;
   }
+  if (steps === 3 && acc > STEP) acc = 0;
   // Draw no more often than the tier's cap (and only ~24fps behind the menu,
   // where the scene is a backdrop under opaque panels). The simulation above
   // still steps at its fixed rate; only rasterisation is rationed, which is
@@ -1845,19 +1871,43 @@ function frame(now) {
   if (now >= nextRenderAt - 1.5) {
     game.render();
     nextRenderAt = Math.max(nextRenderAt + 1000 / cap, now);
+    if (game.state === 'play') {
+      const iv = now - lastRenderAt;
+      if (iv > 0 && iv < 250) renderAvg = renderAvg * 0.9 + iv * 0.1;
+    }
+    lastRenderAt = now;
   }
 
-  if (game.state === 'play' && !quality.autoLowerExhausted) {
-    perfAvg = perfAvg * 0.94 + rawDt * 0.06;
-    lowPerfT = perfAvg > 1 / 38 ? lowPerfT + rawDt : 0;
-    if (lowPerfT > 4) {
-      // Give the new preset a fair run before judging it again, rather than
-      // stepping down twice off the same bad stretch. The step-down budget in
-      // quality.js is what actually bounds this.
-      lowPerfT = -8;
-      perfAvg = 1 / 60;
-      const lowered = quality.tryAutoLower();
-      if (lowered) { hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name })); resize(); }
+  // Hold 60. Long frames step the scene resolution down by ~12% at a time
+  // (down to DYN_MIN); a few seconds of clean frames step it back up by ~6%,
+  // but never straight back over the level that just failed (dynCeil), so it
+  // settles instead of see-sawing. Only when resolution is already at the
+  // floor and frames are still long does the runtime drop a whole tier.
+  if (game.state === 'play') {
+    const target = 1000 / cap;
+    dynCool -= rawDt; dynCeilT -= rawDt;
+    if (dynCeilT <= 0) dynCeil = 1;
+    if (renderAvg > target * 1.12) { slowT += rawDt; fastT = 0; }
+    else if (renderAvg < target * 1.04) { fastT += rawDt; slowT = 0; }
+    else { slowT = 0; fastT = 0; }
+    if (slowT > 0.6 && dynCool <= 0) {
+      slowT = 0; dynCool = 0.9;
+      if (quality.dyn > DYN_MIN + 0.001) {
+        dynCeil = quality.dyn; dynCeilT = 20;
+        quality.setDyn(Math.max(DYN_MIN, quality.dyn * 0.88));
+        resize(); renderAvg = target;
+      } else if (!quality.autoLowerExhausted) {
+        const lowered = quality.tryAutoLower();
+        if (lowered) {
+          dynCeil = 1;
+          hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name }));
+          resize(); renderAvg = target; dynCool = 2;
+        }
+      }
+    } else if (fastT > 3.5 && dynCool <= 0 && quality.dyn < 1) {
+      fastT = 0; dynCool = 2;
+      const next = Math.min(1, quality.dyn * 1.06);
+      if (next < dynCeil - 0.005) { quality.setDyn(next); resize(); renderAvg = target; }
     }
   }
 
