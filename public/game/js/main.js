@@ -464,6 +464,9 @@ class Game {
       settingsClose: () => { audio.ui(); hud.showSettings(false); },
       watchAdRevive: () => { audio.ui(); this.reviveViaAd(); },
       skipRevive: () => { audio.ui(); this.declineRevive(); },
+      // Straight to the menu from the down screen: the run is banked exactly as
+      // declining would bank it, then the end screen is skipped.
+      reviveMenu: () => { audio.ui(); this.declineRevive(); this.pendingResume = null; this.reset(); this.setState('menu'); },
       // Opens the language list. The static markup is re-filled by i18n
       // itself; the screens that build their labels in JS repaint through
       // onLangChange. The list is rebuilt on every open so the active row is

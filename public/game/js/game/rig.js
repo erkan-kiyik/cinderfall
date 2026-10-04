@@ -81,6 +81,19 @@ const IDLE_AIM_DRIFT = 0.035; // radians at full idle
 // Feet at rest. Bladed and wider than the old ±5: weight forward over a lead
 // foot, rear foot back and carrying the turn. Only applies standing — it is
 // lerped out by `mv` the moment the operator moves.
+// Held crouch. It used to be the standing pose with the hips lowered and the
+// feet left where they were, so both knees folded forward side by side, the
+// boots tipped onto their toes and the operator looked like he was sitting on
+// an invisible stool. Standing still it is now a kneel: lead foot planted flat
+// out front with the shin upright, rear knee down at the street. Moving, it is
+// a low, short-stepped walk with the chest pitched over the weapon.
+const KNEEL_HIP_Y = -38;        // hip height in the kneel (stand is -64)
+const CROUCH_WALK_HIP_Y = -47;  // hip height walking crouched
+const KNEEL_FRONT_X = 21;       // lead ankle, out in front of the hips
+const KNEEL_REAR_X = -15;       // rear ankle, tucked behind (knee on the street)
+const KNEEL_LEAN = 0.07;        // chest pitch in the kneel
+const CROUCH_WALK_LEAN = 0.17;  // chest pitch walking crouched
+const CROUCH_STRIDE = 0.7;      // stride length multiplier, walking crouched
 const STANCE_FRONT = 7.5;
 const STANCE_REAR = -7.5;
 
@@ -188,8 +201,11 @@ export function computePose(ent) {
   const sp = clamp(ent.speedNorm, 0, 1);
   const air = ent.onGround ? 0 : clamp(ent.airTime * 5, 0, 1);
   // landing spring + held crouch both lower the stance; held crouch dominates
-  const crouch = clamp(ent.crouchSpring + (ent.crouchHold || 0) * 1.15, 0, 1.7);
   const mv = clamp(sp * 5, 0, 1);
+  // The held crouch has its own pose (below); `crouch` is only the landing
+  // spring's dip now, which keeps its old feel.
+  const hold = smootherstep(clamp(ent.crouchHold || 0, 0, 1)) * (1 - air);
+  const crouch = clamp(ent.crouchSpring, 0, 1.7);
 
   const breath = Math.sin(ent.breathT * 1.8) * (1 - sp * 0.7);
   // Footing irregularity the Player integrates (see gaitNoise there); zero
@@ -239,7 +255,8 @@ export function computePose(ent) {
                   * (1 - clamp(crouch * 0.4, 0, 0.55));
   const lean = ent.lean + (ent.stumbleLean || 0)
                + air * clamp(ent.vy * 0.00035, -0.12, 0.2) + posture
-               + idleDrift * IDLE_DRIFT;
+               + idleDrift * IDLE_DRIFT
+               + hold * lerp(KNEEL_LEAN, CROUCH_WALK_LEAN, mv);
 
   // Shoulders counter-rotate against the hips, once per full stride. Pure
   // horizontal offset rather than a real twist — in a side view that is what
@@ -251,7 +268,7 @@ export function computePose(ent) {
   // Hips drive forward as the stance leg extends.
   const drive = Math.abs(stride) * HIP_DRIVE * sp * (1 - air);
 
-  const hipX = lean * 13 + sway + noise * 1.6 + drive + idleShift * IDLE_SWAY;
+  const hipX = lean * 13 + sway + noise * 1.6 + drive + idleShift * IDLE_SWAY - hold * 3;
   // Breathing is worth 0.4px under load and IDLE_BREATH standing still — a
   // chest actually moves when a man is not running, and this is most of what
   // sells a stationary operator as a living one.
@@ -260,11 +277,13 @@ export function computePose(ent) {
   const breathLift = breath * lerp(0.4, IDLE_BREATH, settle);
   const hipBreath = breath * lerp(0.4, 0.6, settle);
   const rest = clamp(1 - sp * 4, 0, 1) * (1 - air);
-  const hipY = -BONES.hipStand + crouch * 9 - bob + air * 4
+  const hipYStand = -BONES.hipStand + crouch * 9 - bob + air * 4
                + hipBreath + pelvicList + IDLE_SINK * settle
                - IDLE_RISE * rest * (1 - clamp(crouch, 0, 1));
+  const hipYCrouch = lerp(KNEEL_HIP_Y, CROUCH_WALK_HIP_Y, mv) - bob * 0.5 + hipBreath + pelvicList * 0.5;
+  const hipY = lerp(hipYStand, hipYCrouch, hold);
 
-  const torsoLen = BONES.torso - crouch * 2.5;
+  const torsoLen = BONES.torso - crouch * 2.5 - hold * 1.5;
   // Head holds its line while the chest drops — the operator is looking at
   // where he is going, not at the floor.
   const neckLean = lean - posture * HEAD_COUNTER;
@@ -309,6 +328,15 @@ export function computePose(ent) {
     const standX = (i ? STANCE_REAR : STANCE_FRONT) * (1 + bulkD * BULK_STANCE_WIDTH);
     let fx = lerp(standX, gx + roll, mv) + noise * 0.8;
     let fy = -lerp(0, lift, mv);
+    if (hold > 0.001) {
+      // kneel targets standing still, a shortened low gait when moving
+      const kx = hipX + (i ? KNEEL_REAR_X : KNEEL_FRONT_X);
+      const ky = i ? 1.5 : 0;
+      const wx = -Math.cos(ph) * legS * CROUCH_STRIDE + hipX * 0.55 + (i ? -3 : 4) + roll;
+      const wy = -lift * 0.55;
+      fx = lerp(fx, lerp(kx, wx, mv), hold);
+      fy = lerp(fy, lerp(ky, wy, mv), hold);
+    }
     if (air > 0) {
       // The air pose follows the arc instead of holding one tuck for the whole
       // jump (which read as sitting on an invisible chair): driving off the

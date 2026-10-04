@@ -161,6 +161,7 @@ export const DE = {
   'revive.sub': 'Sieh ein kurzes Video, um wieder aufzustehen — Abschnitt und Fortschritt bleiben erhalten.',
   'revive.watch': '▶ WERBUNG ANSEHEN — WEITER',
   'revive.skip': 'NEIN, DANKE',
+  'revive.menu': 'HAUPTMENÜ',
   'end.redeploy': 'NEUER EINSATZ',
   'end.menu': 'ZURÜCK ZUM MENÜ',
   'end.share': 'ERGEBNIS TEILEN',

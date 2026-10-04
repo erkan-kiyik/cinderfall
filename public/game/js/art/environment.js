@@ -574,46 +574,66 @@ export function fence(w = 70, scale = 1) {
 }
 
 // ---------------- dumpster ----------------
+// Side view of a steel skip: a body that flares toward the top, a heavy rim,
+// a lid hinged at the back and propped a few degrees open on one bag, fork
+// pockets on the flank and swivel casters. Same 40x28 box and body extent as
+// before (x 3..37, y 5..27) — DUMP_W / DUMP_H in world.js are measured off it.
+// The old one was a slab with a parallelogram lid and two black blobs on top.
 export function dumpster(scale = 1) {
   const rng = nextRng();
-  const base = '#3f4d42';
+  const base = '#3d5243';
   return makeSprite(40 * scale, 28 * scale, 20 * scale, 27 * scale, (g) => {
     g.scale(scale, scale);
-    g.fillStyle = lingrad(g, 0, 4, 0, 26, [
-      [0, shade(base, 0.14)], [0.4, base], [1, shade(base, -0.38)],
+    // a bag caught under the lid, drawn first so the lid closes over it
+    g.fillStyle = '#20232a';
+    g.beginPath(); g.ellipse(27, 5.2, 4.6, 2.2, -0.1, Math.PI, 0); g.fill();
+    g.fillStyle = 'rgba(210,215,225,0.18)';
+    g.beginPath(); g.ellipse(25.6, 4.0, 1.8, 0.7, -0.1, 0, Math.PI * 2); g.fill();
+
+    // body: flared, darker toward the ground
+    g.fillStyle = lingrad(g, 0, 6, 0, 25, [
+      [0, shade(base, 0.12)], [0.45, base], [1, shade(base, -0.42)],
     ]);
     g.beginPath();
-    g.moveTo(2, 6); g.lineTo(38, 6); g.lineTo(36.5, 25.5); g.lineTo(3.5, 25.5);
+    g.moveTo(2.4, 6.6); g.lineTo(37.6, 6.6); g.lineTo(35.8, 24.6); g.lineTo(4.2, 24.6);
     g.closePath(); g.fill();
-    // open lid leaning back + trash
-    g.fillStyle = shade(base, -0.22);
+    // broad vertical stiffeners: two flat panels, one light edge each
+    for (const x of [12.4, 25.0]) {
+      g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(x, 8.2, 2.4, 15.4);
+      g.fillStyle = 'rgba(226,232,240,0.10)'; g.fillRect(x, 8.2, 0.5, 15.4);
+    }
+    // fork pocket along the flank
+    g.fillStyle = shade(base, -0.34);
+    rr(g, 5.6, 15.6, 28.8, 3.2, 0.6); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    g.fillRect(6.6, 16.6, 6.4, 1.4); g.fillRect(27.0, 16.6, 6.4, 1.4);
+    // heavy top rim
+    g.fillStyle = lingrad(g, 0, 5.4, 0, 8, [[0, shade(base, 0.22)], [1, shade(base, -0.25)]]);
+    rr(g, 1.4, 5.6, 37.2, 2.4, 0.6); g.fill();
+    // lid, hinged at the back (right) and propped open at the front by the bag
+    g.fillStyle = lingrad(g, 0, 2.6, 0, 6, [[0, shade(base, -0.05)], [1, shade(base, -0.35)]]);
     g.beginPath();
-    g.moveTo(2, 6.5); g.lineTo(10, 0.8); g.lineTo(34, 1); g.lineTo(38, 6);
+    g.moveTo(2.0, 4.4); g.lineTo(38.2, 5.4); g.lineTo(38.2, 6.0); g.lineTo(2.0, 5.6);
     g.closePath(); g.fill();
-    g.fillStyle = '#1c1e1b';
-    g.beginPath(); g.moveTo(6, 6); g.lineTo(34, 6); g.lineTo(33, 4); g.lineTo(7, 4); g.closePath(); g.fill();
-    // bags poking out
-    g.fillStyle = '#22242a';
-    g.beginPath(); g.ellipse(14, 4.6, 4.4, 2.6, 0.2, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.ellipse(24, 4.2, 5, 3, -0.15, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(200,205,215,0.16)';
-    g.beginPath(); g.ellipse(13, 3.6, 2, 1, 0.2, 0, Math.PI * 2); g.fill();
-    // side ribs + pocket
-    g.fillStyle = 'rgba(0,0,0,0.2)';
-    for (const x of [10, 19, 28]) g.fillRect(x, 8, 2, 16);
-    g.fillStyle = shade(base, -0.3);
-    g.fillRect(4, 19, 8, 4.6);
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    g.beginPath(); g.moveTo(2.0, 4.4); g.lineTo(38.2, 5.4); g.lineTo(38.2, 5.7); g.lineTo(2.0, 4.8); g.closePath(); g.fill();
+    g.fillStyle = shade(base, -0.5); rr(g, 36.4, 4.8, 2.2, 1.6, 0.4); g.fill();   // hinge
     // stencil
-    g.fillStyle = 'rgba(225,220,205,0.4)';
-    g.font = 'bold 3.6px monospace';
-    g.fillText('CWD 09', 15, 14);
-    // wheels
-    g.fillStyle = '#17181a';
-    g.beginPath(); g.arc(7, 26, 2, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.arc(33, 26, 2, 0, Math.PI * 2); g.fill();
-    streaks(g, 2, 7, 36, 18, rng, { n: 8, color: 'rgba(40,28,14,0.3)', wMax: 2.2 });
-    grunge(g, 2, 6, 36, 19, rng, { n: 80 });
-    ao(g, 20, 27, 21, 3, 0.42);
+    g.fillStyle = 'rgba(232,226,208,0.5)';
+    g.font = 'bold 3.4px monospace';
+    g.fillText('CWD 09', 15.4, 13.2);
+    // casters
+    for (const x of [8, 32]) {
+      g.fillStyle = '#2a2c2f'; g.fillRect(x - 1.4, 24.4, 2.8, 1.2);
+      g.fillStyle = '#141517';
+      g.beginPath(); g.arc(x, 26.2, 1.7, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(200,205,215,0.18)';
+      g.beginPath(); g.arc(x - 0.4, 25.7, 0.6, 0, Math.PI * 2); g.fill();
+    }
+    // a little wear, no more: rust run-off under the rim and a dented corner
+    streaks(g, 4, 8, 32, 14, rng, { n: 5, color: 'rgba(70,40,18,0.28)', wMax: 1.6 });
+    grunge(g, 3, 7, 34, 17, rng, { n: 30 });
+    ao(g, 20, 27, 20, 2.6, 0.42);
   });
 }
 

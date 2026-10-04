@@ -157,6 +157,7 @@ export const ES = {
   'revive.sub': 'Mira un vídeo corto para levantarte: la fase y el progreso continúan.',
   'revive.watch': '▶ VER ANUNCIO — CONTINUAR',
   'revive.skip': 'NO, GRACIAS',
+  'revive.menu': 'MENÚ PRINCIPAL',
   'end.redeploy': 'VOLVER A DESPLEGAR',
   'end.menu': 'VOLVER AL MENÚ',
   'end.share': 'COMPARTIR RESULTADO',

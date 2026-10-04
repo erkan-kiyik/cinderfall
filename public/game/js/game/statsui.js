@@ -5,7 +5,10 @@
 
 import { ACHIEVEMENTS, TIERS, achievementProgress, drawAchievementIcon } from './achievements.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
-import { slidePill, popIn } from '../ui/motion.js';
+import { slidePill, popIn, sparks, coinsTo, haptic, sfx, spring, level } from '../ui/motion.js';
+import { paintMedalCanvas } from '../art/medal.js';
+import { renderScrapIcon } from '../art/currency.js';
+import { ACHIEVEMENT_SCRAP } from './progression.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -133,105 +136,160 @@ export class StatsUI {
     return card;
   }
 
+  // Medal cabinet: a summary strip (overall progress + medals per metal),
+  // then one section per metal. Cards are horizontal — medal, name and goal,
+  // progress, reward — so a phone shows a readable column rather than a wall
+  // of tiny squares.
   renderAchievements() {
     const host = $('achievements-list');
     host.innerHTML = '';
+    const all = ACHIEVEMENTS.map((a) => [a, achievementProgress(a, this.p)]);
+    const done = all.filter(([, p]) => p.claimed).length;
+    const ready = all.filter(([, p]) => p.unlocked && !p.claimed).length;
+
+    const sum = document.createElement('div');
+    sum.className = 'ach-summary';
+    const left = document.createElement('div');
+    left.className = 'ach-sum-main';
+    left.innerHTML = `<div class="ach-sum-count"><b>${done}</b> / ${all.length}</div><div class="ach-sum-label">COMPLETED${ready ? ` · <span class="ach-sum-ready">${ready} READY TO CLAIM</span>` : ''}</div>`;
+    const bar = document.createElement('div');
+    bar.className = 'ach-sum-track';
+    const fill = document.createElement('div');
+    fill.className = 'ach-sum-fill';
+    bar.appendChild(fill);
+    left.appendChild(bar);
+    sum.appendChild(left);
+    const medals = document.createElement('div');
+    medals.className = 'ach-sum-medals';
+    for (const tierKey of ['easy', 'medium', 'hard']) {
+      const group = all.filter(([a]) => a.tier === tierKey);
+      const got = group.filter(([, p]) => p.claimed).length;
+      const m = document.createElement('div');
+      m.className = 'ach-sum-medal';
+      const cv = document.createElement('canvas');
+      m.appendChild(cv);
+      const n = document.createElement('span');
+      n.textContent = `${got}/${group.length}`;
+      m.appendChild(n);
+      medals.appendChild(m);
+      requestAnimationFrame(() => paintMedalCanvas(cv, tierKey, 'star', got ? 'claimed' : 'progress'));
+    }
+    sum.appendChild(medals);
+    host.appendChild(sum);
+    requestAnimationFrame(() => { fill.style.width = `${Math.round((done / all.length) * 100)}%`; });
+
     for (const tierKey of ['easy', 'medium', 'hard']) {
       const tier = TIERS[tierKey];
-      const group = ACHIEVEMENTS.filter((a) => a.tier === tierKey);
+      const group = all.filter(([a]) => a.tier === tierKey);
       const head = document.createElement('div');
       head.className = 'achievement-tier-head';
-      head.style.color = tier.color;
-      head.textContent = `${tier.label} (${group.filter((a) => this.p.achievementClaimed(a.id)).length}/${group.length})`;
+      head.style.setProperty('--tier-color', tier.color);
+      head.innerHTML = `<span>${tier.label}</span><span class="ach-tier-count">${group.filter(([, p]) => p.claimed).length}/${group.length}</span>`;
       host.appendChild(head);
 
       const grid = document.createElement('div');
       grid.className = 'achievements-grid';
-      for (const ach of group) {
-        grid.appendChild(this.makeAchievementCard(ach, tier));
+      // claimable first, then in progress by how close, then done
+      const rank = ([, p]) => (p.unlocked && !p.claimed ? 0 : !p.unlocked ? 1 - p.frac + 1 : 3);
+      for (const [ach, prog] of group.slice().sort((x, y) => rank(x) - rank(y))) {
+        grid.appendChild(this.makeAchievementCard(ach, tier, prog));
       }
       host.appendChild(grid);
     }
   }
 
-  makeAchievementCard(ach, tier) {
-    const prog = achievementProgress(ach, this.p);
+  makeAchievementCard(ach, tier, prog = achievementProgress(ach, this.p)) {
+    const state = prog.claimed ? 'claimed' : prog.unlocked ? 'ready' : prog.frac > 0 ? 'progress' : 'locked';
     const card = document.createElement('div');
-    card.className = 'achievement-card' + (prog.claimed ? ' claimed' : prog.unlocked ? ' unlocked' : ' locked');
+    card.className = `achievement-card ach-${state}`;
+    card.dataset.id = ach.id;
     card.style.setProperty('--tier-color', tier.color);
     card.style.setProperty('--tier-glow', tier.glow);
 
-    const iconWrap = document.createElement('div');
-    iconWrap.className = 'achievement-icon-wrap';
-    const cv = document.createElement('canvas');
-    cv.className = 'achievement-icon';
-    iconWrap.appendChild(cv);
-    if (!prog.unlocked) {
-      const lock = document.createElement('div');
-      lock.className = 'achievement-lock';
-      lock.textContent = '🔒';
-      iconWrap.appendChild(lock);
-    }
-    card.appendChild(iconWrap);
+    const medal = document.createElement('canvas');
+    medal.className = 'ach-medal';
+    card.appendChild(medal);
 
+    const body = document.createElement('div');
+    body.className = 'ach-body';
+    const top = document.createElement('div');
+    top.className = 'ach-top';
     const name = document.createElement('div');
     name.className = 'achievement-name';
     name.textContent = ach.name;
-    card.appendChild(name);
+    top.appendChild(name);
+    const reward = document.createElement('div');
+    reward.className = 'ach-reward';
+    const ico = document.createElement('canvas');
+    ico.className = 'cur-icon cur-scrap'; ico.width = ico.height = 14;
+    reward.append(ico, document.createTextNode(String(ACHIEVEMENT_SCRAP)));
+    top.appendChild(reward);
+    body.appendChild(top);
 
     const desc = document.createElement('div');
     desc.className = 'achievement-desc';
     desc.textContent = ach.desc;
-    card.appendChild(desc);
+    body.appendChild(desc);
 
+    const row = document.createElement('div');
+    row.className = 'ach-prog-row';
     const track = document.createElement('div');
     track.className = 'achievement-progress-track';
     const fill = document.createElement('div');
     fill.className = 'achievement-progress-fill';
-    fill.style.width = `${Math.round(prog.frac * 100)}%`;
     track.appendChild(fill);
-    card.appendChild(track);
-
-    const goalLabel = ach.stat === 'totalPlaytimeMs'
-      ? `${Math.round(prog.value / 60000)}m / ${Math.round(ach.goal / 60000)}m`
+    const label = document.createElement('div');
+    label.className = 'achievement-progress-label';
+    label.textContent = ach.stat === 'totalPlaytimeMs'
+      ? `${Math.round(Math.min(prog.value, ach.goal) / 60000)}m / ${Math.round(ach.goal / 60000)}m`
       : `${Math.min(prog.value, ach.goal).toLocaleString()} / ${ach.goal.toLocaleString()}`;
-    const progLabel = document.createElement('div');
-    progLabel.className = 'achievement-progress-label';
-    progLabel.textContent = goalLabel;
-    card.appendChild(progLabel);
+    row.append(track, label);
+    body.appendChild(row);
 
-    if (prog.claimed) {
-      const badge = document.createElement('div');
-      badge.className = 'achievement-badge';
-      badge.textContent = 'COMPLETED';
-      card.appendChild(badge);
-    } else if (prog.unlocked) {
+    if (state === 'ready') {
       const btn = document.createElement('button');
       btn.className = 'btn primary achievement-claim-btn';
-      btn.textContent = 'CLAIM +1 DIAMOND';
-      btn.addEventListener('click', () => this.claimAchievement(ach.id));
-      card.appendChild(btn);
+      btn.textContent = `CLAIM +${ACHIEVEMENT_SCRAP}`;
+      btn.addEventListener('click', () => this.claimAchievement(ach.id, card));
+      body.appendChild(btn);
     }
+    card.appendChild(body);
 
     requestAnimationFrame(() => {
-      const g = cv.getContext('2d');
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = cv.clientWidth || 40, h = cv.clientHeight || 40;
-      cv.width = w * dpr; cv.height = h * dpr;
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawAchievementIcon(g, ach.icon, w, h, tier.color);
+      paintMedalCanvas(medal, tier.key, ach.icon, state);
+      renderScrapIcon(ico);
+      fill.style.width = `${Math.round(prog.frac * 100)}%`;
     });
     return card;
   }
 
-  claimAchievement(id) {
+  // Claim beat: the medal is struck (spring + burst in the metal's colour),
+  // scrap arcs from the card into the balance, then the list re-sorts.
+  claimAchievement(id, card) {
     const before = this.p.scrap;
     if (!this.p.claimAchievement(id)) return;
-    this.renderAchievements();
-    this.renderOverview();
+    const medal = card && card.querySelector('.ach-medal');
+    const pill = document.querySelector('.scrap-pill');
+    haptic('success');
+    sfx('reveal', 2);
+    if (medal) {
+      const ach = ACHIEVEMENTS.find((a) => a.id === id);
+      paintMedalCanvas(medal, ach.tier, ach.icon, 'claimed');
+      card.classList.remove('ach-ready'); card.classList.add('ach-claimed', 'ach-just');
+      if (level() > 0 && medal.animate) {
+        medal.animate([{ transform: 'scale(0.6) rotate(-14deg)' }, { transform: 'none' }], { duration: 700, easing: spring() });
+      }
+      sparks(medal, { count: 16, color: TIERS[ach.tier].color, spread: 90, size: 6 });
+      coinsTo(card, pill, { count: 6 });
+      const btn = card.querySelector('.achievement-claim-btn');
+      if (btn) btn.remove();
+    }
     const scrapCount = $('scrap-count');
-    if (scrapCount) animateCount(scrapCount, before, this.p.scrap);
-    playCurrencyGain(document.querySelector('.scrap-pill'), 'scrap', this.audio);
+    setTimeout(() => {
+      if (scrapCount) animateCount(scrapCount, before, this.p.scrap);
+      playCurrencyGain(pill, 'scrap', this.audio);
+    }, 520);
+    setTimeout(() => { this.renderAchievements(); this.renderOverview(); }, 1100);
   }
 
 }

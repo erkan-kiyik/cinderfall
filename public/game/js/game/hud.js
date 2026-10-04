@@ -98,6 +98,7 @@ export class Hud {
     on('btn-daily-claim', h.claimDaily);
     on('btn-revive-ad', h.watchAdRevive);
     on('btn-revive-skip', h.skipRevive);
+    on('btn-revive-menu', h.reviveMenu);
   }
 
   // The graphics tier used to have its own label in the pause menu. It lives

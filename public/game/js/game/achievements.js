@@ -5,10 +5,13 @@
 // (Progression.achievements[id]), since "have I collected the reward" is the
 // one thing that truly needs to survive independent of the stat's value.
 
+// Tiers are struck in metal: easy bronze, medium silver, hard gold. The
+// colour here drives the section heads and the progress fill; the medal art
+// itself is in art/medal.js.
 export const TIERS = {
-  easy:   { key: 'easy',   label: 'EASY',   color: '#8fae6a', glow: 'rgba(143,174,106,0.55)' },
-  medium: { key: 'medium', label: 'MEDIUM', color: '#4a90d9', glow: 'rgba(74,144,217,0.6)' },
-  hard:   { key: 'hard',   label: 'HARD',   color: '#e0446e', glow: 'rgba(224,68,110,0.7)' },
+  easy:   { key: 'easy',   label: 'BRONZE', color: '#d39a62', glow: 'rgba(211,154,98,0.55)' },
+  medium: { key: 'medium', label: 'SILVER', color: '#c3cdd8', glow: 'rgba(195,205,216,0.55)' },
+  hard:   { key: 'hard',   label: 'GOLD',   color: '#f0c050', glow: 'rgba(240,192,80,0.65)' },
 };
 
 export const ACHIEVEMENTS = [

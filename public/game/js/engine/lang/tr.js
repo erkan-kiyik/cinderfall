@@ -159,6 +159,7 @@ export const TR = {
   'revive.sub': 'Kısa bir video izle ve ayağa kalk — bölüm ve ilerleme devam eder.',
   'revive.watch': '▶ REKLAM İZLE — DEVAM ET',
   'revive.skip': 'HAYIR, TEŞEKKÜRLER',
+  'revive.menu': 'ANA MENÜ',
   'end.redeploy': 'TEKRAR GÖREVE',
   'end.menu': 'MENÜYE DÖN',
   'end.share': 'SONUCU PAYLAŞ',

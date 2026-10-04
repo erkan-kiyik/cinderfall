@@ -270,29 +270,28 @@ function paintRifleMag(variant, finish) {
     g.fillStyle = lingrad(g, -2.6, 0, 3, 0, [
       [0, shade(skin, 0.16)], [0.42, skin], [1, shade(skin, -0.38)],
     ]);
+    // Shortened from 13.5 to ~10 units and given a stronger forward curve: at
+    // twice the pistol grip's length it hung below the hand like a stick and
+    // was the part people read as "the grip doesn't line up".
     g.beginPath();
     g.moveTo(-2.3, 0);
     g.lineTo(2.3, 0);
-    g.quadraticCurveTo(3.3, 7, 2.1, 12.4);     // curved front
-    g.quadraticCurveTo(0.1, 13.5, -1.9, 12.9);
-    g.quadraticCurveTo(-3.3, 7, -2.3, 0);
+    g.quadraticCurveTo(3.6, 5.2, 3.0, 9.4);     // curved front
+    g.quadraticCurveTo(1.1, 10.4, -0.9, 9.9);
+    g.quadraticCurveTo(-2.9, 5.2, -2.3, 0);
     g.closePath(); g.fill();
-    // Witness holes down the spine: the detail that says "magazine" at a
-    // glance, where the old horizontal bands said "grip".
     g.fillStyle = 'rgba(0,0,0,0.42)';
-    for (let i = 0; i < 4; i++) {
-      const t = 2.1 + i * 2.7;
-      rr(g, -0.9 + t * 0.045, t, 1.7, 1.0, 0.45); g.fill();
+    for (let i = 0; i < 3; i++) {
+      const t = 2.0 + i * 2.5;
+      rr(g, -0.8 + t * 0.1, t, 1.7, 1.0, 0.45); g.fill();
     }
     // floorplate, proud of the body on both sides
     g.fillStyle = shade(skin, -0.42);
-    rr(g, -2.5, 12.2, 4.9, 1.9, 0.5); g.fill();
+    rr(g, -1.4, 9.2, 4.9, 1.8, 0.5); g.fill();
     g.fillStyle = 'rgba(226,232,240,0.14)';
-    g.fillRect(-2.4, 12.3, 4.7, 0.3);
-    // spine light down the leading edge
+    g.fillRect(-1.3, 9.3, 4.7, 0.3);
     g.strokeStyle = 'rgba(226,232,240,0.20)'; g.lineWidth = 0.45;
-    g.beginPath(); g.moveTo(2.35, 0.6); g.quadraticCurveTo(3.3, 7, 2.2, 12); g.stroke();
-    speckle(g, -3, 0, 6, 12.5, 26);
+    g.beginPath(); g.moveTo(2.35, 0.6); g.quadraticCurveTo(3.6, 5.2, 3.0, 9); g.stroke();
   });
 }
 
@@ -751,17 +750,16 @@ function paintSmgMag(finish) {
     g.fillStyle = lingrad(g, -2, 0, 2, 0, [
       [0, shade(skin, 0.14)], [0.42, skin], [1, shade(skin, -0.36)],
     ]);
-    rr(g, -1.9, 0, 3.8, 12.4, 0.7); g.fill();
-    // witness holes, not grip bands
+    // 9 units, down from 12.4 — it reached well below the grip hand
+    rr(g, -1.9, 0, 3.8, 9.0, 0.7); g.fill();
     g.fillStyle = 'rgba(0,0,0,0.44)';
-    for (let i = 0; i < 4; i++) { rr(g, -0.7, 2.0 + i * 2.6, 1.4, 0.9, 0.4); g.fill(); }
+    for (let i = 0; i < 3; i++) { rr(g, -0.7, 2.0 + i * 2.3, 1.4, 0.9, 0.4); g.fill(); }
     g.fillStyle = shade(skin, -0.44);
-    rr(g, -2.2, 11.9, 4.4, 1.9, 0.5); g.fill();
+    rr(g, -2.2, 8.5, 4.4, 1.8, 0.5); g.fill();
     g.fillStyle = 'rgba(226,232,240,0.13)';
-    g.fillRect(-2.1, 12.0, 4.2, 0.3);
+    g.fillRect(-2.1, 8.6, 4.2, 0.3);
     g.strokeStyle = 'rgba(226,232,240,0.18)'; g.lineWidth = 0.4;
-    g.beginPath(); g.moveTo(1.95, 0.8); g.lineTo(1.95, 11.4); g.stroke();
-    speckle(g, -1.9, 0, 3.8, 12, 18);
+    g.beginPath(); g.moveTo(1.95, 0.8); g.lineTo(1.95, 8.0); g.stroke();
   });
 }
 
@@ -1458,12 +1456,20 @@ function chassisMag(g, kind, rec, poly, core) {
     g.fillStyle = 'rgba(226,232,240,0.15)';
     g.fillRect(12.3, 0.6, 0.32, 8.4);
   } else if (kind === 'drum') {
-    g.fillStyle = metal(g, 1, 14, shade(rec, -0.12));
-    g.beginPath(); g.arc(9.4, 7.4, 6.6, 0, Math.PI * 2); g.fill();
-    g.fillStyle = shade(rec, 0.1);
-    g.beginPath(); g.arc(9.4, 7.4, 2.4, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = 'rgba(8,9,12,0.4)'; g.lineWidth = 0.8;
-    g.beginPath(); g.arc(9.4, 7.4, 4.6, 0, Math.PI * 2); g.stroke();
+    // A full circle hung on a neck read as a wheel under the gun. Now a squat
+    // half-drum seated flush against the receiver, with a charge window.
+    g.fillStyle = metal(g, 0, 9, shade(rec, -0.12));
+    g.beginPath();
+    g.moveTo(4.4, 0.2); g.lineTo(14.4, 0.2);
+    g.quadraticCurveTo(15.2, 7.8, 9.4, 8.6);
+    g.quadraticCurveTo(3.6, 7.8, 4.4, 0.2);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(8,9,12,0.5)';
+    rr(g, 6.6, 2.4, 5.6, 2.6, 0.6); g.fill();
+    g.fillStyle = `rgba(${cr},${cg},${cb},0.55)`;
+    rr(g, 7.1, 2.9, 4.6, 1.6, 0.4); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.14)';
+    g.fillRect(5.0, 0.6, 8.8, 0.4);
   } else if (kind === 'belt') {
     // Ammo belt out of a feed tray. The rounds used to be six loose rectangles
     // whose tops were scattered +/-1.2 about the tray's lower edge, so half of
@@ -1473,15 +1479,22 @@ function chassisMag(g, kind, rec, poly, core) {
     rr(g, 4.6, 0.2, 10, 5.4, 1); g.fill();
     g.fillStyle = 'rgba(8,9,12,0.5)';
     g.fillRect(5.2, 4.4, 8.8, 1.2);
-    const sag = (i) => 4.9 + Math.sin(i * 0.55) * 0.55 + i * 0.42;
+    // Ammo box under the tray; the belt hangs from the tray into its lid
+    // instead of trailing off into the air.
+    g.fillStyle = metal(g, 5, 13, shade(rec, -0.06));
+    rr(g, 6.4, 6.6, 9.4, 6.4, 0.9); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.12)'; g.fillRect(6.8, 6.9, 8.6, 0.4);
+    g.fillStyle = 'rgba(8,9,12,0.45)'; g.fillRect(7.4, 9.4, 7.4, 0.6);
+    g.fillStyle = shade(rec, -0.3); rr(g, 13.2, 10.4, 1.8, 1.6, 0.3); g.fill();
+    const sag = (i) => 4.6 + Math.sin(i * 0.9) * 0.35 + i * 0.18;
     // link strip the cases are pinned to
     g.fillStyle = shade(rec, -0.34);
     g.beginPath();
     g.moveTo(5.0, sag(0));
-    for (let i = 0; i <= 6; i++) g.lineTo(5.0 + i * 1.75, sag(i));
-    for (let i = 6; i >= 0; i--) g.lineTo(5.0 + i * 1.75, sag(i) + 1.5);
+    for (let i = 0; i <= 4; i++) g.lineTo(5.0 + i * 1.75, sag(i));
+    for (let i = 4; i >= 0; i--) g.lineTo(5.0 + i * 1.75, sag(i) + 1.5);
     g.closePath(); g.fill();
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       const x = 5.4 + i * 1.75, y = sag(i) + 0.3;
       // case
       g.fillStyle = lingrad(g, x, 0, x + 1.3, 0, [
@@ -2056,10 +2069,8 @@ function paintMinigun(finish) {
     g.fillStyle = shade(rec, 0.1);
     rr(g, -12.2, 7.0, 4.6, 2.6, 0.6); g.fill();
 
-    // motor housing at the rear, with the power lead dropping to the pack
-    g.strokeStyle = shade(poly, -0.25); g.lineWidth = 1.6; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(-18.2, 2.6); g.quadraticCurveTo(-21.5, 8, -20.2, 14.6); g.stroke();
-    g.lineCap = 'butt';
+    // motor housing at the rear (the power lead that looped down off it into
+    // nothing was cut: it read as a stray hook behind the gun)
     g.fillStyle = metal(g, -8, 4, shade(rec, -0.14));
     rr(g, -20, -7.2, 5.6, 11.4, 2.0); g.fill();
     g.fillStyle = 'rgba(0,0,0,0.4)';
@@ -2447,16 +2458,18 @@ function paintFlamethrower(finish) {
     rr(g, -5.4, -6.6, 15, 6.2, 1); g.fill();
     energyGrip(g, poly, rec);
 
-    // fuel hose looping from tank to nozzle — the signature shape
-    g.strokeStyle = shade(poly, -0.1); g.lineWidth = 2.6; g.lineCap = 'round';
+    // Fuel line from the tank over the top of the body to the tube. It used
+    // to loop *under* the gun, straight through the trigger hand, so the hand
+    // read as holding a hose rather than a grip.
+    g.strokeStyle = shade(poly, -0.1); g.lineWidth = 2.0; g.lineCap = 'round';
     g.beginPath();
-    g.moveTo(-8, -1.2);
-    g.quadraticCurveTo(2, 7.4, 14, 1.2);
+    g.moveTo(-9, -8.2);
+    g.quadraticCurveTo(0, -12.2, 10, -8.4);
     g.stroke();
-    g.strokeStyle = 'rgba(255,255,255,0.1)'; g.lineWidth = 0.8;
+    g.strokeStyle = 'rgba(255,255,255,0.12)'; g.lineWidth = 0.6;
     g.beginPath();
-    g.moveTo(-8, -1.9);
-    g.quadraticCurveTo(2, 6.4, 14, 0.5);
+    g.moveTo(-9, -8.8);
+    g.quadraticCurveTo(0, -12.8, 10, -9.0);
     g.stroke();
     g.lineCap = 'butt';
 
@@ -2935,6 +2948,10 @@ export function buildWeapons() {
       // no magazine well and no reciprocating bolt on this frame — the
       // rifle def these inherit from would otherwise draw both floating.
       mag: null, bolt: null,
+      // The support hand used to inherit the rifle's handguard point, which on
+      // this frame is the middle of the coil housing: the hand closed on air
+      // above the vertical grip painted for it. It holds that grip now.
+      gripB: { x: 23.0, y: 7.6 },
       energy: true, fireMode: 'projectile', auto: false, rpm: 60, dmg: 120, spread: 0.001,
       projectile: { color: [150, 220, 255], radius: 4.2, speed: 2600, pierce: 4, life: 0.8 },
       charge: { time: 0.9, minMul: 0.5, maxMul: 1.5 },
@@ -3005,6 +3022,8 @@ export function buildWeapons() {
       // no magazine well and no reciprocating bolt on this frame — the
       // rifle def these inherit from would otherwise draw both floating.
       mag: null, bolt: null,
+      // on the foregrip under the tube, not the rifle's handguard point on top
+      gripB: { x: 18.6, y: -1.4 },
       energy: true, fireMode: 'beam', auto: true, rpm: 900, dmg: 6, spread: 0.05,
       beam: { color: [255, 130, 40], width: 6, range: 300, flame: true }, shotSound: 'flame',
       recoilKick: 0.4, recoilRot: 0.006, camKick: 0.3, camTrauma: 0.024,

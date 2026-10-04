@@ -157,6 +157,7 @@ export const EN = {
   'revive.sub': 'Watch a short video to get back up — stage and progress carry on.',
   'revive.watch': '▶ WATCH AD — CONTINUE',
   'revive.skip': 'NO THANKS',
+  'revive.menu': 'MAIN MENU',
   'end.redeploy': 'REDEPLOY',
   'end.menu': 'RETURN TO MENU',
   'end.share': 'SHARE RESULT',

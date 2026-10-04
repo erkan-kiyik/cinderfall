@@ -358,3 +358,80 @@
 html.no-backdrop-filter * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 /* the in-game panels stay see-through enough to read the fight behind them */
 html.no-backdrop-filter #hud .glass { background: rgba(10, 13, 18, 0.72) !important; }
+
+/* down screen: the two quiet choices side by side under the ad button */
+.revive-alt { display: flex; gap: var(--s3); justify-content: center; flex-wrap: wrap; margin-top: var(--s4); }
+.revive-alt .btn.quiet { margin: 0; width: auto; min-width: 150px; }
+
+/* =========================================================================
+   ACHIEVEMENTS — medal cabinet
+   ========================================================================= */
+.ach-summary {
+  display: flex; align-items: center; gap: var(--s5); flex-wrap: wrap;
+  padding: var(--s4) var(--s5); margin-bottom: var(--s5);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  border: 1px solid var(--line); border-radius: var(--r3);
+}
+.ach-sum-main { flex: 1 1 220px; min-width: 0; }
+.ach-sum-count { font-size: 13px; letter-spacing: 0.12em; color: var(--ink-dim); }
+.ach-sum-count b { font-size: 26px; color: var(--ink); letter-spacing: 0.02em; margin-right: 2px; }
+.ach-sum-label { font-size: 10px; letter-spacing: 0.2em; color: var(--ink-dim); margin: 2px 0 var(--s3); }
+.ach-sum-ready { color: #f0c050; }
+.ach-sum-track { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.07); overflow: hidden; }
+.ach-sum-fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #d39a62, #c3cdd8, #f0c050); transition: width 0.9s var(--spring); }
+.ach-sum-medals { display: flex; gap: var(--s4); }
+.ach-sum-medal { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ach-sum-medal canvas { width: 40px; height: 40px; }
+.ach-sum-medal span { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-2); font-weight: 700; }
+
+.achievement-tier-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  color: var(--tier-color); font-size: 12px; letter-spacing: 0.3em;
+}
+.achievement-tier-head .ach-tier-count { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-dim); }
+.achievements-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+
+.achievement-card {
+  display: flex; align-items: center; gap: var(--s4); text-align: left;
+  padding: var(--s3) var(--s4) var(--s3) var(--s3);
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r3);
+  box-shadow: var(--sh-1); opacity: 1; animation: none;
+}
+.achievement-card:hover { transform: none; }
+.ach-medal { flex: 0 0 auto; width: 58px; height: 58px; }
+.ach-body { flex: 1 1 auto; min-width: 0; }
+.ach-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.achievement-name { font-size: 12px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.achievement-desc { font-size: 10px; min-height: 0; margin: 3px 0 var(--s2); }
+.ach-reward {
+  display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto;
+  font-size: 10px; font-weight: 700; color: #e9c47a; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 999px; background: rgba(233,196,122,0.1);
+}
+.ach-reward .cur-icon { width: 12px; height: 12px; }
+.ach-prog-row { display: flex; align-items: center; gap: var(--s3); }
+.ach-prog-row .achievement-progress-track { flex: 1 1 auto; height: 5px; background: rgba(255,255,255,0.07); }
+.achievement-progress-fill { opacity: 1; transition: width 0.8s var(--spring); box-shadow: 0 0 8px var(--tier-glow); }
+.achievement-progress-label { flex: 0 0 auto; margin: 0; font-size: 9px; }
+.achievement-claim-btn { margin-top: var(--s3); padding: var(--s2) 0; font-size: 10px; }
+
+/* states */
+.ach-locked { opacity: 0.6; }
+.ach-locked .achievement-progress-fill, .ach-progress .achievement-progress-fill { background: var(--ink-dim); box-shadow: none; }
+.ach-progress .achievement-progress-fill { background: color-mix(in srgb, var(--tier-color) 70%, #555); }
+.ach-ready {
+  border-color: var(--tier-color);
+  box-shadow: 0 0 0 1px var(--tier-color), 0 0 22px -6px var(--tier-glow);
+  animation: ach-ready 2.2s ease-in-out infinite;
+}
+@keyframes ach-ready { 50% { box-shadow: 0 0 0 1px var(--tier-color), 0 0 30px -2px var(--tier-glow); } }
+.ach-ready .ach-medal { animation: ach-bob 2.2s ease-in-out infinite; }
+@keyframes ach-bob { 50% { transform: translateY(-3px) rotate(-3deg); } }
+.ach-claimed { background: linear-gradient(90deg, color-mix(in srgb, var(--tier-color) 9%, var(--surface-2)), var(--surface-2) 60%); }
+.ach-claimed .ach-reward { opacity: 0.45; text-decoration: line-through; }
+.ach-just { animation: ach-struck 0.7s var(--spring); }
+@keyframes ach-struck { 0% { transform: scale(0.97); } 40% { transform: scale(1.02); } 100% { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ach-ready, .ach-ready .ach-medal { animation: none; }
+}
