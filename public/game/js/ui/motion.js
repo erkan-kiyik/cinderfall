@@ -513,3 +513,49 @@ export function initUI(audio) {
     audio._uiWrapped = true;
   }
 }
+
+
+// ---- in-game HUD helpers ---------------------------------------------------
+// The HUD sits on top of the fight, so these are short, small and cheap: WAAPI
+// only (no forced reflow, safe to call many times a second), throttled per
+// element, and silent in reduced-motion mode.
+const lastKick = new WeakMap();
+export function kick(el, { scale = 1.16, ms = 240, gap = 0, y = 0, x = 0 } = {}) {
+  if (!el || !el.animate || level() === 0) return;
+  const now = performance.now();
+  if (gap && now - (lastKick.get(el) || 0) < gap) return;
+  lastKick.set(el, now);
+  el.animate([
+    { transform: `translate(${x}px, ${y}px) scale(${scale})` },
+    { transform: 'none' },
+  ], { duration: ms, easing: spring() });
+}
+
+export function flash(el, { from = 'brightness(2.4)', ms = 260 } = {}) {
+  if (!el || !el.animate || level() === 0) return;
+  el.animate([{ filter: from }, { filter: 'none' }], { duration: ms, easing: 'ease-out' });
+}
+
+export function shake(el, px = 4, ms = 300) {
+  if (!el || !el.animate || level() === 0) return;
+  el.animate([
+    { transform: 'translateX(0)' }, { transform: `translateX(${-px}px)`, offset: 0.2 },
+    { transform: `translateX(${px}px)`, offset: 0.45 }, { transform: `translateX(${-px * 0.5}px)`, offset: 0.7 },
+    { transform: 'translateX(0)' },
+  ], { duration: ms, easing: 'ease-out' });
+}
+
+// Touch controls: pointer handlers in touch.js stop propagation, so the
+// delegated menu handler never sees them. These listen in the capture phase
+// instead. Press = scale down + light tick; release springs back (CSS).
+export function bindTouchButtons() {
+  document.querySelectorAll('.tc-btn').forEach((b) => {
+    if (b._tcFx) return;
+    b._tcFx = true;
+    b.addEventListener('pointerdown', () => { b.classList.add('pressed'); haptic('tick'); }, true);
+    const up = () => b.classList.remove('pressed');
+    b.addEventListener('pointerup', up, true);
+    b.addEventListener('pointercancel', up, true);
+    b.addEventListener('lostpointercapture', up, true);
+  });
+}

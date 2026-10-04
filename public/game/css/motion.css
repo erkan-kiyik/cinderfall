@@ -294,6 +294,51 @@
 .ov-inner { animation: mo-ov-in 0.55s var(--spring); }
 @keyframes mo-ov-in { 0% { opacity: 0; transform: translateY(16px) scale(0.92); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
 
+/* =========================================================================
+   IN-GAME HUD — short, small, cheap
+   ========================================================================= */
+/* Touch buttons use the independent `scale` property so they never fight the
+   transform some of them (takedown) use for positioning. */
+.tc-btn { transition: opacity var(--dur-1) var(--ease), background var(--dur-1) var(--ease), scale 0.45s var(--spring), box-shadow 0.3s ease; }
+.tc-btn.pressed { scale: 0.84; transition-duration: var(--dur-1), var(--dur-1), 0.07s, 0.07s; background: rgba(217,179,108,0.34); box-shadow: 0 0 16px rgba(255, 190, 120, 0.4); opacity: 0.95; }
+
+/* reload button: a ring sweeps round it for the length of the reload */
+.tc-reload.busy::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%; pointer-events: none;
+  border: 2px solid transparent; border-top-color: var(--amber-bright); border-right-color: var(--amber-bright);
+  animation: mo-spin 0.8s linear infinite;
+}
+@keyframes mo-spin { to { transform: rotate(360deg); } }
+
+/* reload progress under the ammo counter */
+.reload-bar { height: 3px; margin: 3px 0 1px; border-radius: 3px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.reload-bar > i { display: block; height: 100%; width: 100%; background: var(--amber-bright); transform-origin: 0 50%; transform: scaleX(0); box-shadow: 0 0 6px rgba(255,92,70,0.6); }
+.reload-bar.hidden { display: none; }
+
+/* ammo state */
+#ammo-mag { display: inline-block; transition: color 0.2s ease; }
+#ammo-mag.low { color: #ffb347; }
+#ammo-mag.empty { color: #ff4a3d; animation: mo-ammo-empty 0.7s ease-in-out infinite; }
+@keyframes mo-ammo-empty { 50% { opacity: 0.35; } }
+#weapon-name, .slot, #lvl-label, #obj-count { display: inline-block; }
+.slot { transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), box-shadow 0.25s ease, background 0.25s ease; }
+
+/* banner: arrives with a little spring instead of only fading */
+@keyframes notify-pop {
+  0% { opacity: 0; max-height: 0; padding: 0 16px; transform: translateY(-10px) scale(0.9); }
+  10% { opacity: 1; max-height: 30px; padding: 7px 16px; transform: translateY(0) scale(1.04); }
+  16% { transform: none; }
+  78% { opacity: 1; max-height: 30px; padding: 7px 16px; transform: none; }
+  100% { opacity: 0; max-height: 30px; padding: 7px 16px; transform: translateY(-4px); }
+}
+
+/* hit marker: a touch snappier, with overshoot on kills */
+@keyframes hit-big {
+  0% { opacity: 1; transform: translate(-50%, -50%) rotate(45deg) scale(0.6); }
+  35% { opacity: 1; transform: translate(-50%, -50%) rotate(45deg) scale(1.75); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(45deg) scale(0.9); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .crate-box { animation: none; }
   #btn-deploy::after { animation: none; opacity: 0.4; }

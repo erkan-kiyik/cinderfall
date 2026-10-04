@@ -10,7 +10,7 @@ import { t, getLang, LANGS } from '../engine/i18n.js';
 import { quality, QUALITY_ORDER, PRESETS as QUALITY_PRESETS } from '../engine/quality.js';
 import { brightness, LEVELS as BRIGHTNESS_LEVELS } from '../engine/brightness.js';
 import { settings, SHAKE_LEVELS } from '../engine/settings.js';
-import { haptic, slidePill } from '../ui/motion.js';
+import { haptic, slidePill, kick, flash, shake, sparks, bindTouchButtons } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -38,7 +38,8 @@ export class Hud {
       pause: $('pause'), end: $('end'), revive: $('revive'), reviveCount: $('revive-count'),
       loadFill: $('load-fill'), loadLabel: $('load-label'),
       hpFill: $('hp-fill'), stFill: $('st-fill'), armorFill: $('armor-fill'),
-      armorRow: $('armor-row'),
+      armorRow: $('armor-row'), reloadBar: $('reload-bar'), reloadBarFill: $('reload-bar-fill'),
+      tcReload: $('tc-reload'), hudTr: document.querySelector('.hud-tr'),
       ammoMag: $('ammo-mag'), ammoRes: $('ammo-res'),
       weaponName: $('weapon-name'), reloadHint: $('reload-hint'),
       wpnMeter: $('wpn-meter'), wpnMeterFill: $('wpn-meter-fill'),
@@ -67,6 +68,8 @@ export class Hud {
     this._loreTimers = [];
     this._lastAmmo = null;
     this._lastDetState = null;
+    this._hp = null; this._armor = null; this._mag = null; this._cur = null; this._buzzAt = 0;
+    bindTouchButtons();
   }
 
   // Every binding goes through `on`, which tolerates a missing element.
@@ -436,18 +439,65 @@ export class Hud {
 
   update(player) {
     const hpFrac = Math.max(0, player.hp / player.maxHp);
+    // Vitals answer a change: a hit flashes the bar white and shakes the
+    // panel, a heal pulses it. Compared against the previous frame, so the
+    // work is two number checks per frame.
+    if (this._hp != null) {
+      if (hpFrac < this._hp - 0.004) {
+        flash(this.el.hpFill, { from: 'brightness(3)' });
+        shake(this.el.hpFill.parentElement.parentElement, 3, 260);
+      } else if (hpFrac > this._hp + 0.004) {
+        flash(this.el.hpFill, { from: 'brightness(1.9) saturate(1.6)', ms: 420 });
+        kick(this.el.hpFill.parentElement, { scale: 1.05, ms: 380 });
+      }
+    }
+    this._hp = hpFrac;
     this.el.hpFill.style.width = `${hpFrac * 100}%`;
     this.el.hpFill.classList.toggle('low', hpFrac < 0.35);
     this.el.stFill.style.width = `${player.stamina}%`;
 
     const hasArmor = player.maxArmor > 0;
     this.el.armorRow.classList.toggle('hidden', !hasArmor);
-    if (hasArmor) this.el.armorFill.style.width = `${(player.armor / player.maxArmor) * 100}%`;
+    if (hasArmor) {
+      const af = player.armor / player.maxArmor;
+      if (this._armor != null && af < this._armor - 0.004) flash(this.el.armorFill, { from: 'brightness(2.6)' });
+      else if (this._armor != null && af > this._armor + 0.004) flash(this.el.armorFill, { from: 'brightness(1.8)', ms: 380 });
+      this._armor = af;
+      this.el.armorFill.style.width = `${af * 100}%`;
+    }
 
     const cur = player.cur;
     const isGun = cur.wpn.kind === 'gun';
     const magTxt = isGun ? String(cur.mag) : '—';
     const resTxt = isGun ? String(cur.reserve) : '';
+    // swap: the weapon panel slides the new name in and the slot pill pops
+    if (this._cur != null && this._cur !== player.current) {
+      kick(this.el.hudTr, { scale: 1.04, ms: 320 });
+      kick(this.el.weaponName, { scale: 1, x: 14, ms: 360 });
+      const slotOf0 = { rifle: 0, pistol: 1, knife: 2, smg: 3 };
+      kick(this.el.slots[slotOf0[player.current]], { scale: 1.28, ms: 380 });
+      this._mag = null;
+    }
+    this._cur = player.current;
+    if (isGun) {
+      // a shot nudges the counter; a reload landing pops it
+      if (this._mag != null && cur.mag < this._mag) kick(this.el.ammoMag, { scale: 1.12, ms: 150, gap: 70 });
+      else if (this._mag != null && cur.mag > this._mag) kick(this.el.ammoMag, { scale: 1.32, ms: 420 });
+      this._mag = cur.mag;
+      const size = cur.wpn.magSize || 1;
+      const low = cur.mag > 0 && cur.mag <= Math.max(2, size * 0.25);
+      const empty = cur.mag === 0;
+      if (low !== this._ammoLow || empty !== this._ammoEmpty) {
+        this.el.ammoMag.classList.toggle('low', low);
+        this.el.ammoMag.classList.toggle('empty', empty);
+        if (empty && !this._ammoEmpty) shake(this.el.ammoMag.parentElement, 3, 260);
+        this._ammoLow = low; this._ammoEmpty = empty;
+      }
+    } else if (this._mag != null) {
+      this._mag = null;
+      this.el.ammoMag.classList.remove('low', 'empty');
+      this._ammoLow = this._ammoEmpty = false;
+    }
     if (this._lastAmmo !== magTxt + resTxt + cur.wpn.name) {
       this._lastAmmo = magTxt + resTxt + cur.wpn.name;
       this.el.ammoMag.textContent = magTxt;
@@ -459,6 +509,18 @@ export class Hud {
       !(player.reload || (isGun && cur.mag === 0 && cur.reserve > 0))
     );
     this.el.reloadHint.textContent = t(player.reload ? 'hud.reloading' : 'hud.reloadHint');
+    // reload progress: a thin bar under the counter and a ring on the button
+    const rl = player.reload;
+    if (this.el.reloadBar) {
+      if (rl) {
+        if (!this._reloading) { this._reloading = true; this.el.reloadBar.classList.remove('hidden'); this.el.tcReload && this.el.tcReload.classList.add('busy'); }
+        this.el.reloadBarFill.style.transform = `scaleX(${Math.min(1, rl.t / rl.T).toFixed(3)})`;
+      } else if (this._reloading) {
+        this._reloading = false;
+        this.el.reloadBar.classList.add('hidden');
+        this.el.tcReload && this.el.tcReload.classList.remove('busy');
+      }
+    }
 
     const slotOf = { rifle: 0, pistol: 1, knife: 2, smg: 3 };
     this.el.slots.forEach((s, i) => { if (s) s.classList.toggle('active', i === slotOf[player.current]); });
@@ -470,7 +532,9 @@ export class Hud {
   }
 
   setObjective(done, total) {
-    this.el.objCount.textContent = `${done} / ${total}`;
+    const txt = `${done} / ${total}`;
+    if (this.el.objCount.textContent !== txt) kick(this.el.objCount, { scale: 1.3, ms: 380 });
+    this.el.objCount.textContent = txt;
   }
 
   setStage(n) {
@@ -540,6 +604,12 @@ export class Hud {
   }
 
   setProgress(level, xpFrac) {
+    if (this._lvl != null && level > this._lvl) {
+      kick(this.el.lvlLabel, { scale: 1.6, ms: 700 });
+      sparks(this.el.lvlLabel, { count: 10, color: '#e5bd57', spread: 60, size: 5 });
+      haptic('success');
+    }
+    this._lvl = level;
     this.el.lvlLabel.textContent = `LVL ${level}`;
     this.el.xpFill.style.width = `${Math.round(xpFrac * 100)}%`;
   }
@@ -595,12 +665,15 @@ export class Hud {
       el.style.left = `${this._aimX}px`;
       el.style.top = `${this._aimY}px`;
     }
-    if (kind === 'kill') el.classList.add('kill');
-    else if (kind === 'headshot') el.classList.add('headshot');
+    if (kind === 'kill') { el.classList.add('kill'); haptic('soft'); }
+    else if (kind === 'headshot') { el.classList.add('headshot'); haptic('tick'); }
     el.classList.add('show');
   }
 
   damageFlash(hpFrac) {
+    // one buzz per burst of hits, not one per bullet
+    const now = performance.now();
+    if (now - this._buzzAt > 260) { this._buzzAt = now; haptic('warn'); }
     this.el.damage.style.opacity = String(0.55 + (1 - hpFrac) * 0.3);
     clearTimeout(this._dmgT);
     this._dmgT = setTimeout(() => {
