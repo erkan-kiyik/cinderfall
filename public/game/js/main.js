@@ -7,7 +7,7 @@ import { Input } from './engine/input.js';
 import { Camera } from './engine/camera.js';
 import { Particles, K, burstSparks, puffSmoke, columnSmoke, ventSmoke } from './engine/particles.js';
 import { audio } from './engine/audio.js';
-import { bindAudio } from './ui/motion.js';
+import { initUI } from './ui/motion.js';
 import { clamp, damp, lerp, rand, randSpread, makeNoise1D } from './engine/math.js';
 import { makeCanvas, drawSprite, setAssetScale } from './art/paint.js';
 import { quality } from './engine/quality.js';
@@ -314,7 +314,7 @@ async function boot() {
   game = new Game();
   if (DEMO) window.__game = game;  // scripted-screenshot / test hook only
 
-  bindAudio(audio);
+  initUI(audio);
   // meta screens (loadout / crates) + on-screen controls
   game.metaUI = new MetaUI({
     progression: game.progression,

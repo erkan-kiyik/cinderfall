@@ -10,7 +10,7 @@ import { t, getLang, LANGS } from '../engine/i18n.js';
 import { quality, QUALITY_ORDER, PRESETS as QUALITY_PRESETS } from '../engine/quality.js';
 import { brightness, LEVELS as BRIGHTNESS_LEVELS } from '../engine/brightness.js';
 import { settings, SHAKE_LEVELS } from '../engine/settings.js';
-import { haptic } from '../ui/motion.js';
+import { haptic, slidePill } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -309,6 +309,7 @@ export class Hud {
         b.classList.toggle('active', on);
         b.setAttribute('aria-checked', on ? 'true' : 'false');
       }
+      slidePill(host, { kind: 'fill', active: '.seg-opt.active' });
     }
     this.renderSettingsVolume();
     const entry = LANGS.find((l) => l.code === getLang());

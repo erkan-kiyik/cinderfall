@@ -74,8 +74,10 @@ export function haptic(kind = 'tap') {
 
 // ---- sound ----------------------------------------------------------------
 let audioRef = null;
+let lastPressAt = 0;
 export function bindAudio(a) { audioRef = a; }
 export function sfx(name, ...args) {
+  if (name === 'uiPress' || name === 'uiRelease' || name === 'uiWhoosh') lastPressAt = performance.now();
   if (audioRef && typeof audioRef[name] === 'function') audioRef[name](...args);
 }
 
@@ -352,13 +354,22 @@ export function sparks(el, { count = 12, color = '#ffd27a', spread = 90, size = 
 export function ripple(el, e) {
   if (!el || level() < 2) return;
   const r = el.getBoundingClientRect();
+  // The ripple lives in its own clipping wrapper so the button itself never
+  // needs overflow:hidden (which would clip glows and enlarged hit areas).
+  let wrap = el.querySelector(':scope > .mo-ripple-wrap');
+  if (!wrap) {
+    wrap = document.createElement('span');
+    wrap.className = 'mo-ripple-wrap';
+    wrap.setAttribute('aria-hidden', 'true');
+    el.appendChild(wrap);
+  }
   const d = document.createElement('span');
   d.className = 'mo-ripple';
   const size = Math.max(r.width, r.height) * 2.2;
   d.style.width = d.style.height = `${size}px`;
   d.style.left = `${(e ? e.clientX : r.left + r.width / 2) - r.left}px`;
   d.style.top = `${(e ? e.clientY : r.top + r.height / 2) - r.top}px`;
-  el.appendChild(d);
+  wrap.appendChild(d);
   const anim = d.animate([
     { transform: 'translate(-50%,-50%) scale(0)', opacity: 0.32 },
     { transform: 'translate(-50%,-50%) scale(1)', opacity: 0 },
@@ -382,4 +393,123 @@ export function countTo(el, from, to, dur = 520) {
     else { el.textContent = String(to); bump(el, to < from ? 0.9 : 1.18); }
   };
   requestAnimationFrame(step);
+}
+
+// ---- slidePill: the selection indicator travels instead of blinking -------
+// Used by every "one of N" control: trader categories (underline), stats
+// sub-tabs and settings segments (filled pill), the bottom tab bar (a lit
+// block). The indicator is one absolutely positioned element per host, moved
+// with transform/width on a spring; the host gets `.has-pill` so CSS can drop
+// the active option's own background.
+export function slidePill(host, { active = '.active', kind = 'underline', instant = false } = {}) {
+  if (!host) return;
+  let pill = host.querySelector(':scope > .mo-pill');
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.className = `mo-pill mo-pill-${kind}`;
+    pill.setAttribute('aria-hidden', 'true');
+    host.appendChild(pill);
+    host.classList.add('has-pill', `has-pill-${kind}`);
+    instant = true;
+    // Hosts are often built while hidden (closed overlay, inactive tab) and
+    // resize with orientation; re-measure whenever the host's box changes.
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(() => { if (host.offsetWidth) slidePill(host, { active, kind, instant: true }); }).observe(host);
+    }
+  }
+  const on = host.querySelector(`:scope > ${active}`);
+  if (!on || !on.offsetWidth) {
+    pill.style.opacity = '0';
+    // hidden host (inactive tab / closed overlay): try again once it shows
+    if (!host._pillRetry) {
+      host._pillRetry = true;
+      requestAnimationFrame(() => { host._pillRetry = false; if (host.offsetWidth) slidePill(host, { active, kind, instant: true }); });
+    }
+    return;
+  }
+  pill.style.opacity = '1';
+  if (instant || level() === 0) pill.style.transition = 'none';
+  pill.style.width = `${on.offsetWidth}px`;
+  if (kind !== 'underline') {
+    pill.style.height = `${on.offsetHeight}px`;
+    pill.style.top = `${on.offsetTop}px`;
+  }
+  pill.style.transform = `translateX(${on.offsetLeft}px)`;
+  if (instant || level() === 0) { void pill.offsetWidth; pill.style.transition = ''; }
+}
+
+// ---- global button feel ----------------------------------------------------
+// One delegated listener gives every button in the menus a response matched
+// to what it does, including buttons built later by JS. Elements that set up
+// their own behaviour (press(), hold()) and the in-game touch controls are
+// left alone.
+//
+//   primary      deep squash, ripple, firm buzz          (DEPLOY, CLAIM, DONE)
+//   secondary    squash, ripple                          (WATCH AD, SHARE)
+//   plain .btn   light squash, ripple                    (RESTART, COPY)
+//   quiet        barely moves, soft tick                 (CLOSE, NO THANKS)
+//   set-open     chevron springs forward                 (LANGUAGE ›)
+//   pill         squash and the icon does its own thing  (PROFILE, SETTINGS)
+//   seg / chip   small squash, selection sound           (settings, sub-tabs)
+const FAMILY = [
+  ['.btn.primary', { scale: 0.92, buzz: 'soft', ripple: true, snd: 'uiPress' }],
+  ['.btn.secondary', { scale: 0.94, buzz: 'tap', ripple: true, snd: 'uiPress' }],
+  ['.btn.quiet', { scale: 0.97, buzz: 'tick', ripple: false, snd: 'uiRelease' }],
+  ['.btn.set-open', { scale: 0.96, buzz: 'tap', ripple: true, snd: 'uiPress', cls: 'mo-nudge' }],
+  ['.btn', { scale: 0.95, buzz: 'tap', ripple: true, snd: 'uiPress' }],
+  ['.profile-pill', { scale: 0.9, buzz: 'tap', ripple: false, snd: 'uiPress', cls: 'mo-ico' }],
+  ['.token-pill', { scale: 0.9, buzz: 'tap', ripple: false, snd: 'coinGain' }],
+  ['.seg-opt', { scale: 0.9, buzz: 'tick', ripple: false, snd: 'uiRelease' }],
+  ['.store-cat-chip', { scale: 0.92, buzz: 'tick', ripple: false, snd: null }],
+];
+const SKIP = '.mo-press, .mo-hold, .tc-btn, .home-tab, .item-card, input, select';
+
+let pressed = null;
+function familyOf(el) {
+  for (const [sel, f] of FAMILY) if (el.matches(sel)) return f;
+  return null;
+}
+function onDown(e) {
+  if (e.button != null && e.button > 0) return;
+  const el = e.target.closest && e.target.closest('.btn, .profile-pill, .token-pill, .seg-opt, .store-cat-chip');
+  if (!el || el.matches(SKIP) || el.closest('#controls')) return;
+  const f = familyOf(el);
+  if (!f) return;
+  if (el.disabled || el.getAttribute('aria-disabled') === 'true') { deny(el); return; }
+  if (f.snd) sfx(f.snd);
+  haptic(f.buzz);
+  if (f.ripple) ripple(el, e);
+  if (f.cls) { el.classList.remove(f.cls); void el.offsetWidth; el.classList.add(f.cls); }
+  if (!canAnimate(el)) return;
+  if (pressed && pressed.anim) pressed.anim.cancel();
+  const anim = el.animate([{ transform: 'scale(1)' }, { transform: `scale(${f.scale})` }],
+    { duration: 110, easing: EASE_OUT, fill: 'forwards' });
+  pressed = { el, anim, scale: f.scale };
+}
+function onUp() {
+  if (!pressed) return;
+  const { el, anim, scale } = pressed;
+  pressed = null;
+  anim.cancel();
+  el.animate([{ transform: `scale(${scale})` }, { transform: 'scale(1)' }], { duration: 520, easing: spring() });
+}
+
+let bound = false;
+export function initUI(audio) {
+  if (audio) bindAudio(audio);
+  if (bound) return;
+  bound = true;
+  document.addEventListener('pointerdown', onDown, { passive: true });
+  document.addEventListener('pointerup', onUp, { passive: true });
+  document.addEventListener('pointercancel', onUp, { passive: true });
+  // a press that slides off the button releases it, as a native button does
+  document.addEventListener('pointerout', (e) => { if (pressed && e.target === pressed.el) onUp(); }, { passive: true });
+  // The click handlers behind these buttons mostly still call audio.ui();
+  // with the press sound already played that would double every tap. Swallow
+  // a ui() that lands right after a press instead of editing fifty call sites.
+  if (audio && audio.ui && !audio._uiWrapped) {
+    const orig = audio.ui.bind(audio);
+    audio.ui = () => { if (performance.now() - lastPressAt > 260) orig(); };
+    audio._uiWrapped = true;
+  }
 }

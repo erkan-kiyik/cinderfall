@@ -4,7 +4,7 @@
 
 import { renderCrate } from '../art/crate.js';
 import {
-  press, deny, tilt, coinsTo, sparks, haptic, sfx, countTo, spring, level,
+  press, deny, tilt, coinsTo, sparks, haptic, sfx, countTo, spring, level, slidePill,
 } from '../ui/motion.js';
 import {
   CATALOG, RARITY, CRATE_COST, DUPLICATE_REFUND, LOADOUT_SLOTS,
@@ -105,6 +105,7 @@ export class MetaUI {
     // markup, so they need an explicit repaint when the language changes.
     onLangChange(() => this.refresh());
     this.refresh();
+    slidePill(document.querySelector('.home-tabs'), { kind: 'tab' });
   }
 
   // ---- invite codes -------------------------------------------------------
@@ -307,12 +308,33 @@ export class MetaUI {
     btn.disabled = left <= 0;
   }
 
+  // Tab change: the lit block in the tab bar slides to the new tab, the tab's
+  // icon does its own little move, and the new panel comes in from the side
+  // the tab sits on — left tabs from the left, right tabs from the right — so
+  // the bar and the screen agree about where you went.
   switchTab(name) {
-    document.querySelectorAll('.home-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
-    document.querySelectorAll('.home-panel').forEach((s) => s.classList.toggle('active', s.id === `tab-${name}`));
+    const tabs = Array.from(document.querySelectorAll('.home-tab'));
+    const from = tabs.findIndex((b) => b.classList.contains('active'));
+    const to = tabs.findIndex((b) => b.dataset.tab === name);
+    const same = from === to;
+    tabs.forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.home-panel').forEach((s) => {
+      const on = s.id === `tab-${name}`;
+      s.classList.toggle('active', on);
+      if (on && !same) {
+        s.classList.remove('enter-l', 'enter-r');
+        void s.offsetWidth;
+        s.classList.add(to > from ? 'enter-r' : 'enter-l');
+      }
+    });
     if (name === 'crates') renderCrate($('crate-body-cv'), $('crate-lid'));
     syncRowFades();
-    if (this.audio) this.audio.ui();
+    slidePill(document.querySelector('.home-tabs'), { kind: 'tab' });
+    if (same) return;
+    const tab = tabs[to];
+    if (tab) { tab.classList.remove('mo-tab-go'); void tab.offsetWidth; tab.classList.add('mo-tab-go'); }
+    sfx('uiWhoosh');
+    haptic('tick');
   }
 
   renderScrap() {

@@ -16,6 +16,7 @@
 .mo-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; }
 .mo-coin { position: absolute; width: 18px; height: 18px; will-change: transform, opacity; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
 .mo-spark { position: absolute; border-radius: 50%; will-change: transform, opacity; box-shadow: 0 0 8px currentColor; }
+.mo-ripple-wrap { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; }
 .mo-ripple { position: absolute; border-radius: 50%; pointer-events: none; background: rgba(255, 240, 220, 0.5); }
 
 /* ---- press ---- */
@@ -165,15 +166,6 @@
 /* =========================================================================
    TRADER
    ========================================================================= */
-/* Category tabs: the underline slides to the chosen one and overshoots a
-   little, instead of blinking from one tab to the next. */
-#trader-cats { position: relative; }
-.mo-chip-pill {
-  position: absolute; left: 0; bottom: 0; height: 2px; width: 0; border-radius: 2px; z-index: 2; pointer-events: none;
-  background: var(--amber); box-shadow: 0 0 8px rgba(214, 69, 58, 0.6);
-  transition: transform 0.6s var(--spring), width 0.6s var(--spring);
-}
-#tab-trader #trader-cats.has-pill .store-cat-chip.active { box-shadow: none; }
 #tab-trader .store-cat-chip { transition: color 0.25s ease; }
 
 /* Buy button: dim instead of disabled when you are short, so a tap can still
@@ -199,8 +191,93 @@
 #trader-line.mo-say { animation: mo-say 0.55s var(--spring); transform-origin: 20% 100%; }
 @keyframes mo-say { 0% { opacity: 0; transform: scale(0.7) translateY(6px); } 100% { opacity: 1; transform: none; } }
 
+/* =========================================================================
+   SLIDING SELECTION (slidePill)
+   ========================================================================= */
+.has-pill { position: relative; }
+.has-pill > :not(.mo-pill) { position: relative; z-index: 1; }
+.mo-pill {
+  position: absolute; left: 0; top: 0; width: 0; z-index: 0; pointer-events: none;
+  transition: transform 0.6s var(--spring), width 0.6s var(--spring), opacity 0.2s ease;
+}
+.mo-pill-underline {
+  top: auto; bottom: 0; height: 2px; border-radius: 2px;
+  background: var(--amber); box-shadow: 0 0 8px rgba(214, 69, 58, 0.6);
+}
+#tab-trader .store-cats.has-pill-underline .store-cat-chip.active { box-shadow: none; }
+.mo-pill-fill { border-radius: var(--r1); background: var(--ink); box-shadow: var(--sh-1); }
+.store-cats.has-pill-fill > .mo-pill { background: var(--amber); border-radius: 999px; }
+.has-pill-fill > .active, .has-pill-fill > .active:hover { background: transparent !important; box-shadow: none !important; border-color: transparent !important; }
+.seg-opt, .store-cat-chip { transition: color 0.25s ease; }
+
+/* Bottom tab bar: the lit block (top rule + raised fill) travels. */
+.mo-pill-tab {
+  background: var(--surface-1);
+  box-shadow: inset 0 2px 0 var(--amber), 0 -6px 18px -10px rgba(214, 69, 58, 0.55);
+}
+.home-tabs.has-pill-tab .home-tab.active { background: transparent; border-top-color: transparent; }
+.home-tab { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.home-tab .tab-ico { display: inline-block; }
+.home-tab:active .tab-ico { transform: scale(0.82); transition: transform 0.1s ease-out; }
+
+/* Each tab icon has its own move when chosen. */
+.home-tab.mo-tab-go .tab-ico { animation: 0.7s var(--spring) both; }
+.home-tab.mo-tab-go[data-tab="play"] .tab-ico { animation-name: ico-nudge; }
+.home-tab.mo-tab-go[data-tab="loadout"] .tab-ico { animation-name: ico-spin; }
+.home-tab.mo-tab-go[data-tab="crates"] .tab-ico { animation-name: ico-hop; }
+.home-tab.mo-tab-go[data-tab="trader"] .tab-ico { animation-name: ico-hammer; transform-origin: 70% 80%; }
+.home-tab.mo-tab-go[data-tab="stats"] .tab-ico { animation-name: ico-ping; }
+.home-tab.mo-tab-go[data-tab="archives"] .tab-ico { animation-name: ico-flip; }
+@keyframes ico-nudge { 0% { transform: translateX(-5px) scale(0.8); } 100% { transform: none; } }
+@keyframes ico-spin { 0% { transform: rotate(-180deg) scale(0.6); } 100% { transform: none; } }
+@keyframes ico-hop { 0% { transform: translateY(0) scale(1.3, 0.7); } 40% { transform: translateY(-7px) scale(0.85, 1.15); } 100% { transform: none; } }
+@keyframes ico-hammer { 0% { transform: rotate(0); } 30% { transform: rotate(-40deg); } 55% { transform: rotate(18deg); } 100% { transform: none; } }
+@keyframes ico-ping { 0% { transform: scale(0.4); text-shadow: 0 0 0 rgba(214,69,58,0); } 50% { text-shadow: 0 0 12px rgba(214,69,58,0.9); } 100% { transform: none; text-shadow: none; } }
+@keyframes ico-flip { 0% { transform: perspective(80px) rotateY(-180deg); } 100% { transform: none; } }
+
+/* Panel enters from the side its tab sits on. */
+.home-panel.active.enter-r { animation: mo-enter-r 0.6s var(--spring); }
+.home-panel.active.enter-l { animation: mo-enter-l 0.6s var(--spring); }
+@keyframes mo-enter-r { 0% { opacity: 0; transform: translateX(34px); } 35% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+@keyframes mo-enter-l { 0% { opacity: 0; transform: translateX(-34px); } 35% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+
+/* =========================================================================
+   BUTTON FAMILIES
+   ========================================================================= */
+/* Touch screens keep :hover after a tap, so the old lift-on-hover left
+   buttons hovering. The press squash replaces it on touch devices. */
+@media (hover: none) {
+  .btn:hover, .btn.secondary:hover, .profile-pill:hover { transform: none; }
+}
+.btn, .profile-pill, .token-pill, .seg-opt, .store-cat-chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* DEPLOY breathes: the one button on the front screen that matters. */
+#btn-deploy::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 22px 2px rgba(255, 110, 80, 0.55);
+  opacity: 0; animation: mo-ember 3.4s ease-in-out infinite;
+}
+@keyframes mo-ember { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+
+/* set-open rows: the chevron springs forward when pressed */
+.set-open-chevron { display: inline-block; }
+.btn.set-open.mo-nudge .set-open-chevron { animation: mo-nudge 0.55s var(--spring); }
+@keyframes mo-nudge { 0% { transform: translateX(8px); } 100% { transform: none; } }
+
+/* header pills: settings cog turns, profile ring pulses */
+.profile-pill-ico { display: inline-block; }
+#btn-settings-pill.mo-ico .profile-pill-ico { animation: mo-cog 0.8s var(--spring); }
+#btn-profile.mo-ico .profile-pill-ico { animation: mo-ring 0.6s var(--spring); }
+@keyframes mo-cog { 0% { transform: rotate(-120deg); } 100% { transform: none; } }
+@keyframes mo-ring { 0% { transform: scale(0.5); } 100% { transform: none; } }
+
+/* Overlays (settings, profile, pause, inspect, daily…) spring open. */
+.ov-inner { animation: mo-ov-in 0.55s var(--spring); }
+@keyframes mo-ov-in { 0% { opacity: 0; transform: translateY(16px) scale(0.92); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+
 @media (prefers-reduced-motion: reduce) {
   .crate-box { animation: none; }
+  #btn-deploy::after { animation: none; opacity: 0.4; }
   #btn-watch-ad::before { animation: none; }
   .mo-tilt, .mo-tilt.tilting { transform: none; transition: none; }
 }

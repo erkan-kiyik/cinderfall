@@ -26,7 +26,7 @@ import { renderScrapIcon } from '../art/currency.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { t, onLangChange } from '../engine/i18n.js';
 import {
-  press, hold, deny, tilt, popIn, coinsTo, sparks, haptic, sfx, countTo, bump,
+  press, hold, deny, tilt, popIn, coinsTo, sparks, haptic, sfx, countTo, bump, slidePill,
 } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
@@ -179,22 +179,9 @@ export class TraderUI {
   // than jumping. Positioned from offsetLeft so it scrolls with the strip.
   movePill(instant = false) {
     const host = $('trader-cats');
-    if (!host) return;
-    let pill = host.querySelector('.mo-chip-pill');
-    if (!pill) {
-      pill = document.createElement('div');
-      pill.className = 'mo-chip-pill';
-      host.appendChild(pill);
-      host.classList.add('has-pill');
-      instant = true;
-    }
-    const active = host.querySelector('.store-cat-chip.active');
-    if (!active || !active.offsetWidth) { requestAnimationFrame(() => this.movePill(true)); return; }
-    if (instant) pill.style.transition = 'none';
-    pill.style.width = `${active.offsetWidth}px`;
-    pill.style.transform = `translateX(${active.offsetLeft}px)`;
-    if (instant) { void pill.offsetWidth; pill.style.transition = ''; }
-    if (active.scrollIntoView && !instant) active.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+    slidePill(host, { kind: 'underline', instant });
+    const active = host && host.querySelector('.store-cat-chip.active');
+    if (active && !instant && active.scrollIntoView) active.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
   }
 
   // Tapping CROW cycles through a few lines; each tap squashes the canvas.

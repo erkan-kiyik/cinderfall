@@ -5,6 +5,7 @@
 
 import { ACHIEVEMENTS, TIERS, achievementProgress, drawAchievementIcon } from './achievements.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
+import { slidePill, popIn } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -84,6 +85,11 @@ export class StatsUI {
     document.querySelectorAll('.stats-subtab').forEach((b) => b.classList.toggle('active', b.dataset.section === this.section));
     $('stats-overview').classList.toggle('hidden', this.section !== 'overview');
     $('stats-achievements').classList.toggle('hidden', this.section !== 'achievements');
+    const first = document.querySelector('.stats-subtab');
+    if (first) slidePill(first.parentElement, { kind: 'fill' });
+    const shown = $(this.section === 'overview' ? 'stats-grid' : 'stats-achievements');
+    if (shown && this._lastSection !== this.section) popIn(shown.children, { step: 30, rise: 10 });
+    this._lastSection = this.section;
   }
 
   renderOverview() {
