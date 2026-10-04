@@ -192,6 +192,25 @@
 @keyframes mo-say { 0% { opacity: 0; transform: scale(0.7) translateY(6px); } 100% { opacity: 1; transform: none; } }
 
 /* =========================================================================
+   LOADOUT
+   ========================================================================= */
+.item-card .mo-glare { z-index: 3; }
+/* Equipped card: a slow light sweep in its rarity colour, so the chosen item
+   is the one that is alive. */
+/* room above the row so a lifted / scaled card is not clipped by it */
+#tab-loadout .item-row { padding-top: 8px; margin-top: -8px; }
+#tab-loadout .item-card.equipped::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; z-index: 1; pointer-events: none;
+  background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--rarity, #fff) 28%, transparent), transparent);
+  transform: skewX(-18deg); animation: mo-sweep 5s ease-in-out infinite;
+}
+@keyframes mo-sweep { 0%, 55% { left: -60%; } 100% { left: 140%; } }
+#tab-loadout .item-card.equipped { box-shadow: 0 0 0 1px var(--rarity, var(--accent-line)), 0 0 18px -6px var(--rarity-glow, rgba(214,69,58,0.45)); }
+.loadout-slot-equipped { display: inline-block; }
+.item-card .item-info { transition: opacity var(--dur-1) var(--ease); }
+.inspect-card { will-change: transform; }
+
+/* =========================================================================
    SLIDING SELECTION (slidePill)
    ========================================================================= */
 .has-pill { position: relative; }
@@ -280,4 +299,5 @@
   #btn-deploy::after { animation: none; opacity: 0.4; }
   #btn-watch-ad::before { animation: none; }
   .mo-tilt, .mo-tilt.tilting { transform: none; transition: none; }
+  #tab-loadout .item-card.equipped::before { animation: none; opacity: 0; }
 }

@@ -4,7 +4,7 @@
 
 import { renderCrate } from '../art/crate.js';
 import {
-  press, deny, tilt, coinsTo, sparks, haptic, sfx, countTo, spring, level, slidePill,
+  press, deny, tilt, coinsTo, sparks, haptic, sfx, countTo, spring, level, slidePill, popIn, bump,
 } from '../ui/motion.js';
 import {
   CATALOG, RARITY, CRATE_COST, DUPLICATE_REFUND, LOADOUT_SLOTS,
@@ -83,6 +83,7 @@ export class MetaUI {
     press($('btn-open-crate'), { scale: 0.94, buzz: 'soft' });
     press($('btn-watch-ad'), { scale: 0.94 });
     press($('reveal-done'));
+    press($('btn-inspect-equip'), { scale: 0.92, buzz: 'soft' });
     tilt($('reveal-card'), { max: 12 });
     // The crate is a toy as well as a button target: poke it and it rattles.
     $('crate-box').addEventListener('click', () => this.pokeCrate());
@@ -95,10 +96,8 @@ export class MetaUI {
     $('btn-inspect-equip').addEventListener('click', () => {
       const ctx = this._inspect;
       if (!ctx || ctx.locked) return;
-      this.p.equip(ctx.slotKey, ctx.item ? ctx.item.id : null);
-      if (this.audio) (this.audio.equip ? this.audio.equip() : this.audio.ui());
       this.closeInspect();
-      this.renderLoadout();
+      this.equipItem(ctx.slotKey, ctx.item);
     });
     this.mountInvite();
     // Labels built here (slot heads, rarity chips, ad button) aren't static
@@ -330,11 +329,31 @@ export class MetaUI {
     if (name === 'crates') renderCrate($('crate-body-cv'), $('crate-lid'));
     syncRowFades();
     slidePill(document.querySelector('.home-tabs'), { kind: 'tab' });
+    if (!same) this.enterPanel(name);
     if (same) return;
     const tab = tabs[to];
     if (tab) { tab.classList.remove('mo-tab-go'); void tab.offsetWidth; tab.classList.add('mo-tab-go'); }
     sfx('uiWhoosh');
     haptic('tick');
+  }
+
+  // Each time a data-heavy tab is opened its cards arrive one after another
+  // rather than all at once. Only the first screenful is staggered.
+  enterPanel(name) {
+    if (name === 'loadout') {
+      const slots = document.querySelectorAll('#loadout-slots .loadout-slot');
+      popIn(slots, { step: 70, rise: 18, from: 0.94 });
+      slots.forEach((box, i) => {
+        const cards = Array.from(box.querySelectorAll('.item-card')).slice(0, 7);
+        popIn(cards, { step: 36, rise: 10, from: 0.8 });
+        // the next slot's cards start after the slot itself has landed
+        cards.forEach((c) => c.getAnimations && c.getAnimations().forEach((a) => {
+          const t0 = a.effect.getTiming(); a.effect.updateTiming({ delay: (t0.delay || 0) + i * 70 + 90 });
+        }));
+      });
+    } else if (name === 'crates') {
+      popIn(document.querySelectorAll('#collection-grid .item-card'), { step: 22, rise: 10, from: 0.8 });
+    }
   }
 
   renderScrap() {
@@ -380,12 +399,14 @@ export class MetaUI {
       const equippedId = this.p.equipped(slot.key);
       const box = document.createElement('div');
       box.className = 'loadout-slot';
+      box.dataset.slot = slot.key;
 
       const head = document.createElement('div');
       head.className = 'loadout-slot-head';
       const eqItem = equippedId && itemById(equippedId);
       head.innerHTML = `<span class="loadout-slot-label">${t(slot.labelKey)}</span>` +
         `<span class="loadout-slot-equipped">${eqItem ? this.itemLabel(eqItem) : t('item.stock')}</span>`;
+      head.querySelector('.loadout-slot-equipped').dataset.name = eqItem ? this.itemLabel(eqItem) : '';
       box.appendChild(head);
 
       const row = document.createElement('div');
@@ -411,6 +432,7 @@ export class MetaUI {
     const rarity = item ? RARITY[item.rarity] : null;
     card.className = 'item-card' + (item ? '' : ' stock')
       + (equipped ? ' equipped' : '') + (locked ? ' locked' : '');
+    card.dataset.id = item ? item.id : 'stock';
     if (rarity) {
       card.style.setProperty('--rarity', rarity.color);
       card.style.setProperty('--rarity-glow', rarity.glow);
@@ -449,6 +471,7 @@ export class MetaUI {
       info.type = 'button';
       info.textContent = 'i';
       info.setAttribute('aria-label', t('inspect.title'));
+      press(info, { scale: 0.8, buzz: 'tick' });
       info.addEventListener('click', (e) => {
         e.stopPropagation();          // don't equip on the way past
         this.openInspect(item, slotKey, locked);
@@ -460,13 +483,61 @@ export class MetaUI {
     requestAnimationFrame(() => this.previewItem(item, cv));
 
     if (!locked) {
-      card.addEventListener('click', () => {
-        this.p.equip(slotKey, item ? item.id : null);
-        if (this.audio) this.audio.equip ? this.audio.equip() : this.audio.ui();
-        this.renderLoadout();
-      });
+      const glare = document.createElement('span');
+      glare.className = 'mo-glare';
+      card.appendChild(glare);
+      tilt(card, { max: 10 });
+      card.addEventListener('click', () => this.equipItem(slotKey, item));
     }
     return card;
+  }
+
+  // Equipping updates the row in place instead of rebuilding the whole
+  // screen, so the change can be seen happening: the old card lets go, the new
+  // one is stamped with a spring and a burst in its rarity colour, and the
+  // slot's name label swaps with a flip. A full rebuild threw all of that away
+  // on the same frame it would have started.
+  equipItem(slotKey, item) {
+    const box = document.querySelector(`.loadout-slot[data-slot="${slotKey}"]`);
+    const id = item ? item.id : 'stock';
+    const next = box && Array.from(box.querySelectorAll('.item-card')).find((c) => c.dataset.id === id);
+    if (!next) {
+      this.p.equip(slotKey, item ? item.id : null);
+      this.renderLoadout();
+      return;
+    }
+    const prev = box.querySelector('.item-card.equipped');
+    if (prev === next) { bump(next, 1.06); sfx('uiBoing'); haptic('tick'); return; }
+    this.p.equip(slotKey, item ? item.id : null);
+    if (prev) prev.classList.remove('equipped');
+    next.classList.add('equipped');
+
+    // label flip
+    const lab = box.querySelector('.loadout-slot-equipped');
+    if (lab) {
+      lab.textContent = item ? this.itemLabel(item) : t('item.stock');
+      if (level() > 0 && lab.animate) {
+        lab.animate([
+          { transform: 'translateY(-8px)', opacity: 0 },
+          { transform: 'none', opacity: 1 },
+        ], { duration: 520, easing: spring() });
+      }
+    }
+    // stamp
+    if (level() > 0 && next.animate) {
+      next.animate([
+        { transform: 'scale(0.86)' }, { transform: 'scale(1.1)', offset: 0.4 }, { transform: 'scale(1)' },
+      ], { duration: 560, easing: 'ease-out' });
+      if (prev && prev.animate) prev.animate([{ transform: 'scale(1.04)' }, { transform: 'scale(1)' }], { duration: 360, easing: spring() });
+    }
+    const col = getComputedStyle(next).getPropertyValue('--rarity').trim() || '#ffd27a';
+    sparks(next, { color: col, count: item ? 12 : 6, spread: 70, size: 5 });
+    sfx(item ? 'uiSpend' : 'uiRelease');
+    if (this.audio && this.audio.equip) this.audio.equip();
+    haptic(item ? 'soft' : 'tick');
+    this.renderDeployStatus();
+    // keep the chosen card in view in a long row
+    if (next.scrollIntoView) next.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
   }
 
   // ---- weapon inspect sheet ----------------------------------------
@@ -533,15 +604,36 @@ export class MetaUI {
     eqBtn.disabled = !!locked || !!isEquipped;
 
     $('inspect').classList.remove('hidden');
+    // The sheet springs up from the card; rows arrive in turn and each bar
+    // fills a beat after the one above it, with its number counting up.
+    if (level() > 0 && card.animate) {
+      card.animate([
+        { transform: 'translateY(40px) scale(0.9)', opacity: 0 },
+        { transform: 'none', opacity: 1 },
+      ], { duration: 620, easing: spring() });
+      popIn(body.children, { step: 45, rise: 10, from: 0.96 });
+    }
     // preview needs a laid-out canvas, and the bars animate from zero — both
     // have to wait a frame after the sheet becomes visible
     requestAnimationFrame(() => {
       this.previewItem(item, $('inspect-preview'));
-      body.querySelectorAll('.stat-fill').forEach((el) => {
+      const prev = $('inspect-preview');
+      if (prev && prev.animate && level() > 0) {
+        prev.animate([{ transform: 'scale(0.6) rotate(-6deg)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+          { duration: 700, delay: 80, easing: spring(), fill: 'backwards' });
+      }
+      // whole-number stats count up from zero as their bar fills
+      body.querySelectorAll('.stat-value').forEach((el, i) => {
+        const txt = el.textContent.trim();
+        if (/^\d{1,5}$/.test(txt) && level() > 0) setTimeout(() => countTo(el, 0, Number(txt), 520), 120 + i * 70);
+      });
+      body.querySelectorAll('.stat-fill').forEach((el, i) => {
+        el.style.transitionDelay = `${120 + i * 70}ms`;
         el.style.width = `${(parseFloat(el.dataset.fill) * 100).toFixed(1)}%`;
       });
     });
-    if (this.audio) this.audio.ui();
+    if (this.audio && this.audio.uiWhoosh) this.audio.uiWhoosh();
+    haptic('tick');
   }
 
   closeInspect() {
