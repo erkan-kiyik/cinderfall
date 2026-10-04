@@ -612,10 +612,15 @@ function paintLaserSmg(finish) {
       rr(g, x, -9.4, 3, 2.4, 0.6); g.fill();
       emissive(x + 0.4, -9, 2.2, 1.6, 0.35 + i * 0.16);
     }
-    // muzzle aperture
+    // Emitter barrel: a short shroud with cooling slots and a lit aperture.
+    // Without it the housing just stopped — the gun had no front.
+    g.fillStyle = metal(g, -7.6, -3.6, shade(rec, -0.06));
+    rr(g, 18.4, -7.6, 7.2, 3.8, 1.0); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    for (let i = 0; i < 3; i++) g.fillRect(19.4 + i * 1.8, -7.0, 0.8, 2.6);
     g.fillStyle = shade(rec, 0.14);
-    rr(g, 19, -8.2, 3.4, 4.6, 1); g.fill();
-    emissive(20.6, -7.6, 1.6, 3.4, 0.7);
+    rr(g, 25.2, -8.2, 2.2, 5.0, 0.8); g.fill();
+    emissive(25.9, -7.4, 0.9, 3.4, 0.75);
 
     // side battery, clipped flat to the housing flank (not a hanging mag)
     g.fillStyle = polymer(g, -3, 2, poly);
@@ -985,12 +990,22 @@ function paintEnergyPistol(variant, finish) {
     g0 = g;
     g.translate(8, 13);
 
-    // grip — raked back on the raygun, near-vertical on the quantum
+    // grip — raked back on the raygun, near-vertical on the quantum. The ray
+    // gun's was a thin straight wedge; it is a rounded retro grip with a
+    // pommel now, so the hand has something to close on.
     const rake = variant === 'bell' ? 2.2 : 0.6;
     g.fillStyle = polymer(g, -1, 6, grip);
     g.beginPath();
-    g.moveTo(-1.4, -1); g.lineTo(2.2, -1);
-    g.lineTo(1.4 - rake * 0.3, 6.6); g.lineTo(-2.6 - rake, 6.6);
+    if (variant === 'bell') {
+      g.moveTo(-1.8, -1); g.lineTo(2.4, -1);
+      g.quadraticCurveTo(2.0, 3.0, 0.8, 6.0);
+      g.quadraticCurveTo(-0.6, 7.4, -3.4, 7.0);
+      g.quadraticCurveTo(-4.6, 6.6, -4.0, 5.2);
+      g.quadraticCurveTo(-2.6, 2.6, -1.8, -1);
+    } else {
+      g.moveTo(-1.4, -1); g.lineTo(2.2, -1);
+      g.lineTo(1.4 - rake * 0.3, 6.6); g.lineTo(-2.6 - rake, 6.6);
+    }
     g.closePath(); g.fill();
     g.strokeStyle = 'rgba(0,0,0,0.32)'; g.lineWidth = 0.35;
     for (let i = 0; i < 3; i++) {
@@ -1007,8 +1022,14 @@ function paintEnergyPistol(variant, finish) {
       // of the gun rather than a glass bulb sitting on it. Now: a housing
       // collar, glass with a defined rim, the plasma inside it, and a bloom
       // that stays well inside the silhouette.
-      g.fillStyle = metal(g, -5.4, -3.6, shade(frame, -0.12));
-      rr(g, -3.4, -5.6, 4.2, 2.2, 0.5); g.fill();        // collar onto the frame
+      // cradle: two prongs off the frame that hold the bulb, instead of a thin
+      // collar the bulb floated above
+      g.fillStyle = metal(g, -9, -3.6, shade(frame, -0.12));
+      g.beginPath();
+      g.moveTo(-5.4, -5.4); g.lineTo(-4.8, -9.2); g.lineTo(-3.6, -9.2); g.lineTo(-3.4, -5.4); g.closePath(); g.fill();
+      g.beginPath();
+      g.moveTo(0.6, -5.4); g.lineTo(0.8, -9.2); g.lineTo(2.0, -9.2); g.lineTo(2.6, -5.4); g.closePath(); g.fill();
+      rr(g, -4.6, -6.2, 6.4, 1.4, 0.5); g.fill();
       g.save();
       g.globalCompositeOperation = 'lighter';
       const halo = g.createRadialGradient(-1.4, -7.8, 1.2, -1.4, -7.8, 5.4);
@@ -1357,8 +1378,22 @@ function chassisBarrel(g, kind, rec, core) {
   } else if (kind === 'lens') {
     // ---- GRAVITY: a heavy focusing ring on a short stem. A big open circle
     // is the one outline no other weapon here has.
-    g.fillStyle = metal(g, -6.4, -3.4, shade(rec, -0.08));
-    g.fillRect(20, -6.4, 12, 3.2);
+    // Tapered neck with a collar, so the ring is carried by the gun rather
+    // than balanced on a 3-unit stick (it read as a lollipop).
+    g.fillStyle = metal(g, -8, -1.6, shade(rec, -0.06));
+    g.beginPath();
+    g.moveTo(20, -8.0); g.lineTo(31.6, -6.6); g.lineTo(31.6, -3.0); g.lineTo(20, -1.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.14)';
+    g.beginPath(); g.moveTo(20, -8.0); g.lineTo(31.6, -6.6); g.lineTo(31.6, -6.0); g.lineTo(20, -7.3); g.closePath(); g.fill();
+    for (const x of [22.6, 26.4]) {
+      g.fillStyle = shade(rec, -0.3); rr(g, x, -7.9, 1.6, 6.2, 0.5); g.fill();
+      g.save(); g.globalCompositeOperation = 'lighter';
+      g.fillStyle = `rgba(${cr},${cg},${cb},0.45)`; g.fillRect(x + 0.45, -7.2, 0.7, 4.8);
+      g.restore();
+    }
+    g.fillStyle = metal(g, -9, -0.8, shade(rec, 0.1));
+    rr(g, 29.8, -8.2, 2.6, 6.8, 0.8); g.fill();            // collar at the ring
     g.fillStyle = metal(g, -13, 4, shade(rec, 0.06));
     g.beginPath(); g.arc(39, -4.8, 8.2, 0, Math.PI * 2); g.fill();
     g.save();
@@ -2437,71 +2472,99 @@ function paintRailgun(finish) {
 function paintFlamethrower(finish) {
   const rec = (finish && finish.rec) || '#3a1f12';
   const poly = (finish && finish.poly) || '#2a150c';
+  // Redrawn from scratch. The old one was a fat ribbed blob of a tank, a hose
+  // arcing over the top like a loose handle, and a plank stuck under the tube
+  // for the support hand — parts placed near each other rather than built
+  // into one weapon. This is one assembly, front to back:
+  //   fuel canister (horizontal, banded) -> receiver with the trigger grip ->
+  //   barrel under a perforated heat shield with a vertical foregrip ->
+  //   cone nozzle with the igniter slung beneath it.
+  // Hand anchors are unchanged in spirit: trigger grip at 0,0, support hand
+  // on the vertical foregrip (gripB in the def).
   return makeSprite(70, 24, 21, 14, (g) => {
     g.translate(21, 14);
+    const steel = shade(rec, 0.12);
 
-    // fuel tank where the stock would be — fat, ribbed, with a pressure gauge
-    g.fillStyle = metal(g, -9, 3, shade(rec, 0.05));
-    rr(g, -19, -9, 14, 11.4, 5); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.8;
-    for (let i = 0; i < 3; i++) {
-      g.beginPath(); g.moveTo(-16.6 + i * 4, -8.6); g.lineTo(-16.6 + i * 4, 2); g.stroke();
+    // ---- fuel canister: a horizontal cylinder where a stock would be ----
+    g.fillStyle = lingrad(g, 0, -9, 0, -0.6, [
+      [0, shade(rec, 0.32)], [0.35, shade(rec, 0.08)], [1, shade(rec, -0.36)],
+    ]);
+    rr(g, -20, -9, 15.2, 8.4, 4.2); g.fill();
+    // end caps
+    g.fillStyle = shade(rec, -0.28);
+    rr(g, -20.4, -8.2, 2.2, 6.8, 1.1); g.fill();
+    // two steel bands
+    for (const x of [-15.6, -9.6]) {
+      g.fillStyle = lingrad(g, 0, -9.2, 0, -0.4, [[0, '#9aa3ad'], [0.5, '#5c636b'], [1, '#2c3035']]);
+      g.fillRect(x, -9.2, 1.5, 8.8);
     }
-    g.fillStyle = '#c9d2dc';
-    g.beginPath(); g.arc(-12, -4.6, 2.2, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = '#1a1b1e'; g.lineWidth = 0.5; g.stroke();
-    g.strokeStyle = '#c0392b'; g.lineWidth = 0.7;
-    g.beginPath(); g.moveTo(-12, -4.6); g.lineTo(-10.6, -5.8); g.stroke();
+    // pressure dial on the top of the canister
+    g.fillStyle = '#2c3035'; rr(g, -13.4, -10.6, 2.4, 1.8, 0.4); g.fill();
+    g.fillStyle = '#d6dde5';
+    g.beginPath(); g.arc(-12.2, -11.4, 1.7, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#1a1b1e'; g.lineWidth = 0.45; g.stroke();
+    g.strokeStyle = '#c0392b'; g.lineWidth = 0.5;
+    g.beginPath(); g.moveTo(-12.2, -11.4); g.lineTo(-11.2, -12.2); g.stroke();
+    // canister highlight
+    g.fillStyle = 'rgba(255,240,225,0.16)';
+    g.fillRect(-18, -8.2, 12, 0.7);
 
-    // body + grip
-    g.fillStyle = metal(g, -6, 3, rec);
-    rr(g, -5.4, -6.6, 15, 6.2, 1); g.fill();
+    // ---- receiver ----
+    g.fillStyle = metal(g, -8, -1.4, rec);
+    rr(g, -5.6, -8.4, 15.4, 7.0, 1.2); g.fill();
+    g.fillStyle = 'rgba(255,240,225,0.12)';
+    g.fillRect(-5.2, -8.2, 14.6, 0.6);
+    // coupling between canister and receiver
+    g.fillStyle = steel;
+    rr(g, -6.6, -7.0, 2.4, 4.4, 0.6); g.fill();
+    // ignition switch on the flank
+    g.fillStyle = 'rgba(8,6,4,0.55)'; rr(g, 3.0, -6.6, 4.2, 2.4, 0.6); g.fill();
+    g.fillStyle = '#ffb14a'; g.fillRect(3.6, -6.0, 1.2, 1.2);
     energyGrip(g, poly, rec);
 
-    // Fuel line from the tank over the top of the body to the tube. It used
-    // to loop *under* the gun, straight through the trigger hand, so the hand
-    // read as holding a hose rather than a grip.
-    g.strokeStyle = shade(poly, -0.1); g.lineWidth = 2.0; g.lineCap = 'round';
-    g.beginPath();
-    g.moveTo(-9, -8.2);
-    g.quadraticCurveTo(0, -12.2, 10, -8.4);
-    g.stroke();
-    g.strokeStyle = 'rgba(255,255,255,0.12)'; g.lineWidth = 0.6;
-    g.beginPath();
-    g.moveTo(-9, -8.8);
-    g.quadraticCurveTo(0, -12.8, 10, -9.0);
-    g.stroke();
-    g.lineCap = 'butt';
+    // ---- barrel under a perforated heat shield ----
+    g.fillStyle = metal(g, -8.2, -3.0, shade(rec, -0.2));
+    rr(g, 9.4, -7.2, 21.6, 3.6, 1.0); g.fill();           // inner tube (shows at the ends)
+    g.fillStyle = lingrad(g, 0, -9.2, 0, -2.2, [
+      [0, shade(rec, 0.28)], [0.5, shade(rec, 0.02)], [1, shade(rec, -0.34)],
+    ]);
+    rr(g, 10.6, -9.2, 17.6, 6.9, 1.6); g.fill();
+    g.fillStyle = 'rgba(10,6,3,0.7)';
+    for (let i = 0; i < 6; i++) { rr(g, 12.2 + i * 2.6, -7.4, 1.5, 3.2, 0.7); g.fill(); }
+    g.fillStyle = 'rgba(255,240,225,0.14)';
+    g.fillRect(11.2, -9.0, 16.4, 0.6);
 
-    // barrel tube + wide nozzle
-    g.fillStyle = metal(g, -8.4, -3.6, shade(rec, 0.1));
-    // Starts at 8.2, not 9.6: butted exactly against the body's rounded corner
-    // the two cylinders met along a hairline and showed daylight between them.
-    rr(g, 8.2, -8, 23.4, 4.6, 1.2); g.fill();
-    g.fillStyle = metal(g, -9.6, -2.4, shade(rec, -0.15));
+    // ---- vertical foregrip under the shield (support hand) ----
+    g.fillStyle = polymer(g, -2, 6, shade(poly, 0.04));
+    rr(g, 17.2, -2.8, 3.6, 8.0, 1.4); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.32)'; g.lineWidth = 0.4;
+    for (let i = 0; i < 3; i++) {
+      g.beginPath(); g.moveTo(17.5, 0.2 + i * 1.6); g.lineTo(20.5, 0.2 + i * 1.6); g.stroke();
+    }
+
+    // ---- nozzle cone + igniter ----
+    g.fillStyle = metal(g, -10, -1.4, steel);
     g.beginPath();
-    g.moveTo(31.6, -8.6); g.lineTo(38.6, -10.2); g.lineTo(38.6, -1); g.lineTo(31.6, -2.6);
+    g.moveTo(30.8, -7.6); g.lineTo(37.6, -9.4); g.lineTo(37.6, -1.2); g.lineTo(30.8, -2.8);
     g.closePath(); g.fill();
-    // pilot flame at the nozzle lip
+    g.fillStyle = '#0d0a08';
+    g.beginPath(); g.ellipse(37.4, -5.3, 0.9, 3.6, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = shade(rec, -0.22);
+    rr(g, 31.4, -2.6, 4.4, 2.6, 0.6); g.fill();            // igniter housing
+    g.fillStyle = '#7a8088'; g.fillRect(35.6, -1.8, 1.8, 0.8);
+    // pilot flame, kept small and at the lip
     g.save();
     g.globalCompositeOperation = 'lighter';
-    const pilot = radgrad(g, 39.4, -5.6, 4.6, [
-      [0, 'rgba(255,230,150,0.95)'],
-      [0.4, 'rgba(255,150,50,0.55)'],
-      [1, 'rgba(255,90,20,0)'],
+    const pilot = radgrad(g, 38.2, -1.4, 2.6, [
+      [0, 'rgba(255,230,160,0.95)'], [0.45, 'rgba(255,150,50,0.5)'], [1, 'rgba(255,90,20,0)'],
     ]);
     g.fillStyle = pilot;
-    g.beginPath(); g.arc(39.4, -5.6, 4.6, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(38.2, -1.4, 2.6, 0, Math.PI * 2); g.fill();
     g.restore();
-
-    // support-hand foregrip on the tube
-    g.fillStyle = polymer(g, -3.4, 1.6, poly);
-    rr(g, 14, -3.2, 9.5, 3.2, 1.1); g.fill();
 
     g.save();
     g.globalCompositeOperation = 'source-atop';
-    scratches(g, -18, -10, 56, 14, rng, { n: 22, color: 'rgba(240,200,160,0.16)' });
-    grunge(g, -19, -10, 58, 15, rng, { n: 50, dark: 0.14, light: 0.03 });
+    grunge(g, -20, -12, 58, 18, rng, { n: 26, dark: 0.1, light: 0.02 });
     g.restore();
     formLight(g, -21, -14, 70, 24);
   });
@@ -2989,7 +3052,7 @@ export function buildWeapons() {
       body: paintLaserSmg({ rec: '#3a1420', poly: '#280d16', core: [255, 70, 90] }),
       // its own frame: no bottom magazine, no reciprocating bolt
       mag: null, bolt: null,
-      muzzle: { x: 22.4, y: -5.9 }, gripB: { x: 11, y: 1.4 },
+      muzzle: { x: 27.4, y: -5.7 }, gripB: { x: 11, y: 1.4 },   // muzzle at the new emitter's aperture
       energy: true, fireMode: 'beam', auto: true, rpm: 1100, dmg: 9, spread: 0.02,
       beam: { color: [255, 70, 90], width: 2.2 }, heatPerShot: 0.03, heatCool: 0.6,
       recoilKick: 0.7, recoilRot: 0.012, camKick: 0.4, camTrauma: 0.024, shotSound: 'laser',
@@ -3023,7 +3086,8 @@ export function buildWeapons() {
       // rifle def these inherit from would otherwise draw both floating.
       mag: null, bolt: null,
       // on the foregrip under the tube, not the rifle's handguard point on top
-      gripB: { x: 18.6, y: -1.4 },
+      gripB: { x: 19.0, y: 0.6 },
+      muzzle: { x: 38.2, y: -5.3 },   // the nozzle mouth, not the rifle's 40
       energy: true, fireMode: 'beam', auto: true, rpm: 900, dmg: 6, spread: 0.05,
       beam: { color: [255, 130, 40], width: 6, range: 300, flame: true }, shotSound: 'flame',
       recoilKick: 0.4, recoilRot: 0.006, camKick: 0.3, camTrauma: 0.024,
