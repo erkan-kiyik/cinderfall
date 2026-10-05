@@ -324,7 +324,7 @@ async function boot() {
   hud.setLoad(0.9, 'CALIBRATING OPTICS…');
   await raf();
   game = new Game();
-  if (DEMO) window.__game = game;  // scripted-screenshot / test hook only
+  if (DEMO) { window.__game = game; window.__hud = hud; }  // scripted-screenshot / test hook only
 
   initUI(audio);
   // meta screens (loadout / crates) + on-screen controls

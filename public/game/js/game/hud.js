@@ -10,7 +10,7 @@ import { t, getLang, LANGS } from '../engine/i18n.js';
 import { quality, QUALITY_ORDER, PRESETS as QUALITY_PRESETS } from '../engine/quality.js';
 import { brightness, LEVELS as BRIGHTNESS_LEVELS } from '../engine/brightness.js';
 import { settings, SHAKE_LEVELS } from '../engine/settings.js';
-import { haptic, slidePill, kick, flash, shake, sparks, bindTouchButtons } from '../ui/motion.js';
+import { haptic, slidePill, kick, flash, shake, sparks, bindTouchButtons, level, EASE_OUT } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -31,6 +31,8 @@ const DET_KEY = {
   detected: 'det.detected', combat: 'det.combat',
 };
 
+const DET_ORDER = ['hidden', 'suspicious', 'searching', 'detected', 'combat'];
+
 export class Hud {
   constructor() {
     this.el = {
@@ -46,7 +48,7 @@ export class Hud {
       slots: [$('slot-1'), $('slot-2'), $('slot-3'), $('slot-4')],
       slotIcons: [$('slot-1-icon'), $('slot-2-icon'), $('slot-3-icon'), $('slot-4-icon')],
       objCount: $('obj-count'), stageLabel: $('stage-label'),
-      hitmark: $('hitmark'), damage: $('damage-flash'),
+      hitmark: $('hitmark'), damage: $('damage-flash'), vignette: $('vignette'),
       stealthPrompt: $('stealth-prompt'),
       dmgLeft: $('dmg-left'), dmgRight: $('dmg-right'), dmgOmni: $('dmg-omni'),
       detBar: $('det-bar'), detFill: $('det-fill'), detLabel: $('det-label'),
@@ -65,6 +67,7 @@ export class Hud {
       langpick: $('langpick'), langpickList: $('langpick-list'),
       settings: $('settings'),
     };
+    this._initGhosts();
     this._loreTimers = [];
     this._lastAmmo = null;
     this._lastDetState = null;
@@ -109,14 +112,80 @@ export class Hud {
     if (this._settingsBuilt) this.renderSettings();
   }
 
+  // Health bars keep a pale "ghost" behind the fill. A hit drops the fill at
+  // once and the ghost holds, then drains down to it, which is what lets the
+  // eye measure how big the hit was. Created here rather than in the markup so
+  // the bars stay a single element each for anything that styles them.
+  _initGhosts() {
+    for (const [key, cls] of [['hpFill', 'hp'], ['bossHpFill', 'boss']]) {
+      const fill = this.el[key];
+      if (!fill || !fill.parentElement) continue;
+      const ghost = document.createElement('i');
+      ghost.className = `bar-ghost ${cls}`;
+      ghost.style.transform = 'scaleX(1)';
+      ghost._f = 1;             // where the ghost is heading / resting
+      ghost._anim = null;
+      fill.parentElement.insertBefore(ghost, fill);
+      this.el[`${key}Ghost`] = ghost;
+    }
+  }
+
+  // Writes a bar's fill and moves its ghost. The ghost is a scaled element
+  // animated with WAAPI (no layout per frame, and the hold-then-drain delay
+  // lives in the animation, so a burst of small changes can't keep resetting
+  // it the way a CSS transition would).
+  //   - a drop starts a drain from wherever the ghost currently is;
+  //   - a heal that reaches the ghost carries it up with the fill;
+  //   - slow regen under a draining ghost leaves it alone.
+  _setBar(key, frac, prev) {
+    const fill = this.el[key], ghost = this.el[`${key}Ghost`];
+    fill.style.width = `${Math.round(frac * 1000) / 10}%`;
+    if (!ghost) return;
+    const park = (f) => {
+      if (ghost._anim) { ghost._anim.cancel(); ghost._anim = null; }
+      ghost._f = f; ghost.style.transform = `scaleX(${f})`;
+    };
+    if (level() === 0 || !ghost.animate) { park(frac); return; }
+    const shown = ghost._anim ? new DOMMatrix(getComputedStyle(ghost).transform).a : ghost._f;
+    if (frac >= shown) { park(frac); return; }
+    if (prev != null && frac > prev) return;
+    if (ghost._anim) ghost._anim.cancel();
+    ghost.style.transform = `scaleX(${shown})`;
+    const anim = ghost.animate(
+      [{ transform: `scaleX(${shown})` }, { transform: `scaleX(${frac})` }],
+      { duration: 650, delay: 420, easing: EASE_OUT, fill: 'forwards' });
+    ghost._anim = anim; ghost._f = frac;
+    anim.onfinish = () => {
+      if (ghost._anim !== anim) return;
+      ghost._anim = null; ghost.style.transform = `scaleX(${frac})`; anim.cancel();
+    };
+  }
+
   // Boss encounter health bar — hidden the rest of the time.
   showBoss(on, name) {
-    this.el.bossBar.classList.toggle('hidden', !on);
+    const bar = this.el.bossBar;
+    const wasHidden = bar.classList.contains('hidden');
+    bar.classList.toggle('hidden', !on);
     if (on && name) this.el.bossName.textContent = name;
+    if (on && wasHidden) {
+      // the bar drops in with a spring and the phone gives one heavy thump
+      bar.classList.remove('enter'); void bar.offsetWidth; bar.classList.add('enter');
+      haptic('heavy');
+      this._boss = null;
+    }
   }
 
   setBossHp(frac) {
-    this.el.bossHpFill.style.width = `${Math.max(0, Math.round(frac * 100))}%`;
+    frac = Math.max(0, Math.min(1, frac));
+    const prev = this._boss;
+    if (frac === prev) return;
+    this._setBar('bossHpFill', frac, prev);
+    if (prev != null && frac < prev - 0.002) {
+      flash(this.el.bossHpFill, { from: 'brightness(2.6)', ms: 240 });
+      kick(this.el.bossName, { scale: 1.08, ms: 220, gap: 120 });
+      if (frac === 0) haptic('success');
+    }
+    this._boss = frac;
   }
 
   setLoad(p, label) {
@@ -452,13 +521,24 @@ export class Hud {
         kick(this.el.hpFill.parentElement, { scale: 1.05, ms: 380 });
       }
     }
-    this._hp = hpFrac;
     const hpW = Math.round(hpFrac * 1000) / 10;
-    if (hpW !== this._hpW) { this._hpW = hpW; this.el.hpFill.style.width = `${hpW}%`; }
+    if (hpW !== this._hpW) { this._hpW = hpW; this._setBar('hpFill', hpFrac, this._hp); }
+    this._hp = hpFrac;
     const low = hpFrac < 0.35;
     if (low !== this._hpLow) { this._hpLow = low; this.el.hpFill.classList.toggle('low', low); }
+    // Under a quarter health the screen edge beats like a pulse (opacity only).
+    const crit = hpFrac > 0 && hpFrac < 0.25;
+    if (crit !== this._crit) { this._crit = crit; this.el.vignette.classList.toggle('crit', crit); }
     const stW = Math.round(player.stamina);
     if (stW !== this._stW) { this._stW = stW; this.el.stFill.style.width = `${stW}%`; }
+    // Out of breath: the bar turns amber and stays that way until there is a
+    // real sprint's worth back, so it doesn't flicker at the empty mark.
+    const spent = this._spent ? stW < 35 : stW < 6;
+    if (spent !== this._spent) {
+      this._spent = spent;
+      this.el.stFill.classList.toggle('spent', spent);
+      if (spent) flash(this.el.stFill, { from: 'brightness(2.2)', ms: 320 });
+    }
 
     const hasArmor = player.maxArmor > 0;
     this.el.armorRow.classList.toggle('hidden', !hasArmor);
@@ -524,10 +604,22 @@ export class Hud {
         if (!this._reloading) { this._reloading = true; this.el.reloadBar.classList.remove('hidden'); this.el.tcReload && this.el.tcReload.classList.add('busy'); }
         this.el.reloadBarFill.style.transform = `scaleX(${Math.min(1, rl.t / rl.T).toFixed(3)})`;
       } else if (this._reloading) {
+        // swapping weapons mid-reload cancels it; only a reload that ran to
+        // the end gets the "done" pop
+        const finished = this._rlFrac >= 0.9;
         this._reloading = false;
         this.el.reloadBar.classList.add('hidden');
-        this.el.tcReload && this.el.tcReload.classList.remove('busy');
+        const btn = this.el.tcReload;
+        if (btn) {
+          btn.classList.remove('busy');
+          if (finished) {
+            btn.classList.add('done');
+            setTimeout(() => btn.classList.remove('done'), 460);
+            haptic('tick');
+          }
+        }
       }
+      this._rlFrac = rl ? rl.t / rl.T : 0;
     }
 
     const slotOf = { rifle: 0, pistol: 1, knife: 2, smg: 3 };
@@ -546,10 +638,19 @@ export class Hud {
     if (this._objTxt != null) kick(this.el.objCount, { scale: 1.3, ms: 380 });
     this._objTxt = txt;
     this.el.objCount.textContent = txt;
+    // a cleared objective turns the counter green and gets its own buzz
+    const cleared = total > 0 && done >= total;
+    if (cleared !== this._objDone) {
+      this._objDone = cleared;
+      this.el.objCount.classList.toggle('done', cleared);
+      if (cleared) { kick(this.el.objCount, { scale: 1.55, ms: 560 }); haptic('success'); }
+    }
   }
 
   setStage(n) {
     this.el.stageLabel.textContent = t('hud.stage', { n });
+    if (this._stage != null && n !== this._stage) kick(this.el.stageLabel, { scale: 1.3, ms: 520 });
+    this._stage = n;
   }
 
   setSlot4Visible(visible) {
@@ -562,6 +663,14 @@ export class Hud {
     const dv = Math.round(value * 100);
     if (dv !== this._detV) { this._detV = dv; this.el.detFill.style.width = `${dv}%`; }
     if (state !== this._lastDetState) {
+      // Escalation is felt as well as seen: noticed gets a double buzz and the
+      // bar shudders, full combat a heavy thump. De-escalation stays quiet.
+      const prevRank = DET_ORDER.indexOf(this._lastDetState);
+      const rank = DET_ORDER.indexOf(state);
+      if (prevRank >= 0 && rank > prevRank && rank >= 3) {
+        shake(this.el.detBar, 4, 280);
+        haptic(rank >= 4 ? 'heavy' : 'warn');
+      }
       this._lastDetState = state;
       this.el.detLabel.textContent = t(DET_KEY[state] || 'det.hidden');
       // The threat bar only appears once an enemy is actually aware of the
@@ -616,6 +725,7 @@ export class Hud {
   }
 
   setProgress(level, xpFrac) {
+    const leveled = this._lvl != null && level !== this._lvl;
     if (this._lvl != null && level > this._lvl) {
       kick(this.el.lvlLabel, { scale: 1.6, ms: 700 });
       sparks(this.el.lvlLabel, { count: 10, color: '#e5bd57', spread: 60, size: 5 });
@@ -624,7 +734,13 @@ export class Hud {
     if (level !== this._lvl) this.el.lvlLabel.textContent = `LVL ${level}`;
     this._lvl = level;
     const xp = Math.round(xpFrac * 100);
-    if (xp !== this._xp) { this._xp = xp; this.el.xpFill.style.width = `${xp}%`; }
+    if (xp !== this._xp) {
+      // A glint on every gain. A level-up wraps the bar back round, so that
+      // one snaps instead of sliding backwards across the whole track.
+      if (this._xp != null && xp > this._xp && !leveled) flash(this.el.xpFill, { from: 'brightness(2.2)', ms: 360 });
+      this.el.xpFill.style.transition = leveled ? 'none' : '';
+      this._xp = xp; this.el.xpFill.style.width = `${xp}%`;
+    }
   }
 
   setScrap(n) {

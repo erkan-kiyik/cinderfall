@@ -321,7 +321,7 @@
 #ammo-mag.low { color: #ffb347; }
 #ammo-mag.empty { color: #ff4a3d; animation: mo-ammo-empty 0.7s ease-in-out infinite; }
 @keyframes mo-ammo-empty { 50% { opacity: 0.35; } }
-#weapon-name, .slot, #lvl-label, #obj-count { display: inline-block; }
+#weapon-name, .slot, #lvl-label, #obj-count, #stage-label { display: inline-block; }
 .slot { transition: border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), box-shadow 0.25s ease, background 0.25s ease; }
 
 /* banner: arrives with a little spring instead of only fading */
@@ -338,6 +338,67 @@
   0% { opacity: 1; transform: translate(-50%, -50%) rotate(45deg) scale(0.6); }
   35% { opacity: 1; transform: translate(-50%, -50%) rotate(45deg) scale(1.75); }
   100% { opacity: 0; transform: translate(-50%, -50%) rotate(45deg) scale(0.9); }
+}
+
+/* ---- HUD, second pass ---------------------------------------------------- */
+/* health ghost: the pale trail that drains down to the fill after a hit */
+.bar { position: relative; }
+.bar-fill.hp, .bar-fill.boss-hp { position: relative; }
+.bar-ghost {
+  position: absolute; left: var(--gp, 1.5px); top: var(--gp, 1.5px); bottom: var(--gp, 1.5px);
+  width: calc(100% - 2 * var(--gp, 1.5px));
+  transform-origin: 0 50%; border-radius: 2px; pointer-events: none;
+}
+.bar-ghost.hp { background: rgba(255, 150, 130, 0.85); }
+.bar-ghost.boss { --gp: 0px; background: rgba(255, 196, 168, 0.85); }
+
+/* stamina: amber and pulsing until there is a real sprint's worth back */
+.bar-fill.st { transition: width 0.15s var(--ease-out), background 0.25s var(--ease); }
+.bar-fill.st.spent { background: #ffb347; box-shadow: 0 0 8px rgba(255, 179, 71, 0.7); animation: mo-spent 0.5s ease-in-out infinite; }
+@keyframes mo-spent { 50% { opacity: 0.55; } }
+
+/* xp slides rather than jumping */
+.bar-fill.xp { transition: width 0.5s var(--ease-out); }
+
+/* low-health heartbeat: the screen edge goes red and beats twice a second.
+   Opacity only, so it stays on the compositor. */
+#vignette.crit {
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(170, 24, 18, 0.46) 100%);
+  animation: mo-heart 1.05s ease-in-out infinite;
+}
+@keyframes mo-heart {
+  0%, 100% { opacity: 0.55; } 12% { opacity: 1; } 24% { opacity: 0.62; } 38% { opacity: 0.92; } 62% { opacity: 0.55; }
+}
+
+/* a cleared objective turns green */
+#obj-count { transition: color 0.3s var(--ease); }
+#obj-count.done { color: #6fe08c; }
+
+/* reload finished: the button pops and flashes */
+.tc-reload.done { animation: mo-reload-done 0.45s var(--spring); }
+@keyframes mo-reload-done {
+  0% { scale: 1.3; box-shadow: 0 0 22px rgba(120, 230, 150, 0.9); }
+  100% { scale: 1; box-shadow: 0 0 0 rgba(120, 230, 150, 0); }
+}
+
+/* boss bar drops in. translate/scale are the independent properties, so they
+   stack with the transform that centres it. */
+.boss-bar.enter { animation: mo-boss-in 0.62s var(--spring); }
+@keyframes mo-boss-in {
+  0% { opacity: 0; translate: 0 -16px; scale: 0.82 0.55; }
+  35% { opacity: 1; }
+  100% { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+/* takedown prompt pops in instead of only fading */
+.stealth-prompt { scale: 0.7; transition: opacity var(--dur-1) var(--ease), scale 0.4s var(--spring); }
+.stealth-prompt.show { scale: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  #vignette.crit { animation: none; opacity: 0.8; }
+  .bar-fill.st.spent { animation: none; }
+  .tc-reload.done, .boss-bar.enter { animation: none; }
+  .stealth-prompt { scale: 1; transition: opacity var(--dur-1) var(--ease); }
 }
 
 @media (prefers-reduced-motion: reduce) {
