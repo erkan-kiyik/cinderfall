@@ -21,7 +21,7 @@ website/
 ## Build and preview
 
 ```bash
-node --experimental-default-type=module scripts/build-website.mjs
+node scripts/build-website.mjs
 npx serve site            # or: python3 -m http.server -d site
 ```
 

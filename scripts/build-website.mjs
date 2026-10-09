@@ -7,7 +7,8 @@
 // then writes the website on top, replacing only the placeholder index.html it
 // leaves behind. Run from anywhere:
 //
-//   node --experimental-default-type=module scripts/build-website.mjs
+//   node scripts/build-website.mjs
+//   (on Node 22 before 22.12, add --experimental-default-type=module)
 //
 // Configuration lives in website/site.config.mjs; every key can also be set
 // through an environment variable of the same name (the Pages workflow passes
@@ -30,7 +31,11 @@ const notes = [];   // unresolved configuration, printed at the end
 
 // ------------------------------------------------------------- 1. legal pages
 {
-  const r = spawnSync(process.execPath, ['--experimental-default-type=module', resolve(root, 'scripts/build-legal-site.mjs')], { cwd: root, stdio: 'inherit' });
+  // The game's .js files are ES modules without a package.json "type". Node
+  // 22.12+ detects that on its own; older 22.x needs the flag, and Node 23+
+  // no longer accepts it — so pass it only where it still exists.
+  const flags = process.allowedNodeEnvironmentFlags.has('--experimental-default-type') ? ['--experimental-default-type=module'] : [];
+  const r = spawnSync(process.execPath, [...flags, resolve(root, 'scripts/build-legal-site.mjs')], { cwd: root, stdio: 'inherit' });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
 

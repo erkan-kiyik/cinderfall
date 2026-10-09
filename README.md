@@ -24,7 +24,7 @@ published as a browser game.
 The official website lives in `website/` and is published to GitHub Pages
 together with the privacy notice and terms — see
 [`website/README.md`](website/README.md). Build it with
-`node --experimental-default-type=module scripts/build-website.mjs`.
+`node scripts/build-website.mjs`.
 
 ---
 
