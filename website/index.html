@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SECTOR 9: CINDERFALL – Tactical 2D Shooter for Android | echosk studios</title>
+<meta name="description" content="Enter SECTOR 9: CINDERFALL, a tactical 2D shooter for Android. Master stealth, survive escalating combat, unlock gear and take on boss encounters.">
+<meta name="theme-color" content="#0B0E13">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="index, follow">
+<meta name="author" content="echosk studios">
+{{HEAD_ABSOLUTE}}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SECTOR 9: CINDERFALL">
+<meta property="og:title" content="SECTOR 9: CINDERFALL – Tactical 2D Shooter for Android">
+<meta property="og:description" content="A tactical 2D shooter for Android. Stay quiet. Go loud. Survive the district.">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="500">
+<meta property="og:image:alt" content="CINDERFALL, Sector 9: an armed operator silhouetted against a burning city skyline at night.">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SECTOR 9: CINDERFALL – Tactical 2D Shooter for Android">
+<meta name="twitter:description" content="A tactical 2D shooter for Android. Stay quiet. Go loud. Survive the district.">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+<meta name="twitter:image:alt" content="CINDERFALL, Sector 9: an armed operator silhouetted against a burning city skyline at night.">
+<link rel="icon" href="assets/img/icons/favicon.ico" sizes="48x48">
+<link rel="icon" href="assets/img/icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/img/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="assets/fonts/orbitron-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/rajdhani-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/main.css">
+<script type="module" src="js/main.js"></script>
+<script type="application/ld+json">{{JSON_LD}}</script>
+<script type="application/json" id="site-config">{{SITE_CONFIG_JSON}}</script>
+</head>
+<body>
+<svg class="icon-sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v13M6 12l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M9 6h9v9M18 6 7 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="10.5" width="13" height="9"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14v2.5"/></g></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="6" width="17" height="12"/><path d="M3.5 6.5 12 13l8.5-6.5"/></g></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.1-5M5 4v4h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 22a11 11 0 1 1 22 0"/><path d="M16 22l6-8"/><path d="M8.5 22h-2M25.5 22h-2M16 11v2M9.5 14.5l1.4 1.4M22.5 14.5l-1.4 1.4"/></g></symbol>
+  <symbol id="i-adaptive" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9h20M6 16h20M6 23h20"/><rect x="10" y="6.5" width="4" height="5"/><rect x="18" y="13.5" width="4" height="5"/><rect x="13" y="20.5" width="4" height="5"/></g></symbol>
+  <symbol id="i-haptic" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="11" y="5.5" width="10" height="21"/><path d="M14.5 23h3"/><path d="M7 11v10M4 13v6M25 11v10M28 13v6"/></g></symbol>
+  <symbol id="i-lang" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="10.5"/><path d="M5.5 16h21M16 5.5c-3.5 3-5 6.5-5 10.5s1.5 7.5 5 10.5M16 5.5c3.5 3 5 6.5 5 10.5s-1.5 7.5-5 10.5"/></g></symbol>
+  <symbol id="i-daily" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="8.5" width="21" height="18"/><path d="M5.5 13.5h21M11 5.5v6M21 5.5v6"/><path d="M12.5 20l2.5 2.5 5-5"/></g></symbol>
+  <symbol id="i-offline" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.5a16 16 0 0 1 22 0M9 16.5a10.5 10.5 0 0 1 14 0M13 20.5a5 5 0 0 1 6 0"/><circle cx="16" cy="24.5" r="1" fill="currentColor"/><path d="M6 6l20 20"/></g></symbol>
+  <symbol id="i-package" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.5 10 16 5l10.5 5v12L16 27 5.5 22z"/><path d="M5.5 10 16 15l10.5-5M16 15v12"/></g></symbol>
+  <symbol id="i-touch" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3.5" y="8.5" width="25" height="15" rx="2"/><circle cx="9.5" cy="18" r="2.5"/><circle cx="22.5" cy="18" r="2.5"/><path d="M14 12.5h4"/></g></symbol>
+</svg>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" data-header>
+  <div class="site-header__inner">
+    <a class="brand" href="#top">
+      {{STUDIO_MARK_HEADER}}
+    </a>
+    <nav class="site-nav" id="site-nav" aria-label="Primary">
+      <ul class="site-nav__list" role="list">
+        <li><a class="site-nav__link" href="#game" data-nav="game"><span class="site-nav__idx" aria-hidden="true">01</span>Game</a></li>
+        <li><a class="site-nav__link" href="#armory" data-nav="armory"><span class="site-nav__idx" aria-hidden="true">02</span>Weapons</a></li>
+        <li><a class="site-nav__link" href="#loot" data-nav="loot"><span class="site-nav__idx" aria-hidden="true">03</span>Loot</a></li>
+        <li><a class="site-nav__link" href="#features" data-nav="features"><span class="site-nav__idx" aria-hidden="true">04</span>Features</a></li>
+        <li><a class="site-nav__link" href="#studio" data-nav="studio"><span class="site-nav__idx" aria-hidden="true">05</span>Studio</a></li>
+        <li><a class="site-nav__link" href="{{PRIVACY_URL}}"><span class="site-nav__idx" aria-hidden="true">//</span>Privacy</a></li>
+      </ul>
+      <p class="site-nav__meta" aria-hidden="true">ECHOSK STUDIOS // FIELD ARCHIVE</p>
+    </nav>
+    <a class="header-cta" {{PLAY_ATTRS}} data-play-link>
+      <span class="header-cta__long">Get it on Google Play</span><span class="header-cta__short">Install</span>
+      <svg class="icon" aria-hidden="true"><use href="#i-external"/></svg>
+      <span class="visually-hidden">{{PLAY_HINT}}</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
+      <span class="nav-toggle__bars" aria-hidden="true"><span></span><span></span></span>
+      <span class="visually-hidden" data-nav-toggle-label>Open menu</span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============================================================ HERO -->
+<section class="hero" id="top" aria-labelledby="hero-title">
+  <div class="hero__sky" aria-hidden="true">
+    <div class="sky-glow"></div>
+    <div class="sky-layer sky-layer--far" data-depth="far">{{include:partials/skyline-far.svg}}</div>
+    <div class="sky-haze"></div>
+    <div class="sky-fog sky-fog--a"></div>
+    <div class="sky-layer sky-layer--mid" data-depth="mid">{{include:partials/skyline-mid.svg}}</div>
+    <div class="sky-fog sky-fog--b"></div>
+    <div class="sky-layer sky-layer--near" data-depth="near">{{include:partials/skyline-near.svg}}</div>
+    <div class="sky-layer sky-layer--cables">{{include:partials/skyline-cables.svg}}</div>
+    <div class="rain rain--far"></div>
+    <div class="rain rain--near"></div>
+    <div class="embers" data-embers></div>
+    <div class="hero__shade"></div>
+  </div>
+
+  <div class="hero__inner">
+    <p class="hero__kicker"><span class="status-dot" aria-hidden="true"></span>SECTOR 9 <span class="hero__slash" aria-hidden="true">//</span> STATUS: <strong>HOSTILE</strong></p>
+    <h1 class="hero__title" id="hero-title"><span class="visually-hidden">SECTOR 9: </span><span class="wordmark">CINDERFALL</span></h1>
+    <p class="hero__lockup" aria-hidden="true"><span>02:30 local // rain<span class="hero__lockup-extra"> // visibility low</span></span></p>
+
+    <div class="hero__copy">
+      <p class="hero__sub">A tactical 2D shooter. <span>Stay quiet. Go loud. Survive the district.</span></p>
+      <div class="hero__actions">
+        <a class="play-badge" {{PLAY_ATTRS}} data-play-link>
+          <img class="play-badge__img" src="{{BADGE_SRC}}" width="646" height="250" alt="Get it on Google Play">
+          <span class="visually-hidden">{{PLAY_HINT}}</span>
+        </a>
+        <button class="btn btn--ghost" type="button" data-trailer-open aria-haspopup="dialog">
+          <svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>Watch the trailer
+        </button>
+      </div>
+      <p class="play-status" data-play-status>{{PLAY_STATUS}}</p>
+      <ul class="hero__trust" role="list" aria-label="At a glance">
+        <li>Free to play</li>
+        <li>Android</li>
+        <li>7 languages</li>
+        <li>No account needed</li>
+      </ul>
+    </div>
+
+    <figure class="hero__device device" data-tilt>
+      <div class="device__float">
+      <div class="device__body">
+        <div class="device__screen">
+          <img src="assets/img/play-firefight-1280.webp"
+               srcset="assets/img/play-firefight-640.webp 640w, assets/img/play-firefight-1280.webp 1280w, assets/img/play-firefight-1920.webp 1920w"
+               sizes="(min-width: 1024px) 40vw, 88vw" width="1920" height="1080" fetchpriority="high"
+               alt="In-game capture: the operator trades fire with a hostile on a rain-soaked street, with the touch controls on screen.">
+          <span class="device__glare" aria-hidden="true"></span>
+        </div>
+        <span class="device__camera" aria-hidden="true"></span>
+        <span class="device__button device__button--a" aria-hidden="true"></span>
+        <span class="device__button device__button--b" aria-hidden="true"></span>
+      </div>
+      </div>
+      <figcaption class="device__caption"><span>IN-GAME CAPTURE</span> // STAGE 01 // TOUCH CONTROLS</figcaption>
+    </figure>
+  </div>
+
+  <a class="hero__scroll" href="#game"><span>Scroll to explore</span> <span class="hero__scroll-idx">// 01</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg></a>
+</section>
+
+<!-- ============================================================ 01 PITCH -->
+<section class="pitch section" id="game" aria-labelledby="pitch-title" data-section="game">
+  <div class="container">
+    <p class="section-label"><span class="section-label__idx">01</span> / FIELD BRIEFING <span class="section-label__meta">DISTRICT STATUS: HOSTILE</span></p>
+    <div class="pitch__head">
+    <h2 class="pitch__statement" id="pitch-title">
+      <span class="pitch__line" data-reveal><span class="pitch__no" aria-hidden="true">A.</span>Neutralize the perimeter.</span>
+      <span class="pitch__line" data-reveal style="--i:1"><span class="pitch__no" aria-hidden="true">B.</span>Read the room.</span>
+      <span class="pitch__line pitch__line--hot" data-reveal style="--i:2"><span class="pitch__no" aria-hidden="true">C.</span>Every stage ends in a fight you chose.</span>
+    </h2>
+    <aside class="dossier" aria-label="Operation file" data-reveal style="--i:3">
+      <dl>
+        <dt>Location</dt><dd>Sector 9</dd>
+        <dt>Operators</dt><dd>One</dd>
+        <dt>Backup</dt><dd>None</dd>
+        <dt>Comms</dt><dd class="is-hot">Dark</dd>
+        <dt>Hostiles</dt><dd>Unmarked force</dd>
+      </dl>
+      <span class="dossier__strip" aria-hidden="true"></span>
+      <p class="dossier__note">Comms went dark over Sector 9 the moment the power plant did. You go in first, and you go in alone.</p>
+    </aside>
+    </div>
+
+    <div class="pitch__grid">
+      <article class="pitch-card pitch-card--stealth panel" data-reveal>
+        <div class="pitch-card__art" aria-hidden="true">
+          <svg class="stealth-art" viewBox="0 0 320 240">
+            <defs>
+              <linearGradient id="cone" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#D9B36C" stop-opacity=".32"/><stop offset="1" stop-color="#D9B36C" stop-opacity="0"/></linearGradient>
+            </defs>
+            <path class="stealth-art__grid" d="M0 200h320M0 160h320M0 120h320M0 80h320M40 0v240M120 0v240M200 0v240M280 0v240"/>
+            <path d="M219 91 36 46v108z" fill="url(#cone)"/>
+            <g class="stealth-art__hostile">
+              <path d="M215 84c0-10 7-17 15-17s15 7 15 17v3h-30z"/>
+              <path d="M219 87h22v13h-22z"/>
+              <path d="M211 101h32l4 52h-40z"/>
+              <path d="M211 153h15l-2 45h-12zM230 153h15l1 45h-12z"/>
+              <path d="M170 114h56v7h-56zM196 121h8v13h-8zM162 116h9v3h-9zM226 112h8v11h-8z"/>
+              <path d="M215 104 197 116l4 5 20-10z"/>
+            </g>
+            <rect class="stealth-art__visor" x="219" y="89" width="8" height="3"/>
+            <g class="stealth-art__alert">
+              <path d="M231 44l10 17h-20z"/>
+              <text x="231" y="59" text-anchor="middle">?</text>
+            </g>
+            <g class="stealth-art__reticle">
+              <circle cx="96" cy="128" r="22"/>
+              <path d="M96 98v14M96 144v14M66 128h14M112 128h14"/>
+            </g>
+            <g class="stealth-art__meter">
+              <rect x="16" y="16" width="120" height="6"/>
+              <rect class="stealth-art__fill" x="16" y="16" width="44" height="6"/>
+              <text x="16" y="38">THREAT // SUSPICIOUS</text>
+            </g>
+          </svg>
+        </div>
+        <div class="pitch-card__body">
+          <p class="pitch-card__tag">A // AWARENESS</p>
+          <h3 class="pitch-card__title">Stealth or assault</h3>
+          <p>Enemies react through a live awareness system. Remain unnoticed for silent takedowns, or fight your way out after detection.</p>
+        </div>
+      </article>
+
+      <article class="pitch-card pitch-card--campaign panel" data-reveal style="--i:1">
+        <div class="pitch-card__body">
+          <p class="pitch-card__tag">B // PROGRESSION</p>
+          <h3 class="pitch-card__title">Endless campaign</h3>
+          <p>The challenge continues as stages become progressively harder. A boss encounter arrives every fifth stage.</p>
+        </div>
+        <div class="stage-track-wrap" role="img" aria-label="Stage progression: stages 1 to 4, a boss at stage 5, stages 6 to 9, a boss at stage 10, and onward">
+        <ol class="stage-track" aria-hidden="true">
+          <li class="stage-track__node" aria-hidden="true">01</li>
+          <li class="stage-track__node" aria-hidden="true">02</li>
+          <li class="stage-track__node" aria-hidden="true">03</li>
+          <li class="stage-track__node" aria-hidden="true">04</li>
+          <li class="stage-track__node stage-track__node--boss" aria-hidden="true"><span>05</span><b>BOSS</b></li>
+          <li class="stage-track__node" aria-hidden="true">06</li>
+          <li class="stage-track__node" aria-hidden="true">07</li>
+          <li class="stage-track__node" aria-hidden="true">08</li>
+          <li class="stage-track__node" aria-hidden="true">09</li>
+          <li class="stage-track__node stage-track__node--boss" aria-hidden="true"><span>10</span><b>BOSS</b></li>
+          <li class="stage-track__node stage-track__node--more" aria-hidden="true">+</li>
+        </ol>
+        </div>
+      </article>
+
+      <article class="pitch-card pitch-card--gear panel" data-reveal style="--i:2">
+        <div class="pitch-card__body">
+          <p class="pitch-card__tag">C // LOADOUT</p>
+          <h3 class="pitch-card__title">Your gear. Your run.</h3>
+          <p>Choose weapons and customize the loadout used in the field.</p>
+        </div>
+        <ul class="gear-slots" role="list" aria-label="The starting loadout">
+          <li class="gear-slot"><span class="gear-slot__label">Primary</span><img src="assets/art/weapon-rifle.webp" width="624" height="268" alt="" loading="lazy"><span class="gear-slot__name">VK-77 “Vandal”</span></li>
+          <li class="gear-slot"><span class="gear-slot__label">Sidearm</span><img src="assets/art/weapon-pistol.webp" width="193" height="146" alt="" loading="lazy"><span class="gear-slot__name">C-9 “Corvid”</span></li>
+          <li class="gear-slot"><span class="gear-slot__label">Special</span><img src="assets/art/weapon-smg.webp" width="426" height="220" alt="" loading="lazy"><span class="gear-slot__name">P-12 “Wasp”</span></li>
+        </ul>
+      </article>
+    </div>
+
+    <a class="text-link pitch__more" href="#directives">See how it plays <svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg></a>
+  </div>
+</section>
+
+<!-- ============================================================ DIRECTIVES -->
+<section class="directives section" id="directives" aria-labelledby="directives-title" data-section="game">
+  <div class="container">
+    <header class="section-head">
+      <p class="section-label"><span class="section-label__idx">01.B</span> / FIELD DIRECTIVES <span class="section-label__meta">FOUR RULES OF SECTOR 9</span></p>
+      <h2 class="section-title" id="directives-title">How it plays</h2>
+    </header>
+
+    <article class="directive" aria-labelledby="d1-title">
+      <div class="directive__text" data-reveal>
+        <p class="directive__no"><span>Directive</span> 01</p>
+        <h3 class="directive__title" id="d1-title">Read the threat</h3>
+        <p>Every hostile has its own awareness, and the threat meter on your HUD climbs as they notice you. Break line of sight and it settles. Push your luck and the whole squad turns.</p>
+
+        <div class="threat panel" data-threat>
+          <div class="threat__hud">
+            <span class="threat__label">Threat</span>
+            <span class="threat__bar"><span class="threat__fill" data-threat-fill></span></span>
+            <span class="threat__state" data-threat-state>Hidden</span>
+            <svg class="threat__hostile" viewBox="0 0 40 40" aria-hidden="true">
+              <path class="threat__head" d="M20 13c4.4 0 7 3 7 7.4 0 3-1.4 5-3 6l1 4h5l2 6H8l2-6h5l1-4c-1.6-1-3-3-3-6C13 16 15.6 13 20 13z"/>
+              <text class="threat__glyph" data-threat-glyph x="20" y="10" text-anchor="middle"></text>
+            </svg>
+          </div>
+          <ol class="threat__steps" role="list" aria-hidden="true">
+            <li data-step="0">Hidden</li><li data-step="1">Suspicious</li><li data-step="2">Searching</li><li data-step="3">Detected</li><li data-step="4">Combat</li>
+          </ol>
+          <p class="threat__msg" data-threat-msg role="status" aria-live="polite" aria-atomic="true">Unaware. Patrol routes unchanged — they have not seen you.</p>
+          <div class="threat__controls">
+            <button class="btn btn--small" type="button" data-threat-next>Advance threat</button>
+            <button class="btn btn--small btn--quiet" type="button" data-threat-reset><svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>Reset</button>
+          </div>
+          <p class="fineprint">Website demonstration of the five in-game threat states.</p>
+        </div>
+      </div>
+      <figure class="directive__shot capture" data-reveal style="--i:1">
+        <div class="capture__frame">
+          <img src="assets/img/play-threat-searching-1280.webp" srcset="assets/img/play-threat-searching-640.webp 640w, assets/img/play-threat-searching-1280.webp 1280w, assets/img/play-threat-searching-1920.webp 1920w" sizes="(min-width: 1024px) 58vw, 100vw" width="1920" height="1080" loading="lazy" decoding="async" alt="In-game capture: the operator crouches on a dumpster while the HUD threat meter reads SEARCHING and a hostile checks the containers below.">
+        </div>
+        <figcaption class="capture__cap"><span class="rec" aria-hidden="true"></span>In-game capture <span>// threat: searching</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="directive directive--flip" aria-labelledby="d2-title">
+      <div class="directive__text" data-reveal>
+        <p class="directive__no"><span>Directive</span> 02</p>
+        <h3 class="directive__title" id="d2-title">Move without a sound</h3>
+        <p>Crouch to stay low, pick your angle and slip behind a hostile who hasn’t seen you. A silent takedown drops them without a shot — and the rest of the squad is none the wiser.</p>
+        <ul class="ticks" role="list">
+          <li>Crouch lowers your profile</li>
+          <li>Takedowns from behind, on unaware targets</li>
+          <li>No noise, no reinforcements</li>
+        </ul>
+      </div>
+      <figure class="directive__shot capture" data-reveal data-in-view style="--i:1">
+        <div class="capture__frame">
+          <img src="assets/img/play-takedown-prompt-1280.webp" srcset="assets/img/play-takedown-prompt-640.webp 640w, assets/img/play-takedown-prompt-1280.webp 1280w, assets/img/play-takedown-prompt-1920.webp 1920w" sizes="(min-width: 1024px) 58vw, 100vw" width="1920" height="1080" loading="lazy" decoding="async" alt="In-game capture: the crouched operator behind an unaware hostile, with the TAKEDOWN prompt and touch button lit.">
+          <span class="target-lock" style="--x:28.4%;--y:44%" aria-hidden="true"><span>Unaware</span></span>
+        </div>
+        <figcaption class="capture__cap"><span class="rec" aria-hidden="true"></span>In-game capture <span>// takedown available</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="directive" aria-labelledby="d3-title">
+      <div class="directive__text" data-reveal>
+        <p class="directive__no"><span>Directive</span> 03</p>
+        <h3 class="directive__title" id="d3-title">Control the engagement</h3>
+        <p>Health, stamina and ammunition all sit on your HUD. Sprinting burns stamina. Every magazine runs dry — reload behind cover, not in the open.</p>
+        <div class="hudstrip panel" data-hudstrip role="img" aria-label="HUD example: the VK-77 Vandal's 30-round magazine and 120 reserve rounds">
+          <div class="hudstrip__bars" aria-hidden="true">
+            <span class="hudstrip__row"><b>HP</b><i class="hudstrip__bar hudstrip__bar--hp"></i></span>
+            <span class="hudstrip__row"><b>ST</b><i class="hudstrip__bar hudstrip__bar--st"></i></span>
+          </div>
+          <div class="hudstrip__ammo" aria-hidden="true">
+            <span class="hudstrip__wpn">VK-77 “Vandal”</span>
+            <span class="hudstrip__count"><b data-ammo>30</b> / <span data-reserve>120</span></span>
+            <span class="hudstrip__reload" data-reload><i></i>Reloading</span>
+          </div>
+        </div>
+      </div>
+      <figure class="directive__shot capture" data-reveal style="--i:1">
+        <div class="capture__frame">
+          <img src="assets/img/play-reload-dry-1280.webp" srcset="assets/img/play-reload-dry-640.webp 640w, assets/img/play-reload-dry-1280.webp 1280w, assets/img/play-reload-dry-1920.webp 1920w" sizes="(min-width: 1024px) 58vw, 100vw" width="1920" height="1080" loading="lazy" decoding="async" alt="In-game capture: the magazine is empty and RELOADING shows on the HUD while a heavy hostile advances.">
+        </div>
+        <figcaption class="capture__cap"><span class="rec" aria-hidden="true"></span>In-game capture <span>// magazine dry</span></figcaption>
+      </figure>
+    </article>
+
+    <article class="directive directive--flip directive--boss" aria-labelledby="d4-title">
+      <div class="directive__text" data-reveal>
+        <p class="directive__no"><span>Directive</span> 04</p>
+        <h3 class="directive__title" id="d4-title">Survive the boss</h3>
+        <p>Every fifth stage the district sends something heavier: one named enemy carrying a heavy weapon, with far more health than any soldier before it. Use all of the cover.</p>
+        <p>Hurt hostiles fall back to regroup — don’t let them. And if you go down, you can choose to watch a short video and get back up once per deployment, with your stage and progress intact.</p>
+        <a class="btn btn--primary" href="#armory">Explore the armory <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+      <figure class="directive__shot capture capture--boss" data-reveal style="--i:1">
+        <div class="capture__frame">
+          <img src="assets/img/play-boss-warlord-1280.webp" srcset="assets/img/play-boss-warlord-640.webp 640w, assets/img/play-boss-warlord-1280.webp 1280w, assets/img/play-boss-warlord-1920.webp 1920w" sizes="(min-width: 1024px) 58vw, 100vw" width="1920" height="1080" loading="lazy" decoding="async" alt="In-game capture: stage 5 boss fight against Warlord Kestrel, whose health bar sits under the objective.">
+        </div>
+        <figure class="capture__inset">
+          <img src="assets/img/play-operator-down-640.webp" width="640" height="360" loading="lazy" decoding="async" alt="In-game capture: the OPERATOR DOWN screen offering an optional video to continue.">
+          <figcaption>Operator down</figcaption>
+        </figure>
+        <figcaption class="capture__cap"><span class="rec" aria-hidden="true"></span>In-game capture <span>// stage 05 // boss</span></figcaption>
+      </figure>
+    </article>
+  </div>
+</section>
+
+<!-- ============================================================ 02 ARMORY -->
+<section class="armory section" id="armory" aria-labelledby="armory-title" data-section="armory">
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div>
+        <p class="section-label"><span class="section-label__idx">02</span> / WEAPONS DATABASE <span class="section-label__meta">{{WEAPON_COUNT}} ENTRIES</span></p>
+        <h2 class="section-title" id="armory-title">Built for every engagement.</h2>
+      </div>
+      <p class="section-lede">{{WEAPON_COUNT}} weapons. Different roles. Your loadout. Every render below is the game’s own art, and every stat is read from the game’s weapon data.</p>
+    </header>
+
+    <div class="armory__bar">
+      <div class="filters" role="group" aria-label="Filter weapons by category" data-filters>
+        <button class="filter" type="button" aria-pressed="true" data-filter="all">All <span class="filter__n">{{WEAPON_COUNT}}</span></button>
+        <button class="filter" type="button" aria-pressed="false" data-filter="ballistic">Ballistic <span class="filter__n">{{N_BALLISTIC}}</span></button>
+        <button class="filter" type="button" aria-pressed="false" data-filter="energy">Energy <span class="filter__n">{{N_ENERGY}}</span></button>
+        <button class="filter" type="button" aria-pressed="false" data-filter="heavy">Heavy <span class="filter__n">{{N_HEAVY}}</span></button>
+        <button class="filter" type="button" aria-pressed="false" data-filter="melee">Melee <span class="filter__n">{{N_MELEE}}</span></button>
+      </div>
+      <div class="carousel-nav" data-carousel-nav="armory">
+        <button class="icon-btn" type="button" data-carousel-prev aria-controls="armory-track"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg><span class="visually-hidden">Previous weapons</span></button>
+        <button class="icon-btn" type="button" data-carousel-next aria-controls="armory-track"><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg><span class="visually-hidden">Next weapons</span></button>
+      </div>
+    </div>
+    <p class="visually-hidden" role="status" aria-live="polite" data-filter-status></p>
+  </div>
+
+  <div class="armory__rail">
+    <ul class="armory__track" id="armory-track" role="list" aria-label="Weapons" data-carousel="armory">
+{{WEAPON_CARDS}}
+    </ul>
+  </div>
+  <div class="container">
+    <p class="fineprint armory__note">Bars compare each weapon with the whole in-game roster, the way the game’s own inspect panel does. Damage is per shot (per pellet for the energy shotgun); accuracy and handling are derived from the game’s spread and recoil values. Use ← → on a card to move through the list.</p>
+  </div>
+
+  <div class="container">
+    <div class="skins panel" aria-labelledby="skins-title">
+      <div class="skins__text">
+        <p class="section-label section-label--small">FINISHES // VK-77 “VANDAL”</p>
+        <h3 class="skins__title" id="skins-title">Every weapon has a different face.</h3>
+        <p>Every weapon in the arsenal has its own set of finishes — camouflage hydro-dips, weathered metal, chrome, carbon weave and glowing top-tier variants that add real muzzle devices and optics. These are the actual VK-77 finishes, rendered by the game.</p>
+        <a class="text-link" href="#loot">How finishes are found <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+      <ol class="skins__ladder" role="list">
+        <li class="skin skin--stock"><img src="assets/art/skin-rifle-default.webp" width="624" height="268" loading="lazy" alt="VK-77 Vandal, stock finish."><span class="skin__name">Stock</span><span class="skin__tier">Standard issue</span></li>
+        <li class="skin" data-rarity="common"><img src="assets/art/skin-rifle-urban.webp" width="624" height="268" loading="lazy" alt="VK-77 Urban finish: grey camouflage hydro-dip."><span class="skin__name">Urban</span><span class="skin__tier">Common · camo</span></li>
+        <li class="skin" data-rarity="rare"><img src="assets/art/skin-rifle-cinder.webp" width="745" height="268" loading="lazy" alt="VK-77 Cinder finish: weathered rust-red metal with a muzzle brake."><span class="skin__name">Cinder</span><span class="skin__tier">Rare · weathered</span></li>
+        <li class="skin" data-rarity="epic"><img src="assets/art/skin-rifle-spectre.webp" width="798" height="288" loading="lazy" alt="VK-77 Spectre finish: dark chrome with a suppressor, laser and violet glow."><span class="skin__name">Spectre</span><span class="skin__tier">Epic · chrome</span></li>
+        <li class="skin" data-rarity="legendary"><img src="assets/art/skin-rifle-arc.webp" width="830" height="286" loading="lazy" alt="ARC-9 Pulse finish: carbon weave with circuit engraving, holo sight and cyan glow."><span class="skin__name">ARC-9 Pulse</span><span class="skin__tier">Legendary · carbon</span></li>
+        <li class="skin" data-rarity="mythic"><img src="assets/art/skin-rifle-inferno.webp" width="783" height="282" loading="lazy" alt="VK-77 Inferno finish: red lacquer with runes, scope and ember glow."><span class="skin__name">Inferno</span><span class="skin__tier">Mythic · glowing</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 03 LOOT -->
+<section class="loot section" id="loot" aria-labelledby="loot-title" data-section="loot">
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div>
+        <p class="section-label"><span class="section-label__idx">03</span> / SUPPLY SYSTEM <span class="section-label__meta">INVENTORY CHAMBER</span></p>
+        <h2 class="section-title" id="loot-title">What you find changes what you carry.</h2>
+      </div>
+      <p class="section-lede">Recover supplies. Build your loadout. Prepare for the next engagement.</p>
+    </header>
+
+    <div class="loot__grid">
+      <div class="chamber panel" data-crate>
+        <p class="chamber__meta" aria-hidden="true"><span>CRATE // SECTOR 9 SUPPLY</span><span data-crate-serial>SN-0901</span></p>
+        <div class="chamber__stage">
+          <div class="chamber__rays" aria-hidden="true"></div>
+          <div class="chamber__sparks" aria-hidden="true" data-crate-sparks></div>
+          <div class="crate" aria-hidden="true">
+            <img class="crate__lid" src="assets/art/crate-lid.webp" width="660" height="510" alt="" loading="lazy" decoding="async">
+            <img class="crate__body" src="assets/art/crate-body.webp" width="660" height="510" alt="" loading="lazy" decoding="async">
+            <span class="crate__light crate__light--l"></span><span class="crate__light crate__light--r"></span>
+          </div>
+          <div class="reveal-card" data-reveal-card aria-hidden="true">
+            <span class="reveal-card__tier" data-reveal-tier>Rare</span>
+            <img class="reveal-card__img" data-reveal-img src="assets/art/skin-rifle-cinder.webp" width="745" height="268" alt="" loading="lazy" decoding="async">
+            <span class="reveal-card__name" data-reveal-name>VK-77 · Cinder</span>
+            <span class="reveal-card__kind">Weapon finish // preview</span>
+          </div>
+        </div>
+        <div class="chamber__controls">
+          <button class="btn btn--primary" type="button" data-crate-open>Open supply crate</button>
+        </div>
+        <p class="visually-hidden" role="status" aria-live="polite" data-crate-status></p>
+        <p class="chamber__disclaimer">Interactive loot preview — no in-game reward granted</p>
+      </div>
+
+      <div class="rarity panel" aria-labelledby="rarity-title">
+        <h3 class="panel-title" id="rarity-title">Rarity</h3>
+        <ol class="rarity__list" role="list">
+          <li class="rarity__tier" data-rarity="common"><span class="rarity__swatch" aria-hidden="true"></span><b>Common</b><span>Supply crates</span></li>
+          <li class="rarity__tier" data-rarity="rare"><span class="rarity__swatch" aria-hidden="true"></span><b>Rare</b><span>Crates · Trader</span></li>
+          <li class="rarity__tier" data-rarity="epic"><span class="rarity__swatch" aria-hidden="true"></span><b>Epic</b><span>Crates · Trader</span></li>
+          <li class="rarity__tier" data-rarity="legendary"><span class="rarity__swatch" aria-hidden="true"></span><b>Legendary</b><span>Crates · Trader</span></li>
+          <li class="rarity__tier" data-rarity="mythic"><span class="rarity__swatch" aria-hidden="true"></span><b>Mythic</b><span>Trader stock only</span></li>
+        </ol>
+        <p class="fineprint">Duplicates pay scrap back.</p>
+      </div>
+
+      <div class="trader panel" aria-labelledby="trader-title">
+        <img class="trader__portrait" src="assets/art/trader-crow.webp" width="480" height="480" loading="lazy" decoding="async" alt="CROW, the scrap trader: an old man in a knit cap with a cybernetic red eye.">
+        <div class="trader__text">
+          <p class="section-label section-label--small">CROW // SALVAGE FENCE — SECTOR 9</p>
+          <h3 class="panel-title" id="trader-title">The Trader</h3>
+          <p>A place to purchase gear and check restocked inventory. CROW’s stall changes every day, and he only deals in scrap.</p>
+          <blockquote class="trader__quote"><p>“Lay it out. I only deal in scrap — money is no good past the line.”</p></blockquote>
+        </div>
+      </div>
+
+      <div class="scrap panel" aria-labelledby="scrap-title">
+        <img class="scrap__icon" src="assets/art/scrap.webp" width="182" height="182" loading="lazy" decoding="async" alt="">
+        <div>
+          <h3 class="panel-title" id="scrap-title">Scrap</h3>
+          <p>The district’s only currency. Strip it from fallen hostiles, then spend it on supply crates or at CROW’s stall.</p>
+        </div>
+      </div>
+
+      <div class="loadout panel" aria-labelledby="loadout-title">
+        <h3 class="panel-title" id="loadout-title">Loadout</h3>
+        <ul class="loadout__slots" role="list">
+          <li class="loadout__slot"><span class="loadout__key">1</span><span class="loadout__label">Primary</span><img src="assets/art/weapon-plasma.webp" width="624" height="258" alt="" loading="lazy"><span class="loadout__item">Plasma Rifle</span></li>
+          <li class="loadout__slot"><span class="loadout__key">2</span><span class="loadout__label">Sidearm</span><img src="assets/art/weapon-raygun.webp" width="188" height="209" alt="" loading="lazy"><span class="loadout__item">Ray Gun</span></li>
+          <li class="loadout__slot"><span class="loadout__key">3</span><span class="loadout__label">Knife</span><img src="assets/art/weapon-knife.webp" width="237" height="76" alt="" loading="lazy"><span class="loadout__item">TALON-7</span></li>
+          <li class="loadout__slot"><span class="loadout__key">4</span><span class="loadout__label">Special</span><img src="assets/art/weapon-lasersmg.webp" width="425" height="179" alt="" loading="lazy"><span class="loadout__item">Laser SMG</span></li>
+        </ul>
+        <p class="fineprint">Example loadout. Weapons, finishes and operator skins are equipped between runs.</p>
+      </div>
+
+      <div class="cabinet panel" aria-labelledby="cabinet-title">
+        <div class="cabinet__head">
+          <h3 class="panel-title" id="cabinet-title">Achievement cabinet</h3>
+          <p>Six of the game’s 27 medals — bronze, silver and gold.</p>
+        </div>
+        <ul class="cabinet__shelf" role="list">
+          <li class="medal" data-metal="bronze"><img src="assets/art/medal-first_blood.webp" width="201" height="256" loading="lazy" alt=""><b>First Blood</b><span>Eliminate your first hostile.</span></li>
+          <li class="medal" data-metal="bronze"><img src="assets/art/medal-boss_slayer.webp" width="201" height="256" loading="lazy" alt=""><b>Boss Slayer</b><span>Defeat your first boss.</span></li>
+          <li class="medal" data-metal="silver"><img src="assets/art/medal-sharpshooter.webp" width="201" height="256" loading="lazy" alt=""><b>Sharpshooter</b><span>Land 50 headshots.</span></li>
+          <li class="medal" data-metal="silver"><img src="assets/art/medal-combo_breaker.webp" width="201" height="256" loading="lazy" alt=""><b>Combo Breaker</b><span>Reach a 5-kill combo.</span></li>
+          <li class="medal" data-metal="gold"><img src="assets/art/medal-ghost.webp" width="201" height="256" loading="lazy" alt=""><b>Ghost</b><span>Reach a 25-kill streak without going down.</span></li>
+          <li class="medal" data-metal="gold"><img src="assets/art/medal-sector_master.webp" width="201" height="256" loading="lazy" alt=""><b>Sector Master</b><span>Reach stage 25 in a single run.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ ARCHIVES -->
+<section class="archives section" id="archives" aria-labelledby="archives-title" data-section="loot">
+  <div class="container">
+    <div class="terminal">
+      <header class="terminal__head">
+        <p class="section-label"><span class="section-label__idx section-label__idx--redacted"><span aria-hidden="true">██</span><span class="visually-hidden">Redacted</span></span> / INTEL ARCHIVE <span class="section-label__meta">CLASSIFIED // SECTOR DATABASE</span></p>
+        <h2 class="section-title" id="archives-title">Some files were never meant to open.</h2>
+        <p class="section-lede">Twelve logs. Some are behind bosses. Every hostile that goes down might be carrying one.</p>
+      </header>
+      <ol class="files" role="list" data-files>
+{{ARCHIVE_ROWS}}
+      </ol>
+      <p class="terminal__out" role="status" aria-live="polite" data-files-out><span class="terminal__prompt" aria-hidden="true">&gt;</span> <span data-files-text>Select a file.</span></p>
+      <p class="fineprint">File contents are recovered in the game, not on this website.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ SCREENSHOTS -->
+<section class="screens section" id="screens" aria-labelledby="screens-title">
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div>
+        <p class="section-label"><span class="section-label__idx">REC</span> / FIELD FOOTAGE <span class="section-label__meta">06 FILES</span></p>
+        <h2 class="section-title" id="screens-title">The actual game.</h2>
+      </div>
+      <div class="screens__aside">
+        <p class="section-lede">Store screenshots from the current build. Tap one to look closer.</p>
+        <div class="carousel-nav" data-carousel-nav="screens">
+          <button class="icon-btn" type="button" data-carousel-prev aria-controls="screens-track"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg><span class="visually-hidden">Previous screenshots</span></button>
+          <button class="icon-btn" type="button" data-carousel-next aria-controls="screens-track"><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg><span class="visually-hidden">Next screenshots</span></button>
+        </div>
+      </div>
+    </header>
+  </div>
+  <div class="screens__rail">
+    <ul class="screens__track" id="screens-track" role="list" aria-label="Screenshots" data-carousel="screens">
+{{SCREEN_ITEMS}}
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ 04 FEATURES -->
+<section class="features section" id="features" aria-labelledby="features-title" data-section="features">
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div>
+        <p class="section-label"><span class="section-label__idx">04</span> / SYSTEM SPECIFICATIONS</p>
+        <h2 class="section-title" id="features-title">Tactical combat. Built for your phone.</h2>
+      </div>
+      <p class="section-lede">Designed around a touch screen and a mid-range Android phone, not ported to them.</p>
+    </header>
+    <ul class="spec-grid" role="list">
+      <li class="spec panel">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-gauge"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.01</p>
+        <h3 class="spec__title">60 FPS target</h3>
+        <p>Every graphics tier targets 60 frames per second on supported phones, and resolution scales itself to hold it.</p>
+        <svg class="spec__viz spec__viz--fps" viewBox="0 0 120 28" aria-hidden="true"><path d="M0 8h120" class="spec__viz-ref"/><path d="M0 9h18l4 1 6-1h22l3 2 4-2h30l5 1h28"/></svg>
+      </li>
+      <li class="spec panel">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-adaptive"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.02</p>
+        <h3 class="spec__title">Adaptive graphics</h3>
+        <p>Low, Medium, High and Ultra presets, tuned automatically so budget phones and flagships both play smoothly.</p>
+        <p class="spec__tags" aria-hidden="true"><span>LOW</span><span>MED</span><span class="is-on">HIGH</span><span>ULTRA</span></p>
+      </li>
+      <li class="spec panel">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-haptic"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.03</p>
+        <h3 class="spec__title">Haptics &amp; interface audio</h3>
+        <p>Springy menus with tactile sound and optional vibration on every press. Switch vibration off in Settings any time.</p>
+      </li>
+      <li class="spec panel">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-lang"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.04</p>
+        <h3 class="spec__title">Seven languages</h3>
+        <p>The game is fully playable in:</p>
+        <ul class="spec__langs" role="list">
+          <li><abbr title="English">EN</abbr></li><li><abbr title="Turkish">TR</abbr></li><li><abbr title="German">DE</abbr></li><li><abbr title="Spanish">ES</abbr></li><li><abbr title="Russian">RU</abbr></li><li><abbr title="Arabic">AR</abbr></li><li><abbr title="Hindi">HI</abbr></li>
+        </ul>
+      </li>
+      <li class="spec panel">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-daily"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.05</p>
+        <h3 class="spec__title">Daily rewards</h3>
+        <p>Claim a reward each day you play and build a streak.</p>
+      </li>
+      <li class="spec panel">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-offline"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.06</p>
+        <h3 class="spec__title">Offline-friendly</h3>
+        <p>The campaign plays without a connection and without an account. Optional rewarded videos need one.</p>
+      </li>
+      <li class="spec panel">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-package"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.07</p>
+        <h3 class="spec__title">Small download</h3>
+        <p>Operators, weapons and effects are drawn in code instead of shipped as textures, so the install stays light.</p>
+      </li>
+      <li class="spec panel spec--touch">
+        <svg class="spec__icon" aria-hidden="true"><use href="#i-touch"/></svg>
+        <p class="spec__idx" aria-hidden="true">SPEC.08</p>
+        <h3 class="spec__title">Touch-first controls</h3>
+        <p>Twin-stick touch controls with jump, crouch, reload, weapon swap, takedown and pause. No controller required — though gamepads work too.</p>
+        <svg class="touch-map" viewBox="0 0 240 112" aria-hidden="true">
+          <rect class="touch-map__screen" x="1" y="1" width="238" height="110" rx="10"/>
+          <circle class="touch-map__stick" cx="36" cy="80" r="18"/><circle class="touch-map__nub" cx="36" cy="80" r="7"/>
+          <circle class="touch-map__btn" cx="74" cy="98" r="6"/>
+          <circle class="touch-map__stick" cx="204" cy="80" r="18"/><circle class="touch-map__fire" cx="204" cy="80" r="7"/>
+          <circle class="touch-map__btn" cx="166" cy="64" r="6"/><circle class="touch-map__btn" cx="166" cy="98" r="6"/>
+          <circle class="touch-map__btn" cx="226" cy="44" r="5"/><circle class="touch-map__btn" cx="226" cy="16" r="5"/>
+          <text x="36" y="54">MOVE</text><text x="204" y="54">AIM / FIRE</text>
+          <text class="touch-map__l" x="84" y="100">CROUCH</text>
+          <text class="touch-map__r" x="156" y="66">JUMP</text><text class="touch-map__r" x="156" y="100">RELOAD</text>
+          <text class="touch-map__r" x="217" y="46">SWAP</text><text class="touch-map__r" x="217" y="18">PAUSE</text>
+        </svg>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ 05 STUDIO -->
+<section class="studio section" id="studio" aria-labelledby="studio-title" data-section="studio">
+  <div class="container studio__inner">
+    <div class="studio__mark" aria-hidden="true">{{STUDIO_MARK_LARGE}}</div>
+    <div class="studio__text">
+      <p class="section-label"><span class="section-label__idx">05</span> / DEVELOPER <span class="section-label__meta">INDEPENDENT GAME DEVELOPMENT</span></p>
+      <h2 class="section-title" id="studio-title">Small studio. Focused games.</h2>
+      <p>echosk studios is an independent game studio focused on building engaging mobile experiences. SECTOR 9: CINDERFALL brings tactical combat, stealth, and progression together in a game designed for the screen in your hands.</p>
+      <div class="studio__actions">
+        <a class="btn btn--ghost" href="mailto:{{CONTACT_EMAIL}}"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>Contact the studio</a>
+        <span class="studio__email">{{CONTACT_EMAIL}}</span>
+      </div>
+      <p class="studio__sig" aria-hidden="true">— echosk studios // independent game development</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 06 DEPLOY -->
+<section class="deploy" id="deploy" aria-labelledby="deploy-title">
+  <div class="deploy__sky" aria-hidden="true">
+    <div class="deploy__keyart"></div>
+    <div class="rain rain--still"></div>
+  </div>
+  <div class="container deploy__inner">
+    <p class="deploy__sector">Sector 9 <span aria-hidden="true">//</span> Final directive</p>
+    <h2 class="deploy__title" id="deploy-title"><span class="visually-hidden">SECTOR 9: </span><span class="wordmark">CINDERFALL</span></h2>
+    <p class="deploy__statement">The district won’t clear itself.</p>
+    <p class="deploy__sub">Enter Sector 9 on Android.</p>
+    <div class="deploy__actions">
+      <a class="play-badge play-badge--large" {{PLAY_ATTRS}} data-play-link>
+        <img class="play-badge__img" src="{{BADGE_SRC}}" width="646" height="250" alt="Get it on Google Play" loading="lazy">
+        <span class="visually-hidden">{{PLAY_HINT}}</span>
+      </a>
+{{QR_BLOCK}}
+    </div>
+    <p class="play-status" data-play-status>{{PLAY_STATUS}}</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container site-footer__inner">
+    <div class="site-footer__brand">
+      {{STUDIO_MARK_FOOTER}}
+      <p class="site-footer__game">SECTOR 9: CINDERFALL — a tactical 2D shooter for Android.</p>
+    </div>
+    <nav class="site-footer__nav" aria-label="Footer">
+      <ul role="list">
+        <li><a href="#game">Game</a></li>
+        <li><a href="#armory">Weapons</a></li>
+        <li><a href="#loot">Loot</a></li>
+        <li><a href="#screens">Screenshots</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#studio">Studio</a></li>
+      </ul>
+      <ul role="list">
+        <li><a href="{{PRIVACY_URL}}">Privacy Notice</a></li>
+        <li><a href="{{TERMS_URL}}">Terms of Service</a></li>
+        <li><a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a></li>
+      </ul>
+    </nav>
+    <div class="site-footer__legal">
+      <p>© 2026 echosk studios</p>
+      <p>SECTOR 9: CINDERFALL is not affiliated with Google. Google Play and the Google Play logo are trademarks of Google LLC.</p>
+      <p>This site sets no cookies and loads no trackers or analytics.</p>
+    </div>
+  </div>
+</footer>
+
+<dialog class="modal" id="trailer-modal" aria-labelledby="trailer-title" data-trailer>
+  <div class="modal__panel">
+    <header class="modal__head">
+      <p class="modal__label">Transmission // Trailer</p>
+      <h2 class="modal__title" id="trailer-title">SECTOR 9: CINDERFALL — trailer</h2>
+      <button class="icon-btn modal__close" type="button" data-modal-close><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg><span class="visually-hidden">Close trailer</span></button>
+    </header>
+    <div class="modal__media" data-trailer-media>
+      <div class="trailer-placeholder">
+        <p class="trailer-placeholder__tag"><span class="rec" aria-hidden="true"></span>Trailer placeholder</p>
+        <p class="trailer-placeholder__title">No trailer has been released yet.</p>
+        <p>This space is reserved for the official trailer. Until it lands, the real thing is one tap away.</p>
+        <a class="btn btn--small" href="#screens" data-modal-close-nav>View in-game screenshots</a>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="lightbox" id="lightbox" aria-labelledby="lightbox-title" data-lightbox>
+  <div class="lightbox__panel">
+    <h2 class="visually-hidden" id="lightbox-title">Screenshot viewer</h2>
+    <header class="lightbox__head">
+      <p class="lightbox__count" data-lightbox-count aria-live="polite">01 / 06</p>
+      <button class="icon-btn" type="button" data-lightbox-close><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg><span class="visually-hidden">Close viewer</span></button>
+    </header>
+    <figure class="lightbox__figure">
+      <img class="lightbox__img" data-lightbox-img src="assets/img/shot-menu-1920.webp" width="1920" height="1080" loading="lazy" decoding="async" alt="">
+      <figcaption class="lightbox__caption" data-lightbox-caption></figcaption>
+    </figure>
+    <button class="icon-btn lightbox__nav lightbox__nav--prev" type="button" data-lightbox-prev><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg><span class="visually-hidden">Previous screenshot</span></button>
+    <button class="icon-btn lightbox__nav lightbox__nav--next" type="button" data-lightbox-next><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg><span class="visually-hidden">Next screenshot</span></button>
+  </div>
+</dialog>
+</body>
+</html>
