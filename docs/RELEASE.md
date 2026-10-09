@@ -202,6 +202,11 @@ publishes it to GitHub Pages:
   *Deploy legal pages* workflow
 - privacy policy URL: `https://<user>.github.io/<repo>/privacy/`
 - terms: `https://<user>.github.io/<repo>/terms/`
+- the site root (`https://<user>.github.io/<repo>/`) is the official game
+  website (`website/`, built by `scripts/build-website.mjs`, which runs the
+  legal build first). Its Google Play buttons and QR code use the listing URL
+  derived from `appId` in `mobile/capacitor.config.json`; if you change the
+  bundle id, the website follows automatically (see `website/README.md`).
 
 The page already contains the full English text without scripts, and upgrades
 itself to the visitor's country and language when scripts run. Editing

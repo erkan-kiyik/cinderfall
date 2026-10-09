@@ -1,21 +1,35 @@
-# Publishes the privacy notice and terms as an ordinary public web page
-# (https://<user>.github.io/<repo>/privacy/) — the URL Google Play asks for in
-# the store listing. The page text is generated from the same legal modules the
-# game uses, so editing public/game/js/legal/** and pushing is the whole update.
+# Publishes the public site to GitHub Pages (https://<user>.github.io/<repo>/):
+#
+#   /           the official SECTOR 9: CINDERFALL website (website/)
+#   /privacy/   the privacy notice — the URL Google Play asks for in the listing
+#   /terms/     the terms of service
+#
+# The legal pages are generated from the same legal modules the game uses
+# (scripts/build-legal-site.mjs, unchanged), so editing public/game/js/legal/**
+# and pushing is still the whole update for them. scripts/build-website.mjs runs
+# that build first and then writes the website on top of it.
 #
 # One-time setup, done by the repo owner in the GitHub UI:
 #   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
 # Until that is switched on, this workflow's configure-pages step fails; once
-# it is on, run the workflow again (Actions -> Deploy legal pages -> Run).
+# it is on, run the workflow again (Actions -> Deploy website and legal pages -> Run).
 
-name: Deploy legal pages
+name: Deploy website and legal pages
 
 on:
   push:
     branches: [main]
     paths:
       - 'public/game/js/legal/**'
+      - 'public/game/js/game/intel.js'
+      - 'public/game/js/engine/lang/en.js'
       - 'scripts/build-legal-site.mjs'
+      - 'scripts/build-website.mjs'
+      - 'scripts/lib/**'
+      - 'website/**'
+      - 'store/feature-graphic.png'
+      - 'mobile/capacitor.config.json'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -36,10 +50,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build legal site
-        run: node --experimental-default-type=module scripts/build-legal-site.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      - uses: actions/configure-pages@v5
+      # First, so the build knows the site's real public URL (canonical,
+      # Open Graph, sitemap.xml) instead of guessing one.
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build website and legal pages
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: node --experimental-default-type=module scripts/build-website.mjs
 
       - uses: actions/upload-pages-artifact@v3
         with:

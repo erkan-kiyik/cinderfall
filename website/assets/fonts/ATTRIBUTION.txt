@@ -1,0 +1,9 @@
+Bundled web fonts — all licensed under the SIL Open Font License 1.1
+(full license text in OFL.txt in this folder).
+
+- Rajdhani — Copyright (c) 2014, Indian Type Foundry (info@indiantypefoundry.com)
+- Orbitron — Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron)
+- Inter — Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
+
+Subset to woff2 from the canonical Google Fonts distribution. No glyphs,
+metrics or names were modified beyond format conversion.
