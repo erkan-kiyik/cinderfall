@@ -1243,38 +1243,70 @@ html, body {
 .ad-status.ok { color: #b9c0cc; }
 
 /* ============================ STATS SCREEN ============================ */
-.stats-grid { margin-bottom: var(--s8); }
-/* Section rule + label, matching the collection/stall heads elsewhere so the
-   whole menu reads as one system. */
-.stats-group-head {
-  font-size: 12px; letter-spacing: 0.22em; font-weight: 700; color: var(--amber-dim);
-  border-top: 1px solid var(--line); padding-top: var(--s5); margin-bottom: var(--s4);
+/* Title + sub-tabs on one row, the shared column width. */
+.st-head {
+  max-width: var(--col); margin: 0 auto var(--s4);
+  display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s3); flex-wrap: wrap;
 }
-.stats-group-head:first-child { border-top: none; padding-top: 0; }
-.stats-group-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s3);
-  margin-bottom: var(--s6);
+.st-head .panel-title { margin: 0; max-width: none; }
+.st-pane { max-width: var(--col); margin: 0 auto var(--s8); }
+#tab-stats { padding-top: var(--s5); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #tab-stats { padding-top: var(--s3); }
+  .st-head { margin-bottom: var(--s3); }
 }
-.stat-card {
-  background: var(--surface-2); border: none;
-  border-radius: var(--r3); padding: var(--s4) var(--s3); text-align: center;
-  box-shadow: var(--sh-1); transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease);
+.st-pane.hidden { display: none; }
+
+/* Headline tiles */
+.st-hero { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s3); margin-bottom: var(--s4); align-items: stretch; }
+.st-tile {
+  position: relative; overflow: hidden;
+  display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: var(--s3);
+  padding: 10px var(--s3); border-radius: 12px;
+  background: linear-gradient(180deg, #1f2631, #151a22);
+  box-shadow: var(--sh-2), inset 0 0 0 1px var(--line);
 }
-/* Headline numbers. Same footprint, louder value and a warm floor tint, so the
-   eye lands on kills / accuracy / level / scrap before the supporting counts. */
-.stat-card.hero {
-  background: #1e2530;
-  box-shadow: var(--sh-2), inset 0 -22px 26px -24px rgba(214,69,58,0.40);
+.st-tile::after {
+  content: ''; position: absolute; inset: auto 0 0 0; height: 2px;
+  background: linear-gradient(90deg, var(--amber), rgba(214,69,58,0));
+  opacity: 0.85;
 }
-.stat-card.hero .stat-card-value { font-size: 24px; color: #fff6f0; }
-.stat-card.hero .stat-card-label { color: var(--ink-2); }
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--sh-2); }
-.stat-card-icon { width: 100%; height: 30px; display: block; margin-bottom: var(--s2); }
-.stat-card-value {
-  font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+.st-tile-icon { width: 26px; height: 26px; }
+.st-tile-body { min-width: 0; }
+.st-tile-value {
+  font-family: var(--font); font-weight: 700; font-size: 22px; line-height: 1;
+  color: #fff6f0; font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.stat-card-label { font-size: 8px; letter-spacing: 0.1em; color: var(--ink-dim); margin-top: var(--s2); line-height: 1.4; }
+.st-tile-label { margin-top: 4px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.16em; color: var(--ink-2); text-transform: uppercase; }
+.st-tile-track { grid-column: 1 / -1; margin-top: 6px; }
+.st-tile-sub { grid-column: 1 / -1; margin-top: 4px; font-size: 8.5px; letter-spacing: 0.12em; color: var(--ink-dim); }
+
+/* Grouped rows: icon · label · value, three groups side by side when the
+   screen is wide enough, stacked otherwise. */
+.st-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s4); align-items: start; }
+.st-group {
+  padding: var(--s3) var(--s3) var(--s2); border-radius: 12px;
+  background: rgba(16, 20, 26, 0.72); box-shadow: inset 0 0 0 1px var(--line);
+}
+.st-group-head {
+  font-size: 10px; letter-spacing: 0.24em; font-weight: 700; color: var(--amber-bright);
+  padding: 0 var(--s1) var(--s2); margin-bottom: var(--s1);
+  border-bottom: 1px solid var(--line);
+}
+.st-rows { display: flex; flex-direction: column; }
+.st-row {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; column-gap: var(--s2);
+  min-height: 32px; padding: 0 var(--s1);
+}
+.st-row + .st-row { border-top: 1px solid rgba(233, 226, 210, 0.05); }
+.st-row-icon { width: 18px; height: 18px; opacity: 0.9; }
+.st-row-label { font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; color: var(--ink-dim); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-row-value { font-family: var(--font); font-weight: 700; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+
+@media (max-width: 640px) {
+  .st-hero { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* ---- achievements ---- */
 .achievement-tier-head {
@@ -2228,255 +2260,272 @@ html.no-backdrop-filter .intel-card {
    those are modals the player is meant to deal with first. */
 #profile-overlay { z-index: 25; }
 
-/* The card itself. Same frosted treatment as the intel reader, plus a rank
-   accent that the JS drives through --rank-color / --rank-glow. */
-.profile-card {
-  --rank-color: #8fae6a;
-  --rank-glow: rgba(143,174,106,0.32);
-  width: min(calc(420px * var(--ui-scale)), 92vw);
-  max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: calc(20px * var(--ui-scale)) calc(18px * var(--ui-scale)) calc(15px * var(--ui-scale));
-  border-radius: calc(18px * var(--ui-scale));
-  text-align: center;
-  background: linear-gradient(180deg, rgba(30,35,45,0.90), rgba(13,16,22,0.95));
-  -webkit-backdrop-filter: blur(16px) saturate(1.18);
-  backdrop-filter: blur(16px) saturate(1.18);
-  box-shadow:
-    0 calc(20px * var(--ui-scale)) calc(52px * var(--ui-scale)) rgba(0,0,0,0.62),
-    inset 0 0 0 1px var(--rank-glow);
+/* ---- shared UI parts (profile, stats, achievements) --------------------
+   One tab strip, one progress track and one close button, so the three
+   screens that show the player's numbers read as one family. */
+.ux-tabs {
+  display: inline-flex; align-items: stretch; gap: 2px;
+  padding: 3px; border-radius: 999px;
+  background: rgba(6, 8, 11, 0.62);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
-html.no-backdrop-filter .profile-card {
-  background: linear-gradient(180deg, rgba(26,31,40,0.985), rgba(11,14,19,0.99));
-}
-
-.profile-head {
-  display: flex; flex-direction: column; gap: calc(2px * var(--ui-scale));
-  padding-bottom: calc(14px * var(--ui-scale));
-  background: linear-gradient(90deg, rgba(233,226,210,0.14), rgba(233,226,210,0)) bottom / 100% 1px no-repeat;
-}
-.profile-kicker {
-  font-family: var(--font); font-size: calc(9px * var(--ui-scale));
-  letter-spacing: 0.30em; text-transform: uppercase;
-  color: rgba(237, 234, 226, 0.42);
-}
-.profile-title {
-  font-family: var(--font-display); font-weight: 800;
-  font-size: calc(15px * var(--ui-scale));
-  letter-spacing: 0.16em; color: var(--ink);
-}
-
-/* ---- identity: the operator this file is actually about ----------------
-   Portrait on the left, name / tag / level on the right. The card carried
-   none of this: it was an "operator file" with no operator on it, and the
-   level — the number the rest of the game leads with — appeared nowhere. */
-.profile-id {
-  display: flex; align-items: center;
-  gap: calc(12px * var(--ui-scale));
-  padding: calc(12px * var(--ui-scale)) 0 calc(10px * var(--ui-scale));
-  text-align: left;
-}
-.profile-portrait {
-  flex: 0 0 auto;
-  width: calc(70px * var(--ui-scale)); height: calc(94px * var(--ui-scale));
-  border-radius: var(--r3);
-  background:
-    radial-gradient(ellipse at 50% 92%, rgba(214,69,58,0.16), rgba(214,69,58,0) 62%),
-    linear-gradient(180deg, rgba(30,36,46,0.72), rgba(12,15,20,0.85));
-  box-shadow: inset 0 0 0 1px var(--rank-glow);
-}
-.profile-id-text { min-width: 0; flex: 1 1 auto; }
-.profile-op-name {
+.ux-tab {
+  min-height: calc(30px * var(--ui-scale));
+  padding: 0 calc(14px * var(--ui-scale));
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 0; border-radius: 999px; background: transparent;
   font-family: var(--font); font-weight: 700;
-  font-size: calc(14px * var(--ui-scale));
-  letter-spacing: 0.10em; color: var(--ink);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: calc(11px * var(--ui-scale)); letter-spacing: 0.14em;
+  color: var(--ink-dim); white-space: nowrap; cursor: pointer;
+  transition: color 0.25s ease;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
-.profile-op-tag {
-  margin-top: calc(2px * var(--ui-scale));
-  font-family: var(--font); font-weight: 700;
-  font-size: calc(9px * var(--ui-scale));
-  letter-spacing: 0.22em; text-transform: uppercase;
+.ux-tab:hover { color: var(--ink-2); }
+.ux-tab.active { color: #fff6f2; background: var(--amber); }
+.ux-tab:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(214, 69, 58, 0.5); }
+.ux-tabs.has-pill-fill > .mo-pill {
+  background: linear-gradient(180deg, #e0574b, var(--amber));
+  border-radius: 999px; box-shadow: 0 2px 10px rgba(214, 69, 58, 0.35);
 }
-.profile-lvl-row {
-  display: flex; align-items: center;
-  gap: calc(10px * var(--ui-scale));
-  margin-top: calc(11px * var(--ui-scale));
+.ux-tab .ux-count {
+  min-width: 16px; padding: 0 5px; border-radius: 999px;
+  font-size: 0.86em; letter-spacing: 0.02em; line-height: 16px;
+  background: rgba(255, 196, 90, 0.92); color: #1a1206;
 }
-.profile-lvl-badge {
-  flex: 0 0 auto;
-  display: inline-flex; align-items: center; justify-content: center;
-  /* min-width, not width: at a fixed 34px a two-digit level in Orbitron 800
-     with the card's letter-spacing ran out of the box on its left. */
-  min-width: calc(24px * var(--ui-scale)); height: calc(34px * var(--ui-scale));
-  padding: 0 calc(8px * var(--ui-scale));
-  border-radius: var(--r3);
-  background: rgba(214,69,58,0.14);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
-  /* Rajdhani, not Orbitron: Orbitron's "1" is a bare vertical stroke, so a
-     two-digit level read as a glyph rather than a number. Every other numeric
-     readout in the game (stats cards, deploy strip) is already on this face. */
-  font-family: var(--font); font-weight: 700;
-  font-size: calc(19px * var(--ui-scale)); line-height: 1;
-  letter-spacing: 0.02em; color: var(--ink); font-variant-numeric: tabular-nums;
-}
-.profile-lvl-meter { flex: 1 1 auto; min-width: 0; }
-.profile-lvl-head {
-  display: flex; justify-content: space-between; align-items: baseline;
-  font-family: var(--font); font-weight: 700;
-  font-size: calc(8px * var(--ui-scale));
-  letter-spacing: 0.18em; color: rgba(237,234,226,0.44);
-  margin-bottom: calc(4px * var(--ui-scale));
-}
-.profile-lvl-track {
+.ux-track {
   height: calc(5px * var(--ui-scale)); border-radius: 999px; overflow: hidden;
   background: rgba(6, 8, 11, 0.72);
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(237,234,226,0.07);
 }
-.profile-lvl-fill {
+.ux-fill {
   height: 100%; width: 0%; border-radius: 999px;
   background: var(--amber);
   box-shadow: 0 0 calc(8px * var(--ui-scale)) rgba(214,69,58,0.55);
-  transition: width 480ms var(--ease-out);
+  transition: width 520ms var(--ease-out);
+}
+.ux-close {
+  flex: 0 0 auto; position: relative;
+  width: calc(32px * var(--ui-scale)); height: calc(32px * var(--ui-scale));
+  border: 0; border-radius: 999px; cursor: pointer;
+  font-size: calc(13px * var(--ui-scale)); line-height: 1; color: var(--ink-2);
+  background: rgba(237, 234, 226, 0.07);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.ux-close::before { content: ''; position: absolute; inset: -8px; border-radius: 999px; }
+.ux-close:hover { color: #fff; background: rgba(214, 69, 58, 0.5); }
+.ux-close:active { transform: scale(0.92); }
+
+/* ---- the card -----------------------------------------------------------
+   A landscape card. It used to be a 420px column that ran off the bottom of
+   a 390px-tall phone and had to be scrolled to reach its own close button;
+   now the header is one row and the body is three tabbed panes of the same
+   fixed height, so nothing moves when you switch and nothing scrolls. */
+.profile-card {
+  --rank-color: #8fae6a;
+  --rank-glow: rgba(143,174,106,0.32);
+  width: min(calc(720px * var(--ui-scale)), 94vw);
+  height: min(calc(330px * var(--ui-scale)), 90vh);
+  display: flex; flex-direction: column;
+  padding: calc(12px * var(--ui-scale)) calc(16px * var(--ui-scale)) calc(14px * var(--ui-scale));
+  border-radius: calc(18px * var(--ui-scale));
+  background: linear-gradient(180deg, rgba(28,33,42,0.985), rgba(11,14,19,0.99));
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--rank-color) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, rgba(28,33,42,0.985), rgba(11,14,19,0.99));
+  box-shadow:
+    0 calc(20px * var(--ui-scale)) calc(52px * var(--ui-scale)) rgba(0,0,0,0.62),
+    inset 0 0 0 1px var(--rank-glow);
+  text-align: left; overflow: hidden;
+}
+.pf-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: calc(12px * var(--ui-scale));
+  padding-bottom: calc(10px * var(--ui-scale));
+  background: linear-gradient(90deg, rgba(233,226,210,0.14), rgba(233,226,210,0)) bottom / 100% 1px no-repeat;
+}
+.pf-head-title { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.profile-kicker {
+  font-family: var(--font); font-size: calc(8px * var(--ui-scale));
+  letter-spacing: 0.30em; text-transform: uppercase; color: rgba(237, 234, 226, 0.42);
+}
+.profile-title {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: calc(14px * var(--ui-scale)); letter-spacing: 0.16em; color: var(--ink);
+}
+.pf-tabs { margin-left: auto; }
+.pf-body { position: relative; flex: 1 1 auto; min-height: 0; padding-top: calc(12px * var(--ui-scale)); }
+.pf-pane { display: none; height: 100%; overflow-y: auto; scrollbar-width: none; }
+.pf-pane::-webkit-scrollbar { display: none; }
+.pf-pane.active { display: grid; animation: pf-in 0.32s var(--ease-out); }
+@keyframes pf-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pf-pane.active { animation: none; } }
+.pf-label {
+  font-family: var(--font); font-weight: 700; font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.24em; text-transform: uppercase; color: rgba(237, 234, 226, 0.44);
 }
 
-/* Score — the number the card leads with. Rajdhani at display weight, with
-   tabular figures so it doesn't jitter as digits change. */
-.profile-score-block {
-  padding: calc(13px * var(--ui-scale)) 0 calc(12px * var(--ui-scale));
-  background: linear-gradient(90deg, rgba(233,226,210,0.12), rgba(233,226,210,0)) top / 100% 1px no-repeat;
+/* SUMMARY: identity left, standing right */
+.pf-pane[data-pane="summary"] { grid-template-columns: 1.15fr 1fr; gap: calc(14px * var(--ui-scale)); align-items: stretch; }
+.pf-id {
+  display: flex; align-items: center; gap: calc(14px * var(--ui-scale));
+  padding: calc(12px * var(--ui-scale));
+  border-radius: calc(12px * var(--ui-scale));
+  background: rgba(8, 10, 14, 0.42); box-shadow: inset 0 0 0 1px var(--line);
 }
-.profile-score {
-  font-family: var(--font); font-weight: 700;
-  font-size: calc(46px * var(--ui-scale));
-  line-height: 0.94; letter-spacing: 0.01em;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  text-shadow: 0 0 calc(26px * var(--ui-scale)) var(--rank-glow);
+.profile-portrait {
+  flex: 0 0 auto;
+  width: calc(96px * var(--ui-scale)); height: calc(150px * var(--ui-scale));
+  border-radius: calc(10px * var(--ui-scale));
+  background:
+    radial-gradient(ellipse at 50% 92%, rgba(214,69,58,0.18), rgba(214,69,58,0) 62%),
+    linear-gradient(180deg, rgba(30,36,46,0.72), rgba(12,15,20,0.85));
+  box-shadow: inset 0 0 0 1px var(--rank-glow);
 }
-.profile-score-label {
+.pf-id-text { min-width: 0; flex: 1 1 auto; }
+.profile-op-name {
+  font-family: var(--font); font-weight: 700; font-size: calc(17px * var(--ui-scale));
+  letter-spacing: 0.08em; color: var(--ink); line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.profile-op-tag {
+  margin-top: calc(3px * var(--ui-scale));
+  font-family: var(--font); font-weight: 700; font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.22em; text-transform: uppercase;
+}
+.pf-lvl { display: flex; align-items: center; gap: calc(10px * var(--ui-scale)); margin-top: calc(16px * var(--ui-scale)); }
+.profile-lvl-badge {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: calc(30px * var(--ui-scale)); height: calc(40px * var(--ui-scale));
+  padding: 0 calc(9px * var(--ui-scale));
+  border-radius: calc(9px * var(--ui-scale));
+  background: linear-gradient(180deg, rgba(214,69,58,0.26), rgba(214,69,58,0.10));
+  box-shadow: inset 0 0 0 1px var(--accent-line), 0 0 14px rgba(214,69,58,0.18);
+  font-family: var(--font); font-weight: 700; font-size: calc(22px * var(--ui-scale)); line-height: 1;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.pf-lvl-meter { flex: 1 1 auto; min-width: 0; }
+.pf-lvl-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font); font-weight: 700; font-size: calc(9px * var(--ui-scale));
+  letter-spacing: 0.18em; color: rgba(237,234,226,0.5);
+  margin-bottom: calc(5px * var(--ui-scale));
+}
+.pf-lvl-sub {
   margin-top: calc(5px * var(--ui-scale));
   font-family: var(--font); font-size: calc(9px * var(--ui-scale));
-  letter-spacing: 0.26em; text-transform: uppercase;
-  color: rgba(237, 234, 226, 0.46);
+  letter-spacing: 0.12em; color: rgba(237,234,226,0.42); font-variant-numeric: tabular-nums;
 }
-
-/* Rank title — the one element that changes colour with standing. */
+.pf-rank {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  padding: calc(12px * var(--ui-scale));
+  border-radius: calc(12px * var(--ui-scale));
+  background: rgba(8, 10, 14, 0.42);
+  background:
+    radial-gradient(90% 70% at 50% 40%, color-mix(in srgb, var(--rank-color) 14%, transparent), transparent 70%),
+    rgba(8, 10, 14, 0.42);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.profile-score {
+  margin-top: calc(4px * var(--ui-scale));
+  font-family: var(--font); font-weight: 700; font-size: calc(46px * var(--ui-scale));
+  line-height: 0.95; letter-spacing: 0.01em; font-variant-numeric: tabular-nums;
+  color: var(--ink); text-shadow: 0 0 calc(26px * var(--ui-scale)) var(--rank-glow);
+}
 .profile-rank {
-  margin-top: calc(12px * var(--ui-scale));
-  font-family: var(--font-display); font-weight: 800;
-  font-size: calc(17px * var(--ui-scale));
+  margin-top: calc(8px * var(--ui-scale));
+  font-family: var(--font-display); font-weight: 800; font-size: calc(16px * var(--ui-scale));
   letter-spacing: 0.13em; text-transform: uppercase;
-  color: var(--rank-color);
-  text-shadow: 0 0 calc(16px * var(--ui-scale)) var(--rank-glow);
+  color: var(--rank-color); text-shadow: 0 0 calc(16px * var(--ui-scale)) var(--rank-glow);
 }
-/* Top rank earns a live glow — it is the only band with nothing above it,
-   and the card should say so without extra copy. */
-.profile-card[data-rank="commander"] .profile-rank {
-  animation: rank-pulse 2.6s var(--ease) infinite;
-}
+.profile-card[data-rank="commander"] .profile-rank { animation: rank-pulse 2.6s var(--ease) infinite; }
 @keyframes rank-pulse {
   0%, 100% { text-shadow: 0 0 calc(14px * var(--ui-scale)) var(--rank-glow); }
-  50%      { text-shadow: 0 0 calc(30px * var(--ui-scale)) var(--rank-glow),
-                          0 0 calc(52px * var(--ui-scale)) var(--rank-glow); }
+  50%      { text-shadow: 0 0 calc(30px * var(--ui-scale)) var(--rank-glow), 0 0 calc(52px * var(--ui-scale)) var(--rank-glow); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .profile-card[data-rank="commander"] .profile-rank { animation: none; }
-}
-
-.profile-rank-track {
-  margin: calc(10px * var(--ui-scale)) auto 0;
-  width: 72%; height: calc(5px * var(--ui-scale));
-  border-radius: 999px; overflow: hidden;
-  /* Recessed, with a hairline lip. A flat slab at 0% fill was indistinguishable
-     from a bar that had been filled all the way. */
-  background: rgba(6, 8, 11, 0.72);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(237,234,226,0.07);
-}
-.profile-rank-fill {
-  height: 100%; border-radius: 999px;
-  background: var(--rank-color);
-  box-shadow: 0 0 calc(10px * var(--ui-scale)) var(--rank-glow);
-  transition: width 420ms var(--ease-out);
-}
-.profile-rank-next {
+@media (prefers-reduced-motion: reduce) { .profile-card[data-rank="commander"] .profile-rank { animation: none; } }
+.pf-rank-track { width: 80%; margin-top: calc(10px * var(--ui-scale)); }
+.pf-rank-fill { background: var(--rank-color); box-shadow: 0 0 calc(10px * var(--ui-scale)) var(--rank-glow); }
+.pf-rank-next {
   margin-top: calc(7px * var(--ui-scale));
   font-family: var(--font); font-size: calc(9px * var(--ui-scale));
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(237, 234, 226, 0.44);
+  letter-spacing: 0.14em; text-transform: uppercase; color: rgba(237, 234, 226, 0.48);
 }
 
-/* Six counters on two rows. Three fitted, but they were the three least
-   interesting numbers the game keeps and two of them read "—" and "0" for
-   most of a playthrough. */
-.profile-stats {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: calc(7px * var(--ui-scale));
-  margin: calc(14px * var(--ui-scale)) 0 calc(4px * var(--ui-scale));
+/* CAREER: a dense, even grid of counters with an icon each */
+.pf-pane[data-pane="career"] { align-content: stretch; }
+.pf-stats { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: calc(8px * var(--ui-scale)); }
+.pf-stat {
+  position: relative; overflow: hidden; text-align: left;
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: calc(10px * var(--ui-scale));
+  align-content: center; align-items: center;
+  padding: calc(11px * var(--ui-scale)) calc(12px * var(--ui-scale));
+  border-radius: calc(11px * var(--ui-scale));
+  background: linear-gradient(180deg, rgba(30,36,46,0.62), rgba(12,15,20,0.62));
+  box-shadow: inset 0 0 0 1px var(--line);
 }
-.profile-stat {
-  padding: calc(9px * var(--ui-scale)) calc(5px * var(--ui-scale));
-  border-radius: var(--r3);
-  background: rgba(8, 10, 14, 0.40);
+.pf-stat.is-hero { box-shadow: inset 0 0 0 1px var(--accent-line); background: linear-gradient(180deg, rgba(64,30,28,0.55), rgba(16,14,16,0.62)); }
+.pf-stat canvas { grid-row: 1 / span 2; width: calc(26px * var(--ui-scale)); height: calc(26px * var(--ui-scale)); }
+.pf-stat-value {
+  font-family: var(--font); font-weight: 700; font-size: calc(21px * var(--ui-scale)); line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.profile-stat-value {
-  font-family: var(--font); font-weight: 700;
-  font-size: calc(19px * var(--ui-scale));
-  font-variant-numeric: tabular-nums;
-  line-height: 1.05; color: var(--ink);
-}
-.profile-stat-label {
-  margin-top: calc(4px * var(--ui-scale));
-  font-family: var(--font); font-size: calc(8px * var(--ui-scale));
-  letter-spacing: 0.12em; text-transform: uppercase;
-  line-height: 1.3;
-  color: rgba(237, 234, 226, 0.42);
+.pf-stat-label {
+  margin-top: calc(3px * var(--ui-scale));
+  font-family: var(--font); font-weight: 600; font-size: calc(8.5px * var(--ui-scale));
+  letter-spacing: 0.13em; text-transform: uppercase; line-height: 1.2; color: rgba(237, 234, 226, 0.46);
 }
 
-/* Favourite weapon, drawn with the same painted sprite the loadout uses. */
-.profile-weapon {
-  margin-top: calc(10px * var(--ui-scale));
-  padding: calc(9px * var(--ui-scale)) calc(10px * var(--ui-scale));
-  border-radius: var(--r3);
-  background: rgba(8, 10, 14, 0.40);
+/* ARSENAL: favourite weapon plate + usage bars */
+.pf-pane[data-pane="arsenal"] { grid-template-columns: 1.15fr 1fr; gap: calc(14px * var(--ui-scale)); }
+.pf-fav, .pf-top {
+  padding: calc(12px * var(--ui-scale)); border-radius: calc(12px * var(--ui-scale));
+  background: rgba(8, 10, 14, 0.42); box-shadow: inset 0 0 0 1px var(--line);
 }
-.profile-weapon-head {
-  font-family: var(--font); font-size: calc(8px * var(--ui-scale));
-  letter-spacing: 0.24em; text-transform: uppercase;
-  color: rgba(237, 234, 226, 0.40);
-}
+.pf-fav { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .profile-weapon-art {
-  display: block; margin: calc(6px * var(--ui-scale)) auto;
-  width: calc(170px * var(--ui-scale)); height: calc(50px * var(--ui-scale));
-  max-width: 100%;
+  display: block; margin: calc(8px * var(--ui-scale)) auto calc(6px * var(--ui-scale));
+  width: calc(260px * var(--ui-scale)); height: calc(92px * var(--ui-scale)); max-width: 100%;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,0.5));
 }
-/* Before any weapon has been logged the plate held a blank 64px canvas above
-   a placeholder line, which read as a failed render. Collapse it. */
-.profile-weapon.empty { padding: calc(9px * var(--ui-scale)) calc(10px * var(--ui-scale)); }
 .profile-weapon.empty .profile-weapon-art { display: none; }
-.profile-weapon.empty .profile-weapon-name {
-  margin-top: calc(6px * var(--ui-scale));
-  font-size: calc(11px * var(--ui-scale)); color: var(--ink-dim); letter-spacing: 0.14em;
-}
+.profile-weapon.empty .profile-weapon-name { margin-top: calc(10px * var(--ui-scale)); color: var(--ink-dim); font-size: calc(12px * var(--ui-scale)); }
 .profile-weapon-name {
-  font-family: var(--font); font-weight: 700;
-  font-size: calc(13px * var(--ui-scale));
+  font-family: var(--font); font-weight: 700; font-size: calc(15px * var(--ui-scale));
   letter-spacing: 0.07em; color: var(--ink);
 }
 .profile-weapon-skin {
-  margin-top: calc(2px * var(--ui-scale));
+  margin-top: calc(3px * var(--ui-scale));
   font-family: var(--font); font-size: calc(9px * var(--ui-scale));
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--amber-bright);
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber-bright);
 }
+.pf-top { display: flex; flex-direction: column; gap: calc(9px * var(--ui-scale)); }
+.pf-top-list { display: flex; flex-direction: column; gap: calc(10px * var(--ui-scale)); }
+.pf-top-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: calc(8px * var(--ui-scale)); row-gap: calc(4px * var(--ui-scale)); }
+.pf-top-rank {
+  width: calc(18px * var(--ui-scale)); height: calc(18px * var(--ui-scale)); border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font); font-weight: 700; font-size: calc(10px * var(--ui-scale));
+  color: var(--bg-0); background: var(--ink-2);
+}
+.pf-top-row:first-child .pf-top-rank { background: #e0a63a; }
+.pf-top-name { font-family: var(--font); font-weight: 700; font-size: calc(12px * var(--ui-scale)); letter-spacing: 0.06em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-top-num { font-family: var(--font); font-size: calc(10px * var(--ui-scale)); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.pf-top-row .ux-track { grid-column: 2 / span 2; }
+.pf-top-empty { font-family: var(--font); font-size: calc(11px * var(--ui-scale)); letter-spacing: 0.1em; color: var(--ink-dim); }
 
-.profile-actions {
-  display: flex; justify-content: center;
-  margin-top: calc(12px * var(--ui-scale));
+/* Narrow (portrait or very small) screens: stack the two-column panes and let
+   them scroll inside the card rather than overflow it. */
+@media (max-width: 560px) {
+  .profile-card { height: min(88vh, 560px); }
+  .pf-head { flex-wrap: wrap; }
+  .pf-tabs { order: 3; margin-left: 0; width: 100%; justify-content: space-between; }
+  .pf-tabs .ux-tab { flex: 1 1 0; padding: 0 6px; }
+  .pf-pane[data-pane="summary"], .pf-pane[data-pane="arsenal"] { grid-template-columns: 1fr; }
+  .pf-stats { grid-template-columns: repeat(2, 1fr); }
 }
-/* The close button inherits .btn.quiet's 200px fixed width and 24px top
-   margin, which stacked with the actions row's own margin and left a band of
-   empty card under the last panel. */
-.profile-actions .btn.quiet { margin-top: 0; width: 100%; }
 
 /* ==================================================================
    Touch targets: hit box vs. drawn box
@@ -2580,6 +2629,9 @@ html.no-backdrop-filter .profile-card {
      subtitles go entirely: on this screen the thing being explained is
      worth more space than the explanation. */
   .panel-title { font-size: 13px; letter-spacing: 0.22em; margin-bottom: var(--s2); }
+  /* The masthead padding is sized for a tall screen; here it is a row of
+     content the player never gets back. */
+  .home-panel { padding-top: var(--s4); }
   .panel-sub { display: none; }
 
   /* Tabs: icon beside the label instead of stacked above it. Keeps both

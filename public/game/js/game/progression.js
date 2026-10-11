@@ -18,7 +18,7 @@ const KEY = 'cinderfall.progress.v1';
 const RUN_KEY = 'cinderfall.run.v1';
 
 // Level thresholds: cumulative XP needed to reach level n (2..).
-function xpForLevel(n) {
+export function xpForLevel(n) {
   return Math.round(120 * n * (n + 1) / 2 + Math.pow(n, 2.1) * 8);
 }
 

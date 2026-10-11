@@ -369,17 +369,30 @@
 
         <!-- STATS -->
         <section id="tab-stats" class="home-panel">
-          <h2 class="panel-title" data-i18n="stats.title">STATISTICS</h2>
-          <div class="store-cats">
-            <button class="store-cat-chip stats-subtab active" data-section="overview" data-i18n="stats.overview">OVERVIEW</button>
-            <button class="store-cat-chip stats-subtab" data-section="achievements" data-i18n="stats.achievements">ACHIEVEMENTS</button>
+          <!-- Title and the two sub-tabs share one row: on a landscape phone
+               the old stacked masthead + chip strip cost a third of the
+               screen before a single number appeared. -->
+          <div class="st-head">
+            <h2 class="panel-title" data-i18n="stats.title">STATISTICS</h2>
+            <div class="ux-tabs st-tabs" role="tablist">
+              <button class="ux-tab stats-subtab active" type="button" role="tab" data-section="overview" data-i18n="stats.overview">OVERVIEW</button>
+              <button class="ux-tab stats-subtab" type="button" role="tab" data-section="achievements"><span data-i18n="stats.achievements">ACHIEVEMENTS</span><span id="ach-tab-count" class="ux-count hidden"></span></button>
+            </div>
           </div>
 
-          <div id="stats-overview" class="store-section">
-            <div id="stats-grid" class="stats-grid"></div>
+          <div id="stats-overview" class="st-pane">
+            <div id="stats-hero" class="st-hero"></div>
+            <div id="stats-grid" class="st-groups"></div>
           </div>
 
-          <div id="stats-achievements" class="store-section hidden">
+          <div id="stats-achievements" class="st-pane hidden">
+            <div id="ach-summary" class="ach-bar"></div>
+            <div class="ux-tabs ach-filters" role="tablist" id="ach-filters">
+              <button class="ux-tab active" type="button" data-filter="all" data-i18n="ach.f.all">ALL</button>
+              <button class="ux-tab" type="button" data-filter="ready" data-i18n="ach.f.ready">READY</button>
+              <button class="ux-tab" type="button" data-filter="progress" data-i18n="ach.f.progress">IN PROGRESS</button>
+              <button class="ux-tab" type="button" data-filter="done" data-i18n="ach.f.done">DONE</button>
+            </div>
             <div id="achievements-list"></div>
           </div>
         </section>
@@ -486,52 +499,70 @@
   <!-- Player card — the offline profile. Built by game/profile.js; every
        number on it is read from local storage, nothing is sent anywhere. -->
   <div id="profile-overlay" class="overlay dim hidden">
-    <div id="profile-card" class="profile-card">
-      <div class="profile-head">
-        <span class="profile-kicker" data-i18n="profile.kicker">OPERATOR FILE</span>
-        <span class="profile-title" data-i18n="profile.title">PROFILE</span>
-      </div>
+    <div id="profile-card" class="profile-card" role="dialog" aria-modal="true" data-i18n-attr="aria-label:profile.title">
+      <!-- One header row: title, the three tabs, close. A landscape phone has
+           ~340px of height for the whole card, so nothing here stacks. -->
+      <header class="pf-head">
+        <div class="pf-head-title">
+          <span class="profile-kicker" data-i18n="profile.kicker">OPERATOR FILE</span>
+          <span class="profile-title" data-i18n="profile.title">PROFILE</span>
+        </div>
+        <div class="ux-tabs pf-tabs" role="tablist">
+          <button class="ux-tab active" type="button" role="tab" data-pf="summary" data-i18n="profile.tabSummary">SUMMARY</button>
+          <button class="ux-tab" type="button" role="tab" data-pf="career" data-i18n="profile.tabCareer">CAREER</button>
+          <button class="ux-tab" type="button" role="tab" data-pf="arsenal" data-i18n="profile.tabArsenal">ARSENAL</button>
+        </div>
+        <button id="btn-profile-close" class="ux-close" type="button" data-i18n-attr="aria-label:profile.close" aria-label="CLOSE">✕</button>
+      </header>
 
-      <!-- Identity. The card is called an operator file and used to contain
-           no operator at all: the equipped skin, the one thing the player
-           actually picked, appeared nowhere on it. -->
-      <div class="profile-id">
-        <canvas id="profile-portrait" class="profile-portrait" aria-hidden="true"></canvas>
-        <div class="profile-id-text">
-          <div id="profile-op-name" class="profile-op-name"></div>
-          <div id="profile-op-tag" class="profile-op-tag"></div>
-          <div class="profile-lvl-row">
-            <span class="profile-lvl-badge"><span id="profile-lvl">1</span></span>
-            <div class="profile-lvl-meter">
-              <div class="profile-lvl-head">
-                <span data-i18n="play.nextRank">NEXT LEVEL</span>
-                <span id="profile-xp-pct">0%</span>
+      <div class="pf-body">
+        <!-- SUMMARY: who (operator, level) beside where they stand (score, rank) -->
+        <section class="pf-pane active" data-pane="summary" role="tabpanel">
+          <div class="pf-id">
+            <canvas id="profile-portrait" class="profile-portrait" aria-hidden="true"></canvas>
+            <div class="pf-id-text">
+              <div id="profile-op-name" class="profile-op-name"></div>
+              <div id="profile-op-tag" class="profile-op-tag"></div>
+              <div class="pf-lvl">
+                <span class="profile-lvl-badge"><span id="profile-lvl">1</span></span>
+                <div class="pf-lvl-meter">
+                  <div class="pf-lvl-head">
+                    <span data-i18n="play.nextRank">NEXT LEVEL</span>
+                    <span id="profile-xp-pct">0%</span>
+                  </div>
+                  <div class="ux-track"><div id="profile-xp-fill" class="ux-fill"></div></div>
+                  <div id="profile-xp-left" class="pf-lvl-sub"></div>
+                </div>
               </div>
-              <div class="profile-lvl-track"><div id="profile-xp-fill" class="profile-lvl-fill"></div></div>
             </div>
           </div>
-        </div>
-      </div>
+          <div class="pf-rank">
+            <div id="profile-score-label" class="pf-label" data-i18n="profile.score">SECTOR SCORE</div>
+            <div id="profile-score" class="profile-score">0</div>
+            <div id="profile-rank" class="profile-rank"></div>
+            <div class="ux-track pf-rank-track"><div id="profile-rank-fill" class="ux-fill pf-rank-fill"></div></div>
+            <div id="profile-rank-next" class="pf-rank-next"></div>
+          </div>
+        </section>
 
-      <div class="profile-score-block">
-        <div id="profile-score" class="profile-score">0</div>
-        <div id="profile-score-label" class="profile-score-label" data-i18n="profile.score">SECTOR SCORE</div>
-        <div id="profile-rank" class="profile-rank"></div>
-        <div class="profile-rank-track"><div id="profile-rank-fill" class="profile-rank-fill"></div></div>
-        <div id="profile-rank-next" class="profile-rank-next"></div>
-      </div>
+        <!-- CAREER: lifetime counters -->
+        <section class="pf-pane" data-pane="career" role="tabpanel">
+          <div id="profile-stats" class="pf-stats"></div>
+        </section>
 
-      <div id="profile-stats" class="profile-stats"></div>
-
-      <div class="profile-weapon">
-        <div class="profile-weapon-head" data-i18n="profile.favorite">FAVOURITE WEAPON</div>
-        <canvas id="profile-weapon-art" class="profile-weapon-art" width="200" height="72"></canvas>
-        <div id="profile-weapon-name" class="profile-weapon-name"></div>
-        <div id="profile-weapon-skin" class="profile-weapon-skin"></div>
-      </div>
-
-      <div class="profile-actions">
-        <button id="btn-profile-close" class="btn quiet" data-i18n="profile.close">CLOSE</button>
+        <!-- ARSENAL: favourite weapon large, then what else gets used -->
+        <section class="pf-pane" data-pane="arsenal" role="tabpanel">
+          <div class="profile-weapon pf-fav">
+            <div class="pf-label" data-i18n="profile.favorite">FAVOURITE WEAPON</div>
+            <canvas id="profile-weapon-art" class="profile-weapon-art" width="200" height="72"></canvas>
+            <div id="profile-weapon-name" class="profile-weapon-name"></div>
+            <div id="profile-weapon-skin" class="profile-weapon-skin"></div>
+          </div>
+          <div class="pf-top">
+            <div class="pf-label" data-i18n="profile.mostFired">MOST FIRED</div>
+            <div id="profile-top" class="pf-top-list"></div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
