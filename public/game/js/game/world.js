@@ -854,17 +854,17 @@ export class World {
   drawBackground(g, cam, vw, vh, time) {
     const z = cam.zoom;
     const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
-    // The sky is a 1600x900 painting stretched over the viewport, redrawn
-    // every frame. On a phone that is 1.3 million pixels resampled sixty times
-    // a second before anything else has drawn — it measured as the single
-    // most expensive blit in the background pass. It only ever depends on the
-    // viewport, so it is rescaled once per resize into a canvas the exact size
-    // of the frame and copied 1:1 from then on.
-    g.drawImage(this._skyFor(vw, vh), 0, 0);
-    if (this.weather === 'overcast' || this.weather === 'rain') {
-      g.fillStyle = 'rgba(60,64,72,0.22)';
-      g.fillRect(0, 0, vw, vh * 0.7);
-    }
+    // Nothing below the street ever shows: the ground sprite and the solid
+    // earth fill under it (drawBack) are opaque from GROUND_Y+84 down. The
+    // backdrop stops just past that line, which on a landscape phone is a
+    // fifth of the frame it no longer fills, in every pass below.
+    const floorY = Math.min(vh, Math.max(0, groundY + 96));
+    if (floorY <= 0) return;
+    // The sky is a 1600x900 painting stretched over the viewport. It only
+    // ever depends on the viewport (and the stage's weather), so it is
+    // rescaled once into a canvas the exact size of the frame — with the
+    // overcast veil already burnt in — and copied 1:1 from then on.
+    g.drawImage(this._skyFor(vw, vh), 0, 0, vw, floorY, 0, 0, vw, floorY);
 
     const tile = (img, ox, y, s) => {
       const w = img.width * s, h = img.height * s;
@@ -875,93 +875,83 @@ export class World {
     const cs = Math.max(vw / 2048, 0.72);
     tile(this.bg.clouds, -(cam.x * 0.05 + time * 3.5), groundY - 700 * cs, cs * 1.15);
 
-    // The block of apartments — the one and only building layer. The far
-    // industrial skyline and the mid factory line that used to sit behind it
-    // are gone; nothing stands between this and the sky.
+    // The block of apartments — the one and only building layer.
     const ns = Math.max(vw / 2048, 0.72) * 1.04;
     tile(this.bg.city, -cam.x * 0.42, groundY - (this.bg.city.height - 6) * ns, ns);
 
     // Drifting haze bank, mid-depth: it parallaxes faster than the apartments
-    // and slower than the street, so it sits *between* them in the stack — the
-    // civil-war air the fight happens in. It also has a slow lateral crawl of
-    // its own on top of the parallax, so the band keeps moving when the player
-    // is standing still.
-    //
-    // Anchored from the *bottom* rather than the top. The band has to hang
-    // over the lower facades — where smoke actually collects on a street —
-    // and a top-anchored offset put it above the roofline, and mostly off the
-    // top of the frame, at anything but one viewport height. HAZE_FLOOR keeps
-    // its lowest wisps just clear of the road so it never fogs the strip the
-    // characters fight on.
+    // and slower than the street, so it sits *between* them in the stack, and
+    // it has a slow lateral crawl of its own so the band keeps moving when the
+    // player is standing still. Anchored from the bottom so it hangs over the
+    // lower facades, where smoke actually collects; HAZE_FLOOR keeps its
+    // lowest wisps clear of the road the characters fight on.
     const hs = Math.max(vw / 2048, 0.72) * 1.3;
     const HAZE_FLOOR = 30;
     tile(this.bg.haze, -(cam.x * 0.55 + time * 7), groundY - HAZE_FLOOR - this.bg.haze.height * hs, hs);
 
-    // cool fog settling at street level
-    // Both this and the atmospheric body below are anchored to groundY, which
-    // moves with the camera — but only by whole pixels, and a gradient rebuilt
-    // for a two-pixel shift is two CanvasGradient allocations a frame in the
-    // hottest loop in the game. Cached against the value they are built from
-    // and rebuilt only when it actually changes.
-    if (this._fogY !== groundY) {
-      this._fogY = groundY;
-      this._fogGrad = lingrad(g, 0, groundY - 150, 0, groundY + 30, [
+    // Gradients below are anchored to groundY, which moves with the camera.
+    // They are rebuilt only when it moves by a whole pixel, never per frame.
+    const gq = Math.round(groundY);
+    if (this._fogY !== gq || this._fogVh !== vh || this._fogGrade !== this.dayGrade) {
+      this._fogY = gq; this._fogVh = vh; this._fogGrade = this.dayGrade;
+      // cool fog settling at street level
+      this._fogGrad = lingrad(g, 0, gq - 150, 0, gq + 30, [
         [0, 'rgba(150,155,175,0)'], [0.8, 'rgba(150,150,168,0.13)'], [1, 'rgba(150,150,168,0.05)'],
       ]);
-      this._atmosGrad = null;
+      this._washGrad = this._buildWash(g, gq, vh);
     }
     g.fillStyle = this._fogGrad;
-    g.fillRect(0, groundY - 150, vw, 190);
+    g.fillRect(0, gq - 150, vw, Math.min(190, floorY - (gq - 150)));
 
-    this.drawWeather(g, cam, vw, vh, time);
+    this.drawWeather(g, cam, vw, floorY, time);
 
-    // Atmospheric fog over the parallax stack: a cool blue-grey body that
-    // thickens toward the horizon. Distance reads as colour temperature here,
-    // not just as dimness.
-    if (!this._atmosGrad || this._atmosVh !== vh) {
-      this._atmosVh = vh;
-      this._atmosGrad = lingrad(g, 0, groundY - vh, 0, groundY + 40, [
-        [0, 'rgba(96,116,150,0.05)'],
-        [0.55, 'rgba(112,132,164,0.17)'],
-        [0.88, 'rgba(126,144,172,0.30)'],
-        [1, 'rgba(120,136,164,0.20)'],
-      ]);
+    // Atmospheric fog + the hour-of-day wash + the night scrim, as ONE fill.
+    if (this._washGrad) {
+      g.fillStyle = this._washGrad;
+      g.fillRect(0, 0, vw, floorY);
     }
-    g.fillStyle = this._atmosGrad;
-    g.fillRect(0, 0, vw, groundY + 40);
+  }
 
-    // ---- TimeShift wash + night scrim, as ONE fill ----
-    // The whole backdrop is repainted toward the hour of day, then pushed down
-    // by a uniform scrim. Doing the grade here, as an overlay, is what lets the
-    // clock move without rebaking a single parallax layer — see
-    // engine/daycycle.js — and it lands before the world layer draws, so the
-    // street and everyone on it keep their own value.
-    //
-    // They used to be two full-screen fills. Two source-over fills of flat
-    // colour over the same rect compose to exactly one, and on a phone a
-    // full-screen alpha fill is ~1.3 million pixels of blending, so the second
-    // one was worth removing:
-    //
-    //   out = C2*a2 + (C1*a1 + base*(1-a1))*(1-a2)
-    //       = [C2*a2 + C1*a1*(1-a2)] + base*(1-a1)(1-a2)
-    //
-    // which is a single fill with a = 1-(1-a1)(1-a2) and premultiplied colour
-    // C = [C2*a2 + C1*a1*(1-a2)] / a. Identical output, half the fill rate.
+  // The three washes that used to be separate full-frame fills over the
+  // parallax stack, folded into one gradient:
+  //
+  //   atmos — a cool blue-grey body thickening toward the horizon (distance
+  //           read as colour temperature, not just dimness)
+  //   tint  — the TimeShift colour of the hour (engine/daycycle.js)
+  //   scrim — a uniform knock-down, scaled by how dark the hour already is
+  //
+  // Two source-over fills over the same pixel compose to exactly one:
+  //   a = 1-(1-a1)(1-a2),  C = [C2*a2 + C1*a1*(1-a2)] / a
+  // so each stop of the atmos gradient is pre-composited with the flat
+  // tint+scrim colour above it. Identical output, a third of the fill.
+  _buildWash(g, groundY, vh) {
     const grade = this.dayGrade;
-    const a1 = grade && grade.a > 0.001 ? grade.a : 0;
     const t = grade ? grade.tint : null;
-    // Scrim: scaled by how dark the hour already is — a noon sky does not need
-    // the same knock-down as midnight.
-    const a2 = 0.34 * (grade ? 0.45 + grade.ambient * 0.55 : 1);
-    const a = 1 - (1 - a1) * (1 - a2);
-    if (a > 0.001) {
-      const k1 = a1 * (1 - a2), k2 = a2;
-      const cr = ((t ? t[0] * k1 : 0) + 6 * k2) / a;
-      const cg = ((t ? t[1] * k1 : 0) + 8 * k2) / a;
-      const cb = ((t ? t[2] * k1 : 0) + 13 * k2) / a;
-      g.fillStyle = `rgba(${Math.round(cr)},${Math.round(cg)},${Math.round(cb)},${a.toFixed(3)})`;
-      g.fillRect(0, 0, vw, vh);
-    }
+    const ga1 = grade && grade.a > 0.001 ? grade.a : 0;
+    const ga2 = 0.34 * (grade ? 0.45 + grade.ambient * 0.55 : 1);
+    // flat wash (tint over scrim order as before: tint first, scrim on top)
+    const fa = 1 - (1 - ga1) * (1 - ga2);
+    const fk1 = ga1 * (1 - ga2), fk2 = ga2;
+    const fr = fa > 0.001 ? ((t ? t[0] * fk1 : 0) + 6 * fk2) / fa : 0;
+    const fg = fa > 0.001 ? ((t ? t[1] * fk1 : 0) + 8 * fk2) / fa : 0;
+    const fb = fa > 0.001 ? ((t ? t[2] * fk1 : 0) + 13 * fk2) / fa : 0;
+    const over = (c, a1) => {
+      // atmos stop (c, a1) underneath, flat wash (fr,fg,fb,fa) on top
+      const a = 1 - (1 - a1) * (1 - fa);
+      if (a <= 0.0005) return 'rgba(0,0,0,0)';
+      const k1 = a1 * (1 - fa);
+      const r = (fr * fa + c[0] * k1) / a, gg = (fg * fa + c[1] * k1) / a, b = (fb * fa + c[2] * k1) / a;
+      return `rgba(${Math.round(r)},${Math.round(gg)},${Math.round(b)},${a.toFixed(3)})`;
+    };
+    const y0 = groundY - vh, y1 = groundY + 96;
+    const at = (y) => Math.min(1, Math.max(0, (y - y0) / (y1 - y0)));
+    // atmos stops, originally over [groundY - vh, groundY + 40]
+    const span = vh + 40;
+    const S = [[0, [96, 116, 150], 0.05], [0.55, [112, 132, 164], 0.17], [0.88, [126, 144, 172], 0.30], [1, [120, 136, 164], 0.20]];
+    const stops = S.map(([u, c, a]) => [at(y0 + u * span), over(c, a)]);
+    // under the atmos body's end only the flat wash remains
+    stops.push([Math.min(1, at(groundY + 41)), over([0, 0, 0], 0)]);
+    return lingrad(g, 0, y0, 0, y1, stops);
   }
 
   // Viewport-sized copy of the sky painting, rebuilt only when the frame
@@ -969,14 +959,19 @@ export class World {
   // failure here costs performance and never correctness.
   _skyFor(vw, vh) {
     const w = Math.max(1, Math.round(vw)), h = Math.max(1, Math.round(vh));
-    if (this._skyCv && this._skyCv.width === w && this._skyCv.height === h) return this._skyCv;
+    const veil = this.weather === 'overcast' || this.weather === 'rain';
+    if (this._skyCv && this._skyCv.width === w && this._skyCv.height === h && this._skyVeil === veil) return this._skyCv;
     let cv;
     try {
       cv = document.createElement('canvas');
       cv.width = w; cv.height = h;
-      cv.getContext('2d').drawImage(this.bg.sky, 0, 0, w, h);
+      const sg = cv.getContext('2d');
+      sg.drawImage(this.bg.sky, 0, 0, w, h);
+      // the overcast veil sits directly on the sky with nothing between, so
+      // it is burnt in here rather than filled over the frame every draw
+      if (veil) { sg.fillStyle = 'rgba(60,64,72,0.22)'; sg.fillRect(0, 0, w, h * 0.7); }
     } catch { return this.bg.sky; }
-    this._skyCv = cv;
+    this._skyCv = cv; this._skyVeil = veil;
     return cv;
   }
 
@@ -1001,10 +996,15 @@ export class World {
       // One path, one stroke: every drop is the same colour and width, so 90
       // to 190 separate stroke calls a frame collapse into a single one.
       const dx = heavy ? 10 : 6, dy = heavy ? 30 : 22;
+      // Coordinates are snapped to whole pixels: a fractional number handed
+      // to a canvas call is boxed on the way in, and at 190 drops x 4 numbers
+      // that was the largest single source of garbage in the frame. A 1px
+      // streak in a soft backdrop loses nothing for it.
       g.beginPath();
+      const ox = seed * 0.4, oy = time * speed, mw = (vw + 200) | 0, mh = (vh + 100) | 0;
       for (let i = 0; i < drops; i++) {
-        const rx = ((i * 137 + seed * 0.4) % (vw + 200)) - 100;
-        const ry = ((i * 71 + time * speed) % (vh + 100)) - 50;
+        const rx = (((i * 137 + ox) % mw) - 100) | 0;
+        const ry = (((i * 71 + oy) % mh) - 50) | 0;
         g.moveTo(rx, ry); g.lineTo(rx - dx, ry + dy);
       }
       g.stroke();

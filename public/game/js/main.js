@@ -98,7 +98,7 @@ function baseZoom() {
   return 1.25 * clamp(Math.min(vh / 720, vw / 1000), 0.72, 1.06);
 }
 
-function resize() {
+function resizeScene() {
   // `dpr` here is device pixels per CSS pixel in the SCENE canvas, which is
   // the display's ratio capped by the tier and then scaled down by the tier's
   // renderScale. The element stays CSS-sized to the viewport, so a sub-1
@@ -108,18 +108,33 @@ function resize() {
   // expressed in terms of this one number and every layout number in CSS px.
   dpr = Math.min(window.devicePixelRatio || 1, quality.preset.dprCap) * quality.preset.renderScale * quality.dyn;
   vw = window.innerWidth; vh = window.innerHeight;
-  canvas.width = vw * dpr; canvas.height = vh * dpr;
+  const cw = Math.round(vw * dpr), ch = Math.round(vh * dpr);
+  // Assigning a canvas's size reallocates its backing store even when the
+  // number is unchanged, so only touch it when it actually moved.
+  if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
   // The light and glow maps get their own, usually lower, resolution — see
   // `lightScale` in quality.js. They are stretched back to full size by the
   // composite, and being low-frequency they lose nothing visible for it.
   lightDpr = dpr * quality.preset.lightScale;
-  const l = makeCanvas(vw * lightDpr, vh * lightDpr); lightCv = l.cv; lightG = l.g;
+  const lw = Math.max(1, Math.round(vw * lightDpr)), lh = Math.max(1, Math.round(vh * lightDpr));
+  if (!lightCv || lightCv.width !== lw || lightCv.height !== lh) { const l = makeCanvas(lw, lh); lightCv = l.cv; lightG = l.g; }
   glowDpr = dpr * 0.22;
-  const g = makeCanvas(Math.max(1, vw * glowDpr), Math.max(1, vh * glowDpr)); glowCv = g.cv; glowG = g.g;
+  const gw = Math.max(1, Math.round(vw * glowDpr)), gh = Math.max(1, Math.round(vh * glowDpr));
+  if (!glowCv || glowCv.width !== gw || glowCv.height !== gh) { const g = makeCanvas(gw, gh); glowCv = g.cv; glowG = g.g; }
   // backdrop canvas, at `bgScale` of the scene resolution (quality.js)
   const bs = quality.preset.bgScale ?? 1;
-  if (bs < 1) { const b = makeCanvas(Math.max(1, Math.round(vw * dpr * bs)), Math.max(1, Math.round(vh * dpr * bs))); bgCv = b.cv; bgG = b.g; }
-  else { bgCv = null; bgG = null; }
+  if (bs < 1) {
+    const bw = Math.max(1, Math.round(vw * dpr * bs)), bh = Math.max(1, Math.round(vh * dpr * bs));
+    if (!bgCv || bgCv.width !== bw || bgCv.height !== bh) { const b = makeCanvas(bw, bh); bgCv = b.cv; bgG = b.g; }
+  } else { bgCv = null; bgG = null; }
+}
+
+// Full resize: viewport, orientation or graphics tier changed. The dynamic
+// resolution steps call resizeScene() alone — they change nothing the DOM
+// cares about, and re-running the device profile restyled the whole overlay
+// tree on every step, which was a visible hitch of its own mid-fight.
+function resize() {
+  resizeScene();
   // refresh --ui-scale so the DOM overlay tracks the new viewport
   applyDeviceProfile();
   // keep the framing right across orientation / resize (not mid-cinematic)
@@ -1423,7 +1438,13 @@ class Game {
       bgG.globalCompositeOperation = 'source-over';
       bgG.globalAlpha = 1;
       this.world.drawBackground(bgG, this.cam, vw, vh, this.time);
-      ctx.drawImage(bgCv, 0, 0, canvas.width, canvas.height);
+      // Only the rows the backdrop actually painted (see drawBackground: it
+      // stops just under the street, which the world layer covers opaquely).
+      const floorY = Math.min(vh, Math.max(0, vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom + 96));
+      if (floorY > 0) {
+        const sh = Math.min(bgCv.height, Math.ceil(floorY * k));
+        ctx.drawImage(bgCv, 0, 0, bgCv.width, sh, 0, 0, canvas.width, sh * (canvas.height / bgCv.height));
+      }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     } else {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1502,8 +1523,11 @@ class Game {
     return this._charOpts;
   }
 
+  // One array, reused every frame: the light list is rebuilt sixty to a
+  // hundred and twenty times a second and was a fresh allocation each time.
   gatherLights() {
-    const out = [];
+    const out = this._lightList || (this._lightList = []);
+    out.length = 0;
     for (const l of this.world.getLights()) out.push(l);
     for (const l of this.fx.getLights()) out.push(l);
     return out;
@@ -1561,6 +1585,15 @@ class Game {
       glowG.beginPath(); glowG.arc(l.x, l.y, l.r * 0.7, 0, Math.PI * 2); glowG.fill();
     }
 
+    // The cheap grade's darkening half (vignette, haze, net tint — see
+    // bakeGrade) is a per-pixel multiply, so it rides in the light map rather
+    // than costing its own full-screen pass on the scene.
+    if (!quality.preset.richGrade) {
+      const bake = this.bakeGrade();
+      lightG.setTransform(1, 0, 0, 1, 0, 0);
+      lightG.globalCompositeOperation = 'source-over';
+      lightG.drawImage(bake.mul, 0, 0, lightCv.width, lightCv.height);
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = 'multiply';
     ctx.drawImage(lightCv, 0, 0, canvas.width, canvas.height);
@@ -1589,8 +1622,16 @@ class Game {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const gy = vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom;
 
-    if (quality.preset.richGrade) this.gradeRich(gy);
-    else this.gradeCheap(gy);
+    if (!quality.preset.richGrade) {
+      // Everything the cheap grade and the brightness lift add, in one
+      // additive blit; their darkening half already went through the light
+      // map (compositeLighting). Two full-screen passes become one.
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.drawImage(this.bakeGrade().add, 0, 0, vw, vh);
+      ctx.globalCompositeOperation = 'source-over';
+      return;
+    }
+    this.gradeRich(gy);
 
     // film grain — subtle; skipped on weaker quality tiers (a canvas-wide
     // tiled overlay draw isn't free, and it's the least-missed effect).
@@ -1636,58 +1677,79 @@ class Game {
     ctx.fillRect(0, 0, vw, vh);
   }
 
-  // Cheap grade, for the tier where a dropped frame costs more than tonal
-  // separation does.
+  // Cheap grade, for every tier but Ultra.
   //
-  // The rich pass is four full-screen passes, and on a weak GPU each one is a
-  // separate read-modify-write of the whole framebuffer — `overlay` and
-  // `soft-light` especially, since neither is a fixed-function blend. All four
-  // are `source-over`-compatible once the two tonal passes are folded into a
-  // single flat tint, and everything left is a function of the screen rather
-  // than of the scene. So they are baked once into a small texture and blitted
-  // in one stretched draw: four framebuffer passes become one, and the pixels
-  // that produce them are computed at a fraction of the resolution — which
-  // costs nothing here, because every layer in the bake is a smooth gradient.
+  // The rich pass is four full-screen passes, two of them on `overlay` and
+  // `soft-light`. All of it is `source-over`-compatible once the two tonal
+  // passes are folded into one flat tint, and everything left (haze band, net
+  // tint, vignette) is a function of the screen, not of the scene — so it is
+  // baked into a small texture. A source-over layer of colour C and alpha A
+  // does  out = S*(1-A) + C*A : a multiply and an add. The bake is split into
+  // exactly those two halves:
   //
-  // The bake only depends on the viewport and on where the ground sits on
-  // screen, so it is rebuilt when the viewport changes or the horizon moves
-  // more than a few pixels — a handful of times a second while the camera
-  // travels, never per frame.
-  gradeCheap(gy) {
+  //   mul — black at alpha A, laid source-over on the light map: that
+  //         scales it by (1-A), and the light map is already multiplied over
+  //         the scene, so the darkening costs no pass of its own. (Plain
+  //         source-over, not 'multiply': a separable blend mode makes the GPU
+  //         read the destination back, and on the light map that measured
+  //         dearer than the full-screen pass it replaced.)
+  //   add — the premultiplied colour C*A plus the player's brightness lift
+  //         (engine/brightness.js, which is itself an additive fill), drawn
+  //         once with 'lighter'
+  //
+  // So the grade and the brightness lift together cost one full-screen pass
+  // where they used to cost two. Rebuilt when the viewport, the brightness
+  // setting or the horizon (by more than a few pixels) changes — a handful of
+  // times a second while the camera travels, never per frame.
+  bakeGrade() {
+    const gy = vh / 2 + (GROUND_Y - this.cam.y) * this.cam.zoom;
     const q = Math.round(gy / 12);
-    if (!this._gradeCv || this._gradeVw !== vw || this._gradeVh !== vh || this._gradeQ !== q) {
-      this._gradeQ = q; this._gradeVw = vw; this._gradeVh = vh;
-      // Aspect-correct and deliberately small: 1/4 scale, floored so a tiny
-      // window still gets enough rows for the gradients to be smooth.
-      const bw = Math.max(64, Math.round(vw / 4));
-      const bh = Math.max(64, Math.round(vh / 4));
-      if (!this._gradeCv || this._gradeCv.width !== bw || this._gradeCv.height !== bh) {
-        const m = makeCanvas(bw, bh);
-        this._gradeCv = m.cv; this._gradeG = m.g;
-      }
-      const g = this._gradeG;
-      const k = bh / vh;             // bake pixels per CSS pixel
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.clearRect(0, 0, bw, bh);
-      // haze band
-      const gyk = gy * k;
-      const haze = g.createLinearGradient(0, gyk - bh * 0.5, 0, gyk);
-      haze.addColorStop(0, 'rgba(150,158,172,0)');
-      haze.addColorStop(1, 'rgba(150,158,172,0.05)');
-      g.fillStyle = haze;
-      g.fillRect(0, 0, bw, Math.max(0, gyk));
-      // net tint standing in for the warm-highlight and cool-shadow passes
-      g.fillStyle = 'rgba(150,142,150,0.045)';
+    const lift = brightness.lift;
+    const B = this._gradeBake;
+    if (B && B.vw === vw && B.vh === vh && B.q === q && B.lift === lift) return B;
+    const bw = Math.max(64, Math.round(vw / 4));
+    const bh = Math.max(64, Math.round(vh / 4));
+    const nb = (B && B.mul.width === bw && B.mul.height === bh) ? B
+      : { mul: makeCanvas(bw, bh).cv, add: makeCanvas(bw, bh).cv };
+    nb.vw = vw; nb.vh = vh; nb.q = q; nb.lift = lift;
+    const k = bh / vh;
+    // the source-over layer, composed exactly as the old single bake was
+    const g = nb.add.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = 'source-over';
+    g.clearRect(0, 0, bw, bh);
+    const gyk = gy * k;
+    const haze = g.createLinearGradient(0, gyk - bh * 0.5, 0, gyk);
+    haze.addColorStop(0, 'rgba(150,158,172,0)');
+    haze.addColorStop(1, 'rgba(150,158,172,0.05)');
+    g.fillStyle = haze;
+    g.fillRect(0, 0, bw, Math.max(0, gyk));
+    g.fillStyle = 'rgba(150,142,150,0.045)';
+    g.fillRect(0, 0, bw, bh);
+    const v = g.createRadialGradient(bw / 2, bh * 0.46, Math.min(bw, bh) * 0.5, bw / 2, bh / 2, Math.max(bw, bh) * 0.78);
+    v.addColorStop(0, 'rgba(5,6,10,0)');
+    v.addColorStop(1, 'rgba(4,5,9,0.16)');
+    g.fillStyle = v;
+    g.fillRect(0, 0, bw, bh);
+    // mul = black carrying the layer's alpha A
+    const m = nb.mul.getContext('2d');
+    m.setTransform(1, 0, 0, 1, 0, 0);
+    m.globalCompositeOperation = 'source-over';
+    m.clearRect(0, 0, bw, bh);
+    m.fillStyle = '#000';
+    m.fillRect(0, 0, bw, bh);
+    m.globalCompositeOperation = 'destination-in';
+    m.drawImage(nb.add, 0, 0);
+    m.globalCompositeOperation = 'source-over';
+    // add = C*A (the layer as it stands, premultiplied) + the brightness lift
+    if (lift > 0) {
+      g.globalCompositeOperation = 'lighter';
+      g.fillStyle = `rgba(150,160,185,${lift.toFixed(3)})`;
       g.fillRect(0, 0, bw, bh);
-      // vignette
-      const v = g.createRadialGradient(bw / 2, bh * 0.46, Math.min(bw, bh) * 0.5, bw / 2, bh / 2, Math.max(bw, bh) * 0.78);
-      v.addColorStop(0, 'rgba(5,6,10,0)');
-      v.addColorStop(1, 'rgba(4,5,9,0.16)');
-      g.fillStyle = v;
-      g.fillRect(0, 0, bw, bh);
+      g.globalCompositeOperation = 'source-over';
     }
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(this._gradeCv, 0, 0, vw, vh);
+    this._gradeBake = nb;
+    return nb;
   }
 
   // Vignette gradient, rebuilt only when the viewport changes.
@@ -1819,8 +1881,20 @@ const NULL_INPUT = {
 // ------------------------------------------------------------------ loop
 
 let last = performance.now();
-let acc = 0;
-const STEP = 1 / 60;
+// Simulation sub-step ceiling. Every frame advances the simulation by exactly
+// the time that frame took, split into equal sub-steps no longer than this:
+// one step on a 120Hz screen, two on 60Hz, two short ones on 90Hz. The game
+// used to step a fixed 1/60s, which on a 120Hz phone meant every other frame
+// showed the same positions as the one before it — 120 draws, 60 distinct
+// images. Every update in the game is written in terms of dt (velocities,
+// timers and exponential damping, never per-call multipliers), so the split
+// changes nothing about how far a jump goes or how fast a bullet flies.
+const SUB_MAX = 1 / 118;
+// At most four sub-steps per frame, and a long frame (a tab switch, a GC
+// pause) is clamped rather than replayed: past the clamp the game runs a touch
+// slow for that one frame instead of spiralling.
+const SUB_CAP = 4;
+const FRAME_DT_MAX = 1 / 20;
 
 // Battery/thermal: a backgrounded tab still gets (throttled) rAF callbacks in
 // most browsers, and the ambience audio graph keeps processing unheard —
@@ -1829,47 +1903,86 @@ const STEP = 1 / 60;
 // doesn't dump a multi-second dt catch-up burst into a single step.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) audio.suspend();
-  else { audio.resume(); last = performance.now(); acc = 0; }
+  else { audio.resume(); last = performance.now(); }
 });
+
+// Display refresh, measured: the median rAF interval over a rolling window,
+// snapped to the common panel rates. It is the frame budget the dynamic
+// resolution aims at, so a 120Hz phone is asked for 8.3ms frames and a 60Hz
+// one for 16.7ms — never the other way round.
+const HZ_RATES = [30, 48, 50, 60, 72, 75, 90, 100, 120, 144, 165, 240];
+const hzBuf = new Float32Array(61);
+const hzSort = new Float32Array(61);
+let hzN = 0, hzI = 0, displayHz = 60;
+function noteInterval(ms) {
+  if (ms <= 2 || ms > 60) return;
+  hzBuf[hzI] = ms; hzI = (hzI + 1) % hzBuf.length; if (hzN < hzBuf.length) hzN++;
+  if (hzI % 15 !== 0 || hzN < 30) return;
+  for (let i = 0; i < hzN; i++) hzSort[i] = hzBuf[i];
+  const v = hzSort.subarray(0, hzN).sort();
+  // the 30th percentile, not the median: dropped frames only ever make an
+  // interval longer, so the faster side of the distribution is the panel
+  const hz = 1000 / v[Math.floor(hzN * 0.3)];
+  let best = 60, bd = 1e9;
+  for (const r of HZ_RATES) { const d = Math.abs(r - hz); if (d < bd) { bd = d; best = r; } }
+  // never below 60: a weak device missing every other vsync on a 60Hz panel
+  // reads as 30Hz, and aiming the budget at 30 would stop it from recovering
+  displayHz = Math.max(60, best);
+}
 
 // Runtime performance control, sampled only during active play (menu/pause
 // frames aren't representative): dynamic resolution first, a whole-tier step
-// down only once resolution is at its floor. See the block in frame().
-const MENU_FPS = 24;
+// down only when even 60 cannot be held at the resolution floor.
 let nextRenderAt = 0;
 // Interval between drawn frames during play, smoothed (ms). This, not the
-// rAF interval, is what the player sees: on a 120Hz screen rAF fires twice
-// per drawn frame, and on a 60Hz one a missed vsync doubles the interval.
+// rAF interval, is what the player sees.
 let lastRenderAt = 0;
 let renderAvg = 1000 / 60;
-let slowT = 0, fastT = 0, dynCool = 0, dynCeil = 1, dynCeilT = 0;
+let slowT = 0, fastT = 0, dynCool = 0, dynCeil = 1, dynCeilT = 0, tierSlowT = 0;
+// Resolution steps are a fixed ladder rather than a running multiplier: each
+// step reallocates the scene buffers, so fewer, larger, well-separated steps
+// beat a stream of tiny ones that each cost a hitch.
+const DYN_LEVELS = [1, 0.9, 0.8, 0.72, 0.64, DYN_MIN];
+function dynIndex(v) {
+  let best = 0;
+  for (let i = 0; i < DYN_LEVELS.length; i++) if (Math.abs(DYN_LEVELS[i] - v) < Math.abs(DYN_LEVELS[best] - v)) best = i;
+  return best;
+}
+function setDynLevel(i) {
+  i = Math.max(0, Math.min(DYN_LEVELS.length - 1, i));
+  if (DYN_LEVELS[i] === quality.dyn) return false;
+  quality.setDyn(DYN_LEVELS[i]);
+  resizeScene();
+  return true;
+}
+
+// The frame budget: the display's own interval, unless the player chose a cap
+// in Settings (60 to save battery, 30 for the weakest phones).
+function frameCap() {
+  const m = quality.fpsMode;
+  return m === 'auto' ? displayHz : Math.min(displayHz, m);
+}
 
 function frame(now) {
   if (document.hidden) { last = now; requestAnimationFrame(frame); return; }
   input.pollGamepad();
-  const rawDt = (now - last) / 1000;
-  const dt = Math.min(rawDt, 0.06);
+  const rawMs = now - last;
   last = now;
-  acc += dt;
-  let steps = 0;
-  // At most three catch-up steps per frame. A slow frame used to allow four,
-  // and every extra update made the next frame slower still — on a weak
-  // phone the simulation could end up eating the time the renderer needed.
-  // Past the cap the remainder is dropped: the game runs a touch slow for a
-  // moment instead of spiralling.
-  while (acc >= STEP && steps < 3) {
-    game.update(STEP);
-    acc -= STEP;
-    steps++;
+  noteInterval(rawMs);
+  const dt = Math.min(rawMs / 1000, FRAME_DT_MAX);
+  if (dt > 0) {
+    const n = Math.min(SUB_CAP, Math.max(1, Math.ceil(dt / SUB_MAX - 1e-3)));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) game.update(h);
   }
-  if (steps === 3 && acc > STEP) acc = 0;
-  // Draw no more often than the tier's cap (and only ~24fps behind the menu,
-  // where the scene is a backdrop under opaque panels). The simulation above
-  // still steps at its fixed rate; only rasterisation is rationed, which is
-  // where all of the frame's cost is.
+
+  // Behind the menus the scene is a backdrop under opaque panels: half the
+  // display rate (30..60) is plenty and leaves the GPU to the UI's own motion.
   const backdrop = game.state === 'menu' || game.state === 'pause' || game.state === 'end';
-  const cap = backdrop ? MENU_FPS : (quality.preset.fpsCap || 60);
-  if (now >= nextRenderAt - 1.5) {
+  const cap = backdrop ? Math.max(30, Math.min(60, displayHz / 2)) : frameCap();
+  // Uncapped play draws on every vsync. A cap below the display rate rations
+  // the draws; the 1.5ms slack absorbs rAF timestamp jitter.
+  if (cap >= displayHz - 1 || now >= nextRenderAt - 1.5) {
     game.render();
     nextRenderAt = Math.max(nextRenderAt + 1000 / cap, now);
     if (game.state === 'play') {
@@ -1879,36 +1992,40 @@ function frame(now) {
     lastRenderAt = now;
   }
 
-  // Hold 60. Long frames step the scene resolution down by ~12% at a time
-  // (down to DYN_MIN); a few seconds of clean frames step it back up by ~6%,
-  // but never straight back over the level that just failed (dynCeil), so it
-  // settles instead of see-sawing. Only when resolution is already at the
-  // floor and frames are still long does the runtime drop a whole tier.
+  // Hold the display rate. Long frames step the scene resolution down one
+  // rung of DYN_LEVELS; a few seconds of clean frames step it back up, but
+  // never straight back onto the rung that just failed (dynCeil), so it
+  // settles instead of see-sawing. A whole tier only drops when frames are
+  // slower than 60fps with the resolution already at the floor — missing 120
+  // on a phone that holds 90 is a resolution problem, not a reason to strip
+  // the effects.
   if (game.state === 'play') {
     const target = 1000 / cap;
-    dynCool -= rawDt; dynCeilT -= rawDt;
+    dynCool -= dt; dynCeilT -= dt;
     if (dynCeilT <= 0) dynCeil = 1;
-    if (renderAvg > target * 1.12) { slowT += rawDt; fastT = 0; }
-    else if (renderAvg < target * 1.04) { fastT += rawDt; slowT = 0; }
+    if (renderAvg > target * 1.15) { slowT += dt; fastT = 0; }
+    else if (renderAvg < target * 1.05) { fastT += dt; slowT = 0; }
     else { slowT = 0; fastT = 0; }
-    if (slowT > 0.6 && dynCool <= 0) {
-      slowT = 0; dynCool = 0.9;
-      if (quality.dyn > DYN_MIN + 0.001) {
+    const di = dynIndex(quality.dyn);
+    if (slowT > 0.5 && dynCool <= 0) {
+      slowT = 0; dynCool = 1.2;
+      if (di < DYN_LEVELS.length - 1) {
         dynCeil = quality.dyn; dynCeilT = 20;
-        quality.setDyn(Math.max(DYN_MIN, quality.dyn * 0.88));
-        resize(); renderAvg = target;
-      } else if (!quality.autoLowerExhausted) {
-        const lowered = quality.tryAutoLower();
-        if (lowered) {
-          dynCeil = 1;
-          hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name }));
-          resize(); renderAvg = target; dynCool = 2;
-        }
+        setDynLevel(di + 1); renderAvg = target;
       }
-    } else if (fastT > 3.5 && dynCool <= 0 && quality.dyn < 1) {
+    } else if (fastT > 4 && dynCool <= 0 && di > 0) {
       fastT = 0; dynCool = 2;
-      const next = Math.min(1, quality.dyn * 1.06);
-      if (next < dynCeil - 0.005) { quality.setDyn(next); resize(); renderAvg = target; }
+      if (DYN_LEVELS[di - 1] < dynCeil - 0.005) { setDynLevel(di - 1); renderAvg = target; }
+    }
+    // tier step-down: only below 60fps, at the floor, sustained
+    if (di === DYN_LEVELS.length - 1 && renderAvg > (1000 / 60) * 1.15) tierSlowT += dt; else tierSlowT = 0;
+    if (tierSlowT > 2.5 && !quality.autoLowerExhausted) {
+      tierSlowT = 0;
+      if (quality.tryAutoLower()) {
+        dynCeil = 1;
+        hud.notify(t('notify.graphicsLowered', { tier: quality.preset.name }));
+        resize(); renderAvg = target; dynCool = 2;
+      }
     }
   }
 

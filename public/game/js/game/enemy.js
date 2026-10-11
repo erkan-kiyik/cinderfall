@@ -256,8 +256,12 @@ export class Enemy {
 
   // Vision cone (narrow, long) + peripheral vision (wide, short) + point
   // blank + line-of-sight, plus hearing for gunfire and nearby sprinting.
+  // Returns a per-enemy scratch record, overwritten on every call: it is read
+  // once, inside the same update, and a fresh object per enemy per step was
+  // a steady stream of garbage.
   perceive(player) {
-    if (!player || player.deadT > 0) return { visible: false, heard: false, dist: 99999 };
+    const out = this._per || (this._per = { visible: false, heard: false, dist: 99999 });
+    if (!player || player.deadT > 0) { out.visible = false; out.heard = false; out.dist = 99999; return out; }
     const dx = player.x - this.x;
     const dist = Math.abs(dx);
     const eyeX = this.x, eyeY = this.y - 112;
@@ -279,7 +283,8 @@ export class Enemy {
     }
     const heardShot = player.time - player.lastShotT < 1.4 && dist < 560 + this.difficulty * 40;
     const heardMove = player.sprinting && dist < 280;
-    return { visible, heard: heardShot || heardMove, dist };
+    out.visible = visible; out.heard = heardShot || heardMove; out.dist = dist;
+    return out;
   }
 
   // Tell nearby idle allies where to look — simulates radio chatter / shouts.

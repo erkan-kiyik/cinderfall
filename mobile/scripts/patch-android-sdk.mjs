@@ -50,10 +50,20 @@ edit('gradle/wrapper/gradle-wrapper.properties',
 // by the system-bar insets itself (display-cutout insets stay with the page's
 // own env(safe-area-inset-*) rules). The window background is already the game's
 // dark colour, so the padded strips are invisible.
+//
+// High refresh rate: many phones (Samsung, Xiaomi, OnePlus in "adaptive" or
+// "standard" mode) hold an app at 60Hz unless the window asks for more, and a
+// WebView's requestAnimationFrame can never run faster than the display. The
+// activity therefore asks for the fastest mode at the current resolution —
+// 90/120/144Hz where the panel has one — and asks again on resume, because
+// some vendors reset the preference when the app comes back to the front.
 edit(`app/src/main/java/${APP_ID.replace(/\./g, '/')}/MainActivity.java`, () => `package ${APP_ID};
 
+import android.os.Build;
 import android.os.Bundle;
+import android.view.Display;
 import android.view.View;
+import android.view.WindowManager;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -69,6 +79,36 @@ public class MainActivity extends BridgeActivity {
       v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
       return WindowInsetsCompat.CONSUMED;
     });
+    requestHighRefreshRate();
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    requestHighRefreshRate();
+  }
+
+  @SuppressWarnings("deprecation")
+  private void requestHighRefreshRate() {
+    try {
+      Display display = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ? getDisplay() : getWindowManager().getDefaultDisplay();
+      if (display == null) return;
+      Display.Mode cur = display.getMode();
+      Display.Mode best = cur;
+      for (Display.Mode m : display.getSupportedModes()) {
+        if (m.getPhysicalWidth() == cur.getPhysicalWidth()
+            && m.getPhysicalHeight() == cur.getPhysicalHeight()
+            && m.getRefreshRate() > best.getRefreshRate() + 0.5f) best = m;
+      }
+      WindowManager.LayoutParams lp = getWindow().getAttributes();
+      if (lp.preferredDisplayModeId == best.getModeId()) return;
+      lp.preferredDisplayModeId = best.getModeId();
+      lp.preferredRefreshRate = best.getRefreshRate();
+      getWindow().setAttributes(lp);
+    } catch (Exception ignored) {
+      // A vendor display stack that refuses the request just stays at its default.
+    }
   }
 }
-`, 'MainActivity pads content by system-bar insets');
+`, 'MainActivity pads content by system-bar insets + requests the highest refresh rate');
