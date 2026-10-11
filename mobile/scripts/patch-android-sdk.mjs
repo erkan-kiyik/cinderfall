@@ -30,9 +30,14 @@ function edit(rel, fn, label) {
   console.log(`[patch-android-sdk] ${label}`);
 }
 
+// Play's automatic protection requires a minimum SDK of 24 or higher (the
+// Capacitor 6 template ships 22). API 24 is Android 7.0.
+const MIN_SDK = 24;
+
 edit('variables.gradle', (s) => s
+  .replace(/minSdkVersion = \d+/, `minSdkVersion = ${MIN_SDK}`)
   .replace(/compileSdkVersion = \d+/, `compileSdkVersion = ${SDK}`)
-  .replace(/targetSdkVersion = \d+/, `targetSdkVersion = ${SDK}`), `compile/target SDK -> ${SDK}`);
+  .replace(/targetSdkVersion = \d+/, `targetSdkVersion = ${SDK}`), `min/compile/target SDK -> ${MIN_SDK}/${SDK}/${SDK}`);
 
 edit('build.gradle', (s) => s.replace(/(com\.android\.tools\.build:gradle:)[\d.]+/, `$1${AGP}`), `AGP -> ${AGP}`);
 
