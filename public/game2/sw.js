@@ -14,7 +14,7 @@
 // Bump CACHE on any shipped change to retire the previous cache on activate.
 
 const PREFIX = 'cinderfall-lab-';
-const CACHE = `${PREFIX}v3`;
+const CACHE = `${PREFIX}v4`;
 
 // The full game shell — every module is a static ES import, so precaching
 // them means the whole game is available offline from the very first visit,
