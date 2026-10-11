@@ -15,7 +15,7 @@ import { CATALOG, itemById } from './meta.js';
 import { WEAPON_SKINS } from '../art/skins.js';
 import { t, onLangChange } from '../engine/i18n.js';
 import { drawAchievementIcon } from './achievements.js';
-import { slidePill } from '../ui/motion.js';
+import { slidePill, popIn, countUp } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -37,6 +37,7 @@ export class ProfileUI {
     this.weapons = deps.weapons || {};
     this.previewItem = deps.previewItem || null;
     this.previewOperator = deps.previewOperator || null;
+    this.animateOperator = deps.animateOperator || null;
     this.audio = deps.audio || null;
   }
 
@@ -92,12 +93,24 @@ export class ProfileUI {
     slidePill(tabs, { active: '.active', kind: 'fill' });
     // Canvases inside a pane are sized from their laid-out box, which is 0
     // while the pane is display:none — paint them once the pane is showing.
-    if (this.tab === 'career') this.paintStatIcons();
-    if (this.tab === 'arsenal') this.renderWeapon(this.p.profile().favoriteWeapon);
+    if (this.tab === 'career') {
+      this.paintStatIcons();
+      popIn(document.querySelectorAll('#profile-stats .pf-stat'), { step: 28, rise: 10 });
+      countUp(document.querySelectorAll('#profile-stats .pf-stat-value'), { dur: 900 });
+    }
+    if (this.tab === 'arsenal') {
+      this.renderWeapon(this.p.profile().favoriteWeapon);
+      popIn([document.querySelector('#profile-card .pf-fav'), ...document.querySelectorAll('#profile-top .pf-top-row')], { step: 60, rise: 10 });
+    }
+    if (this.tab === 'summary') {
+      popIn(document.querySelectorAll('#profile-card .pf-id, #profile-card .pf-rank'), { step: 70, rise: 10 });
+      countUp([$('profile-score')], { dur: 1100 });
+    }
   }
 
   close() {
     this._open = false;
+    this.stopPortrait();
     const ov = $('profile-overlay');
     if (ov) ov.classList.add('hidden');
     if (this.audio) this.audio.ui();
@@ -148,11 +161,36 @@ export class ProfileUI {
     }
 
     const cv = $('profile-portrait');
-    if (cv && this.previewOperator) {
+    if (cv && (this.animateOperator || this.previewOperator)) {
       // The canvas is sized from its laid-out box, which is only correct once
       // the overlay is visible — open() unhides before calling render().
-      requestAnimationFrame(() => this.previewOperator(variant, cv));
+      const wid = this.equippedPrimary();
+      const finish = this.equippedFinish(wid);
+      const color = (this.p.profile().rank || {}).color || '#d6453a';
+      requestAnimationFrame(() => {
+        this.stopPortrait();
+        if (this.animateOperator) this._portrait = this.animateOperator(cv, { variant, weaponId: wid, finish, color });
+        else this.previewOperator(variant, cv);
+      });
     }
+  }
+
+  stopPortrait() {
+    if (this._portrait) { this._portrait.stop(); this._portrait = null; }
+  }
+
+  // The weapon the operator actually carries into a match, and its finish.
+  equippedPrimary() {
+    const id = this.p.equipped('wpn_primary');
+    const item = id ? itemById(id) : null;
+    const wid = item && item.apply && item.apply.weapon;
+    return wid && this.weapons[wid] ? wid : 'rifle';
+  }
+
+  equippedFinish(weaponId) {
+    const id = this.p.equipped(`skin_${weaponId}`);
+    const item = id ? itemById(id) : null;
+    return (item && item.apply && item.apply.finish) || null;
   }
 
   renderScore(info) {

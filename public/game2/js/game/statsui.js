@@ -12,8 +12,8 @@
 
 import { ACHIEVEMENTS, TIERS, achievementProgress, drawAchievementIcon } from './achievements.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
-import { slidePill, popIn, sparks, coinsTo, haptic, sfx, spring, level } from '../ui/motion.js';
-import { paintMedalCanvas } from '../art/medal.js';
+import { slidePill, popIn, sparks, coinsTo, haptic, sfx, spring, level, countUp } from '../ui/motion.js';
+import { paintMedalCanvas, paintTierMedal } from '../art/medal.js';
 import { renderScrapIcon } from '../art/currency.js';
 import { ACHIEVEMENT_SCRAP, xpForLevel } from './progression.js';
 import { t, onLangChange } from '../engine/i18n.js';
@@ -123,6 +123,9 @@ export class StatsUI {
   refresh() {
     this.renderOverview();
     this.renderAchievements();
+    // every visit to the tab plays the entrance (stagger + count-up), not
+    // only a switch between its two sections
+    this._lastSection = null;
     this.applySectionVisibility();
   }
 
@@ -144,8 +147,12 @@ export class StatsUI {
         ? [...$('stats-hero').children, ...$('stats-grid').children]
         : [$('ach-summary'), ...$('achievements-list').children];
       popIn(shown, { step: 26, rise: 8 });
+      countUp(this.section === 'overview'
+        ? document.querySelectorAll('#stats-overview .st-tile-value, #stats-overview .st-row-value')
+        : document.querySelectorAll('#ach-summary .ach-bar-count b'), { dur: 1000 });
     }
     this._lastSection = this.section;
+    this.runMedalShine();
   }
 
   paintVisibleIcons() {
@@ -199,6 +206,33 @@ export class StatsUI {
     requestAnimationFrame(() => this.paintVisibleIcons());
   }
 
+  // Summary medals catch the light in turn: a glint crosses each claimed
+  // medal's face, staggered, every few seconds. Runs only while the cabinet
+  // is on screen; repaints a medal only while its glint is moving.
+  runMedalShine() {
+    if (this._shine || level() === 0) return;
+    this._shine = true;
+    const t0 = performance.now();
+    let last = 0;
+    const tick = (now) => {
+      const host = $('stats-achievements');
+      if (!host || host.classList.contains('hidden') || !host.offsetWidth) { this._shine = false; return; }
+      if (now - last >= 32) {
+        last = now;
+        const t = (now - t0) / 1000;
+        host.querySelectorAll('.ach-bar-medal canvas[data-tier]').forEach((cv, i) => {
+          const phase = ((t - i * 0.35) % 4.2 + 4.2) % 4.2;
+          const on = phase < 0.8;
+          if (!on && !cv._glinting) return;
+          cv._glinting = on;
+          paintTierMedal(cv, cv.dataset.tier, +cv.dataset.got, +cv.dataset.total, on ? phase / 0.8 : -1);
+        });
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
   // ----------------------------------------------------------- achievements
 
   stateOf(prog) {
@@ -233,12 +267,14 @@ export class StatsUI {
     for (const tierKey of TIER_ORDER) {
       const group = all.filter(([a]) => a.tier === tierKey);
       const got = group.filter(([, p]) => p.claimed).length;
-      const m = el('div', 'ach-bar-medal');
+      const m = el('div', `ach-bar-medal tier-${tierKey}`);
       const cv = el('canvas');
-      m.append(cv, el('span', null, `${got}/${group.length}`));
+      cv.dataset.tier = tierKey; cv.dataset.got = String(got); cv.dataset.total = String(group.length);
+      const cap = el('span', null, `${got}/${group.length}`);
+      m.append(cv, cap);
       m.title = t(`ach.tier.${tierKey}`);
       medals.appendChild(m);
-      requestAnimationFrame(() => paintMedalCanvas(cv, tierKey, 'star', got ? 'claimed' : 'progress'));
+      requestAnimationFrame(() => paintTierMedal(cv, tierKey, got, group.length));
     }
     sum.append(count, mid, medals);
     if (ready.length) {

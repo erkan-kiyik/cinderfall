@@ -2370,14 +2370,16 @@ html.no-backdrop-filter .intel-card {
 .pf-pane[data-pane="summary"] { grid-template-columns: 1.15fr 1fr; gap: calc(14px * var(--ui-scale)); align-items: stretch; }
 .pf-id {
   display: flex; align-items: center; gap: calc(14px * var(--ui-scale));
-  padding: calc(12px * var(--ui-scale));
+  padding: calc(10px * var(--ui-scale));
   border-radius: calc(12px * var(--ui-scale));
   background: rgba(8, 10, 14, 0.42); box-shadow: inset 0 0 0 1px var(--line);
+  min-height: 0;
 }
 .profile-portrait {
   flex: 0 0 auto;
-  width: calc(96px * var(--ui-scale)); height: calc(150px * var(--ui-scale));
-  border-radius: calc(10px * var(--ui-scale));
+  width: calc(160px * var(--ui-scale)); height: calc(196px * var(--ui-scale));
+  max-height: 100%;
+  border-radius: calc(12px * var(--ui-scale));
   background:
     radial-gradient(ellipse at 50% 92%, rgba(214,69,58,0.18), rgba(214,69,58,0) 62%),
     linear-gradient(180deg, rgba(30,36,46,0.72), rgba(12,15,20,0.85));
@@ -2657,7 +2659,7 @@ html.no-backdrop-filter .intel-card {
     padding: var(--s3) var(--s4);
   }
   .trader-id { margin-top: 0; }
-  .trader-scene { width: auto; max-width: 100%; height: 24vh; margin: 0 auto; }
+  .trader-scene { width: auto; max-width: 100%; height: 34vh; margin: 0 auto; }
   .trader-line { margin-top: var(--s2); font-size: 11px; line-height: 1.5; }
   .store-section { margin-bottom: var(--s6); }
   .store-section-head { padding-top: var(--s3); margin-bottom: var(--s3); }

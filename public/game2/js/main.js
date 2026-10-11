@@ -301,6 +301,142 @@ function previewOperator(variant, cv) {
   g.restore();
 }
 
+// The profile card's operator, alive: the equipped operator holding the
+// equipped primary (in its equipped finish) on a small lit stage in the rank's
+// colour — a spotlight from above, a floor ring, embers drifting up through
+// the light, a scan line passing over. The operator breathes, the aim drifts,
+// and every few seconds they bring the weapon up across the chest and work
+// the bolt. Runs at ~30fps only while the canvas is on screen; returns a
+// handle whose stop() ends the loop. Reduced motion paints one still frame.
+function animateOperator(cv, { variant = 'ranger', weaponId = 'rifle', finish = null, color = '#d6453a' } = {}) {
+  const parts = assets[variant] || assets.ranger;
+  const base = assets.weapons[weaponId] || assets.weapons.rifle;
+  const wpn = finish && base.finishes && base.finishes[finish] ? withFinish(base, finish) : base;
+  if (!parts || !cv) return { stop() {} };
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 120, H = cv.clientHeight || 180;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext('2d');
+  const hex = (c, a) => { const n = parseInt(c.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
+  const floorY = H - 16;
+
+  // static stage, baked once: backdrop, rank glow, hex mesh, spotlight
+  const stage = makeCanvas(W * dpr, H * dpr);
+  {
+    const b = stage.g; b.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const bg = b.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#151a22'); bg.addColorStop(0.7, '#0c0f14'); bg.addColorStop(1, '#07090c');
+    b.fillStyle = bg; b.fillRect(0, 0, W, H);
+    const glow = b.createRadialGradient(W / 2, H * 0.42, 4, W / 2, H * 0.42, H * 0.62);
+    glow.addColorStop(0, hex(color, 0.34)); glow.addColorStop(1, hex(color, 0));
+    b.fillStyle = glow; b.fillRect(0, 0, W, H);
+    // hex mesh, fading toward the floor
+    b.strokeStyle = hex(color, 0.09); b.lineWidth = 0.6;
+    const R = 9, dx = R * Math.sqrt(3);
+    for (let row = 0, y = 4; y < H; row++, y += R * 1.5) {
+      for (let x = (row % 2) * dx / 2 - dx; x < W + dx; x += dx) {
+        b.globalAlpha = Math.max(0, 1 - y / H);
+        b.beginPath();
+        for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; b.lineTo(x + Math.cos(a) * R * 0.92, y + Math.sin(a) * R * 0.92); }
+        b.closePath(); b.stroke();
+      }
+    }
+    b.globalAlpha = 1;
+    // spotlight cone from above
+    b.globalCompositeOperation = 'lighter';
+    const cone = b.createLinearGradient(0, 0, 0, floorY);
+    cone.addColorStop(0, 'rgba(255,236,210,0.16)'); cone.addColorStop(1, 'rgba(255,236,210,0.02)');
+    b.fillStyle = cone;
+    b.beginPath(); b.moveTo(W * 0.42, 0); b.lineTo(W * 0.58, 0); b.lineTo(W * 0.92, floorY); b.lineTo(W * 0.08, floorY); b.closePath(); b.fill();
+    b.globalCompositeOperation = 'source-over';
+    // floor
+    const fl = b.createLinearGradient(0, floorY - 4, 0, H);
+    fl.addColorStop(0, 'rgba(0,0,0,0)'); fl.addColorStop(1, 'rgba(0,0,0,0.55)');
+    b.fillStyle = fl; b.fillRect(0, floorY - 4, W, H - floorY + 4);
+  }
+
+  const ent = {
+    x: 0, y: 0, facing: 1, aimLocal: 0.12, gaitPhase: 0, speedNorm: 0,
+    onGround: true, airTime: 0, vy: 0, vx: 0, crouchSpring: 0, breathT: 0,
+    lean: 0, hurtT: 0, deadT: 0,
+  };
+  const ws = newWeaponState();
+  const weapon = { wpn, ws };
+  // framed so the muzzle of a long rifle clears the right edge
+  const k = Math.min(W / 100, H / 150);
+  const embers = Array.from({ length: 16 }, (_, i) => ({ seed: i * 1.618, sp: 0.07 + ((i * 37) % 11) / 110 }));
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const t0 = performance.now();
+
+  const draw = (t) => {
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.globalCompositeOperation = 'source-over';
+    g.drawImage(stage.cv, 0, 0, W, H);
+    // floor ring, breathing with a slow pulse
+    const pulse = 0.5 + 0.5 * Math.sin(t * 2.1);
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    g.strokeStyle = hex(color, 0.35 + pulse * 0.25); g.lineWidth = 1.4;
+    g.beginPath(); g.ellipse(W * 0.42, floorY, W * 0.34, 5.5, 0, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = hex(color, 0.12 + pulse * 0.1); g.lineWidth = 4;
+    g.beginPath(); g.ellipse(W * 0.42, floorY, W * (0.34 + pulse * 0.04), 6.5 + pulse, 0, 0, Math.PI * 2); g.stroke();
+    g.restore();
+
+    // idle: breathing, a drifting aim, and every 6.5s a weapon check —
+    // up to port arms, the bolt worked, back down to the ready
+    const cyc = t % 6.5;
+    const up = smooth(0.2, 0.7, cyc) * (1 - smooth(1.9, 2.5, cyc));
+    ent.breathT = t;
+    ent.aimLocal = 0.12 + Math.sin(t * 0.8) * 0.035 - up * 0.1;
+    ws.highReady = up;
+    ws.boltBack = cyc > 1.0 && cyc < 1.5 ? Math.sin(((cyc - 1.0) / 0.5) * Math.PI) : 0;
+    ws.offY = Math.sin(t * 1.6) * 0.3;
+    g.save();
+    g.translate(W * 0.38, floorY + 1);
+    g.scale(k, k);
+    rigDrawSoldier(g, parts, assets.shadow, ent, weapon);
+    g.restore();
+
+    // embers drifting up through the light
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (const e of embers) {
+      const f = (t * e.sp + e.seed) % 1;
+      const x = W * (0.15 + ((e.seed * 0.37) % 0.7)) + Math.sin(t * 1.3 + e.seed * 5) * 6;
+      const y = floorY - f * (H - 10);
+      const a = Math.sin(f * Math.PI) * 0.75;
+      g.fillStyle = hex(color, a * 0.8);
+      g.fillRect(x, y, 1.6, 1.6);
+      g.fillStyle = `rgba(255,214,160,${a * 0.5})`;
+      g.fillRect(x + 0.4, y + 0.4, 0.8, 0.8);
+    }
+    // scan line passing over, every 3.2s
+    const sy = ((t % 3.2) / 3.2) * (H + 40) - 20;
+    const sl = g.createLinearGradient(0, sy - 6, 0, sy + 1);
+    sl.addColorStop(0, hex(color, 0)); sl.addColorStop(1, hex(color, 0.14));
+    g.fillStyle = sl; g.fillRect(0, sy - 6, W, 7);
+    g.restore();
+
+    // edge vignette
+    const v = g.createRadialGradient(W / 2, H * 0.5, Math.min(W, H) * 0.35, W / 2, H * 0.5, Math.max(W, H) * 0.75);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)');
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
+  };
+
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  draw(reduced ? 0 : 0.01);
+  let alive = !reduced, last = 0;
+  const tick = (now) => {
+    if (!alive || !cv.isConnected) return;
+    if (cv.offsetWidth && !document.hidden && now - last >= 32) {
+      last = now;
+      draw((now - t0) / 1000);
+    }
+    requestAnimationFrame(tick);
+  };
+  if (alive) requestAnimationFrame(tick);
+  return { stop() { alive = false; } };
+}
+
 async function boot() {
   applyTranslations();          // fill static markup before the first paint
   hud.show('loading');
@@ -363,7 +499,7 @@ async function boot() {
   game.archivesUI.mount();
   game.profileUI = new ProfileUI({
     progression: game.progression, weapons: assets.weapons,
-    previewItem, previewOperator, audio,
+    previewItem, previewOperator, animateOperator, audio,
   });
   game.profileUI.mount();
   game.touch = new TouchControls(input, { force: params.has('touch') });

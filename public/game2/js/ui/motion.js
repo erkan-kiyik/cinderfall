@@ -160,6 +160,47 @@ export function popIn(nodes, { step = 38, from = 0.86, rise = 14 } = {}) {
   });
 }
 
+// ---- countUp: numbers arrive by counting ---------------------------------
+// Takes elements whose text is a plain number ("1,284", "1.284", "43%",
+// "+78", "142.67") and runs each up from zero with an ease-out, then puts the
+// exact original text back. Anything that is not a plain number ("1h 18m",
+// a weapon name) is left alone. Thousands separators are told apart from a
+// decimal point by the group after the last separator: exactly three digits
+// is a thousands group, in any locale the game ships.
+export function countUp(nodes, { dur = 900 } = {}) {
+  const lv = level();
+  if (lv === 0) return;
+  const d = lv === 1 ? dur * 0.6 : dur;
+  for (const el of Array.from(nodes || [])) {
+    if (!el) continue;
+    const txt = (el._cuFinal != null && el._cuRunning) ? el._cuFinal : el.textContent.trim();
+    const m = /^(\+?)([\d][\d.,\u00a0 ]*)(%?)$/.exec(txt);
+    if (!m) continue;
+    const body = m[2].replace(/[\s\u00a0]/g, '');
+    const parts = body.split(/[.,]/);
+    let value, dec = 0;
+    if (parts.length > 1 && parts[parts.length - 1].length !== 3) {
+      dec = parts[parts.length - 1].length;
+      value = parseFloat(`${parts.slice(0, -1).join('')}.${parts[parts.length - 1]}`);
+    } else value = parseInt(parts.join(''), 10);
+    if (!Number.isFinite(value) || value <= 0) continue;
+    const fmt = (v) => m[1] + (dec ? v.toFixed(dec) : Math.round(v).toLocaleString()) + m[3];
+    const token = (el._cuToken || 0) + 1;
+    el._cuToken = token; el._cuFinal = txt; el._cuRunning = true;
+    const t0 = performance.now();
+    const step = (now) => {
+      if (el._cuToken !== token) return;
+      const k = Math.min(1, (now - t0) / d);
+      const e = 1 - Math.pow(1 - k, 3);
+      if (k >= 1) { el.textContent = txt; el._cuRunning = false; return; }
+      el.textContent = fmt(value * e);
+      requestAnimationFrame(step);
+    };
+    el.textContent = fmt(0);
+    requestAnimationFrame(step);
+  }
+}
+
 // ---- tilt: the card leans toward the finger -------------------------------
 // Only while a pointer is down on it (hover-tilt would never be seen on a
 // phone, and would cost a style write per mousemove on desktop for nothing).
