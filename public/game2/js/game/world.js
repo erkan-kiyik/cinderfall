@@ -1,0 +1,1264 @@
+// World: level layout, AABB physics, hitscan raycasts, persistent decals
+// (blood, scorch, bullet holes), the parallax background composite and the
+// dynamic light list. Stage 1 is the original hand-authored "Sector 9 —
+// Cinder Works" layout, unchanged. Stage 2+ are generated procedurally
+// (buildings, road cover, spawns, loot, props) from a per-stage seed so the
+// campaign is endless and no two stages play identically.
+
+import * as env from '../art/environment.js';
+import { buildBackground } from '../art/background.js';
+import { makeShadowSprite } from '../art/soldier.js';
+import { makeCanvas, drawSprite, drawSpriteSlice, lingrad, radgrad, rr, ChunkedSurface } from '../art/paint.js';
+import { clamp, rand, randSpread, makeRng } from '../engine/math.js';
+import { gradeAt, pickWeather, START_HOUR } from '../engine/daycycle.js';
+import { enemyCount, lootCount } from './difficulty.js';
+
+// ---- prop impact response ----------------------------------------------
+// How hard a round shoves a prop's *drawing* (never its collider — see
+// nudgeProp), how far that is allowed to go, and the spring that puts it
+// back. The travel is small by design: this is the object registering the
+// hit, not the object being moved. Anything larger and cover stops lining up
+// with the collider the player is actually standing behind.
+const PROP_NUDGE = 62;         // impulse per unit of hit power
+const PROP_NUDGE_MAX = 2.6;    // px of travel, hard cap
+const PROP_ROCK_MAX = 0.028;   // radians, ~1.6 degrees
+const PROP_SPRING_K = 620;     // stiff: it snaps back inside ~0.2s
+const PROP_SPRING_DAMP = 11;
+// Sprite footprint, in world units, that counts as "one crate" of mass.
+// Bigger props take the same impulse proportionally less far, so a shipping
+// container barely twitches under a rifle round and a crate visibly jumps —
+// read off the art rather than authored per prop.
+const PROP_MASS_REF = 34;
+
+// ---- foreground parallax ------------------------------------------------
+// How much faster the near plane scrolls than the play surface, and how far
+// below the road its top edge sits. FORE_DROP is measured from the ground
+// line, so the layer can never reach up into the strip the characters fight
+// on however the camera moves.
+const FORE_PARALLAX = 1.24;
+// Where the near plane sits, measured down from the ground line.
+//
+// FORE_DROP clears the road strip's own depth, not just the ground line: the
+// street sprite is 90 units deep (see World's groundStrip call), and a
+// smaller drop puts the kerb across the middle of the asphalt, where it reads
+// as a seam rather than as a kerb on the far side of the road.
+//
+// But a phone in landscape has almost no screen below the ground line — 78px
+// of a 390px frame, which the road alone fills — so at that drop the layer
+// lands entirely off the bottom of the frame and the feature does nothing on
+// the platform that matters most. Measured: layer top at y=394.8 of a 390px
+// viewport.
+//
+// So the drop is clamped. FORE_MIN_BAND is how much of the band we insist on
+// showing, and FORE_MIN_DROP is the floor it can never rise above. The real
+// constraint was never "stay off the road sprite" — it was "never occlude a
+// character or the surface they stand on", and no entity geometry exists
+// below the ground line. Occluding the bottom of the asphalt costs nothing.
+const FORE_DROP = 92;
+const FORE_MIN_DROP = 34;
+const FORE_MIN_BAND = 46;
+
+// The impact-spring fields are declared at construction rather than being
+// added the first time a prop is shot. Same reasoning as newWeaponState in
+// rig.js: every prop then has one shape, so the draw loop — which reads hx/hy
+// on all of them, every frame — never re-optimises against a second hidden
+// class the moment the player opens fire.
+function newProp(spr, x, y) {
+  return { spr, x, y, hx: 0, hy: 0, hr: 0, hvx: 0, hvy: 0, hvr: 0 };
+}
+
+export const GROUND_Y = 640;
+// Map width. Stages were clearing in well under a minute at 4600; the wider
+// field gives a run room to breathe (more cover to work, more ground to lose)
+// without changing any of the layout maths, which is all expressed relative
+// to MAP_W.
+export const MAP_W = 7400;
+const GRAV = 2400;
+
+// Uniform darkening laid over the parallax stack — see drawBackground().
+export const BG_SCRIM = 'rgba(6,8,13,0.34)';
+
+// ---- prop scale ----
+// The operator stands 126px (see STAND_H in player.js). Street furniture was
+// authored much smaller than that — a 92px lamp and a 42px fence — so the
+// street read as a scale model the character was wading through. These size
+// both against the figure: the fence lands near shoulder height and the lamp
+// at roughly 2.4 body-heights, which is what a residential street lamp does.
+export const LAMP_SCALE = 3.2;
+export const FENCE_SCALE = 2.8;
+// On-screen span of one fence segment, so runs can be butted together.
+export const FENCE_W = 70 * FENCE_SCALE;
+// Lit head offset from the lamp's base anchor, in world units. Every light
+// attached to a lamp has to use these or it detaches from the fixture.
+export const LAMP_HEAD_X = 14 * LAMP_SCALE;
+export const LAMP_HEAD_Y = 86 * LAMP_SCALE;
+
+// ---- obstacle scale ----
+// Cover was authored tiny: a 25px crate and a 22px barrel next to a 126px
+// operator read as litter, not as something to fight from behind. These bring
+// the whole cover vocabulary up to a size worth taking cover behind — a crate
+// now stands about chest height on a crouching operator, a container has to be
+// climbed rather than stepped over.
+//
+// Every collider below is derived from these rather than hard-coded, so the
+// physics box always matches the art. Note the step-up limit in moveEntity is
+// 27px: anything taller than that must be jumped, which is the point.
+// Sized against the operator's 126px standing height (STAND_H in player.js):
+//   crate      20 * 3.4 = 68px   — waist-high, crouch behind it
+//   sandbags   13 * 3.4 = 44px   — thigh, still vaultable at a walk
+//   barrel     22 * 2.9 = 64px   — waist
+//   container  38 * 2.4 = 91px   — chest, real cover you have to climb
+//   dumpster   28 * 3.4 = 95px   — chest
+// All stay under the 168.8px jump apex (JUMP 900 / GRAV 2400), so nothing
+// becomes impassable — verified, not assumed.
+export const OB_SCALE = 3.4;         // crates, sandbags, tires, rubble, dumpster
+export const CONTAINER_SCALE = 2.4;  // containers: chest-high, break sightlines
+export const BARREL_SCALE = 2.9;     // drums
+
+// Derived collider dimensions (art size × scale).
+export const CRATE_W = 26 * OB_SCALE, CRATE_H = 20 * OB_SCALE;
+export const CRATE_SM_W = 22 * OB_SCALE, CRATE_SM_H = 16 * OB_SCALE;
+export const CONT_W = 96 * CONTAINER_SCALE, CONT_H = 38 * CONTAINER_SCALE;
+export const BAG_W = 42 * OB_SCALE, BAG_H = 13 * OB_SCALE;
+// Drums, dumpsters and tyre stacks had no collider at all — the block above
+// documented their heights as if they did, and the art reads as cover, but an
+// operator walked straight through every one of them. These are measured off
+// the painted body rather than the sprite box: a dumpster's box includes the
+// lid leaning open behind it, and a drum's includes the ground shadow, and
+// neither of those is something you can stand behind.
+//
+// Every one of the three lands between VAULT_MIN_H (50) and VAULT_MAX_H (100),
+// so they read as vault-over cover rather than as walls — checked, because a
+// waist-high drum you have to walk around would be worse than one you walk
+// through.
+export const BARREL_W = 13 * BARREL_SCALE, BARREL_H = 20 * BARREL_SCALE;   // 37.7 x 58
+export const DUMP_W = 34 * OB_SCALE, DUMP_H = 22 * OB_SCALE;               // 115.6 x 74.8
+export const TIRE_W = 16 * OB_SCALE, TIRE_H = 15.5 * OB_SCALE;             // 54.4 x 52.7
+// Razor wire: a vaultable hazard strip. Low enough to clear with a jump,
+// tall enough that walking through is not an option.
+export const WIRE_SCALE = 2.0;
+export const WIRE_W = 90 * WIRE_SCALE, WIRE_H = 22 * WIRE_SCALE;
+
+// ---- contact shadows ----
+// Everything standing on the street gets an elliptical shadow pooled at its
+// base. Without one, a prop is just a sprite pasted over the road and reads as
+// floating a few pixels above it — the single cheapest cue that an object is
+// actually resting on the ground. The blob is the same baked sprite the
+// characters use, stretched to the prop's footprint, so this costs one
+// drawImage per visible prop rather than a per-frame gradient build.
+//
+// SHADOW_SQUASH keeps the pool tighter than the object is wide (light comes
+// from above, not from the camera), and SHADOW_ALPHA sits under the
+// characters' own 0.9 so the operator still reads as the nearest subject.
+const SHADOW_SQUASH = 0.86;
+const SHADOW_ALPHA = 0.62;
+
+// ---- volumetric lamp shafts ----
+// A street lamp with a light in the light map but no visible beam reads as a
+// glowing bulb rather than a fixture throwing light through dust. The shaft is
+// a downward-tapering wedge, additive, fading out before it reaches the road
+// so it never becomes a hard-edged triangle sitting on the ground.
+const SHAFT_TOP_W = 26;      // width at the fixture head
+const SHAFT_BOT_W = 132;     // spread where it fades out
+const SHAFT_ALPHA = 0.085;
+
+// Stage 1 is the hand-authored, art-directed encounter layout.
+export const STAGE1_SPAWNS = [
+  { x: 1080, min: 980, max: 1225, y: GROUND_Y - 40 },
+  { x: 1650, min: 1440, max: 1690, y: GROUND_Y },
+  { x: 2320, min: 2200, max: 2520, y: GROUND_Y },
+  { x: 2950, min: 2760, max: 3050, y: GROUND_Y },
+  { x: 3500, min: 3380, max: 3690, y: GROUND_Y },
+  { x: 4080, min: 3960, max: 4140, y: GROUND_Y - 40 },
+  // --- back half, added when MAP_W was widened: the authored stage used to
+  // end around 4400 and would otherwise leave a long empty walk-out ---
+  { x: 4750, min: 4600, max: 4900, y: GROUND_Y },
+  { x: 5320, min: 5180, max: 5480, y: GROUND_Y },
+  { x: 5950, min: 5800, max: 6120, y: GROUND_Y - 40 },
+  { x: 6560, min: 6400, max: 6720, y: GROUND_Y },
+  { x: 7050, min: 6920, max: 7180, y: GROUND_Y },
+];
+
+export class World {
+  constructor(stage = 1) {
+    this.bg = buildBackground();
+    this.ground = env.groundStrip(MAP_W + 500, 90);
+    this.emitters = [];    // ambient particle sources
+    this.shadowSpr = makeShadowSprite();   // reused for every prop contact shadow
+    this.time = 0;
+
+    // decal surface covering the playfield (persists across a stage, wiped
+    // by Game.reset()/regenerate on a fresh mission)
+    this.decalTop = GROUND_Y - 300;
+    // Chunked for the same reason as the street: at MAP_W this surface is
+    // 7,400 px across, past the texture width mobile GPUs will hold, so every
+    // frame's blit from it was software-rastered.
+    this.decalTop = GROUND_Y - 300;
+    this.decals = new ChunkedSurface(MAP_W, 380);
+
+    this.regenerate(stage);
+  }
+
+  baseColliders() {
+    return [
+      { x: -500, y: GROUND_Y, w: MAP_W + 1000, h: 400 },   // ground
+      { x: -60, y: GROUND_Y - 800, w: 60, h: 800 },        // map bounds
+      { x: MAP_W, y: GROUND_Y - 800, w: 60, h: 800 },
+    ];
+  }
+
+  // ---------------- level (re)generation ----------------
+
+  // `ctx` carries the run state the sector's look depends on:
+  //   { hour, attempts } — see engine/daycycle.js. Weather and the sky wash
+  // are both derived from it, so a stage that has beaten the player back
+  // several times visibly degrades: later hour, worse weather.
+  regenerate(stage, ctx = {}) {
+    this.stage = stage;
+    this.props = [];
+    this.lights = [];
+    this.barrels = [];
+    this.emitters.length = 0;
+    this.pickups = [];
+    this.coverSpots = [];
+    this.enemySpawns = [];
+    this.shafts = [];      // volumetric cones under lit street lamps
+    this.colliders = this.baseColliders();
+    this.setTime(ctx.hour, ctx.attempts, stage);
+
+    if (stage <= 1) this.buildLevel();
+    else this.buildProceduralLevel(stage);
+
+    this.deriveCoverSpots();
+    if (this.decals) this.decals.clear();
+  }
+
+  // Re-derives the sky wash and the weather from the clock. Split out from
+  // regenerate() so the hour can shift mid-run (a stage cleared moves it)
+  // without rebuilding the whole level.
+  setTime(hour = START_HOUR, attempts = 0, stage = this.stage) {
+    this.hour = hour;
+    this.dayGrade = gradeAt(hour);
+    this.weather = pickWeather(stage, attempts, hour);
+    return this.dayGrade;
+  }
+
+  // A prop that is also solid. `w`/`h` are the collider, not the sprite box —
+  // see BARREL_W and friends for why those are different numbers. Returns the
+  // collider so a destructible piece can drop it again later.
+  solidProp(spr, x, y, w, h, mat) {
+    this.props.push(newProp(spr, x, y));
+    const c = { x: x - w / 2, y: y - h, w, h, mat };
+    this.colliders.push(c);
+    return c;
+  }
+
+  // Drops a collider from the world (a barrel that just went up). Rare enough
+  // that a splice costs nothing, and keeping the array dense means rectHit's
+  // loop stays a plain scan with no liveness check per test.
+  // Collider without a prop: the caller is drawing the art itself (an
+  // explosive barrel is an entity, not a prop).
+  pushCollider(x, y, w, h, mat) {
+    const c = { x: x - w / 2, y: y - h, w, h, mat };
+    this.colliders.push(c);
+    return c;
+  }
+
+  removeCollider(c) {
+    if (!c) return;
+    const i = this.colliders.indexOf(c);
+    if (i >= 0) this.colliders.splice(i, 1);
+  }
+
+  // Cover points: two flanking spots per low obstacle (crates, barrels,
+  // sandbags, containers…) so enemies have real positions to retreat behind
+  // that break line-of-sight to the player. Ground/bound colliders are
+  // excluded by size.
+  deriveCoverSpots() {
+    for (const c of this.colliders) {
+      // Height ceiling has to sit above the tallest piece of *cover* so the
+      // AI still recognises it. Containers are 91px now (they were 38px), and
+      // at the old 90px limit they silently stopped counting as cover spots —
+      // enemies would ignore the single best piece of cover on the map.
+      // 130 clears containers while still excluding the 800px map bounds.
+      if (c.h > 130 || c.w > 340) continue;
+      this.coverSpots.push({ x: c.x - 18, y: GROUND_Y });
+      this.coverSpots.push({ x: c.x + c.w + 18, y: GROUND_Y });
+    }
+  }
+
+  // ---------------- stage 1: hand-authored "Sector 9" ----------------
+
+  buildLevel() {
+    const GY = GROUND_Y;
+    const P = (spr, x, y = GY) => this.props.push(newProp(spr, x, y));
+    const L = (x, y, r, c, a, flicker = 0) => this.lights.push({ x, y, r, c, a, flicker, seed: rand(0, 100) });
+    const S = (x, y) => this.shafts.push({ x, y });
+
+    // Cover boxes are derived from the obstacle scale constants so the physics
+    // always matches the (now much larger) art — see OB_SCALE / CONTAINER_SCALE.
+    // `mat` is presentation-only: it selects the impact particle recipe when a
+    // round lands here (see FX.impactWall). Nothing in the physics reads it.
+    this.colliders.push(
+      { x: 950, y: GY - 40, w: 300, h: 40, mat: 'wood' },           // loading dock
+      { x: 898, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H, mat: 'wood' },   // crate step
+      { x: 1750, y: GY - CONT_H, w: CONT_W, h: CONT_H, mat: 'metal' },    // container
+      { x: 1798, y: GY - CONT_H * 2, w: CONT_W, h: CONT_H, mat: 'metal' },// stacked container
+      { x: 1702, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H, mat: 'wood' },
+      { x: 2560, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H, mat: 'wood' },
+      { x: 2596, y: GY - CRATE_H * 2, w: CRATE_W, h: CRATE_H * 2, mat: 'wood' },
+      { x: 3080, y: GY - CONT_H, w: CONT_W, h: CONT_H, mat: 'metal' },
+      { x: 2250, y: GY - BAG_H, w: BAG_W, h: BAG_H, mat: 'sand' },  // sandbags (vault)
+      { x: 3560, y: GY - BAG_H, w: BAG_W, h: BAG_H, mat: 'sand' },
+      { x: 3900, y: GY - 40, w: 260, h: 40, mat: 'wood' },          // second dock
+      { x: 3848, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H, mat: 'wood' },
+    );
+
+    // Building facades used to stand here, a few metres behind the player.
+    // They walled every fight into a corridor and were the busiest thing on
+    // screen behind the characters; the near neon-city parallax band (see
+    // art/background.js paintNear) carries that depth now, so the street is
+    // left open. A sparse line of warm lamps keeps the ambient light the
+    // facades' baked emissives used to provide.
+    for (let lx = 260; lx < MAP_W; lx += 620) {
+      L(lx, GY - 60, 130, [255, 196, 120], 0.34, 0.05);
+    }
+
+    // -- street furniture & cover --
+    P(env.sign('sector'), 700);
+    P(env.sign('danger'), 2152);
+    for (const lx of [560, 1470, 2440, 3420, 4240]) {
+      P(env.lamp(LAMP_SCALE), lx);
+      L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 300, [255, 202, 128], 0.62, lx === 2440 ? 0.5 : 0.04);
+      S(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y);
+    }
+    P(env.dock(300, 40), 1100);            // matches collider at 950..1250
+    P(env.crate(26, 20, OB_SCALE), 911 + CRATE_W / 2);
+    P(env.dock(260, 40), 4030);
+    P(env.crate(26, 20, OB_SCALE), 3861 + CRATE_W / 2);
+
+    // authored opener keeps its precisely-fitted container stack (96×38)
+    P(env.container('containerRed', 'HLC-407', 96, 38, CONTAINER_SCALE), 1750 + CONT_W / 2);
+    P(env.container('containerBlue', 'MSU-2213', 96, 38, CONTAINER_SCALE), 1798 + CONT_W / 2, GY - CONT_H);
+    P(env.container('containerGreen', 'KDR-118', 96, 38, CONTAINER_SCALE), 3080 + CONT_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 1702 + CRATE_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 2560 + CRATE_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 2596 + CRATE_W / 2, GY);        // stack base
+    P(env.crate(26, 20, OB_SCALE), 2596 + CRATE_W / 2, GY - CRATE_H);
+    P(env.sandbags(OB_SCALE), 2250 + BAG_W / 2);
+    P(env.sandbags(OB_SCALE), 3560 + BAG_W / 2);
+
+    this.solidProp(env.dumpster(OB_SCALE), 1590, GY, DUMP_W, DUMP_H, 'metal');
+    this.solidProp(env.tires(OB_SCALE), 2330, GY, TIRE_W, TIRE_H, 'metal');
+    P(env.rubble(OB_SCALE), 2060);
+    P(env.rubble(OB_SCALE), 3300);
+    this.solidProp(env.barrel('rust', BARREL_SCALE), 1310, GY, BARREL_W, BARREL_H, 'metal');
+    this.solidProp(env.barrel('blue', BARREL_SCALE), 2700, GY, BARREL_W, BARREL_H, 'metal');
+    this.solidProp(env.barrel('rust', BARREL_SCALE), 2712, GY - 1, BARREL_W, BARREL_H, 'metal');
+    this.solidProp(env.barrel('blue', BARREL_SCALE), 3730, GY, BARREL_W, BARREL_H, 'metal');
+    for (const fx of [1720, 1930, 2070]) P(env.fence(70, FENCE_SCALE), fx + FENCE_W / 2);
+    P(env.fence(70, FENCE_SCALE), 4390); P(env.fence(70, FENCE_SCALE), 4390 + FENCE_W - 2);
+    P(env.crate(22, 16, OB_SCALE), 1140, GY - 40);   // crates up on the dock
+    this.solidProp(env.barrel('rust', BARREL_SCALE), 1210, GY - 40, BARREL_W, BARREL_H, 'metal');
+
+    // explosive barrels (entities — shootable)
+    for (const bx of [1685, 2620, 3260]) {
+      this.barrels.push({
+        x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE),
+        // Solid while it stands: taking cover behind something that is about
+        // to go off is the trade the object exists to offer. Dropped in
+        // explodeBarrel — see main.js.
+        col: this.pushCollider(bx, GY, BARREL_W, BARREL_H, 'metal'),
+      });
+    }
+
+    // burn barrel: painted barrel + fire emitter + strong flicker light
+    this.solidProp(env.barrel('rust', BARREL_SCALE), 2390, GY, BARREL_W, BARREL_H, 'metal');
+    this.emitters.push({ kind: 'fire', x: 2390, y: GY - 21 });
+    L(2390, GY - 30, 150, [255, 150, 60], 0.85, 0.8);
+    // failing street lamp: sparks at the head of the fixture placed at 3420.
+    // (This used to hang off an overhead cable; with the wire system gone the
+    // sparks are anchored to the lamp so they read as a shorted fitting.)
+    this.emitters.push({ kind: 'sparks', x: 3434, y: GY - 86 });
+    // Razor wire strung across the street — a hazard to vault rather than a
+    // shooting position, so it breaks up the run without adding more cover.
+    for (const wx of [1450, 2880, 4520, 6300]) {
+      P(env.razorWire(90, WIRE_SCALE), wx);
+      this.colliders.push({ x: wx - WIRE_W / 2, y: GY - WIRE_H, w: WIRE_W, h: WIRE_H, mat: 'metal' });
+    }
+
+    // Civil-war aftermath: barrels burned down to soot along the block. These
+    // are dressing, not hazards — they carry no fire emitter and no light, so
+    // they read as "this fight already happened here" rather than as another
+    // thing to avoid.
+    for (const sx of [1180, 2050, 2860, 3980, 5240, 6180, 6880]) {
+      P(env.barrel('rust'), sx);
+      this.emitters.push({ kind: 'smolder', x: sx, y: GY - 21, rate: 0.55, t: rand(0, 0.5) });
+    }
+
+    // industrial smoke sources: rooftop stacks rising over the sector + a
+    // couple of ground vents. Hand-placed for the authored opening stage.
+    this.emitters.push({ kind: 'chimney', x: 760, y: GY - 260, tint: 'exhaust', rate: 0.3, t: 0 });
+    this.emitters.push({ kind: 'chimney', x: 2980, y: GY - 300, tint: 'soot', rate: 0.34, t: 0.15 });
+    this.emitters.push({ kind: 'chimney', x: 4180, y: GY - 230, tint: 'steam', rate: 0.26, t: 0.3 });
+    this.emitters.push({ kind: 'vent', x: 1640, y: GY - 34, tint: 'exhaust', dir: 0, rate: 0.7, t: 0.2 });
+    this.emitters.push({ kind: 'vent', x: 3120, y: GY - 30, tint: 'dust', dir: Math.PI, rate: 0.85, t: 0.5 });
+
+    // ---- back half (x > 4500) ----
+    // Added when MAP_W was widened. Same vocabulary as the front half —
+    // containers to break sightlines, a dock to fight up onto, barrels to
+    // shoot — so the extended run still reads as one authored space.
+    this.colliders.push(
+      { x: 4820, y: GY - CONT_H, w: CONT_W, h: CONT_H, mat: 'metal' },   // container
+      { x: 4772, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H, mat: 'wood' },
+      { x: 5400, y: GY - BAG_H, w: BAG_W, h: BAG_H, mat: 'sand' },  // sandbags (vault)
+      { x: 5880, y: GY - 40, w: 280, h: 40, mat: 'wood' },          // third dock
+      { x: 5828, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H, mat: 'wood' },
+      { x: 6480, y: GY - CONT_H, w: CONT_W, h: CONT_H, mat: 'metal' },
+      { x: 6528, y: GY - CONT_H * 2, w: CONT_W, h: CONT_H, mat: 'metal' },  // stacked
+      { x: 6432, y: GY - CRATE_H, w: CRATE_W, h: CRATE_H, mat: 'wood' },
+      { x: 6980, y: GY - BAG_H, w: BAG_W, h: BAG_H, mat: 'sand' },
+    );
+    P(env.container('containerBlue', 'VTX-889', 96, 38, CONTAINER_SCALE), 4820 + CONT_W / 2);
+    P(env.crate(26, 20, OB_SCALE), 4772 + CRATE_W / 2);
+    P(env.sandbags(OB_SCALE), 5400 + BAG_W / 2);
+    P(env.dock(280, 40), 6020);
+    P(env.crate(26, 20, OB_SCALE), 5828 + CRATE_W / 2);
+    P(env.container('containerRed', 'QLR-052', 96, 38, CONTAINER_SCALE), 6480 + CONT_W / 2);
+    P(env.container('containerGreen', 'ZBN-771', 96, 38, CONTAINER_SCALE), 6528 + CONT_W / 2, GY - CONT_H);
+    P(env.crate(26, 20, OB_SCALE), 6432 + CRATE_W / 2);
+    P(env.sandbags(OB_SCALE), 6980 + BAG_W / 2);
+    this.solidProp(env.dumpster(OB_SCALE), 5150, GY, DUMP_W, DUMP_H, 'metal');
+    this.solidProp(env.tires(OB_SCALE), 6250, GY, TIRE_W, TIRE_H, 'metal');
+    P(env.rubble(OB_SCALE), 4600);
+    P(env.rubble(OB_SCALE), 6800);
+    this.solidProp(env.barrel('blue', BARREL_SCALE), 5620, GY, BARREL_W, BARREL_H, 'metal');
+    this.solidProp(env.barrel('rust', BARREL_SCALE), 6120, GY - 40, BARREL_W, BARREL_H, 'metal');
+    for (const lx of [5080, 6000, 6900]) {
+      P(env.lamp(LAMP_SCALE), lx);
+      L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 300, [255, 202, 128], 0.62, lx === 6000 ? 0.45 : 0.04);
+      S(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y);
+    }
+    for (const bx of [5320, 6340]) {
+      this.barrels.push({
+        x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE),
+        // Solid while it stands: taking cover behind something that is about
+        // to go off is the trade the object exists to offer. Dropped in
+        // explodeBarrel — see main.js.
+        col: this.pushCollider(bx, GY, BARREL_W, BARREL_H, 'metal'),
+      });
+    }
+    this.emitters.push({ kind: 'chimney', x: 5500, y: GY - 275, tint: 'soot', rate: 0.3, t: 0.45 });
+    this.emitters.push({ kind: 'chimney', x: 6700, y: GY - 245, tint: 'steam', rate: 0.28, t: 0.6 });
+    this.emitters.push({ kind: 'vent', x: 5900, y: GY - 32, tint: 'dust', dir: 0, rate: 0.8, t: 0.35 });
+
+    // loot: a couple of resupply crates tucked near cover
+    this.pickups.push({ x: 1145, y: GY - 40, kind: 'ammo', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 2280, y: GY, kind: 'health', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 3590, y: GY, kind: 'armor', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 4900, y: GY, kind: 'ammo', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 5950, y: GY - 40, kind: 'health', alive: true, bob: rand(0, 6) });
+    this.pickups.push({ x: 6600, y: GY, kind: 'ammo', alive: true, bob: rand(0, 6) });
+
+    this.enemySpawns = STAGE1_SPAWNS;
+  }
+
+  // ---------------- stage 2+: procedural generator ----------------
+
+  // Every stage gets its own seeded RNG so layout, cover, spawns, loot and
+  // props are unique but reproducible for that stage number.
+  buildProceduralLevel(stage) {
+    const GY = GROUND_Y;
+    const rng = makeRng(stage * 92821 + 17);
+    const P = (spr, x, y = GY) => this.props.push(newProp(spr, x, y));
+    const L = (x, y, r, c, a, flicker = 0) => this.lights.push({ x, y, r, c, a, flicker, seed: rng.range(0, 100) });
+    const S = (x, y) => this.shafts.push({ x, y });
+
+    // Procedural stages used to raise the same near-wall facade line stage 1
+    // had. That layer is gone (the near neon-city parallax band carries the
+    // depth now — see art/background.js), so all that's seeded here is the
+    // warm ambient lamp spacing those facades used to contribute.
+    const mapW = MAP_W;
+    for (let lx = rng.range(180, 340); lx < mapW; lx += rng.range(520, 760)) {
+      L(lx, GY - 60, rng.range(110, 150), [255, 196, 120], rng.range(0.28, 0.4), rng.range(0, 0.07));
+    }
+
+    // -- randomized road cover: crates / containers / barrels / sandbags --
+    const coverKinds = ['crate', 'container', 'sandbags', 'barrel', 'dumpster', 'tires', 'rubble', 'dock', 'wire'];
+    let x = 260;
+    const clusters = [];
+    while (x < mapW - 300) {
+      const kind = coverKinds[rng.int(0, coverKinds.length - 1)];
+      const gap = rng.range(240, 420);
+      if (kind === 'crate') {
+        // Cover boxes derive from OB_SCALE, so the collider always matches the
+        // (much larger) art — see the obstacle scale block at the top.
+        const cw = 30 * OB_SCALE, ch = 25 * OB_SCALE;
+        P(env.crate(30, 25, OB_SCALE), x);
+        this.colliders.push({ x: x - cw / 2, y: GY - ch, w: cw, h: ch, mat: 'wood' });
+      } else if (kind === 'container') {
+        const variant = rng.pick(['containerRed', 'containerBlue', 'containerGreen']);
+        const cw = 108 * CONTAINER_SCALE, ch = 44 * CONTAINER_SCALE;
+        P(env.container(variant, `${rng.pick(['HLC', 'MSU', 'KDR', 'TRX'])}-${rng.int(100, 999)}`, 108, 44, CONTAINER_SCALE), x);
+        this.colliders.push({ x: x - cw / 2, y: GY - ch, w: cw, h: ch, mat: 'metal' });
+      } else if (kind === 'sandbags') {
+        const bw = 40 * OB_SCALE, bh = 16 * OB_SCALE;
+        P(env.sandbags(OB_SCALE), x);
+        this.colliders.push({ x: x - bw / 2, y: GY - bh, w: bw, h: bh, mat: 'sand' });
+      } else if (kind === 'wire') {
+        // Razor wire: a vault-or-detour hazard strip, not a shooting position.
+        P(env.razorWire(90, WIRE_SCALE), x);
+        this.colliders.push({ x: x - WIRE_W / 2, y: GY - WIRE_H, w: WIRE_W, h: WIRE_H, mat: 'metal' });
+      } else if (kind === 'barrel') {
+        this.solidProp(env.barrel(rng.pick(['rust', 'blue']), BARREL_SCALE), x, GY,
+                       BARREL_W, BARREL_H, 'metal');
+      } else if (kind === 'dumpster') {
+        this.solidProp(env.dumpster(OB_SCALE), x, GY, DUMP_W, DUMP_H, 'metal');
+      } else if (kind === 'tires') {
+        this.solidProp(env.tires(OB_SCALE), x, GY, TIRE_W, TIRE_H, 'metal');
+      } else if (kind === 'rubble') {
+        P(env.rubble(OB_SCALE), x);
+      } else if (kind === 'dock') {
+        const w = rng.range(180, 300);
+        P(env.dock(w, 40), x);
+        this.colliders.push({ x: x - w / 2, y: GY - 40, w, h: 40, mat: 'wood' });
+      }
+      clusters.push(x);
+      x += gap;
+    }
+
+    // -- explosive barrels scattered along the block --
+    const barrelCount = rng.int(2, 4);
+    for (let i = 0; i < barrelCount; i++) {
+      const bx = clusters[rng.int(0, clusters.length - 1)] + rng.range(-60, 60);
+      this.barrels.push({
+        x: bx, y: GY, hp: 30, alive: true, spr: env.barrel('red', BARREL_SCALE),
+        // Solid while it stands: taking cover behind something that is about
+        // to go off is the trade the object exists to offer. Dropped in
+        // explodeBarrel — see main.js.
+        col: this.pushCollider(bx, GY, BARREL_W, BARREL_H, 'metal'),
+      });
+    }
+
+    // -- street lamps --
+    // (power poles and the cable runs they carried were removed; the street
+    // reads cleaner without a web of wires across the play area)
+    for (let lx = 300; lx < mapW - 200; lx += rng.range(760, 980)) {
+      if (rng.chance(0.6)) {
+        P(env.lamp(LAMP_SCALE), lx);
+        L(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y, 290, [255, 202, 128], 0.6, rng.chance(0.25) ? 0.4 : 0.04);
+        S(lx + LAMP_HEAD_X, GY - LAMP_HEAD_Y);
+      }
+    }
+
+    // -- fencing, signage --
+    // (`cx` was referenced here and never defined, which threw a ReferenceError
+    // out of level generation for every stage >= 2 — the whole endless campaign
+    // was unreachable. The run is anchored to a seeded position on the map.)
+    const fenceRunX = rng.range(mapW * 0.25, mapW * 0.8);
+    for (let i = 0; i < rng.int(2, 4); i++) P(env.fence(70, FENCE_SCALE), fenceRunX + i * (FENCE_W - 2));
+    P(env.sign(rng.pick(['sector', 'danger'])), rng.range(400, mapW - 400));
+
+    // -- one hazard emitter (burning barrel or sparking line) per stage --
+    if (rng.chance(0.7)) {
+      const hx = clusters[rng.int(0, clusters.length - 1)];
+      this.solidProp(env.barrel('rust', BARREL_SCALE), hx, GY, BARREL_W, BARREL_H, 'metal');
+      this.emitters.push({ kind: 'fire', x: hx, y: GY - 21 });
+      L(hx, GY - 30, 150, [255, 150, 60], 0.85, 0.8);
+    }
+    if (rng.chance(0.5)) {
+      this.emitters.push({ kind: 'sparks', x: rng.range(400, mapW - 400), y: GY - rng.range(110, 160) });
+    }
+    // -- smouldering wrecks: the civil-war signature, scattered every stage --
+    const wrecks = rng.int(4, 8);
+    for (let i = 0; i < wrecks; i++) {
+      const wx = rng.range(300, mapW - 300);
+      this.solidProp(env.barrel('rust', BARREL_SCALE), wx, GY, BARREL_W, BARREL_H, 'metal');
+      this.emitters.push({ kind: 'smolder', x: wx, y: GY - 21, rate: rng.range(0.45, 0.75), t: rng.range(0, 0.6) });
+    }
+    // -- industrial smoke sources: rooftop stacks (steady columns) + a couple
+    //    of ground vents / damaged machinery. Tints vary by source so plumes
+    //    read differently across the sector. Placed high so columns rise over
+    //    the rooftops without colliding with the play space.
+    const stackTints = ['exhaust', 'exhaust', 'soot', 'steam', 'chem'];
+    const stackCount = rng.int(2, 4);
+    for (let i = 0; i < stackCount; i++) {
+      this.emitters.push({
+        kind: 'chimney',
+        x: rng.range(200, mapW - 200),
+        y: GY - rng.range(150, 300),
+        tint: rng.pick(stackTints),
+        rate: rand(0.22, 0.4), t: rand(0, 0.4),
+      });
+    }
+    for (let i = 0; i < rng.int(1, 3); i++) {
+      this.emitters.push({
+        kind: 'vent',
+        x: rng.range(300, mapW - 300),
+        y: GY - rng.range(20, 70),
+        tint: rng.pick(['exhaust', 'dust', 'steam']),
+        dir: rng.pick([0, Math.PI]),
+        rate: rand(0.5, 1.0), t: rand(0, 0.6),
+      });
+    }
+
+    // -- loot: scattered resupply crates, more on higher stages --
+    const loot = lootCount(stage);
+    for (let i = 0; i < loot; i++) {
+      const kind = rng.pick(['ammo', 'ammo', 'health', 'armor']);
+      const lx = clusters.length ? clusters[rng.int(0, clusters.length - 1)] + rng.range(-40, 40) : rng.range(300, mapW - 300);
+      this.pickups.push({ x: lx, y: GY, kind, alive: true, bob: rng.range(0, 6) });
+    }
+
+    // -- enemy spawns: count + spacing scale with stage difficulty. The cap
+    //    rose with MAP_W so the longer field stays populated rather than
+    //    turning into a walk between fights. --
+    // Squad size comes from game/difficulty.js — square-root growth with a
+    // ceiling that is a frame-rate budget, not a difficulty cap (health and
+    // damage keep climbing past it forever).
+    const squad = enemyCount(stage);
+    const spacing = (mapW - 700) / squad;
+    for (let i = 0; i < squad; i++) {
+      const sx = 500 + spacing * i + rng.range(-60, 60);
+      const onDock = rng.chance(0.25);
+      this.enemySpawns.push({
+        x: sx, min: sx - rng.range(140, 220), max: sx + rng.range(140, 220),
+        y: onDock ? GY - 40 : GY,
+      });
+    }
+  }
+
+  // ---------------- physics ----------------
+
+  rectHit(x, y, w, h) {
+    for (const c of this.colliders) {
+      if (x < c.x + c.w && x + w > c.x && y < c.y + c.h && y + h > c.y) return c;
+    }
+    return null;
+  }
+
+  solidAt(x, y) {
+    for (const c of this.colliders) {
+      if (x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h) return true;
+    }
+    return false;
+  }
+
+  // ent: x,y feet-center, halfW, h, vx, vy, onGround
+  moveEntity(ent, dt) {
+    // Gravity is not one number for anything that wants to feel good to
+    // control. A jump that rises and falls at the same rate spends half its
+    // life drifting back down with nothing to do, which is exactly what
+    // "floaty" means — and this one was perfectly symmetric, 0.38s up and
+    // 0.38s down.
+    //
+    // Entities opt in by setting `gravityFeel` (see Player). Two departures
+    // from the flat curve, both standard and both cheap:
+    //
+    //   fall  — heavier once past the apex, so the descent is decisive
+    //   hang  — lighter while vertical speed is near zero, which stretches
+    //           the top of the arc into a beat the player can read and aim
+    //           through instead of a corner they whip around
+    //
+    // Neither touches the rise rate below the hang band, so the apex height
+    // is essentially unchanged — and this level is a continuous street where
+    // the constraint is clearing 95px obstacles with a 169px jump, not
+    // crossing gaps, so shortening the airtime costs no traversal.
+    let gm = 1;
+    const gf = ent.gravityFeel;
+    if (gf) {
+      if (Math.abs(ent.vy) < gf.hangBand) gm = gf.hang;
+      else if (ent.vy > 0) gm = gf.fall;
+    }
+    ent.vy = Math.min(ent.vy + GRAV * gm * dt, 1500);
+    let landed = 0;
+
+    let nx = ent.x + ent.vx * dt;
+    let c = this.rectHit(nx - ent.halfW, ent.y - ent.h, ent.halfW * 2, ent.h - 1);
+    if (c) {
+      // step-up: if the obstacle is a low ledge (crate, sandbags, dock lip)
+      // and there's headroom above it, walk up onto it instead of hard-stopping
+      // — smoother traversal. Tall cover (containers, walls) still blocks.
+      const STEP = 27;
+      const topGap = ent.y - c.y;
+      const clearAbove = !this.rectHit(nx - ent.halfW, c.y - ent.h, ent.halfW * 2, ent.h - 2);
+      if (ent.onGround && topGap > 0.5 && topGap <= STEP && clearAbove) {
+        ent.y = c.y;
+      } else {
+        nx = ent.vx > 0 ? c.x - ent.halfW : c.x + c.w + ent.halfW;
+        ent.vx = 0;
+      }
+    }
+    ent.x = nx;
+
+    let ny = ent.y + ent.vy * dt;
+    c = this.rectHit(ent.x - ent.halfW, ny - ent.h, ent.halfW * 2, ent.h);
+    const wasAir = !ent.onGround;
+    ent.onGround = false;
+    if (c) {
+      if (ent.vy > 0 && ent.y <= c.y + 1) {   // landing on top
+        if (wasAir) landed = ent.vy;
+        ny = c.y;
+        ent.vy = 0;
+        ent.onGround = true;
+      } else if (ent.vy < 0) {                 // ceiling
+        ny = c.y + c.h + ent.h;
+        ent.vy = 0;
+      } else {                                 // stuck inside side — push up
+        ny = c.y;
+        ent.vy = 0;
+        ent.onGround = true;
+      }
+    }
+    ent.y = ny;
+    // Ground probe (walking off edges, and any fall that stops just short of
+    // penetrating the surface). This path also has to report impact speed:
+    // whether a landing resolves here or in the sweep above depends on where
+    // the fall happens to land within a step, so leaving it silent made land
+    // dust, the camera bounce and the landing crouch spring fire only some of
+    // the time for identical drops.
+    if (!ent.onGround && ent.vy >= 0) {
+      if (this.rectHit(ent.x - ent.halfW, ent.y - 2, ent.halfW * 2, 4)) {
+        if (wasAir) landed = ent.vy;
+        ent.onGround = true; ent.vy = 0;
+      }
+    }
+    return landed;
+  }
+
+  // segment raycast vs colliders + explosive barrels
+  raycast(x0, y0, x1, y1) {
+    let best = null, bestT = 1;
+    const dx = x1 - x0, dy = y1 - y0;
+    const testRect = (rx, ry, rw, rh, tag, ref, mat) => {
+      let tmin = 0, tmax = 1, nx = 0, ny = 0;
+      for (let axis = 0; axis < 2; axis++) {
+        const o = axis ? y0 : x0, d = axis ? dy : dx;
+        const lo = axis ? ry : rx, hi = axis ? ry + rh : rx + rw;
+        if (Math.abs(d) < 1e-6) { if (o < lo || o > hi) return; continue; }
+        let t1 = (lo - o) / d, t2 = (hi - o) / d;
+        let n = -Math.sign(d);
+        if (t1 > t2) { const tt = t1; t1 = t2; t2 = tt; }
+        if (t1 > tmin) { tmin = t1; nx = axis ? 0 : n; ny = axis ? n : 0; }
+        tmax = Math.min(tmax, t2);
+        if (tmin > tmax) return;
+      }
+      if (tmin > 0 && tmin < bestT) {
+        bestT = tmin;
+        best = { x: x0 + dx * tmin, y: y0 + dy * tmin, nx, ny, tag, ref, mat, t: tmin };
+      }
+    };
+    // `mat` picks the impact particle recipe (FX.impactWall). Colliders without
+    // one — the ground plane and the map bounds — fall back to concrete.
+    for (const c of this.colliders) testRect(c.x, c.y, c.w, c.h, 'world', c, c.mat || 'concrete');
+    for (const b of this.barrels) {
+      if (b.alive) testRect(b.x - 8, b.y - 21, 16, 21, 'barrel', b, 'metal');
+    }
+    return best;
+  }
+
+  hasLineOfSight(x0, y0, x1, y1) {
+    const hit = this.raycast(x0, y0, x1, y1);
+    return !hit || hit.tag === 'barrel';
+  }
+
+  // ---------------- pickups ----------------
+
+  collectPickup(x, y, radius = 40) {
+    for (const p of this.pickups) {
+      if (!p.alive) continue;
+      if (Math.hypot(p.x - x, (p.y - 20) - y) < radius) { p.alive = false; return p; }
+    }
+    return null;
+  }
+
+  // ---------------- decals ----------------
+
+  // `x0`/`x1` are the world-x bounds of the stamp, so it only visits the
+  // chunks it actually lands on.
+  stamp(fn, x0, x1) {
+    this.decals.stamp((g) => {
+      g.save();
+      g.translate(0, -this.decalTop);
+      fn(g);
+      g.restore();
+    }, x0, x1);
+  }
+
+  bloodDecal(x, y, size = 8) {
+    this.stamp((g) => {
+      for (let i = 0; i < 5; i++) {
+        g.fillStyle = `rgba(${86 + rand(0, 30)},${14 + rand(0, 8)},${12},${rand(0.25, 0.5)})`;
+        g.beginPath();
+        g.ellipse(x + randSpread(size), y + randSpread(size * 0.4), rand(1.5, size * 0.55), rand(1, size * 0.3), rand(0, 3), 0, Math.PI * 2);
+        g.fill();
+      }
+    }, x - size * 2, x + size * 2);
+  }
+
+  bulletHole(x, y) {
+    this.stamp((g) => {
+      g.fillStyle = 'rgba(14,13,12,0.75)';
+      g.beginPath(); g.arc(x, y, rand(1.2, 1.9), 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(210,205,190,0.2)';
+      g.lineWidth = 0.7;
+      g.beginPath(); g.arc(x, y, rand(2.2, 2.9), 0, Math.PI * 2); g.stroke();
+    }, x - 4, x + 4);
+  }
+
+  scorch(x, y, r = 30) {
+    this.stamp((g) => {
+      const gr = g.createRadialGradient(x, y, 2, x, y, r);
+      gr.addColorStop(0, 'rgba(12,10,9,0.8)');
+      gr.addColorStop(0.6, 'rgba(16,13,11,0.45)');
+      gr.addColorStop(1, 'rgba(16,13,11,0)');
+      g.fillStyle = gr;
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    }, x - r - 2, x + r + 2);
+  }
+
+  // ---------------- rendering ----------------
+
+  // Screen-space parallax composite (call with identity transform).
+  // The near plane. Drawn in screen space like the rest of the parallax stack,
+  // but AFTER the characters — it is in front of them in the world, so it has
+  // to be in front of them in the draw order. It goes in before the lighting
+  // composite, so the same light map that lands on the street lands on this;
+  // a foreground lit differently from the scene reads as a UI element pasted
+  // over the game.
+  //
+  // FORE_PARALLAX is the whole point of the layer: at 1.24 it outruns the
+  // street the operator is standing on, which is what the eye reads as "this
+  // is nearer than he is". It is anchored under the road and cannot rise to
+  // meet him — see paintForeground for why that constraint is not negotiable.
+  drawForeground(g, cam, vw, vh) {
+    const img = this.bg && this.bg.fore;
+    if (!img) return;
+    const z = cam.zoom;
+    const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
+    const s = Math.max(vw / 1600, 0.7) * z;
+    // Preferred position, then pulled up far enough to be seen, then stopped
+    // dead at the floor that keeps it clear of the play surface. On a wide
+    // viewport the first term wins and nothing is clamped.
+    const y = Math.max(
+      groundY + FORE_MIN_DROP * z,
+      Math.min(groundY + FORE_DROP * z, vh - FORE_MIN_BAND),
+    );
+    if (y > vh) return;                       // no room at all
+    const w = img.width * s, h = img.height * s;
+    const ox = -cam.x * FORE_PARALLAX * z;
+    let x = ((ox % w) + w) % w - w;
+    for (; x < vw; x += w) g.drawImage(img, x, y, w, h);
+  }
+
+  drawBackground(g, cam, vw, vh, time) {
+    const z = cam.zoom;
+    const groundY = vh / 2 + (GROUND_Y - cam.y) * z;
+    // The sky is a 1600x900 painting stretched over the viewport, redrawn
+    // every frame. On a phone that is 1.3 million pixels resampled sixty times
+    // a second before anything else has drawn — it measured as the single
+    // most expensive blit in the background pass. It only ever depends on the
+    // viewport, so it is rescaled once per resize into a canvas the exact size
+    // of the frame and copied 1:1 from then on.
+    g.drawImage(this._skyFor(vw, vh), 0, 0);
+    if (this.weather === 'overcast' || this.weather === 'rain') {
+      g.fillStyle = 'rgba(60,64,72,0.22)';
+      g.fillRect(0, 0, vw, vh * 0.7);
+    }
+
+    const tile = (img, ox, y, s) => {
+      const w = img.width * s, h = img.height * s;
+      let x = ((ox % w) + w) % w - w;
+      for (; x < vw; x += w) g.drawImage(img, x, y, w, h);
+    };
+
+    const cs = Math.max(vw / 2048, 0.72);
+    tile(this.bg.clouds, -(cam.x * 0.05 + time * 3.5), groundY - 700 * cs, cs * 1.15);
+
+    // The block of apartments — the one and only building layer. The far
+    // industrial skyline and the mid factory line that used to sit behind it
+    // are gone; nothing stands between this and the sky.
+    const ns = Math.max(vw / 2048, 0.72) * 1.04;
+    tile(this.bg.city, -cam.x * 0.42, groundY - (this.bg.city.height - 6) * ns, ns);
+
+    // Drifting haze bank, mid-depth: it parallaxes faster than the apartments
+    // and slower than the street, so it sits *between* them in the stack — the
+    // civil-war air the fight happens in. It also has a slow lateral crawl of
+    // its own on top of the parallax, so the band keeps moving when the player
+    // is standing still.
+    //
+    // Anchored from the *bottom* rather than the top. The band has to hang
+    // over the lower facades — where smoke actually collects on a street —
+    // and a top-anchored offset put it above the roofline, and mostly off the
+    // top of the frame, at anything but one viewport height. HAZE_FLOOR keeps
+    // its lowest wisps just clear of the road so it never fogs the strip the
+    // characters fight on.
+    const hs = Math.max(vw / 2048, 0.72) * 1.3;
+    const HAZE_FLOOR = 30;
+    tile(this.bg.haze, -(cam.x * 0.55 + time * 7), groundY - HAZE_FLOOR - this.bg.haze.height * hs, hs);
+
+    // cool fog settling at street level
+    // Both this and the atmospheric body below are anchored to groundY, which
+    // moves with the camera — but only by whole pixels, and a gradient rebuilt
+    // for a two-pixel shift is two CanvasGradient allocations a frame in the
+    // hottest loop in the game. Cached against the value they are built from
+    // and rebuilt only when it actually changes.
+    if (this._fogY !== groundY) {
+      this._fogY = groundY;
+      this._fogGrad = lingrad(g, 0, groundY - 150, 0, groundY + 30, [
+        [0, 'rgba(150,155,175,0)'], [0.8, 'rgba(150,150,168,0.13)'], [1, 'rgba(150,150,168,0.05)'],
+      ]);
+      this._atmosGrad = null;
+    }
+    g.fillStyle = this._fogGrad;
+    g.fillRect(0, groundY - 150, vw, 190);
+
+    this.drawWeather(g, cam, vw, vh, time);
+
+    // Atmospheric fog over the parallax stack: a cool blue-grey body that
+    // thickens toward the horizon. Distance reads as colour temperature here,
+    // not just as dimness.
+    if (!this._atmosGrad || this._atmosVh !== vh) {
+      this._atmosVh = vh;
+      this._atmosGrad = lingrad(g, 0, groundY - vh, 0, groundY + 40, [
+        [0, 'rgba(96,116,150,0.05)'],
+        [0.55, 'rgba(112,132,164,0.17)'],
+        [0.88, 'rgba(126,144,172,0.30)'],
+        [1, 'rgba(120,136,164,0.20)'],
+      ]);
+    }
+    g.fillStyle = this._atmosGrad;
+    g.fillRect(0, 0, vw, groundY + 40);
+
+    // ---- TimeShift wash + night scrim, as ONE fill ----
+    // The whole backdrop is repainted toward the hour of day, then pushed down
+    // by a uniform scrim. Doing the grade here, as an overlay, is what lets the
+    // clock move without rebaking a single parallax layer — see
+    // engine/daycycle.js — and it lands before the world layer draws, so the
+    // street and everyone on it keep their own value.
+    //
+    // They used to be two full-screen fills. Two source-over fills of flat
+    // colour over the same rect compose to exactly one, and on a phone a
+    // full-screen alpha fill is ~1.3 million pixels of blending, so the second
+    // one was worth removing:
+    //
+    //   out = C2*a2 + (C1*a1 + base*(1-a1))*(1-a2)
+    //       = [C2*a2 + C1*a1*(1-a2)] + base*(1-a1)(1-a2)
+    //
+    // which is a single fill with a = 1-(1-a1)(1-a2) and premultiplied colour
+    // C = [C2*a2 + C1*a1*(1-a2)] / a. Identical output, half the fill rate.
+    const grade = this.dayGrade;
+    const a1 = grade && grade.a > 0.001 ? grade.a : 0;
+    const t = grade ? grade.tint : null;
+    // Scrim: scaled by how dark the hour already is — a noon sky does not need
+    // the same knock-down as midnight.
+    const a2 = 0.34 * (grade ? 0.45 + grade.ambient * 0.55 : 1);
+    const a = 1 - (1 - a1) * (1 - a2);
+    if (a > 0.001) {
+      const k1 = a1 * (1 - a2), k2 = a2;
+      const cr = ((t ? t[0] * k1 : 0) + 6 * k2) / a;
+      const cg = ((t ? t[1] * k1 : 0) + 8 * k2) / a;
+      const cb = ((t ? t[2] * k1 : 0) + 13 * k2) / a;
+      g.fillStyle = `rgba(${Math.round(cr)},${Math.round(cg)},${Math.round(cb)},${a.toFixed(3)})`;
+      g.fillRect(0, 0, vw, vh);
+    }
+  }
+
+  // Viewport-sized copy of the sky painting, rebuilt only when the frame
+  // changes size. Returns the original if the canvas cannot be made, so a
+  // failure here costs performance and never correctness.
+  _skyFor(vw, vh) {
+    const w = Math.max(1, Math.round(vw)), h = Math.max(1, Math.round(vh));
+    if (this._skyCv && this._skyCv.width === w && this._skyCv.height === h) return this._skyCv;
+    let cv;
+    try {
+      cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(this.bg.sky, 0, 0, w, h);
+    } catch { return this.bg.sky; }
+    this._skyCv = cv;
+    return cv;
+  }
+
+  // Weather pass, drawn over the parallax stack and under the time wash.
+  drawWeather(g, cam, vw, vh, time) {
+    const w = this.weather;
+    if (w === 'clear') return;
+    if (w === 'fog') {
+      g.fillStyle = lingrad(g, 0, vh * 0.2, 0, vh, [
+        [0, 'rgba(150,158,172,0.06)'], [1, 'rgba(158,166,180,0.30)'],
+      ]);
+      g.fillRect(0, 0, vw, vh);
+      return;
+    }
+    if (w === 'rain' || w === 'storm') {
+      const heavy = w === 'storm';
+      g.strokeStyle = heavy ? 'rgba(190,205,225,0.30)' : 'rgba(180,195,215,0.22)';
+      g.lineWidth = 1;
+      const seed = (cam.x * 0.3) % 4000;
+      const drops = heavy ? 190 : 90;
+      const speed = heavy ? 1500 : 900;
+      // One path, one stroke: every drop is the same colour and width, so 90
+      // to 190 separate stroke calls a frame collapse into a single one.
+      const dx = heavy ? 10 : 6, dy = heavy ? 30 : 22;
+      g.beginPath();
+      for (let i = 0; i < drops; i++) {
+        const rx = ((i * 137 + seed * 0.4) % (vw + 200)) - 100;
+        const ry = ((i * 71 + time * speed) % (vh + 100)) - 50;
+        g.moveTo(rx, ry); g.lineTo(rx - dx, ry + dy);
+      }
+      g.stroke();
+      if (heavy) {
+        // lightning: a short bright frame on a slow, seeded cadence
+        const flash = Math.sin(time * 0.7) > 0.985 ? 1 : 0;
+        if (flash) { g.fillStyle = 'rgba(200,215,245,0.22)'; g.fillRect(0, 0, vw, vh); }
+      }
+    }
+  }
+
+  // World-space layers behind entities (call inside camera transform).
+  // cam/vw, when given, cull props/barrels/pickups outside the visible
+  // x-range — endless procedural stages can carry far more of these than are
+  // ever on screen at once, so this cuts real draw-call count without
+  // touching physics/AI (those keep updating regardless of culling).
+  drawBack(g, cam, vw, vh) {
+    const halfVis = cam && vw ? vw / (2 * cam.zoom) + 400 : Infinity;
+    const camX = cam ? cam.x : 0;
+    const visible = (x) => Math.abs(x - camX) < halfVis;
+    // World span actually on screen. Everything below is clipped to it rather
+    // than drawn map-wide and left to the rasteriser: the street sprite is
+    // 7900 units across and the decal layer 7400, and handing either to
+    // drawImage whole was costing more than the rest of the frame put together.
+    const spanL = Number.isFinite(halfVis) ? camX - halfVis : -250;
+    const spanR = Number.isFinite(halfVis) ? camX + halfVis : MAP_W + 250;
+    // Tighter still for the flat background fills. `halfVis` carries a 400-unit
+    // margin so a prop whose art overhangs its anchor still gets drawn; a
+    // full-bleed fill needs no such margin, and at typical zoom that margin
+    // was making every background band more than twice as wide as the screen.
+    // Fill area was the single largest cost in this function.
+    const fillL = Number.isFinite(halfVis) ? camX - (halfVis - 360) : -250;
+    const fillW = Number.isFinite(halfVis) ? (halfVis - 360) * 2 : MAP_W + 500;
+
+    drawSpriteSlice(g, this.ground, -250, GROUND_Y, spanL, spanR);
+    // solid earth below the painted street — never let the sky bleed through.
+    // The gradient is camera-independent, so it is built once and reused.
+    if (!this._underGrad) {
+      this._underGrad = lingrad(g, 0, GROUND_Y + 82, 0, GROUND_Y + 700, [
+        [0, '#2b2a27'], [0.25, '#1b1a18'], [1, '#0c0c0d'],
+      ]);
+    }
+    g.fillStyle = this._underGrad;
+    // Only as deep as the camera can actually see. This used to fill a fixed
+    // 1400 units down; at typical zoom fewer than 300 are ever on screen, and
+    // a gradient fill of that size was measurably the priciest fillRect in the
+    // frame. The gradient itself still runs to GROUND_Y+700, so the visible
+    // band is identical — there is just no work below the bottom of the view.
+    const underH = cam && vh
+      ? (cam.y + vh / (2 * cam.zoom) + 40) - (GROUND_Y + 84)
+      : 1400;
+    if (underH > 0) g.fillRect(fillL, GROUND_Y + 84, fillW, Math.min(1400, underH));
+
+    // Foreground floor falloff: the road darkens as it comes toward camera, so
+    // the strip the characters stand on frames them from below instead of
+    // being the brightest band on screen. Props, barrels, pickups and decals
+    // all draw after this and keep their full value.
+    if (!this._falloffGrad) {
+      this._falloffGrad = lingrad(g, 0, GROUND_Y - 4, 0, GROUND_Y + 96, [
+        [0, 'rgba(5,7,11,0)'],
+        [0.45, 'rgba(5,7,11,0.16)'],
+        [1, 'rgba(4,6,10,0.42)'],
+      ]);
+    }
+    g.fillStyle = this._falloffGrad;
+    g.fillRect(fillL, GROUND_Y - 4, fillW, 100);
+
+    // Contact shadows go down first, as one batch: every prop's pool is laid
+    // in before any prop art, so a crate standing in front of another never
+    // has the neighbour's shadow painted over its face.
+    this.drawContactShadows(g, visible);
+
+    for (const p of this.props) {
+      if (!visible(p.x)) continue;
+      // hx/hy/hr are the impact spring (see nudgeProp). Zero for anything that
+      // has not been shot, so the common case pays one branch.
+      if (p.hr !== 0) {
+        // Rock about the base, not the sprite centre: these things stand on
+        // the ground and pivot on the edge the round pushed them away from.
+        g.save();
+        g.translate(p.x + p.hx, p.y + p.hy);
+        g.rotate(p.hr);
+        drawSprite(g, p.spr, 0, 0);
+        g.restore();
+      } else {
+        drawSprite(g, p.spr, p.x + p.hx, p.y + p.hy);
+      }
+    }
+    for (const b of this.barrels) if (b.alive && visible(b.x)) drawSprite(g, b.spr, b.x, b.y);
+    this.drawShafts(g, visible);
+    this.drawPickups(g, visible);
+    // Decals over ground/props, under characters. Same story as the street: the
+    // decal surface is the width of the whole map, so only the visible column
+    // of it is blitted.
+    this.decals.drawSlice(g, 0, this.decalTop, spanL, spanR);
+  }
+
+  // Soft elliptical pools under every prop, barrel and pickup.
+  //
+  // The blob is sized from the sprite's own footprint rather than a constant,
+  // so a container gets a wide pool and a tyre stack a narrow one. A sprite's
+  // world-space width is spr.w and its anchor sits spr.ax*spr.s in from the
+  // left edge, which is what recentres the pool under the art — props are
+  // anchored at various points, and a shadow that ignored that would sit off
+  // to one side of anything not centre-anchored.
+  drawContactShadows(g, visible = () => true) {
+    const spr = this.shadowSpr;
+    if (!spr) return;
+    g.save();
+    g.globalAlpha = SHADOW_ALPHA;
+    const pool = (p) => {
+      const s = p.spr;
+      if (!s || !s.w) return;
+      const cx = p.x + (s.w / 2 - s.ax * s.s);
+      // Wider objects cast a proportionally *less* extended pool — the light is
+      // overhead, so the shadow tracks the footprint, not the silhouette.
+      drawSprite(g, spr, cx, p.y, 0, (s.w / spr.w) * SHADOW_SQUASH, 1);
+    };
+    for (const p of this.props) if (visible(p.x)) pool(p);
+    for (const b of this.barrels) if (b.alive && visible(b.x)) pool(b);
+    for (const p of this.pickups) {
+      // Pickups hover and bob, so theirs is a small fixed pool on the road
+      // directly beneath — it is what sells the float as deliberate.
+      if (!p.alive || !visible(p.x)) continue;
+      g.globalAlpha = SHADOW_ALPHA * 0.5;
+      drawSprite(g, spr, p.x, p.y, 0, 0.42, 1);
+      g.globalAlpha = SHADOW_ALPHA;
+    }
+    g.restore();
+  }
+
+  // Volumetric cones under the lit street lamps: a downward-tapering wedge of
+  // haze, drawn additively so it lifts whatever is behind it rather than
+  // greying it out. It fades to nothing well above the road, which is what
+  // keeps it reading as light through dust instead of a solid cone resting on
+  // the ground.
+  drawShafts(g, visible = () => true) {
+    if (!this.shafts.length) return;
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    for (const s of this.shafts) {
+      if (!visible(s.x)) continue;
+      const h = GROUND_Y - s.y;
+      const grad = lingrad(g, 0, s.y, 0, GROUND_Y, [
+        [0, `rgba(255,214,158,${SHAFT_ALPHA})`],
+        [0.55, `rgba(255,206,150,${SHAFT_ALPHA * 0.42})`],
+        [1, 'rgba(255,200,145,0)'],
+      ]);
+      g.fillStyle = grad;
+      g.beginPath();
+      g.moveTo(s.x - SHAFT_TOP_W / 2, s.y);
+      g.lineTo(s.x + SHAFT_TOP_W / 2, s.y);
+      g.lineTo(s.x + SHAFT_BOT_W / 2, s.y + h);
+      g.lineTo(s.x - SHAFT_BOT_W / 2, s.y + h);
+      g.closePath();
+      g.fill();
+    }
+    g.restore();
+  }
+
+  drawPickups(g, visible = () => true) {
+    for (const p of this.pickups) {
+      if (!p.alive || !visible(p.x)) continue;
+      const bob = Math.sin(this.time * 2.4 + p.bob) * 3;
+      const y = p.y - 22 + bob;
+      g.save();
+      g.translate(p.x, y);
+      const col = p.kind === 'health' ? '#c9564a' : p.kind === 'armor' ? '#7d95a8' : '#c9a94a';
+      g.fillStyle = 'rgba(10,12,14,0.55)';
+      rr(g, -9, -9, 18, 18, 3); g.fill();
+      g.strokeStyle = col; g.lineWidth = 1.2;
+      rr(g, -9, -9, 18, 18, 3); g.stroke();
+      g.fillStyle = col;
+      if (p.kind === 'health') {
+        g.fillRect(-1.2, -5, 2.4, 10);
+        g.fillRect(-5, -1.2, 10, 2.4);
+      } else if (p.kind === 'armor') {
+        g.beginPath();
+        g.moveTo(0, -6); g.lineTo(5.5, -3); g.lineTo(5.5, 3); g.lineTo(0, 6.5); g.lineTo(-5.5, 3); g.lineTo(-5.5, -3);
+        g.closePath(); g.fill();
+      } else {
+        g.fillRect(-5, -4, 10, 8);
+        g.fillStyle = 'rgba(10,12,14,0.6)';
+        g.fillRect(-3, -4, 1.4, 8); g.fillRect(1.6, -4, 1.4, 8);
+      }
+      g.restore();
+    }
+  }
+
+  getLights() {
+    return this.lights;
+  }
+
+  // ---------------- prop hit response ----------------
+  // A round striking a crate used to spawn particles and a decal in front of
+  // a completely inert sprite: the world made a noise about being hit but the
+  // thing that was hit never moved. This is the missing half — the object
+  // itself takes the impulse.
+  //
+  // It is deliberately a nudge and not a physics body. These props are cover;
+  // knocking them out of position would move the collider out from under the
+  // art, and the collider is what the whole level is laid out around. What
+  // moves is the drawing, by a couple of pixels, on a spring that returns it
+  // exactly where it started.
+  //
+  // Heavier props take the same impulse less far — PROP_MASS is read off the
+  // sprite's own footprint, so a shipping container barely registers a rifle
+  // round and a wooden crate visibly jumps, with nothing to author per prop.
+  nudgeProp(x, y, nx, ny, power = 1) {
+    let best = null, bestArea = Infinity;
+    for (const p of this.props) {
+      // cheap x-reject first: props are numerous and this runs per impact
+      if (Math.abs(p.x - x) > 140) continue;
+      const spr = p.spr;
+      const l = p.x - spr.ax * spr.s, t = p.y - spr.ay * spr.s;
+      if (x < l || x > l + spr.w || y < t || y > t + spr.h) continue;
+      // Smallest containing sprite wins, so a crate sitting against a
+      // container takes the hit rather than the container behind it.
+      const area = spr.w * spr.h;
+      if (area < bestArea) { bestArea = area; best = p; }
+    }
+    if (!best) return;
+    const mass = Math.max(1, Math.sqrt(bestArea) / PROP_MASS_REF);
+    const k = (PROP_NUDGE * power) / mass;
+    best.hvx += nx * k;
+    best.hvy += ny * k * 0.55;   // less vertical: they sit on the ground
+    // A little rotation off centre reads as the object rocking rather than
+    // sliding — signed by which side of the prop the round landed on.
+    best.hvr += nx * k * 0.0016 + (x - best.x) * ny * k * 0.00012;
+  }
+
+  updateProps(dt) {
+    for (const p of this.props) {
+      if (p.hvx === 0 && p.hvy === 0 && p.hvr === 0
+          && p.hx === 0 && p.hy === 0 && p.hr === 0) continue;
+      p.hvx -= p.hx * PROP_SPRING_K * dt;
+      p.hvy -= p.hy * PROP_SPRING_K * dt;
+      p.hvr -= p.hr * PROP_SPRING_K * 1.4 * dt;
+      const d = Math.exp(-PROP_SPRING_DAMP * dt);
+      p.hvx *= d; p.hvy *= d; p.hvr *= d;
+      p.hx = clamp(p.hx + p.hvx * dt, -PROP_NUDGE_MAX, PROP_NUDGE_MAX);
+      p.hy = clamp(p.hy + p.hvy * dt, -PROP_NUDGE_MAX, PROP_NUDGE_MAX);
+      p.hr = clamp(p.hr + p.hvr * dt, -PROP_ROCK_MAX, PROP_ROCK_MAX);
+      // Park it exactly at rest rather than leaving a residue to iterate over
+      // forever — this loop skips anything fully settled.
+      if (Math.abs(p.hx) < 0.01 && Math.abs(p.hy) < 0.01 && Math.abs(p.hr) < 0.0002
+          && Math.abs(p.hvx) < 0.05 && Math.abs(p.hvy) < 0.05 && Math.abs(p.hvr) < 0.0008) {
+        p.hx = p.hy = p.hr = p.hvx = p.hvy = p.hvr = 0;
+      }
+    }
+  }
+
+  update(dt) {
+    this.time += dt;
+    this.updateProps(dt);
+  }
+}

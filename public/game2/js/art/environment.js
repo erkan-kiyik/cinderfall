@@ -1,0 +1,1066 @@
+// Environment prop & facade painters. Everything is painted per-instance with
+// its own deterministic wear (no two barrels rust the same way) and shares the
+// dusk-industrial palette: warm top light, cool shadow, painted AO at contact.
+
+import {
+  makeSprite, makeCanvas, lingrad, radgrad, rr, grunge, streaks, scratches,
+  ao, rivet, rim, shade, mix, withA, COL, makeWideSprite,
+} from './paint.js';
+import { makeRng, clamp } from '../engine/math.js';
+
+let seedCounter = 77;
+const nextRng = () => makeRng((seedCounter += 1013));
+
+// ---------------- shipping container ----------------
+// w×h world units, anchor bottom-center. Corrugated walls, door end, stencil.
+export function container(colorKey = 'containerRed', label = 'HLC-407', w = 108, h = 44, scale = 1) {
+  const rng = nextRng();
+  const base = COL[colorKey] || colorKey;
+  return makeSprite(w * scale, (h + 4) * scale, (w / 2) * scale, (h + 2) * scale, (g) => {
+    g.scale(scale, scale);
+    const y0 = 2;
+    // body
+    g.fillStyle = lingrad(g, 0, y0, 0, y0 + h, [
+      [0, shade(base, 0.18)], [0.3, shade(base, 0.02)], [1, shade(base, -0.36)],
+    ]);
+    g.fillRect(0, y0, w, h);
+    // corrugation
+    for (let x = 4; x < w - 4; x += 5) {
+      g.fillStyle = 'rgba(0,0,0,0.16)';
+      g.fillRect(x, y0 + 2, 1.6, h - 4);
+      g.fillStyle = 'rgba(255,235,205,0.07)';
+      g.fillRect(x + 2.6, y0 + 2, 1.2, h - 4);
+    }
+    // corner posts + top rail
+    g.fillStyle = shade(base, -0.45);
+    g.fillRect(0, y0, 3.5, h); g.fillRect(w - 3.5, y0, 3.5, h);
+    g.fillStyle = lingrad(g, 0, y0 - 0.5, 0, y0 + 3, [[0, shade(base, 0.3)], [1, shade(base, -0.05)]]);
+    g.fillRect(0, y0, w, 3);
+    // door end (right): hinges, lock rods, handles
+    g.fillStyle = 'rgba(0,0,0,0.2)';
+    g.fillRect(w - 22, y0 + 2, 18, h - 4);
+    for (let i = 0; i < 2; i++) {
+      const dx = w - 18 + i * 8;
+      g.fillStyle = shade(base, -0.2);
+      g.fillRect(dx, y0 + 2, 1.8, h - 4);
+      g.fillStyle = '#22201c';
+      g.fillRect(dx - 0.6, y0 + h * 0.35, 3, 2.4);
+      g.fillRect(dx - 0.6, y0 + h * 0.6, 3, 2.4);
+    }
+    // stencil label + ID
+    g.fillStyle = 'rgba(235,230,215,0.5)';
+    g.font = 'bold 5px monospace';
+    g.fillText(label, 8, y0 + 9);
+    g.font = '3.5px monospace';
+    g.fillText('MAX GROSS 30,480 KG', 8, y0 + h - 5);
+    g.fillStyle = 'rgba(235,230,215,0.32)';
+    g.fillRect(8, y0 + 11, 22, 0.8);
+    // hazard diamond
+    g.save();
+    g.translate(w * 0.55, y0 + h * 0.45); g.rotate(Math.PI / 4);
+    g.strokeStyle = 'rgba(230,220,200,0.35)'; g.lineWidth = 1;
+    g.strokeRect(-4, -4, 8, 8);
+    g.restore();
+    // weathering
+    streaks(g, 0, y0, w, h, rng, { n: 14, color: 'rgba(48,30,18,0.22)', wMax: 3 });
+    grunge(g, 0, y0, w, h, rng, { n: 160, dark: 0.14 });
+    scratches(g, 2, y0 + 2, w - 4, h - 4, rng, { n: 8, len: 2.4, color: 'rgba(220,225,235,0.10)' });
+    rim(g, 0, y0, w, h);
+    ao(g, w / 2, y0 + h + 1, w * 0.55, 5, 0.4);
+  });
+}
+
+// ---------------- barrels ----------------
+// Cylinder shading needs a real specular story to read as metal rather than a
+// flat rounded rect: dark terminator at both edges, a narrow bright sheen
+// offset toward the key-light side, not a wide soft gradient. `rust` used to
+// silently fall through to a desaturated olive-grey — the most common barrel
+// variant in the game was never actually rust-colored.
+// Barrels varied only in rust and streaks: measured on the solid alpha mask,
+// twelve of them produced five outlines and a total area spread of 3 pixels.
+// A steel drum that has been in a war zone is dented, and dents are the one
+// thing that changes a cylinder's profile, so that is what varies here —
+// along with how far the lid rim stands proud and how much the whole drum
+// leans, both of which read at a glance down a street lined with them.
+export function barrel(variant = 'rust', scale = 1) {
+  const rng = nextRng();
+  // 'rust' is a painted drum that has rusted, not a brown one: an all-brown
+  // cylinder with vertical streaks read as a wooden keg.
+  const base = variant === 'red' ? '#8a3b2e' : variant === 'blue' ? '#3d5161' : '#4f5545';
+  // Dents, as bites out of one side. Kept off the very top and bottom so the
+  // lid ellipse and the ground contact still read as a drum standing upright.
+  const dents = [];
+  const dentN = rng.range(0, 1) < 0.22 ? 0 : (rng.range(0, 1) < 0.55 ? 1 : 2);
+  for (let i = 0; i < dentN; i++) {
+    dents.push({
+      side: rng.range(0, 1) < 0.5 ? 0 : 1,
+      y: rng.range(4.5, 16),
+      h: rng.range(2.4, 5.5),
+      d: rng.range(0.7, 1.9),      // how deep into the body it bites
+    });
+  }
+  const rimR = rng.range(6.4, 7.4);   // lid radius: a rolled edge more or less proud
+  const lean = rng.range(-0.035, 0.035);
+  return makeSprite(16 * scale, 22 * scale, 8 * scale, 21 * scale, (g) => {
+    g.scale(scale, scale);
+    // Lean about the base. Small — these are standing, not falling — but it
+    // is enough that a row of drums stops looking extruded from one model.
+    g.translate(8, 21); g.rotate(lean); g.translate(-8, -21);
+    g.fillStyle = lingrad(g, 1, 0, 15, 0, [
+      [0, shade(base, -0.5)], [0.16, shade(base, -0.2)], [0.34, shade(base, 0.42)],
+      [0.46, shade(base, 0.08)], [0.7, shade(base, -0.12)], [1, shade(base, -0.55)],
+    ]);
+    rr(g, 1, 1, 14, 20, 2); g.fill();
+    // rolling hoops: dark groove + crisp highlight catching the same key light
+    // as the body sheen, so they read as pressed metal, not painted stripes
+    for (const y of [5.5, 11.5, 17]) {
+      g.fillStyle = 'rgba(0,0,0,0.38)';
+      g.fillRect(1, y, 14, 2.1);
+      g.fillStyle = 'rgba(255,244,222,0.22)';
+      g.fillRect(1, y - 1, 14, 0.9);
+      g.fillStyle = 'rgba(0,0,0,0.22)';
+      g.fillRect(1, y + 2.1, 14, 0.6);
+    }
+    // lid: same sheen logic as the body, plus a rolled-edge rim highlight
+    g.fillStyle = lingrad(g, 2, 0, 14, 0, [
+      [0, shade(base, -0.35)], [0.4, shade(base, 0.36)], [1, shade(base, -0.4)],
+    ]);
+    g.beginPath(); g.ellipse(8, 2, rimR, 1.8, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(255,244,222,0.3)'; g.lineWidth = 0.5;
+    g.beginPath(); g.ellipse(8, 1.7, rimR - 0.7, 1.5, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+    g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.6;
+    g.beginPath(); g.ellipse(8, 2, rimR, 1.8, 0, 0, Math.PI * 2); g.stroke();
+    if (variant === 'red') {
+      // flammable marking
+      g.fillStyle = 'rgba(20,14,8,0.5)';
+      g.font = 'bold 3.2px monospace';
+      g.fillText('FLAM', 4.3, 10.6);
+      g.fillStyle = 'rgba(245,235,210,0.75)';
+      g.font = 'bold 3.2px monospace';
+      g.fillText('FLAM', 4.4, 10.4);
+      g.save(); g.translate(8, 16); g.rotate(Math.PI / 4);
+      g.strokeStyle = 'rgba(245,235,210,0.55)'; g.lineWidth = 0.8;
+      g.strokeRect(-2.4, -2.4, 4.8, 4.8);
+      g.restore();
+    } else if (variant === 'blue') {
+      g.fillStyle = 'rgba(230,235,245,0.55)';
+      g.font = 'bold 3px monospace';
+      g.fillText('H2O', 5, 10.6);
+    }
+    if (variant !== 'blue') {
+      // Rust blooms where the paint is broken — under the hoops, round the
+      // chime at the base, at the lid rim — as patches, not vertical stripes.
+      g.save();
+      g.beginPath(); rr(g, 1, 1, 14, 20, 2); g.clip();
+      const blooms = variant === 'rust' ? 9 : 4;
+      for (let i = 0; i < blooms; i++) {
+        const bx = rng.range(2, 14);
+        const by = [7.4, 13.4, 19.2, 3.2][i % 4] + rng.range(-0.6, 1.4);
+        const r = rng.range(1.2, variant === 'rust' ? 3.4 : 2.2);
+        const gr = g.createRadialGradient(bx, by, 0, bx, by, r);
+        gr.addColorStop(0, 'rgba(132,62,24,0.75)');
+        gr.addColorStop(0.6, 'rgba(104,48,20,0.45)');
+        gr.addColorStop(1, 'rgba(90,40,16,0)');
+        g.fillStyle = gr;
+        g.beginPath(); g.ellipse(bx, by, r * 1.3, r * 0.8, 0, 0, Math.PI * 2); g.fill();
+      }
+      // a few short drips below the worst patches
+      for (let i = 0; i < 3; i++) {
+        const sx = rng.range(2.5, 13.5), sy = [7.6, 13.6][i % 2];
+        const len = rng.range(1.8, 3.6);
+        const gr = g.createLinearGradient(0, sy, 0, sy + len);
+        gr.addColorStop(0, 'rgba(96,42,16,0.45)'); gr.addColorStop(1, 'rgba(96,42,16,0)');
+        g.fillStyle = gr; g.fillRect(sx, sy, 0.7, len);
+      }
+      g.restore();
+    }
+    scratches(g, 2, 5, 12, 14, rng, { n: 4, len: 2, color: 'rgba(255,244,222,0.12)' });
+    grunge(g, 1, 1, 14, 20, rng, { n: 55 });
+    // Dents last, cut out of the finished drum so the profile itself is
+    // deformed rather than shaded to look that way — and painted back with a
+    // hard shadow lip so the bite reads as pressed metal, not a hole.
+    for (const d of dents) {
+      const x = d.side ? 15 : 1;
+      const sx = d.side ? -1 : 1;
+      const path = () => {
+        g.beginPath();
+        g.moveTo(x, d.y);
+        g.quadraticCurveTo(x + sx * d.d * 1.6, d.y + d.h * 0.5, x, d.y + d.h);
+        g.lineTo(x - sx * 0.6, d.y + d.h);
+        g.lineTo(x - sx * 0.6, d.y);
+        g.closePath();
+      };
+      g.save();
+      g.globalCompositeOperation = 'destination-out';
+      path();
+      g.fill();
+      g.restore();
+      g.strokeStyle = `rgba(14,10,6,${rng.range(0.35, 0.55)})`;
+      g.lineWidth = 0.5;
+      g.beginPath();
+      g.moveTo(x, d.y);
+      g.quadraticCurveTo(x + sx * d.d * 1.6, d.y + d.h * 0.5, x, d.y + d.h);
+      g.stroke();
+    }
+    ao(g, 8, 21, 9, 3, 0.42);
+  });
+}
+
+// ---------------- wooden crate ----------------
+// Each plank is its own filled band with its own shade offset and a dark
+// groove between boards — a single gradient over the whole face plus two
+// hairline strokes reads as a flat brown rectangle at gameplay scale, not
+// individual timber.
+// Every crate in the game was painted from the identical recipe: three planks,
+// two battens, the same stencil in the same place. The per-instance rng only
+// ever varied surface tone and grunge, so the *outline* — which is what the
+// eye actually reads at gameplay distance — repeated exactly, and a street
+// lined with cover looked stamped out.
+//
+// So the variation moved into the silhouette. Plank count, batten sides,
+// stencil placement and, above all, knocked-off corners: the chips are cut
+// with destination-out so they genuinely remove the corner rather than paint
+// over it. Everything stays strictly inside the sprite's own box, because the
+// collider that world.js lays the level out with is the footprint — cover has
+// to keep lining up with the thing the player is standing behind.
+export function crate(w = 30, h = 25, scale = 1) {
+  const rng = nextRng();
+  const base = COL.woodCrate;
+  const planks = rng.range(0, 1) < 0.42 ? 4 : 3;
+  // Which corners are damaged, and how far in the damage reaches. At least
+  // one always is: a first pass at 34% per corner left 44% of crates with an
+  // undamaged top edge, and measured on the alpha masks only 6 of 12 crates
+  // came out with a distinct outline — which is most of the way back to the
+  // problem this is here to solve. These have been sitting in a war zone.
+  const chips = [];
+  for (const [cx, cy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+    if (rng.range(0, 1) < 0.55) chips.push({ cx, cy, r: rng.range(1.8, 4.6) });
+  }
+  if (!chips.length) {
+    chips.push({ cx: rng.range(0, 1) < 0.5 ? 0 : 1, cy: 0, r: rng.range(2.2, 4.6) });
+  }
+  // The top rail is the edge the eye lands on first, so it varies on every
+  // crate rather than only on damaged ones: cap thickness, and how far short
+  // of the end it stops on one side. This one is a *surface* difference, not
+  // an outline one — the cap sits on top of the planks, so insetting it
+  // exposes board rather than cutting the profile. (Making it proud instead
+  // would be clipped away by the sprite box and change nothing at all, which
+  // is what the first attempt at this did.) The chips below are what actually
+  // vary the silhouette.
+  const capH = rng.range(1.2, 2.6);
+  const capInset = rng.range(0, 3.2);
+  const capSide = rng.range(0, 1) < 0.5 ? 0 : 1;
+  const battenL = rng.range(0, 1) < 0.88;
+  const battenR = rng.range(0, 1) < 0.88 || !battenL;   // never both missing
+  const stencilDx = rng.range(-1.6, 1.6);
+  const stencilDy = rng.range(-1.2, 1.4);
+  return makeSprite(w * scale, (h + 3) * scale, (w / 2) * scale, (h + 1.5) * scale, (g) => {
+    g.scale(scale, scale);
+    // base fill under the planks (fallback for any gap)
+    g.fillStyle = shade(base, -0.3);
+    g.fillRect(0.5, 0.5, w - 1, h);
+    // horizontal planks, each with its own lit-top / shadow-bottom bevel and
+    // a slightly different tone so no two boards match exactly
+    const plankH = h / planks;
+    for (let i = 0; i < planks; i++) {
+      const py = 0.5 + i * plankH;
+      const tone = shade(base, rng.range(-0.1, 0.12));
+      g.fillStyle = lingrad(g, 0, py, 0, py + plankH, [
+        [0, shade(tone, 0.32)], [0.18, shade(tone, 0.08)], [0.85, shade(tone, -0.16)], [1, shade(tone, -0.4)],
+      ]);
+      g.fillRect(0.5, py, w - 1, plankH - (i < planks - 1 ? 0.9 : 0));
+      // groove between planks
+      if (i < planks - 1) {
+        g.fillStyle = 'rgba(18,11,5,0.6)';
+        g.fillRect(0.5, py + plankH - 0.9, w - 1, 0.9);
+      }
+      // long grain streaks along the board
+      g.strokeStyle = `rgba(50,34,16,${rng.range(0.18, 0.3)})`; g.lineWidth = 0.4;
+      for (let s = 0; s < 2; s++) {
+        const gy = py + rng.range(plankH * 0.25, plankH * 0.75);
+        g.beginPath(); g.moveTo(2, gy);
+        g.quadraticCurveTo(w / 2, gy + rng.range(-0.6, 0.6), w - 2, gy);
+        g.stroke();
+      }
+    }
+    // corner battens (the structural frame reads on top of the plank bands).
+    // A crate missing one has a visibly different edge.
+    g.strokeStyle = 'rgba(18,11,5,0.5)'; g.lineWidth = 0.5;
+    if (battenL) {
+      g.fillStyle = lingrad(g, 0, 0, 3.4, 0, [[0, shade(base, -0.05)], [1, shade(base, -0.42)]]);
+      g.fillRect(0.5, 0.5, 3.4, h);
+      g.strokeRect(0.5, 0.5, 3.4, h);
+    }
+    if (battenR) {
+      g.fillStyle = lingrad(g, w - 3.9, 0, w - 0.5, 0, [[0, shade(base, -0.42)], [1, shade(base, -0.1)]]);
+      g.fillRect(w - 3.9, 0.5, 3.4, h);
+      g.strokeRect(w - 3.9, 0.5, 3.4, h);
+    }
+    // top/bottom cap rails. The top one carries the per-crate thickness and
+    // the overhang, so no two crates present the same top edge.
+    const capX = capSide ? 0.5 + capInset : 0.5;
+    const capW = w - 1 - capInset;
+    g.fillStyle = shade(base, -0.28);
+    g.fillRect(capX, 0.5, capW, capH); g.fillRect(0.5, h - 0.6, w - 1, 1.1);
+    g.fillStyle = 'rgba(255,235,205,0.16)';
+    g.fillRect(capX, 0.5, capW, capH * 0.44);
+    // stencil, dark base + lighter overlay so it holds up against light and
+    // dark boards alike
+    // Stencil varies per crate: every crate in a stack said "9-C" in the same
+    // spot, which is the stamped-out look the silhouette work was meant to
+    // kill. A few cargo marks, and some crates carry none at all.
+    const marks = ['9-C', 'C-14', 'AMMO', '7.62', 'FRAGILE', 'S9-04', '', 'MED'];
+    const mark = marks[Math.floor(rng.range(0, marks.length))];
+    if (mark) {
+      const fs = mark.length > 4 ? 3.2 : 4.4;
+      g.font = `bold ${fs}px monospace`;
+      const tw = g.measureText(mark).width;
+      const tx = Math.max(2.5, Math.min(w - tw - 2.5, w / 2 - tw / 2 + stencilDx));
+      g.fillStyle = 'rgba(20,13,6,0.55)';
+      g.fillText(mark, tx + 0.2, h / 2 + 1.7 + stencilDy);
+      g.fillStyle = mark === 'MED' ? 'rgba(196,70,58,0.7)' : 'rgba(232,220,195,0.58)';
+      g.fillText(mark, tx, h / 2 + 1.5 + stencilDy);
+    }
+    for (const [nx, ny] of [[2.2, 2.2], [w - 2.2, 2.2], [2.2, h - 1.4], [w - 2.2, h - 1.4]]) rivet(g, nx, ny, 0.9);
+    grunge(g, 1, 1, w - 2, h - 1, rng, { n: 45 });
+    rim(g, 0, 0, w, h, { top: 0.16, bottom: 0.3 });
+    // Knocked-off corners, cut out of the finished crate so the silhouette
+    // itself is damaged. Done after the rim light so the fresh edge does not
+    // pick up a highlight that belongs to an intact one; the exposed inner
+    // wood is painted back in over the hole.
+    for (const c of chips) {
+      const px = c.cx ? w - 0.5 : 0.5;
+      const py = c.cy ? h + 0.5 : 0.5;
+      const sx = c.cx ? -1 : 1, sy = c.cy ? -1 : 1;
+      // The polygon has to CONTAIN the corner, or destination-out takes a
+      // sliver out of the diagonal and leaves the corner itself standing —
+      // which is exactly what the first version of this did, and why the
+      // measured silhouettes barely moved. The corner is the first vertex.
+      const path = () => {
+        g.beginPath();
+        g.moveTo(px, py);                                          // the corner
+        g.lineTo(px, py + sy * c.r * 1.35);                        // down one edge
+        g.lineTo(px + sx * c.r * 0.5, py + sy * c.r * 0.45);       // dent inward
+        g.lineTo(px + sx * c.r, py);                               // along the other
+        g.closePath();
+      };
+      g.save();
+      g.globalCompositeOperation = 'destination-out';
+      path();
+      g.fill();
+      g.restore();
+      // Raw split wood along the break — the two inner edges only, so the
+      // stroke traces the new outline instead of boxing the missing corner.
+      g.strokeStyle = `rgba(38,25,11,${rng.range(0.4, 0.6)})`;
+      g.lineWidth = 0.5;
+      g.beginPath();
+      g.moveTo(px, py + sy * c.r * 1.35);
+      g.lineTo(px + sx * c.r * 0.5, py + sy * c.r * 0.45);
+      g.lineTo(px + sx * c.r, py);
+      g.stroke();
+    }
+    ao(g, w / 2, h + 1, w * 0.55, 3, 0.4);
+  });
+}
+
+// ---------------- sandbag emplacement ----------------
+export function sandbags(scale = 1) {
+  const rng = nextRng();
+  return makeSprite(40 * scale, 18 * scale, 20 * scale, 17 * scale, (g) => {
+    g.scale(scale, scale);
+    const bag = (x, y, w, h, rot) => {
+      g.save(); g.translate(x, y); g.rotate(rot);
+      g.fillStyle = lingrad(g, 0, -h / 2, 0, h / 2, [
+        [0, shade(COL.khaki, 0.12)], [0.5, shade(COL.khaki, -0.08)], [1, shade(COL.khaki, -0.3)],
+      ]);
+      rr(g, -w / 2, -h / 2, w, h, h / 2.2); g.fill();
+      g.strokeStyle = 'rgba(50,40,22,0.4)'; g.lineWidth = 0.5;
+      rr(g, -w / 2, -h / 2, w, h, h / 2.2); g.stroke();
+      g.strokeStyle = 'rgba(255,240,210,0.14)'; g.lineWidth = 0.7;
+      g.beginPath(); g.moveTo(-w / 2 + 2, -h / 2 + 1.2); g.quadraticCurveTo(0, -h / 2, w / 2 - 2, -h / 2 + 1.4); g.stroke();
+      g.restore();
+    };
+    // The stack used to be eight bags at eight hardcoded positions, so every
+    // emplacement in the game had the identical outline — and a sandbag wall
+    // is nothing BUT its outline. Now the rows are laid out from the rng:
+    // bag count, width, sag and lie all vary, and the top row is short by a
+    // bag often enough that the profile genuinely differs stack to stack.
+    // Everything stays inside the same 40x18 footprint, because the collider
+    // world.js vaults the operator over is that box.
+    const rows = [
+      { y: 14.5, n: 3, jitter: 0.5 },
+      { y: 9.5,  n: 3, jitter: 0.7 },
+      // The top course is what the eye reads first, so it is the one allowed
+      // to be incomplete — a wall two bags short reads as built by hand.
+      { y: 4.9,  n: rng.range(0, 1) < 0.3 ? 3 : 2, jitter: 0.9 },
+    ];
+    for (let r = 0; r < rows.length; r++) {
+      const { y, n, jitter } = rows[r];
+      // Alternate courses are offset like real bond work, and the whole row
+      // is nudged so the ends do not line up between stacks.
+      const span = 36 - rng.range(0, 3);
+      const step = span / n;
+      const x0 = 2 + (r % 2 ? step * 0.28 : 0) + rng.range(-0.8, 0.8);
+      for (let i = 0; i < n; i++) {
+        const bw = step * rng.range(0.92, 1.12);
+        bag(clamp(x0 + step * (i + 0.5), 5, 35),
+            y + rng.range(-jitter, jitter),
+            Math.min(bw, 15), rng.range(5.4, 6.4), rng.range(-0.09, 0.09));
+      }
+    }
+    grunge(g, 2, 2, 36, 14, rng, { n: 60 });
+    ao(g, 20, 17, 20, 3, 0.4);
+  });
+}
+
+// ---------------- street lamp ----------------
+// `scale` sizes the whole fixture against the 126px-tall operator. At 1 the
+// lamp was 92px — barely shoulder height on a man, which is what made the
+// street read like a scale model. LAMP_SCALE in world.js is the real size.
+// The lit head sits at (14 * scale, -86 * scale) from the base anchor; light
+// placements must follow it (see LAMP_HEAD_X / LAMP_HEAD_Y).
+export function lamp(scale = 1) {
+  const rng = nextRng();
+  return makeSprite(30 * scale, 92 * scale, 6 * scale, 90 * scale, (g) => {
+    g.scale(scale, scale);
+    // pole
+    g.fillStyle = lingrad(g, 4, 0, 9, 0, [
+      [0, '#22252a'], [0.4, '#4e545c'], [1, '#191b1f'],
+    ]);
+    g.fillRect(4.6, 6, 3.2, 82);
+    g.fillStyle = '#2a2d33';
+    rr(g, 2.6, 86, 7.2, 4, 1); g.fill();
+    // arm
+    g.strokeStyle = '#3a3e45'; g.lineWidth = 2.6;
+    g.beginPath(); g.moveTo(6.2, 8); g.quadraticCurveTo(7, 2.4, 18, 3); g.stroke();
+    // head + lens
+    g.fillStyle = lingrad(g, 0, 1, 0, 6.4, [[0, '#4a4f57'], [1, '#22242a']]);
+    rr(g, 15.5, 1.2, 9.5, 4.6, 1.6); g.fill();
+    g.fillStyle = 'rgba(255,214,150,0.95)';
+    rr(g, 16.6, 4.6, 7.2, 1.6, 0.8); g.fill();
+    // service panel + sticker
+    g.fillStyle = '#15171a';
+    g.fillRect(4.9, 60, 2.6, 6);
+    g.fillStyle = 'rgba(200,180,60,0.5)';
+    g.fillRect(4.9, 44, 2.6, 3);
+    streaks(g, 4.6, 10, 3.2, 70, rng, { n: 3, color: 'rgba(60,40,22,0.35)', wMax: 1.4 });
+    ao(g, 6, 90, 8, 2.6, 0.4);
+  });
+}
+
+// ---------------- concertina / razor wire ----------------
+// Coiled barbed wire strung along the street — the fastest visual shorthand
+// for a city that has been fought over. Purely an obstacle: it is drawn as a
+// low coil the operator has to vault, and world.js gives it a matching
+// collider. `w` is the run length, `scale` sizes it against the operator.
+export function razorWire(w = 90, scale = 1) {
+  const rng = nextRng();
+  const H = 34;
+  return makeSprite(w * scale, H * scale, (w / 2) * scale, (H - 1) * scale, (g) => {
+    g.scale(scale, scale);
+    const baseY = H - 2;
+
+    // support stakes at each end and one in the middle
+    for (const sx of [2, w / 2, w - 4]) {
+      g.fillStyle = lingrad(g, sx, 0, sx + 2.4, 0, [[0, '#4a5058'], [1, '#1d2126']]);
+      g.fillRect(sx, baseY - 26, 2.4, 26);
+      // angled top arm the wire hangs from
+      g.strokeStyle = '#3a4046'; g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(sx + 1.2, baseY - 24);
+      g.lineTo(sx + 5.5, baseY - 30);
+      g.stroke();
+    }
+
+    // The coil: a concertina seen side-on is a helix, so each turn projects to
+    // a narrow upright ellipse, spaced tight enough to overlap its neighbours.
+    // Back halves are drawn first and darker, front halves after and lit, so
+    // the wire wraps round in depth. The old version was six fat rings with
+    // big X-shaped barbs, which read as a stack of tyres.
+    const cy = baseY - 11.5, R = 10.5;
+    const pitch = 3.0;
+    const turns = Math.floor((w - 14) / pitch);
+    const turn = [];
+    for (let i = 0; i <= turns; i++) {
+      turn.push({
+        cx: 7 + i * pitch + rng.range(-0.5, 0.5),
+        cy: cy + rng.range(-0.8, 0.8),
+        ry: R + rng.range(-1.0, 0.8),
+        rx: 3.6 + rng.range(-0.4, 0.6),
+        t: rng.range(-0.12, 0.12),
+      });
+    }
+    const arc = (o, a0, a1) => { g.beginPath(); g.ellipse(o.cx, o.cy, o.rx, o.ry, o.t, a0, a1); g.stroke(); };
+    g.lineCap = 'round';
+    for (const o of turn) {
+      g.strokeStyle = 'rgba(22,25,29,0.85)'; g.lineWidth = 0.75;
+      arc(o, Math.PI * 0.5, Math.PI * 1.5);
+    }
+    for (const o of turn) {
+      g.strokeStyle = 'rgba(4,5,7,0.35)'; g.lineWidth = 1.2;
+      g.beginPath(); g.ellipse(o.cx + 0.3, o.cy + 0.6, o.rx, o.ry, o.t, -Math.PI * 0.5, Math.PI * 0.5); g.stroke();
+      g.strokeStyle = 'rgba(92,99,108,0.95)'; g.lineWidth = 0.75;
+      arc(o, -Math.PI * 0.5, Math.PI * 0.5);
+      g.strokeStyle = 'rgba(214,220,228,0.55)'; g.lineWidth = 0.35;
+      arc(o, -Math.PI * 0.45, -Math.PI * 0.1);
+      // barbs: short blade pairs riding the front strand
+      for (const a of [-1.15, -0.35, 0.45, 1.2]) {
+        const c = Math.cos(o.t), sn = Math.sin(o.t);
+        const ex = Math.cos(a) * o.rx, ey = Math.sin(a) * o.ry;
+        const bx = o.cx + ex * c - ey * sn, by = o.cy + ex * sn + ey * c;
+        g.strokeStyle = 'rgba(178,186,196,0.85)'; g.lineWidth = 0.4;
+        g.beginPath();
+        g.moveTo(bx - 0.9, by - 0.7); g.lineTo(bx + 0.9, by + 0.7);
+        g.moveTo(bx - 0.9, by + 0.7); g.lineTo(bx + 0.9, by - 0.7);
+        g.stroke();
+      }
+      if (rng.chance(0.18)) {
+        g.strokeStyle = 'rgba(122,62,30,0.35)'; g.lineWidth = 0.8;
+        arc(o, Math.PI * 0.15, Math.PI * 0.45);
+      }
+    }
+    g.lineCap = 'butt';
+
+    // taut strand running the length, tying the coils together
+    g.strokeStyle = 'rgba(30,33,38,0.6)'; g.lineWidth = 1.1;
+    g.beginPath();
+    g.moveTo(1, baseY - 22);
+    g.quadraticCurveTo(w / 2, baseY - 19, w - 2, baseY - 22);
+    g.stroke();
+    g.strokeStyle = 'rgba(200,206,216,0.35)'; g.lineWidth = 0.5;
+    g.beginPath();
+    g.moveTo(1, baseY - 22.6); g.quadraticCurveTo(w / 2, baseY - 19.6, w - 2, baseY - 22.6);
+    g.stroke();
+
+    ao(g, w / 2, baseY + 1, w * 0.5, 3.5, 0.42);
+  });
+}
+
+// ---------------- chain-link fence segment ----------------
+// Same scale story as lamp(): a 42px fence next to a 126px operator read as
+// knee-high garden edging. At FENCE_SCALE it stands near shoulder height,
+// which is what a real site security fence does. The segment covers
+// `w * scale` on screen — world.js spaces runs by that, not by `w`.
+export function fence(w = 70, scale = 1) {
+  const rng = nextRng();
+  return makeSprite(w * scale, 42 * scale, (w / 2) * scale, 41 * scale, (g) => {
+    g.scale(scale, scale);
+    // posts
+    for (const x of [1.5, w - 2.5]) {
+      g.fillStyle = lingrad(g, x, 0, x + 2, 0, [[0, '#565c64'], [1, '#23262b']]);
+      g.fillRect(x, 2, 2.2, 38);
+    }
+    // rails
+    g.fillStyle = '#3c4148';
+    g.fillRect(1.5, 3, w - 3, 1.6);
+    g.fillRect(1.5, 36.5, w - 3, 1.4);
+    // mesh
+    g.strokeStyle = 'rgba(150,158,168,0.4)'; g.lineWidth = 0.45;
+    for (let x = -40; x < w + 6; x += 4.6) {
+      g.beginPath(); g.moveTo(x, 4); g.lineTo(x + 34, 37); g.stroke();
+      g.beginPath(); g.moveTo(x + 34, 4); g.lineTo(x, 37); g.stroke();
+    }
+    // sagging top + torn patch
+    g.strokeStyle = 'rgba(120,128,138,0.5)'; g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(2, 4.4); g.quadraticCurveTo(w / 2, 6.8, w - 2, 4.6); g.stroke();
+    // middle post and a bottom tension wire, so a run reads as built, not
+    // a sheet of mesh pinned between two poles
+    g.fillStyle = lingrad(g, w / 2 - 1, 0, w / 2 + 1, 0, [[0, '#4e545c'], [1, '#22252a']]);
+    g.fillRect(w / 2 - 0.9, 3, 1.8, 37);
+    g.strokeStyle = 'rgba(30,33,38,0.7)'; g.lineWidth = 0.5;
+    g.beginPath(); g.moveTo(2, 34); g.lineTo(w - 2, 34.4); g.stroke();
+    ao(g, w / 2, 41, w / 2, 2.6, 0.3);
+  });
+}
+
+// ---------------- dumpster ----------------
+// Side view of a steel skip: a body that flares toward the top, a heavy rim,
+// a lid hinged at the back and propped a few degrees open on one bag, fork
+// pockets on the flank and swivel casters. Same 40x28 box and body extent as
+// before (x 3..37, y 5..27) — DUMP_W / DUMP_H in world.js are measured off it.
+// The old one was a slab with a parallelogram lid and two black blobs on top.
+export function dumpster(scale = 1) {
+  const rng = nextRng();
+  const base = '#3d5243';
+  return makeSprite(40 * scale, 28 * scale, 20 * scale, 27 * scale, (g) => {
+    g.scale(scale, scale);
+    // a bag caught under the lid, drawn first so the lid closes over it
+    g.fillStyle = '#20232a';
+    g.beginPath(); g.ellipse(27, 5.2, 4.6, 2.2, -0.1, Math.PI, 0); g.fill();
+    g.fillStyle = 'rgba(210,215,225,0.18)';
+    g.beginPath(); g.ellipse(25.6, 4.0, 1.8, 0.7, -0.1, 0, Math.PI * 2); g.fill();
+
+    // body: flared, darker toward the ground
+    g.fillStyle = lingrad(g, 0, 6, 0, 25, [
+      [0, shade(base, 0.12)], [0.45, base], [1, shade(base, -0.42)],
+    ]);
+    g.beginPath();
+    g.moveTo(2.4, 6.6); g.lineTo(37.6, 6.6); g.lineTo(35.8, 24.6); g.lineTo(4.2, 24.6);
+    g.closePath(); g.fill();
+    // broad vertical stiffeners: two flat panels, one light edge each
+    for (const x of [12.4, 25.0]) {
+      g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(x, 8.2, 2.4, 15.4);
+      g.fillStyle = 'rgba(226,232,240,0.10)'; g.fillRect(x, 8.2, 0.5, 15.4);
+    }
+    // fork pocket along the flank
+    g.fillStyle = shade(base, -0.34);
+    rr(g, 5.6, 15.6, 28.8, 3.2, 0.6); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.45)';
+    g.fillRect(6.6, 16.6, 6.4, 1.4); g.fillRect(27.0, 16.6, 6.4, 1.4);
+    // heavy top rim
+    g.fillStyle = lingrad(g, 0, 5.4, 0, 8, [[0, shade(base, 0.22)], [1, shade(base, -0.25)]]);
+    rr(g, 1.4, 5.6, 37.2, 2.4, 0.6); g.fill();
+    // lid, hinged at the back (right) and propped open at the front by the bag
+    g.fillStyle = lingrad(g, 0, 2.6, 0, 6, [[0, shade(base, -0.05)], [1, shade(base, -0.35)]]);
+    g.beginPath();
+    g.moveTo(2.0, 4.4); g.lineTo(38.2, 5.4); g.lineTo(38.2, 6.0); g.lineTo(2.0, 5.6);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(226,232,240,0.16)';
+    g.beginPath(); g.moveTo(2.0, 4.4); g.lineTo(38.2, 5.4); g.lineTo(38.2, 5.7); g.lineTo(2.0, 4.8); g.closePath(); g.fill();
+    g.fillStyle = shade(base, -0.5); rr(g, 36.4, 4.8, 2.2, 1.6, 0.4); g.fill();   // hinge
+    // stencil
+    g.fillStyle = 'rgba(232,226,208,0.5)';
+    g.font = 'bold 3.4px monospace';
+    g.fillText('CWD 09', 15.4, 13.2);
+    // casters
+    for (const x of [8, 32]) {
+      g.fillStyle = '#2a2c2f'; g.fillRect(x - 1.4, 24.4, 2.8, 1.2);
+      g.fillStyle = '#141517';
+      g.beginPath(); g.arc(x, 26.2, 1.7, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(200,205,215,0.18)';
+      g.beginPath(); g.arc(x - 0.4, 25.7, 0.6, 0, Math.PI * 2); g.fill();
+    }
+    // a little wear, no more: rust run-off under the rim and a dented corner
+    streaks(g, 4, 8, 32, 14, rng, { n: 5, color: 'rgba(70,40,18,0.28)', wMax: 1.6 });
+    grunge(g, 3, 7, 34, 17, rng, { n: 30 });
+    ao(g, 20, 27, 20, 2.6, 0.42);
+  });
+}
+
+// ---------------- tire stack ----------------
+export function tires(scale = 1) {
+  const rng = nextRng();
+  return makeSprite(20 * scale, 18 * scale, 10 * scale, 17 * scale, (g) => {
+    g.scale(scale, scale);
+    for (let i = 0; i < 3; i++) {
+      const y = 14.4 - i * 5;
+      const off = rng.range(-1.2, 1.2);
+      g.fillStyle = lingrad(g, 0, y - 3, 0, y + 3, [[0, '#33353a'], [0.5, '#232529'], [1, '#121316']]);
+      g.beginPath(); g.ellipse(10 + off, y, 8.6, 3.2, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#0d0e10';
+      g.beginPath(); g.ellipse(10 + off, y - 0.4, 3.6, 1.2, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(200,205,215,0.1)'; g.lineWidth = 0.7;
+      g.beginPath(); g.ellipse(10 + off, y - 1.4, 7.4, 2.2, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke();
+    }
+    ao(g, 10, 17, 10.5, 2.6, 0.4);
+  });
+}
+
+// ---------------- trash / rubble pile ----------------
+// Each chunk gets a real top-facet / shadow-facet pair rather than a shaded
+// rectangle — a broken concrete slab reads as debris by its faceted light,
+// not by scattering flat colored tiles.
+export function rubble(scale = 1) {
+  const rng = nextRng();
+  return makeSprite(30 * scale, 12 * scale, 15 * scale, 11 * scale, (g) => {
+    g.scale(scale, scale);
+    // back layer: smaller, darker, sets depth before the hero chunks paint over
+    for (let i = 0; i < 10; i++) {
+      const x = rng.range(1, 29), y = rng.range(3, 9);
+      const s = rng.range(1.2, 2.6);
+      g.save(); g.translate(x, y); g.rotate(rng.range(0, 3));
+      g.fillStyle = shade(COL.asphalt, rng.range(-0.3, 0));
+      g.fillRect(-s / 2, -s / 3, s, s * 0.7);
+      g.restore();
+    }
+    // hero chunks: concrete with rebar-stained edges, each with a lit top
+    // facet and a dark underside so it reads as a broken 3D fragment
+    for (let i = 0; i < 11; i++) {
+      const x = rng.range(2, 28), y = rng.range(5, 10.5);
+      const s = rng.range(2.6, 5.6);
+      const rot = rng.range(-0.6, 0.6);
+      const tone = shade(COL.concrete, rng.range(-0.15, 0.1));
+      g.save(); g.translate(x, y); g.rotate(rot);
+      // underside shadow facet
+      g.fillStyle = shade(tone, -0.55);
+      g.beginPath();
+      g.moveTo(-s / 2, -s * 0.1); g.lineTo(s / 2, -s * 0.16); g.lineTo(s * 0.42, s * 0.32); g.lineTo(-s * 0.44, s * 0.3);
+      g.closePath(); g.fill();
+      // lit top facet, offset up so the pair reads as a wedge catching light
+      g.fillStyle = lingrad(g, -s / 2, -s * 0.5, s / 2, -s * 0.1, [
+        [0, shade(tone, 0.22)], [1, shade(tone, -0.12)],
+      ]);
+      g.beginPath();
+      g.moveTo(-s / 2, -s * 0.1); g.lineTo(-s * 0.3, -s * 0.5); g.lineTo(s * 0.36, -s * 0.44); g.lineTo(s / 2, -s * 0.16);
+      g.closePath(); g.fill();
+      // exposed rebar stub on some chunks
+      if (rng.chance(0.3)) {
+        g.strokeStyle = 'rgba(70,44,26,0.7)'; g.lineWidth = 0.5;
+        g.beginPath(); g.moveTo(-s * 0.1, -s * 0.3); g.lineTo(s * 0.2, s * 0.1); g.stroke();
+      }
+      g.restore();
+    }
+    // rebar arcing through the pile, rust-stained
+    g.strokeStyle = 'rgba(74,58,40,0.8)'; g.lineWidth = 0.9;
+    g.beginPath(); g.moveTo(5, 9.6); g.quadraticCurveTo(14, 1.2, 25, 5); g.stroke();
+    g.strokeStyle = 'rgba(120,64,34,0.4)'; g.lineWidth = 0.5;
+    g.beginPath(); g.moveTo(5, 9.4); g.quadraticCurveTo(14, 1, 25, 4.8); g.stroke();
+    // dust settled at the base
+    for (let i = 0; i < 14; i++) {
+      g.fillStyle = `rgba(200,195,182,${rng.range(0.05, 0.14)})`;
+      g.fillRect(rng.range(1, 29), rng.range(9.5, 11.6), rng.range(0.8, 1.8), rng.range(0.5, 1));
+    }
+    ao(g, 15, 11, 15, 2.8, 0.4);
+  });
+}
+
+// ---------------- street sign ----------------
+export function sign(kind = 'sector') {
+  const rng = nextRng();
+  return makeSprite(26, 56, 13, 54, (g) => {
+    g.fillStyle = lingrad(g, 12, 0, 15, 0, [[0, '#4c525a'], [1, '#1e2126']]);
+    g.fillRect(12, 4, 2.6, 50);
+    if (kind === 'sector') {
+      g.save();
+      g.translate(13, 10); g.rotate(-0.02);
+      g.fillStyle = lingrad(g, 0, -7, 0, 7, [[0, '#5d6a55'], [1, '#39422f']]);
+      rr(g, -12, -7, 24, 14, 1.4); g.fill();
+      g.strokeStyle = 'rgba(230,228,215,0.6)'; g.lineWidth = 0.8;
+      rr(g, -10.8, -5.8, 21.6, 11.6, 1); g.stroke();
+      g.fillStyle = 'rgba(232,230,218,0.85)';
+      g.font = 'bold 4.6px monospace';
+      g.textAlign = 'center';
+      g.fillText('SECTOR 9', 0, -0.6);
+      g.font = '3.2px monospace';
+      g.fillText('CINDER WORKS', 0, 4);
+      g.textAlign = 'left';
+      g.restore();
+    } else {
+      g.save();
+      g.translate(13, 12); g.rotate(0.04);
+      g.fillStyle = lingrad(g, 0, -8, 0, 8, [[0, '#a08428'], [1, '#6e5716']]);
+      rr(g, -9, -9, 18, 18, 1.2); g.fill();
+      g.fillStyle = 'rgba(20,18,10,0.85)';
+      g.font = 'bold 4px monospace'; g.textAlign = 'center';
+      g.fillText('DANGER', 0, -1.4);
+      g.font = '2.8px monospace';
+      g.fillText('HIGH VOLTAGE', 0, 3);
+      g.textAlign = 'left';
+      // bullet holes
+      for (let i = 0; i < 2; i++) {
+        const bx = rng.range(-6, 6), by = rng.range(-6, 6);
+        g.fillStyle = '#141210';
+        g.beginPath(); g.arc(bx, by, 0.9, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = 'rgba(255,240,210,0.3)'; g.lineWidth = 0.4;
+        g.beginPath(); g.arc(bx, by, 1.3, 0, Math.PI * 2); g.stroke();
+      }
+      g.restore();
+    }
+    streaks(g, 12, 14, 2.6, 38, rng, { n: 2, color: 'rgba(60,40,22,0.4)', wMax: 1.2 });
+    ao(g, 13, 54, 7, 2.2, 0.36);
+  });
+}
+
+// ---------------- loading dock platform (walkable) ----------------
+export function dock(w = 160, h = 42) {
+  const rng = nextRng();
+  return makeSprite(w, h + 3, w / 2, h, (g) => {
+    // concrete deck
+    g.fillStyle = lingrad(g, 0, 0, 0, 8, [
+      [0, shade(COL.concrete, 0.12)], [1, shade(COL.concrete, -0.12)],
+    ]);
+    g.fillRect(0, 0, w, 8);
+    // yellow safety edge, chipped
+    g.fillStyle = 'rgba(178,150,52,0.75)';
+    g.fillRect(0, 0, w, 2);
+    for (let i = 0; i < 14; i++) {
+      g.fillStyle = withA(COL.concrete, 0.9);
+      g.fillRect(rng() * w, 0, rng.range(1, 3.4), rng.range(0.6, 1.8));
+    }
+    // face: shuttered bays + concrete piers
+    g.fillStyle = lingrad(g, 0, 8, 0, h, [
+      [0, shade(COL.concreteDark, -0.16)], [1, shade(COL.concreteDark, -0.5)],
+    ]);
+    g.fillRect(0, 8, w, h - 8);
+    const bays = Math.floor(w / 54);
+    for (let b = 0; b < bays; b++) {
+      const bx = 14 + b * 54;
+      g.fillStyle = lingrad(g, 0, 10, 0, h - 2, [[0, '#4b5058'], [1, '#25282d']]);
+      g.fillRect(bx, 11, 34, h - 13);
+      g.fillStyle = 'rgba(0,0,0,0.25)';
+      for (let y = 13; y < h - 4; y += 3.4) g.fillRect(bx, y, 34, 1.2);
+      g.fillStyle = 'rgba(255,236,205,0.06)';
+      for (let y = 12; y < h - 5; y += 3.4) g.fillRect(bx, y, 34, 0.7);
+      // bumpers
+      g.fillStyle = '#1a1b1e';
+      g.fillRect(bx - 5, h - 10, 4, 8);
+      g.fillRect(bx + 35, h - 10, 4, 8);
+    }
+    // cracks + stains
+    g.strokeStyle = 'rgba(20,20,18,0.4)'; g.lineWidth = 0.5;
+    for (let i = 0; i < 5; i++) {
+      let cx = rng() * w, cy = 8;
+      g.beginPath(); g.moveTo(cx, cy);
+      for (let s = 0; s < 4; s++) { cx += rng.range(-6, 6); cy += rng.range(4, 9); g.lineTo(cx, cy); }
+      g.stroke();
+    }
+    streaks(g, 0, 8, w, h - 8, rng, { n: 18, color: 'rgba(30,28,24,0.3)', wMax: 3 });
+    grunge(g, 0, 0, w, h, rng, { n: 200 });
+    rim(g, 0, 0, w, h, { top: 0.12, bottom: 0.24 });
+  });
+}
+
+// ---------------- warehouse facade (near-background strip) ----------------
+// A long painted building wall that sits directly behind the gameplay layer:
+// panel walls, roller doors, lit/dark windows, pipes, vents, an open storage
+// bay with interior shelving, roofline against the sky.
+export function facade(wid = 560, hei = 190, opts = {}) {
+  const rng = nextRng();
+  const panel = opts.brick ? COL.brick : COL.metalPanel;
+  return makeSprite(wid, hei, 0, hei, (g) => {
+    // wall base
+    g.fillStyle = lingrad(g, 0, 0, 0, hei, [
+      [0, shade(panel, 0.05)], [0.55, shade(panel, -0.14)], [1, shade(panel, -0.4)],
+    ]);
+    g.fillRect(0, 0, wid, hei);
+
+    if (opts.brick) {
+      g.strokeStyle = 'rgba(30,20,14,0.25)'; g.lineWidth = 0.5;
+      for (let y = 6; y < hei; y += 6) {
+        g.beginPath(); g.moveTo(0, y); g.lineTo(wid, y); g.stroke();
+      }
+      for (let y = 6; y < hei; y += 6) {
+        for (let x = ((y / 6) % 2) * 7; x < wid; x += 14) {
+          g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 6); g.stroke();
+        }
+      }
+    } else {
+      // vertical metal panels
+      for (let x = 0; x < wid; x += 22) {
+        g.fillStyle = 'rgba(0,0,0,0.18)';
+        g.fillRect(x, 0, 1.6, hei);
+        g.fillStyle = 'rgba(235,240,250,0.05)';
+        g.fillRect(x + 2, 0, 1, hei);
+      }
+    }
+
+    // roofline parapet + cap
+    g.fillStyle = shade(panel, -0.42);
+    g.fillRect(0, 0, wid, 7);
+    g.fillStyle = 'rgba(255,220,170,0.2)';
+    g.fillRect(0, 0, wid, 1.4);
+
+    // high windows: mix of lit (warm interior) and dark/broken
+    const winY = 26;
+    for (let x = 24; x < wid - 50; x += 68) {
+      const lit = rng.chance(0.45);
+      const broken = !lit && rng.chance(0.35);
+      g.fillStyle = '#1a1d22';
+      rr(g, x - 2, winY - 2, 42, 26, 1.4); g.fill();
+      if (lit) {
+        g.fillStyle = lingrad(g, 0, winY, 0, winY + 22, [
+          [0, 'rgba(255,206,130,0.95)'], [1, 'rgba(200,130,60,0.85)'],
+        ]);
+        g.fillRect(x, winY, 38, 22);
+        // interior silhouettes: shelving + hanging lamp
+        g.fillStyle = 'rgba(40,24,10,0.75)';
+        g.fillRect(x + 3, winY + 9, 12, 1.6);
+        g.fillRect(x + 3, winY + 15, 12, 1.6);
+        g.fillRect(x + 4.4, winY + 9, 1.2, 13);
+        g.fillRect(x + 12.6, winY + 9, 1.2, 13);
+        for (let bx = 0; bx < 3; bx++) g.fillRect(x + 5.5 + bx * 3.2, winY + 5.6 + (bx % 2) * 6, 2.4, 3.2);
+        g.fillRect(x + 26, winY, 0.9, 6.5);
+        g.beginPath(); g.arc(x + 26.5, winY + 8, 2.6, Math.PI, 0); g.fill();
+        g.fillStyle = 'rgba(255,240,200,0.9)';
+        g.beginPath(); g.arc(x + 26.5, winY + 8.6, 1.1, 0, Math.PI * 2); g.fill();
+      } else {
+        g.fillStyle = lingrad(g, 0, winY, 0, winY + 22, [
+          [0, '#2c3644'], [1, '#161b22'],
+        ]);
+        g.fillRect(x, winY, 38, 22);
+        // sky reflection streak
+        g.fillStyle = 'rgba(150,170,200,0.12)';
+        g.beginPath();
+        g.moveTo(x + 4, winY); g.lineTo(x + 14, winY); g.lineTo(x + 6, winY + 22); g.lineTo(x, winY + 18);
+        g.closePath(); g.fill();
+      }
+      // mullions
+      g.strokeStyle = 'rgba(12,13,16,0.85)'; g.lineWidth = 1.2;
+      g.strokeRect(x, winY, 38, 22);
+      g.beginPath(); g.moveTo(x + 19, winY); g.lineTo(x + 19, winY + 22); g.stroke();
+      g.beginPath(); g.moveTo(x, winY + 11); g.lineTo(x + 38, winY + 11); g.stroke();
+      if (broken) {
+        g.fillStyle = '#0d0f13';
+        g.beginPath();
+        g.moveTo(x + 22, winY + 12); g.lineTo(x + 30, winY + 13); g.lineTo(x + 27, winY + 19); g.lineTo(x + 21, winY + 17);
+        g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(200,215,235,0.35)'; g.lineWidth = 0.4;
+        g.beginPath(); g.moveTo(x + 24, winY + 13); g.lineTo(x + 20, winY + 8); g.stroke();
+        g.beginPath(); g.moveTo(x + 27, winY + 15); g.lineTo(x + 33, winY + 12); g.stroke();
+      }
+    }
+
+    // ground-level roller doors + man door + open storage bay
+    const gy = hei;
+    let x = 30;
+    let bayDone = false;
+    while (x < wid - 90) {
+      if (!bayDone && x > wid * 0.35 && opts.openBay !== false) {
+        // open bay: dark interior with shelving, crates, hanging work lamp
+        const bw = 88, bh = 74;
+        g.fillStyle = lingrad(g, 0, gy - bh, 0, gy, [[0, '#0e1013'], [1, '#191b1a']]);
+        g.fillRect(x, gy - bh, bw, bh);
+        // interior back wall hint
+        g.fillStyle = 'rgba(70,64,52,0.22)';
+        g.fillRect(x + 6, gy - bh + 8, bw - 12, bh - 14);
+        // shelving racks
+        g.fillStyle = 'rgba(16,17,15,0.95)';
+        for (const sx of [x + 10, x + 52]) {
+          g.fillRect(sx, gy - 52, 26, 2);
+          g.fillRect(sx, gy - 34, 26, 2);
+          g.fillRect(sx, gy - 16, 26, 2);
+          g.fillRect(sx + 1, gy - 52, 2, 52);
+          g.fillRect(sx + 23, gy - 52, 2, 52);
+          // boxes on shelves
+          for (let b = 0; b < 3; b++) {
+            g.fillStyle = shade('#5a4c34', rng.range(-0.3, 0.1));
+            g.fillRect(sx + 3 + b * 7, gy - 50 + (b % 2) * 18, 5.6, 6.5);
+            g.fillStyle = 'rgba(16,17,15,0.95)';
+          }
+        }
+        // hanging work lamp with warm pool
+        g.strokeStyle = '#101211'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(x + bw / 2, gy - bh); g.lineTo(x + bw / 2, gy - bh + 14); g.stroke();
+        g.fillStyle = '#1c1e1d';
+        g.beginPath(); g.arc(x + bw / 2, gy - bh + 16, 4, Math.PI, 0); g.fill();
+        const lg = radgrad(g, x + bw / 2, gy - bh + 18, 44, [
+          [0, 'rgba(255,200,120,0.5)'], [1, 'rgba(255,180,90,0)'],
+        ]);
+        g.fillStyle = lg;
+        g.fillRect(x, gy - bh, bw, bh);
+        g.fillStyle = 'rgba(255,235,190,0.95)';
+        g.beginPath(); g.arc(x + bw / 2, gy - bh + 16.6, 1.6, 0, Math.PI * 2); g.fill();
+        // door frame
+        g.fillStyle = shade(panel, -0.5);
+        g.fillRect(x - 3, gy - bh - 6, bw + 6, 6);
+        g.fillRect(x - 3, gy - bh - 6, 3, bh + 6);
+        g.fillRect(x + bw, gy - bh - 6, 3, bh + 6);
+        x += bw + 40;
+        bayDone = true;
+        continue;
+      }
+      // closed roller door
+      const dw = 62, dh = 66;
+      g.fillStyle = lingrad(g, 0, gy - dh, 0, gy, [[0, '#4d525a'], [0.7, '#33373d'], [1, '#212429']]);
+      g.fillRect(x, gy - dh, dw, dh);
+      g.fillStyle = 'rgba(0,0,0,0.25)';
+      for (let y = gy - dh + 4; y < gy - 3; y += 4.4) g.fillRect(x, y, dw, 1.4);
+      g.fillStyle = 'rgba(240,245,255,0.05)';
+      for (let y = gy - dh + 2.6; y < gy - 4; y += 4.4) g.fillRect(x, y, dw, 0.8);
+      g.fillStyle = shade(panel, -0.5);
+      g.fillRect(x - 3, gy - dh - 6, dw + 6, 6);
+      // stencil number
+      g.fillStyle = 'rgba(220,215,200,0.4)';
+      g.font = 'bold 7px monospace';
+      g.fillText(String(rng.int(1, 9)).padStart(2, '0'), x + dw / 2 - 4, gy - dh + 12);
+      x += dw + 46;
+    }
+    // man door with caged bulb (painted glow; real light added by world)
+    const mdX = wid - 60;
+    g.fillStyle = lingrad(g, 0, gy - 46, 0, gy, [[0, '#3c342c'], [1, '#221d17']]);
+    g.fillRect(mdX, gy - 46, 24, 46);
+    g.fillStyle = '#171410';
+    g.fillRect(mdX + 17, gy - 26, 2.6, 4);
+    g.fillStyle = shade(panel, -0.5);
+    g.fillRect(mdX - 2.6, gy - 50, 29, 4.4);
+    g.fillStyle = '#22242a';
+    g.beginPath(); g.arc(mdX + 12, gy - 54, 3.6, Math.PI, 0); g.fill();
+    g.fillStyle = 'rgba(255,220,150,0.9)';
+    g.beginPath(); g.arc(mdX + 12, gy - 53, 1.4, 0, Math.PI * 2); g.fill();
+
+    // pipes running along wall
+    g.fillStyle = lingrad(g, 0, 88, 0, 94, [[0, '#5a5f52'], [1, '#2b2e26']]);
+    g.fillRect(0, 88, wid, 5);
+    g.fillStyle = '#3c4036';
+    for (let px = 16; px < wid; px += 60) g.fillRect(px, 86.6, 5, 8);
+    g.strokeStyle = 'rgba(255,220,170,0.14)'; g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(0, 88.6); g.lineTo(wid, 88.6); g.stroke();
+    // vertical downpipe
+    g.fillStyle = lingrad(g, wid * 0.22, 0, wid * 0.22 + 4, 0, [[0, '#4c5044'], [1, '#23251f']]);
+    g.fillRect(wid * 0.22, 7, 4, hei - 7);
+    // vents
+    for (const vx of [wid * 0.12, wid * 0.72]) {
+      g.fillStyle = '#2b2e33';
+      rr(g, vx, 62, 16, 10, 1.4); g.fill();
+      g.fillStyle = 'rgba(0,0,0,0.4)';
+      for (let i = 0; i < 4; i++) g.fillRect(vx + 1.6, 63.6 + i * 2, 12.8, 1);
+    }
+
+    // grime, streaks, edge wear
+    streaks(g, 0, 7, wid, hei - 7, rng, { n: Math.floor(wid / 16), color: 'rgba(24,20,16,0.3)', wMax: 3.4 });
+    grunge(g, 0, 0, wid, hei, rng, { n: Math.floor(wid * 1.2), dark: 0.12 });
+    // ground contact shadow
+    g.fillStyle = lingrad(g, 0, hei - 14, 0, hei, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(4,5,7,0.5)']]);
+    g.fillRect(0, hei - 14, wid, 14);
+  });
+}
+
+// ---------------- ground strip ----------------
+// Painted once for the whole map: asphalt road, sidewalk, cracks, oil stains,
+// faded lane paint, manholes. Anchor at top-left of strip (y = ground line).
+export function groundStrip(w, depth = 80) {
+  const rng = nextRng();
+  // makeWideSprite, not makeSprite: at MAP_W the street is 19,750 device
+  // pixels across, well past the texture width every mobile GPU will hold, and
+  // a source canvas over that limit puts every draw from it on the software
+  // rasteriser. See the note in paint.js.
+  return makeWideSprite(w, depth, 0, 0, (g) => {
+    // asphalt body
+    g.fillStyle = lingrad(g, 0, 0, 0, depth, [
+      [0, shade(COL.asphalt, 0.06)], [0.25, COL.asphalt], [1, shade(COL.asphalt, -0.4)],
+    ]);
+    g.fillRect(0, 0, w, depth);
+    // top lip catches the warm key light
+    g.fillStyle = 'rgba(255,215,165,0.16)';
+    g.fillRect(0, 0, w, 1.6);
+    g.fillStyle = 'rgba(10,10,12,0.5)';
+    g.fillRect(0, 1.6, w, 1);
+    // aggregate speckle
+    for (let i = 0; i < w * 2.4; i++) {
+      g.fillStyle = rng.chance(0.6) ? 'rgba(0,0,0,0.14)' : 'rgba(220,215,200,0.06)';
+      g.fillRect(rng() * w, rng() * depth, rng.range(0.5, 1.6), rng.range(0.5, 1.2));
+    }
+    // faded lane line
+    g.fillStyle = 'rgba(190,175,120,0.3)';
+    for (let x = 20; x < w; x += 90) g.fillRect(x, 12, 46, 2.6);
+    // cracks
+    g.strokeStyle = 'rgba(12,12,12,0.55)'; g.lineWidth = 0.8;
+    for (let i = 0; i < w / 70; i++) {
+      let cx = rng() * w, cy = rng.range(2, 10);
+      g.beginPath(); g.moveTo(cx, cy);
+      for (let s = 0; s < 5; s++) { cx += rng.range(-10, 10); cy += rng.range(3, 9); g.lineTo(cx, cy); }
+      g.stroke();
+    }
+    // oil stains
+    for (let i = 0; i < w / 240; i++) {
+      const ox = rng() * w, oy = rng.range(8, depth - 20);
+      g.fillStyle = radgrad(g, ox, oy, rng.range(12, 26), [
+        [0, 'rgba(10,10,14,0.4)'], [1, 'rgba(10,10,14,0)'],
+      ]);
+      g.beginPath(); g.arc(ox, oy, 26, 0, Math.PI * 2); g.fill();
+    }
+    // manholes
+    for (let x = 260; x < w; x += 700) {
+      g.fillStyle = '#26272a';
+      g.beginPath(); g.ellipse(x, 8, 9, 3, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(150,150,145,0.25)'; g.lineWidth = 0.7;
+      g.beginPath(); g.ellipse(x, 7.4, 7.4, 2.2, 0, 0, Math.PI * 2); g.stroke();
+    }
+    // scattered small litter
+    for (let i = 0; i < w / 60; i++) {
+      const lx = rng() * w, ly = rng.range(3, 14);
+      g.fillStyle = `rgba(${rng.int(120, 200)},${rng.int(110, 180)},${rng.int(90, 150)},0.25)`;
+      g.fillRect(lx, ly, rng.range(1, 3), rng.range(0.6, 1.4));
+    }
+  });
+}

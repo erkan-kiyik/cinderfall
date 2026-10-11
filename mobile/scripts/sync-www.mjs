@@ -10,7 +10,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SRC = resolve(here, '..', '..', 'public', 'game');
+// GAME_DIR picks which copy under public/ is packaged: 'game' (the shipping
+// game, the default) or 'game2' (the LAB testbed, built by its own workflow
+// into a separately installable app).
+const SRC = resolve(here, '..', '..', 'public', process.env.GAME_DIR || 'game');
 const DEST = resolve(here, '..', 'www');
 
 try {

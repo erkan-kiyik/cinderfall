@@ -15,6 +15,10 @@ const AGP = '8.9.1';
 const GRADLE = '8.11.1';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'android');
+// The activity lives under the app id's package path. Read it from the config
+// rather than hard-coding it, so a build with a different app id (the LAB
+// build) patches its own MainActivity.
+const APP_ID = JSON.parse(readFileSync(resolve(root, '..', 'capacitor.config.json'), 'utf8')).appId;
 
 function edit(rel, fn, label) {
   const p = resolve(root, rel);
@@ -41,7 +45,7 @@ edit('gradle/wrapper/gradle-wrapper.properties',
 // by the system-bar insets itself (display-cutout insets stay with the page's
 // own env(safe-area-inset-*) rules). The window background is already the game's
 // dark colour, so the padded strips are invisible.
-edit('app/src/main/java/com/cinderfall/sector9/MainActivity.java', () => `package com.cinderfall.sector9;
+edit(`app/src/main/java/${APP_ID.replace(/\./g, '/')}/MainActivity.java`, () => `package ${APP_ID};
 
 import android.os.Bundle;
 import android.view.View;

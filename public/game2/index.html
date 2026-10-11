@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>CINDERFALL LAB // SECTOR 9</title>
+<meta name="description" content="CINDERFALL — a hand-painted 2D tactical shooter. Infiltrate Sector 9, use cover and silent takedowns, and survive an endless procedurally-generated campaign.">
+<!-- PWA / mobile app chrome (relative paths so the same build serves at
+     /game on the web and at the root inside a Capacitor/TWA wrapper) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0c0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CINDERFALL LAB">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/motion.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <!-- In-game HUD (DOM for crisp text) -->
+  <div id="hud" class="hidden">
+    <!-- TOP LEFT — vitals -->
+    <div class="hud-tl glass">
+      <div class="vital-row">
+        <span class="vital-ico">HP</span>
+        <div class="bar"><div id="hp-fill" class="bar-fill hp"></div></div>
+      </div>
+      <div class="vital-row">
+        <span class="vital-ico">ST</span>
+        <div class="bar slim"><div id="st-fill" class="bar-fill st"></div></div>
+      </div>
+      <div class="vital-row hidden" id="armor-row">
+        <span class="vital-ico">AR</span>
+        <div class="bar slim"><div id="armor-fill" class="bar-fill armor"></div></div>
+      </div>
+      <!-- CREDITS — moved out of the centre cluster so no readout sits over
+           the play area; reads as a stacked tactical line under the vitals -->
+      <div class="vital-row credits-row">
+        <span class="vital-ico">SC</span>
+        <span id="hud-scrap" class="hud-tokens">
+          <canvas class="cur-icon cur-scrap hud-tokens-ico" width="14" height="14"></canvas>
+          <span id="hud-scrap-val">0</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Mission briefing — centre screen for a few seconds when a stage opens -->
+    <div id="lore" class="lore hidden">
+      <div class="lore-tag" data-i18n="lore.tag">SECTOR 9</div>
+      <div class="lore-title" data-i18n="lore.title">CINDERFALL DISTRICT</div>
+      <div class="lore-status"><span data-i18n="lore.statusLabel">STATUS:</span> <b data-i18n="lore.hostile">HOSTILE</b></div>
+      <div class="lore-body" data-i18n="lore.body">Neutralize enemy forces and secure the perimeter.</div>
+      <div id="lore-attempt" class="lore-attempt hidden"></div>
+    </div>
+
+    <!-- Attempt counter — pinned under the objective while playing, the way a
+         Geometry Dash run keeps its attempt number on screen -->
+    <div id="attempt-badge" class="attempt-badge hidden"></div>
+
+    <!-- TOP CENTER — objective, progression, threat -->
+    <div class="hud-tc">
+      <div class="objective glass">
+        <span class="obj-label" data-i18n="hud.objective">OBJECTIVE</span>
+        <span id="obj-text">ELIMINATE ALL HOSTILES</span>
+        <span id="obj-count">0 / 0</span>
+        <span id="stage-label" class="stage-label">STAGE 1</span>
+      </div>
+      <div class="prog-row glass">
+        <span id="lvl-label" class="lvl-label">LVL 1</span>
+        <div class="bar xp-track"><div id="xp-fill" class="bar-fill xp"></div></div>
+      </div>
+      <div id="det-bar" class="det-bar glass">
+        <span class="det-ico" data-i18n="hud.threat">THREAT</span>
+        <div class="bar det-track"><div id="det-fill" class="bar-fill det"></div></div>
+        <span id="det-label" class="det-label">HIDDEN</span>
+      </div>
+    </div>
+
+    <!-- BOSS HEALTH BAR — appears only during a boss encounter -->
+    <div id="boss-bar" class="boss-bar glass hidden">
+      <div class="boss-bar-name" id="boss-name">BOSS</div>
+      <div class="bar boss-hp-track"><div id="boss-hp-fill" class="bar-fill boss-hp"></div></div>
+    </div>
+
+    <!-- TOP RIGHT — weapon + ammo -->
+    <div class="hud-tr glass">
+      <div id="weapon-name">VK-77 "VANDAL"</div>
+      <div class="ammo-row">
+        <span id="ammo-mag">30</span>
+        <span class="ammo-div">/</span>
+        <span id="ammo-res">120</span>
+      </div>
+      <div id="reload-hint" class="hidden" data-i18n="hud.reloading">RELOADING</div>
+      <div id="reload-bar" class="reload-bar hidden"><i id="reload-bar-fill"></i></div>
+      <div id="wpn-meter" class="wpn-meter hidden"><div id="wpn-meter-fill" class="wpn-meter-fill"></div></div>
+      <div class="slots">
+        <span id="slot-1" class="slot active"><canvas id="slot-1-icon" class="slot-icon"></canvas>1 RIFLE</span>
+        <span id="slot-2" class="slot"><canvas id="slot-2-icon" class="slot-icon"></canvas>2 SIDEARM</span>
+        <span id="slot-3" class="slot"><canvas id="slot-3-icon" class="slot-icon"></canvas>3 KNIFE</span>
+        <span id="slot-4" class="slot hidden"><canvas id="slot-4-icon" class="slot-icon"></canvas>4 SMG</span>
+      </div>
+    </div>
+
+    <div id="notify" class="notify"></div>
+
+    <!-- Intel drop toast. Deliberately its own element rather than a call to
+         #notify: an intel find and a level-up can land on the same kill, and
+         sharing one banner meant whichever fired second wiped the first. This
+         sits lower so both are legible at once. -->
+    <div id="intel-toast" class="intel-toast">
+      <span class="intel-toast-mark">▤</span>
+      <span class="intel-toast-text">
+        <span class="intel-toast-kicker" data-i18n="intel.found">NEW INTEL RECOVERED</span>
+        <span id="intel-toast-title" class="intel-toast-title"></span>
+      </span>
+    </div>
+
+    <!-- MOTH's radio barks. Its own element for the same reason the intel
+         toast is: a bark and an intel find can land on the same kill, and
+         sharing a banner means whichever fires second wipes the first. Sits
+         low-left, clear of the objective and the weapon panel. -->
+    <div id="bark" class="bark">
+      <span class="bark-mark">◎</span>
+      <span class="bark-body">
+        <span class="bark-who">MOTH</span>
+        <span class="bark-text"></span>
+      </span>
+    </div>
+
+    <div id="dmg-left" class="dmg-dir left"></div>
+    <div id="dmg-right" class="dmg-dir right"></div>
+    <div id="dmg-omni" class="dmg-dir omni"></div>
+    <div id="hitmark"></div>
+    <div id="stealth-prompt" class="stealth-prompt" data-i18n="hud.takedown">TAKEDOWN — E</div>
+    <div id="damage-flash"></div>
+    <div id="vignette"></div>
+    <div class="rotate-hint"><span class="ri-icon">⟳</span><span class="ri-text" data-i18n="hud.rotate">ROTATE TO LANDSCAPE</span></div>
+  </div>
+
+  <!-- Loading -->
+  <!-- Animated boot sequence. The canvas plays the intro cinematic while
+       assets paint; the label and bar are reduced to a hairline status line at
+       the bottom edge so the animation owns the screen. -->
+  <div id="loading" class="overlay">
+    <canvas id="intro-canvas" class="intro-canvas"></canvas>
+    <div class="intro-status">
+      <div class="load-label" id="load-label">PAINTING ASSETS…</div>
+      <div class="load-bar"><div id="load-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Between-stage interlude — MOTH's cinematic. Driven by
+       engine/interlude.js; hidden except while a stage transition plays. -->
+  <div id="interlude" class="overlay hidden">
+    <canvas id="interlude-canvas" class="intro-canvas"></canvas>
+    <div class="interlude-skip" data-i18n="interlude.skip">TAP TO SKIP</div>
+  </div>
+
+  <!-- Main menu — mobile-first tabbed home -->
+  <div id="menu" class="overlay hidden">
+    <div class="home">
+      <header class="home-top">
+        <div class="home-brand">CINDERFALL<span class="lab-tag">LAB</span><span data-i18n="brand.sub">SECTOR 9</span></div>
+        <div class="pill-row">
+          <button id="btn-profile" class="profile-pill" type="button" data-i18n-attr="title:profile.title" title="PROFILE">
+            <span class="profile-pill-ico">◎</span>
+            <span class="profile-pill-label" data-i18n="profile.short">PROFILE</span>
+          </button>
+          <!-- Language is reachable from the front screen, not only from the
+               pause menu. A player who cannot read the interface cannot be
+               asked to start a mission and pause it in order to fix that. -->
+          <!-- Settings belong on the front screen too. Graphics and
+               brightness used to live only inside the pause menu, so changing
+               either meant starting a mission first — the two settings most
+               likely to be wrong on a phone you have just installed the game
+               on, reachable only after you had already deployed. -->
+          <button id="btn-settings-pill" class="profile-pill" type="button" data-i18n-attr="title:set.title" title="SETTINGS">
+            <span class="profile-pill-ico">⚙</span>
+            <span class="profile-pill-label" data-i18n="set.short">SETTINGS</span>
+          </button>
+          <div class="token-pill scrap-pill"><canvas class="cur-icon cur-scrap" width="20" height="20"></canvas><span id="scrap-count">0</span></div>
+        </div>
+      </header>
+
+      <main class="home-body">
+        <!-- PLAY -->
+        <section id="tab-play" class="home-panel active">
+          <div class="hero">
+            <div class="hero-kicker" data-i18n="play.kicker">A 2D TACTICAL OPERATION</div>
+            <h1 class="hero-title">CINDERFALL</h1>
+            <button id="btn-deploy" class="btn primary big" data-i18n="play.deploy">DEPLOY</button>
+          </div>
+          <!-- Operator readout. The screen a player lands on used to end at
+               DEPLOY and leave the lower half of the display empty; this puts
+               rank, XP to the next level, what the level is currently worth
+               and the kit actually going into the field on it. -->
+          <section class="deploy-status" id="deploy-status">
+            <div class="ds-rank">
+              <div class="ds-level"><span class="ds-level-n" id="ds-level-n">1</span><span class="ds-level-cap" data-i18n="play.lvl">LVL</span></div>
+              <div class="ds-xp">
+                <div class="ds-xp-head">
+                  <span data-i18n="play.nextRank">NEXT LEVEL</span>
+                  <span class="ds-xp-pct" id="ds-xp-pct">0%</span>
+                </div>
+                <div class="ds-xp-track"><div class="ds-xp-fill" id="ds-xp-fill"></div></div>
+                <div class="ds-buffs" id="ds-buffs"></div>
+              </div>
+            </div>
+            <div class="ds-kit" id="ds-kit"></div>
+          </section>
+          <!-- Level select: every cleared sector stays replayable, so a player
+               can farm a boss stage or re-run a favourite layout. -->
+          <section class="level-select" id="level-select">
+            <h3 class="level-select-title" data-i18n="level.select">SELECT SECTOR</h3>
+            <div class="level-grid" id="level-grid"></div>
+          </section>
+          <details class="controls-fold">
+            <summary data-i18n="play.controls">CONTROLS</summary>
+            <div class="controls-grid">
+              <span>A / D</span><span data-i18n="ctrl.move">MOVE</span>
+              <span>C</span><span data-i18n="ctrl.crouch">CROUCH</span>
+              <span>SPACE</span><span data-i18n="ctrl.jump">JUMP</span>
+              <span>SHIFT</span><span data-i18n="ctrl.sprint">SPRINT</span>
+              <span>SHIFT + C</span><span data-i18n="ctrl.slide">SLIDE</span>
+              <span>MOUSE</span><span data-i18n="ctrl.aimFire">AIM / FIRE</span>
+              <span>R</span><span data-i18n="ctrl.reload">RELOAD</span>
+              <span>E</span><span data-i18n="ctrl.takedown">TAKEDOWN</span>
+              <span>1 / 2 / 3 / 4</span><span data-i18n="ctrl.weapons">WEAPONS</span>
+              <span>RIGHT-CLICK</span><span data-i18n="ctrl.heavyMelee">HEAVY MELEE</span>
+              <span>ESC</span><span data-i18n="ctrl.pause">PAUSE</span>
+            </div>
+            <div class="controls-note" data-i18n="play.controlsNote">On phones, on-screen controls appear automatically.</div>
+            <div class="controls-note" data-i18n="play.slideNote">On a phone: flick the move stick down at a sprint to slide.</div>
+          </details>
+        </section>
+
+        <!-- LOADOUT -->
+        <section id="tab-loadout" class="home-panel">
+          <h2 class="panel-title" data-i18n="loadout.title">LOADOUT</h2>
+          <p class="panel-sub" data-i18n="loadout.sub">Choose your weapons, then equip skins &amp; operators unlocked from crates.</p>
+          <div id="loadout-slots" class="loadout-list"></div>
+        </section>
+
+        <!-- CRATES -->
+        <section id="tab-crates" class="home-panel">
+          <h2 class="panel-title" data-i18n="crates.title">SUPPLY CRATE</h2>
+          <div class="crate-hero">
+            <div id="crate-box" class="crate-box">
+              <div class="crate-rays" aria-hidden="true"></div>
+              <div id="crate-glow" class="crate-glow"></div>
+              <canvas id="crate-body-cv" class="crate-cv" aria-hidden="true"></canvas>
+              <canvas id="crate-lid" class="crate-cv crate-lid" aria-hidden="true"></canvas>
+              <div id="crate-burst" class="crate-burst"></div>
+            </div>
+            <!-- The labels sit in their own spans: the buttons also carry a
+                 painted canvas and a live counter, which data-i18n on the
+                 button itself would overwrite. -->
+            <button id="btn-open-crate" class="btn primary big"><span data-i18n="crates.open">OPEN</span> — <span id="crate-cost">300</span> <canvas class="cur-icon cur-scrap" width="16" height="16"></canvas></button>
+            <button id="btn-watch-ad" class="btn secondary big"><span data-i18n="crates.watchAdFree">▶ WATCH AD — FREE CRATE</span><span class="ad-remaining"></span></button>
+            <div id="crate-msg" class="crate-msg"></div>
+          </div>
+          <!-- Invite codes. Placed in CRATES because that is where the game's
+               other free-scrap paths live (the ad crate above), so a player
+               looking for a way to open a crate without paying finds both in
+               the same place. See js/game/referral.js for why this is built
+               out of two codes rather than one link. -->
+          <section id="invite-panel" class="invite-panel">
+            <div class="collection-head"><span data-i18n="invite.title">INVITE FRIENDS</span> <span id="invite-friends" class="invite-friends"></span></div>
+            <p class="invite-sub" data-i18n="invite.sub">Trade codes with a friend and you both get scrap. Works offline — no account needed.</p>
+
+            <div class="invite-card">
+              <div class="invite-label" data-i18n="invite.yourCode">YOUR INVITE CODE</div>
+              <!-- dir="ltr" on every code and input: the codes are Latin
+                   characters and digits and must read the same way round in
+                   Arabic as anywhere else, or they get copied out reversed. -->
+              <div id="invite-code" class="invite-code" dir="ltr">······</div>
+              <div class="invite-actions">
+                <button id="btn-invite-copy" class="btn" data-i18n="invite.copy">COPY</button>
+                <button id="btn-invite-share" class="btn secondary" data-i18n="invite.share">SHARE</button>
+              </div>
+            </div>
+
+            <div id="invite-enter" class="invite-card">
+              <div class="invite-label" data-i18n="invite.enterTitle">GOT A FRIEND'S CODE?</div>
+              <p class="invite-hint" data-i18n="invite.enterHint">Enter it once to claim your joining bonus.</p>
+              <div class="invite-actions">
+                <input id="invite-input" class="invite-input" type="text" inputmode="latin" maxlength="7" dir="ltr"
+                       autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                       data-i18n-attr="placeholder:invite.placeholder" placeholder="ENTER CODE">
+                <button id="btn-invite-redeem" class="btn primary" data-i18n="invite.redeem">REDEEM</button>
+              </div>
+              <div id="invite-enter-msg" class="invite-msg"></div>
+            </div>
+
+            <div id="invite-thanks" class="invite-card hidden">
+              <div class="invite-label" data-i18n="invite.thanksTitle">SEND THIS BACK TO YOUR FRIEND</div>
+              <p class="invite-hint" data-i18n="invite.thanksSub">They enter this code to collect their half of the reward.</p>
+              <div id="invite-thanks-code" class="invite-code" dir="ltr">······</div>
+              <div class="invite-actions">
+                <button id="btn-thanks-copy" class="btn" data-i18n="invite.copy">COPY</button>
+                <button id="btn-thanks-share" class="btn secondary" data-i18n="invite.share">SHARE</button>
+              </div>
+            </div>
+
+            <div class="invite-card">
+              <div class="invite-label" data-i18n="invite.claimTitle">FRIEND SENT A THANK-YOU CODE?</div>
+              <p class="invite-hint" data-i18n="invite.claimHint">Enter it to collect your reward for inviting them.</p>
+              <div class="invite-actions">
+                <input id="invite-claim-input" class="invite-input" type="text" inputmode="latin" maxlength="7" dir="ltr"
+                       autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                       data-i18n-attr="placeholder:invite.placeholder" placeholder="ENTER CODE">
+                <button id="btn-invite-claim" class="btn primary" data-i18n="invite.claim">CLAIM</button>
+              </div>
+              <div id="invite-claim-msg" class="invite-msg"></div>
+            </div>
+          </section>
+
+          <div class="collection">
+            <div class="collection-head"><span data-i18n="crates.collection">COLLECTION</span> <span id="collection-count"></span></div>
+            <div id="collection-grid" class="collection-grid"></div>
+          </div>
+        </section>
+
+        <!-- TRADER — CROW's stall. Scrap is the only thing that changes
+             hands here; there is no real-money purchase path in the game. -->
+        <section id="tab-trader" class="home-panel">
+          <h2 class="panel-title" data-i18n="trader.title">THE TRADER</h2>
+
+          <div class="trader-hero">
+            <canvas id="trader-scene" class="trader-scene" aria-hidden="true"></canvas>
+            <div class="trader-id">
+              <div class="trader-name" data-i18n="trader.name">CROW</div>
+              <div class="trader-role" data-i18n="trader.role">SALVAGE FENCE — SECTOR 9</div>
+              <p id="trader-line" class="trader-line"></p>
+            </div>
+          </div>
+
+          <div id="trader-cats" class="store-cats"></div>
+
+          <div id="trader-section-stall" class="store-section">
+            <div class="store-section-head trader-stall-head">
+              <span data-i18n="trader.stall">TODAY'S STALL</span>
+              <span id="trader-restock" class="trader-restock"></span>
+            </div>
+            <div id="trader-stall-grid" class="collection-grid"></div>
+          </div>
+
+          <div id="trader-section-ad" class="store-section">
+            <div class="store-section-head" data-i18n="trader.adTitle">SCRAP FOR A WATCH</div>
+            <div class="trade-card">
+              <div id="trade-ad-desc" class="trade-card-desc"></div>
+              <div class="ad-progress-track"><div id="trade-ad-fill" class="ad-progress-fill"></div></div>
+              <button id="btn-trade-ad" class="btn secondary" data-i18n="trader.watchAd">▶ WATCH AD</button>
+              <div id="trade-ad-status" class="ad-status"></div>
+            </div>
+          </div>
+
+          <div id="trader-section-items" class="store-section hidden">
+            <div class="store-section-head" id="trader-items-head">ITEMS</div>
+            <div id="trader-item-grid" class="collection-grid"></div>
+          </div>
+        </section>
+
+        <!-- STATS -->
+        <section id="tab-stats" class="home-panel">
+          <h2 class="panel-title" data-i18n="stats.title">STATISTICS</h2>
+          <div class="store-cats">
+            <button class="store-cat-chip stats-subtab active" data-section="overview" data-i18n="stats.overview">OVERVIEW</button>
+            <button class="store-cat-chip stats-subtab" data-section="achievements" data-i18n="stats.achievements">ACHIEVEMENTS</button>
+          </div>
+
+          <div id="stats-overview" class="store-section">
+            <div id="stats-grid" class="stats-grid"></div>
+          </div>
+
+          <div id="stats-achievements" class="store-section hidden">
+            <div id="achievements-list"></div>
+          </div>
+        </section>
+
+        <!-- ARCHIVES — recovered intel logs. Built by game/archives.js. -->
+        <section id="tab-archives" class="home-panel">
+          <h2 class="panel-title" data-i18n="archives.title">ARCHIVES</h2>
+          <p class="panel-sub" data-i18n="archives.sub">Intel files recovered in the field.</p>
+          <div class="archives-meter">
+            <div id="archives-count" class="archives-count"></div>
+            <div class="archives-track"><div id="archives-fill" class="archives-fill"></div></div>
+          </div>
+          <div id="archives-list" class="archives-list"></div>
+        </section>
+      </main>
+
+      <nav class="home-tabs">
+        <button class="home-tab active" data-tab="play"><span class="tab-ico">▶</span><span data-i18n="tab.play">PLAY</span></button>
+        <button class="home-tab" data-tab="loadout"><span class="tab-ico">◈</span><span data-i18n="tab.loadout">LOADOUT</span></button>
+        <button class="home-tab" data-tab="crates"><span class="tab-ico">▣</span><span data-i18n="tab.crates">CRATES</span></button>
+        <button class="home-tab" data-tab="trader"><span class="tab-ico">⚒</span><span data-i18n="tab.trader">TRADER</span></button>
+        <button class="home-tab" data-tab="stats"><span class="tab-ico">◉</span><span data-i18n="tab.stats">STATS</span></button>
+        <button class="home-tab" data-tab="archives"><span class="tab-ico">▤</span><span data-i18n="tab.archives">ARCHIVES</span></button>
+      </nav>
+      <div class="home-legal">
+        <a href="legal/privacy.html" target="_blank" rel="noopener" data-i18n="legal.privacy">Privacy</a>
+        <span>·</span>
+        <a href="legal/terms.html" target="_blank" rel="noopener" data-i18n="legal.terms">Terms</a>
+        <span>·</span>
+        <span class="build-tag">CINDERFALL v1.0</span>
+      </div>
+    </div>
+
+    <!-- Crate reveal overlay (CS-style horizontal reel) -->
+    <div id="crate-reveal" class="crate-reveal hidden">
+      <div class="reel-window">
+        <div id="reel-track" class="reel-track"></div>
+        <div class="reel-marker"></div>
+      </div>
+      <div id="reveal-card" class="reveal-card hidden">
+        <div class="reveal-rays" aria-hidden="true"></div>
+        <canvas id="reveal-art" class="reveal-art" aria-hidden="true"></canvas>
+        <div id="reveal-rarity" class="reveal-rarity"></div>
+        <div id="reveal-name" class="reveal-name"></div>
+        <div id="reveal-kind" class="reveal-kind"></div>
+        <div id="reveal-status" class="reveal-status"></div>
+      </div>
+      <button id="reveal-done" class="btn hidden">CONTINUE</button>
+    </div>
+  </div>
+
+  <!-- Daily login reward — shown once per calendar day on reaching the menu -->
+  <div id="daily" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div class="title-small" data-i18n="daily.title">DAILY REWARD</div>
+      <div id="daily-sub" class="revive-sub"></div>
+      <div id="daily-track" class="daily-track"></div>
+      <button id="btn-daily-claim" class="btn primary" data-i18n="daily.claim">CLAIM</button>
+      <div id="daily-streak" class="daily-streak"></div>
+    </div>
+  </div>
+
+  <!-- Weapon inspect: stat panel for a tapped loadout card. Built empty and
+       filled by MetaUI.openInspect() so the markup stays declarative. -->
+  <div id="inspect" class="overlay dim hidden">
+    <div class="inspect-card">
+      <div class="inspect-head">
+        <canvas id="inspect-preview" class="inspect-preview"></canvas>
+        <div class="inspect-id">
+          <div id="inspect-name" class="inspect-name"></div>
+          <div id="inspect-rarity" class="inspect-rarity"></div>
+        </div>
+      </div>
+      <div id="inspect-body" class="inspect-body"></div>
+      <div class="inspect-actions">
+        <button id="btn-inspect-equip" class="btn primary" data-i18n="inspect.equip">EQUIP</button>
+        <button id="btn-inspect-close" class="btn quiet" data-i18n="inspect.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Intel reader: a recovered log, presented as the document it is.
+       Filled by ArchivesUI.open() so the markup stays declarative. -->
+  <div id="intel-reader" class="overlay dim hidden">
+    <div class="intel-card">
+      <div class="intel-card-head">
+        <div class="intel-stamp">
+          <span id="intel-read-tier" class="intel-tier"></span>
+          <span id="intel-read-code" class="intel-code"></span>
+        </div>
+        <div id="intel-read-title" class="intel-read-title"></div>
+        <div class="intel-read-source">
+          <span class="intel-source-label" data-i18n="intel.source">SOURCE</span>
+          <span id="intel-read-source" class="intel-source-name"></span>
+        </div>
+      </div>
+      <div id="intel-read-body" class="intel-read-body"></div>
+      <div class="intel-card-actions">
+        <button id="btn-intel-close" class="btn quiet" data-i18n="intel.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player card — the offline profile. Built by game/profile.js; every
+       number on it is read from local storage, nothing is sent anywhere. -->
+  <div id="profile-overlay" class="overlay dim hidden">
+    <div id="profile-card" class="profile-card">
+      <div class="profile-head">
+        <span class="profile-kicker" data-i18n="profile.kicker">OPERATOR FILE</span>
+        <span class="profile-title" data-i18n="profile.title">PROFILE</span>
+      </div>
+
+      <!-- Identity. The card is called an operator file and used to contain
+           no operator at all: the equipped skin, the one thing the player
+           actually picked, appeared nowhere on it. -->
+      <div class="profile-id">
+        <canvas id="profile-portrait" class="profile-portrait" aria-hidden="true"></canvas>
+        <div class="profile-id-text">
+          <div id="profile-op-name" class="profile-op-name"></div>
+          <div id="profile-op-tag" class="profile-op-tag"></div>
+          <div class="profile-lvl-row">
+            <span class="profile-lvl-badge"><span id="profile-lvl">1</span></span>
+            <div class="profile-lvl-meter">
+              <div class="profile-lvl-head">
+                <span data-i18n="play.nextRank">NEXT LEVEL</span>
+                <span id="profile-xp-pct">0%</span>
+              </div>
+              <div class="profile-lvl-track"><div id="profile-xp-fill" class="profile-lvl-fill"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-score-block">
+        <div id="profile-score" class="profile-score">0</div>
+        <div id="profile-score-label" class="profile-score-label" data-i18n="profile.score">SECTOR SCORE</div>
+        <div id="profile-rank" class="profile-rank"></div>
+        <div class="profile-rank-track"><div id="profile-rank-fill" class="profile-rank-fill"></div></div>
+        <div id="profile-rank-next" class="profile-rank-next"></div>
+      </div>
+
+      <div id="profile-stats" class="profile-stats"></div>
+
+      <div class="profile-weapon">
+        <div class="profile-weapon-head" data-i18n="profile.favorite">FAVOURITE WEAPON</div>
+        <canvas id="profile-weapon-art" class="profile-weapon-art" width="200" height="72"></canvas>
+        <div id="profile-weapon-name" class="profile-weapon-name"></div>
+        <div id="profile-weapon-skin" class="profile-weapon-skin"></div>
+      </div>
+
+      <div class="profile-actions">
+        <button id="btn-profile-close" class="btn quiet" data-i18n="profile.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Viral score card — painted to canvas so it can be shared as an image -->
+  <div id="sharecard" class="overlay dim hidden">
+    <div class="sharecard-inner">
+      <canvas id="sharecard-canvas" class="sharecard-canvas"></canvas>
+      <div class="sharecard-actions">
+        <button id="btn-sharecard-send" class="btn primary" data-i18n="share.share">SHARE</button>
+        <button id="btn-sharecard-close" class="btn quiet" data-i18n="share.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div id="pause" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div class="title-small" data-i18n="pause.title">OPERATION PAUSED</div>
+      <button id="btn-resume" class="btn primary" data-i18n="pause.resume">RESUME</button>
+      <button id="btn-restart" class="btn" data-i18n="pause.restart">RESTART MISSION</button>
+      <button id="btn-quit" class="btn" data-i18n="pause.quit">ABORT TO MENU</button>
+      <!-- One door to every option, instead of three 32px cycling buttons
+           stacked under the real ones. Those were below the 44px tap minimum,
+           hid their own options until you cycled blindly through them, and on
+           a 844x390 phone pushed the panel far enough that the title clipped
+           off the top of the screen. -->
+      <button id="btn-settings" class="btn"><span class="btn-ico">⚙</span><span data-i18n="set.title">SETTINGS</span></button>
+    </div>
+  </div>
+
+  <!-- Settings.
+       Every row shows all of its options at once. A cycling button is fine
+       for two states and stops working at three: the player cannot see what
+       is available, cannot tell how many taps back a setting is, and on the
+       language control could not even read the labels they were cycling past.
+       Language keeps a picker of its own because seven options is past what a
+       segmented row can hold on a phone. -->
+  <div id="settings" class="overlay dim hidden">
+    <div class="ov-inner settings-inner">
+      <div class="settings-head">
+        <div class="title-small" data-i18n="set.title">SETTINGS</div>
+      </div>
+
+      <div class="settings-body">
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.graphics">GRAPHICS</span>
+            <span class="set-hint" data-i18n="set.graphicsHint">Higher tiers cost frame rate.</span>
+          </div>
+          <div class="seg" id="set-graphics" role="radiogroup" data-i18n-attr="aria-label:set.graphics"></div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.brightness">BRIGHTNESS</span>
+            <span class="set-hint" data-i18n="set.brightnessHint">Raise this if the screen reads too dark.</span>
+          </div>
+          <div class="seg" id="set-brightness" role="radiogroup" data-i18n-attr="aria-label:set.brightness"></div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.volume">VOLUME</span>
+            <span class="set-hint" data-i18n="set.volumeHint">Drag to zero to mute.</span>
+          </div>
+          <div class="set-slider">
+            <input id="set-volume" class="slider" type="range" min="0" max="100" step="1" value="70"
+                   data-i18n-attr="aria-label:set.volume">
+            <span class="set-value" id="set-volume-val">70%</span>
+          </div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.shake">SCREEN SHAKE</span>
+            <span class="set-hint" data-i18n="set.shakeHint">Turn down if camera movement is uncomfortable.</span>
+          </div>
+          <div class="seg" id="set-shake" role="radiogroup" data-i18n-attr="aria-label:set.shake"></div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="set.haptics">VIBRATION</span>
+            <span class="set-hint" data-i18n="set.hapticsHint">A light buzz on menu presses.</span>
+          </div>
+          <div class="seg" id="set-haptics" role="radiogroup" data-i18n-attr="aria-label:set.haptics"></div>
+        </div>
+
+        <div class="set-row">
+          <div class="set-label">
+            <span data-i18n="lang.title">LANGUAGE</span>
+            <span class="set-hint" data-i18n="set.languageHint">Seven languages available.</span>
+          </div>
+          <button id="set-language" class="btn set-open">
+            <span id="set-language-label">ENGLISH</span>
+            <span class="set-open-chevron" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <!-- Privacy & legal: documents, consent choices, delete my data
+             (legal/gate.js). Labels are filled from the legal texts. -->
+        <div class="set-row">
+          <div class="set-label">
+            <span id="set-privacy-title">PRIVACY &amp; LEGAL</span>
+            <span class="set-hint" id="set-privacy-hint"></span>
+          </div>
+          <button id="set-privacy" class="btn set-open" type="button">
+            <span id="set-privacy-label">KVKK · GDPR · CCPA</span>
+            <span class="set-open-chevron" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
+
+      <button id="btn-settings-close" class="btn primary" data-i18n="set.done">DONE</button>
+    </div>
+  </div>
+
+  <!-- Language picker. Seven languages is past the point where cycling works:
+       a player wanting Hindi would have to tap through six others and read
+       each one to know where they are. The list shows every language at once,
+       each in its own script, so it is one tap and no reading. -->
+  <div id="langpick" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div class="title-small" data-i18n="lang.title">LANGUAGE</div>
+      <div id="langpick-list" class="langpick-list"></div>
+      <button id="btn-langpick-close" class="btn quiet" data-i18n="invite.close">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- Revive prompt: shown right after going down, before the run ends —
+       watching the ad gets the operator back up on the same stage, so the
+       run/streak isn't broken by one bad fight. -->
+  <div id="revive" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div class="title-small" style="color:var(--red)" data-i18n="revive.title">OPERATOR DOWN</div>
+      <div class="revive-sub" data-i18n="revive.sub">Watch a short video to get back up — stage and progress carry on.</div>
+      <button id="btn-revive-ad" class="btn secondary big" data-i18n="revive.watch">▶ WATCH AD — CONTINUE</button>
+      <div id="revive-count" class="revive-count"></div>
+      <div class="revive-alt">
+        <button id="btn-revive-skip" class="btn quiet" data-i18n="revive.skip">NO THANKS</button>
+        <button id="btn-revive-menu" class="btn quiet" data-i18n="revive.menu">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- End screens -->
+  <div id="end" class="overlay dim hidden">
+    <div class="ov-inner">
+      <div id="end-title" class="title-small">SECTOR CLEARED</div>
+      <div id="end-detail" class="end-detail"></div>
+      <button id="btn-redeploy" class="btn primary" data-i18n="end.redeploy">REDEPLOY</button>
+      <button id="btn-share" class="btn secondary" data-i18n="end.share">SHARE RESULT</button>
+      <button id="btn-menu" class="btn" data-i18n="end.menu">RETURN TO MENU</button>
+    </div>
+  </div>
+
+  <!-- On-screen touch controls (shown on touch devices during play) -->
+  <div id="touch">
+    <!-- Capture zones. Each stick floats to wherever the thumb lands inside
+         its zone, so neither pad ever has to be found by eye. The zones sit
+         below the buttons in z-order, so a tap on JUMP is still a jump. -->
+    <div id="tc-zone-left" class="tc-zone left"></div>
+    <div id="tc-zone-right" class="tc-zone right"></div>
+    <div id="tc-move" class="tc-stick left"><div class="tc-nub"></div><div class="tc-label">MOVE</div></div>
+    <div id="tc-aim" class="tc-stick right"><div class="tc-nub"></div><div class="tc-label">AIM / FIRE</div></div>
+    <button id="tc-jump" class="tc-btn tc-jump" data-i18n="ctrl.jump">JUMP</button>
+    <button id="tc-reload" class="tc-btn tc-reload" data-i18n="ctrl.reload">RELOAD</button>
+    <button id="tc-swap" class="tc-btn tc-swap" data-i18n="ctrl.swap">SWAP</button>
+    <button id="tc-crouch" class="tc-btn tc-crouch" data-i18n="ctrl.crouch">CROUCH</button>
+    <button id="tc-takedown" class="tc-btn tc-takedown" data-i18n="ctrl.takedown">TAKEDOWN</button>
+    <button id="tc-pause" class="tc-btn tc-pause" data-i18n="ctrl.pause">PAUSE</button>
+  </div>
+
+  <!-- Deploy cinematic: letterbox bars + briefing text, driven by main.js -->
+  <div id="cine-bars" class="cine-bars">
+    <div class="cine-bar top"></div>
+    <div class="cine-bar bottom"></div>
+  </div>
+  <div id="intro">
+    <div id="intro-kicker" class="cine-kicker"></div>
+    <div id="intro-line" class="cine-line"></div>
+  </div>
+  <div id="intro-skip" data-i18n="skip.hint">CLICK OR PRESS ANY KEY TO SKIP</div>
+  <div id="scene-fade"></div>
+</div>
+<script>
+  // Native-app input hardening: block the browser's own text-selection,
+  // long-press callout, drag and pinch-gesture behaviours so every tap only
+  // ever drives the game. Double-tap zoom / pinch are already killed by the
+  // locked viewport + touch-action, so we don't cancel touchend here (that
+  // would swallow legitimate fast taps on the on-screen buttons).
+  (function () {
+    const stop = (e) => e.preventDefault();
+    document.addEventListener('contextmenu', stop);   // no long-press menu
+    document.addEventListener('selectstart', stop);    // no text highlighting
+    document.addEventListener('dragstart', stop);      // no image/text drag
+    document.addEventListener('gesturestart', stop);   // iOS pinch-zoom
+    document.addEventListener('gesturechange', stop);
+    document.addEventListener('gestureend', stop);
+  })();
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
