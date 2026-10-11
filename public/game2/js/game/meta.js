@@ -1,9 +1,10 @@
+import { withFinish } from '../art/arsenal.js';
 import { BOSS_DROPS } from './loot.js';
 import { WEAPON_SKINS } from '../art/skins.js';
 
 // Meta-economy: item catalog, rarity tiers, crate rolls and loadout apply.
 // Crate drops reuse the game's existing weapon-finish and operator-skin art
-// (baked in weapons.js / soldier.js) plus a couple of new energy finishes,
+// (baked in arsenal.js / soldier.js) plus a couple of new energy finishes,
 // so the reward loop ships without a pile of one-off assets. All ownership
 // and equip state lives in Progression (localStorage-backed).
 
@@ -388,9 +389,10 @@ export function applyLoadout(player, progression, assets) {
     const item = skinFor(a.wpn.id);
     if (!item) continue;
     const base = assets.weapons[a.wpn.id];
-    const body = base && base.finishes && base.finishes[item.apply.finish];
-    if (!body) continue;
-    a.wpn = { ...a.wpn, body, finish: item.apply.finish };
+    if (!base || !base.finishes || !base.finishes[item.apply.finish]) continue;
+    // The whole finished weapon — the old path swapped the body only, so a
+    // skin equipped from the loadout kept the default magazine and slide.
+    a.wpn = withFinish(base, item.apply.finish);
   }
 
   applyPerks(player, perks);

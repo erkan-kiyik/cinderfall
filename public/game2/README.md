@@ -1,4 +1,14 @@
-# CINDERFALL — Sector 9
+# CINDERFALL LAB — Sector 9
+
+> **LAB build.** This folder (`public/game2`) is a working copy of the game
+> where new work lands first; the shipping game in `public/game` is not
+> touched by it. It builds as its own app (`com.cinderfall.sector9.lab`,
+> "CF LAB") via `.github/workflows/build-lab-android.yml`.
+>
+> In this copy every weapon is redrawn as its own object (`js/art/guns/*`,
+> painted with `js/art/gunkit.js`) with its own rig, and every skin is
+> rebuilt (`js/art/skins.js`); gameplay numbers are unchanged
+> (`js/art/arsenal-stats.js`).
 
 A premium 2D side-view tactical shooter for the browser. Zero dependencies,
 zero binary assets: every sprite, background painting, effect and sound is
