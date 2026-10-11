@@ -17,6 +17,11 @@ import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { t, onLangChange } from '../engine/i18n.js';
 import { REDEEM, formatCode, normalize } from './referral.js';
 
+// Skin slots are generated per weapon and carry a ready label (e.g. "VK-77
+// SKIN") instead of an i18n key; translating a missing key printed
+// "undefined" as the section title of every skin row.
+const slotLabel = (slot) => (slot.labelKey ? t(slot.labelKey) : slot.label || '');
+
 
 // A horizontally scrolling item row is masked at its right edge so the card
 // that runs off the fold fades instead of being sliced, but only while there
@@ -283,7 +288,7 @@ export class MetaUI {
       cell.appendChild(lbl);
       const kind = document.createElement('div');
       kind.className = 'ds-slot-kind';
-      kind.textContent = t(slot.labelKey);
+      kind.textContent = slotLabel(slot);
       cell.appendChild(kind);
       if (item) {
         const rarity = RARITY[item.rarity];
@@ -404,7 +409,7 @@ export class MetaUI {
       const head = document.createElement('div');
       head.className = 'loadout-slot-head';
       const eqItem = equippedId && itemById(equippedId);
-      head.innerHTML = `<span class="loadout-slot-label">${t(slot.labelKey)}</span>` +
+      head.innerHTML = `<span class="loadout-slot-label">${slotLabel(slot)}</span>` +
         `<span class="loadout-slot-equipped">${eqItem ? this.itemLabel(eqItem) : t('item.stock')}</span>`;
       head.querySelector('.loadout-slot-equipped').dataset.name = eqItem ? this.itemLabel(eqItem) : '';
       box.appendChild(head);

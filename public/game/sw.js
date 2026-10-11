@@ -8,7 +8,7 @@
 //     refresh — instant loads, self-healing when files change.
 // Bump CACHE on any shipped change to retire the previous cache on activate.
 
-const CACHE = 'cinderfall-v12';
+const CACHE = 'cinderfall-v13';
 
 // The full game shell — every module is a static ES import, so precaching
 // them means the whole game is available offline from the very first visit,
@@ -31,16 +31,26 @@ const SHELL = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
+  './js/art/arsenal-stats.js',
+  './js/art/arsenal.js',
   './js/art/background.js',
   './js/art/crate.js',
   './js/art/currency.js',
   './js/art/environment.js',
+  './js/art/gunkit.js',
+  './js/art/guns/acc.js',
+  './js/art/guns/battle.js',
+  './js/art/guns/energy.js',
+  './js/art/guns/heavy.js',
+  './js/art/guns/knife.js',
+  './js/art/guns/pistol.js',
+  './js/art/guns/rifle.js',
+  './js/art/guns/smg.js',
   './js/art/medal.js',
   './js/art/paint.js',
   './js/art/skins.js',
   './js/art/soldier.js',
   './js/art/trader.js',
-  './js/art/weapons.js',
   './js/engine/ads.js',
   './js/engine/audio.js',
   './js/engine/brightness.js',
@@ -105,8 +115,6 @@ const SHELL = [
   './js/legal/text/tr.js',
   './js/main.js',
   './js/ui/motion.js',
-  './legal/privacy.html',
-  './legal/terms.html',
 ];
 
 self.addEventListener('install', (e) => {

@@ -542,9 +542,13 @@ const HIGHREADY_DROP_X = -5.2;       // px, drawn back against the chest
 export function weaponAnchor(pose, wpn, ws, aim) {
   const relax = ws.relax || 0;
   const high = ws.highReady || 0;
+  // Each weapon carries its own hold: a rifle is shouldered at the pocket, a
+  // rotary gun rides at the hip, a launcher sits up on top of the shoulder.
+  // `wpn.pivot` moves the point the weapon is held from to suit.
+  const pv = wpn.pivot;
   const pivot = {
-    x: pose.shoulder.x + 2.2 + RELAX_DROP_X * relax + HIGHREADY_DROP_X * high,
-    y: pose.shoulder.y + 2.2 + RELAX_DROP_Y * relax + HIGHREADY_DROP_Y * high,
+    x: pose.shoulder.x + 2.2 + (pv ? pv.x : 0) + RELAX_DROP_X * relax + HIGHREADY_DROP_X * high,
+    y: pose.shoulder.y + 2.2 + (pv ? pv.y : 0) + RELAX_DROP_Y * relax + HIGHREADY_DROP_Y * high,
   };
   // Muzzle dips toward the ground as the weapon comes off aim. The pose is
   // built in facing-neutral local space (the horizontal flip happens at draw
@@ -709,7 +713,10 @@ function drawBody(g, parts, ent, weapon) {
     } else {
       // Support hand: on the foregrip when the weapon is up, released and
       // hanging at the side once the operator relaxes into a one-handed carry.
-      const onGrip = weaponPoint(wa, wpn.gripB);
+      // A pump gun's support hand rides the fore-end as it cycles.
+      const onGrip = weaponPoint(wa, wpn.gripBOnBolt
+        ? { x: wpn.gripB.x - (ws.boltBack || 0) * 4.5, y: wpn.gripB.y }
+        : wpn.gripB);
       const relax = ws.relax || 0;
       if (relax > 0.001) {
         const rest = {

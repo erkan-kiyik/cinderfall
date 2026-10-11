@@ -17,7 +17,7 @@ import { brightness, LEVELS as BRIGHTNESS_LEVELS } from './engine/brightness.js'
 import { Interlude } from './engine/interlude.js';
 import { t, applyTranslations, setLang, getLang, onLangChange } from './engine/i18n.js';
 import { buildSoldier, makeShadowSprite } from './art/soldier.js';
-import { buildWeapons } from './art/weapons.js';
+import { buildWeapons, withFinish, warmFinishes } from './art/arsenal.js';
 import { World, GROUND_Y, MAP_W } from './game/world.js';
 import { FX } from './game/fx.js';
 import { Player } from './game/player.js';
@@ -218,18 +218,13 @@ function previewItem(item, cv) {
   if (item.apply.type === 'finish' || item.apply.type === 'weaponBody') {
     const def = assets.weapons[item.apply.weapon];
     if (!def) return;
-    const body = item.apply.type === 'finish'
-      ? ((def.finishes && def.finishes[item.apply.finish]) || def.body)
-      : def.body;
-    if (!body) return;
-    // A skin repaints the magazine and the slide too, so prefer the finish's
-    // own parts and fall back to the default weapon's.
-    const mag = body.mag || def.mag;
-    if (mag && def.magPos) parts.push([mag, def.magPos.x, def.magPos.y]);
-    parts.push([body, 0, 0]);
-    if (def.bolt && def.boltPos) parts.push([def.bolt, def.boltPos.x, def.boltPos.y]);
-    const slide = body.slide || def.slide;
-    if (slide) parts.push([slide, 0, 0]);
+    // The finished weapon, with the skin's own magazine, slide and bolt.
+    const w = item.apply.type === 'finish' ? withFinish(def, item.apply.finish) : def;
+    if (!w.body) return;
+    if (w.mag && w.magPos) parts.push([w.mag, w.magPos.x, w.magPos.y]);
+    parts.push([w.body, 0, 0]);
+    if (w.bolt && w.boltPos) parts.push([w.bolt, w.boltPos.x, w.boltPos.y]);
+    if (w.slide) parts.push([w.slide, 0, 0]);
   } else if (item.apply.type === 'operator') {
     const op = assets[item.apply.variant];
     if (!op || !op.head) return;
@@ -324,6 +319,9 @@ async function boot() {
   hud.setLoad(0.9, 'CALIBRATING OPTICS…');
   await raf();
   game = new Game();
+  // Skins bake on first use; fill the rest of the cache in idle time, but
+  // never while a firefight is running.
+  warmFinishes(assets.weapons, () => !game || game.state !== 'play');
   if (DEMO) { window.__game = game; window.__hud = hud; window.__demo = demoDriver; }  // scripted-screenshot / test hook only
 
   initUI(audio);

@@ -4,6 +4,7 @@
 // magazine and bolt rack, inspect, equip/unequip, and the knife's quick /
 // heavy slashes. All transitions are spring- or envelope-blended.
 
+import { withFinish } from '../art/arsenal.js';
 import {
   clamp, lerp, damp, rand, randSpread, easeOutCubic, easeInOutQuad, easeInCubic,
   smootherstep, TAU, makeNoise1D,
@@ -94,7 +95,7 @@ const VIBE_DECAY = 4.2;
 
 // ---- spray control -----------------------------------------------------
 // Holding the trigger walks the muzzle up a fixed per-weapon path (see the
-// SPRAY_* tables in art/weapons.js) rather than only widening a random cone.
+// spray tables in art/arsenal-stats.js) rather than only widening a random cone.
 // The climb is applied to the operator's own aim, so the player watches it
 // happen and can drag the stick down against it — the pattern is a skill,
 // not a tax. The random cone still exists on top; it just no longer has to
@@ -979,13 +980,8 @@ export class Player {
     const base = this.weapons[slot];
     if (!base || !base.finishes || !base.finishes[finishKey]) return;
     const cur = this.arsenal[slot];
-    const fin = base.finishes[finishKey];
-    // A skin repaints the detachable magazine too (see buildSkinSet), so take
-    // the finish's own mag when it has one — otherwise a coated weapon runs
-    // around with the default-palette magazine bolted to it.
-    cur.wpn = finishKey === 'default'
-      ? base
-      : { ...base, body: fin, mag: fin.mag || base.mag, slide: fin.slide || base.slide, finish: finishKey };
+    // The whole finished weapon: its own magazine, slide, bolt and rig.
+    cur.wpn = withFinish(base, finishKey);
   }
 
   switchTo(slot) {

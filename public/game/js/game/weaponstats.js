@@ -1,6 +1,6 @@
 // Weapon stat readout.
 //
-// Turns a raw weapon def (art/weapons.js) into printable, comparable rows for
+// Turns a raw weapon def (art/arsenal.js) into printable, comparable rows for
 // the inspect panel. Two things matter here:
 //
 //  1. Bars are normalised against the *whole roster*, not against an arbitrary
