@@ -427,30 +427,41 @@ html.no-backdrop-filter #hud .glass { background: rgba(10, 13, 18, 0.72) !import
 /* =========================================================================
    ACHIEVEMENTS — medal cabinet
    ========================================================================= */
-.ach-summary {
-  display: flex; align-items: center; gap: var(--s5); flex-wrap: wrap;
-  padding: var(--s4) var(--s5); margin-bottom: var(--s5);
-  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
-  border: 1px solid var(--line); border-radius: var(--r3);
+/* Summary bar: count · progress · medals · CLAIM ALL, one slim row. */
+.ach-bar {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s3) var(--s4); margin-bottom: var(--s3);
+  background: linear-gradient(180deg, #1f2631, #151a22);
+  box-shadow: var(--sh-2), inset 0 0 0 1px var(--line); border-radius: 12px;
 }
-.ach-sum-main { flex: 1 1 220px; min-width: 0; }
-.ach-sum-count { font-size: 13px; letter-spacing: 0.12em; color: var(--ink-dim); }
-.ach-sum-count b { font-size: 26px; color: var(--ink); letter-spacing: 0.02em; margin-right: 2px; }
-.ach-sum-label { font-size: 10px; letter-spacing: 0.2em; color: var(--ink-dim); margin: 2px 0 var(--s3); }
-.ach-sum-ready { color: #f0c050; }
-.ach-sum-track { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.07); overflow: hidden; }
-.ach-sum-fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #d39a62, #c3cdd8, #f0c050); transition: width 0.9s var(--spring); }
-.ach-sum-medals { display: flex; gap: var(--s4); }
-.ach-sum-medal { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.ach-sum-medal canvas { width: 40px; height: 40px; }
-.ach-sum-medal span { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-2); font-weight: 700; }
+.ach-bar-count { flex: 0 0 auto; display: flex; align-items: baseline; gap: 4px; }
+.ach-bar-count b { font-size: 28px; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ach-bar-count span { font-size: 13px; color: var(--ink-dim); letter-spacing: 0.06em; }
+.ach-bar-mid { flex: 1 1 auto; min-width: 0; }
+.ach-bar-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.2em; color: var(--ink-dim); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ach-bar-ready { color: #f0c050; }
+.ach-bar-fill { background: linear-gradient(90deg, #d39a62, #c3cdd8, #f0c050); box-shadow: 0 0 8px rgba(240,192,80,0.35); }
+.ach-bar-medals { flex: 0 0 auto; display: flex; gap: var(--s3); }
+.ach-bar-medal { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.ach-bar-medal canvas { width: 30px; height: 30px; }
+.ach-bar-medal span { font-size: 9.5px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 700; }
+.ach-claim-all { flex: 0 0 auto; width: auto; margin: 0; padding: 8px 16px; font-size: 11px; letter-spacing: 0.14em; }
+
+/* Filter strip under it */
+.ach-filters { margin: 0 0 var(--s4); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.ach-filters::-webkit-scrollbar { display: none; }
+.ach-filters .ux-tab { min-height: 28px; font-size: 10px; padding: 0 12px; }
+.ach-filters .ux-tab.has-ready:not(.active) { color: #f0c050; }
+.ach-empty { padding: var(--s8) 0; text-align: center; font-size: 12px; letter-spacing: 0.06em; color: var(--ink-dim); }
+.ux-count.hidden { display: none; }
 
 .achievement-tier-head {
   display: flex; align-items: baseline; justify-content: space-between;
-  color: var(--tier-color); font-size: 12px; letter-spacing: 0.3em;
+  color: var(--tier-color); font-size: 11px; letter-spacing: 0.3em;
+  margin: var(--s4) 0 var(--s2); padding-top: var(--s3);
 }
 .achievement-tier-head .ach-tier-count { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-dim); }
-.achievements-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+.achievements-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s2); }
 
 .achievement-card {
   display: flex; align-items: center; gap: var(--s4); text-align: left;
@@ -459,7 +470,7 @@ html.no-backdrop-filter #hud .glass { background: rgba(10, 13, 18, 0.72) !import
   box-shadow: var(--sh-1); opacity: 1; animation: none;
 }
 .achievement-card:hover { transform: none; }
-.ach-medal { flex: 0 0 auto; width: 58px; height: 58px; }
+.ach-medal { flex: 0 0 auto; width: 48px; height: 48px; }
 .ach-body { flex: 1 1 auto; min-width: 0; }
 .ach-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
 .achievement-name { font-size: 12px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -474,7 +485,12 @@ html.no-backdrop-filter #hud .glass { background: rgba(10, 13, 18, 0.72) !import
 .ach-prog-row .achievement-progress-track { flex: 1 1 auto; height: 5px; background: rgba(255,255,255,0.07); }
 .achievement-progress-fill { opacity: 1; transition: width 0.8s var(--spring); box-shadow: 0 0 8px var(--tier-glow); }
 .achievement-progress-label { flex: 0 0 auto; margin: 0; font-size: 9px; }
-.achievement-claim-btn { margin-top: var(--s3); padding: var(--s2) 0; font-size: 10px; }
+.achievement-claim-btn {
+  flex: 0 0 auto; width: auto; min-width: 0; margin: 0; min-height: 28px;
+  padding: 4px 14px; font-size: 10px; letter-spacing: 0.12em; border-radius: 999px;
+  box-shadow: 0 0 14px -2px var(--tier-glow);
+}
+.ach-ready .achievement-progress-label { display: none; }
 
 /* states */
 .ach-locked { opacity: 0.6; }

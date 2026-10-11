@@ -10,10 +10,12 @@
 // thing it borrows is the overlay pattern (a `.hidden` toggle on a dimmed
 // backdrop), so it never has to reach into another screen's internals.
 
-import { RANKS } from './progression.js';
+import { RANKS, xpForLevel } from './progression.js';
 import { CATALOG, itemById } from './meta.js';
 import { WEAPON_SKINS } from '../art/skins.js';
 import { t, onLangChange } from '../engine/i18n.js';
+import { drawAchievementIcon } from './achievements.js';
+import { slidePill } from '../ui/motion.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -50,6 +52,17 @@ export class ProfileUI {
         if (e.target === card) this.close();
       });
     }
+    // Tabs. The panes share one fixed-height body, so switching never moves
+    // the header or the card's edges — only the content crossfades.
+    this.tab = 'summary';
+    document.querySelectorAll('#profile-card .pf-tabs .ux-tab').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (this.tab === b.dataset.pf) return;
+        this.tab = b.dataset.pf;
+        this.applyTab();
+        if (this.audio) this.audio.ui();
+      });
+    });
     // Rank titles and every stat label resolve through t(), and this card is
     // built in JS, so a language switch needs an explicit repaint.
     onLangChange(() => { if (this._open) this.render(); });
@@ -61,8 +74,26 @@ export class ProfileUI {
     // laid-out width, which is 0 while the overlay is still display:none.
     const ov = $('profile-overlay');
     if (ov) ov.classList.remove('hidden');
+    this.tab = 'summary';
     this.render();
+    this.applyTab();
     if (this.audio) this.audio.ui();
+  }
+
+  applyTab() {
+    const tabs = document.querySelector('#profile-card .pf-tabs');
+    if (!tabs) return;
+    tabs.querySelectorAll('.ux-tab').forEach((b) => {
+      const on = b.dataset.pf === this.tab;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('#profile-card .pf-pane').forEach((p) => p.classList.toggle('active', p.dataset.pane === this.tab));
+    slidePill(tabs, { active: '.active', kind: 'fill' });
+    // Canvases inside a pane are sized from their laid-out box, which is 0
+    // while the pane is display:none — paint them once the pane is showing.
+    if (this.tab === 'career') this.paintStatIcons();
+    if (this.tab === 'arsenal') this.renderWeapon(this.p.profile().favoriteWeapon);
   }
 
   close() {
@@ -78,7 +109,8 @@ export class ProfileUI {
     this.renderScore(info);
     this.renderRank(info.rank, info.score);
     this.renderStats(info);
-    this.renderWeapon(info.favoriteWeapon);
+    this.renderTopWeapons();
+    if (this.tab === 'arsenal') this.renderWeapon(info.favoriteWeapon);
   }
 
   // Who the player is: equipped operator, their level and the distance to the
@@ -108,6 +140,12 @@ export class ProfileUI {
     if (pctEl) pctEl.textContent = `${pct}%`;
     const fill = $('profile-xp-fill');
     if (fill) fill.style.width = `${pct}%`;
+    const left = $('profile-xp-left');
+    if (left) {
+      const lv = this.p.data.level;
+      const need = Math.max(0, xpForLevel(lv + 1) - Math.round(this.p.data.xp));
+      left.textContent = t('profile.xpLeft', { xp: need.toLocaleString(), lvl: String(lv + 1) });
+    }
 
     const cv = $('profile-portrait');
     if (cv && this.previewOperator) {
@@ -167,32 +205,94 @@ export class ProfileUI {
     const host = $('profile-stats');
     if (!host) return;
     const d = this.p.data;
-    // Six counters, not three. The old set was highest sector / bosses /
-    // deaths — the three least interesting numbers the game keeps, and two of
-    // them read "—" and "0" for most of a playthrough. These lead with what a
-    // player actually wants to show someone.
+    const kills = d.totalKills || 0, deaths = info.totalDeaths || 0;
+    const kd = deaths ? (kills / deaths) : kills;
+    const mins = Math.floor((d.totalPlaytimeMs || 0) / 60000);
+    const playtime = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+    // Twelve counters on three even rows, each with its own glyph. The two a
+    // player shows someone first (kills, accuracy) carry the accent edge.
     const rows = [
-      { key: 'profile.kills', value: (d.totalKills || 0).toLocaleString() },
-      { key: 'profile.accuracy', value: `${this.p.accuracy()}%` },
-      { key: 'profile.headshots', value: (d.totalHeadshots || 0).toLocaleString() },
-      { key: 'profile.streak', value: String(d.longestKillStreak || 0) },
-      { key: 'profile.bossKills', value: String(info.bossKills) },
-      { key: 'profile.deaths', value: info.totalDeaths.toLocaleString() },
+      { key: 'profile.kills', icon: 'skull', hero: true, value: kills.toLocaleString() },
+      { key: 'profile.accuracy', icon: 'target', hero: true, value: `${this.p.accuracy()}%` },
+      { key: 'profile.headshots', icon: 'crosshair', value: (d.totalHeadshots || 0).toLocaleString() },
+      { key: 'profile.kd', icon: 'blade', value: kd.toFixed(2) },
+      { key: 'profile.streak', icon: 'fire', value: String(d.longestKillStreak || 0) },
+      { key: 'profile.combo', icon: 'bolt', value: String(d.highestCombo || 0) },
+      { key: 'profile.bossKills', icon: 'crown', value: String(info.bossKills) },
+      { key: 'profile.maxLevel', icon: 'flag', value: String(info.maxLevelReached || 0) },
+      { key: 'profile.missions', icon: 'star', value: String(d.totalMissionsCompleted || 0) },
+      { key: 'profile.games', icon: 'play', value: (d.gamesPlayed || 0).toLocaleString() },
+      { key: 'profile.deaths', icon: 'shield', value: deaths.toLocaleString() },
+      { key: 'profile.playtime', icon: 'clock', value: playtime },
     ];
     host.innerHTML = '';
     for (const row of rows) {
       const cell = document.createElement('div');
-      cell.className = 'profile-stat';
+      cell.className = 'pf-stat' + (row.hero ? ' is-hero' : '');
+      const cv = document.createElement('canvas');
+      cv.dataset.icon = row.icon;
       const val = document.createElement('div');
-      val.className = 'profile-stat-value';
+      val.className = 'pf-stat-value';
       val.textContent = row.value;
       const lbl = document.createElement('div');
-      lbl.className = 'profile-stat-label';
+      lbl.className = 'pf-stat-label';
       lbl.textContent = t(row.key);
-      cell.appendChild(val);
-      cell.appendChild(lbl);
+      cell.append(cv, val, lbl);
       host.appendChild(cell);
     }
+    if (this.tab === 'career') requestAnimationFrame(() => this.paintStatIcons());
+  }
+
+  paintStatIcons() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    document.querySelectorAll('#profile-stats canvas[data-icon]').forEach((cv) => {
+      const w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h || cv._painted === `${w}x${h}`) return;
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      const g = cv.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawAchievementIcon(g, cv.dataset.icon, w, h, '#ff5c46');
+      cv._painted = `${w}x${h}`;
+    });
+  }
+
+  // Lifetime shots per weapon, top three, as share-of-total bars. The card
+  // named one favourite and stopped; this shows how lopsided the habit is.
+  renderTopWeapons() {
+    const host = $('profile-top');
+    if (!host) return;
+    host.innerHTML = '';
+    const shots = this.p.data.weaponShots || {};
+    const entries = Object.entries(shots).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) {
+      const e = document.createElement('div');
+      e.className = 'pf-top-empty';
+      e.textContent = t('profile.noWeapon');
+      host.appendChild(e);
+      return;
+    }
+    const total = entries.reduce((s, [, n]) => s + n, 0);
+    entries.slice(0, 4).forEach(([id, n], i) => {
+      const row = document.createElement('div');
+      row.className = 'pf-top-row';
+      const rank = document.createElement('span');
+      rank.className = 'pf-top-rank';
+      rank.textContent = String(i + 1);
+      const name = document.createElement('span');
+      name.className = 'pf-top-name';
+      name.textContent = (this.weapons[id] && this.weapons[id].name) || id.toUpperCase();
+      const num = document.createElement('span');
+      num.className = 'pf-top-num';
+      num.textContent = `${Math.round((n / total) * 100)}%`;
+      const track = document.createElement('div');
+      track.className = 'ux-track';
+      const fill = document.createElement('div');
+      fill.className = 'ux-fill';
+      track.appendChild(fill);
+      row.append(rank, name, num, track);
+      host.appendChild(row);
+      requestAnimationFrame(() => { fill.style.width = `${Math.max(3, Math.round((n / entries[0][1]) * 100))}%`; });
+    });
   }
 
   // The favourite weapon is shown with the actual painted sprite, reusing the

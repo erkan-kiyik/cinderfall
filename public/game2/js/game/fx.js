@@ -603,19 +603,24 @@ export class FX {
     }
   }
 
+  // Called every drawn frame. The output array and its light records are
+  // pooled — a fresh object per light per frame was steady garbage at 120Hz.
   getLights() {
-    const out = [];
-    for (const l of this.lights) {
-      const a = l.a * clamp(1 - l.age / l.life, 0, 1);
-      out.push({ x: l.x, y: l.y, r: l.r, c: l.c, a, flicker: 0, seed: 0 });
-    }
+    const out = this._lightOut || (this._lightOut = []);
+    const pool = this._lightPool || (this._lightPool = []);
+    let n = 0;
+    const put = (x, y, r, c, a, flicker, seed) => {
+      const o = pool[n] || (pool[n] = { x: 0, y: 0, r: 0, c: null, a: 0, flicker: 0, seed: 0 });
+      o.x = x; o.y = y; o.r = r; o.c = c; o.a = a; o.flicker = flicker; o.seed = seed;
+      out[n++] = o;
+    };
+    for (const l of this.lights) put(l.x, l.y, l.r, l.c, l.a * clamp(1 - l.age / l.life, 0, 1), 0, 0);
     // every energy bolt emits its own dynamic light
-    for (const pr of this.projectiles) {
-      out.push({ x: pr.x, y: pr.y, r: pr.radius * 12, c: pr.color, a: 0.7, flicker: 0.3, seed: pr.age * 30 });
-    }
+    for (const pr of this.projectiles) put(pr.x, pr.y, pr.radius * 12, pr.color, 0.7, 0.3, pr.age * 30);
     // the held weapon's own emitter — flickers so it reads as live plasma
     const em = this.emitter;
-    if (em) out.push({ x: em.x, y: em.y, r: em.r, c: em.c, a: em.a, flicker: 0.35, seed: this.emitterSeed = (this.emitterSeed || 0) + 0.7 });
+    if (em) put(em.x, em.y, em.r, em.c, em.a, 0.35, this.emitterSeed = (this.emitterSeed || 0) + 0.7);
+    out.length = n;
     return out;
   }
 }

@@ -331,6 +331,11 @@ export class Hud {
       () => quality.data.tier,
       (tier) => { quality.set(tier); on.graphics && on.graphics(); });
 
+    seg($('set-fps'),
+      [{ val: 'auto', text: () => t('set.fpsMax') }, { val: 60, text: () => '60' }, { val: 30, text: () => '30' }],
+      () => quality.fpsMode,
+      (v) => { quality.setFpsMode(v); });
+
     seg($('set-brightness'),
       BRIGHTNESS_LEVELS.map((l, i) => ({ val: i, text: () => t(l.label) })),
       () => brightness.index,
@@ -370,7 +375,7 @@ export class Hud {
 
   renderSettings() {
     if (!this.el.settings) return;
-    for (const id of ['set-graphics', 'set-brightness', 'set-shake', 'set-haptics']) {
+    for (const id of ['set-graphics', 'set-fps', 'set-brightness', 'set-shake', 'set-haptics']) {
       const host = $(id);
       if (!host || !host._opts) continue;
       const cur = String(host._get());

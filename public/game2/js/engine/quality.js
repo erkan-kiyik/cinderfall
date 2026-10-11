@@ -36,9 +36,10 @@ const KEY = 'cinderfall.quality.v1';
 // cool-shadow passes use `overlay` and `soft-light`, which are the two most
 // expensive blend modes a mobile GPU has to service; the cheap path folds them
 // into one `source-over` fill of the same net tint.
-// `fpsCap` bounds how often the scene is drawn. A 120Hz phone otherwise
-// renders every frame twice for no visible gain, and Low holds a steady 30
-// rather than a ragged 40-50 — steadier, cooler and lighter on the battery.
+// No tier caps the frame rate any more. The scene draws on every vsync and
+// the simulation sub-steps to match (main.js), so a 120Hz phone shows 120
+// distinct frames; the only cap is the player's own choice in Settings
+// (`fpsMode`: 60 to save battery, 30 for the weakest phones).
 // Medium no longer runs the rich grade: its overlay and soft-light passes are
 // the two most expensive blend modes a mobile GPU services, for a tint the
 // cheap path reproduces closely.
@@ -54,15 +55,15 @@ const KEY = 'cinderfall.quality.v1';
 // `foreground` (the near-plane parallax strip) is its own flag now rather than
 // riding on richGrade, so High keeps it.
 //
-// Every tier targets 60fps now (Low used to cap at 30). Holding it is the job
-// of the dynamic resolution in main.js: when frames run long the scene
-// resolution steps down in small increments, and climbs back when there is
-// headroom, before the runtime ever drops a whole tier.
+// Every tier targets the display's own rate. Holding it is the job of the
+// dynamic resolution in main.js: when frames run long the scene resolution
+// steps down a rung, and climbs back when there is headroom; a whole tier only
+// drops when even 60 cannot be held at the resolution floor.
 export const PRESETS = {
-  low:    { name: 'LOW',    dprCap: 1,   assetScale: 2,   particleMax: 700,  bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.4,  accentPx: 0,   lightScale: 0.4,  richGrade: false, renderScale: 0.7,  bgScale: 0.5,  fpsCap: 60 },
-  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1200, bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.6,  accentPx: 1.2, lightScale: 0.5,  richGrade: false, renderScale: 0.72, bgScale: 0.6,  fpsCap: 60 },
-  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: false, ambientMul: 1,    accentPx: 1.4, lightScale: 0.75, richGrade: false, foreground: true, renderScale: 1,    bgScale: 0.75, fpsCap: 60 },
-  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, accentPx: 1.4, lightScale: 1,    richGrade: true,  foreground: true, renderScale: 1,    bgScale: 1,    fpsCap: 60 },
+  low:    { name: 'LOW',    dprCap: 1,   assetScale: 2,   particleMax: 700,  bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.4,  accentPx: 0,   lightScale: 0.4,  richGrade: false, renderScale: 0.7,  bgScale: 0.5 },
+  medium: { name: 'MEDIUM', dprCap: 1.5, assetScale: 2.5, particleMax: 1200, bloom: false, bloomBlur: 0,  grain: false, ambientMul: 0.6,  accentPx: 1.2, lightScale: 0.5,  richGrade: false, renderScale: 0.72, bgScale: 0.6 },
+  high:   { name: 'HIGH',   dprCap: 2,   assetScale: 3,   particleMax: 2600, bloom: true,  bloomBlur: 13, grain: false, ambientMul: 1,    accentPx: 1.4, lightScale: 0.75, richGrade: false, foreground: true, renderScale: 1,    bgScale: 0.75 },
+  ultra:  { name: 'ULTRA',  dprCap: 3,   assetScale: 3.5, particleMax: 3600, bloom: true,  bloomBlur: 16, grain: true,  ambientMul: 1.25, accentPx: 1.4, lightScale: 1,    richGrade: true,  foreground: true, renderScale: 1,    bgScale: 1 },
 };
 const ORDER = ['low', 'medium', 'high', 'ultra'];
 // How many times the runtime may step the preset down on its own. Two is
@@ -130,6 +131,16 @@ class Quality {
     this._dynSave = setTimeout(() => this.save(), 1500);   // debounced: steps come in runs
   }
 
+  // Frame-rate cap chosen in Settings: 'auto' (the display's rate), 60 or 30.
+  get fpsMode() {
+    const v = this.data.fps;
+    return v === 60 || v === 30 ? v : 'auto';
+  }
+  setFpsMode(v) {
+    this.data.fps = v === 60 || v === 30 ? v : 'auto';
+    this.save();
+  }
+
   save() {
     try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { /* ignore */ }
   }
@@ -166,7 +177,7 @@ class Quality {
     if (i <= 0) { this.data.autoLowered = MAX_AUTO_LOWER; this.save(); return null; }
     this.data.tier = ORDER[i - 1];
     this.data.autoLowered = used + 1;
-    this.data.dyn = 0.85;
+    this.data.dyn = 0.8;
     this.save();
     return this.data.tier;
   }

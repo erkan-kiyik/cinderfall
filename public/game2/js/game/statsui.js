@@ -1,16 +1,33 @@
-// Stats screen: the lifetime-counters overview grid and the achievement
-// browser (progress bars, lock state, claim). All numbers are read live off
-// Progression — this module never stores anything itself besides the
-// achievements' claimed flag (on Progression).
+// Stats screen: the lifetime-counters overview and the achievement cabinet
+// (progress, lock state, claim). All numbers are read live off Progression —
+// this module never stores anything itself besides the achievements' claimed
+// flag (on Progression).
+//
+// Layout, for a landscape phone first: the title and the two sub-tabs share
+// one row; the overview leads with four headline tiles and then dense
+// icon/label/value rows in three named groups; the cabinet leads with one
+// slim summary bar (count, progress, medals, CLAIM ALL) and a filter strip,
+// so the first screen of either tab is numbers rather than chrome. Every
+// string resolves through t().
 
 import { ACHIEVEMENTS, TIERS, achievementProgress, drawAchievementIcon } from './achievements.js';
 import { playCurrencyGain, animateCount } from './currencyfx.js';
 import { slidePill, popIn, sparks, coinsTo, haptic, sfx, spring, level } from '../ui/motion.js';
 import { paintMedalCanvas } from '../art/medal.js';
 import { renderScrapIcon } from '../art/currency.js';
-import { ACHIEVEMENT_SCRAP } from './progression.js';
+import { ACHIEVEMENT_SCRAP, xpForLevel } from './progression.js';
+import { t, onLangChange } from '../engine/i18n.js';
 
 const $ = (id) => document.getElementById(id);
+
+// t() returns the key itself when no dictionary has it; achievement names and
+// descriptions keep their English in achievements.js, so fall back to that.
+function tf(key, fallback) {
+  const s = t(key);
+  return s === key ? fallback : s;
+}
+export const achName = (a) => tf(`ach.${a.id}.n`, a.name);
+export const achDesc = (a) => tf(`ach.${a.id}.d`, a.desc);
 
 function formatDuration(ms) {
   const totalMin = Math.floor(ms / 60000);
@@ -19,44 +36,59 @@ function formatDuration(ms) {
   return `${m}m`;
 }
 
-// Grouped rather than one 17-card wall. A flat grid left an orphan card on
-// its own final row and gave the eye no place to start; three named blocks —
-// how you fight, how far you have come, what you have banked — each land on a
-// clean row and let a player find the number they came for. Every field owns a
-// distinct icon: `accuracy` and `headshots` both drew the same reticle before,
-// as did combo/XP, level/most-used and weapons-used/damage-bonus.
+// Headline tiles: the four numbers a returning player checks first.
+const HERO = [
+  { key: 'kills', label: 'stats.f.kills', icon: 'skull', value: (p) => p.data.totalKills.toLocaleString() },
+  { key: 'accuracy', label: 'stats.f.accuracy', icon: 'target', value: (p) => `${p.accuracy()}%` },
+  { key: 'level', label: 'stats.f.level', icon: 'chevron', value: (p) => String(p.data.level), meter: true },
+  { key: 'scrap', label: 'stats.f.scrap', icon: 'scrap', value: (p) => p.data.lifetimeScrapEarned.toLocaleString() },
+];
+
+// Everything else, grouped — how you fight, how far you have come, what you
+// have banked. Each field owns a distinct icon.
 const STAT_GROUPS = [
-  { label: 'COMBAT RECORD', fields: [
-    { key: 'kills',      label: 'TOTAL KILLS',             icon: 'skull',     value: (p) => p.data.totalKills.toLocaleString() },
-    { key: 'headshots',  label: 'HEADSHOTS',               icon: 'crosshair', value: (p) => p.data.totalHeadshots.toLocaleString() },
-    { key: 'accuracy',   label: 'ACCURACY',                icon: 'target',    value: (p) => `${p.accuracy()}%` },
-    { key: 'shots',      label: 'SHOTS FIRED',             icon: 'bullet',    value: (p) => p.data.shotsTotal.toLocaleString() },
-    { key: 'combo',      label: 'HIGHEST COMBO',           icon: 'bolt',      value: (p) => String(p.data.highestCombo) },
-    { key: 'streak',     label: 'LONGEST KILL STREAK',     icon: 'fire',      value: (p) => String(p.data.longestKillStreak) },
-    { key: 'missions',   label: 'MISSIONS COMPLETED',      icon: 'flag',      value: (p) => String(p.data.totalMissionsCompleted) },
-    { key: 'playtime',   label: 'TOTAL PLAYTIME',          icon: 'clock',     value: (p) => formatDuration(p.data.totalPlaytimeMs) },
+  { label: 'stats.g.combat', fields: [
+    { key: 'headshots', label: 'stats.f.headshots', icon: 'crosshair', value: (p) => p.data.totalHeadshots.toLocaleString() },
+    { key: 'shots', label: 'stats.f.shots', icon: 'bullet', value: (p) => p.data.shotsTotal.toLocaleString() },
+    { key: 'combo', label: 'stats.f.combo', icon: 'bolt', value: (p) => String(p.data.highestCombo) },
+    { key: 'streak', label: 'stats.f.streak', icon: 'fire', value: (p) => String(p.data.longestKillStreak) },
+    { key: 'missions', label: 'stats.f.missions', icon: 'flag', value: (p) => String(p.data.totalMissionsCompleted) },
+    { key: 'playtime', label: 'stats.f.playtime', icon: 'clock', value: (p) => formatDuration(p.data.totalPlaytimeMs) },
   ] },
-  { label: 'OPERATOR', fields: [
-    { key: 'level',      label: 'OPERATOR LEVEL',          icon: 'chevron',   value: (p) => String(p.data.level) },
-    { key: 'xp',         label: 'TOTAL XP',                icon: 'spark',     value: (p) => Math.round(p.data.xp).toLocaleString() },
+  { label: 'stats.g.operator', fields: [
+    { key: 'xp', label: 'stats.f.xp', icon: 'spark', value: (p) => Math.round(p.data.xp).toLocaleString() },
     // What the level is actually worth in the field. Without these two rows
-    // the per-level stat gain is invisible — the player would be getting
-    // steadily tougher with nothing on screen ever saying so.
-    { key: 'lvlHp',      label: 'LEVEL BONUS — HEALTH',    icon: 'shield',    value: (p) => `+${p.levelBonuses().maxHp}` },
-    { key: 'lvlDmg',     label: 'LEVEL BONUS — DAMAGE',    icon: 'blade',     value: (p) => `+${Math.round(p.levelBonuses().damage * 100)}%` },
+    // the per-level stat gain is invisible.
+    { key: 'lvlHp', label: 'stats.f.lvlHp', icon: 'shield', value: (p) => `+${p.levelBonuses().maxHp}` },
+    { key: 'lvlDmg', label: 'stats.f.lvlDmg', icon: 'blade', value: (p) => `+${Math.round(p.levelBonuses().damage * 100)}%` },
   ] },
-  { label: 'ARMOURY & SALVAGE', fields: [
-    { key: 'mostUsed',   label: 'MOST USED WEAPON',        icon: 'crown',     value: (p, weapons) => { const id = p.mostUsedWeapon(); return id ? (weapons[id]?.name || id) : '—'; } },
-    { key: 'weaponsUsed', label: 'WEAPONS USED',           icon: 'guns',      value: (p) => String(p.weaponsUsedCount()) },
-    { key: 'crates',     label: 'CRATES OPENED',           icon: 'crate',     value: (p) => String(p.data.cratesOpened) },
-    { key: 'scrap',      label: 'LIFETIME SCRAP SALVAGED', icon: 'scrap',     value: (p) => p.data.lifetimeScrapEarned.toLocaleString() },
-    { key: 'ads',        label: 'ADS WATCHED',             icon: 'play',      value: (p) => p.data.totalAdsWatched.toLocaleString() },
+  { label: 'stats.g.armoury', fields: [
+    { key: 'mostUsed', label: 'stats.f.mostUsed', icon: 'crown', value: (p, weapons) => { const id = p.mostUsedWeapon(); return id ? (weapons[id]?.name || id) : '—'; } },
+    { key: 'weaponsUsed', label: 'stats.f.weaponsUsed', icon: 'guns', value: (p) => String(p.weaponsUsedCount()) },
+    { key: 'crates', label: 'stats.f.crates', icon: 'crate', value: (p) => String(p.data.cratesOpened) },
+    { key: 'ads', label: 'stats.f.ads', icon: 'play', value: (p) => p.data.totalAdsWatched.toLocaleString() },
   ] },
 ];
 
-// The four numbers a returning player checks first get a wider, brighter card
-// at the head of their group instead of hiding in a uniform wall.
-const STAT_HERO = new Set(['kills', 'accuracy', 'level', 'scrap']);
+const TIER_ORDER = ['easy', 'medium', 'hard'];
+
+// One icon canvas, sized from its laid-out box once it has one.
+function paintIcon(cv, icon, color = '#ff5c46') {
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawAchievementIcon(g, icon, w, h, color);
+}
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
 
 export class StatsUI {
   constructor(deps) {
@@ -64,17 +96,27 @@ export class StatsUI {
     this.weapons = deps.weapons || {};
     this.audio = deps.audio || null;
     this.section = 'overview';
-    this.busy = false;
+    this.filter = 'all';
   }
 
   mount() {
     document.querySelectorAll('.stats-subtab').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (this.section === btn.dataset.section) return;
         this.section = btn.dataset.section;
         this.applySectionVisibility();
         if (this.audio) this.audio.ui();
       });
     });
+    document.querySelectorAll('#ach-filters .ux-tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (this.filter === btn.dataset.filter) return;
+        this.filter = btn.dataset.filter;
+        this.renderAchievements(true);
+        if (this.audio) this.audio.ui();
+      });
+    });
+    onLangChange(() => this.refresh());
     this.refresh();
   }
 
@@ -85,173 +127,207 @@ export class StatsUI {
   }
 
   applySectionVisibility() {
-    document.querySelectorAll('.stats-subtab').forEach((b) => b.classList.toggle('active', b.dataset.section === this.section));
+    document.querySelectorAll('.stats-subtab').forEach((b) => {
+      const on = b.dataset.section === this.section;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
     $('stats-overview').classList.toggle('hidden', this.section !== 'overview');
     $('stats-achievements').classList.toggle('hidden', this.section !== 'achievements');
-    const first = document.querySelector('.stats-subtab');
-    if (first) slidePill(first.parentElement, { kind: 'fill' });
-    const shown = $(this.section === 'overview' ? 'stats-grid' : 'stats-achievements');
-    if (shown && this._lastSection !== this.section) popIn(shown.children, { step: 30, rise: 10 });
+    const tabs = document.querySelector('.st-tabs');
+    if (tabs) slidePill(tabs, { kind: 'fill' });
+    if (this.section === 'achievements') slidePill($('ach-filters'), { kind: 'fill' });
+    // canvases inside a hidden section have no box yet: paint on show
+    requestAnimationFrame(() => this.paintVisibleIcons());
+    if (this._lastSection !== this.section) {
+      const shown = this.section === 'overview'
+        ? [...$('stats-hero').children, ...$('stats-grid').children]
+        : [$('ach-summary'), ...$('achievements-list').children];
+      popIn(shown, { step: 26, rise: 8 });
+    }
     this._lastSection = this.section;
   }
 
+  paintVisibleIcons() {
+    document.querySelectorAll('#tab-stats canvas[data-icon]').forEach((cv) => {
+      const key = `${cv.clientWidth}x${cv.clientHeight}`;
+      if (!cv.clientWidth || cv._painted === key) return;
+      paintIcon(cv, cv.dataset.icon);
+      cv._painted = key;
+    });
+  }
+
+  // ------------------------------------------------------------- overview
+
   renderOverview() {
+    const p = this.p;
+    const hero = $('stats-hero');
+    hero.innerHTML = '';
+    for (const f of HERO) {
+      const tile = el('div', `st-tile st-tile-${f.key}`);
+      const cv = el('canvas', 'st-tile-icon'); cv.dataset.icon = f.icon;
+      const body = el('div', 'st-tile-body');
+      body.append(el('div', 'st-tile-value', f.value(p, this.weapons)), el('div', 'st-tile-label', t(f.label)));
+      tile.append(cv, body);
+      if (f.meter) {
+        const lv = p.data.level;
+        const need = Math.max(0, xpForLevel(lv + 1) - Math.round(p.data.xp));
+        const track = el('div', 'ux-track st-tile-track');
+        const fill = el('div', 'ux-fill');
+        track.appendChild(fill);
+        tile.append(track, el('div', 'st-tile-sub', t('profile.xpLeft', { xp: need.toLocaleString(), lvl: String(lv + 1) })));
+        requestAnimationFrame(() => { fill.style.width = `${Math.round(p.xpProgress() * 100)}%`; });
+      }
+      hero.appendChild(tile);
+    }
+
     const host = $('stats-grid');
     host.innerHTML = '';
     for (const group of STAT_GROUPS) {
-      const head = document.createElement('div');
-      head.className = 'stats-group-head';
-      head.textContent = group.label;
-      host.appendChild(head);
-
-      const grid = document.createElement('div');
-      grid.className = 'stats-group-grid';
-      for (const field of group.fields) grid.appendChild(this.makeStatCard(field));
-      host.appendChild(grid);
+      const block = el('div', 'st-group');
+      block.appendChild(el('div', 'st-group-head', t(group.label)));
+      const rows = el('div', 'st-rows');
+      for (const f of group.fields) {
+        const row = el('div', 'st-row');
+        const cv = el('canvas', 'st-row-icon'); cv.dataset.icon = f.icon;
+        row.append(cv, el('div', 'st-row-label', t(f.label)), el('div', 'st-row-value', f.value(p, this.weapons)));
+        rows.appendChild(row);
+      }
+      block.appendChild(rows);
+      host.appendChild(block);
     }
+    requestAnimationFrame(() => this.paintVisibleIcons());
   }
 
-  makeStatCard(field) {
-    const card = document.createElement('div');
-    card.className = 'stat-card' + (STAT_HERO.has(field.key) ? ' hero' : '');
-    const cv = document.createElement('canvas');
-    cv.className = 'stat-card-icon';
-    card.appendChild(cv);
-    const val = document.createElement('div');
-    val.className = 'stat-card-value';
-    val.textContent = field.value(this.p, this.weapons);
-    card.appendChild(val);
-    const lbl = document.createElement('div');
-    lbl.className = 'stat-card-label';
-    lbl.textContent = field.label;
-    card.appendChild(lbl);
-    requestAnimationFrame(() => {
-      const g = cv.getContext('2d');
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = cv.clientWidth || 28, h = cv.clientHeight || 28;
-      cv.width = w * dpr; cv.height = h * dpr;
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawAchievementIcon(g, field.icon, w, h, '#ff5c46');
-    });
-    return card;
+  // ----------------------------------------------------------- achievements
+
+  stateOf(prog) {
+    return prog.claimed ? 'claimed' : prog.unlocked ? 'ready' : prog.frac > 0 ? 'progress' : 'locked';
   }
 
-  // Medal cabinet: a summary strip (overall progress + medals per metal),
-  // then one section per metal. Cards are horizontal — medal, name and goal,
-  // progress, reward — so a phone shows a readable column rather than a wall
-  // of tiny squares.
-  renderAchievements() {
-    const host = $('achievements-list');
-    host.innerHTML = '';
+  renderAchievements(animate = false) {
     const all = ACHIEVEMENTS.map((a) => [a, achievementProgress(a, this.p)]);
     const done = all.filter(([, p]) => p.claimed).length;
-    const ready = all.filter(([, p]) => p.unlocked && !p.claimed).length;
+    const ready = all.filter(([, p]) => p.unlocked && !p.claimed);
 
-    const sum = document.createElement('div');
-    sum.className = 'ach-summary';
-    const left = document.createElement('div');
-    left.className = 'ach-sum-main';
-    left.innerHTML = `<div class="ach-sum-count"><b>${done}</b> / ${all.length}</div><div class="ach-sum-label">COMPLETED${ready ? ` · <span class="ach-sum-ready">${ready} READY TO CLAIM</span>` : ''}</div>`;
-    const bar = document.createElement('div');
-    bar.className = 'ach-sum-track';
-    const fill = document.createElement('div');
-    fill.className = 'ach-sum-fill';
-    bar.appendChild(fill);
-    left.appendChild(bar);
-    sum.appendChild(left);
-    const medals = document.createElement('div');
-    medals.className = 'ach-sum-medals';
-    for (const tierKey of ['easy', 'medium', 'hard']) {
+    // tab badge: how many medals are waiting
+    const badge = $('ach-tab-count');
+    if (badge) {
+      badge.textContent = String(ready.length);
+      badge.classList.toggle('hidden', ready.length === 0);
+    }
+
+    // ---- summary bar
+    const sum = $('ach-summary');
+    sum.innerHTML = '';
+    const count = el('div', 'ach-bar-count');
+    count.innerHTML = `<b>${done}</b><span>/ ${all.length}</span>`;
+    const mid = el('div', 'ach-bar-mid');
+    const label = el('div', 'ach-bar-label', t('ach.completed'));
+    if (ready.length) label.appendChild(el('span', 'ach-bar-ready', ` · ${t('ach.ready', { n: ready.length })}`));
+    const track = el('div', 'ux-track ach-bar-track');
+    const fill = el('div', 'ux-fill ach-bar-fill');
+    track.appendChild(fill);
+    mid.append(label, track);
+    const medals = el('div', 'ach-bar-medals');
+    for (const tierKey of TIER_ORDER) {
       const group = all.filter(([a]) => a.tier === tierKey);
       const got = group.filter(([, p]) => p.claimed).length;
-      const m = document.createElement('div');
-      m.className = 'ach-sum-medal';
-      const cv = document.createElement('canvas');
-      m.appendChild(cv);
-      const n = document.createElement('span');
-      n.textContent = `${got}/${group.length}`;
-      m.appendChild(n);
+      const m = el('div', 'ach-bar-medal');
+      const cv = el('canvas');
+      m.append(cv, el('span', null, `${got}/${group.length}`));
+      m.title = t(`ach.tier.${tierKey}`);
       medals.appendChild(m);
       requestAnimationFrame(() => paintMedalCanvas(cv, tierKey, 'star', got ? 'claimed' : 'progress'));
     }
-    sum.appendChild(medals);
-    host.appendChild(sum);
+    sum.append(count, mid, medals);
+    if (ready.length) {
+      const btn = el('button', 'btn primary ach-claim-all', t('ach.claimAll'));
+      btn.type = 'button';
+      btn.addEventListener('click', () => this.claimAll(btn));
+      sum.appendChild(btn);
+    }
     requestAnimationFrame(() => { fill.style.width = `${Math.round((done / all.length) * 100)}%`; });
 
-    for (const tierKey of ['easy', 'medium', 'hard']) {
+    // filter strip: counts in the labels would crowd a phone; the READY chip
+    // just lights up when there is something in it
+    const fbar = $('ach-filters');
+    if (fbar) {
+      fbar.querySelectorAll('.ux-tab').forEach((b) => {
+        b.classList.toggle('active', b.dataset.filter === this.filter);
+        b.classList.toggle('has-ready', b.dataset.filter === 'ready' && ready.length > 0);
+      });
+      if (this.section === 'achievements') slidePill(fbar, { kind: 'fill' });
+    }
+
+    // ---- list
+    const host = $('achievements-list');
+    host.innerHTML = '';
+    const keep = ([, p]) => {
+      const s = this.stateOf(p);
+      if (this.filter === 'ready') return s === 'ready';
+      if (this.filter === 'progress') return s === 'progress' || s === 'locked';
+      if (this.filter === 'done') return s === 'claimed';
+      return true;
+    };
+    // claimable first, then in progress by how close, then done
+    const rank = ([, p]) => (p.unlocked && !p.claimed ? 0 : !p.unlocked ? 2 - p.frac : 3);
+    let shown = 0;
+    for (const tierKey of TIER_ORDER) {
       const tier = TIERS[tierKey];
       const group = all.filter(([a]) => a.tier === tierKey);
-      const head = document.createElement('div');
-      head.className = 'achievement-tier-head';
+      const list = group.filter(keep);
+      if (!list.length) continue;
+      const head = el('div', 'achievement-tier-head');
       head.style.setProperty('--tier-color', tier.color);
-      head.innerHTML = `<span>${tier.label}</span><span class="ach-tier-count">${group.filter(([, p]) => p.claimed).length}/${group.length}</span>`;
+      head.append(el('span', null, t(`ach.tier.${tierKey}`)), el('span', 'ach-tier-count', `${group.filter(([, p]) => p.claimed).length}/${group.length}`));
       host.appendChild(head);
-
-      const grid = document.createElement('div');
-      grid.className = 'achievements-grid';
-      // claimable first, then in progress by how close, then done
-      const rank = ([, p]) => (p.unlocked && !p.claimed ? 0 : !p.unlocked ? 1 - p.frac + 1 : 3);
-      for (const [ach, prog] of group.slice().sort((x, y) => rank(x) - rank(y))) {
+      const grid = el('div', 'achievements-grid');
+      for (const [ach, prog] of list.slice().sort((x, y) => rank(x) - rank(y))) {
         grid.appendChild(this.makeAchievementCard(ach, tier, prog));
+        shown++;
       }
       host.appendChild(grid);
     }
+    if (!shown) host.appendChild(el('div', 'ach-empty', t('ach.empty')));
+    if (animate) popIn(host.children, { step: 24, rise: 8 });
   }
 
   makeAchievementCard(ach, tier, prog = achievementProgress(ach, this.p)) {
-    const state = prog.claimed ? 'claimed' : prog.unlocked ? 'ready' : prog.frac > 0 ? 'progress' : 'locked';
-    const card = document.createElement('div');
-    card.className = `achievement-card ach-${state}`;
+    const state = this.stateOf(prog);
+    const card = el('div', `achievement-card ach-${state}`);
     card.dataset.id = ach.id;
     card.style.setProperty('--tier-color', tier.color);
     card.style.setProperty('--tier-glow', tier.glow);
 
-    const medal = document.createElement('canvas');
-    medal.className = 'ach-medal';
+    const medal = el('canvas', 'ach-medal');
     card.appendChild(medal);
 
-    const body = document.createElement('div');
-    body.className = 'ach-body';
-    const top = document.createElement('div');
-    top.className = 'ach-top';
-    const name = document.createElement('div');
-    name.className = 'achievement-name';
-    name.textContent = ach.name;
-    top.appendChild(name);
-    const reward = document.createElement('div');
-    reward.className = 'ach-reward';
-    const ico = document.createElement('canvas');
-    ico.className = 'cur-icon cur-scrap'; ico.width = ico.height = 14;
+    const body = el('div', 'ach-body');
+    const top = el('div', 'ach-top');
+    top.appendChild(el('div', 'achievement-name', achName(ach)));
+    const reward = el('div', 'ach-reward');
+    const ico = el('canvas', 'cur-icon cur-scrap'); ico.width = ico.height = 14;
     reward.append(ico, document.createTextNode(String(ACHIEVEMENT_SCRAP)));
     top.appendChild(reward);
     body.appendChild(top);
+    body.appendChild(el('div', 'achievement-desc', achDesc(ach)));
 
-    const desc = document.createElement('div');
-    desc.className = 'achievement-desc';
-    desc.textContent = ach.desc;
-    body.appendChild(desc);
-
-    const row = document.createElement('div');
-    row.className = 'ach-prog-row';
-    const track = document.createElement('div');
-    track.className = 'achievement-progress-track';
-    const fill = document.createElement('div');
-    fill.className = 'achievement-progress-fill';
+    const row = el('div', 'ach-prog-row');
+    const track = el('div', 'achievement-progress-track');
+    const fill = el('div', 'achievement-progress-fill');
     track.appendChild(fill);
-    const label = document.createElement('div');
-    label.className = 'achievement-progress-label';
-    label.textContent = ach.stat === 'totalPlaytimeMs'
+    const label = el('div', 'achievement-progress-label', ach.stat === 'totalPlaytimeMs'
       ? `${Math.round(Math.min(prog.value, ach.goal) / 60000)}m / ${Math.round(ach.goal / 60000)}m`
-      : `${Math.min(prog.value, ach.goal).toLocaleString()} / ${ach.goal.toLocaleString()}`;
+      : `${Math.min(prog.value, ach.goal).toLocaleString()} / ${ach.goal.toLocaleString()}`);
     row.append(track, label);
     body.appendChild(row);
 
     if (state === 'ready') {
-      const btn = document.createElement('button');
-      btn.className = 'btn primary achievement-claim-btn';
-      btn.textContent = `CLAIM +${ACHIEVEMENT_SCRAP}`;
+      const btn = el('button', 'btn primary achievement-claim-btn', t('ach.claim', { n: ACHIEVEMENT_SCRAP }));
+      btn.type = 'button';
       btn.addEventListener('click', () => this.claimAchievement(ach.id, card));
-      body.appendChild(btn);
+      row.appendChild(btn);
     }
     card.appendChild(body);
 
@@ -284,6 +360,32 @@ export class StatsUI {
       const btn = card.querySelector('.achievement-claim-btn');
       if (btn) btn.remove();
     }
+    this.afterClaim(before, pill);
+  }
+
+  // Every waiting medal at once: one burst from the summary bar, one count-up.
+  claimAll(btn) {
+    const before = this.p.scrap;
+    const ready = ACHIEVEMENTS.filter((a) => { const pr = achievementProgress(a, this.p); return pr.unlocked && !pr.claimed; });
+    let n = 0;
+    for (const a of ready) if (this.p.claimAchievement(a.id)) n++;
+    if (!n) return;
+    const pill = document.querySelector('.scrap-pill');
+    haptic('success');
+    sfx('reveal', 3);
+    if (btn) {
+      sparks(btn, { count: 22, color: '#f0c050', spread: 120, size: 7 });
+      coinsTo(btn, pill, { count: Math.min(12, 4 + n * 2) });
+      btn.disabled = true;
+    }
+    document.querySelectorAll('#achievements-list .ach-ready').forEach((c) => {
+      c.classList.remove('ach-ready'); c.classList.add('ach-claimed', 'ach-just');
+      const b = c.querySelector('.achievement-claim-btn'); if (b) b.remove();
+    });
+    this.afterClaim(before, pill);
+  }
+
+  afterClaim(before, pill) {
     const scrapCount = $('scrap-count');
     setTimeout(() => {
       if (scrapCount) animateCount(scrapCount, before, this.p.scrap);
@@ -291,5 +393,4 @@ export class StatsUI {
     }, 520);
     setTimeout(() => { this.renderAchievements(); this.renderOverview(); }, 1100);
   }
-
 }
