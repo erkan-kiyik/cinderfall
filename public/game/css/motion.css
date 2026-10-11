@@ -443,7 +443,7 @@ html.no-backdrop-filter #hud .glass { background: rgba(10, 13, 18, 0.72) !import
 .ach-bar-fill { background: linear-gradient(90deg, #d39a62, #c3cdd8, #f0c050); box-shadow: 0 0 8px rgba(240,192,80,0.35); }
 .ach-bar-medals { flex: 0 0 auto; display: flex; gap: var(--s3); }
 .ach-bar-medal { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.ach-bar-medal canvas { width: 30px; height: 30px; }
+.ach-bar-medal canvas { width: 40px; height: 40px; }
 .ach-bar-medal span { font-size: 9.5px; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 700; }
 .ach-claim-all { flex: 0 0 auto; width: auto; margin: 0; padding: 8px 16px; font-size: 11px; letter-spacing: 0.14em; }
 
@@ -511,4 +511,82 @@ html.no-backdrop-filter #hud .glass { background: rgba(10, 13, 18, 0.72) !import
 
 @media (prefers-reduced-motion: reduce) {
   .ach-ready, .ach-ready .ach-medal { animation: none; }
+}
+
+/* =========================================================================
+   PROFILE / STATS / ACHIEVEMENTS — idle and touch motion
+   Everything here animates transform or opacity only (compositor work, no
+   layout), and all of it stops under reduced motion.
+   ========================================================================= */
+/* a sheen crosses the headline tiles now and then, each on its own beat */
+.st-tile, .pf-stat.is-hero, .ach-bar { position: relative; overflow: hidden; }
+.st-tile::before, .pf-stat.is-hero::before, .ach-bar::before {
+  content: ''; position: absolute; inset: -20% auto -20% 0; width: 38%; z-index: 0; pointer-events: none;
+  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,240,225,0.07) 45%, rgba(255,255,255,0.13) 50%, rgba(255,240,225,0.07) 55%, rgba(255,255,255,0) 100%);
+  transform: translateX(-140%) skewX(-16deg);
+  animation: ux-sheen 6.5s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+.st-tile > *, .pf-stat > *, .ach-bar > * { position: relative; z-index: 1; }
+.st-tile:nth-child(2)::before { animation-delay: 0.9s; }
+.st-tile:nth-child(3)::before { animation-delay: 1.8s; }
+.st-tile:nth-child(4)::before { animation-delay: 2.7s; }
+.pf-stat.is-hero:nth-child(2)::before { animation-delay: 1.1s; }
+.ach-bar::before { animation-duration: 8s; animation-delay: 2s; }
+@keyframes ux-sheen {
+  0%, 62% { transform: translateX(-140%) skewX(-16deg); }
+  100% { transform: translateX(380%) skewX(-16deg); }
+}
+
+/* light travelling along every progress fill */
+.ux-fill, .achievement-progress-fill { position: relative; overflow: hidden; }
+.ux-fill::after, .achievement-progress-fill::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.45), rgba(255,255,255,0));
+  transform: translateX(-120%);
+  animation: ux-flow 2.8s ease-in-out infinite;
+}
+@keyframes ux-flow { 0%, 30% { transform: translateX(-120%); } 100% { transform: translateX(300%); } }
+
+/* press: tiles and cards give under the thumb and spring back */
+.st-tile, .pf-stat, .st-row, .achievement-card, .pf-top-row, .pf-fav {
+  transition: transform 0.45s var(--spring), box-shadow 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.st-tile:active, .pf-stat:active, .achievement-card:active, .pf-fav:active { transform: scale(0.965); transition-duration: 0.08s; }
+.st-row:active, .pf-top-row:active { transform: translateX(3px); transition-duration: 0.08s; }
+.ux-tab { transition: color 0.25s ease, transform 0.4s var(--spring); }
+.ux-tab:active { transform: scale(0.93); transition-duration: 0.08s; }
+.ux-close { transition: background 0.15s ease, color 0.15s ease, transform 0.45s var(--spring); }
+.ux-close:hover { transform: rotate(90deg); }
+
+/* icons in the stat rows nudge when their row is touched */
+.st-row:active .st-row-icon { transform: scale(1.25) rotate(-8deg); }
+.st-row-icon, .st-tile-icon, .pf-stat canvas { transition: transform 0.5s var(--spring); }
+.st-tile:hover .st-tile-icon, .pf-stat:hover canvas { transform: scale(1.12) rotate(-6deg); }
+
+/* the ready-to-claim count on the tab beats */
+.ux-count:not(.hidden) { animation: ux-beat 1.6s ease-in-out infinite; }
+@keyframes ux-beat { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.22); } 90% { transform: scale(0.96); } }
+.ach-filters .ux-tab.has-ready:not(.active) { animation: ux-ready-glow 2s ease-in-out infinite; }
+@keyframes ux-ready-glow { 50% { text-shadow: 0 0 10px rgba(240,192,80,0.7); } }
+
+/* summary medals bob gently, out of step */
+.ach-bar-medal canvas { animation: ux-medal-bob 3.4s ease-in-out infinite; }
+.ach-bar-medal:nth-child(2) canvas { animation-delay: 0.5s; }
+.ach-bar-medal:nth-child(3) canvas { animation-delay: 1s; }
+@keyframes ux-medal-bob { 50% { transform: translateY(-2px) rotate(-2deg); } }
+
+/* profile: the panes slide in a little, the rank title settles */
+.pf-pane.active { animation: pf-in 0.42s var(--spring); }
+@keyframes pf-in { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+.profile-portrait { transition: transform 0.6s var(--spring), box-shadow 0.3s ease; }
+.pf-id:hover .profile-portrait { transform: translateY(-2px); box-shadow: inset 0 0 0 1px var(--rank-glow), 0 10px 24px -10px var(--rank-glow); }
+.profile-lvl-badge { animation: ux-badge 3.2s ease-in-out infinite; }
+@keyframes ux-badge { 50% { box-shadow: inset 0 0 0 1px var(--accent-line), 0 0 22px rgba(214,69,58,0.38); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .st-tile::before, .pf-stat.is-hero::before, .ach-bar::before,
+  .ux-fill::after, .achievement-progress-fill::after,
+  .ux-count:not(.hidden), .ach-filters .ux-tab.has-ready:not(.active),
+  .ach-bar-medal canvas, .profile-lvl-badge, .pf-pane.active { animation: none !important; }
 }

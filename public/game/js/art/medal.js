@@ -117,3 +117,75 @@ export function paintMedalCanvas(cv, tierKey, iconKind, state) {
   g.clearRect(0, 0, s, s);
   drawMedal(g, s, tierKey, iconKind, state);
 }
+
+// Tier totals for the cabinet's summary bar: one medal per metal, always in
+// its own metal (a bronze with nothing claimed yet is still bronze — it was
+// drawn in grey steel, which read as "locked", and the claimed state carried
+// a check seal that made one claimed bronze look like a finished set). A ring
+// around it fills with the share claimed, and the glyph names the tier:
+// star for bronze, shield for silver, crown for gold. `glint` (0..1) sweeps a
+// highlight across the face for the idle shine.
+const TIER_GLYPH = { easy: 'star', medium: 'shield', hard: 'crown' };
+export function drawTierMedal(g, size, tierKey, got, total, glint = -1) {
+  const M = METALS[tierKey] || METALS.easy;
+  const frac = total ? got / total : 0;
+  const done = total > 0 && got >= total;
+  const cx = size / 2, cy = size / 2, R = size * 0.46;
+  // ring track + fill
+  g.lineCap = 'round';
+  g.strokeStyle = 'rgba(255,255,255,0.08)'; g.lineWidth = size * 0.07;
+  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+  if (frac > 0) {
+    g.save();
+    g.shadowColor = M.mid; g.shadowBlur = size * 0.18;
+    g.strokeStyle = M.hi; g.lineWidth = size * 0.07;
+    g.beginPath(); g.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); g.stroke();
+    g.restore();
+  }
+  // the medal itself; dimmed, not greyed, until the first one is claimed
+  const r = size * 0.32;
+  g.save();
+  if (!got) g.globalAlpha = 0.5;
+  g.fillStyle = 'rgba(0,0,0,0.4)'; hexPath(g, cx, cy + size * 0.025, r); g.fill();
+  const rim = g.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  rim.addColorStop(0, M.hi); rim.addColorStop(0.45, M.mid); rim.addColorStop(1, M.lo);
+  g.fillStyle = rim; hexPath(g, cx, cy, r); g.fill();
+  const face = g.createLinearGradient(cx, cy - r, cx, cy + r);
+  face.addColorStop(0, M.lo); face.addColorStop(1, M.mid);
+  g.fillStyle = face; hexPath(g, cx, cy, r * 0.76); g.fill();
+  const gs = r * 1.1;
+  g.globalAlpha *= 0.55;
+  g.drawImage(glyph(TIER_GLYPH[tierKey] || 'star', gs, '#000'), cx - gs / 2 + size * 0.01, cy - gs / 2 + size * 0.016, gs, gs);
+  g.globalAlpha = got ? 1 : 0.5;
+  g.drawImage(glyph(TIER_GLYPH[tierKey] || 'star', gs, M.hi), cx - gs / 2, cy - gs / 2, gs, gs);
+  // shine: a static top sheen, plus the moving glint when asked
+  hexPath(g, cx, cy, r); g.clip();
+  g.fillStyle = 'rgba(255,255,255,0.16)';
+  g.beginPath(); g.ellipse(cx - r * 0.2, cy - r * 0.75, r * 0.9, r * 0.35, -0.3, 0, Math.PI * 2); g.fill();
+  if (glint >= 0 && got) {
+    const gx = cx - r * 1.6 + glint * r * 3.2;
+    const gr = g.createLinearGradient(gx - r * 0.4, 0, gx + r * 0.4, 0);
+    gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.save(); g.translate(gx, cy); g.rotate(0.5); g.fillRect(-r * 0.4, -r * 1.6, r * 0.8, r * 3.2); g.restore();
+  }
+  g.restore();
+  // a full set earns a small star above the ring
+  if (done) {
+    g.fillStyle = M.hi;
+    const sx = cx, sy = cy - R, s = size * 0.075;
+    g.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? s * 0.45 : s; g.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr); }
+    g.closePath(); g.fill();
+  }
+}
+
+export function paintTierMedal(cv, tierKey, got, total, glint = -1) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const s = cv.clientWidth || 40;
+  if (cv.width !== Math.round(s * dpr)) { cv.width = Math.round(s * dpr); cv.height = Math.round(s * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, s, s);
+  drawTierMedal(g, s, tierKey, got, total, glint);
+}

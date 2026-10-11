@@ -58,7 +58,7 @@ const WALL = '#1a1f24';
 const STEEL = '#3a4048';
 const COAT = '#17181c';
 const FEATHER = '#101115';
-const SHEEN = '#3d5566';     // crow-plumage blue-green
+const SHEEN = '#4f7489';     // crow-plumage blue-green
 const LEATHER = '#3b2f26';
 const BRASS = '#a98a52';
 const NEON = '#ff3b4a';
@@ -297,8 +297,14 @@ function feather(g, x, y, len, ang, w, sheen) {
   g.quadraticCurveTo(len * 0.55, -w, len, 0);
   g.quadraticCurveTo(len * 0.55, w, 0, w * 0.6);
   g.closePath(); g.fill();
-  g.strokeStyle = 'rgba(120,150,170,0.18)'; g.lineWidth = 0.25;
+  g.strokeStyle = sheen ? 'rgba(150,200,220,0.42)' : 'rgba(120,150,170,0.22)'; g.lineWidth = 0.3;
   g.beginPath(); g.moveTo(0.5, 0); g.lineTo(len * 0.92, 0); g.stroke();
+  if (sheen) {
+    // the oil-slick sheen real crow plumage has, along the leading edge
+    g.fillStyle = 'rgba(110,170,190,0.28)';
+    g.beginPath(); g.moveTo(len * 0.1, -w * 0.45); g.quadraticCurveTo(len * 0.55, -w * 0.95, len * 0.95, -w * 0.08);
+    g.quadraticCurveTo(len * 0.55, -w * 0.55, len * 0.1, -w * 0.25); g.closePath(); g.fill();
+  }
   g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.18;
   for (let t = 0.2; t < 0.9; t += 0.09) {
     const x = len * t, hw = w * 0.8 * Math.sin(Math.PI * t);
@@ -358,6 +364,30 @@ function crow(g) {
   g.fillStyle = LEATHER;
   g.beginPath(); g.moveTo(16, 60); g.lineTo(21, 60); g.lineTo(-30, COUNTER + 4); g.lineTo(-36, COUNTER + 4); g.closePath(); g.fill();
   g.fillStyle = BRASS; g.fillRect(-1, 76, 3, 3.6); g.fillStyle = '#2a2018'; g.fillRect(-0.2, 76.8, 1.4, 2);
+
+  // dog tags on a ball chain, hanging in the open collar — someone else's
+  g.strokeStyle = 'rgba(190,196,204,0.55)'; g.lineWidth = 0.32;
+  g.beginPath(); g.moveTo(-5, 61); g.quadraticCurveTo(0, 71, 6, 61); g.stroke();
+  for (const [tx, ty, rot] of [[-0.6, 69.6, -0.12], [1.6, 70.4, 0.18]]) {
+    g.save(); g.translate(tx, ty); g.rotate(rot);
+    g.fillStyle = lin(g, -1.4, 0, 1.4, 0, [[0, '#7d848d'], [0.5, '#d4d9df'], [1, '#6a7078']]);
+    rrect(g, -1.3, 0, 2.6, 3.8, 0.7); g.fill();
+    g.fillStyle = 'rgba(30,34,40,0.55)'; g.fillRect(-0.8, 1.2, 1.6, 0.3); g.fillRect(-0.8, 1.9, 1.2, 0.3);
+    g.restore();
+  }
+
+  // shoulder patch on the coat's lit side: his mark, stitched on by hand
+  g.save(); g.translate(30, 76); g.rotate(0.12);
+  g.fillStyle = '#3a1416';
+  rrect(g, -5.4, -4.2, 10.8, 8.4, 1.6); g.fill();
+  g.strokeStyle = 'rgba(220,200,170,0.55)'; g.lineWidth = 0.3; g.setLineDash([0.7, 0.6]);
+  rrect(g, -4.7, -3.5, 9.4, 7.0, 1.2); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#d9cdb4';
+  g.beginPath();   // crow head in profile, the same mark as the neon
+  g.moveTo(-3.2, 2.4); g.quadraticCurveTo(-3.6, -2.4, -0.6, -2.6); g.quadraticCurveTo(1.0, -2.6, 1.4, -1.2);
+  g.lineTo(3.8, -0.4); g.lineTo(1.2, 0.4); g.quadraticCurveTo(0.6, 2.2, -1.2, 2.8); g.closePath(); g.fill();
+  g.fillStyle = '#3a1416'; g.beginPath(); g.arc(-0.4, -1.2, 0.45, 0, Math.PI * 2); g.fill();
+  g.restore();
 
   // ---- neck, with the crow inked on it
   g.fillStyle = lin(g, -6, 0, 8, 0, [[0, SKIN_D], [0.6, SKIN], [1, SKIN_D]]);
@@ -513,27 +543,6 @@ function crow(g) {
   g.restore();   // head scale
 }
 
-// smoke drawn on the scene, not his layer, so it can drift above his head
-function smoke(g) {
-  g.save();
-  g.lineCap = 'round';
-  const r = rng(0x5e0c);
-  for (let k = 0; k < 3; k++) {
-    g.strokeStyle = `rgba(200,205,212,${0.10 - k * 0.025})`;
-    g.lineWidth = 1.2 + k * 1.4;
-    g.beginPath();
-    let x = 11.6, y = 52.6;
-    g.moveTo(x, y);
-    for (let i = 0; i < 9; i++) {
-      const nx = x + (r() - 0.35) * 5 + k, ny = y - 5 - r() * 2;
-      g.quadraticCurveTo(x + (r() - 0.5) * 6, (y + ny) / 2, nx, ny);
-      x = nx; y = ny;
-    }
-    g.stroke();
-  }
-  g.restore();
-}
-
 function gloves(g) {
   // forearms laid along the counter from the elbows, meeting at folded hands
   for (const side of [-1, 1]) {
@@ -559,36 +568,46 @@ function gloves(g) {
     g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.3;
     for (let k = 0; k < 4; k++) { const x = side * (10.2 + k * 0.9); g.beginPath(); g.moveTo(x, COUNTER - 10); g.lineTo(x, COUNTER - 1); g.stroke(); }
   }
-  // his left hand: a loose fist, fingerless glove, knuckles to the counter
-  g.fillStyle = lin(g, 0, COUNTER - 10, 0, COUNTER, [[0, '#3b2f25'], [1, '#1d1712']]);
-  rrect(g, -10, COUNTER - 10, 12, 9.4, 3.4); g.fill();
-  g.fillStyle = lin(g, 0, COUNTER - 6, 0, COUNTER, [[0, SKIN], [1, SKIN_D]]);
-  rrect(g, -3.6, COUNTER - 7.6, 6, 6.8, 2.2); g.fill();          // fingers curled under
-  // his right hand laid over it, fingers wrapping the left fist
-  g.fillStyle = lin(g, -2, COUNTER - 13, 10, COUNTER - 5, [[0, '#4a3b2e'], [1, '#261e17']]);
-  g.beginPath();
-  g.moveTo(10.4, COUNTER - 12.2);
-  g.quadraticCurveTo(3, COUNTER - 13.6, -2.4, COUNTER - 11.4);
-  g.lineTo(-1.6, COUNTER - 6.2);
-  g.quadraticCurveTo(4, COUNTER - 5, 10.4, COUNTER - 5.6);
-  g.closePath(); g.fill();
-  // bare fingers wrapping round the left fist, knuckles toward us
-  for (let i = 0; i < 4; i++) {
-    const y = COUNTER - 12.4 + i * 2.35, len = 11.4 - i * 0.9;
-    g.fillStyle = lin(g, 0, y, 0, y + 2.3, [[0, SKIN_L], [0.55, SKIN], [1, SKIN_D]]);
-    rrect(g, -7.4 + i * 0.5, y, len, 2.3, 1.15); g.fill();
-    g.strokeStyle = 'rgba(90,52,34,0.45)'; g.lineWidth = 0.22;
-    g.beginPath(); g.moveTo(-3.2 + i * 0.5, y + 0.3); g.lineTo(-3.2 + i * 0.5, y + 2.0); g.stroke();
-    g.fillStyle = 'rgba(255,226,196,0.30)';
-    g.fillRect(-6.4 + i * 0.5, y + 0.35, len - 3, 0.45);
+  // Hands clasped on the counter, fingers laced: two fingerless-gloved backs
+  // of hand meeting in the middle, the bare fingers interleaving between
+  // them. (The first version stacked four fingers in a column, which read
+  // as a little tower of sausages rather than a pair of hands.) Drawn 1.45x
+  // about the counter line: at 1:1 they were a child's hands on that coat.
+  g.save(); g.translate(0, COUNTER - 0.4); g.scale(1.45, 1.45); g.translate(0, -COUNTER + 0.4);
+  for (const side of [-1, 1]) {
+    const lit = side > 0;
+    g.fillStyle = lin(g, side * 12, COUNTER - 11, side * 3, COUNTER - 2, lit ? [[0, '#6a5240'], [1, '#3a2c20']] : [[0, '#4a3828'], [1, '#2a2018']]);
+    g.beginPath();
+    g.moveTo(side * 13.4, COUNTER - 10.6);
+    g.quadraticCurveTo(side * 7.6, COUNTER - 12.4, side * 3.4, COUNTER - 10.2);
+    g.lineTo(side * 3.0, COUNTER - 2.0);
+    g.quadraticCurveTo(side * 8.0, COUNTER - 0.6, side * 13.2, COUNTER - 1.2);
+    g.closePath(); g.fill();
+    // knuckle ridge and stitching on the glove back
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.3;
+    g.beginPath(); g.moveTo(side * 4.6, COUNTER - 10.4); g.quadraticCurveTo(side * 4.0, COUNTER - 6, side * 4.4, COUNTER - 2.2); g.stroke();
+    g.strokeStyle = lit ? 'rgba(255,220,180,0.16)' : 'rgba(255,220,180,0.06)'; g.lineWidth = 0.4;
+    g.beginPath(); g.moveTo(side * 12.2, COUNTER - 10.4); g.quadraticCurveTo(side * 8, COUNTER - 11.6, side * 4.2, COUNTER - 10.0); g.stroke();
   }
-  // thumb along the top, turning a hex nut
-  g.fillStyle = lin(g, 0, COUNTER - 14, 0, COUNTER - 10, [[0, SKIN_L], [1, SKIN]]);
-  g.beginPath(); g.moveTo(10, COUNTER - 12); g.quadraticCurveTo(14, COUNTER - 14.4, 15.8, COUNTER - 12.6); g.quadraticCurveTo(14.6, COUNTER - 10.8, 10.6, COUNTER - 10.2); g.closePath(); g.fill();
+  // laced fingers: alternate rows from each hand, tips just past the middle
+  for (let i = 0; i < 4; i++) {
+    const side = i % 2 ? 1 : -1;
+    const y = COUNTER - 10.4 + i * 2.25;
+    // each finger runs from its own knuckles well onto the other hand's back
+    const x0 = side * 4.2, x1 = -side * (7.2 - (i === 0 || i === 3 ? 1.2 : 0));
+    const lo = Math.min(x0, x1), hi = Math.max(x0, x1);
+    g.fillStyle = lin(g, 0, y, 0, y + 2.1, [[0, SKIN_L], [0.55, SKIN], [1, SKIN_D]]);
+    rrect(g, lo, y, hi - lo, 2.1, 1.05); g.fill();
+    g.fillStyle = 'rgba(255,226,196,0.28)'; g.fillRect(lo + 0.8, y + 0.32, hi - lo - 1.8, 0.4);
+    g.fillStyle = 'rgba(120,70,48,0.45)';     // fingertip / nail end
+    g.beginPath(); g.arc(side > 0 ? lo + 0.9 : hi - 0.9, y + 1.05, 0.55, 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+  // the hex nut he is turning over, set down by his right hand
   g.fillStyle = '#a2a8b0';
-  g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + 0.3; g.lineTo(16.6 + Math.cos(a) * 2.0, COUNTER - 12.8 + Math.sin(a) * 2.0); } g.closePath(); g.fill();
-  g.fillStyle = 'rgba(255,240,220,0.35)'; g.fillRect(15.4, COUNTER - 14.4, 1.8, 0.5);
-  g.fillStyle = '#1a1c1f'; g.beginPath(); g.arc(16.6, COUNTER - 12.8, 0.75, 0, Math.PI * 2); g.fill();
+  g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + 0.3; g.lineTo(26.6 + Math.cos(a) * 2.2, COUNTER - 2.0 + Math.sin(a) * 1.4); } g.closePath(); g.fill();
+  g.fillStyle = 'rgba(255,240,220,0.35)'; g.fillRect(25.4, COUNTER - 3.3, 1.9, 0.4);
+  g.fillStyle = '#1a1c1f'; g.beginPath(); g.ellipse(26.6, COUNTER - 2.0, 0.8, 0.52, 0, 0, Math.PI * 2); g.fill();
   // contact shadow on the counter
   g.fillStyle = 'rgba(0,0,0,0.35)';
   g.beginPath(); g.ellipse(0, COUNTER - 0.2, 40, 1.2, 0, 0, Math.PI * 2); g.fill();
@@ -632,7 +651,7 @@ function counterGoods(g) {
   // scrap: a heap of nuts, bolts and gears
   const r = rng(0x5c4a);
   for (let i = 0; i < 26; i++) {
-    const x = -46 + r() * 22, y = COUNTER - 1.6 - r() * 3.2 * (1 - Math.abs(x + 35) / 12);
+    const x = -72 + r() * 22, y = COUNTER - 1.6 - r() * 3.2 * (1 - Math.abs(x + 61) / 12);
     const c = r() > 0.5 ? '#8a8f97' : '#a0784a';
     g.fillStyle = c;
     if (r() > 0.6) { g.beginPath(); g.arc(x, y, 1.1 + r() * 0.6, 0, Math.PI * 2); g.fill(); g.fillStyle = '#16181b'; g.beginPath(); g.arc(x, y, 0.4, 0, Math.PI * 2); g.fill(); }
@@ -652,37 +671,161 @@ function counterGoods(g) {
   g.restore();
 }
 
+// ------------------------------------------------------------- the crow
+// His bird. The name was carried by a cap feather nobody could see against
+// the dark; now it sits on his shoulder and watches you shop. Crows move
+// their heads in snaps, not sweeps — the head holds still, jerks to a new
+// angle, holds again — and that one behaviour sells the animal more than
+// any amount of feather detail.
+//
+// Drawn at its feet (0,0), facing +x, ~17 units long. `pose` is
+// { head, blink, wing, beak } — all 0..1 except head (radians).
+function petCrow(g, pose) {
+  const { head = 0, blink = 0, wing = 0, beak = 0 } = pose || {};
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  // legs gripping the shoulder seam
+  g.strokeStyle = '#24262b'; g.lineWidth = 0.7;
+  g.beginPath(); g.moveTo(-1.6, -3.4); g.lineTo(-2.0, 0); g.moveTo(1.0, -3.2); g.lineTo(1.2, 0); g.stroke();
+  g.lineWidth = 0.45;
+  g.beginPath();
+  for (const fx of [-2.0, 1.2]) { g.moveTo(fx, 0); g.lineTo(fx + 1.6, 0.5); g.moveTo(fx, 0); g.lineTo(fx - 1.2, 0.6); }
+  g.stroke();
+  g.fillStyle = BRASS; g.fillRect(0.6, -2.4, 1.1, 0.8);          // leg ring
+  // tail: a wedge of long feathers down and back
+  g.fillStyle = lin(g, -14, 0, -3, 0, [[0, '#07080a'], [1, '#15171c']]);
+  g.beginPath();
+  g.moveTo(-4.6, -6.6); g.lineTo(-15.4, 1.6); g.lineTo(-14.2, 3.0); g.lineTo(-12.0, 2.2); g.lineTo(-3.0, -3.4); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(110,160,180,0.22)'; g.lineWidth = 0.25;
+  g.beginPath(); g.moveTo(-5.4, -5.2); g.lineTo(-14.4, 2.0); g.moveTo(-5.0, -4.2); g.lineTo(-12.8, 2.4); g.stroke();
+  // body
+  g.save(); g.translate(-0.6, -7.2); g.rotate(-0.42);
+  g.fillStyle = lin(g, 0, -5, 0, 5, [[0, '#1d2128'], [0.5, '#0e0f13'], [1, '#060708']]);
+  g.beginPath(); g.ellipse(0, 0, 7.4, 4.6, 0, 0, Math.PI * 2); g.fill();
+  // folded wing, lifting a touch on a flick
+  g.save(); g.translate(-1.6, -0.6); g.rotate(-wing * 0.55);
+  g.fillStyle = lin(g, -6, -3, 5, 3, [[0, '#0a0b0e'], [0.55, '#191c22'], [1, '#0b0c0f']]);
+  g.beginPath(); g.moveTo(5.2, -2.2); g.quadraticCurveTo(-2, -4.4, -9.6, 1.4); g.quadraticCurveTo(-2, 2.6, 5.2, 1.6); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 0.22;
+  for (let i = 0; i < 5; i++) { const x = -7.6 + i * 2.2; g.beginPath(); g.moveTo(x, 1.4 - i * 0.1); g.lineTo(x + 2.6, -1.0 - i * 0.25); g.stroke(); }
+  g.fillStyle = 'rgba(105,170,195,0.30)';            // the oil-slick sheen
+  g.beginPath(); g.moveTo(4.6, -2.0); g.quadraticCurveTo(-1.6, -3.8, -7.4, 0.2); g.quadraticCurveTo(-1.6, -2.6, 4.6, -1.2); g.closePath(); g.fill();
+  g.restore();
+  // neon rim along the back, the same red that edges CROW's coat
+  g.strokeStyle = 'rgba(255,70,80,0.38)'; g.lineWidth = 0.55;
+  g.beginPath(); g.ellipse(0, 0, 7.2, 4.4, 0, Math.PI * 1.02, Math.PI * 1.62); g.stroke();
+  g.restore();
+  g.strokeStyle = 'rgba(255,70,80,0.30)'; g.lineWidth = 0.45;
+  g.beginPath(); g.moveTo(-5.0, -7.0); g.lineTo(-15.2, 1.4); g.stroke();
+  // head: pivots at the neck
+  g.save(); g.translate(3.4, -10.6); g.rotate(head);
+  g.fillStyle = lin(g, -2, -4, 2, 3, [[0, '#262b33'], [0.45, '#121418'], [1, '#08090b']]);
+  g.beginPath(); g.ellipse(1.6, -2.4, 3.9, 3.3, -0.2, 0, Math.PI * 2); g.fill();
+  g.fillStyle = 'rgba(120,185,205,0.34)';
+  g.beginPath(); g.ellipse(1.2, -4.4, 2.6, 0.9, -0.25, 0, Math.PI * 2); g.fill();
+  // beak: upper mandible, lower one hinging open on a caw
+  g.fillStyle = lin(g, 4, -4, 10, -1, [[0, '#3a3e45'], [0.5, '#22252a'], [1, '#0d0e10']]);
+  g.beginPath(); g.moveTo(4.6, -3.6); g.quadraticCurveTo(8.6, -3.6, 10.8, -1.9); g.lineTo(4.9, -1.8); g.closePath(); g.fill();
+  g.save(); g.translate(4.9, -1.8); g.rotate(beak * 0.42);
+  g.fillStyle = '#16181c';
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(5.4, -0.05); g.quadraticCurveTo(3, 1.1, 0, 0.9); g.closePath(); g.fill();
+  g.restore();
+  g.fillStyle = 'rgba(230,236,244,0.40)'; g.fillRect(5.4, -3.4, 3.2, 0.32);
+  // eye: dark, with a wet glint — and a lid for the blink
+  g.fillStyle = '#05060a'; g.beginPath(); g.arc(2.8, -3.1, 0.95, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = 'rgba(160,170,180,0.55)'; g.lineWidth = 0.18; g.stroke();
+  g.fillStyle = 'rgba(255,250,240,0.95)'; g.beginPath(); g.arc(3.15, -3.45, 0.3, 0, Math.PI * 2); g.fill();
+  if (blink > 0) {
+    g.fillStyle = '#1b1e24';
+    g.beginPath(); g.ellipse(2.8, -3.1, 1.15, 1.15 * blink, 0, 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+}
+
+// Deterministic pseudo-random per integer, for the bird's schedule.
+function hash01(n) {
+  let x = (n * 2654435761) >>> 0;
+  x ^= x >>> 15; x = Math.imul(x, 2246822519) >>> 0; x ^= x >>> 13;
+  return (x >>> 0) / 4294967296;
+}
+
+// The bird's pose at time t (seconds).
+function crowPose(t) {
+  const SEG = 1.35;
+  const k = Math.floor(t / SEG), f = t - k * SEG;
+  const angle = (i) => -0.38 + hash01(i * 7 + 3) * 0.62;
+  // snap: 0.11s to the new angle, then hold — with a breath of drift
+  const e = Math.min(1, f / 0.11);
+  const ease = 1 - Math.pow(1 - e, 3);
+  let head = angle(k - 1) + (angle(k) - angle(k - 1)) * ease + Math.sin(t * 2.3) * 0.015;
+  const blink = (t % 3.3) < 0.13 ? Math.sin(((t % 3.3) / 0.13) * Math.PI) : 0;
+  const r = hash01(k * 13 + 5);
+  const wing = r > 0.82 && f < 0.5 ? Math.sin((f / 0.5) * Math.PI) : 0;
+  const beak = r < 0.1 && f > 0.15 && f < 0.55 ? Math.sin(((f - 0.15) / 0.4) * Math.PI) : 0;
+  if (beak) head -= beak * 0.12;      // the head lifts as it caws
+  return { head, blink, wing, beak };
+}
+
 // ------------------------------------------------------------- scene
-export function paintTraderScene(g, w, h) {
-  g.clearRect(0, 0, w, h);
-  const u = h / 140;
+//
+// The stall is drawn in three baked layers and a handful of live elements:
+//
+//   back  — container, door, racks, neon sign, lamp cone          (baked)
+//   man   — CROW himself, rim-lit by neon and lamp                (baked)
+//   front — forearms and hands, counter, goods, lamp shade, grade (baked)
+//   live  — breathing, the bird, cigarette smoke and ember, the optic's
+//           pulse, the neon's flicker, rain in the doorway, dust in the
+//           lamp light
+//
+// The bakes are the expensive part (~100ms of path work) and happen once per
+// size; a frame is three blits and a few dozen small shapes.
+
+// The banner frames the scene from just under the roof beam to just below
+// the counter's hazard strip, not the whole 140-unit container: the floor
+// and the counter's lower panels are empty, and showing them made CROW a
+// small figure in a wide box. Cropped like this he fills two-thirds of the
+// banner's height.
+const VIEW_TOP = 10, VIEW_H = 108;
+
+function sceneGeom(w, h) {
+  const u = h / VIEW_H;
   const halfW = w / 2 / u;
-  g.save();
-  g.translate(w / 2, 0);
-  g.scale(u, u);
+  return { u, halfW, doorX: Math.max(120, halfW - 34), door: halfW > 128, wideSign: halfW > 150 };
+}
 
-  container(g, halfW);
-  // door only where the banner is wide enough to show it beside the racks
-  const doorX = Math.max(120, halfW - 34);
-  if (halfW > 128) doorway(g, doorX, halfW);
-  wallStock(g, -1);
-  wallStock(g, 1);
-  if (halfW > 150) { neonSign(g, -halfW + 10, 22); floorStock(g, -halfW + 12); }
-  else neonSign(g, -26, -40);        // too narrow for the sign: keep it off-frame
+function bakeLayer(w, h, dpr, paint) {
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  paint(g);
+  return cv;
+}
 
-  pendantLight(g, 34, 22);
-
-  // CROW in his own layer: the neon cuts a red rim down his left edge and the
-  // pendant a warm one along his hood, both from his own silhouette
-  // layer resolution follows the device pixel scale, not CSS pixels, or he
-  // comes out soft on a 2x screen
-  const px = u * Math.abs(g.getTransform().a / u);
+function buildTraderScene(w, h, dpr) {
+  const G = sceneGeom(w, h);
+  const { u, halfW } = G;
+  const inScene = (g, fn) => { g.save(); g.translate(w / 2, -VIEW_TOP * u); g.scale(u, u); fn(g); g.restore(); };
+  const back = bakeLayer(w, h, dpr, (g) => inScene(g, (g) => {
+    container(g, halfW);
+    if (G.door) doorway(g, G.doorX, halfW);
+    wallStock(g, -1);
+    wallStock(g, 1);
+    if (G.wideSign) { neonSign(g, -halfW + 10, 22); floorStock(g, -halfW + 12); }
+    pendantLight(g, 34, 22);
+  }));
+  // CROW in his own layer, at device resolution: the neon cuts a red rim
+  // down his left edge and the pendant a warm one along his right, both
+  // from his own silhouette
+  const px = u * dpr;
   const L = document.createElement('canvas');
   L.width = Math.ceil(90 * px); L.height = Math.ceil((COUNTER + 8) * px);
   const lg = L.getContext('2d');
   lg.scale(px, px); lg.translate(45, 0);
   crow(lg);
-  const rimLayer = (col, dx, dy, a, fromLeft) => {
+  const man = document.createElement('canvas');
+  man.width = L.width; man.height = L.height;
+  const mg = man.getContext('2d');
+  const rim = (col, dx, dy, a, fromLeft) => {
     const R = document.createElement('canvas'); R.width = L.width; R.height = L.height;
     const rc = R.getContext('2d');
     rc.drawImage(L, 0, 0);
@@ -691,24 +834,145 @@ export function paintTraderScene(g, w, h) {
       ? [[0, rgba(col, a)], [0.45, rgba(col, 0)], [1, rgba(col, 0)]]
       : [[0, rgba(col, 0)], [0.5, rgba(col, 0)], [1, rgba(col, a)]]);
     rc.fillRect(0, 0, R.width, R.height);
-    g.drawImage(R, -45 + dx, dy, 90, COUNTER + 8);
+    mg.drawImage(R, dx * px, dy * px);
   };
-  rimLayer(NEON, -0.6, 0, 0.42, true);
-  rimLayer(LAMP, 0.5, -0.4, 0.28, false);
-  g.drawImage(L, -45, 0, 90, COUNTER + 8);
+  rim(NEON, -0.6, 0, 0.42, true);
+  rim(LAMP, 0.5, -0.4, 0.28, false);
+  mg.drawImage(L, 0, 0);
+  const front = bakeLayer(w, h, dpr, (g) => {
+    inScene(g, (g) => {
+      gloves(g);
+      counter(g, halfW);
+      counterGoods(g);
+      pendant(g, 34, 22);
+      g.fillStyle = rgba(HAZE, 0.035); g.fillRect(-halfW, 0, halfW * 2, 140);
+    });
+    const vig = g.createRadialGradient(w / 2, h * 0.45, h * 0.3, w / 2, h * 0.5, w * 0.62);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.5)');
+    g.fillStyle = vig; g.fillRect(0, 0, w, h);
+  });
+  // a soft puff, reused for every wisp of smoke
+  const puff = document.createElement('canvas'); puff.width = puff.height = 64;
+  const pg = puff.getContext('2d');
+  pg.fillStyle = rad(pg, 32, 32, 0, 32, [[0, 'rgba(210,214,220,0.9)'], [0.5, 'rgba(200,205,212,0.35)'], [1, 'rgba(200,205,212,0)']]);
+  pg.fillRect(0, 0, 64, 64);
+  return { w, h, dpr, G, back, man, front, puff };
+}
 
-  counter(g, halfW);
-  counterGoods(g);
-  smoke(g);
-  pendant(g, 34, 22);
+// Neon intensity: steady, with the odd stutter a tired transformer makes.
+function neonLevel(t) {
+  const k = Math.floor(t / 0.9), f = t - k * 0.9;
+  const r = hash01(k * 31 + 11);
+  if (r > 0.86 && f < 0.32) return (Math.floor(f / 0.05) % 2) ? 0.25 : 0.9;
+  return 0.94 + Math.sin(t * 37) * 0.03;
+}
 
-  // grade: cool haze lifts the darks a touch, vignette holds the edges
-  g.fillStyle = rgba(HAZE, 0.035); g.fillRect(-halfW, 0, halfW * 2, 140);
+function drawTraderFrame(g, S, t) {
+  const { w, h, G } = S;
+  const { u, halfW } = G;
+  g.save();
+  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  g.drawImage(S.back, 0, 0, w, h);
+
+  g.save(); g.translate(w / 2, -VIEW_TOP * u); g.scale(u, u);
+
+  // neon: a dropout dims the tube and its spill
+  if (G.wideSign) {
+    const lv = neonLevel(t), x = -halfW + 10, y = 22;
+    if (lv < 0.9) { g.fillStyle = `rgba(6,7,9,${(0.9 - lv) * 0.85})`; g.fillRect(x - 2, y - 2, 52, 26); }
+    else {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      g.fillStyle = rad(g, x + 24, y + 11, 2, 40, [[0, rgba(NEON, 0.05 + (lv - 0.94) * 0.8)], [1, rgba(NEON, 0)]]);
+      g.fillRect(x - 20, y - 20, 90, 64);
+      g.restore();
+    }
+  }
+
+  // rain through the open door
+  if (G.door) {
+    const x0 = G.doorX, dw = halfW - x0;
+    g.save(); g.beginPath(); g.rect(x0, 8, dw, FLOOR - 10); g.clip();
+    g.strokeStyle = 'rgba(175,205,235,0.24)'; g.lineWidth = 0.35;
+    g.beginPath();
+    const n = Math.round(dw * 1.3), span = FLOOR + 20;
+    for (let i = 0; i < n; i++) {
+      const x = x0 + hash01(i * 3 + 1) * (dw + 6);
+      const y = ((hash01(i * 5 + 2) * span + t * (95 + hash01(i) * 40)) % span) - 6;
+      g.moveTo(x, y); g.lineTo(x - 1.3, y + 5.5);
+    }
+    g.stroke();
+    g.restore();
+  }
+
+  // dust turning in the lamp's cone
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 16; i++) {
+    const p = (t * (0.03 + hash01(i + 40) * 0.04) + hash01(i + 9)) % 1;
+    const yy = 26 + p * (COUNTER - 30);
+    const spread = 8 + (yy - 22) * 0.62;
+    const xx = 34 + (hash01(i + 70) - 0.5) * 2 * spread * 0.8 + Math.sin(t * 0.6 + i) * 2;
+    const tw = 0.5 + 0.5 * Math.sin(t * 1.7 + i * 2.1);
+    g.fillStyle = rgba(LAMP, 0.10 + 0.22 * tw * Math.sin(p * Math.PI));
+    g.fillRect(xx, yy, 0.55, 0.55);
+  }
   g.restore();
-  const vig = g.createRadialGradient(w / 2, h * 0.45, h * 0.3, w / 2, h * 0.5, w * 0.62);
-  vig.addColorStop(0, 'rgba(0,0,0,0)');
-  vig.addColorStop(1, 'rgba(0,0,0,0.5)');
-  g.fillStyle = vig; g.fillRect(0, 0, w, h);
+
+  // CROW breathes: the whole figure lifts a fraction on the in-breath
+  const breath = Math.sin(t * 1.25) * 0.38;
+  g.drawImage(S.man, -45, breath, 90, COUNTER + 8);
+
+  // his bird, perched on the shoulder nearest the neon
+  g.save(); g.translate(-37.6, 68.8 + breath * 0.9); g.rotate(-0.1); g.scale(1.5, 1.5);
+  petCrow(g, crowPose(t));
+  g.restore();
+
+  g.restore();
+  g.drawImage(S.front, 0, 0, w, h);
+  g.save(); g.translate(w / 2, -VIEW_TOP * u); g.scale(u, u);
+
+  // cigarette: the ember breathes, brightens on a drag every few seconds,
+  // and the smoke rises off it in loose puffs
+  const tipX = 14.1, tipY = 52.1 + breath;
+  const drag = (t % 7.5) < 0.9 ? Math.sin(((t % 7.5) / 0.9) * Math.PI) : 0;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  g.fillStyle = rad(g, tipX, tipY, 0, 3.4 + drag * 2.4, [[0, `rgba(255,170,90,${0.45 + drag * 0.5})`], [1, 'rgba(255,90,40,0)']]);
+  g.beginPath(); g.arc(tipX, tipY, 3.4 + drag * 2.4, 0, Math.PI * 2); g.fill();
+  g.restore();
+  const N = 12, LIFE = 3.6;
+  for (let i = 0; i < N; i++) {
+    const f = ((t + i * LIFE / N) % LIFE) / LIFE;
+    const sway = Math.sin(f * 5.2 + i * 1.7) * (1.4 + f * 4.2);
+    const x = tipX + 1 + f * 6 + sway, y = tipY - 1 - f * 46;
+    const r = 1.2 + f * 6.4;
+    g.globalAlpha = Math.sin(Math.PI * Math.min(1, f * 1.25)) * 0.24 * (1 - f * 0.35);
+    g.drawImage(S.puff, x - r, y - r, r * 2, r * 2);
+  }
+  g.globalAlpha = 1;
+
+  // the cheap red optic: a slow pulse, and a scan flicker now and then
+  const ox = 8.2, oy = 36.3 + breath;
+  const scan = (t % 5.2) < 0.25 ? 0.5 * Math.sin(((t % 5.2) / 0.25) * Math.PI * 3) : 0;
+  const pulse = 0.42 + 0.22 * Math.sin(t * 2.6) + scan;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  g.fillStyle = rad(g, ox, oy, 0, 6, [[0, `rgba(255,80,60,${Math.max(0, pulse)})`], [1, 'rgba(255,60,40,0)']]);
+  g.beginPath(); g.arc(ox, oy, 6, 0, Math.PI * 2); g.fill();
+  g.restore();
+
+  g.restore();
+  g.restore();
+}
+
+// A still frame (shop thumbnails, anywhere without an animation loop).
+export function paintTraderScene(g, w, h) {
+  const S = buildTraderScene(w, h, 1);
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+  const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+  drawTraderFrame(tmp.getContext('2d'), S, 2.2);
+  g.clearRect(0, 0, w, h);
+  g.drawImage(tmp, 0, 0);
+  g.restore();
 }
 
 // Bust, for any square use: the scene cropped onto CROW.
@@ -717,9 +981,9 @@ export function paintTrader(g, w, h) {
   const H = Math.round(h * 1.5);
   cv.width = Math.round(H * 2.6); cv.height = H;
   paintTraderScene(cv.getContext('2d'), cv.width, cv.height);
-  const sw = cv.height * (w / h) * 0.7, sh = cv.height * 0.7;
+  const sw = cv.height * (w / h) * 0.9, sh = cv.height * 0.9;
   g.clearRect(0, 0, w, h);
-  g.drawImage(cv, cv.width / 2 - sw / 2, cv.height * 0.08, sw, sh, 0, 0, w, h);
+  g.drawImage(cv, cv.width / 2 - sw / 2 - sw * 0.1, cv.height * 0.01, sw, sh, 0, 0, w, h);
 }
 
 export function renderTraderPortrait(cv) {
@@ -729,12 +993,32 @@ export function renderTraderPortrait(cv) {
   paintTrader(cv.getContext('2d'), cv.width, cv.height);
 }
 
-// HiDPI-aware convenience for the wide banner.
+// The live banner. Idempotent: calling it again on the same canvas (every
+// time the Trader tab is shown) only rebuilds the bakes if the size changed.
+// The loop draws at ~30fps while the canvas is on screen and idles — a cheap
+// visibility check twice a second — while it is not (other tab, in a match,
+// app in the background). With reduced motion it paints one still frame.
+const LIVE = new WeakMap();
 export function renderTraderScene(cv) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const w = cv.clientWidth || 640, h = cv.clientHeight || 220;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  let st = LIVE.get(cv);
+  if (!st) { st = { S: null, raf: 0, t0: performance.now(), last: 0 }; LIVE.set(cv, st); }
+  if (!st.S || st.S.w !== w || st.S.h !== h || st.S.dpr !== dpr) st.S = buildTraderScene(w, h, dpr);
   const g = cv.getContext('2d');
-  g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  paintTraderScene(g, w, h);
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  drawTraderFrame(g, st.S, reduced ? 2.2 : (performance.now() - st.t0) / 1000);
+  if (reduced || st.running) return;
+  st.running = true;
+  const tick = (now) => {
+    if (!cv.isConnected) { st.running = false; return; }
+    if (document.hidden || !cv.offsetWidth) { setTimeout(() => requestAnimationFrame(tick), 500); return; }
+    if (now - st.last >= 32) {
+      st.last = now;
+      drawTraderFrame(g, st.S, (now - st.t0) / 1000);
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
