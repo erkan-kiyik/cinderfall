@@ -217,7 +217,7 @@ export class M1Scene {
 
   explode(x, y) {
     const t = this.t;
-    this.flashes.push([x, y, t, 0.5, 170, 3.2, 1, 0.62, 0.32, 0]);
+    this.flashes.push([x, y, t, 0.5, 170, 2.4, 1, 0.62, 0.32, 0]);
     this.e.camera.addShake(0.75);
     for (let i = 0; i < 90; i++) {
       const a = -Math.PI * this.rand(), s = 40 + this.rand() * 160;
