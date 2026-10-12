@@ -15,7 +15,7 @@
 // (fill, through the door).
 
 import {
-  paintCrowBody, paintCrowHead, paintCrowCollar, crowEyesLive, HEAD_PIVOT, CIGAR_TIP,
+  paintCrowBody, paintCrowHead, paintCrowCollar, crowEyesLive, HEAD_PIVOT,
 } from './crowchar.js';
 
 function rng(seed) {
@@ -520,15 +520,10 @@ function buildTraderScene(w, h, dpr) {
     vig.addColorStop(1, 'rgba(0,0,0,0.5)');
     g.fillStyle = vig; g.fillRect(0, 0, w, h);
   });
-  // a soft puff, reused for every wisp of smoke
-  const puff = document.createElement('canvas'); puff.width = puff.height = 64;
-  const pg = puff.getContext('2d');
-  pg.fillStyle = rad(pg, 32, 32, 0, 32, [[0, 'rgba(210,214,220,0.9)'], [0.5, 'rgba(200,205,212,0.35)'], [1, 'rgba(200,205,212,0)']]);
-  pg.fillRect(0, 0, 64, 64);
-  return { w, h, dpr, G, back, body, head, collar, front, puff };
+  return { w, h, dpr, G, back, body, head, collar, front };
 }
 
-// CROW's own idle at time t. He looks at you; every 9.5s his eyes go to the
+// CROW's own idle at time t. He looks straight at you; every 9.5s his eyes go to the
 // bird and his head follows a little, then both come back. Blinks on their
 // own beat, plus one as the glance starts (people blink when they move their
 // eyes a long way).
@@ -537,8 +532,8 @@ function crowLife(t) {
   const gk = t % 9.5;
   const look = gk > 5.4 && gk < 7.8 ? Math.sin(((gk - 5.4) / 2.4) * Math.PI) : 0;
   const ease = look * look * (3 - 2 * look);
-  const lx = -0.55 - ease * 0.45;
-  const ly = ease * 0.55;
+  const lx = -ease * 0.9;
+  const ly = ease * 0.5;
   const tilt = Math.sin(t * 0.45) * 0.018 - ease * 0.05;
   const bk = (t + 1.7) % 4.3;
   let blink = bk < 0.16 ? Math.sin((bk / 0.16) * Math.PI) : 0;
@@ -621,44 +616,16 @@ function drawTraderFrame(g, S, t) {
   P(S.collar, pose.breath);
   // his bird on the perch pad, turned toward him with its beak at his ear —
   // his confidant — its tail falling away off the outside of the shoulder
-  g.save(); g.translate(-34.4, 2.4 + pose.breath * 0.9); g.scale(1.8, 1.8);
+  g.save(); g.translate(-37.6, 3.4 + pose.breath * 0.9); g.scale(1.75, 1.75);
   petCrow(g, crowPose(t));
   g.restore();
   g.restore();
-  // where the cigar's tip is this frame, in scene units (smoke rises in
-  // scene space, not with his head)
-  const cs = Math.cos(pose.tilt), sn = Math.sin(pose.tilt);
-  const dx = CIGAR_TIP.x - HEAD_PIVOT.x, dy = CIGAR_TIP.y - HEAD_PIVOT.y;
-  S.tip = {
-    x: CHAR.x + CHAR.k * (HEAD_PIVOT.x + dx * cs - dy * sn),
-    y: CHAR.y + CHAR.k * (HEAD_PIVOT.y + pose.breath + dx * sn + dy * cs),
-  };
+
 
   g.restore();
   g.drawImage(S.front, 0, 0, w, h);
   g.save(); g.translate(w / 2, -VIEW_TOP * u); g.scale(u, u);
 
-  // the cigar: the ember brightens on a drag every few seconds, and the
-  // smoke rises off it in loose puffs, past the brim and into the lamp light
-  const tipX = S.tip.x, tipY = S.tip.y;
-  const drag = (t % 7.5) < 1.0 ? Math.sin(((t % 7.5) / 1.0) * Math.PI) : 0;
-  g.save(); g.globalCompositeOperation = 'lighter';
-  const em = 0.45 + 0.2 * Math.sin(t * 2.2) + drag * 0.5;
-  const er = 2.2 + drag * 1.6;
-  g.fillStyle = rad(g, tipX, tipY, 0, er, [[0, `rgba(255,190,110,${Math.min(1, em)})`], [0.4, `rgba(255,100,40,${em * 0.5})`], [1, 'rgba(255,90,40,0)']]);
-  g.beginPath(); g.arc(tipX, tipY, er, 0, Math.PI * 2); g.fill();
-  g.restore();
-  const N = 12, LIFE = 4.0;
-  for (let i = 0; i < N; i++) {
-    const f = ((t + i * LIFE / N) % LIFE) / LIFE;
-    const sway = Math.sin(f * 5.2 + i * 1.7) * (1.0 + f * 4.6);
-    const x = tipX + 1 + f * 7 + sway, y = tipY - 0.6 - f * 44;
-    // born as a soft wisp, not a speck: a little size from the start, and
-    // the alpha ramps in over the first fifth of its life
-    const r = 1.8 + f * 6.0;
-    g.globalAlpha = Math.min(1, f * 5) * Math.sin(Math.PI * Math.min(1, 0.15 + f * 1.1)) * 0.16;
-    g.drawImage(S.puff, x - r, y - r, r * 2, r * 2);
-  }
   g.globalAlpha = 1;
 
   g.restore();
