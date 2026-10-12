@@ -1,0 +1,41 @@
+/* CINDERFALL LAB — design tokens. Colours mirror js/art/style.js so the
+   canvas art and the DOM interface share one palette. */
+@font-face { font-family: 'Rajdhani'; font-weight: 500; font-display: swap; src: url(../assets/fonts/rajdhani-500.woff2) format('woff2'); }
+@font-face { font-family: 'Rajdhani'; font-weight: 600; font-display: swap; src: url(../assets/fonts/rajdhani-600.woff2) format('woff2'); }
+@font-face { font-family: 'Rajdhani'; font-weight: 700; font-display: swap; src: url(../assets/fonts/rajdhani-700.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-display: swap; src: url(../assets/fonts/inter-400.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-display: swap; src: url(../assets/fonts/inter-600.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 700; font-display: swap; src: url(../assets/fonts/inter-700.woff2) format('woff2'); }
+
+:root {
+  /* neutral slate ramp */
+  --n0: #0d1015; --n1: #151a21; --n2: #1e252e; --n3: #2a323d; --n4: #3c4654;
+  --n5: #5d6878; --n6: #939dab; --n7: #d9dee5; --n8: #f4f1ea;
+  /* brand and gameplay */
+  --ember: #ff6b2c; --ember-hi: #ff9a5c; --ember-lo: #c4441a; --cream: #f2dfbf;
+  --danger: #ff3347; --interact: #3ee8e0; --gold: #ffc93c;
+  /* rarity */
+  --r-common: #9aa4b1; --r-rare: #4aa8ff; --r-epic: #b26bff;
+  --r-legendary: #ffb22e; --r-mythic: #ff4f6d; --r-ultra: #3ee8e0;
+  /* type */
+  --f-display: 'Rajdhani', 'Inter', sans-serif;
+  --f-body: 'Inter', system-ui, sans-serif;
+  --t-xs: 10px; --t-sm: 12px; --t-md: 14px; --t-lg: 18px; --t-xl: 26px; --t-xxl: 44px;
+  --track-wide: 0.14em; --track-mid: 0.08em;
+  /* space (4-step), radius, chamfer */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --rad: 6px; --cut: 10px;
+  /* surfaces */
+  --panel: rgba(21, 26, 33, 0.86); --panel-hi: rgba(42, 50, 61, 0.9);
+  --line: rgba(217, 222, 229, 0.12); --line-hi: rgba(217, 222, 229, 0.24);
+  /* motion */
+  --d-fast: 140ms; --d-mid: 220ms; --d-slow: 360ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.25, 1.45, 0.45, 1);
+  /* touch */
+  --hit: 44px;
+}
+
+/* chamfered corners: the interface's signature shape */
+.cut { clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut)); }
+.cut-r { clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%); }

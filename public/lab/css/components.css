@@ -1,0 +1,66 @@
+/* CINDERFALL LAB — interface components (built on tokens.css). */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--n1); color: var(--n7);
+  font: 400 var(--t-sm)/1.35 var(--f-body);
+  -webkit-font-smoothing: antialiased; overflow: hidden;
+}
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; }
+
+.app { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app::before { /* backdrop: the street, dimmed and blurred behind the panels */
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background: var(--bg-image, none) center 70% / cover no-repeat;
+  filter: blur(3px) saturate(0.8) brightness(0.5); transform: scale(1.04);
+}
+.app > * { position: relative; z-index: 1; }
+
+/* top bar ------------------------------------------------------------------ */
+.topbar {
+  height: 46px; flex: none; display: flex; align-items: center; gap: var(--s3);
+  padding: 0 var(--s4); background: linear-gradient(180deg, rgba(13,16,21,0.92), rgba(13,16,21,0.6));
+  border-bottom: 1px solid var(--line);
+}
+.me { display: flex; align-items: center; gap: var(--s2); padding: 4px 10px 4px 4px; background: var(--panel-hi); height: 36px; --cut: 7px; }
+.me canvas { width: 28px; height: 28px; border-radius: 4px; background: var(--n3); }
+.me b { font: 700 var(--t-md)/1 var(--f-display); letter-spacing: var(--track-mid); display: block; }
+.me .lvl { font: 700 var(--t-xs)/1 var(--f-display); color: var(--ember-hi); letter-spacing: var(--track-mid); margin-left: 6px; }
+.bar { height: 3px; background: rgba(255,255,255,0.1); margin-top: 4px; width: 92px; }
+.bar > i { display: block; height: 100%; background: var(--ember); }
+
+.tabs { display: flex; gap: 2px; margin: 0 auto; height: 100%; }
+.tabs a {
+  display: flex; align-items: center; padding: 0 12px; height: 100%; position: relative;
+  font: 700 var(--t-sm)/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--n6);
+}
+.tabs a.on { color: var(--n8); }
+.tabs a.on::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; background: var(--ember); }
+
+.cur { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 8px; background: var(--panel-hi);
+  font: 700 var(--t-md)/1 var(--f-display); letter-spacing: 0.04em; color: var(--n8); --cut: 6px; }
+.cur svg { width: 16px; height: 16px; }
+.icon-btn { width: 30px; height: 30px; display: grid; place-items: center; background: var(--panel-hi); --cut: 6px; }
+.icon-btn svg { width: 16px; height: 16px; }
+
+/* buttons ------------------------------------------------------------------ */
+.btn-primary {
+  background: var(--ember); color: #1a0d06; text-align: left;
+  transition: transform var(--d-fast) var(--ease-spring), filter var(--d-fast);
+}
+.btn-primary:active { transform: scale(0.97); filter: brightness(1.1); }
+.btn-ghost { border: 1px solid var(--line-hi); color: var(--n7); }
+
+/* cards, chips, labels ------------------------------------------------------- */
+.card { background: var(--panel); border: 1px solid var(--line); padding: var(--s2) var(--s3); }
+.eyebrow { font: 700 var(--t-xs)/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--n6); text-transform: uppercase; }
+.title { font: 700 var(--t-lg)/1 var(--f-display); letter-spacing: var(--track-mid); color: var(--n8); }
+.chip {
+  height: 26px; padding: 0 10px; display: inline-flex; align-items: center;
+  font: 700 var(--t-xs)/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--n6);
+  background: rgba(255,255,255,0.04); border: 1px solid var(--line); --cut: 5px;
+}
+.chip.on { color: #1a0d06; background: var(--n7); border-color: var(--n7); }
+.meter { height: 4px; background: rgba(255,255,255,0.08); }
+.meter > i { display: block; height: 100%; background: var(--n7); }
+.rar-epic { --rar: var(--r-epic); } .rar-legendary { --rar: var(--r-legendary); } .rar-rare { --rar: var(--r-rare); } .rar-common { --rar: var(--r-common); } .rar-mythic { --rar: var(--r-mythic); }
