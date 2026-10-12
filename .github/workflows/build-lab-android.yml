@@ -1,8 +1,9 @@
 name: Build Cinderfall LAB Android APK
 
-# The LAB build packages public/game2 — the testbed copy of the game — as a
-# separate app (its own application id and name), so it installs next to the
-# shipping game on the same phone instead of replacing it.
+# The LAB build packages public/lab — the from-scratch rewrite of the game
+# (docs/LAB_REWRITE_PLAN.md) — as a separate app (its own application id and
+# name), so it installs next to the shipping game on the same phone instead of
+# replacing it. Until milestone M1 it packaged public/game2, the old testbed.
 
 on:
   workflow_dispatch: {}
@@ -10,7 +11,7 @@ on:
     branches:
       - main
     paths:
-      - "public/game2/**"
+      - "public/lab/**"
       - ".github/workflows/build-lab-android.yml"
 
 permissions:
@@ -20,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      GAME_DIR: game2
+      GAME_DIR: lab
     defaults:
       run:
         working-directory: mobile
@@ -91,7 +92,7 @@ jobs:
           tag_name: lab-build-${{ github.run_number }}
           name: "Cinderfall LAB build #${{ github.run_number }}"
           body: |
-            LAB build (public/game2) from commit ${{ github.sha }}.
+            LAB build (public/lab, rewrite) from commit ${{ github.sha }}.
             Installs as a separate app ("CF LAB", com.cinderfall.sector9.lab)
             next to the shipping game. Debug-key signed, for testing only.
           files: mobile/android/app/build/outputs/apk/debug/app-debug.apk

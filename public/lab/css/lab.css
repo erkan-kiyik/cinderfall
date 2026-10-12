@@ -1,0 +1,19 @@
+/* CINDERFALL LAB — engine shell (canvas, boot screen, overlay). */
+html, body { background: var(--n0); touch-action: none; user-select: none; -webkit-user-select: none; }
+#game { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#ctl { position: absolute; left: max(12px, env(safe-area-inset-left)); top: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100vw - 300px); pointer-events: auto; }
+#ctl .chip { height: 30px; background: rgba(13,16,21,0.72); color: var(--n7); }
+#ctl .chip:active { transform: scale(0.96); }
+.perf { position: absolute; right: max(10px, env(safe-area-inset-right)); top: 10px; background: rgba(13,16,21,0.72); border: 1px solid var(--line); padding: 6px 8px; pointer-events: auto; }
+.perf pre { margin: 0 0 6px; font: 600 11px/1.35 var(--f-body); color: var(--n7); white-space: pre; }
+.perf canvas { display: block; width: 240px; height: 46px; }
+#boot { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; background: var(--n1); transition: opacity var(--d-slow) var(--ease-out); }
+#boot.done { opacity: 0; pointer-events: none; }
+#boot .logo { font: 700 40px/1 var(--f-display); letter-spacing: 0.18em; color: var(--n8); }
+#boot .logo span { color: var(--ember); }
+#boot .sub { font: 700 12px/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--n6); }
+#boot .bar { width: 240px; height: 4px; background: rgba(255,255,255,0.08); margin-top: 14px; }
+#boot .fill { height: 100%; width: 0; background: var(--ember); transition: width 120ms linear; }
+#boot .msg { font: 600 12px/1 var(--f-body); color: var(--n6); }
+#boot.fail .msg { color: var(--danger); }

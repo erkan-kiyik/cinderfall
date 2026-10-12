@@ -44,10 +44,10 @@ Korunan tek görsel varlık: **CROW** (yeni onaylanan v6). Yeni stile uyması i�
 
 ## 2. Klasör yapısı
 
-Yeni oyun `public/lab/` altında yazılır. LAB APK'sı ilk oynanabilir sürüme
-(M4) kadar eski LAB'ı paketlemeye devam eder. M4'te
-`build-lab-android.yml` içindeki `GAME_DIR` `lab`'a çevrilir ve
-`public/game2` silinir.
+Yeni oyun `public/lab/` altında yazılır. **M1'den itibaren LAB APK'sı bu
+klasörü paketler** (`build-lab-android.yml` → `GAME_DIR: lab`). Geçiş, motorun
+120 FPS hedefi gerçek telefonda ölçülebilsin diye M4'ten M1'e alındı. Eski LAB
+(`public/game2`) depoda durur; artık paketlenmez.
 
 ```
 public/lab/
@@ -482,7 +482,7 @@ teslimden önce düzeltilir.
 | **M1** | Motor çekirdeği | WebGL2 batcher, atlas pişirici + önbellek, kamera, ışık, bloom, parçacık, 120 Hz döngü, perf katmanı | Test sahnesi 10 bin sprite'ta 120 FPS (masaüstü) |
 | **M2** | Karakter + hareket | İskelet, klipler, blend, IK, kumaş; VEX; tam hareket fiziği | `anim-lab` şeritleri temiz; hareket testi geçer |
 | **M3** | Silah çekirdeği | Wren-9, Kestrel AR, Ramrod-12, Marksman DMR + bıçak; balistik, geri tepme, tam animasyon, ses, FX | 4 silah + bıçak inceleme sayfası |
-| **M4** | Dikey kesit | 3 düşman tipi + yapay zekâ, ilk kampanya görevi, HUD, dokunmatik | **LAB yeni oyuna geçer** (GAME_DIR = lab) |
+| **M4** | Dikey kesit | 3 düşman tipi + yapay zekâ, ilk kampanya görevi, HUD, dokunmatik | İlk oynanabilir görev uçtan uca |
 | **M5** | UI tasarım sistemi | Bütün menü ekranları, geçişler, ayarlar, HUD düzenleyici, yasal | 740×360 ve 2400×1080'de bütün ekranlar temiz |
 | **M6** | Operatörler + kadro | 5 operatör, 15 yetenek, kalan 8 silah, eklentiler | Her yetenek ve silah için inceleme sayfası |
 | **M7** | Skin + meta | Malzeme shader'ları, 6 koleksiyon, sandık, CROW, profil, istatistik, başarımlar | Skin vitrin sayfaları; ekonomi simülasyonu |
