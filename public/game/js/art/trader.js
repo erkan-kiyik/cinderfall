@@ -3,18 +3,9 @@
 // Painted rather than shipped as an image, like every other asset here: crisp
 // at any DPR, no download, re-lit by changing a few numbers.
 //
-// Design brief. The first CROW was a hooded silhouette with a glowing visor
-// slot — the stock "mysterious vendor" every generated game ships, with
-// nothing in it that said *this* trader or *this* name. The redesign is built
-// on the name:
-//
-//   - a beaked respirator (a plague-doctor nose cone in riveted steel), turned
-//     three-quarters so the beak breaks the hood's outline — the one shape
-//     that makes him CROW in silhouette before any detail resolves
-//   - a mantle of black feathers and shredded cloth over the shoulders, with
-//     the blue-green sheen real crow plumage has
-//   - two round brass-rimmed goggle lenses instead of a sci-fi visor
-//   - hands on the counter, one of them on a rifle he is selling
+// The man is in crowchar.js; his design history, brief and the checklist he
+// was reviewed against are in docs/CROW_DESIGN.md. This file is the place
+// and the staging.
 //
 // And a place, not a backdrop: a shipping container fitted out as a shop —
 // corrugated walls, a pegboard of weapons, ammo cans, a red neon sign with his
@@ -22,6 +13,10 @@
 // through the open door. Three lights, each with a visible source: the warm
 // pendant (key, above right), the red neon (rim, left), the cold street haze
 // (fill, through the door).
+
+import {
+  paintCrowBody, paintCrowHead, paintCrowCollar, crowEyesLive, HEAD_PIVOT, CIGAR_TIP,
+} from './crowchar.js';
 
 function rng(seed) {
   let s = seed >>> 0;
@@ -56,10 +51,6 @@ function rrect(g, x, y, w, h, r) {
 
 const WALL = '#1a1f24';
 const STEEL = '#3a4048';
-const COAT = '#17181c';
-const FEATHER = '#101115';
-const SHEEN = '#4f7489';     // crow-plumage blue-green
-const LEATHER = '#3b2f26';
 const BRASS = '#a98a52';
 const NEON = '#ff3b4a';
 const LAMP = '#ffc27a';
@@ -69,7 +60,7 @@ const HAZE = '#7fa6c4';
 // x = 0 at the horizontal centre, y = 0 at the top. FLOOR and COUNTER are the
 // two horizontal lines everything is staged against.
 const FLOOR = 131;
-const COUNTER = 94;
+const COUNTER = 106;
 
 // ------------------------------------------------------------- container
 function container(g, halfW) {
@@ -150,14 +141,6 @@ function rifle(g, x, y, len, col = STEEL, mag = true) {
   if (mag) { g.beginPath(); g.moveTo(15, 1.8); g.lineTo(18.4, 1.8); g.lineTo(19.2, 7.4); g.lineTo(16.4, 7.6); g.closePath(); g.fill(); }
   g.fillStyle = shade(col, 0.55); g.fillRect(12, -4.4, 6, 1.8);  // optic
   g.fillStyle = 'rgba(220,230,240,0.16)'; g.fillRect(9, -2.6, 22, 0.6);
-  g.restore();
-}
-function pistol(g, x, y, s, col = STEEL) {
-  g.save(); g.translate(x, y); g.scale(s, s);
-  g.fillStyle = col; g.fillRect(0, -2, 9, 2.4);
-  g.fillStyle = shade(col, 0.65);
-  g.beginPath(); g.moveTo(0.6, 0.4); g.lineTo(3, 0.4); g.lineTo(2.2, 4.6); g.lineTo(-0.4, 4.6); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(220,230,240,0.18)'; g.fillRect(0, -2, 9, 0.5);
   g.restore();
 }
 function pegboard(g, x0, x1) {
@@ -277,424 +260,14 @@ function pendantLight(g, x, y) {
 }
 
 // ------------------------------------------------------------- CROW
-// Fourth design, built from scratch. What the earlier ones taught:
-//
-//   - a mask or a visor gives the player nobody to deal with: he has a face
-//   - bare hands drawn as finger strips read as sausages at this size: his
-//     arms are folded, one hand tucked away, the other in a heavy leather
-//     glove gripping his arm — a glove is a shape, not a row of fingers
-//   - the name has to be in the silhouette: slicked-back black hair swept
-//     into a crest, a hooked nose, a mantle of crow feathers over the
-//     shoulders of a high-collared black coat, and the bird itself
-//
-// He is a scrap appraiser, so the one-eye-replaced idea is now a brass
-// jeweller's loupe strapped over his right eye, with his eye swimming large
-// in the glass. A red scarf ties him to the neon. He is drawn in three baked
-// parts — body (coat, mantle, folded arms), head (on its own so it can turn
-// and blink) and collar (scarf and coat collar, over the neck seam).
-
-const SKIN = '#b48862';
-const SKIN_D = '#7e5940';
-const SKIN_L = '#dcb08a';
-const HAIR = '#111216';
-const COAT_K = '#131418';
-const COAT_L = '#2b2e36';
-const SCARF = '#8c1f2c';
-const SCARF_D = '#561119';
-const SCARF_L = '#c23a47';
-const GLOVE = '#2e2620';
-const GLOVE_L = '#57483b';
-
-function feather(g, x, y, len, ang, w, sheen) {
-  g.save(); g.translate(x, y); g.rotate(ang);
-  g.fillStyle = lin(g, 0, -w, 0, w, [[0, sheen ? shade(SHEEN, 0.9) : '#1c1f26'], [0.5, FEATHER], [1, '#060608']]);
-  g.beginPath();
-  g.moveTo(0, -w * 0.6);
-  g.quadraticCurveTo(len * 0.55, -w, len, 0);
-  g.quadraticCurveTo(len * 0.55, w, 0, w * 0.6);
-  g.closePath(); g.fill();
-  g.strokeStyle = sheen ? 'rgba(150,200,220,0.38)' : 'rgba(120,150,170,0.18)'; g.lineWidth = 0.28;
-  g.beginPath(); g.moveTo(0.5, 0); g.lineTo(len * 0.92, 0); g.stroke();
-  if (sheen) {
-    g.fillStyle = 'rgba(110,170,190,0.24)';
-    g.beginPath(); g.moveTo(len * 0.1, -w * 0.45); g.quadraticCurveTo(len * 0.55, -w * 0.95, len * 0.95, -w * 0.08);
-    g.quadraticCurveTo(len * 0.55, -w * 0.55, len * 0.1, -w * 0.25); g.closePath(); g.fill();
-  }
-  g.restore();
-}
-
-// ---- body: coat, bandolier, mantle, folded arms --------------------------
-function sleeve(g, pts, lit) {
-  g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
-  for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
-  g.closePath();
-  g.fillStyle = lit;
-  g.fill();
-}
-
-function crowBody(g) {
-  const r = rng(0xb0d1);
-  // coat: broad, a little hunched
-  g.fillStyle = lin(g, -48, 0, 50, 0, [[0, '#0d0e11'], [0.5, COAT_K], [1, COAT_L]]);
-  g.beginPath();
-  g.moveTo(-49, 102); g.lineTo(-48, 84);
-  g.quadraticCurveTo(-48, 70, -38, 65);
-  g.quadraticCurveTo(-26, 59.4, -12, 58.4);
-  g.lineTo(14, 58.4);
-  g.quadraticCurveTo(28, 59.4, 40, 65);
-  g.quadraticCurveTo(50, 70, 50, 84);
-  g.lineTo(51, 102); g.closePath(); g.fill();
-  // shirt in the open front, and the scarf's tail hanging down it
-  g.fillStyle = '#23252a';
-  g.beginPath(); g.moveTo(-8, 62); g.lineTo(10, 62); g.lineTo(2, 84); g.closePath(); g.fill();
-  g.fillStyle = lin(g, -3, 0, 7, 0, [[0, SCARF_D], [0.5, SCARF], [1, SCARF_L]]);
-  g.beginPath();
-  g.moveTo(-1.6, 64); g.quadraticCurveTo(-3.6, 72, -2.4, 82); g.lineTo(0.6, 86.6); g.lineTo(3.0, 83.2);
-  g.lineTo(5.4, 86.0); g.quadraticCurveTo(7.4, 74, 5.4, 64); g.closePath(); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.35;
-  g.beginPath(); g.moveTo(1.4, 66); g.quadraticCurveTo(1.0, 75, 2.0, 84); g.stroke();
-  // coat lapel edges
-  g.strokeStyle = 'rgba(0,0,0,0.55)'; g.lineWidth = 0.6;
-  g.beginPath(); g.moveTo(-8, 62); g.lineTo(-2, 90); g.moveTo(10, 62); g.lineTo(5, 90); g.stroke();
-  g.strokeStyle = 'rgba(190,205,225,0.08)'; g.lineWidth = 0.5;
-  g.beginPath(); g.moveTo(10.6, 62.4); g.lineTo(5.6, 90); g.stroke();
-
-  // bandolier: shoulder to hip, with pouches and tools
-  g.save();
-  g.translate(-28, 63); g.rotate(Math.atan2(36, 60));
-  g.fillStyle = lin(g, 0, -2.4, 0, 2.4, [[0, '#4a3a2c'], [0.5, '#3b2f26'], [1, '#231b15']]);
-  g.fillRect(0, -2.4, 72, 4.8);
-  g.strokeStyle = 'rgba(220,190,150,0.22)'; g.lineWidth = 0.25; g.setLineDash([0.8, 0.7]);
-  g.beginPath(); g.moveTo(0, -1.8); g.lineTo(72, -1.8); g.moveTo(0, 1.8); g.lineTo(72, 1.8); g.stroke();
-  g.setLineDash([]);
-  for (const x of [10, 19]) {
-    g.fillStyle = lin(g, 0, -3.6, 0, 4, [[0, '#55432f'], [1, '#2a2018']]);
-    rrect(g, x, -3.6, 7, 7.4, 1.0); g.fill();
-    g.fillStyle = '#3d3024'; rrect(g, x - 0.3, -3.8, 7.6, 2.6, 0.8); g.fill();
-    g.fillStyle = BRASS; g.beginPath(); g.arc(x + 3.5, -2.2, 0.7, 0, Math.PI * 2); g.fill();
-  }
-  // a screwdriver and a small wrench tucked under it
-  g.fillStyle = '#a7232f'; rrect(g, 28, -4.6, 2.4, 6, 0.8); g.fill();
-  g.fillStyle = '#9aa1aa'; g.fillRect(28.8, -9.6, 0.8, 5.2);
-  g.fillStyle = '#7d848d';
-  g.fillRect(33, -6.4, 1.3, 9);
-  g.beginPath(); g.arc(33.65, -6.8, 1.6, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#23252a'; g.fillRect(33.1, -8.4, 1.1, 1.6);
-  g.restore();
-
-  // the back forearm (his left), running across to tuck under his right arm
-  sleeve(g, [[46, 84], [-16, 74.6], [-21, 78.6], [-19, 84.6], [44, 94]],
-    lin(g, 0, 74, 0, 94, [[0, '#24272e'], [0.6, '#16171b'], [1, '#0c0d10']]));
-  // upper arms, falling from the shoulders to the elbows at his sides
-  for (const side of [-1, 1]) {
-    g.fillStyle = side < 0
-      ? lin(g, -50, 0, -30, 0, [[0, '#0b0c0e'], [1, '#191a1f']])
-      : lin(g, 30, 0, 52, 0, [[0, '#1b1d22'], [1, COAT_L]]);
-    g.beginPath();
-    g.moveTo(side * 37, 64.6);
-    g.quadraticCurveTo(side * 50, 70, side * 50.4, 84);
-    g.quadraticCurveTo(side * 50.4, 93, side * 45, 95);
-    g.lineTo(side * 34, 92);
-    g.quadraticCurveTo(side * 31.4, 80, side * 30, 69);
-    g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 0.55;
-    g.beginPath(); g.moveTo(side * 31, 70); g.quadraticCurveTo(side * 33, 82, side * 35, 92); g.stroke();
-    g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 0.4;
-    g.beginPath(); g.moveTo(side * 45, 76); g.quadraticCurveTo(side * 42, 82, side * 44.6, 88); g.stroke();
-  }
-
-  // mantle: two rows of crow feathers over each shoulder, sheened on the lit
-  // side, the outer ones longest
-  for (const row of [0, 1]) {
-    for (const side of [-1, 1]) {
-      const n = 9;
-      for (let i = 0; i < n; i++) {
-        const t = i / (n - 1);
-        const bx = side * (11 + t * 31), by = 58.8 + t * 8.6 + row * 3.6 + (r() - 0.5) * 0.6;
-        const ang = side > 0 ? 0.62 + t * 0.78 + row * 0.12 : Math.PI - 0.62 - t * 0.78 - row * 0.12;
-        const len = (row ? 12 : 14) + t * 7 + r() * 2;
-        const w = 3.0 + r() * 0.9;
-        feather(g, bx, by, len, ang + (r() - 0.5) * 0.12, w, side > 0 ? r() > 0.25 : r() > 0.7);
-      }
-    }
-  }
-
-  // the front forearm (his right), across the top, a rolled cuff at the wrist
-  sleeve(g, [[-50, 86], [16.6, 73.2], [21.6, 76.4], [20.6, 83.2], [-46, 97]],
-    lin(g, 0, 72, 0, 97, [[0, '#353943'], [0.35, '#1f2228'], [1, '#0d0e11']]));
-  // sleeve folds: short, soft, following the arm's taper
-  g.strokeStyle = 'rgba(0,0,0,0.28)'; g.lineWidth = 0.5;
-  for (const fx of [-28, -10, 6]) {
-    const top = 86 - (fx + 50) * 0.19;
-    g.beginPath(); g.moveTo(fx, top + 1.2); g.quadraticCurveTo(fx + 1.4, top + 4.2, fx + 0.4, top + 7.0); g.stroke();
-  }
-  g.strokeStyle = 'rgba(255,220,180,0.14)'; g.lineWidth = 0.6;
-  g.beginPath(); g.moveTo(-46, 86.8); g.lineTo(16, 74); g.stroke();
-  // cuff
-  g.save(); g.translate(17.4, 78.6); g.rotate(-0.19);
-  g.fillStyle = lin(g, 0, -5, 0, 5, [[0, '#3a3e48'], [1, '#17191d']]);
-  rrect(g, -3.6, -5.4, 4.6, 10.6, 1.2); g.fill();
-  g.fillStyle = BRASS;
-  g.beginPath(); g.arc(-1.3, -2.6, 0.55, 0, Math.PI * 2); g.arc(-1.3, 2.4, 0.55, 0, Math.PI * 2); g.fill();
-  g.restore();
-
-  // his gloved right hand gripping his left arm: the back of the hand, four
-  // fingers wrapping round the sleeve, brass studs over the knuckles
-  g.save(); g.translate(21.4, 77.6); g.rotate(-0.12);
-  g.fillStyle = lin(g, 0, -6, 0, 6, [[0, GLOVE_L], [0.5, GLOVE], [1, '#17120f']]);
-  g.beginPath();
-  g.moveTo(-1.2, -5.2); g.quadraticCurveTo(4, -6.8, 8.6, -5.0);
-  g.lineTo(9.4, 4.6); g.quadraticCurveTo(4, 6.4, -1.0, 5.0);
-  g.closePath(); g.fill();
-  for (let i = 0; i < 4; i++) {
-    const y = -4.6 + i * 2.55;
-    g.save(); g.translate(8.2, y); g.rotate(0.32 + i * 0.05);
-    g.fillStyle = lin(g, 0, -1.1, 0, 1.2, [[0, GLOVE_L], [0.6, GLOVE], [1, '#120e0b']]);
-    rrect(g, 0, -1.15, 5.6 - i * 0.35, 2.3, 1.1); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.25;
-    g.beginPath(); g.moveTo(2.4, -1.0); g.lineTo(2.4, 1.0); g.stroke();
-    g.restore();
-  }
-  g.fillStyle = '#c9a868';
-  for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(7.4, -4.3 + i * 2.55, 0.42, 0, Math.PI * 2); g.fill(); }
-  g.strokeStyle = 'rgba(255,230,200,0.18)'; g.lineWidth = 0.4;
-  g.beginPath(); g.moveTo(-0.6, -4.8); g.quadraticCurveTo(4, -6.2, 8.2, -4.6); g.stroke();
-  g.restore();
-}
-
-// ---- head ------------------------------------------------------------------
-// Pre-scale head space; drawn at HEAD_S about HEAD_PIVOT.
-const HEAD_PIVOT = { x: 1, y: 57 };
-const HEAD_S = 1.1;
-const EYE_L = { x: -4.5, y: 39.4 };
-const LOUPE = { x: 6.9, y: 39.5 };
-
-function facePath(g) {
-  g.beginPath();
-  g.moveTo(-9.8, 31.5);
-  g.quadraticCurveTo(-11.3, 37, -10.6, 42.2);
-  g.quadraticCurveTo(-10.2, 47.4, -7.4, 51.8);
-  g.quadraticCurveTo(-3.8, 56.8, 0.9, 57.7);
-  g.quadraticCurveTo(5.4, 57.4, 8.7, 52.6);
-  g.quadraticCurveTo(11.7, 48, 12.2, 42);
-  g.quadraticCurveTo(12.6, 36, 11.4, 31);
-  g.quadraticCurveTo(1, 26.4, -9.8, 31.5);
-  g.closePath();
-}
-
-function crowHead(g) {
-  const r = rng(0x4ead);
-  // neck, with feathers inked up its side
-  g.fillStyle = lin(g, -6, 0, 8, 0, [[0, SKIN_D], [0.6, SKIN], [1, SKIN_D]]);
-  g.beginPath(); g.moveTo(-5.6, 50); g.lineTo(7.4, 50); g.lineTo(8.2, 63); g.lineTo(-6.4, 63); g.closePath(); g.fill();
-  g.strokeStyle = 'rgba(28,36,48,0.62)'; g.lineWidth = 0.45; g.lineCap = 'round';
-  for (let i = 0; i < 3; i++) {
-    const y = 55.6 + i * 2.2;
-    g.beginPath(); g.moveTo(-5.4, y + 1.6); g.quadraticCurveTo(-3.6, y - 0.6, -1.2, y - 1.2); g.stroke();
-    g.beginPath(); g.moveTo(-4.6, y + 0.8); g.lineTo(-3.4, y + 0.1); g.stroke();
-  }
-  g.lineCap = 'butt';
-
-  // ears; a brass hoop and a stud in the left one
-  g.fillStyle = SKIN_D;
-  g.beginPath(); g.ellipse(-10.8, 41.6, 1.9, 3.4, -0.12, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(70,40,26,0.55)';
-  g.beginPath(); g.ellipse(-10.6, 41.8, 0.8, 2.1, 0, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = '#c9a35e'; g.lineWidth = 0.42;
-  g.beginPath(); g.arc(-11.1, 45.4, 0.95, 0, Math.PI * 2); g.stroke();
-  g.fillStyle = '#e2c27a'; g.beginPath(); g.arc(-11.6, 43.2, 0.36, 0, Math.PI * 2); g.fill();
-  g.fillStyle = SKIN;
-  g.beginPath(); g.ellipse(12.4, 42.2, 1.4, 3.0, 0.1, 0, Math.PI * 2); g.fill();
-
-  // face
-  g.fillStyle = lin(g, -11, 0, 13, 0, [[0, SKIN_D], [0.32, SKIN], [0.72, SKIN_L], [1, SKIN]]);
-  facePath(g); g.fill();
-  g.save(); facePath(g); g.clip();
-  // gaunt planes: deep sockets, hollow cheeks, a hard jaw
-  g.fillStyle = 'rgba(78,44,28,0.40)';
-  g.beginPath(); g.ellipse(EYE_L.x, EYE_L.y + 0.2, 4.2, 2.7, 0, 0, Math.PI * 2); g.fill();
-  g.beginPath(); g.ellipse(LOUPE.x, LOUPE.y, 4.0, 2.8, 0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(78,44,28,0.34)';
-  g.beginPath(); g.moveTo(-10.4, 43); g.quadraticCurveTo(-6.4, 46, -6.8, 51.6); g.lineTo(-9.6, 50); g.closePath(); g.fill();
-  g.beginPath(); g.moveTo(11.8, 43); g.quadraticCurveTo(8.6, 46, 8.8, 51.4); g.lineTo(11.4, 48.6); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(255,224,190,0.18)';     // cheekbone catching the lamp
-  g.beginPath(); g.ellipse(8.4, 43.4, 2.6, 1.0, -0.4, 0, Math.PI * 2); g.fill();
-  // age: forehead lines, crow's feet, bags, the folds beside the mouth
-  g.strokeStyle = 'rgba(92,54,34,0.42)'; g.lineWidth = 0.3; g.lineCap = 'round';
-  for (const [y, a] of [[32.6, 0.9], [34.0, 0.7]]) { g.beginPath(); g.moveTo(-6.6, y + 0.4); g.quadraticCurveTo(1, y - 0.6 * a, 8.6, y + 0.2); g.stroke(); }
-  g.beginPath(); g.moveTo(EYE_L.x - 3.2, EYE_L.y + 0.4); g.lineTo(EYE_L.x - 4.8, EYE_L.y - 0.4); g.moveTo(EYE_L.x - 3.2, EYE_L.y + 0.9); g.lineTo(EYE_L.x - 4.9, EYE_L.y + 1.2); g.stroke();
-  g.beginPath(); g.moveTo(EYE_L.x - 2.4, EYE_L.y + 2.3); g.quadraticCurveTo(EYE_L.x, EYE_L.y + 3.2, EYE_L.x + 2.4, EYE_L.y + 2.0); g.stroke();
-  g.lineWidth = 0.42;
-  g.beginPath(); g.moveTo(-0.6, 47.6); g.quadraticCurveTo(-3.6, 49.8, -3.2, 53.6); g.stroke();
-  g.beginPath(); g.moveTo(5.0, 47.4); g.quadraticCurveTo(7.6, 49.6, 7.2, 53.0); g.stroke();
-  g.beginPath(); g.moveTo(1.0, 35.6); g.lineTo(1.4, 37.4); g.stroke();      // the frown line
-  g.lineCap = 'butt';
-  // stubble shadow and a trimmed goatee
-  g.fillStyle = 'rgba(40,34,32,0.32)';
-  g.beginPath(); g.moveTo(-10.2, 46); g.quadraticCurveTo(-8, 54, 0.9, 57.8); g.quadraticCurveTo(8.6, 55, 11.8, 46); g.lineTo(11.8, 58); g.lineTo(-10.2, 58); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(14,14,16,0.88)';
-  g.beginPath(); g.moveTo(-1.4, 53.6); g.quadraticCurveTo(1.6, 53.0, 4.6, 53.6); g.lineTo(3.8, 57.6); g.quadraticCurveTo(1.6, 58.6, -0.4, 57.6); g.closePath(); g.fill();
-  for (let i = 0; i < 110; i++) {
-    const x = -9.6 + r() * 21, y = 46.5 + r() * 11;
-    g.fillStyle = r() > 0.55 ? 'rgba(200,196,188,0.42)' : 'rgba(30,26,24,0.38)'; g.fillRect(x, y, 0.32, 0.32);
-  }
-  g.restore();
-
-  // nose: long, hooked — the beak. A shadow plane down its far side and a
-  // lit ridge on the near one, so it stands off the face in profile.
-  g.fillStyle = 'rgba(70,38,22,0.42)';
-  g.beginPath(); g.moveTo(0.4, 36.6); g.quadraticCurveTo(-1.6, 42.4, -0.6, 47.8); g.lineTo(1.4, 48.4); g.quadraticCurveTo(0.2, 42.4, 1.4, 36.8); g.closePath(); g.fill();
-  g.fillStyle = lin(g, 0, 37, 6, 49, [[0, SKIN], [0.55, SKIN_L], [1, SKIN]]);
-  g.beginPath();
-  g.moveTo(0.8, 36.2);
-  g.quadraticCurveTo(2.6, 41.4, 6.0, 46.6);
-  g.quadraticCurveTo(6.4, 49.2, 3.4, 49.0);
-  g.quadraticCurveTo(1.6, 49.0, 0.4, 47.6);
-  g.quadraticCurveTo(-0.2, 42, 0.8, 36.2);
-  g.closePath(); g.fill();
-  g.strokeStyle = 'rgba(80,44,28,0.6)'; g.lineWidth = 0.42;
-  g.beginPath(); g.moveTo(6.0, 46.6); g.quadraticCurveTo(6.4, 49.2, 3.4, 49.0); g.quadraticCurveTo(1.6, 49.0, 0.4, 47.6); g.stroke();
-  g.strokeStyle = 'rgba(255,236,212,0.62)'; g.lineWidth = 0.4;
-  g.beginPath(); g.moveTo(1.8, 37.4); g.quadraticCurveTo(3.4, 41.8, 5.4, 45.6); g.stroke();
-  g.fillStyle = 'rgba(255,240,222,0.55)';
-  g.beginPath(); g.ellipse(5.0, 46.8, 0.8, 0.5, 0.5, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(52,26,16,0.8)';
-  g.beginPath(); g.ellipse(1.8, 48.2, 0.95, 0.42, 0.25, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(70,40,26,0.35)';
-  g.beginPath(); g.ellipse(2.8, 49.9, 2.8, 0.7, 0, 0, Math.PI * 2); g.fill();
-
-  // moustache and a mouth that has decided you are overpaying
-  g.strokeStyle = 'rgba(16,16,18,0.9)'; g.lineWidth = 0.7; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(-2.6, 50.6); g.quadraticCurveTo(1.2, 49.6, 5.4, 50.4); g.stroke();
-  g.strokeStyle = '#4a2a1c'; g.lineWidth = 0.55;
-  g.beginPath(); g.moveTo(-2.2, 52.3); g.quadraticCurveTo(1.4, 52.9, 4.6, 51.9); g.quadraticCurveTo(5.4, 51.5, 5.8, 50.9); g.stroke();
-  g.fillStyle = 'rgba(160,96,76,0.4)'; g.fillRect(-1, 52.7, 4.4, 0.55);
-  g.lineCap = 'butt';
-
-  // his own eye: narrow, amber, unimpressed
-  g.fillStyle = '#e9dfcf';
-  g.beginPath(); g.moveTo(EYE_L.x - 2.8, EYE_L.y); g.quadraticCurveTo(EYE_L.x, EYE_L.y - 1.5, EYE_L.x + 2.7, EYE_L.y - 0.1);
-  g.quadraticCurveTo(EYE_L.x, EYE_L.y + 1.1, EYE_L.x - 2.8, EYE_L.y); g.closePath(); g.fill();
-  g.fillStyle = '#a26a26'; g.beginPath(); g.arc(EYE_L.x + 0.4, EYE_L.y - 0.1, 1.0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#0b0705'; g.beginPath(); g.arc(EYE_L.x + 0.4, EYE_L.y - 0.1, 0.48, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(255,244,226,0.95)'; g.fillRect(EYE_L.x + 0.7, EYE_L.y - 0.7, 0.42, 0.42);
-  g.strokeStyle = '#2e1a10'; g.lineWidth = 0.7;
-  g.beginPath(); g.moveTo(EYE_L.x - 3.0, EYE_L.y + 0.1); g.quadraticCurveTo(EYE_L.x, EYE_L.y - 1.8, EYE_L.x + 2.9, EYE_L.y - 0.2); g.stroke();
-  g.strokeStyle = 'rgba(80,44,28,0.45)'; g.lineWidth = 0.32;
-  g.beginPath(); g.moveTo(EYE_L.x - 2.2, EYE_L.y + 1.5); g.quadraticCurveTo(EYE_L.x, EYE_L.y + 2.2, EYE_L.x + 2.2, EYE_L.y + 1.2); g.stroke();
-
-  // brows: low and hard
-  g.fillStyle = HAIR;
-  g.beginPath(); g.moveTo(-9.0, 36.0); g.quadraticCurveTo(-5.2, 34.2, -1.2, 36.6); g.lineTo(-1.4, 37.6); g.quadraticCurveTo(-5.2, 35.6, -8.8, 37.2); g.closePath(); g.fill();
-  g.beginPath(); g.moveTo(3.6, 36.6); g.quadraticCurveTo(7.6, 34.4, 11.0, 35.6); g.lineTo(10.8, 36.6); g.quadraticCurveTo(7.6, 35.6, 3.8, 37.6); g.closePath(); g.fill();
-
-  // hair: slicked straight back into a crest, a grey streak through it, the
-  // sides clipped short
-  g.fillStyle = 'rgba(30,30,34,0.55)';
-  g.beginPath(); g.moveTo(-10.4, 32); g.quadraticCurveTo(-11.6, 37, -10.8, 40.6); g.lineTo(-9.6, 39.4); g.quadraticCurveTo(-10, 35, -9.4, 32); g.closePath(); g.fill();
-  g.fillStyle = lin(g, -14, 18, 10, 30, [[0, '#08090b'], [0.55, HAIR], [1, '#23262d']]);
-  g.beginPath();
-  g.moveTo(11.4, 31.6);
-  g.quadraticCurveTo(11.6, 24, 4, 19.4);
-  g.quadraticCurveTo(-4, 16.6, -11.6, 19.6);
-  g.lineTo(-19.2, 21.4); g.lineTo(-14.6, 24.4);
-  g.lineTo(-20.0, 27.4); g.lineTo(-14.0, 29.2);
-  g.lineTo(-17.2, 32.6); g.lineTo(-11.0, 33.2);
-  g.quadraticCurveTo(-6.4, 29.6, -1.2, 29.8);
-  g.lineTo(1.4, 31.2);
-  g.quadraticCurveTo(6.4, 29.2, 11.4, 31.6);
-  g.closePath(); g.fill();
-  g.strokeStyle = 'rgba(120,170,200,0.22)'; g.lineWidth = 0.35;
-  for (let i = 0; i < 7; i++) {
-    const y = 21.6 + i * 1.3;
-    g.beginPath(); g.moveTo(9.6 - i * 0.6, y + 6); g.quadraticCurveTo(-2, y - 1.6, -13 - i * 0.4, y + 2.4); g.stroke();
-  }
-  g.fillStyle = 'rgba(176,180,188,0.62)';     // the grey streak
-  g.beginPath();
-  g.moveTo(6.2, 29.8); g.quadraticCurveTo(2, 24.2, -10.6, 21.8); g.lineTo(-14.8, 22.6);
-  g.quadraticCurveTo(-1, 25.4, 8.6, 30.6); g.closePath(); g.fill();
-
-  // the loupe strap, over the hair and round the back
-  g.strokeStyle = '#2b211a'; g.lineWidth = 1.1;
-  g.beginPath(); g.moveTo(10.4, 37.8); g.quadraticCurveTo(11.8, 33, 4, 30.6); g.quadraticCurveTo(-6, 28.6, -12.4, 33.4); g.stroke();
-  g.strokeStyle = 'rgba(220,180,130,0.25)'; g.lineWidth = 0.3;
-  g.beginPath(); g.moveTo(10.0, 37.2); g.quadraticCurveTo(11.2, 33, 4, 30.2); g.stroke();
-  g.fillStyle = BRASS; g.fillRect(-5.2, 28.8, 1.6, 1.6);
-
-  // jeweller's loupe: a brass barrel standing out of the socket, its glass
-  // magnifying the eye behind it
-  const L = LOUPE;
-  g.fillStyle = lin(g, L.x - 3.6, L.y - 3.6, L.x + 3.6, L.y + 3.6, [[0, '#f0d08a'], [0.45, '#b0874a'], [1, '#5a4020']]);
-  g.beginPath(); g.ellipse(L.x, L.y, 3.6, 3.8, 0, 0, Math.PI * 2); g.fill();
-  g.beginPath(); g.ellipse(L.x + 1.4, L.y + 0.6, 3.1, 3.3, 0, 0, Math.PI * 2); g.fill();
-  g.beginPath();      // barrel side
-  g.moveTo(L.x, L.y - 3.8); g.lineTo(L.x + 1.4, L.y - 2.7); g.lineTo(L.x + 1.4, L.y + 3.9); g.lineTo(L.x, L.y + 3.8); g.closePath();
-  g.fillStyle = '#7a5a2c'; g.fill();
-  g.strokeStyle = 'rgba(40,26,10,0.55)'; g.lineWidth = 0.22;
-  for (let i = 0; i < 9; i++) { const a = -Math.PI / 2 + i * 0.36; g.beginPath(); g.moveTo(L.x + Math.cos(a) * 3.5, L.y + Math.sin(a) * 3.7); g.lineTo(L.x + 1.3 + Math.cos(a) * 3.0, L.y + 0.6 + Math.sin(a) * 3.2); g.stroke(); }
-  g.fillStyle = rad(g, L.x + 1.2, L.y + 0.4, 0.2, 2.6, [[0, '#2a3b48'], [0.7, '#162029'], [1, '#0a0f14']]);
-  g.beginPath(); g.ellipse(L.x + 1.4, L.y + 0.6, 2.3, 2.5, 0, 0, Math.PI * 2); g.fill();
-  // the magnified eye, amber, swimming in the glass
-  g.fillStyle = 'rgba(200,190,170,0.35)';
-  g.beginPath(); g.ellipse(L.x + 1.2, L.y + 0.7, 2.0, 1.2, 0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#b07428'; g.beginPath(); g.arc(L.x + 1.5, L.y + 0.6, 1.25, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#0b0705'; g.beginPath(); g.arc(L.x + 1.5, L.y + 0.6, 0.6, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(255,255,255,0.75)';
-  g.beginPath(); g.ellipse(L.x + 0.5, L.y - 0.6, 0.9, 0.45, -0.6, 0, Math.PI * 2); g.fill();
-}
-
-// ---- collar: scarf wrap and the coat's upturned collar ----------------------
-function crowCollar(g) {
-  // scarf, wound twice round the neck, knotted at the front
-  g.fillStyle = lin(g, -10, 0, 12, 0, [[0, SCARF_D], [0.55, SCARF], [1, SCARF_L]]);
-  g.beginPath();
-  g.moveTo(-9.6, 57.4); g.quadraticCurveTo(1, 55.4, 11.4, 57.2);
-  g.quadraticCurveTo(12.6, 61, 11, 64.4); g.quadraticCurveTo(1, 66.6, -9, 64.6);
-  g.quadraticCurveTo(-10.8, 61, -9.6, 57.4); g.closePath(); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,0.32)'; g.lineWidth = 0.4;
-  for (const y of [59.4, 61.8]) { g.beginPath(); g.moveTo(-9.4, y); g.quadraticCurveTo(1, y - 1.4, 11.4, y); g.stroke(); }
-  g.fillStyle = lin(g, 0, 62, 0, 69, [[0, SCARF_L], [1, SCARF_D]]);
-  g.beginPath(); g.ellipse(2.4, 65.4, 3.4, 2.6, 0.2, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.35;
-  g.beginPath(); g.moveTo(0.4, 64); g.quadraticCurveTo(2.4, 66.6, 4.8, 64.4); g.stroke();
-  // upturned coat collar either side
-  for (const side of [-1, 1]) {
-    g.fillStyle = side < 0
-      ? lin(g, -18, 0, -6, 0, [[0, '#0c0d10'], [1, '#1b1d22']])
-      : lin(g, 6, 0, 20, 0, [[0, '#1d2026'], [1, '#353943']]);
-    g.beginPath();
-    g.moveTo(side * 6.4, 65);
-    g.lineTo(side * 17.6, 61.6);
-    g.lineTo(side * 18.6, 49.2);
-    g.quadraticCurveTo(side * 14, 50.4, side * 11.6, 54.4);
-    g.lineTo(side * 9.6, 58.6);
-    g.closePath(); g.fill();
-    g.strokeStyle = side > 0 ? 'rgba(255,220,180,0.20)' : 'rgba(255,80,90,0.18)'; g.lineWidth = 0.4;
-    g.beginPath(); g.moveTo(side * 18.6, 49.2); g.quadraticCurveTo(side * 14, 50.4, side * 11.6, 54.4); g.stroke();
-  }
-}
-
-// His own blink and the loupe's glint, drawn live in head space.
-function crowHeadLive(g, blink, glint) {
-  if (blink > 0) {
-    const E = EYE_L;
-    g.fillStyle = lin(g, 0, E.y - 2, 0, E.y + 1.4, [[0, SKIN], [1, SKIN_D]]);
-    g.beginPath();
-    g.moveTo(E.x - 3.1, E.y + 0.1);
-    g.quadraticCurveTo(E.x, E.y - 1.9, E.x + 3.0, E.y - 0.2);
-    g.quadraticCurveTo(E.x, E.y - 1.9 + 3.2 * blink, E.x - 3.1, E.y + 0.1);
-    g.closePath(); g.fill();
-    g.strokeStyle = '#2e1a10'; g.lineWidth = 0.6;
-    g.beginPath(); g.moveTo(E.x - 3.0, E.y + 0.1); g.quadraticCurveTo(E.x, E.y - 1.9 + 3.2 * blink, E.x + 2.9, E.y - 0.2); g.stroke();
-  }
-  if (glint > 0) {
-    const L = LOUPE;
-    g.save(); g.globalCompositeOperation = 'lighter';
-    g.fillStyle = rad(g, L.x + 0.6, L.y - 0.4, 0, 3.2, [[0, `rgba(255,236,200,${0.85 * glint})`], [1, 'rgba(255,236,200,0)']]);
-    g.beginPath(); g.arc(L.x + 0.6, L.y - 0.4, 3.2, 0, Math.PI * 2); g.fill();
-    g.restore();
-  }
-}
+// The man himself lives in crowchar.js (fifth design, docs/CROW_DESIGN.md).
+// He is staged here in "character units" — origin at the base of his neck —
+// scaled and placed by CHAR: a medium close-up, hat brim to mid-chest, so
+// his face carries the banner instead of being a small figure in a wide box.
+const CHAR = { x: -4, y: 88.5, k: 1.25 };
+// the pendant hangs clear of the hat brim, above and to his right: it is the
+// key light on his face
+const LAMP_X = 54;
 
 // ------------------------------------------------------------- counter
 function counter(g, halfW) {
@@ -721,10 +294,6 @@ function counter(g, halfW) {
     g.fillStyle = '#7a8088';
     for (const [rx, ry] of [[x + 3.5, strip + 8], [x + 28.5, strip + 8], [x + 3.5, FLOOR - 5], [x + 28.5, FLOOR - 5]]) { g.beginPath(); g.arc(rx, ry, 0.55, 0, Math.PI * 2); g.fill(); }
   }
-  // stencil
-  g.fillStyle = 'rgba(214,206,186,0.32)';
-  g.font = '700 8px Rajdhani, "Arial Narrow", sans-serif';
-  g.fillText('SCRAP ONLY', -22, 121);
   // legs' shadow
   g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(x0, FLOOR - 1, x1 - x0, 1.5);
 }
@@ -740,16 +309,6 @@ function counterGoods(g) {
     if (r() > 0.6) { g.beginPath(); g.arc(x, y, 1.1 + r() * 0.6, 0, Math.PI * 2); g.fill(); g.fillStyle = '#16181b'; g.beginPath(); g.arc(x, y, 0.4, 0, Math.PI * 2); g.fill(); }
     else { g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; g.lineTo(x + Math.cos(a) * 1.1, y + Math.sin(a) * 1.1); } g.closePath(); g.fill(); }
   }
-  // ashtray, a cigarette resting on its lip — the smoke in the lamp light
-  g.fillStyle = lin(g, 0, COUNTER - 3.4, 0, COUNTER, [[0, '#6b7079'], [1, '#2d3036']]);
-  g.beginPath(); g.ellipse(-30, COUNTER - 1.4, 5.6, 1.9, 0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#1a1c20'; g.beginPath(); g.ellipse(-30, COUNTER - 2.2, 4.0, 1.0, 0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(180,176,170,0.6)'; g.beginPath(); g.ellipse(-30.6, COUNTER - 2.1, 1.8, 0.5, 0, 0, Math.PI * 2); g.fill();
-  g.save(); g.translate(-27.4, COUNTER - 2.6); g.rotate(-0.12);
-  g.fillStyle = '#c08a52'; g.fillRect(-1.6, -0.45, 1.6, 0.9);
-  g.fillStyle = '#e8e2d4'; g.fillRect(0, -0.45, 4.6, 0.9);
-  g.fillStyle = '#6a6460'; g.fillRect(4.6, -0.45, 0.6, 0.9);
-  g.restore();
   // ammo box, lid open
   g.fillStyle = lin(g, 0, COUNTER - 10, 0, COUNTER, [[0, '#5a6a46'], [1, '#2d3622']]);
   g.fillRect(64, COUNTER - 8, 14, 7);
@@ -765,7 +324,7 @@ function counterGoods(g) {
 }
 
 // ------------------------------------------------------------- the crow
-// His bird. The name was carried by a cap feather nobody could see against
+// His bird, perched on the leather pad on his left shoulder, beak at his ear.
 // the dark; now it sits on his shoulder and watches you shop. Crows move
 // their heads in snaps, not sweeps — the head holds still, jerks to a new
 // angle, holds again — and that one behaviour sells the animal more than
@@ -787,9 +346,9 @@ function petCrow(g, pose) {
   // tail: a wedge of long feathers down and back
   g.fillStyle = lin(g, -14, 0, -3, 0, [[0, '#07080a'], [1, '#15171c']]);
   g.beginPath();
-  g.moveTo(-4.6, -6.6); g.lineTo(-15.4, 1.6); g.lineTo(-14.2, 3.0); g.lineTo(-12.0, 2.2); g.lineTo(-3.0, -3.4); g.closePath(); g.fill();
+  g.moveTo(-4.8, -6.6); g.lineTo(-12.6, 4.6); g.lineTo(-11.2, 6.2); g.lineTo(-9.4, 5.0); g.lineTo(-2.8, -3.4); g.closePath(); g.fill();
   g.strokeStyle = 'rgba(110,160,180,0.22)'; g.lineWidth = 0.25;
-  g.beginPath(); g.moveTo(-5.4, -5.2); g.lineTo(-14.4, 2.0); g.moveTo(-5.0, -4.2); g.lineTo(-12.8, 2.4); g.stroke();
+  g.beginPath(); g.moveTo(-5.4, -5.2); g.lineTo(-11.8, 5.0); g.moveTo(-4.6, -4.2); g.lineTo(-10.2, 5.2); g.stroke();
   // body
   g.save(); g.translate(-0.6, -7.2); g.rotate(-0.42);
   g.fillStyle = lin(g, 0, -5, 0, 5, [[0, '#1d2128'], [0.5, '#0e0f13'], [1, '#060708']]);
@@ -808,7 +367,7 @@ function petCrow(g, pose) {
   g.beginPath(); g.ellipse(0, 0, 7.2, 4.4, 0, Math.PI * 1.02, Math.PI * 1.62); g.stroke();
   g.restore();
   g.strokeStyle = 'rgba(255,70,80,0.30)'; g.lineWidth = 0.45;
-  g.beginPath(); g.moveTo(-5.0, -7.0); g.lineTo(-15.2, 1.4); g.stroke();
+  g.beginPath(); g.moveTo(-5.0, -7.0); g.lineTo(-12.4, 4.4); g.stroke();
   // head: pivots at the neck
   g.save(); g.translate(3.4, -10.6); g.rotate(head);
   g.fillStyle = lin(g, -2, -4, 2, 3, [[0, '#262b33'], [0.45, '#121418'], [1, '#08090b']]);
@@ -896,7 +455,7 @@ function bakeLayer(w, h, dpr, paint) {
 
 // One part of CROW baked at `px` device pixels per scene unit over the box
 // [x0,y0]-[x1,y1], with the two rim lights cut from its own silhouette.
-function bakePart(px, x0, y0, x1, y1, paint) {
+function bakePart(px, x0, y0, x1, y1, paint, neonA = 0.5, lampA = 0.3) {
   const W = Math.max(1, Math.ceil((x1 - x0) * px)), H = Math.max(1, Math.ceil((y1 - y0) * px));
   const L = document.createElement('canvas'); L.width = W; L.height = H;
   const lg = L.getContext('2d');
@@ -915,8 +474,8 @@ function bakePart(px, x0, y0, x1, y1, paint) {
     rc.fillRect(0, 0, W, H);
     og.drawImage(R, dx * px, dy * px);
   };
-  rim(NEON, -0.6, 0, 0.5, true);
-  rim(LAMP, 0.5, -0.4, 0.3, false);
+  rim(NEON, -0.5, 0, neonA, true);
+  rim(LAMP, 0.4, -0.3, lampA, false);
   og.drawImage(L, 0, 0);
   return { cv: out, x0, y0, w: x1 - x0, h: y1 - y0 };
 }
@@ -925,25 +484,35 @@ function buildTraderScene(w, h, dpr) {
   const G = sceneGeom(w, h);
   const { u, halfW } = G;
   const inScene = (g, fn) => { g.save(); g.translate(w / 2, -VIEW_TOP * u); g.scale(u, u); fn(g); g.restore(); };
-  const back = bakeLayer(w, h, dpr, (g) => inScene(g, (g) => {
+  const sharp = bakeLayer(w, h, dpr, (g) => inScene(g, (g) => {
     container(g, halfW);
     if (G.door) doorway(g, G.doorX, halfW);
     wallStock(g, -1);
     wallStock(g, 1);
     if (G.wideSign) { neonSign(g, -halfW + 10, 22); floorStock(g, -halfW + 12); }
-    pendantLight(g, 34, 22);
+    pendantLight(g, LAMP_X, 20);
   }));
-  // CROW in three parts at device resolution, each rim-lit from its own
-  // silhouette: the neon cuts red down the left, the pendant warm on the right
-  const px = u * dpr;
-  const body = bakePart(px, -56, 46, 56, 104, crowBody);
-  const head = bakePart(px * HEAD_S, -22, 14, 24, 64, crowHead);
-  const collar = bakePart(px, -20, 47, 21, 69, crowCollar);
+  // A shallow depth of field: the shop behind him goes soft and a step
+  // darker, so he reads as the subject rather than one more object in it.
+  const back = document.createElement('canvas'); back.width = sharp.width; back.height = sharp.height;
+  {
+    const bg = back.getContext('2d');
+    bg.filter = `blur(${Math.max(0.5, 0.9 * dpr).toFixed(2)}px)`;
+    bg.drawImage(sharp, 0, 0);
+    bg.filter = 'none';
+    bg.fillStyle = 'rgba(6,8,11,0.22)'; bg.fillRect(0, 0, back.width, back.height);
+  }
+  // CROW in three parts at device resolution, in character units. bakePart
+  // adds a soft silhouette rim on top of the rim light painted into the art.
+  const px = u * dpr * CHAR.k;
+  const body = bakePart(px, -46, -48, 46, 42, paintCrowBody, 0.3, 0.2);
+  const head = bakePart(px, -30, -63, 34, -10, paintCrowHead, 0.3, 0.2);
+  const collar = bakePart(px, -15, -15, 16, 17, paintCrowCollar, 0.2, 0.15);
   const front = bakeLayer(w, h, dpr, (g) => {
     inScene(g, (g) => {
       counter(g, halfW);
       counterGoods(g);
-      pendant(g, 34, 22);
+      pendant(g, LAMP_X, 20);
       g.fillStyle = rgba(HAZE, 0.035); g.fillRect(-halfW, 0, halfW * 2, 140);
     });
     const vig = g.createRadialGradient(w / 2, h * 0.45, h * 0.3, w / 2, h * 0.5, w * 0.62);
@@ -957,6 +526,24 @@ function buildTraderScene(w, h, dpr) {
   pg.fillStyle = rad(pg, 32, 32, 0, 32, [[0, 'rgba(210,214,220,0.9)'], [0.5, 'rgba(200,205,212,0.35)'], [1, 'rgba(200,205,212,0)']]);
   pg.fillRect(0, 0, 64, 64);
   return { w, h, dpr, G, back, body, head, collar, front, puff };
+}
+
+// CROW's own idle at time t. He looks at you; every 9.5s his eyes go to the
+// bird and his head follows a little, then both come back. Blinks on their
+// own beat, plus one as the glance starts (people blink when they move their
+// eyes a long way).
+function crowLife(t) {
+  const breath = Math.sin(t * 1.25) * 0.32;
+  const gk = t % 9.5;
+  const look = gk > 5.4 && gk < 7.8 ? Math.sin(((gk - 5.4) / 2.4) * Math.PI) : 0;
+  const ease = look * look * (3 - 2 * look);
+  const lx = -0.55 - ease * 0.45;
+  const ly = ease * 0.55;
+  const tilt = Math.sin(t * 0.45) * 0.018 - ease * 0.05;
+  const bk = (t + 1.7) % 4.3;
+  let blink = bk < 0.16 ? Math.sin((bk / 0.16) * Math.PI) : 0;
+  if (gk > 5.4 && gk < 5.56) blink = Math.max(blink, Math.sin(((gk - 5.4) / 0.16) * Math.PI));
+  return { breath, tilt, lx, ly, blink };
 }
 
 // Neon intensity: steady, with the odd stutter a tired transformer makes.
@@ -1011,60 +598,65 @@ function drawTraderFrame(g, S, t) {
     const p = (t * (0.03 + hash01(i + 40) * 0.04) + hash01(i + 9)) % 1;
     const yy = 26 + p * (COUNTER - 30);
     const spread = 8 + (yy - 22) * 0.62;
-    const xx = 34 + (hash01(i + 70) - 0.5) * 2 * spread * 0.8 + Math.sin(t * 0.6 + i) * 2;
+    const xx = LAMP_X + (hash01(i + 70) - 0.5) * 2 * spread * 0.8 + Math.sin(t * 0.6 + i) * 2;
     const tw = 0.5 + 0.5 * Math.sin(t * 1.7 + i * 2.1);
     g.fillStyle = rgba(LAMP, 0.10 + 0.22 * tw * Math.sin(p * Math.PI));
     g.fillRect(xx, yy, 0.55, 0.55);
   }
   g.restore();
 
-  // CROW breathes: the whole figure lifts a fraction on the in-breath
-  const breath = Math.sin(t * 1.25) * 0.38;
-  const P = (p, dy) => g.drawImage(p.cv, p.x0, p.y0 + dy, p.w, p.h);
-  P(S.body, breath);
-  // his head turns on its own: a slow drift, and every so often a glance
-  // down at the bird on his shoulder
-  const gk = t % 9.5;
-  const glance = gk > 5.6 && gk < 7.6 ? Math.sin(((gk - 5.6) / 2) * Math.PI) : 0;
-  const tilt = Math.sin(t * 0.45) * 0.03 - glance * 0.085;
-  const bk = (t + 1.7) % 4.1;
-  const blink = bk < 0.15 ? Math.sin((bk / 0.15) * Math.PI) : 0;
-  const lk = t % 5.3;
-  const glint = lk < 0.6 ? Math.sin((lk / 0.6) * Math.PI) : 0;
+  // ---- CROW. Everything below is in character units.
   g.save();
-  g.translate(HEAD_PIVOT.x, HEAD_PIVOT.y + breath);
-  g.rotate(tilt);
-  g.scale(HEAD_S, HEAD_S);
+  g.translate(CHAR.x, CHAR.y); g.scale(CHAR.k, CHAR.k);
+  const pose = crowLife(t);
+  const P = (p, dy) => g.drawImage(p.cv, p.x0, p.y0 + dy, p.w, p.h);
+  P(S.body, pose.breath);
+  g.save();
+  g.translate(HEAD_PIVOT.x, HEAD_PIVOT.y + pose.breath);
+  g.rotate(pose.tilt);
   g.translate(-HEAD_PIVOT.x, -HEAD_PIVOT.y);
   P(S.head, 0);
-  crowHeadLive(g, blink, glint);
+  crowEyesLive(g, pose.lx, pose.ly, pose.blink);
   g.restore();
-  P(S.collar, breath);
-
-  // his bird, on the shoulder nearest the neon
-  g.save(); g.translate(-36.4, 62.4 + breath * 0.9); g.rotate(-0.12); g.scale(1.5, 1.5);
+  P(S.collar, pose.breath);
+  // his bird on the perch pad, turned toward him with its beak at his ear —
+  // his confidant — its tail falling away off the outside of the shoulder
+  g.save(); g.translate(-34.4, 2.4 + pose.breath * 0.9); g.scale(1.8, 1.8);
   petCrow(g, crowPose(t));
   g.restore();
+  g.restore();
+  // where the cigar's tip is this frame, in scene units (smoke rises in
+  // scene space, not with his head)
+  const cs = Math.cos(pose.tilt), sn = Math.sin(pose.tilt);
+  const dx = CIGAR_TIP.x - HEAD_PIVOT.x, dy = CIGAR_TIP.y - HEAD_PIVOT.y;
+  S.tip = {
+    x: CHAR.x + CHAR.k * (HEAD_PIVOT.x + dx * cs - dy * sn),
+    y: CHAR.y + CHAR.k * (HEAD_PIVOT.y + pose.breath + dx * sn + dy * cs),
+  };
 
   g.restore();
   g.drawImage(S.front, 0, 0, w, h);
   g.save(); g.translate(w / 2, -VIEW_TOP * u); g.scale(u, u);
 
-  // the cigarette in the ashtray: its ember breathes and the smoke climbs
-  // through the lamp light in loose puffs
-  const tipX = -22.4, tipY = COUNTER - 3.2;
+  // the cigar: the ember brightens on a drag every few seconds, and the
+  // smoke rises off it in loose puffs, past the brim and into the lamp light
+  const tipX = S.tip.x, tipY = S.tip.y;
+  const drag = (t % 7.5) < 1.0 ? Math.sin(((t % 7.5) / 1.0) * Math.PI) : 0;
   g.save(); g.globalCompositeOperation = 'lighter';
-  const em = 0.5 + 0.25 * Math.sin(t * 2.2);
-  g.fillStyle = rad(g, tipX, tipY, 0, 2.6, [[0, `rgba(255,170,90,${em})`], [1, 'rgba(255,90,40,0)']]);
-  g.beginPath(); g.arc(tipX, tipY, 2.6, 0, Math.PI * 2); g.fill();
+  const em = 0.45 + 0.2 * Math.sin(t * 2.2) + drag * 0.5;
+  const er = 2.2 + drag * 1.6;
+  g.fillStyle = rad(g, tipX, tipY, 0, er, [[0, `rgba(255,190,110,${Math.min(1, em)})`], [0.4, `rgba(255,100,40,${em * 0.5})`], [1, 'rgba(255,90,40,0)']]);
+  g.beginPath(); g.arc(tipX, tipY, er, 0, Math.PI * 2); g.fill();
   g.restore();
-  const N = 12, LIFE = 4.2;
+  const N = 12, LIFE = 4.0;
   for (let i = 0; i < N; i++) {
     const f = ((t + i * LIFE / N) % LIFE) / LIFE;
-    const sway = Math.sin(f * 5.2 + i * 1.7) * (1.2 + f * 4.4);
-    const x = tipX + f * 4 + sway, y = tipY - 1 - f * 52;
-    const r = 1.0 + f * 6.6;
-    g.globalAlpha = Math.sin(Math.PI * Math.min(1, f * 1.25)) * 0.22 * (1 - f * 0.35);
+    const sway = Math.sin(f * 5.2 + i * 1.7) * (1.0 + f * 4.6);
+    const x = tipX + 1 + f * 7 + sway, y = tipY - 0.6 - f * 44;
+    // born as a soft wisp, not a speck: a little size from the start, and
+    // the alpha ramps in over the first fifth of its life
+    const r = 1.8 + f * 6.0;
+    g.globalAlpha = Math.min(1, f * 5) * Math.sin(Math.PI * Math.min(1, 0.15 + f * 1.1)) * 0.16;
     g.drawImage(S.puff, x - r, y - r, r * 2, r * 2);
   }
   g.globalAlpha = 1;
@@ -1074,11 +666,11 @@ function drawTraderFrame(g, S, t) {
 }
 
 // A still frame (shop thumbnails, anywhere without an animation loop).
-export function paintTraderScene(g, w, h) {
+export function paintTraderScene(g, w, h, t = 2.2) {
   const S = buildTraderScene(w, h, 1);
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
   const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
-  drawTraderFrame(tmp.getContext('2d'), S, 2.2);
+  drawTraderFrame(tmp.getContext('2d'), S, t);
   g.clearRect(0, 0, w, h);
   g.drawImage(tmp, 0, 0);
   g.restore();
