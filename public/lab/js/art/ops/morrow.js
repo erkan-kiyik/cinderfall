@@ -96,8 +96,8 @@ function fore(g, ctx) {
 }
 
 function handP(g, ctx) {
-  if (!ctx.far) {
-    // smoke canister held loosely, cap down
+  if (!ctx.far && !ctx.rt) {
+    // smoke canister held loosely, cap down (board pose; in game the hand holds the weapon)
     g.save(); g.translate(0.4, 2.6); g.rotate(0.1);
     canister(g, 0, 0, 4.2);
     g.restore();

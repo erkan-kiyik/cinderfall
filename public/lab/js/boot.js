@@ -10,7 +10,9 @@ import { Camera } from './gfx/camera.js';
 import { Renderer, RES_STEPS } from './gfx/renderer.js';
 import { bakeAll } from './gfx/baker.js';
 import { Loop } from './core/loop.js';
-import { M1Scene, bakeList, BAKE_VERSION } from './test/m1scene.js';
+import * as M1 from './test/m1scene.js';
+import * as M2 from './test/m2scene.js';
+import { Controls, bindKeyboard, bindTouch } from './game/input.js';
 import { PerfOverlay } from './ui/perf.js';
 
 const $ = (s) => document.querySelector(s);
@@ -33,17 +35,23 @@ async function main() {
 
   const bar = $('#boot .fill');
   const atlas = new Atlas(gl, 2048);
-  const bake = await bakeAll(atlas, bakeList(quality), {
-    key: params.has('nocache') ? null : `${BAKE_VERSION}:${quality}:${atlas.size}`,
+  const SC = params.get('scene') === 'm1' ? M1 : M2;
+  const bake = await bakeAll(atlas, SC.bakeList(quality), {
+    key: params.has('nocache') ? null : `${SC.BAKE_VERSION}:${quality}:${atlas.size}`,
     onProgress: (p) => { bar.style.width = (p * 100).toFixed(0) + '%'; },
   });
   const renderer = new Renderer(gl, canvas);
   renderer.setQuality(quality);
-  const camera = new Camera(); camera.viewH = 150;
+  const camera = new Camera(); camera.viewH = SC === M2 ? 178 : 150;
   const batch = new SpriteBatch(gl, atlas);
   const eng = { gl, atlas, batch, camera, renderer };
-  const scene = new M1Scene(eng);
-  if (params.get('stress')) scene.setStress(+params.get('stress'));
+  const controls = new Controls();
+  const scene = SC === M1 ? new M1.M1Scene(eng) : new M2.M2Scene(eng, controls);
+  if (SC === M2) {
+    bindKeyboard(controls, canvas);
+    if (matchMedia('(pointer: coarse)').matches || params.has('touch')) bindTouch(controls, $('#hud'));
+  }
+  if (params.get('stress') && scene.setStress) scene.setStress(+params.get('stress'));
 
   // dynamic resolution: step down after 1 s over budget, back up after 4 s of headroom
   const dyn = { on: true, step: 0, over: 0, under: 0, failedAt: new Float64Array(RES_STEPS.length).fill(-1e9), next: 0 };
@@ -78,24 +86,25 @@ async function main() {
   const ctl = $('#ctl');
   const btn = (label, fn) => { const b = document.createElement('button'); b.className = 'chip cut'; b.textContent = label; b.onclick = (ev) => { ev.stopPropagation(); fn(b); }; ctl.appendChild(b); return b; };
   const STRESS = [0, 2000, 10000, 20000];
-  btn(`STRES ${scene.N}`, (b) => { const n = STRESS[(STRESS.indexOf(scene.N) + 1) % STRESS.length]; scene.setStress(n); b.textContent = `STRES ${n}`; });
+  if (SC === M2) btn('OPERATÖR VEX', (b) => { b.textContent = 'OPERATÖR ' + scene.switchOperator().toUpperCase(); });
+  else btn(`STRES ${scene.N}`, (b) => { const n = STRESS[(STRESS.indexOf(scene.N) + 1) % STRESS.length]; scene.setStress(n); b.textContent = `STRES ${n}`; });
   const QN = ['low', 'med', 'high'], QL = { low: 'DÜŞÜK', med: 'ORTA', high: 'YÜKSEK' };
   btn(`KALİTE ${QL[quality]}`, (b) => { const q = QN[(QN.indexOf(renderer.qName) + 1) % 3]; renderer.setQuality(q); store.set('cf-lab-q', q); b.textContent = `KALİTE ${QL[q]}`; });
   btn('OTO ÇÖZ. AÇIK', (b) => { dyn.on = !dyn.on; if (!dyn.on) { dyn.step = 0; renderer.setDyn(1); } b.textContent = dyn.on ? 'OTO ÇÖZ. AÇIK' : 'OTO ÇÖZ. KAPALI'; });
   btn('BLOOM AÇIK', (b) => { renderer.bloomOn = !renderer.bloomOn; b.textContent = renderer.bloomOn ? 'BLOOM AÇIK' : 'BLOOM KAPALI'; });
   btn('IŞIK AÇIK', (b) => { renderer.lightsOn = !renderer.lightsOn; b.textContent = renderer.lightsOn ? 'IŞIK AÇIK' : 'IŞIK KAPALI'; });
-  btn('PATLAT', () => scene.explode(scene.camX + (Math.random() - 0.5) * 120, -4));
+  if (SC === M1) btn('PATLAT', () => scene.explode(scene.camX + (Math.random() - 0.5) * 120, -4));
   btn('PANEL', () => perf.toggle());
 
   // drag pans the camera; a tap sets off an explosion where you touched
   let down = null;
-  canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 }; canvas.setPointerCapture(e.pointerId); });
-  canvas.addEventListener('pointermove', (e) => {
+  if (SC === M1) canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 }; canvas.setPointerCapture(e.pointerId); });
+  if (SC === M1) canvas.addEventListener('pointermove', (e) => {
     if (!down) return;
     const dx = e.clientX - down.x; down.moved += Math.abs(dx); down.x = e.clientX;
     if (down.moved > 6) scene.pan(-dx / canvas.clientHeight * camera.viewH);
   });
-  canvas.addEventListener('pointerup', (e) => {
+  if (SC === M1) canvas.addEventListener('pointerup', (e) => {
     if (down && down.moved <= 6 && performance.now() - down.t < 400) {
       const [wx] = camera.toWorld(e.clientX / canvas.clientWidth, e.clientY / canvas.clientHeight);
       scene.explode(wx, -4);
@@ -106,7 +115,7 @@ async function main() {
   $('#boot').classList.add('done');
   loop.start();
   // test harness hook
-  window.__lab = { loop, scene, renderer, atlas, bake, batch, camera, setStress: (n) => scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
+  window.__lab = { loop, scene, renderer, atlas, bake, batch, camera, controls, setStress: (n) => scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
 }
 
 main().catch((err) => {

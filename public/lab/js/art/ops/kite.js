@@ -55,9 +55,16 @@ function torso(g, ctx) {
 }
 
 function front(g, ctx) {
-  // scout drone hovering above the raised far hand
+  // scout drone hovering above the raised far hand (board pose only; in
+  // game the drone is its own sprite, see DRONE)
   const [hx, hy] = ctx.J.hip, [wx, wy] = ctx.J.fWr;
   g.save(); g.translate(wx - hx + 1.6, wy - hy - 8.6); g.rotate(-0.08);
+  drone(g);
+  g.restore();
+}
+
+// The scout drone, centred on its body.
+export function drone(g) {
   const BODY = blob([[-3.2, -0.6], [-1.0, -1.6], [2.6, -1.4], [3.8, 0.0], [2.8, 1.4], [-1.6, 1.6], [-3.4, 0.8]]);
   // rotor arms and blurred discs
   for (const x of [-4.6, 4.8]) {
@@ -77,7 +84,6 @@ function front(g, ctx) {
   fill(g, 'M 2.65 0.9 a 0.45 0.45 0 1 0 0.9 0 a 0.45 0.45 0 1 0 -0.9 0 Z', PAL.lens.m);
   g.restore();
   stroke(g, 'M -1.6 1.6 L -2.2 3.0 M 1.6 1.6 L 2.2 3.0 M -3.0 3.0 L 3.0 3.0', PAL.dark.m, 0.4);
-  g.restore();
 }
 
 function upper(g, ctx) {

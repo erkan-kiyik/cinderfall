@@ -307,3 +307,5 @@ export class M1Scene {
     R.finish(t);
   }
 }
+
+export { FX, DENS };

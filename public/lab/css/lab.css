@@ -17,3 +17,13 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 #boot .fill { height: 100%; width: 0; background: var(--ember); transition: width 120ms linear; }
 #boot .msg { font: 600 12px/1 var(--f-body); color: var(--n6); }
 #boot.fail .msg { color: var(--danger); }
+
+/* touch controls (M2) */
+.touch { position: fixed; inset: 0; pointer-events: auto; }
+.touch .stick { display: none; position: absolute; width: 92px; height: 92px; border-radius: 50%; border: 2px solid rgba(217,222,229,0.35); background: rgba(13,16,21,0.25); }
+.touch .knob { position: absolute; left: 26px; top: 26px; width: 40px; height: 40px; border-radius: 50%; background: rgba(244,241,234,0.55); }
+.touch .tbtn { position: absolute; width: 74px; height: 74px; border-radius: 50%; font: 700 12px/1 var(--f-display); letter-spacing: 0.1em; color: var(--n8); background: rgba(13,16,21,0.45); border: 2px solid rgba(217,222,229,0.35); }
+.touch .tbtn.on { background: rgba(255,107,44,0.55); border-color: var(--ember); transform: scale(0.94); }
+.touch .jump { right: max(20px, env(safe-area-inset-right)); bottom: 22px; }
+.touch .crouch { right: calc(max(20px, env(safe-area-inset-right)) + 88px); bottom: 14px; width: 62px; height: 62px; }
+#ctl, .perf { z-index: 2; }

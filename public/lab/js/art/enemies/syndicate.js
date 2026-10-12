@@ -120,6 +120,12 @@ export const TETIKCI = {
 function shieldFront(g, ctx) {
   const [hx, hy] = ctx.J.hip;
   g.save(); g.translate(-hx, -hy);
+  shield(g);
+  g.restore();
+}
+
+// Riot shield in root space (feet at the origin), as carried in the idle pose.
+export function shield(g) {
   const S = 'M 6.4 -57.6 Q 6.4 -58.6 7.4 -58.4 L 14.6 -56.8 Q 15.6 -56.6 15.6 -55.6 L 15.6 -16.6 Q 15.6 -15.6 14.6 -15.4 L 7.4 -13.8 Q 6.4 -13.6 6.4 -14.6 Z';
   cel(g, S, PAL.armor, { sh: 1.6, hl: 0.6 });
   clip(g, S, () => {
@@ -131,7 +137,6 @@ function shieldFront(g, ctx) {
     for (const [x, y] of [[8.0, -44], [14.0, -43.4], [8.0, -20], [14.0, -19.4]]) fill(g, `M ${x - 0.3} ${y} a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 Z`, PAL.armor.d);
     emblem(g, 11.0, -25.0, 2.0, PAL.white.m);
   });
-  g.restore();
 }
 
 function heavyTorso(g, ctx) {

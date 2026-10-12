@@ -166,6 +166,19 @@ function head(g) {
   fill(g, 'M -1.75 -5.35 a 0.32 0.32 0 1 0 0.64 0 a 0.32 0.32 0 1 0 -0.64 0 Z', PAL.tip.l);
 }
 
+// Runtime scarf: tails simulated as verlet chains and drawn with this segment
+// (4×2 units along +x, centred on y = 0; stretched between chain points).
+export function scarfSeg(g) {
+  cel(g, 'M 0 -1 L 4 -1 A 1 1 0 0 1 4 1 L 0 1 A 1 1 0 0 1 0 -1 Z', PAL.scarf, { sh: 0.5, hl: 0.25, line: false });
+}
+export const SCARF = {
+  // anchors in the torso frame (back of the neck); length, points, widths
+  tails: [
+    { ax: -2.2, ay: -21.2, len: 24, n: 8, w0: 3.4, w1: 1.6, g: 200 },
+    { ax: -3.0, ay: -19.4, len: 17, n: 6, w0: 2.8, w1: 1.3, g: 520 },
+  ],
+};
+
 export const VEX = {
   id: 'vex', name: 'VEX', role: 'SALDIRI', pal: PAL,
   pose: { nUpper: 0.62, nFore: -0.95, nHand: -0.5, fUpper: -0.06, fFore: -0.3, fHand: -0.15, nThigh: 0.16, nShin: 0.04, fThigh: -0.24, fShin: -0.08, head: -0.04 },

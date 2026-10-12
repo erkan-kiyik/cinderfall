@@ -38,6 +38,7 @@ const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
 // entry: { name, box: [x0, y0, x1, y1], scale, paint(g), outline?: radius,
 //          chunk?: units (split wide layers), anchor?: [ax, ay] }
 function bakeOne(atlas, e) {
+  if (typeof e.box === 'function') { e.box = e.box(); if (!e.box) return 0; }
   const [x0, y0, x1, y1] = e.box;
   const s = e.scale;
   if (!e.chunk) {
