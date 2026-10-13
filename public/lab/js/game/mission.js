@@ -19,7 +19,7 @@ import { t } from '../ui/i18n.js';
 import { rgba } from '../gfx/batch.js';
 import { col } from '../gfx/particles.js';
 
-export const BAKE_VERSION = 'c2-1';
+export const BAKE_VERSION = 'c2-2';
 const MISSION = buildMission1();
 
 export function bakeList(quality) {

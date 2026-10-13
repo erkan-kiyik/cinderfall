@@ -29,12 +29,9 @@ const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } } };
 
-function autoQuality() {
-  const mobile = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad/i.test(navigator.userAgent);
-  if (!mobile) return 'high';
-  const mem = navigator.deviceMemory || 4, cores = navigator.hardwareConcurrency || 4;
-  return mem <= 3 || cores <= 4 ? 'low' : 'med';
-}
+// the picture is kept at high on every device; dynamic resolution (floor
+// 80 %) holds the frame rate, and Settings can still lower it
+function autoQuality() { return 'high'; }
 
 async function main() {
   const canvas = $('#game');

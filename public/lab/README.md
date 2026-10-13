@@ -143,6 +143,26 @@ folder; the shipping game in `public/game` is untouched.
   fire side and the visor glowing in the operator's colour
   (`dev/sheet.html?what=avatars`)
 
+## The street
+- `js/art/env/city.js` — nine buildings (brick and plaster walk-ups, CROW's
+  shop, warehouse, Syndicate block, hotel with a vertical neon sign, auto
+  repair, a burnt-out ruin, an alley), each baked once and laid out along the
+  level by `facadeLayout()`: no building returns within three of its last
+  use, CROW's shop appears once; each building lists the lights and glows it
+  throws, so neon, door lights and ember-lit windows follow the layout
+- the ground: pavement slabs, kerb and gutter, storm drains, worn lane
+  dashes, manholes, patches, cracks, puddles catching the lights; the far
+  skyline burns at the horizon (glow bands, smoke columns, a crane)
+- obstacles redrawn: framed crate with steel corners, jersey barrier with
+  lifting loops, T-wall, irregular sandbags, oil drum with glowing air holes,
+  dumpster with its lid, guard booth with a lit window and a beacon, terminal
+  with a keypad, lamp post with its flange, containers with corner castings
+- contact shadows under every obstacle and every character on its feet; the
+  burn barrel's fire sits on the barrel (`course.fires`)
+- `dev/sheet.html?what=env` — every building and obstacle on one page
+- quality: Auto is High on every device (2.5× pixel ratio cap); dynamic
+  resolution never drops below 80 %
+
 ## Characters — body standard v2
 - `js/art/ops/body.js` — shared anatomy: heroic proportions (head about 1/7 of
   the height, wide high shoulders, V torso, limbs with mass), big gloves,

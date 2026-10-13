@@ -3,10 +3,11 @@
 //
 // 8-unit tiles, street level y = 0, 200 columns (1600 units). Every feature
 // is placed in tile columns; its painter draws inside the same tile box.
-import { cel, fill, stroke, clip } from '../kit.js';
+import { cel, fill, stroke, clip, rng } from '../kit.js';
 import { M, tone, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone } from './street.js';
+import { facadeLayout } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -26,12 +27,16 @@ export function container(g, x0, y0, x1, y1, t) {
     // corrugation, top and bottom rails, a door pair with lock bars at one end
     for (let x = x0 + 3; x < x1 - 1; x += 3.2) { fill(g, rect(x, y0 + 2, x + 1.1, y1 - 2), t.d, 0.55); fill(g, rect(x + 1.1, y0 + 2, x + 1.6, y1 - 2), t.l, 0.35); }
     fill(g, rect(x0, y0, x1, y0 + 2), t.d); fill(g, rect(x0, y1 - 2, x1, y1), t.d);
+    fill(g, rect(x0, y0, x1, y0 + 0.6), t.l, 0.6);
     const dx = x1 - 22;
     fill(g, rect(dx, y0 + 2, x1 - 2, y1 - 2), t.m);
     stroke(g, `M ${dx + 10} ${y0 + 2} L ${dx + 10} ${y1 - 2}`, t.k, 0.4);
     for (const lx of [dx + 4, dx + 7, dx + 13, dx + 16]) stroke(g, `M ${lx} ${y0 + 3} L ${lx} ${y1 - 3}`, t.k, 0.5);
     for (const lx of [dx + 7, dx + 13]) fill(g, rect(lx - 1, (y0 + y1) / 2 - 1.5, lx + 1, (y0 + y1) / 2 + 1.5), M.gunmetal.m);
-    // rust streaks and a stencil code
+    for (const hy of [y0 + 6, y1 - 7]) for (const hx of [dx + 0.6, x1 - 3]) fill(g, rect(hx, hy, hx + 1.6, hy + 2.2), t.k, 0.8);
+    // corner castings, a data plate, rust streaks and a stencil code
+    for (const [cx, cy] of [[x0, y0], [x1 - 3, y0], [x0, y1 - 3], [x1 - 3, y1 - 3]]) { fill(g, rect(cx, cy, cx + 3, cy + 3), t.k); fill(g, rect(cx + 0.9, cy + 0.9, cx + 2.1, cy + 2.1), '#0b0d10'); }
+    fill(g, rect(dx - 9, y0 + 5, dx - 3, y0 + 9), '#c9ccd2', 0.8);
     for (const [x, h] of [[x0 + 9, 9], [x0 + 21, 14], [x0 + 33, 7]]) fill(g, rect(x, y0 + 2, x + 1.4, y0 + 2 + h), '#6a3a28', 0.35);
     g.font = '700 5px Rajdhani'; g.fillStyle = 'rgba(244,241,234,0.75)'; g.fillText('CF·9', x0 + 5, y1 - 5);
   });
@@ -95,13 +100,18 @@ export function duct(g, x0, x1, yTop, yBot) {
 
 export function sandbags(g, x0, x1, h) {
   const S = tone('#d8c49a', '#b8a27a', '#8c7856', '#3e3322');
-  const rows = Math.round(h / 6);
-  for (let r = 0; r < rows; r++) {
-    const y = -6 * (r + 1), off = r % 2 ? 4 : 0;
+  const S2 = tone('#cdb98e', '#a99470', '#7d6a4b', '#3a2f1f');
+  const rows = Math.round(h / 6), r = rng(Math.round(x0 * 7 + h));
+  for (let row = 0; row < rows; row++) {
+    const y = -6 * (row + 1), off = row % 2 ? 4 : 0;
     for (let x = x0 - 2 + off; x < x1 + 2 - 4; x += 8) {
-      const B = `M ${x + 1} ${y + 6} C ${x - 0.4} ${y + 6} ${x - 0.4} ${y} ${x + 1.4} ${y} L ${x + 6.6} ${y} C ${x + 8.4} ${y} ${x + 8.4} ${y + 6} ${x + 7} ${y + 6} Z`;
-      cel(g, B, S, { sh: 0.9, hl: 0.5 });
-      stroke(g, `M ${x + 2} ${y + 3} L ${x + 6} ${y + 3}`, S.d, 0.3);
+      // each bag a little different: width, sag, a tied ear, its stitch
+      const bw = 7.6 + r() * 1.2, sag = 0.5 + r() * 0.7, bx = x + (r() - 0.5) * 0.6, t = r() > 0.55 ? S2 : S;
+      const B = `M ${bx + 1} ${y + 6} C ${bx - 0.5} ${y + 6} ${bx - 0.6} ${y + 0.2} ${bx + 1.4} ${y + sag * 0.4} Q ${bx + bw / 2} ${y - sag * 0.3} ${bx + bw - 1.2} ${y + sag * 0.4} C ${bx + bw + 0.6} ${y + 0.4} ${bx + bw + 0.6} ${y + 6} ${bx + bw - 0.8} ${y + 6} Z`;
+      cel(g, B, t, { sh: 1.0, hl: 0.5 });
+      stroke(g, `M ${bx + 2} ${y + 3.1} Q ${bx + bw / 2} ${y + 3.6} ${bx + bw - 2} ${y + 3.1}`, t.d, 0.3);
+      stroke(g, `M ${bx + 1.4} ${y + 1.2} l 0.6 1.2`, t.d, 0.3);
+      if (r() > 0.6) fill(g, `M ${bx + bw - 1} ${y + 1.2} l 1.6 -0.9 l -0.2 1.6 Z`, t.d);
     }
   }
 }
@@ -156,6 +166,8 @@ export function buildCourse() {
   const level = new Level(g.map((r) => r.join('')), TOPY);
   return {
     level, props, front, deco, lamps,
+    facade: facadeLayout(-10, COLS * T + 10, 5, ['walkupB', 'crow', 'alley', 'warehouse', 'synBlock', 'ruin']),
+    fires: [1107],
     spawn: [100, 0],
     enemies: [{ id: 'tet', x: 1340, y: 0 }, { id: 'kal', x: 1392, y: 0 }, { id: 'tet', x: 1484, y: -40 }],
     width: COLS * T,

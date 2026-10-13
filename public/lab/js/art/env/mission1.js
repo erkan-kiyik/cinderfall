@@ -14,9 +14,11 @@ import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone } from './street.js';
 import { CONT, container, catwalk, ladder, pit, duct, sandbags } from './course.js';
 import { emblem } from '../enemies/syndicate.js';
+import { facadeLayout } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
+const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 
 export const COLS = 400, TOPY = -200, ROWS = 30, STREET = 25;
 const CONC = tone('#b9bcc6', '#8d919d', '#666a76', '#2f323a');
@@ -26,16 +28,26 @@ const SYN = tone('#9ab3cc', '#5e7d9c', '#3f5a76', '#1c2b3b');
 // --- painters ------------------------------------------------------------------
 // tall concrete barricade with a hazard band
 export function concrete(g, x0, x1, h) {
-  const B = poly([[x0, 0], [x0 + 1, -h + 3], [x0 + 3, -h], [x1 - 3, -h], [x1 - 1, -h + 3], [x1, 0]]);
+  // a T-wall blast barrier: the slab on a wider foot, a lifting eye near the top
+  const B = poly([[x0 - 0.6, 0], [x0 - 0.6, -3], [x0 + 1.4, -6], [x0 + 1.4, -h + 2], [x0 + 3, -h], [x1 - 2, -h], [x1 - 1.4, -h + 1.2], [x1 - 1.4, -6], [x1 + 0.6, -3], [x1 + 0.6, 0]]);
   cel(g, B, CONC, { sh: 1.6, hl: 0.7 });
   clip(g, B, () => {
-    fill(g, rect(x0, -h + 6, x1, -h + 10), C.gold);
-    for (let x = x0 - 6; x < x1 + 4; x += 5) fill(g, poly([[x, -h + 10], [x + 2.4, -h + 10], [x + 6.4, -h + 6], [x + 4, -h + 6]]), '#1a1c20');
-    fill(g, rect(x0, -3, x1, 0), CONC.d, 0.7);
-    for (const [x, y, r] of [[x0 + 4, -h + 18, 1.2], [x1 - 5, -h + 26, 0.9], [x0 + 9, -12, 1]]) fill(g, `M ${x - r} ${y} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0 Z`, CONC.k, 0.6);
-    stroke(g, `M ${x0 + 2} ${-h + 2} L ${x1 - 2} ${-h + 2}`, CONC.l, 0.5, 0.7);
+    fill(g, rect(x0 - 1, -6, x1 + 1, 0), CONC.d, 0.55);
+    stroke(g, `M ${x0 - 1} -6 L ${x1 + 1} -6`, CONC.k, 0.3, 0.8);
+    stroke(g, `M ${(x0 + x1) / 2} ${-h + 4} L ${(x0 + x1) / 2} -6`, CONC.d, 0.4, 0.8);
+    fill(g, rect(x0, -h + 8, x1, -h + 12), C.gold);
+    for (let x = x0 - 6; x < x1 + 4; x += 5) fill(g, poly([[x, -h + 12], [x + 2.4, -h + 12], [x + 6.4, -h + 8], [x + 4, -h + 8]]), '#1a1c20');
+    fill(g, ell(x0 + 5, -h + 4.4, 1.5, 1.5), CONC.k);
+    fill(g, ell(x0 + 5, -h + 4.0, 1.5, 1.1), '#0f1116');
+    // chips, cracks, a stencil and a spray tag
+    for (const [x, y, r] of [[x1 - 4, -h + 20, 1.0], [x0 + 3.6, -18, 0.8]]) fill(g, ell(x, y, r, r * 0.8), CONC.k, 0.55);
+    stroke(g, `M ${x1 - 2} ${-h + 14} l -2 4 l 0.8 3 l -1.6 3`, CONC.k, 0.25, 0.8);
+    g.font = '700 2.6px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.75)'; g.fillText('T-09', x0 + 2.4, -h + 17);
+    stroke(g, `M ${x0 + 2} -14 C ${x0 + 4} -18 ${x0 + 6} -17 ${x0 + 6} -13.6 C ${x0 + 6} -11 ${x0 + 9} -11 ${x0 + 11} -15`, C.interact, 0.7, 0.65);
+    stroke(g, `M ${x0 + 3} ${-h + 1.2} L ${x1 - 3} ${-h + 1.2}`, CONC.l, 0.5, 0.7);
   });
   stroke(g, B, CONC.k, 0.5);
+  stroke(g, `M ${x1 - 3} ${-h} l 0.8 -2.4`, '#6a4a3a', 0.5);
 }
 
 // guard booth (background)
@@ -44,14 +56,28 @@ export function booth(g, x0, w = 44, h = 58) {
   const B = rect(x0, -h, x1, 0);
   cel(g, B, SYN, { sh: 2.0, hl: 0.6 });
   clip(g, B, () => {
-    fill(g, rect(x0 + 5, -h + 12, x1 - 5, -h + 30), '#141c26');
-    fill(g, rect(x0 + 6, -h + 13, x0 + 14, -h + 29), 'rgba(170,200,230,0.18)');
+    // panel seams, the window with the guard's lamp on and half-down blinds
+    for (const x of [x0 + w * 0.34, x0 + w * 0.68]) stroke(g, `M ${x} ${-h} L ${x} 0`, SYN.d, 0.35, 0.7);
+    fill(g, rect(x0 + 4, -h + 11, x1 - 4, -h + 31), SYN.k);
+    fill(g, rect(x0 + 5, -h + 12, x1 - 5, -h + 30), '#9fc3d8');
+    fill(g, rect(x0 + 5, -h + 22, x1 - 5, -h + 30), '#6f98b2');
+    for (let y = -h + 12.6; y < -h + 20; y += 1.5) fill(g, rect(x0 + 5, y, x1 - 5, y + 0.6), '#3f5a76', 0.75);
+    fill(g, rect(x0 + 14, -h + 23, x0 + 20, -h + 30), '#1c2b3b', 0.8);
+    fill(g, rect(x0 + 5, -h + 12, x0 + 9, -h + 30), '#fff', 0.15);
     fill(g, rect(x0, -h + 36, x1, -h + 39), M.visor.m);
+    // the door on the right
+    fill(g, rect(x1 - 13, -26, x1 - 3, 0), SYN.d); fill(g, rect(x1 - 12, -25, x1 - 4, -14), '#141c26');
+    fill(g, rect(x1 - 5.4, -12, x1 - 4.4, -10.6), M.gunmetal.l);
     fill(g, rect(x0, -4, x1, 0), SYN.d);
+    fill(g, rect(x0, -h, x1, -h + 3), '#000', 0.2);
   });
+  // roof overhang with a warning light, an antenna, a vent box
   cel(g, rect(x0 - 3, -h - 5, x1 + 3, -h), STEEL, { sh: 0.6, hl: 0.4 });
+  cel(g, rect(x0 + 6, -h - 8.4, x0 + 12, -h - 5), M.visor, { sh: 0.3, hl: 0.5, lw: 0.3 });
+  stroke(g, `M ${x1 - 6} ${-h - 5} L ${x1 - 6} ${-h - 20}`, STEEL.k, 0.5);
+  cel(g, rect(x0 - 5, -h + 42, x0, -h + 50), STEEL, { sh: 0.3, hl: 0.2, lw: 0.3 });
   stroke(g, B, SYN.k, 0.5);
-  emblem(g, x0 + w / 2, -h + 46, 4, M.white.m);
+  emblem(g, x0 + w * 0.36, -h + 47, 4, M.white.m);
 }
 
 // the gate leaf (moves up when it opens), drawn from its bottom-left corner
@@ -84,13 +110,20 @@ export function terminal(g, x) {
   const B = poly([[x - 7, 0], [x - 7, -22], [x - 5, -26], [x + 7, -26], [x + 7, 0]]);
   cel(g, B, STEEL, { sh: 1.0, hl: 0.5 });
   clip(g, B, () => {
+    // the bezel and dark screen (the glow is drawn live), a keypad, a warning label
+    fill(g, rect(x - 5.6, -23.6, x + 5.6, -14.4), STEEL.k);
     fill(g, rect(x - 5, -23, x + 5, -15), '#071016');
-    for (let k = 0; k < 3; k++) fill(g, rect(x - 4 + k * 3, -11, x - 2 + k * 3, -9.6), k === 1 ? M.visor.m : STEEL.d);
+    for (let r = 0; r < 2; r++) for (let k = 0; k < 4; k++) fill(g, rect(x - 4.6 + k * 2.4, -12 + r * 2, x - 3.2 + k * 2.4, -10.8 + r * 2), (r + k) % 3 === 0 ? M.visor.m : STEEL.d);
+    clip(g, rect(x - 6, -6, x + 2, -4), () => { fill(g, rect(x - 6, -6, x + 2, -4), C.gold); for (let k = x - 8; k < x + 4; k += 2.4) fill(g, poly([[k, -4], [k + 1.2, -4], [k + 3.2, -6], [k + 2, -6]]), '#1a1c20'); });
     fill(g, rect(x - 7, -3, x + 7, 0), STEEL.d);
+    stroke(g, `M ${x - 7} -24 L ${x + 7} -24`, STEEL.l, 0.4, 0.7);
   });
   stroke(g, B, STEEL.k, 0.5);
-  // cable into the ground
-  stroke(g, `M ${x + 7} -6 C ${x + 12} -6 ${x + 12} -1 ${x + 16} 0`, '#1a1c20', 1.2);
+  // a side handle, the conduit and the cable into the ground
+  cel(g, rect(x + 7, -18, x + 8.4, -12), STEEL, { sh: 0.2, hl: 0.2, lw: 0.25 });
+  cel(g, rect(x + 7, -8, x + 10, -5.6), STEEL, { sh: 0.2, hl: 0.2, lw: 0.25 });
+  stroke(g, `M ${x + 10} -6.8 C ${x + 13} -6.8 ${x + 12} -1 ${x + 16} 0`, '#1a1c20', 1.2);
+  for (const bx of [x - 5.6, x + 5.6]) fill(g, ell(bx, -1.2, 0.45, 0.45), STEEL.l);
 }
 
 // extraction beacon: a short pole (the flare light is drawn live)
@@ -162,6 +195,9 @@ export function buildMission1() {
   const E = (id, x, y, zone, o = {}) => ({ id, kind: id, x, y, zone, facing: -1, ...o });
   return {
     level, props, front, deco, lamps, width: COLS * T,
+    // CROW's shop once, near the start; then the district, never twice the same in a row
+    facade: facadeLayout(-10, COLS * T + 10, 9, ['walkup', 'crow', 'alley', 'warehouse', 'synBlock', 'walkupB', 'hotel', 'ruin', 'garage']),
+    fires: [X(124) + 5],
     spawn: [64, 0],
     checkpoints,
     // the gate leaf is a live sprite; its tiles open when the terminal is done

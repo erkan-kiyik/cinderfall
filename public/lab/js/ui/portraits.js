@@ -2,8 +2,8 @@
 // (head and shoulders, lit like the opening) and weapon side views, painted
 // once and cached.
 import { outlined, setRoot, canvas, rng } from '../art/kit.js';
-import { drawFigure, headPoint } from '../art/figure.js';
-import { OPS, VISOR } from '../art/ops/index.js';
+import { drawFigure } from '../art/figure.js';
+import { OPS, visorLight } from '../art/ops/index.js';
 import { WEAPONS } from '../art/weapons/index.js';
 
 const cache = new Map();
@@ -80,17 +80,8 @@ function paintAvatar(id, size) {
   rg.globalCompositeOperation = 'source-in'; rg.fillStyle = 'rgba(255,132,66,0.95)'; rg.fillRect(0, 0, size, size);
   rg.globalCompositeOperation = 'destination-out'; rg.drawImage(fig, dx, dy);
   g.drawImage(rim, 0, 0);
-  // the visor light
-  const V = VISOR[id], [cr, cg, cb] = V.c, hot = `rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 40)},${Math.min(255, cb + 40)},0.9)`;
-  g.save(); g.globalCompositeOperation = 'lighter';
-  for (const [hx, hy, rx, ry] of V.at) {
-    const [x, y] = headPoint(pose, [hx, hy]), vx = fx + x * z, vy = fy + y * z, R = Math.max(rx, ry) * 2.6 * z;
-    const halo = g.createRadialGradient(vx, vy, 0, vx, vy, R);
-    halo.addColorStop(0, `rgba(${cr},${cg},${cb},0.42)`); halo.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
-    g.fillStyle = halo; g.fillRect(vx - R, vy - R, R * 2, R * 2);
-    g.fillStyle = hot; g.beginPath(); g.ellipse(vx, vy, rx * z * 0.8, Math.max(0.6, ry * z * 0.42), 0, 0, Math.PI * 2); g.fill();
-  }
-  g.restore();
+  // the visor light, fitted to the glass
+  g.save(); g.translate(fx, fy); g.scale(z, z); visorLight(g, id, pose, z); g.restore();
   // vignette
   const vg = g.createRadialGradient(size * 0.55, size * 0.45, size * 0.3, size * 0.5, size * 0.5, size * 0.78);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)');

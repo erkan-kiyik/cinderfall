@@ -228,6 +228,14 @@ bakan kenarda kor ışığı, operatörün renginde parlayan vizör.
 Ardından lobi girişi: kamera yaklaşır, seçili operatör sokağa iner, paneller
 kayarak gelir.
 
+**Sokak (M5 sonrası çevre geçişi):** Cepheler tek bir 600 birimlik şerit
+olarak tekrarlanmaz; dokuz bina tipi (`art/env/city.js`) seviye boyunca son
+üç binada tekrar etmeyecek şekilde dizilir, CROW'un dükkânı bir kez görünür.
+Her bina kendi ışıklarını taşır. Zemin, ufuk ve bütün engeller ayrıntılı
+yeniden çizildi; engellerin ve karakterlerin altında temas gölgesi vardır.
+Görüntü kalitesi varsayılan olarak her cihazda Yüksek'tir; dinamik çözünürlük
+%80'in altına inmez.
+
 **M0 teslimi (onay kapısı):**
 - Stil panosu PNG'si: 5 operatörün silüet ve renk taslakları, 4 silah, 2 düşman,
   1 sokak kesiti ve 2 menü ekranı taslağı.

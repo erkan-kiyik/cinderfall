@@ -7,6 +7,7 @@
 import { cel, fill, stroke, clip, rng, setRoot } from '../kit.js';
 import { M, tone, C } from '../style.js';
 import { emblem } from '../enemies/syndicate.js';
+import { facadeStrip } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -17,23 +18,50 @@ const FAR = '#262e3e', FAR_WIN = '#6c6372';
 const MID = '#2e3748', MID_HI = '#38425a';
 
 function sky(g) {
-  // stepped dusk bands instead of a soft gradient
+  // stepped dusk bands, warmer toward the horizon where the district burns
   const top = -172, h = 150 / SKY.length;
   SKY.forEach((c, i) => fill(g, rect(-10, top + i * h, 610, top + (i + 1) * h + 0.5), c));
-  // a low ember sun bleeding through the haze
-  fill(g, ell(470, -96, 46, 46), '#6a4a55', 0.5);
-  fill(g, ell(470, -96, 30, 30), '#8a5257', 0.5);
+  fill(g, rect(-10, -64, 610, -22), '#6a4250', 0.35);
+  fill(g, rect(-10, -48, 610, -22), '#8a4a40', 0.25);
+  // a few stars where the smoke is thin
+  const r = rng(5);
+  for (let i = 0; i < 40; i++) { const x = r() * 610, y = -170 + r() * 46, k = 0.3 + r() * 0.4; fill(g, rect(x, y, x + k, y + k), '#c9cfe0', 0.35 + r() * 0.4); }
 }
 
 function farCity(g) {
+  // the fires on the horizon: flat glow bands behind the skyline, smoke columns
+  fill(g, rect(-10, -96, 610, -58), '#5a3040', 0.35);
+  fill(g, rect(-10, -80, 610, -58), '#8a3a2a', 0.3);
+  for (const [x, w] of [[60, 70], [250, 50], [470, 90]]) {
+    fill(g, ell(x, -62, w, 14), '#c4552a', 0.18);
+    fill(g, ell(x, -62, w * 0.5, 8), '#ff7a35', 0.16);
+  }
+  for (const [x, w, h] of [[50, 20, 110], [262, 14, 80], [480, 26, 120]]) {
+    for (let k = 0; k < 6; k++) fill(g, ell(x + k * k * 1.2, -70 - k * (h / 6), w * (0.6 + k * 0.15), 7 + k * 1.5), '#2a2a36', 0.5 - k * 0.05);
+  }
   const r = rng(91);
   let x = -6;
   while (x < 610) {
-    const w = 14 + r() * 26, h = 20 + r() * 44;
-    fill(g, rect(x, -84 - h, x + w, -60), FAR);
-    for (let wy = -80 - h + 4; wy < -80; wy += 5) for (let wx = x + 2; wx < x + w - 3; wx += 4) if (r() > 0.82) fill(g, rect(wx, wy, wx + 1.4, wy + 2), FAR_WIN, 0.7);
+    const w = 14 + r() * 26, h = 20 + r() * 44, top = -84 - h;
+    fill(g, rect(x, top, x + w, -60), FAR);
+    // roof clutter: an antenna, a water tank, a stepped crown
+    const k = r();
+    if (k < 0.3) { fill(g, rect(x + w * 0.5, top - 8, x + w * 0.5 + 0.8, top), FAR); fill(g, rect(x + w * 0.5 - 2, top - 5, x + w * 0.5 + 2.8, top - 4.4), FAR); }
+    else if (k < 0.5) { fill(g, rect(x + 3, top - 6, x + 9, top - 1.2), FAR); fill(g, rect(x + 3.6, top - 1.2, x + 4.4, top), FAR); fill(g, rect(x + 7.6, top - 1.2, x + 8.4, top), FAR); }
+    else if (k < 0.65) fill(g, rect(x + 3, top - 5, x + w - 3, top), FAR);
+    for (let wy = top + 4; wy < -64; wy += 5) for (let wx = x + 2; wx < x + w - 3; wx += 4) {
+      const q = r();
+      if (q > 0.84) fill(g, rect(wx, wy, wx + 1.4, wy + 2), FAR_WIN, 0.7);
+      else if (q > 0.81) fill(g, rect(wx, wy, wx + 1.4, wy + 2), '#ff8a4a', 0.65);
+    }
     x += w + r() * 3;
   }
+  // a construction crane over the skyline
+  fill(g, rect(150, -150, 152, -60), FAR); fill(g, rect(126, -150, 212, -148), FAR);
+  for (let k = 128; k < 210; k += 6) stroke(g, `M ${k} -148 L ${k + 3} -150`, FAR, 0.5);
+  stroke(g, 'M 151 -158 L 128 -150 M 151 -158 L 210 -150', FAR, 0.5);
+  fill(g, rect(150.4, -160, 151.6, -150), FAR); fill(g, rect(190, -148, 190.6, -126), '#1d2330'); fill(g, rect(187, -126, 193.6, -123), FAR);
+  g.save(); g.shadowColor = C.danger; g.shadowBlur = 6; fill(g, ell(151, -160, 0.9, 0.9), C.danger); g.restore();
   // the Tower: the campaign's final objective on the horizon
   fill(g, poly([[420, -60], [424, -154], [436, -162], [448, -154], [452, -60]]), '#222a39');
   fill(g, rect(434.5, -176, 437.5, -160), '#222a39');
@@ -67,83 +95,43 @@ function midIndustry(g) {
   fill(g, rect(-10, -52, 610, -40), '#5a5168', 0.14);
 }
 
-// --- street facades (flat, unlit except for their own windows and signs) ----
-const FAC = { brick: '#433a45', brickHi: '#4d4350', panel: '#39445a', panelHi: '#435069', conc: '#4a4c58', concHi: '#555866', trim: '#262b37' };
-
-function windowLit(g, x, y, w, h, on) {
-  fill(g, rect(x - 0.8, y - 0.8, x + w + 0.8, y + h + 0.8), FAC.trim);
-  fill(g, rect(x, y, x + w, y + h), on ? '#ffbe78' : '#1a1f2a');
-  if (on) {
-    fill(g, rect(x, y + h * 0.55, x + w, y + h), '#e48a52');
-    fill(g, rect(x + w * 0.15, y + h * 0.2, x + w * 0.35, y + h), '#2a2230', 0.6);
-    g.save(); g.globalCompositeOperation = 'lighter'; fill(g, rect(x - 2, y - 2, x + w + 2, y + h + 2), '#ff9a5c', 0.08); g.restore();
-  } else {
-    fill(g, poly([[x, y], [x + w * 0.4, y], [x, y + h * 0.6]]), '#2b3342');
-  }
-  fill(g, rect(x - 1.2, y + h + 0.8, x + w + 1.2, y + h + 2), FAC.trim);
-}
-
-function facades(g) {
-  // A: brick walk-up with a fire escape
-  fill(g, rect(-10, -96, 142, 0), FAC.brick);
-  for (let y = -92; y < -4; y += 4) stroke(g, `M -10 ${y} L 142 ${y}`, FAC.brickHi, 0.35, 0.35);
-  fill(g, rect(-10, -100, 142, -96), FAC.trim);
-  for (const [x, y, on] of [[10, -86, 1], [40, -86, 0], [70, -86, 1], [100, -86, 0], [40, -56, 1], [70, -56, 0], [100, -56, 1]]) windowLit(g, x, y, 16, 18, on);
-  for (const y of [-64, -34]) { fill(g, rect(30, y, 92, y + 1.6), '#1c2129'); for (let x = 31; x < 92; x += 3) fill(g, rect(x, y - 7, x + 0.6, y), '#1c2129'); }
-  fill(g, poly([[86, -34], [92, -34], [76, -64], [70, -64]]), '#1c2129');
-  fill(g, rect(10, -36, 30, 0), '#1c2230'); fill(g, rect(12, -34, 28, 0), '#2a3140');
-  // B: CROW's shop — awning, half-open roller door, neon sign
-  fill(g, rect(142, -110, 300, 0), FAC.conc);
-  fill(g, rect(142, -114, 300, -110), FAC.trim);
-  for (const x of [160, 196, 232, 268]) windowLit(g, x, -104, 18, 14, x === 232);
-  fill(g, rect(166, -42, 276, 0), '#1f1a20');
-  g.save(); g.globalCompositeOperation = 'lighter';
-  fill(g, rect(166, -16, 276, 0), '#ff8a4c', 0.28);
-  g.restore();
-  for (let y = -42; y < -16; y += 2.2) stroke(g, `M 166 ${y} L 276 ${y}`, '#5c6070', 0.6);
-  fill(g, rect(166, -17.4, 276, -16), '#2a2d36');
-  const AW = poly([[160, -58], [282, -58], [288, -46], [154, -46]]);
-  fill(g, AW, '#e8dccb');
-  clip(g, AW, () => { for (let x = 150; x < 292; x += 8) fill(g, poly([[x, -58], [x + 4, -58], [x + 4 + (x - 221) * 0.05, -46], [x + (x - 221) * 0.05, -46]]), '#b5452e'); fill(g, rect(150, -52, 292, -46), '#000', 0.18); });
-  fill(g, rect(154, -46.5, 288, -44.5), '#7a2a22');
-  for (let x = 154; x < 288; x += 8) fill(g, rect(x, -44.5, x + 4, -43.2), '#b5452e');
-  // neon CROW sign with a bird mark
-  const neon = '#ff6b52';
-  const BIRD = 'M 186 -72 C 188 -77 193 -79 197 -77 L 203 -78.4 L 198.6 -75.2 C 198.4 -71.6 195 -69.4 190.6 -70 L 186.4 -66.6 L 187.6 -70.8 Z';
-  g.save(); g.shadowColor = neon; g.shadowBlur = 12;
-  g.font = '700 22px Rajdhani'; g.fillStyle = neon; g.fillText('CROW', 206, -64);
-  stroke(g, BIRD, neon, 1.1);
-  g.restore();
-  stroke(g, BIRD, '#ffd8cc', 0.45);
-  g.font = '700 22px Rajdhani'; g.fillStyle = '#ffd8cc'; g.fillText('CROW', 206, -64);
-  // C: clad warehouse with a loading door and pipes
-  fill(g, rect(300, -88, 462, 0), FAC.panel);
-  for (let x = 304; x < 462; x += 6) stroke(g, `M ${x} -88 L ${x} 0`, FAC.panelHi, 0.5, 0.5);
-  fill(g, rect(300, -92, 462, -88), FAC.trim);
-  fill(g, rect(330, -56, 410, 0), '#2a3242');
-  for (let y = -54; y < 0; y += 3) stroke(g, `M 330 ${y} L 410 ${y}`, '#3a4458', 0.5);
-  clip(g, rect(330, -62, 410, -56), () => { fill(g, rect(330, -62, 410, -56), C.gold); for (let x = 320; x < 420; x += 6) fill(g, poly([[x, -56], [x + 3, -56], [x + 9, -62], [x + 6, -62]]), '#1a1c20'); });
-  fill(g, rect(420, -84, 424, 0), '#2a3242'); fill(g, rect(432, -84, 435, -20), '#2a3242');
-  fill(g, rect(414, -70, 452, -66), '#2a3242');
-  for (const [x, y] of [[440, -82], [312, -80]]) { fill(g, rect(x, y, x + 16, y + 10), '#2e3748'); for (let k = 1; k < 5; k++) stroke(g, `M ${x + 1} ${y + k * 2} L ${x + 15} ${y + k * 2}`, '#46516a', 0.5); }
-  // D: concrete block with a Syndicate banner and dark windows
-  fill(g, rect(462, -102, 610, 0), '#3e3f4b');
-  fill(g, rect(462, -106, 610, -102), FAC.trim);
-  for (const [x, y] of [[476, -90], [566, -90], [566, -56]]) windowLit(g, x, y, 18, 20, false);
-  const BN = poly([[508, -94], [544, -94], [544, -40], [526, -46], [508, -40]]);
-  fill(g, BN, '#8e2330');
-  fill(g, rect(508, -94, 544, -90), '#5a1219');
-  emblem(g, 526, -70, 8, '#f0d9d9');
-}
-
 // --- ground -----------------------------------------------------------------
 function ground(g) {
-  fill(g, rect(-10, 0, 610, 4), '#59627a');
+  const r = rng(77);
+  // the pavement: slabs, joints, a few cracked and stained ones
+  fill(g, rect(-10, 0, 610, 4.2), '#56607a');
   fill(g, rect(-10, 0, 610, 0.8), '#7a849c');
-  fill(g, rect(-10, 4, 610, 6), '#2a303c');
-  fill(g, rect(-10, 6, 610, 40), '#222833');
-  for (let x = 0; x < 610; x += 40) fill(g, rect(x, 20, x + 20, 21.6), '#3d4556');
-  for (let x = 6; x < 610; x += 12) stroke(g, `M ${x} 0.8 L ${x - 1} 4`, '#4b546a', 0.4);
+  for (let x = -4; x < 610; x += 12) stroke(g, `M ${x} 0.8 L ${x - 0.8} 4.2`, '#46506a', 0.35);
+  for (let i = 0; i < 14; i++) {
+    const x = r() * 600, k = r();
+    if (k < 0.5) stroke(g, `M ${x} 1 l 1.4 1.2 l -0.6 1.6`, '#3e4760', 0.25);
+    else fill(g, ell(x, 2.4, 2 + r() * 3, 0.8), '#3e4760', 0.5);
+  }
+  // the kerb: a lit edge, its face, the gutter
+  fill(g, rect(-10, 4.2, 610, 5.1), '#8c94a8');
+  fill(g, rect(-10, 5.1, 610, 7.2), '#394052');
+  for (let x = 0; x < 610; x += 24) stroke(g, `M ${x} 4.2 L ${x} 7.2`, '#2c3242', 0.3);
+  fill(g, rect(-10, 7.2, 610, 8.8), '#1b2029');
+  // storm drains in the kerb
+  for (const x of [70, 330, 540]) { fill(g, rect(x, 5.4, x + 10, 8.8), '#0f1217'); for (let k = x + 1; k < x + 10; k += 1.6) fill(g, rect(k, 5.4, k + 0.6, 8.8), '#2c3242'); }
+  // the road
+  fill(g, rect(-10, 8.8, 610, 42), '#222833');
+  for (let i = 0; i < 7; i++) { const x = r() * 590, w = 24 + r() * 50, y = 10 + r() * 22; fill(g, rect(x, y, x + w, y + 4 + r() * 6), r() > 0.5 ? '#262c38' : '#1f242e'); }
+  for (let i = 0; i < 9; i++) {
+    const x = r() * 600, y = 11 + r() * 26;
+    stroke(g, `M ${x} ${y} l ${2 + r() * 3} ${r() * 1.6 - 0.8} l ${2 + r() * 3} ${r() * 1.6 - 0.8} l ${1 + r() * 2} ${r() * 1.6 - 0.8}`, '#171b23', 0.3);
+  }
+  // worn lane dashes
+  for (let x = 0; x < 610; x += 40) { fill(g, rect(x, 22.6, x + 20, 24.2), '#5b6377'); fill(g, rect(x + 4 + r() * 10, 22.6, x + 7 + r() * 10, 24.2), '#222833', 0.7); }
+  // manholes, oil stains, puddles catching the street lights
+  for (const x of [150, 470]) { fill(g, ell(x, 31, 7, 1.8), '#14171d'); fill(g, ell(x, 30.8, 6.2, 1.4), '#2c323e'); for (let k = -4; k <= 4; k += 2) stroke(g, `M ${x + k} 29.8 L ${x + k} 31.8`, '#1b1f27', 0.3); }
+  for (const [x, y, w] of [[220, 14, 9], [410, 33, 12], [590, 17, 7]]) fill(g, ell(x, y, w, 1.4), '#15191f', 0.7);
+  for (const [x, y, w, c] of [[100, 12.6, 14, '#ffcf8f'], [300, 16, 10, '#ff6b52'], [520, 13, 16, '#ffcf8f']]) {
+    fill(g, ell(x, y, w, 1.6), '#181c24');
+    fill(g, ell(x - w * 0.2, y - 0.2, w * 0.5, 0.5), c, 0.22);
+    fill(g, ell(x + w * 0.3, y + 0.3, w * 0.25, 0.3), '#8a96b0', 0.18);
+  }
+  fill(g, rect(-10, 36, 610, 42), '#000', 0.2);
 }
 
 // --- props (outlined play layer) ---------------------------------------------
@@ -151,14 +139,28 @@ const WOOD = tone('#c9935c', '#a5713f', '#7a4f29', '#3e2612');
 const CONC = tone('#b9bcc6', '#8d919d', '#666a76', '#2f323a');
 
 export function crate(g, x, w = 18, h = 16) {
-  const B = rect(x, -h, x + w, 0);
+  const B = rect(x, -h, x + w, 0), f = 2.2;
   cel(g, B, WOOD, { sh: 1.4, hl: 0.6 });
   clip(g, B, () => {
-    for (let y = -h + 4; y < 0; y += 4) stroke(g, `M ${x} ${y} L ${x + w} ${y}`, WOOD.d, 0.4);
-    stroke(g, `M ${x + 1.5} ${-1.5} L ${x + w - 1.5} ${-h + 1.5}`, WOOD.d, 1.6);
-    stroke(g, `M ${x + 1.5} ${-1.5} L ${x + w - 1.5} ${-h + 1.5}`, WOOD.m, 1.0);
-    fill(g, rect(x, -h, x + w, -h + 1.6), WOOD.d);
+    // the planks behind the frame, with grain
+    for (let y = -h + 3.6; y < -0.5; y += 3.6) { stroke(g, `M ${x} ${y} L ${x + w} ${y}`, WOOD.k, 0.4, 0.7); stroke(g, `M ${x} ${y + 0.5} L ${x + w} ${y + 0.5}`, WOOD.l, 0.3, 0.5); }
+    for (const [gx, gy] of [[0.3, -0.7], [0.62, -0.45], [0.45, -0.22]]) stroke(g, `M ${x + w * gx} ${h * gy} l 3.4 0.3`, WOOD.d, 0.25, 0.8);
+    // the frame boards round the edge
+    fill(g, rect(x, -h, x + w, -h + f), WOOD.m); fill(g, rect(x, -h, x + w, -h + 0.6), WOOD.l);
+    fill(g, rect(x, -f, x + w, 0), WOOD.d);
+    fill(g, rect(x, -h, x + f, 0), WOOD.m); fill(g, rect(x + w - f, -h, x + w, 0), WOOD.d);
+    // the diagonal brace
+    fill(g, poly([[x + f, -f - 1.6], [x + f + 1.6, -f], [x + w - f, -h + f + 1.6], [x + w - f - 1.6, -h + f]]), WOOD.m);
+    stroke(g, `M ${x + f + 0.8} ${-f - 0.8} L ${x + w - f - 0.8} ${-h + f + 0.8}`, WOOD.l, 0.35, 0.6);
+    // stencil
+    g.font = '700 3.4px Rajdhani'; g.fillStyle = 'rgba(40,24,12,0.7)'; g.fillText('S-9', x + w * 0.56, -f - 1.2);
   });
+  // steel corners with a rivet each
+  for (const [cx, cy, sx, sy] of [[x, -h, 1, 1], [x + w, -h, -1, 1], [x, 0, 1, -1], [x + w, 0, -1, -1]]) {
+    const L = poly([[cx, cy], [cx + 3.4 * sx, cy], [cx + 3.4 * sx, cy + 1.1 * sy], [cx + 1.1 * sx, cy + 1.1 * sy], [cx + 1.1 * sx, cy + 3.4 * sy], [cx, cy + 3.4 * sy]]);
+    cel(g, L, M.gunmetal, { sh: 0.3, hl: 0.2, lw: 0.25 });
+    fill(g, ell(cx + 0.7 * sx, cy + 0.7 * sy, 0.3, 0.3), M.gunmetal.l);
+  }
   stroke(g, B, WOOD.k, 0.4);
 }
 
@@ -166,19 +168,38 @@ export function barrier(g, x, w = 34) {
   const B = poly([[x, 0], [x + 4, -6], [x + 6, -16], [x + w - 6, -16], [x + w - 4, -6], [x + w, 0]]);
   cel(g, B, CONC, { sh: 1.6, hl: 0.7 });
   clip(g, B, () => {
+    // the sloped foot in shade, the top face lit
+    fill(g, rect(x, -6, x + w, 0), CONC.d, 0.55);
+    fill(g, rect(x, -16, x + w, -14.8), CONC.l, 0.7);
     fill(g, rect(x, -12, x + w, -8.4), C.gold);
     for (let k = x - 6; k < x + w; k += 5) fill(g, poly([[k, -8.4], [k + 2.5, -8.4], [k + 6.1, -12], [k + 3.6, -12]]), '#1a1c20');
-    fill(g, ell(x + w * 0.62, -14.2, 2.2, 0.8), '#555a66', 0.8);
+    // a chipped corner, cracks, scuffs, an amber reflector
+    fill(g, poly([[x + w - 6, -16], [x + w - 9.5, -16], [x + w - 6.4, -13.2]]), CONC.k, 0.8);
+    stroke(g, `M ${x + 9} -16 l 1.2 3 l -0.8 2.4`, CONC.k, 0.25, 0.8);
+    stroke(g, `M ${x + w * 0.66} -6 l 1.4 2.6 l 1.8 0.8`, CONC.k, 0.25, 0.7);
+    for (const sx of [x + 7, x + 15, x + 22]) fill(g, rect(sx, -4.4, sx + 3, -3.8), CONC.k, 0.35);
+    fill(g, rect(x + w / 2 - 1.4, -6, x + w / 2 + 1.4, -4.4), '#ffb030');
+    g.font = '700 2.8px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.7)'; g.fillText('S9-114', x + 8, -13.4);
   });
   stroke(g, B, CONC.k, 0.4);
+  // rebar lifting loops on top
+  for (const lx of [x + 10, x + w - 10]) stroke(g, `M ${lx - 1.6} -16 C ${lx - 1.6} -18.2 ${lx + 1.6} -18.2 ${lx + 1.6} -16`, '#6a4a3a', 0.55);
 }
 
 export function lampPost(g, x, h = 82) {
   const P = tone('#5d6878', '#3c4654', '#2a323d', '#12151b');
   cel(g, rect(x - 1.2, -h, x + 1.2, 0), P, { sh: 0.8, hl: 0.3 });
-  cel(g, rect(x - 2.4, -6, x + 2.4, 0), P, { sh: 0.6, hl: 0.3 });
+  // joints, an access hatch, a sticker, the base flange with bolts
+  for (const y of [-h + 20, -h + 44]) cel(g, rect(x - 1.6, y, x + 1.6, y + 1.6), P, { sh: 0.3, hl: 0.2, lw: 0.25 });
+  fill(g, rect(x - 0.8, -18, x + 0.8, -12), P.d);
+  fill(g, rect(x - 1, -30, x + 1, -27), '#c9b991', 0.8);
+  cel(g, poly([[x - 3.2, 0], [x - 2.4, -4], [x + 2.4, -4], [x + 3.2, 0]]), P, { sh: 0.6, hl: 0.3 });
+  for (const bx of [x - 2.2, x + 2.2]) fill(g, ell(bx, -0.9, 0.4, 0.4), P.l);
+  // the arm and the lamp head
   cel(g, poly([[x, -h], [x + 14, -h - 2], [x + 14, -h + 0.6], [x, -h + 2.2]]), P, { sh: 0.5, hl: 0.2 });
+  stroke(g, `M ${x} ${-h + 6} Q ${x + 4} ${-h + 1} ${x + 9} ${-h - 0.6}`, P.d, 0.5);
   cel(g, poly([[x + 10, -h - 1.4], [x + 20, -h - 1.4], [x + 22, -h + 2.4], [x + 8, -h + 2.4]]), P, { sh: 0.5, hl: 0.3 });
+  fill(g, rect(x + 12, -h - 2.6, x + 18, -h - 1.4), P.d);
   fill(g, rect(x + 9.6, -h + 2.2, x + 20.4, -h + 3.2), '#fff1d0');
 }
 
@@ -196,15 +217,34 @@ export function dumpster(g, x) {
   const D = tone('#5f8a6a', '#466e52', '#30503b', '#14241a');
   const B = poly([[x, -20], [x + 40, -20], [x + 38, -2], [x + 2, -2]]);
   cel(g, B, D, { sh: 1.6, hl: 0.6 });
-  clip(g, B, () => { for (let k = x + 6; k < x + 38; k += 8) stroke(g, `M ${k} -18 L ${k} -4`, D.d, 0.8); fill(g, rect(x + 26, -16, x + 36, -11), '#d9dee5'); });
-  cel(g, poly([[x - 1, -21.6], [x + 41, -21.6], [x + 41, -19.6], [x - 1, -19.6]]), D, { sh: 0.4, hl: 0.2 });
+  clip(g, B, () => {
+    for (let k = x + 6; k < x + 38; k += 8) { stroke(g, `M ${k} -18 L ${k} -4`, D.d, 0.8); stroke(g, `M ${k + 0.8} -18 L ${k + 0.8} -4`, D.l, 0.3, 0.5); }
+    fill(g, rect(x + 26, -16, x + 36, -11), '#d9dee5');
+    g.font = '700 2.4px Rajdhani'; g.fillStyle = '#30503b'; g.fillText('ATIK · S9', x + 27, -12.6);
+    fill(g, ell(x + 14, -9, 3, 2), D.d, 0.6);
+    fill(g, rect(x, -7, x + 40, -2), '#000', 0.15);
+  });
+  // the lid, a little open, its hinge and the side handles
+  cel(g, poly([[x - 1, -21.6], [x + 41, -24.2], [x + 41, -22.2], [x - 1, -19.6]]), D, { sh: 0.4, hl: 0.25 });
+  fill(g, rect(x - 1.6, -21.4, x + 1, -19.4), D.k);
+  for (const hx of [x + 1.2, x + 36.6]) cel(g, rect(hx, -16, hx + 2.2, -14.4), M.gunmetal, { sh: 0.2, hl: 0.2, lw: 0.25 });
   for (const wx of [x + 6, x + 34]) cel(g, ell(wx, -1.6, 1.8, 1.8), M.rubber, { sh: 0.4, hl: 0.2 });
 }
 
 export function burnBarrel(g, x) {
-  const B = rect(x, -14, x + 10, 0);
-  cel(g, B, tone('#8a5a4a', '#6b3f30', '#4a2a20', '#22130d'), { sh: 1.0, hl: 0.4 });
-  clip(g, B, () => { stroke(g, `M ${x} -10 L ${x + 10} -10 M ${x} -4 L ${x + 10} -4`, '#2a1810', 0.6); });
+  const T = tone('#9a6450', '#6b3f30', '#4a2a20', '#22130d');
+  const B = poly([[x + 0.4, -14], [x + 9.6, -14], [x + 10, -12.6], [x + 10, -1], [x + 9.4, 0], [x + 0.6, 0], [x, -1], [x, -12.6]]);
+  cel(g, B, T, { sh: 1.2, hl: 0.5 });
+  clip(g, B, () => {
+    // ribs, rust, a dent, and the air holes punched near the bottom, glowing
+    for (const y of [-10, -4.6]) { fill(g, rect(x, y, x + 10, y + 1), T.d); fill(g, rect(x, y, x + 10, y + 0.35), T.l, 0.6); }
+    fill(g, poly([[x + 1, -9], [x + 4, -8.4], [x + 3, -6], [x + 1.2, -6.4]]), '#8a4a28', 0.6);
+    fill(g, ell(x + 7.4, -7.2, 1.6, 1.2), T.d, 0.6);
+    for (const hx of [x + 2.2, x + 5, x + 7.8]) { fill(g, ell(hx, -2.4, 0.7, 0.55), '#ff8a3a'); fill(g, ell(hx, -2.2, 0.35, 0.3), '#ffd56a'); }
+  });
+  // the lip at the top
+  cel(g, rect(x - 0.4, -14.6, x + 10.4, -13.4), T, { sh: 0.3, hl: 0.3, lw: 0.3 });
+  fill(g, rect(x + 0.6, -14.4, x + 9.4, -13.8), '#2a1008');
 }
 
 // Flames and glow sit in the light pass so they never pick up the outline.
@@ -226,4 +266,4 @@ export function cone(g, x) {
   cel(g, rect(x - 5, -1, x + 5, 0), M.black, { sh: 0.3, hl: 0.1 });
 }
 
-export const STREET = { sky, farCity, midIndustry, facades, ground, lampLight, fireLight };
+export const STREET = { sky, farCity, midIndustry, facades: facadeStrip, ground, lampLight, fireLight };

@@ -84,12 +84,6 @@ export function solve(pose) {
   };
 }
 
-// A point in the head frame (as the head painters draw it) → the figure frame.
-export function headPoint(pose, [hx, hy]) {
-  const J = solve(pose), a = -J.p.lean - J.p.head, c = Math.cos(a), sn = Math.sin(a);
-  return [J.neck[0] + hx * c - hy * sn, J.neck[1] + hx * sn + hy * c];
-}
-
 // Darker variant of a tone for the far side of the body.
 const darker = (t) => ({ l: t.m, m: t.d, d: t.k, k: t.k });
 

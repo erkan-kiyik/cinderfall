@@ -100,11 +100,13 @@ void main() {
 }`;
 
 export const QUALITY = {
-  low: { scale: 0.7, light: 0.33, bloom: 0, particles: 1024 },
-  med: { scale: 0.85, light: 0.5, bloom: 1, particles: 2048 },
-  high: { scale: 1.0, light: 0.5, bloom: 2, particles: 4096 },
+  low: { scale: 0.7, light: 0.33, bloom: 0, particles: 1024, dpr: 1.5 },
+  med: { scale: 0.85, light: 0.5, bloom: 1, particles: 2048, dpr: 2 },
+  high: { scale: 1.0, light: 0.5, bloom: 2, particles: 4096, dpr: 2.5 },
 };
-export const RES_STEPS = [1.0, 0.9, 0.8, 0.7, 0.6];
+// dynamic resolution never goes below 80 %: the picture stays sharp, the
+// frame rate is held by the steps above it
+export const RES_STEPS = [1.0, 0.92, 0.85, 0.8];
 
 export class Renderer {
   constructor(gl, canvas) {
@@ -138,7 +140,7 @@ export class Renderer {
 
   // Canvas backing store follows CSS size × DPR (capped); targets follow it.
   resize(force = false) {
-    const c = this.canvas, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const c = this.canvas, dpr = Math.min(window.devicePixelRatio || 1, this.q.dpr);
     const W = Math.round(c.clientWidth * dpr), H = Math.round(c.clientHeight * dpr);
     if (!force && W === c.width && H === c.height) return;
     c.width = W; c.height = H;

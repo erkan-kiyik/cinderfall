@@ -65,6 +65,52 @@ if (what === 'poses') {
   cg.drawImage(big, -(big.width * 0.42 - 13 * z), -(big.height - 6 * z - 70 * z));
   r2.appendChild(crop);
 }
+if (what === 'env') {
+  // every building and every obstacle at a readable size, on the night ground
+  const { BUILDINGS } = await import('../js/art/env/city.js');
+  const env = await import('../js/art/env/street.js');
+  const m1 = await import('../js/art/env/mission1.js');
+  const co = await import('../js/art/env/course.js');
+  const { outlined, setRoot: sr } = await import('../js/art/kit.js');
+  const s = +(q.get('s') || 3);
+  const pane = (w, top, bottom, paint, outline) => {
+    const W = Math.ceil(w * s), H = Math.ceil((bottom - top) * s);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.fillStyle = '#151b27'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#2a303c'; g.fillRect(0, -top * s, W, H);
+    if (outline) { const o = outlined(W, H, s, 0, -top * s, (gg) => { sr(gg); paint(gg); }, 0.85); g.drawImage(o, 0, 0); }
+    else { g.save(); g.translate(0, -top * s); g.scale(s, s); sr(g); paint(g); g.restore(); }
+    return c;
+  };
+  let r = row();
+  let acc = 0;
+  for (const [t, b] of Object.entries(BUILDINGS)) {
+    if (acc + b.w > 520) { r = row(); acc = 0; }
+    const c = pane(b.w + 6, b.top - 2, 8, (g) => { g.translate(3, 0); b.paint(g); });
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif';
+    wrap.append(c, t); r.appendChild(wrap); acc += b.w + 10;
+  }
+  const props = [
+    ['crate', 24, -20, (g) => env.crate(g, 4, 16, 16)],
+    ['barrier', 42, -20, (g) => env.barrier(g, 4, 34)],
+    ['concrete', 26, -44, (g) => m1.concrete(g, 5, 21, 40)],
+    ['sandbags', 36, -36, (g) => co.sandbags(g, 6, 30, 32)],
+    ['burnBarrel', 18, -18, (g) => env.burnBarrel(g, 4)],
+    ['dumpster', 48, -26, (g) => env.dumpster(g, 4)],
+    ['cone', 14, -12, (g) => env.cone(g, 7)],
+    ['booth', 56, -70, (g) => m1.booth(g, 6)],
+    ['terminal', 30, -30, (g) => m1.terminal(g, 10)],
+    ['lamp', 34, -90, (g) => env.lampPost(g, 6)],
+    ['container', 86, -44, (g) => co.container(g, 3, -40, 83, 0, co.CONT.teal)],
+  ];
+  r = row(); acc = 0;
+  for (const [n, w, top, paint] of props) {
+    if (acc + w > 300) { r = row(); acc = 0; }
+    const c = pane(w, top, 4, paint, true);
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif';
+    wrap.append(c, n); r.appendChild(wrap); acc += w + 6;
+  }
+}
 if (what === 'avatars') {
   // the menu portraits at the sizes the menus use, and large
   const { avatar } = await import('../js/ui/portraits.js');

@@ -14,9 +14,9 @@
 //
 // Any tap or key skips (after a beat, so the launch tap does not); the
 // hand-off fades into the lobby, which plays its own entrance.
-import { drawFigure, solve, headPoint } from '../art/figure.js';
+import { drawFigure, solve } from '../art/figure.js';
 import { outlined } from '../art/kit.js';
-import { OPS, VISOR } from '../art/ops/index.js';
+import { OPS, visorLight } from '../art/ops/index.js';
 import { drone } from '../art/ops/kite.js';
 import { WEAPONS } from '../art/weapons/index.js';
 import { t } from './i18n.js';
@@ -35,7 +35,7 @@ const SQUAD = [
   { id: 'morrow', x: 0.925, k: 0.97, gun: 'wren9', on: 1.6 },
   { id: 'brick', x: 0.84, k: 1.08, gun: 'kestrel', on: 1.27 },
   { id: 'vex', x: 0.745, k: 1.04, gun: 'kestrel', on: 0.95 },
-].map((m) => ({ ...m, c: VISOR[m.id].c, glow: VISOR[m.id].at }));
+];
 
 function squadPose(m) {
   const op = OPS[m.id];
@@ -156,13 +156,12 @@ export class Intro {
       const dg = dark.getContext('2d'); dg.drawImage(fig, 0, 0);
       dg.globalCompositeOperation = 'source-atop'; dg.fillStyle = 'rgba(8,9,13,0.78)'; dg.fillRect(0, 0, fw, fh);
       sg.drawImage(dark, 0, 0);
-      // visor lights: head frame → figure frame → mirrored
+      // the visor light, painted once; each frame only sets how bright it is
+      const vis = document.createElement('canvas'); vis.width = fw; vis.height = fh;
+      const vg = vis.getContext('2d'); vg.translate(ox, oy); vg.scale(-s, s);
+      visorLight(vg, m.id, pose, s);
       const J = solve(pose);
-      const glows = m.glow.map(([hx, hy, rx, ry]) => {
-        const [x, y] = headPoint(pose, [hx, hy]);
-        return { x: -x * s0 * m.k, y: y * s0 * m.k, rx: rx * s0 * m.k, ry: ry * s0 * m.k };
-      });
-      figs.push({ m, sil, w: fw / dpr, h: fh / dpr, ox: ox / dpr, oy: oy / dpr, glows, headY: J.neck[1] * s0 * m.k });
+      figs.push({ m, sil, vis, w: fw / dpr, h: fh / dpr, ox: ox / dpr, oy: oy / dpr, headY: J.neck[1] * s0 * m.k });
     }
     // KITE's drone, painted once, hovers over her
     const ds = s0 * 0.95 * dpr, [dc] = [document.createElement('canvas')];
@@ -233,16 +232,9 @@ export class Intro {
       // power-on flicker, then a steady glow with a slow breath
       const k = t < f.m.on ? 0 : t < f.m.on + 0.12 ? (Math.sin((t - f.m.on) * 90) > 0 ? 1 : 0.2) : 1;
       if (k > 0) {
-        const [r, gg, b] = f.m.c, lit = k * (0.85 + 0.15 * Math.sin(t * 2.3 + f.m.x * 9));
         g.save(); g.globalCompositeOperation = 'lighter';
-        for (const v of f.glows) {
-          const vx = fxp + v.x * z, vy = fyp + v.y * z * br, R = Math.max(v.rx, v.ry) * 3.2 * z;
-          const halo = g.createRadialGradient(vx, vy, 0, vx, vy, R);
-          halo.addColorStop(0, `rgba(${r},${gg},${b},${0.55 * lit})`); halo.addColorStop(1, `rgba(${r},${gg},${b},0)`);
-          g.fillStyle = halo; g.fillRect(vx - R, vy - R, R * 2, R * 2);
-          g.fillStyle = `rgba(${Math.min(255, r + 60)},${Math.min(255, gg + 60)},${Math.min(255, b + 60)},${0.95 * lit})`;
-          g.beginPath(); g.ellipse(vx, vy, v.rx * z, v.ry * z * 0.7, 0, 0, Math.PI * 2); g.fill();
-        }
+        g.globalAlpha = k * (0.82 + 0.18 * Math.sin(t * 2.3 + f.m.x * 9));
+        g.drawImage(f.vis, fxp - f.ox * z, fyp - f.oy * z * br, f.w * z, f.h * z * br);
         g.restore();
       }
       if (f.m.id === 'kite') {

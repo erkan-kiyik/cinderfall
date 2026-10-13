@@ -5,6 +5,7 @@
 // built from tiles, rendered with the runtime rig and live outline. Syndicate
 // troopers at the far end track the player with their aim.
 import { STREET } from '../art/env/street.js';
+import { BUILDINGS, buildingBakeList, facadeLayout } from '../art/env/city.js';
 import { buildCourse } from '../art/env/course.js';
 import { FX, DENS } from './m1scene.js';
 import { charBakeList } from '../game/bakechars.js';
@@ -14,7 +15,7 @@ import { CharRenderer } from '../gfx/charrender.js';
 import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 
-export const BAKE_VERSION = 'm2-3';
+export const BAKE_VERSION = 'm2-4';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -25,7 +26,7 @@ export function bakeList(quality, course = COURSE) {
   layer('sky', [-10, -176, 610, -20], STREET.sky, Math.min(2, bg));
   layer('far', [-10, -182, 610, -58], STREET.farCity, bg * 0.6);
   layer('mid', [-10, -168, 610, -38], STREET.midIndustry, bg * 0.75);
-  layer('fac', [-10, -118, 610, 0.5], STREET.facades, bg);
+  E.push(...buildingBakeList(bg));
   layer('ground', [-10, -0.5, 610, 42], STREET.ground, bg);
   for (const p of [...course.props, ...course.front, ...course.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
   E.push(...charBakeList([...OPERATORS, 'tet', 'kal'], ch));
@@ -45,6 +46,8 @@ export class M2Scene {
     this.e = eng; this.ctl = controls; this.C = course;
     const { gl, atlas, batch } = eng;
     this.L = this.C.level;
+    // the buildings along the street (scenes that do not lay them out get a default street)
+    if (!this.C.facade) this.C.facade = facadeLayout(-10, this.C.width + 10, 3);
     this.cr = new CharRenderer(gl, batch);
     this.dust = new ParticleSystem(gl, atlas, atlas.get('fx.smoke'), 512, { additive: false });
     this.opIndex = 0;
@@ -121,6 +124,16 @@ export class M2Scene {
     this.afterUpdate(dt);
   }
 
+  // light flicker by kind: CROW's neon stutters now and then, the hotel sign
+  // on its own beat, fires breathe; each building on its own phase
+  flicker(kind, seed = 0) {
+    const t = this.t + seed * 0.013;
+    if (kind === 'neon') return (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
+    if (kind === 'neon2') return (t % 8.3) > 8.0 && ((t * 24) | 0) % 2 ? 0.3 : 1;
+    if (kind === 'fire') return 0.8 + Math.sin(t * 11) * 0.1 + Math.sin(t * 4.7) * 0.1;
+    return 1;
+  }
+
   // --- hooks for scenes built on this one ---------------------------------------------
   beforePlayerStep() {}
   afterPlayerStep() {}
@@ -168,14 +181,11 @@ export class M2Scene {
     // lights
     const vw = cam.viewW, x0 = cam.x - vw / 2 - 120, x1 = cam.x + vw / 2 + 120;
     for (const lx of this.C.lamps) if (lx > x0 && lx < x1) { R.addLight(lx + 15, -78, 100, 1.2, [1, 0.84, 0.6], Math.PI / 2, Math.cos(0.44), 0.18); R.addLight(lx + 15, -80, 22, 0.8, [1, 0.9, 0.7]); }
-    const neon = (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
-    const kN = Math.ceil(this.C.width / 600) + 1;
-    for (let k = -1; k < kN; k++) {
-      const ox = k * 600;
-      if (232 + ox > x0 && 232 + ox < x1) { R.addLight(232 + ox, -72, 70, 0.95 * neon, [1, 0.4, 0.3]); R.addLight(221 + ox, -6, 60, 0.55, [1, 0.56, 0.32]); }
-      if (364 + ox > x0 && 364 + ox < x1) R.addLight(364 + ox, -100, 54, 0.45, [1, 0.22, 0.26]);
-    }
-    R.addLight(1107, -20, 80, 1.2 * (0.86 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06), [1, 0.55, 0.24]);
+    // the buildings in view: their windows, neon and fires
+    const vis = this.C.facade.filter((f) => f.x + BUILDINGS[f.type].w > x0 && f.x < x1);
+    for (const f of vis) for (const [lx, ly, rad, k, c, fl] of BUILDINGS[f.type].lights || []) R.addLight(f.x + lx, ly, rad, k * this.flicker(fl, f.x), c);
+    const fire = 0.86 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06;
+    for (const fx of this.C.fires || []) if (fx > x0 && fx < x1) R.addLight(fx, -20, 80, 1.2 * fire, [1, 0.55, 0.24]);
     for (const en of this.enemies) if (en.alive) R.addLight(en.rx + en.facing * 4, en.ry - 55, 12, 0.6, [1, 0.2, 0.25]);
     // background: parallax layers repeated along the street
     R.beginScene();
@@ -194,9 +204,22 @@ export class M2Scene {
     layer('sky', this.viewFor('sky', PLX.sky, cam.x));
     layer('far', this.viewFor('far', PLX.far, 300));
     layer('mid', this.viewFor('mid', PLX.mid, 300));
-    layer('fac', w); layer('ground', w);
-    // props behind the characters
+    layer('ground', w);
     B.begin(w);
+    for (const f of vis) B.draw(A.get(`b.${f.type}`), f.x, 0);
+    // contact shadows: every prop that stands on the street, every character on its feet
+    const glow0 = A.get('fx.glow'), shade = rgba('#05060a', 0.55);
+    const foot = (x, y, hw) => B.draw(glow0, x, y + 0.4, hw, 2.4, 0, shade);
+    for (const p of [...this.C.deco, ...this.C.props, ...this.C.front]) {
+      if (p.at) { for (const x of p.at) if (x > x0 && x < x1) foot(x, 0, 5); continue; }
+      if (!p.box) continue;
+      const [bx0, by0, bx1, by1] = p.box;
+      if (by1 < -2 || by1 > 2 || by0 > -6) continue;
+      if (bx1 < x0 || bx0 > x1) continue;
+      foot((bx0 + bx1) / 2, 0, (bx1 - bx0) * 0.55);
+    }
+    for (const c of chars) if (!c.rag && c.m.grounded) foot(c.rx, c.ry, 10);
+    // props behind the characters
     for (const p of this.C.deco) {
       const r = A.get(p.name);
       if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0);
@@ -219,11 +242,11 @@ export class M2Scene {
     const glow = A.get('fx.glow'), flame = A.get('fx.flame');
     B.begin(w); B.setBlend(1);
     for (const lx of this.C.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#fff1d0', 0.6));
-    for (let k = -1; k < kN; k++) B.draw(glow, 232 + k * 600, -74, 34, 14, 0, rgba('#ff6b52', 0.22 * neon));
+    for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) B.draw(glow, f.x + gx, gy, sx, sy, 0, rgba(c, a * this.flicker(fl, f.x)));
     for (const en of this.enemies) if (en.alive) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
-    for (let k = 0; k < 3; k++) {
+    for (const fx of this.C.fires || []) for (let k = 0; k < 3; k++) {
       const ph = t * (9 + k * 3) + k * 2.1;
-      B.draw(flame, 1107 + (k - 1) * 2.4, -14, 3.6 + Math.sin(ph) * 0.6, 6 + Math.sin(ph * 1.3) * 1.6 - k * 0.8, Math.sin(ph * 0.7) * 0.15, rgba(k === 1 ? '#ffd56a' : '#ff8a3a', 0.9));
+      B.draw(flame, fx + (k - 1) * 2.4, -14, 3.6 + Math.sin(ph) * 0.6, 6 + Math.sin(ph * 1.3) * 1.6 - k * 0.8, Math.sin(ph * 0.7) * 0.15, rgba(k === 1 ? '#ffd56a' : '#ff8a3a', 0.9));
     }
     B.end();
     this.drawGlow(B, w);
