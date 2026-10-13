@@ -33,3 +33,46 @@ folder; the shipping game in `public/game` is untouched.
 - `js/gfx/camera.js` — framing by view height, parallax, trauma shake
 - `js/test/m1scene.js`, `js/boot.js`, `js/ui/perf.js` — engine test scene with
   stress mode, live performance overlay and quality/effect toggles
+
+## Status — M2 (character + movement)
+- `js/anim/rig.js` — runtime skeleton (same bone frames as `figure.js`),
+  two-bone IK for legs (ankle targets) and arms (weapon grips, rungs)
+- `js/anim/charbake.js` — every body part baked in its own bone frame, near
+  and far variants, bounds measured automatically
+- `js/gfx/charrender.js` — characters drawn into slots of a sheet, then
+  composited through a live outline shader (one clean outer outline)
+- `js/anim/animator.js` — distance-driven gait (no foot skating), walk/run/
+  sprint blends, crouch, air, landing spring, slide, mantle, ladder; aim layer
+- `js/anim/cloth.js` — verlet cloth (VEX's scarf)
+- `js/phys/level.js`, `js/phys/mover.js` — tile level (solid, one-way,
+  ladders, slopes) and the movement physics (coyote time, jump buffer,
+  variable jump, mantle, slide, ladders)
+- `js/game/input.js` — keyboard + mouse and floating touch sticks
+- `js/art/env/course.js`, `js/test/m2scene.js` — the movement course
+  (`?scene=m2`); tests: `node tools/lab/phys.test.mjs`
+
+## Status — M3 (weapon core) — default scene
+- `js/art/weapons/` — guns split into moving parts (magazine, slide, pump)
+  with rig points (ejection port, magazine axis and grab point, charging
+  handle, shell port); `items.js`: casings, shells, knife, holster, effect shapes
+- `js/game/guns.js` — stats and the fire / reload state machine: semi, auto
+  and pump modes, recoil patterns, spread (movement, air, crouch, bloom),
+  tactical and empty reloads, shell-by-shell shotgun reload, slide lock
+- `js/anim/animator.js` — recoil spring, reload choreography (support hand to
+  the magazine, pouch, magwell, charging handle; shells into the port),
+  weapon swap, knife swing, hit flinch
+- `js/game/character.js` — loadout (primary + sidearm), stowed guns (back
+  sling, thigh holster), hit capsules from the live skeleton, damage, death
+- `js/anim/ragdoll.js` — verlet ragdoll; limbs drawn by IK onto the
+  simulated ankles and wrists so joints always bend naturally
+- `js/game/ballistics.js` — hitscan: DDA through the tiles (slopes exact,
+  one-way decks let bullets through), ray vs capsules and shield boxes, falloff
+- `js/game/fx.js` — muzzle flash + light, tracers, sparks, dust, bullet holes,
+  hit puffs, knife swoosh, bouncing debris (casings, magazines, dropped guns)
+- `js/audio/sfx.js` — every sound synthesised at start-up (no audio files),
+  positional playback with a compressor
+- `js/ui/combathud.js`, `js/test/m3scene.js` — health, ammo, reload bar,
+  crosshair with spread and hit markers; troopers that shoot back
+- controls: mouse fire / right-click knife, R reload, Q (or wheel) swap,
+  F knife; touch: aim stick fires past its outer ring, DOLDUR / BIÇAK / SİLAH
+- tests: `node tools/lab/guns.test.mjs`, `ballistics.test.mjs`, `ragdoll.test.mjs`

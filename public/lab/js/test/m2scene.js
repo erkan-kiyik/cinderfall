@@ -16,9 +16,9 @@ import { rgba } from '../gfx/batch.js';
 
 export const BAKE_VERSION = 'm2-1';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
-const COURSE = buildCourse();
+export const COURSE = buildCourse();
 
-export function bakeList(quality) {
+export function bakeList(quality, course = COURSE) {
   const [bg, ch, fx] = DENS[quality];
   const E = [];
   const layer = (name, box, paint, scale) => E.push({ name, box, scale, paint, chunk: 300 });
@@ -27,7 +27,7 @@ export function bakeList(quality) {
   layer('mid', [-10, -168, 610, -38], STREET.midIndustry, bg * 0.75);
   layer('fac', [-10, -118, 610, 0.5], STREET.facades, bg);
   layer('ground', [-10, -0.5, 610, 42], STREET.ground, bg);
-  for (const p of [...COURSE.props, ...COURSE.front, ...COURSE.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
+  for (const p of [...course.props, ...course.front, ...course.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
   E.push(...charBakeList([...OPERATORS, 'tet', 'kal'], ch));
   for (const [n, p] of Object.entries(FX)) {
     const box = n === 'tracer' ? [0, -0.5, 1, 0.5] : n === 'flame' ? [-0.6, -1.05, 0.6, 0.05] : [-1, -1, 1, 1];
@@ -41,17 +41,17 @@ const LAYER_Y = { sky: -176, far: -182, mid: -168, fac: -118, ground: -0.5 };
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
 export class M2Scene {
-  constructor(eng, controls) {
-    this.e = eng; this.ctl = controls;
+  constructor(eng, controls, course = COURSE) {
+    this.e = eng; this.ctl = controls; this.C = course;
     const { gl, atlas, batch } = eng;
-    this.L = COURSE.level;
+    this.L = this.C.level;
     this.cr = new CharRenderer(gl, batch);
     this.dust = new ParticleSystem(gl, atlas, atlas.get('fx.smoke'), 512, { additive: false });
     this.opIndex = 0;
-    const [sx, sy] = COURSE.spawn;
+    const [sx, sy] = this.C.spawn;
     this.mover = new Mover(this.L, sx, sy);
     this.player = new Character(OPERATORS[0], atlas, this.mover);
-    this.enemies = COURSE.enemies.map((d) => {
+    this.enemies = this.C.enemies.map((d) => {
       const m = new Mover(this.L, d.x, d.y); m.facing = -1;
       const c = new Character(d.id, atlas, m); return c;
     });
@@ -71,6 +71,7 @@ export class M2Scene {
 
   // world aim point from the controls
   aimPoint() {
+    if (this.aimWorld) return this.aimWorld; // test hook: a fixed world point
     const c = this.ctl, m = this.mover, cam = this.e.camera, cv = this.e.renderer.canvas;
     if (c.aimMode === 'point') {
       const [wx, wy] = cam.toWorld(c.aimSX / cv.clientWidth, c.aimSY / cv.clientHeight);
@@ -93,9 +94,11 @@ export class M2Scene {
     if (m.state === 'ladder' && Math.abs(c.moveX) > 0.2) inp.face = Math.sign(c.moveX);
     const P = this.player;
     P.setAim(ax, ay);
+    this.beforePlayerStep(dt, inp);
     P.preStep();
     m.step(dt, inp);
     P.postStep(dt, this.L);
+    this.afterPlayerStep(dt);
     // dust: take-off, landing, sliding
     const ev = m.ev;
     if (ev.jump) this.puff(m.x, m.y, 4, 0.5);
@@ -103,22 +106,37 @@ export class M2Scene {
     if (m.state === 'slide' && Math.random() < dt * 40) this.puff(m.x - m.facing * 6, m.y, 1, 0.5);
     if (ev.mantle) this.puff(m.mantle.x1, m.mantle.y1, 3, 0.4);
     // fell out of the world: back to the start
-    if (m.y > 300) { m.x = COURSE.spawn[0]; m.y = COURSE.spawn[1] - 20; m.vx = m.vy = 0; m.state = 'air'; }
-    // troopers track the player's chest
+    if (m.y > 300) { m.x = this.C.spawn[0]; m.y = this.C.spawn[1] - 20; m.vx = m.vy = 0; m.state = 'air'; }
+    this.updateEnemies(dt);
+    // camera: lead in the facing direction, ease vertically
+    const cam = this.cam, e = this.e.camera;
+    cam.px = cam.x; cam.py = cam.y;
+    // lead in the facing direction and a little toward where you aim
+    const lead = m.facing * 36 + m.vx * 0.12 + clamp((ax - m.x) * 0.12, -26, 26);
+    const tx = clamp(m.x + lead, e.viewW / 2 + 4, this.C.width - e.viewW / 2 - 4);
+    const ty = clamp(m.y - 44 + clamp((ay - m.y + 48) * 0.3, -44, 30), -176 + e.viewH / 2, 40 - e.viewH / 2 + 8);
+    cam.x += (tx - cam.x) * (1 - Math.exp(-dt * 5));
+    cam.y += (ty - cam.y) * (1 - Math.exp(-dt * 3.5));
+    e.update(dt);
+    this.afterUpdate(dt);
+  }
+
+  // --- hooks for scenes built on this one ---------------------------------------------
+  beforePlayerStep() {}
+  afterPlayerStep() {}
+  afterUpdate() {}
+  drawWorldExtras() {}
+  drawFrontExtras() {}
+  addLights() {}
+  drawGlow() {}
+  // troopers track the player's chest
+  updateEnemies(dt) {
+    const m = this.mover;
     for (const e of this.enemies) {
       e.m.facing = m.x < e.m.x ? -1 : 1;
       e.setAim(m.x, m.y - (m.crouching ? 30 : 42));
       e.preStep(); e.m.step(dt, { moveX: 0, face: e.m.facing }); e.postStep(dt, this.L);
     }
-    // camera: lead in the facing direction, ease vertically
-    const cam = this.cam, e = this.e.camera;
-    cam.px = cam.x; cam.py = cam.y;
-    const lead = m.facing * 46 + m.vx * 0.12;
-    const tx = clamp(m.x + lead, e.viewW / 2 + 4, COURSE.width - e.viewW / 2 - 4);
-    const ty = clamp(m.y - 44, -176 + e.viewH / 2, 40 - e.viewH / 2 + 8);
-    cam.x += (tx - cam.x) * (1 - Math.exp(-dt * 5));
-    cam.y += (ty - cam.y) * (1 - Math.exp(-dt * 3.5));
-    e.update(dt);
   }
 
   puff(x, y, n, s) {
@@ -149,7 +167,7 @@ export class M2Scene {
     this.cr.begin(chars);
     // lights
     const vw = cam.viewW, x0 = cam.x - vw / 2 - 120, x1 = cam.x + vw / 2 + 120;
-    for (const lx of COURSE.lamps) if (lx > x0 && lx < x1) { R.addLight(lx + 15, -78, 100, 1.2, [1, 0.84, 0.6], Math.PI / 2, Math.cos(0.44), 0.18); R.addLight(lx + 15, -80, 22, 0.8, [1, 0.9, 0.7]); }
+    for (const lx of this.C.lamps) if (lx > x0 && lx < x1) { R.addLight(lx + 15, -78, 100, 1.2, [1, 0.84, 0.6], Math.PI / 2, Math.cos(0.44), 0.18); R.addLight(lx + 15, -80, 22, 0.8, [1, 0.9, 0.7]); }
     const neon = (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
     for (let k = -1; k < 4; k++) {
       const ox = k * 600;
@@ -157,7 +175,7 @@ export class M2Scene {
       if (364 + ox > x0 && 364 + ox < x1) R.addLight(364 + ox, -100, 54, 0.45, [1, 0.22, 0.26]);
     }
     R.addLight(1107, -20, 80, 1.2 * (0.86 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06), [1, 0.55, 0.24]);
-    for (const en of this.enemies) R.addLight(en.rx + en.facing * 4, en.ry - 55, 12, 0.6, [1, 0.2, 0.25]);
+    for (const en of this.enemies) if (en.alive) R.addLight(en.rx + en.facing * 4, en.ry - 55, 12, 0.6, [1, 0.2, 0.25]);
     // background: parallax layers repeated along the street
     R.beginScene();
     B.resetStats();
@@ -177,32 +195,36 @@ export class M2Scene {
     layer('fac', w); layer('ground', w);
     // props behind the characters
     B.begin(w);
-    for (const p of COURSE.deco) {
+    for (const p of this.C.deco) {
       const r = A.get(p.name);
       if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0);
     }
-    for (const p of COURSE.props) B.draw(A.get(p.name), 0, 0);
+    for (const p of this.C.props) B.draw(A.get(p.name), 0, 0);
     B.end();
+    this.drawWorldExtras(B, w, x0, x1);
     // characters (each composited through the outline shader)
     for (const c of chars) this.cr.composite(c, w, restore);
     // cover in front
     B.begin(w);
-    for (const p of COURSE.front) B.draw(A.get(p.name), 0, 0);
+    for (const p of this.C.front) B.draw(A.get(p.name), 0, 0);
     B.end();
     this.dust.draw(w, t);
+    this.drawFrontExtras(B, w);
+    this.addLights(R);
     R.lightPass(w);
     R.compose();
     // emissive
     const glow = A.get('fx.glow'), flame = A.get('fx.flame');
     B.begin(w); B.setBlend(1);
-    for (const lx of COURSE.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#fff1d0', 0.6));
+    for (const lx of this.C.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#fff1d0', 0.6));
     for (let k = -1; k < 4; k++) B.draw(glow, 232 + k * 600, -74, 34, 14, 0, rgba('#ff6b52', 0.22 * neon));
-    for (const en of this.enemies) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
+    for (const en of this.enemies) if (en.alive) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
     for (let k = 0; k < 3; k++) {
       const ph = t * (9 + k * 3) + k * 2.1;
       B.draw(flame, 1107 + (k - 1) * 2.4, -14, 3.6 + Math.sin(ph) * 0.6, 6 + Math.sin(ph * 1.3) * 1.6 - k * 0.8, Math.sin(ph * 0.7) * 0.15, rgba(k === 1 ? '#ffd56a' : '#ff8a3a', 0.9));
     }
     B.end();
+    this.drawGlow(B, w);
     R.finish(t);
   }
 }

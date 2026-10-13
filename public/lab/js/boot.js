@@ -1,4 +1,4 @@
-// CINDERFALL LAB — boot (M1: engine test).
+// CINDERFALL LAB — boot.
 //
 // WebGL2 check → quality pick → bake or load the atlas from cache → start the
 // 120 Hz loop on the engine test scene, with the performance overlay and a
@@ -12,6 +12,7 @@ import { bakeAll } from './gfx/baker.js';
 import { Loop } from './core/loop.js';
 import * as M1 from './test/m1scene.js';
 import * as M2 from './test/m2scene.js';
+import * as M3 from './test/m3scene.js';
 import { Controls, bindKeyboard, bindTouch } from './game/input.js';
 import { PerfOverlay } from './ui/perf.js';
 
@@ -35,19 +36,20 @@ async function main() {
 
   const bar = $('#boot .fill');
   const atlas = new Atlas(gl, 2048);
-  const SC = params.get('scene') === 'm1' ? M1 : M2;
+  const SC = { m1: M1, m2: M2 }[params.get('scene')] || M3;
+  const play = SC !== M1;
   const bake = await bakeAll(atlas, SC.bakeList(quality), {
     key: params.has('nocache') ? null : `${SC.BAKE_VERSION}:${quality}:${atlas.size}`,
     onProgress: (p) => { bar.style.width = (p * 100).toFixed(0) + '%'; },
   });
   const renderer = new Renderer(gl, canvas);
   renderer.setQuality(quality);
-  const camera = new Camera(); camera.viewH = SC === M2 ? 178 : 150;
+  const camera = new Camera(); camera.viewH = play ? 178 : 150;
   const batch = new SpriteBatch(gl, atlas);
   const eng = { gl, atlas, batch, camera, renderer };
   const controls = new Controls();
-  const scene = SC === M1 ? new M1.M1Scene(eng) : new M2.M2Scene(eng, controls);
-  if (SC === M2) {
+  const scene = SC === M1 ? new M1.M1Scene(eng) : SC === M2 ? new M2.M2Scene(eng, controls) : new M3.M3Scene(eng, controls);
+  if (play) {
     bindKeyboard(controls, canvas);
     if (matchMedia('(pointer: coarse)').matches || params.has('touch')) bindTouch(controls, $('#hud'));
   }
@@ -86,7 +88,7 @@ async function main() {
   const ctl = $('#ctl');
   const btn = (label, fn) => { const b = document.createElement('button'); b.className = 'chip cut'; b.textContent = label; b.onclick = (ev) => { ev.stopPropagation(); fn(b); }; ctl.appendChild(b); return b; };
   const STRESS = [0, 2000, 10000, 20000];
-  if (SC === M2) btn('OPERATÖR VEX', (b) => { b.textContent = 'OPERATÖR ' + scene.switchOperator().toUpperCase(); });
+  if (play) btn('OPERATÖR VEX', (b) => { b.textContent = 'OPERATÖR ' + scene.switchOperator().toUpperCase(); });
   else btn(`STRES ${scene.N}`, (b) => { const n = STRESS[(STRESS.indexOf(scene.N) + 1) % STRESS.length]; scene.setStress(n); b.textContent = `STRES ${n}`; });
   const QN = ['low', 'med', 'high'], QL = { low: 'DÜŞÜK', med: 'ORTA', high: 'YÜKSEK' };
   btn(`KALİTE ${QL[quality]}`, (b) => { const q = QN[(QN.indexOf(renderer.qName) + 1) % 3]; renderer.setQuality(q); store.set('cf-lab-q', q); b.textContent = `KALİTE ${QL[q]}`; });

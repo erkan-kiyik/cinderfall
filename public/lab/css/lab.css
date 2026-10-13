@@ -26,4 +26,29 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .touch .tbtn.on { background: rgba(255,107,44,0.55); border-color: var(--ember); transform: scale(0.94); }
 .touch .jump { right: max(20px, env(safe-area-inset-right)); bottom: 22px; }
 .touch .crouch { right: calc(max(20px, env(safe-area-inset-right)) + 88px); bottom: 14px; width: 62px; height: 62px; }
+.touch .reload { right: calc(max(20px, env(safe-area-inset-right)) + 6px); bottom: 108px; width: 60px; height: 60px; font-size: 10px; }
+.touch .knife { right: calc(max(20px, env(safe-area-inset-right)) + 80px); bottom: 90px; width: 56px; height: 56px; font-size: 10px; }
+.touch .swap { right: calc(max(20px, env(safe-area-inset-right)) + 10px); bottom: 182px; width: 52px; height: 52px; font-size: 10px; }
+/* the aim stick's outer ring lights up while it fires */
+.touch .stick.r::after { content: ''; position: absolute; inset: -2px; border-radius: 50%; border: 2px dashed rgba(255,107,44,0.35); }
+.touch .stick.r.fire { border-color: var(--ember); background: rgba(255,107,44,0.18); }
+.touch .stick.r.fire .knob { background: rgba(255,154,92,0.85); }
+
+/* combat HUD (M3) */
+.chud { position: fixed; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: flex-end; gap: 18px; pointer-events: none; z-index: 1; }
+.chud .hp { width: 150px; }
+.chud .hp .v { font: 700 22px/1 var(--f-display); color: var(--n8); letter-spacing: 0.04em; }
+.chud .hp .bar { height: 5px; margin-top: 4px; background: rgba(255,255,255,0.1); }
+.chud .hp .bar i { display: block; height: 100%; width: 100%; background: var(--n8); transform-origin: left; transition: transform 120ms linear; }
+.chud .hp.low .bar i { background: var(--danger); }
+.chud .wpn { text-align: right; min-width: 150px; }
+.chud .wpn .n { font: 700 11px/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--n6); }
+.chud .wpn .a { font: 700 30px/1 var(--f-display); color: var(--n8); letter-spacing: 0.02em; }
+.chud .wpn .a small { font-size: 15px; color: var(--n6); margin-left: 4px; }
+.chud .wpn.low .a { color: var(--ember); }
+.chud .wpn .r { height: 3px; margin-top: 4px; background: rgba(255,255,255,0.08); }
+.chud .wpn .r i { display: block; height: 100%; width: 0; background: var(--ember); }
+.hurt { position: fixed; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(200,20,30,0.55) 100%); z-index: 1; }
+.dead { position: fixed; inset: 0; display: grid; place-content: center; pointer-events: none; font: 700 26px/1 var(--f-display); letter-spacing: 0.2em; color: var(--n8); opacity: 0; transition: opacity 400ms; z-index: 1; }
+.dead.on { opacity: 1; }
 #ctl, .perf { z-index: 2; }

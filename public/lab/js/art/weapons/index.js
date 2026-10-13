@@ -47,28 +47,44 @@ function redDot(g, x) {
 }
 
 // WREN-9 — compact striker pistol -------------------------------------------
-function wren(g, m = MAT) {
-  grip(g, m.poly, -1.1, -2.0, 5.8, 2.6, 0.22);
-  fill(g, rr(-2.6, 3.4, 0.4, 4.1, 0.3), m.dark.m);
-  const FRAME = poly([[-2.8, -3.3], [5.6, -3.3], [5.6, -2.2], [3.4, -2.0], [-2.4, -1.8]]);
-  cel(g, FRAME, m.poly, { sh: 0.4, hl: 0.25 });
-  guard(g, m.poly, 0.2, 3.2, -2.1, 2.0);
-  const SLIDE = poly([[-3.4, -5.4], [5.8, -5.4], [6.2, -4.9], [6.2, -3.3], [-3.4, -3.3]]);
-  cel(g, SLIDE, m.metal, { sh: 0.5, hl: 0.35 });
-  clip(g, SLIDE, () => {
-    for (let x = -2.9; x < -0.6; x += 0.55) stroke(g, `M ${x} -5.3 L ${x - 0.2} -3.5`, m.metal.d, 0.24);
-    fill(g, rr(1.4, -4.9, 4.2, -4.2, 0.2), m.metal.d);
-    stroke(g, 'M -3.2 -5.0 L 5.8 -5.0', m.metal.l, 0.18, 0.8);
-  });
-  fill(g, rr(5.0, -6.0, 5.6, -5.4, 0.1), m.dark.m);
-  fill(g, dot(5.3, -5.75, 0.18), m.accent.l);
-  fill(g, rr(-3.0, -5.95, -2.2, -5.4, 0.1), m.dark.m);
-  fill(g, rr(6.2, -4.6, 6.45, -3.6, 0.1), m.dark.k);
-  stroke(g, 'M -0.4 -2.6 L 4.4 -2.6', m.poly.d, 0.2);
+function wren(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) wrenMag(g, m);
+  if (on('body')) {
+    grip(g, m.poly, -1.1, -2.0, 5.8, 2.6, 0.22);
+    const FRAME = poly([[-2.8, -3.3], [5.6, -3.3], [5.6, -2.2], [3.4, -2.0], [-2.4, -1.8]]);
+    cel(g, FRAME, m.poly, { sh: 0.4, hl: 0.25 });
+    guard(g, m.poly, 0.2, 3.2, -2.1, 2.0);
+    fill(g, rr(6.0, -4.6, 6.45, -3.6, 0.1), m.dark.k); // barrel crown
+    stroke(g, 'M -0.4 -2.6 L 4.4 -2.6', m.poly.d, 0.2);
+  }
+  if (on('slide')) {
+    const SLIDE = poly([[-3.4, -5.4], [5.8, -5.4], [6.2, -4.9], [6.2, -3.3], [-3.4, -3.3]]);
+    cel(g, SLIDE, m.metal, { sh: 0.5, hl: 0.35 });
+    clip(g, SLIDE, () => {
+      for (let x = -2.9; x < -0.6; x += 0.55) stroke(g, `M ${x} -5.3 L ${x - 0.2} -3.5`, m.metal.d, 0.24);
+      fill(g, rr(1.4, -4.9, 4.2, -4.2, 0.2), m.metal.d);
+      stroke(g, 'M -3.2 -5.0 L 5.8 -5.0', m.metal.l, 0.18, 0.8);
+    });
+    fill(g, rr(5.0, -6.0, 5.6, -5.4, 0.1), m.dark.m);
+    fill(g, dot(5.3, -5.75, 0.18), m.accent.l);
+    fill(g, rr(-3.0, -5.95, -2.2, -5.4, 0.1), m.dark.m);
+  }
+}
+// the pistol magazine rides inside the grip; only its base plate shows
+function wrenMag(g, m = MAT) {
+  g.save(); g.translate(-1.1, -2.0); g.rotate(0.22);
+  cel(g, rr(-0.95, 0.6, 0.95, 5.9, 0.2), m.metal, { sh: 0.4, hl: 0.25 });
+  fill(g, rr(-0.7, 0.3, 0.6, 0.8, 0.15), m.brass.m);
+  cel(g, rr(-1.45, 5.6, 1.25, 6.45, 0.3), m.dark, { sh: 0.3, hl: 0.2 });
+  g.restore();
 }
 
 // KESTREL AR — select-fire carbine --------------------------------------------
-function kestrel(g, m = MAT) {
+function kestrel(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) kestrelMag(g, m);
+  if (!on('body')) return;
   // stock and buffer tube
   cel(g, rr(-11.0, -3.6, -5.6, -2.0, 0.3), m.metal, { sh: 0.3, hl: 0.2 });
   const STOCK = poly([[-15.8, -4.6], [-9.2, -4.6], [-8.4, -3.8], [-8.4, -1.8], [-11.6, 0.2], [-15.2, 1.8], [-16.2, 1.8], [-16.2, -4.2]]);
@@ -77,10 +93,7 @@ function kestrel(g, m = MAT) {
     fill(g, poly([[-14.6, -3.4], [-10.0, -3.4], [-10.0, -2.4], [-14.6, -2.4]]), m.poly.d);
     fill(g, rr(-17, -5, -15.4, 2.2, 0.2), m.dark.m);
   });
-  // lower receiver, magwell, grip, magazine
-  const MAG = 'M 1.0 0.4 L 3.4 0.4 C 3.8 3.0 4.6 5.6 5.8 8.0 L 3.2 8.8 C 2.0 6.4 1.2 3.6 1.0 0.4 Z';
-  cel(g, MAG, m.poly, { sh: 0.6, hl: 0.3 });
-  clip(g, MAG, () => { for (const y of [2.6, 4.8]) stroke(g, `M 0.5 ${y} L 6 ${y + 0.6}`, m.poly.d, 0.25); fill(g, 'M 2.8 8.4 L 6.2 7.4 L 6.6 9.4 L 3.2 9.6 Z', m.dark.m); });
+  // lower receiver, grip
   grip(g, m.poly, -1.4, 0.4, 6.4, 2.4, 0.34);
   const LOWER = poly([[-5.8, -1.8], [4.2, -1.8], [4.2, 0.0], [3.6, 0.8], [0.6, 0.8], [-0.4, 0.4], [-5.2, 0.2]]);
   cel(g, LOWER, m.metal, { sh: 0.45, hl: 0.25 });
@@ -111,8 +124,19 @@ function kestrel(g, m = MAT) {
   redDot(g, -0.4);
 }
 
+function kestrelMag(g, m = MAT) {
+  const MAG = 'M 1.0 -0.6 L 3.4 -0.6 L 3.4 0.4 C 3.8 3.0 4.6 5.6 5.8 8.0 L 3.2 8.8 C 2.0 6.4 1.2 3.6 1.0 0.4 Z';
+  cel(g, MAG, m.poly, { sh: 0.6, hl: 0.3 });
+  clip(g, MAG, () => { for (const y of [2.6, 4.8]) stroke(g, `M 0.5 ${y} L 6 ${y + 0.6}`, m.poly.d, 0.25); fill(g, 'M 2.8 8.4 L 6.2 7.4 L 6.6 9.4 L 3.2 9.6 Z', m.dark.m); });
+}
+
 // RAMROD-12 — pump-action shotgun -------------------------------------------
-function ramrod(g, m = MAT) {
+function ramrod(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('body')) ramrodBody(g, m);
+  if (on('pump')) ramrodPump(g, m);
+}
+function ramrodBody(g, m) {
   // barrel and tube magazine
   cel(g, rr(4.8, -4.1, 27.4, -2.7, 0.3), m.metal, { sh: 0.3, hl: 0.2 });
   cel(g, rr(4.8, -2.6, 24.6, -0.9, 0.5), m.metal, { sh: 0.4, hl: 0.25 });
@@ -145,6 +169,10 @@ function ramrod(g, m = MAT) {
   // ghost-ring rear sight
   stroke(g, 'M 3.0 -4.3 L 3.0 -5.6 M 4.6 -4.3 L 4.6 -5.6', m.dark.m, 0.4);
   stroke(g, dot(3.8, -5.6, 0.7), m.dark.m, 0.35);
+  // loading port under the receiver
+  fill(g, rr(0.6, 0.0, 3.6, 0.6, 0.2), m.dark.k);
+}
+function ramrodPump(g, m) {
   // pump with ember grip ridges
   const PUMP = 'M 9.0 -3.0 L 18.4 -3.0 Q 19.0 -3.0 19.0 -2.4 L 19.0 0.2 Q 19.0 0.8 18.4 0.8 L 9.0 0.8 Q 8.4 0.8 8.4 0.2 L 8.4 -2.4 Q 8.4 -3.0 9.0 -3.0 Z';
   cel(g, PUMP, m.poly, { sh: 0.6, hl: 0.3 });
@@ -155,7 +183,10 @@ function ramrod(g, m = MAT) {
 }
 
 // MARKSMAN DMR — semi-auto designated marksman rifle --------------------------
-function marksman(g, m = MAT) {
+function marksman(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) marksmanMag(g, m);
+  if (!on('body')) return;
   // precision stock with a raised comb
   const STOCK = 'M -7.2 -4.2 L -14.0 -4.2 L -14.6 -6.0 L -18.6 -6.0 L -19.6 -4.8 L -20.4 -4.6 L -20.4 2.6 L -19.0 2.6 L -13.4 0.4 L -9.2 0.4 L -7.2 -0.4 Z';
   cel(g, STOCK, m.poly, { sh: 0.8, hl: 0.4 });
@@ -164,10 +195,7 @@ function marksman(g, m = MAT) {
     fill(g, rr(-17.8, -2.6, -13.2, -1.2, 0.5), m.poly.k);
     stroke(g, 'M -18.6 -5.6 L -14.6 -5.6', m.poly.l, 0.2);
   });
-  // mag and grip
-  const MAG = rr(0.6, -1.2, 4.0, 5.8, 0.3);
-  cel(g, MAG, m.poly, { sh: 0.5, hl: 0.3 });
-  clip(g, MAG, () => { fill(g, 'M 0 5.0 L 5 5.0 L 5 6 L 0 6 Z', m.dark.m); stroke(g, 'M 0.8 1.6 L 3.8 1.6', m.poly.d, 0.25); });
+  // grip
   grip(g, m.poly, -1.4, 0.0, 6.0, 2.4, 0.3);
   guard(g, m.metal, -0.6, 2.4, 0.0, 1.8);
   // receiver
@@ -205,9 +233,23 @@ function marksman(g, m = MAT) {
   stroke(g, 'M -1.0 -7.4 L 7.6 -7.4', m.dark.l, 0.2, 0.8);
 }
 
+function marksmanMag(g, m = MAT) {
+  const MAG = rr(0.6, -1.2, 4.0, 5.8, 0.3);
+  cel(g, MAG, m.poly, { sh: 0.5, hl: 0.3 });
+  clip(g, MAG, () => { fill(g, 'M 0 5.0 L 5 5.0 L 5 6 L 0 6 Z', m.dark.m); stroke(g, 'M 0.8 1.6 L 3.8 1.6', m.poly.d, 0.25); });
+}
+
+// Rig points (weapon space):
+//   eject   ejection port; magAxis: unit pull-out direction; magGrab: where a
+//   hand holds the mag; magPull: distance until it clears the gun; slide /
+//   pump: travel; charge: charging handle or slide grab; port: shell port.
 export const WEAPONS = {
-  wren9: { id: 'wren9', name: 'WREN-9', cls: 'TABANCA', paint: wren, box: [-4, -7, 7, 5], gripB: [1.0, 0.6], muzzle: [6.4, -4.1] },
-  kestrel: { id: 'kestrel', name: 'KESTREL AR', cls: 'TÜFEK', paint: kestrel, box: [-17, -9, 25, 10], gripB: [12.0, -0.6], muzzle: [24.4, -2.5] },
-  ramrod: { id: 'ramrod', name: 'RAMROD-12', cls: 'POMPALI', paint: ramrod, box: [-19, -7, 28, 7], gripB: [13.6, 0.8], muzzle: [27.4, -3.4] },
-  marksman: { id: 'marksman', name: 'MARKSMAN DMR', cls: 'KESKİN NİŞANCI', paint: marksman, box: [-21, -10, 34, 7], gripB: [16.0, -1.0], muzzle: [33.4, -2.8] },
+  wren9: { id: 'wren9', name: 'WREN-9', cls: 'TABANCA', paint: wren, box: [-4, -7, 7, 5], gripB: [1.0, 0.6], muzzle: [6.4, -4.1],
+    parts: ['mag', 'body', 'slide'], eject: [2.8, -4.6], casing: 'pistol', magAxis: [-0.218, 0.976], magGrab: [-2.3, 4.0], magPull: 7, slide: 2.4, charge: [-2.0, -4.4] },
+  kestrel: { id: 'kestrel', name: 'KESTREL AR', cls: 'TÜFEK', paint: kestrel, box: [-17, -9, 25, 10], gripB: [12.0, -0.6], muzzle: [24.4, -2.5],
+    parts: ['mag', 'body'], eject: [2.0, -3.0], casing: 'rifle', magAxis: [0.27, 0.963], magGrab: [4.0, 5.2], magPull: 9.5, charge: [-6.0, -4.3] },
+  ramrod: { id: 'ramrod', name: 'RAMROD-12', cls: 'POMPALI', paint: ramrod, box: [-19, -7, 28, 7], gripB: [13.6, 0.8], muzzle: [27.4, -3.4],
+    parts: ['body', 'pump'], eject: [1.5, -1.9], casing: 'shell', pump: 4.2, port: [2.1, 0.6] },
+  marksman: { id: 'marksman', name: 'MARKSMAN DMR', cls: 'KESKİN NİŞANCI', paint: marksman, box: [-21, -10, 34, 7], gripB: [16.0, -1.0], muzzle: [33.4, -2.8],
+    parts: ['mag', 'body'], eject: [2.6, -2.9], casing: 'rifle', magAxis: [0, 1], magGrab: [2.3, 4.0], magPull: 8, charge: [-5.4, -3.0] },
 };

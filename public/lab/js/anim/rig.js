@@ -42,7 +42,9 @@ export class Pose {
     this.gun = null; this.gx = 0; this.gy = 0; this.ga = 0; this.gk = 1;
     this.wAx = -0.9; this.wAy = -1.4; this.wBx = 0; this.wBy = 0;
     this.handN = 0.2; this.handF = -1.2;
-    this.supportFree = false; // pistols one-handed, ladders: far arm uses FK
+    this.supportFree = false; // one-handed (melee, swaps): far arm uses FK
+    // support hand away from the gun (reloads): local target, absolute hand angle
+    this.bLocal = false; this.bx = 0; this.by = 0; this.bHand = 0;
     // free hands reaching for targets (ladder rungs, ledges) instead of FK
     this.reach = false; this.nHx = 0; this.nHy = 0; this.fHx = 0; this.fHy = 0;
   }
@@ -86,11 +88,15 @@ export function solvePose(P, J) {
     const ax = P.gx + (P.wAx * c - P.wAy * s) * k, ay = P.gy + (P.wAx * s + P.wAy * c) * k;
     ik2(J.nSh[0], J.nSh[1], ax, ay, SK.upper, SK.fore, 1, t); A.nUpper = t[0]; A.nFore = t[1];
     A.nHand = P.ga + P.handN - A.nFore;
-    if (!P.supportFree) {
+    if (P.supportFree) { A.fUpper = P.fUpper; A.fFore = P.fFore; A.fHand = P.fHand; }
+    else if (P.bLocal) {
+      ik2(J.fSh[0], J.fSh[1], P.bx, P.by, SK.upper, SK.fore, 1, t); A.fUpper = t[0]; A.fFore = t[1];
+      A.fHand = P.bHand - A.fFore;
+    } else {
       const bx = P.gx + (P.wBx * c - P.wBy * s) * k, by = P.gy + (P.wBx * s + P.wBy * c) * k;
       ik2(J.fSh[0], J.fSh[1], bx, by, SK.upper, SK.fore, 1, t); A.fUpper = t[0]; A.fFore = t[1];
       A.fHand = P.ga + P.handF - A.fFore;
-    } else { A.fUpper = P.fUpper; A.fFore = P.fFore; A.fHand = P.fHand; }
+    }
   } else if (P.reach) {
     ik2(J.nSh[0], J.nSh[1], P.nHx, P.nHy, SK.upper, SK.fore, 1, t); A.nUpper = t[0]; A.nFore = t[1]; A.nHand = P.nHand;
     ik2(J.fSh[0], J.fSh[1], P.fHx, P.fHy, SK.upper, SK.fore, 1, t); A.fUpper = t[0]; A.fFore = t[1]; A.fHand = P.fHand;

@@ -114,7 +114,8 @@ export class CharRenderer {
     gl.uniform2f(p.u.uR, r, r);
     gl.uniform4f(p.u.uClamp, uv[0] + 0.5 / W, uv[3] + 0.5 / W, uv[2] - 0.5 / W, uv[1] - 0.5 / W);
     gl.uniform4f(p.u.uInk, this.ink[0], this.ink[1], this.ink[2], this.ink[3]);
-    gl.uniform4f(p.u.uFlash, 1, 1, 1, ch.flash || 0);
+    const fc = ch.flashCol || [1, 1, 1];
+    gl.uniform4f(p.u.uFlash, fc[0], fc[1], fc[2], (ch.flash || 0) * 0.45);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.sheet.tex); gl.uniform1i(p.u.uTex, 0);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(this.vao);

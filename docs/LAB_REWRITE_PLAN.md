@@ -480,8 +480,8 @@ teslimden önce düzeltilir.
 |---|---|---|---|
 | **M0** | Stil panosu | §6 panosu: operatör silüetleri, 4 silah, 2 düşman, sokak kesiti, 2 menü taslağı | **Senin onayın** |
 | **M1** | Motor çekirdeği | WebGL2 batcher, atlas pişirici + önbellek, kamera, ışık, bloom, parçacık, 120 Hz döngü, perf katmanı | Test sahnesi 10 bin sprite'ta 120 FPS (masaüstü) |
-| **M2** | Karakter + hareket | İskelet, klipler, blend, IK, kumaş; VEX; tam hareket fiziği | `anim-lab` şeritleri temiz; hareket testi geçer |
-| **M3** | Silah çekirdeği | Wren-9, Kestrel AR, Ramrod-12, Marksman DMR + bıçak; balistik, geri tepme, tam animasyon, ses, FX | 4 silah + bıçak inceleme sayfası |
+| **M2** | Karakter + hareket | İskelet, klipler, blend, IK, kumaş; VEX; tam hareket fiziği | `anim-lab` şeritleri temiz; hareket testi geçer — *tamamlandı* |
+| **M3** | Silah çekirdeği | Wren-9, Kestrel AR, Ramrod-12, Marksman DMR + bıçak; balistik, geri tepme, tam animasyon, ses, FX | 4 silah + bıçak inceleme sayfası — *tamamlandı: varsayılan LAB sahnesi, düşmanlar karşılık veriyor, ragdoll ölümler* |
 | **M4** | Dikey kesit | 3 düşman tipi + yapay zekâ, ilk kampanya görevi, HUD, dokunmatik | İlk oynanabilir görev uçtan uca |
 | **M5** | UI tasarım sistemi | Bütün menü ekranları, geçişler, ayarlar, HUD düzenleyici, yasal | 740×360 ve 2400×1080'de bütün ekranlar temiz |
 | **M6** | Operatörler + kadro | 5 operatör, 15 yetenek, kalan 8 silah, eklentiler | Her yetenek ve silah için inceleme sayfası |
