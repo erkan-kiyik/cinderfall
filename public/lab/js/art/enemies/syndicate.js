@@ -4,11 +4,12 @@
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { M, tone } from '../style.js';
 import { WEAPONS, MAT } from '../weapons/index.js';
-import { UPPER, FORE, THIGH, SHIN, BOOT_SHAFT, hand, boot, NECK } from '../ops/common.js';
+import { NECK } from '../ops/common.js';
+import { UPPER, FORE, THIGH, SHIN, BOOT_SHAFT, TORSO, PELVIS, ELBOW_PAD, glove, boot, kneePad, scaledHead, fold } from '../ops/body.js';
 
 const PAL = {
   armor: tone('#9ab3cc', '#5e7d9c', '#3f5a76', '#1c2b3b'),
-  suit: tone('#434f60', '#2c3644', '#1d242e', '#0c1015'),
+  suit: tone('#4b586a', '#323d4c', '#212935', '#0c1015'),
   visor: M.visor,
   glove: M.black,
   boot: M.black,
@@ -25,7 +26,8 @@ export function emblem(g, x, y, r, c) {
   stroke(g, `M ${x - r * 0.45} ${y - r * 0.05} L ${x + r * 0.45} ${y - r * 0.05}`, c, r * 0.22);
 }
 
-function helmet(g) {
+function helmet(g) { scaledHead(g, () => helmet0(g)); }
+function helmet0(g) {
   cel(g, NECK, PAL.suit, { sh: 1.0, hl: 0 });
   const H = 'M -4.7 -7.0 C -5.1 -11.0 -2.9 -13.8 0.6 -13.8 C 3.9 -13.8 5.5 -11.7 5.5 -9.0 L 5.5 -5.4 C 5.5 -3.7 4.6 -2.4 3.2 -2.0 L 0.4 -2.0 C -1.8 -2.4 -3.7 -4.0 -4.7 -7.0 Z';
   cel(g, H, PAL.armor, { sh: 1.2, hl: 0.5 });
@@ -47,62 +49,63 @@ function helmet(g) {
   stroke(g, 'M -2.2 -8.6 L -3.4 -12.6', PAL.suit.m, 0.35);
 }
 
-const VEST = blob([[-6.8, -18.6], [-4.0, -20.6], [0.6, -21.2], [3.6, -20.6], [5.4, -19.0], [6.4, -15.0], [6.2, -10.6], [5.6, -6.0], [5.6, -3.0], [-5.4, -2.8], [-6.2, -8.0], [-7.0, -13.6]]);
-const PELVIS = blob([[-5.4, -4.4], [5.4, -4.5], [5.6, -1.2], [3.6, 1.4], [0.4, 2.0], [-3.6, 1.4], [-5.6, -1.0]]);
+const VEST = TORSO;
+const PLATE = blob([[-5.2, -21.2], [1.2, -22.2], [5.8, -21.2], [7.4, -17.2], [7.0, -10.8], [5.6, -8.4], [-0.4, -8.0], [-5.8, -9.0], [-6.6, -14.4]]);
 
 function torso(g) {
-  cel(g, PELVIS, PAL.suit, { sh: 1.0, hl: 0.4 });
-  cel(g, VEST, PAL.suit, { sh: 1.6, hl: 0.45 });
-  const PLATE = blob([[-4.8, -19.0], [1.2, -20.0], [5.4, -19.0], [6.8, -15.4], [6.4, -9.6], [5.2, -7.6], [-0.4, -7.2], [-5.4, -8.2], [-6.0, -13.0]]);
-  cel(g, PLATE, PAL.armor, { sh: 1.7, hl: 0.55 });
+  cel(g, PELVIS, PAL.suit, { sh: 1.1, hl: 0.4 });
+  cel(g, VEST, PAL.suit, { sh: 1.7, hl: 0.45 });
+  clip(g, VEST, () => fold(g, [[-6.8, -14.0], [-6.2, -10.6], [-5.4, -8.2]], PAL.suit));
+  cel(g, PLATE, PAL.armor, { sh: 1.8, hl: 0.55 });
   clip(g, PLATE, () => {
-    stroke(g, curve([[-4.6, -13.4], [0.8, -14.0], [6.6, -13.4]]), PAL.armor.d, 0.3);
-    fill(g, 'M 2.6 -18.0 L 5.6 -18.2 L 5.7 -15.6 L 2.7 -15.4 Z', PAL.suit.m);
-    emblem(g, 4.15, -16.75, 0.95, PAL.white.m);
+    stroke(g, curve([[-5.0, -14.8], [0.8, -15.4], [7.2, -14.8]]), PAL.armor.d, 0.32);
+    stroke(g, curve([[-4.2, -20.8], [1.2, -21.4], [5.6, -20.6]]), PAL.armor.l, 0.3, 0.8);
+    fill(g, 'M 2.8 -19.8 L 6.0 -20.0 L 6.1 -17.2 L 2.9 -17.0 Z', PAL.suit.m);
+    emblem(g, 4.45, -18.45, 1.0, PAL.white.m);
   });
   // ammo pouches and belt
-  for (const x of [-3.4, -1.0, 1.4]) {
-    const P = `M ${x} -7.6 L ${x + 2.1} -7.7 L ${x + 2.2} -4.4 L ${x + 0.1} -4.3 Z`;
-    cel(g, P, PAL.suit, { sh: 0.4, hl: 0.25 });
-    fill(g, `M ${x - 0.05} -7.8 L ${x + 2.15} -7.9 L ${x + 2.2} -6.8 L ${x} -6.7 Z`, PAL.armor.d);
+  for (const x of [-3.6, -1.0, 1.6]) {
+    cel(g, `M ${x} -8.4 L ${x + 2.3} -8.5 L ${x + 2.4} -4.8 L ${x + 0.1} -4.7 Z`, PAL.suit, { sh: 0.4, hl: 0.25, lw: 0.28 });
+    fill(g, `M ${x - 0.05} -8.6 L ${x + 2.35} -8.7 L ${x + 2.4} -7.5 L ${x} -7.4 Z`, PAL.armor.d);
   }
-  cel(g, 'M -5.8 -4.4 C -1 -4.7 2.5 -4.7 5.8 -4.5 L 5.8 -2.8 C 2.5 -3.0 -1 -3.0 -5.8 -2.7 Z', PAL.suit, { sh: 0.35, hl: 0.2 });
+  cel(g, 'M -6.0 -5.0 C -1.2 -5.35 2.6 -5.35 5.8 -5.1 L 5.85 -3.2 C 2.6 -3.45 -1.2 -3.45 -6.05 -3.1 Z', PAL.suit, { sh: 0.35, hl: 0.2, lw: 0.28 });
+  cel(g, 'M 2.7 -5.5 L 4.9 -5.55 L 4.9 -2.9 L 2.7 -2.85 Z', PAL.armor, { sh: 0.3, hl: 0.2, lw: 0.26 });
 }
 
 function upper(g, ctx) {
   const t = ctx.t;
-  cel(g, UPPER, t(PAL.suit), { sh: 1.4, hl: 0.45 });
-  const PAD = blob([[-3.2, -2.0], [0.2, -3.0], [3.4, -1.8], [3.4, 3.0], [-3.2, 3.2]]);
-  cel(g, PAD, t(PAL.armor), { sh: 0.8, hl: 0.4 });
-  clip(g, PAD, () => fill(g, 'M -4 1.6 L 4 1.4 L 4 2.0 L -4 2.2 Z', t(PAL.visor).m));
+  cel(g, UPPER, t(PAL.suit), { sh: 1.5, hl: 0.45 });
+  clip(g, UPPER, () => fold(g, [[-1.8, 8.6], [-0.4, 9.6], [1.2, 9.8]], t(PAL.suit)));
+  const PAD = blob([[-3.6, -2.6], [0.2, -3.6], [3.8, -2.4], [3.8, 3.2], [-3.6, 3.4]]);
+  cel(g, PAD, t(PAL.armor), { sh: 0.9, hl: 0.4 });
+  clip(g, PAD, () => fill(g, 'M -4 1.8 L 4 1.6 L 4 2.3 L -4 2.5 Z', t(PAL.visor).m));
 }
 function fore(g, ctx) {
   const t = ctx.t;
-  cel(g, FORE, t(PAL.suit), { sh: 1.2, hl: 0.4 });
-  cel(g, blob([[-2.1, 3.6], [2.0, 3.4], [1.9, 9.2], [-1.9, 9.4]]), t(PAL.armor), { sh: 0.6, hl: 0.35 });
+  cel(g, FORE, t(PAL.suit), { sh: 1.3, hl: 0.4 });
+  cel(g, blob([[-2.4, 3.6], [2.3, 3.4], [2.1, 9.4], [-2.1, 9.6]]), t(PAL.armor), { sh: 0.6, hl: 0.35, lw: 0.28 });
+  cel(g, ELBOW_PAD, t(PAL.armor), { sh: 0.5, hl: 0.3, lw: 0.28 });
 }
-function handP(g, ctx) { hand(g, ctx, PAL.glove, PAL.glove, false); }
+function handP(g, ctx) { glove(g, ctx, PAL.glove, { knuckle: PAL.armor }); }
 function thigh(g, ctx) {
   const t = ctx.t;
-  cel(g, THIGH, t(PAL.suit), { sh: 1.5, hl: 0.4 });
-  clip(g, THIGH, () => stroke(g, curve([[-1.6, 10.4], [0.0, 11.2], [1.6, 11.6]]), t(PAL.suit).d, 0.26));
-  const HP = blob([[-3.0, 0.6], [2.8, 0.4], [3.0, 5.4], [-2.8, 5.8]]);
-  cel(g, HP, t(PAL.armor), { sh: 0.6, hl: 0.35 });
+  cel(g, THIGH, t(PAL.suit), { sh: 1.6, hl: 0.45 });
+  clip(g, THIGH, () => fold(g, [[-2.0, 12.4], [0.0, 13.4], [2.0, 13.4]], t(PAL.suit)));
+  const HP = blob([[-3.4, 0.4], [3.2, 0.2], [3.4, 5.8], [-3.2, 6.2]]);
+  cel(g, HP, t(PAL.armor), { sh: 0.7, hl: 0.35, lw: 0.28 });
 }
 function shin(g, ctx) {
   const t = ctx.t;
-  cel(g, SHIN, t(PAL.suit), { sh: 1.3, hl: 0.35 });
-  cel(g, BOOT_SHAFT, t(PAL.boot), { sh: 0.6, hl: 0.3 });
-  const PAD = blob([[-1.0, -2.0], [2.2, -1.8], [3.2, 0.8], [2.8, 3.8], [0.4, 4.2], [-0.6, 1.4]]);
-  cel(g, PAD, t(PAL.armor), { sh: 0.6, hl: 0.35 });
-  clip(g, PAD, () => fill(g, 'M -2 1.2 L 4 0.8 L 4 1.5 L -2 1.9 Z', t(PAL.visor).m));
+  cel(g, SHIN, t(PAL.suit), { sh: 1.4, hl: 0.4 });
+  cel(g, BOOT_SHAFT, t(PAL.boot), { sh: 0.7, hl: 0.35 });
+  kneePad(g, ctx, PAL.armor, PAL.visor);
 }
-function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole); }
+function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { toe: PAL.suit }); }
 
 function chest(g) {
-  const COL = 'M -5.0 -19.6 C -4.6 -22.0 -2.0 -23.0 1.0 -22.8 C 3.6 -22.6 5.0 -21.6 5.4 -19.8 L 4.8 -19.0 C 2.8 -18.6 -1.8 -18.4 -5.0 -19.6 Z';
+  const COL = 'M -5.4 -21.6 C -5.0 -24.2 -2.2 -25.2 1.0 -25.0 C 3.8 -24.8 5.4 -23.8 5.8 -21.8 L 5.2 -21.0 C 3.0 -20.6 -1.8 -20.4 -5.4 -21.6 Z';
   cel(g, COL, PAL.suit, { sh: 0.8, hl: 0.4 });
-  clip(g, COL, () => stroke(g, curve([[-4.4, -20.6], [0.6, -21.6], [5.0, -20.4]]), PAL.armor.d, 0.3));
+  clip(g, COL, () => stroke(g, curve([[-4.8, -22.6], [0.6, -23.7], [5.4, -22.4]]), PAL.armor.d, 0.32));
 }
 
 const PARTS = { torso, chest, head: helmet, upper, fore, hand: handP, thigh, shin, foot };
@@ -166,7 +169,8 @@ const PAL_H = {
   band: tone('#ff6b6b', '#e03a3a', '#a32424', '#4a0f0f'),
 };
 
-function hoodHead(g) {
+function hoodHead(g) { scaledHead(g, () => hoodHead0(g)); }
+function hoodHead0(g) {
   cel(g, NECK, PAL_H.suit, { sh: 1.0, hl: 0 });
   // hood: a soft cowl falling to the shoulders at the back
   const HOOD = 'M -5.6 -2.0 C -6.4 -6.4 -5.4 -12.2 -0.6 -13.6 C 3.4 -14.4 5.6 -12.0 5.6 -9.0 L 5.2 -5.6 C 4.4 -4.0 2.4 -3.4 0.6 -3.0 L -1.8 0.6 Z';
@@ -187,28 +191,28 @@ function hoodHead(g) {
 }
 
 function lightTorso(g) {
-  cel(g, PELVIS, PAL_H.suit, { sh: 1.0, hl: 0.4 });
-  cel(g, VEST, PAL_H.suit, { sh: 1.6, hl: 0.45 });
-  const PLATE = blob([[-4.4, -18.6], [1.2, -19.6], [5.0, -18.6], [6.2, -15.0], [5.8, -10.4], [-0.4, -9.8], [-5.0, -10.6], [-5.4, -14.4]]);
-  cel(g, PLATE, PAL_H.armor, { sh: 1.5, hl: 0.5 });
-  clip(g, PLATE, () => emblem(g, 3.4, -15.4, 0.9, PAL.white.m));
+  cel(g, PELVIS, PAL_H.suit, { sh: 1.1, hl: 0.4 });
+  cel(g, VEST, PAL_H.suit, { sh: 1.7, hl: 0.45 });
+  const LPLATE = blob([[-4.8, -20.8], [1.2, -21.8], [5.4, -20.8], [6.8, -16.8], [6.4, -11.4], [-0.4, -10.8], [-5.4, -11.6], [-5.8, -15.8]]);
+  cel(g, LPLATE, PAL_H.armor, { sh: 1.6, hl: 0.5 });
+  clip(g, LPLATE, () => emblem(g, 3.6, -17.0, 0.95, PAL.white.m));
   // shell bandolier from the far shoulder to the near hip
-  const BAND = 'M -5.6 -19.0 L -3.6 -20.0 L 6.2 -6.6 L 4.6 -5.2 Z';
+  const BAND = 'M -6.0 -21.2 L -4.0 -22.2 L 6.6 -7.2 L 5.0 -5.8 Z';
   cel(g, BAND, PAL_H.hood, { sh: 0.5, hl: 0.25 });
   for (let k = 0; k < 7; k++) {
-    const t = k / 6, x = -4.2 + t * 9.2, y = -18.4 + t * 12.2;
+    const t = k / 6, x = -4.6 + t * 10.0, y = -20.6 + t * 13.6;
     fill(g, `M ${x - 0.55} ${y - 0.2} L ${x + 0.55} ${y - 0.95} L ${x + 1.05} ${y - 0.2} L ${x - 0.05} ${y + 0.55} Z`, MAT.shell.m);
     fill(g, `M ${x + 0.45} ${y - 0.85} L ${x + 0.75} ${y - 1.05} L ${x + 1.2} ${y - 0.35} L ${x + 0.95} ${y - 0.15} Z`, M.brass.m);
   }
-  cel(g, 'M -5.8 -4.4 C -1 -4.7 2.5 -4.7 5.8 -4.5 L 5.8 -2.8 C 2.5 -3.0 -1 -3.0 -5.8 -2.7 Z', PAL_H.suit, { sh: 0.35, hl: 0.2 });
+  cel(g, 'M -6.0 -5.0 C -1.2 -5.35 2.6 -5.35 5.8 -5.1 L 5.85 -3.2 C 2.6 -3.45 -1.2 -3.45 -6.05 -3.1 Z', PAL_H.suit, { sh: 0.35, hl: 0.2, lw: 0.28 });
 }
 function lightUpper(g, ctx) {
   const t = ctx.t;
-  cel(g, UPPER, t(PAL_H.suit), { sh: 1.4, hl: 0.45 });
-  clip(g, UPPER, () => fill(g, 'M -4 4.6 L 4 4.4 L 4 6.6 L -4 6.8 Z', t(PAL_H.band).m));
+  cel(g, UPPER, t(PAL_H.suit), { sh: 1.5, hl: 0.45 });
+  clip(g, UPPER, () => { fill(g, 'M -4 4.6 L 4 4.4 L 4 6.8 L -4 7.0 Z', t(PAL_H.band).m); fold(g, [[-1.8, 8.8], [-0.4, 9.7], [1.2, 9.9]], t(PAL_H.suit)); });
 }
 function lightChest(g) {
-  const COL = 'M -5.0 -19.6 C -4.6 -21.4 -2.0 -22.2 1.0 -22.0 C 3.6 -21.8 5.0 -21.0 5.4 -19.6 L 4.8 -19.0 C 2.8 -18.6 -1.8 -18.4 -5.0 -19.6 Z';
+  const COL = 'M -5.4 -21.6 C -5.0 -23.6 -2.2 -24.4 1.0 -24.2 C 3.8 -24.0 5.4 -23.2 5.8 -21.6 L 5.2 -21.0 C 3.0 -20.6 -1.8 -20.4 -5.4 -21.6 Z';
   cel(g, COL, PAL_H.hood, { sh: 0.8, hl: 0.4 });
 }
 

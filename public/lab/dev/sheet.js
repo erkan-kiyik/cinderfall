@@ -36,6 +36,35 @@ if (what === 'op') {
   const real = figureCanvas(op, 2.6 * 2.5);
   const r3 = row(); r3.appendChild(toCanvasEl(real, '#1e252e'));
 }
+if (what === 'poses') {
+  // one operator in the poses the game uses most, on one strip, plus real size and the silhouette
+  const op = OPS[q.get('op') || 'vex'];
+  const s = +(q.get('s') || 6);
+  const gun = (id, at, ang, k = 0.96) => ({ w: WEAPONS[id], at, ang, k, mat: op.pose.gun && op.pose.gun.mat });
+  const W = q.get('w') || 'kestrel';
+  const POSES = [
+    ['idle', op.pose],
+    ['aim', { lean: -0.05, head: -0.08, nThigh: 0.28, nShin: 0.1, fThigh: -0.26, fShin: -0.04, gun: gun(W, [10.2, -48.2], -0.03) }],
+    ['run', { lean: -0.16, head: -0.04, nThigh: 0.62, nShin: 0.85, fThigh: -0.55, fShin: -0.15, gun: gun(W, [10.6, -46.4], 0.25) }],
+    ['crouch', { lean: -0.12, head: -0.02, nThigh: 1.15, nShin: -0.9, fThigh: 0.55, fShin: -1.35, hipX: -1, gun: gun(W, [10.6, -34.0], -0.02) }],
+    ['up', { lean: 0.08, head: 0.2, nThigh: 0.2, nShin: 0.06, fThigh: -0.2, fShin: -0.06, gun: gun(W, [8.2, -51], -0.9) }],
+  ];
+  const r = row();
+  for (const [name, pose] of POSES) {
+    const c = toCanvasEl(figureCanvas(op, s, pose), '#2a323d');
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif';
+    wrap.append(c, name); r.appendChild(wrap);
+  }
+  const r2 = row();
+  r2.appendChild(toCanvasEl(figureCanvas(op, 2.6 * 2.6, POSES[1][1]), '#1e252e'));
+  r2.appendChild(toCanvasEl(silhouette(figureCanvas(op, 2.6 * 2.6, POSES[1][1])), '#d9dee5'));
+  r2.appendChild(toCanvasEl(grey(figureCanvas(op, 2.6 * 2.6, POSES[1][1])), '#3c4654'));
+  const z = 20, big = figureCanvas(op, z, POSES[1][1]);
+  const crop = document.createElement('canvas'); crop.width = 34 * z; crop.height = 30 * z;
+  const cg = crop.getContext('2d'); cg.fillStyle = '#2a323d'; cg.fillRect(0, 0, crop.width, crop.height);
+  cg.drawImage(big, -(big.width * 0.42 - 13 * z), -(big.height - 6 * z - 70 * z));
+  r2.appendChild(crop);
+}
 if (what === 'weapons') {
   for (const w of Object.values(WEAPONS)) {
     const s = Math.min(26, 880 / (w.box[2] - w.box[0]));

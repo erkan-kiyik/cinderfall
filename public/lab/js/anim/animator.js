@@ -136,11 +136,18 @@ export class Animator {
 
     // --- crouch ---------------------------------------------------------------
     if (cr > 0) {
-      hipH = lerp(hipH, 21.5 + 0.5 * bobPh * mv, cr);
-      nx = lerp(nx, -6.5 * (1 - mv) + (nf[0] * 0.7 - 2) * mv, cr);
-      fx = lerp(fx, 6.5 * (1 - mv) + (ff[0] * 0.7 + 3) * mv, cr);
-      nLift *= 1 - cr * 0.4; fLift *= 1 - cr * 0.4;
-      lean = lerp(lean, -0.14, cr);
+      // still: a half kneel — back knee near the ground on a raised heel,
+      // front shin upright, weight forward (both knees at the same height
+      // read as a crab). Moving: a lower, shorter-stepping walk.
+      const still = 1 - mv;
+      hipH = lerp(hipH, lerp(19.4, 22.6, mv) + 0.5 * bobPh * mv, cr);
+      nx = lerp(nx, -8.8 * still + (nf[0] * 0.75 - 1.5) * mv, cr);
+      fx = lerp(fx, 6.2 * still + (ff[0] * 0.75 + 2.5) * mv, cr);
+      nLift = lerp(nLift, nLift * 0.6 + 1.8 * still, cr);
+      nPitch = lerp(nPitch, 0.8 * still + nPitch * mv, cr);
+      fLift *= 1 - cr * 0.4;
+      hipX = lerp(hipX, -1.0 * still, cr);
+      lean = lerp(lean, -0.2, cr);
     }
     // --- landing compression ----------------------------------------------------
     hipH -= Math.max(0, this.land);
@@ -226,7 +233,7 @@ export class Animator {
         P.gx -= tilt * 2.5; P.gy += tilt * 2.5;
       } else {
         // pistol: two-handed at arm's length from between the shoulders
-        const mx = P.hipX + (-1.3) * c - (-18.6) * s, my = P.hipY + (-1.3) * s + (-18.6) * c;
+        const mx = P.hipX + (-1.2) * c - (-20.6) * s, my = P.hipY + (-1.2) * s + (-20.6) * c;
         const reach = lerp(lerp(15.5, 10, sp), 9.5, Math.max(tilt, low * 0.6)) - this.kx;
         P.gx = mx + ca * reach; P.gy = my + sa * reach + 1.2 + bob * 0.3 + tilt * 2;
       }

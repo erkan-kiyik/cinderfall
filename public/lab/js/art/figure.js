@@ -16,8 +16,10 @@ export const SK = {
   thigh: 15.2, shin: 14.4, upper: 11.6, fore: 10.4,
   ankleH: 2.5,
   nearHip: [-2.4, -0.6], farHip: [2.3, -0.9],
-  nearSh: [-6.0, -19.0], farSh: [3.4, -19.4],
-  neck: [0.7, -21.0],
+  // body standard v2 (ops/body.js): a longer torso, shoulders set wider and
+  // higher, the neck higher so the smaller head sits at about 1/7
+  nearSh: [-6.6, -21.0], farSh: [4.2, -21.4],
+  neck: [0.6, -23.4],
 };
 
 const rot = (x, y, a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];

@@ -73,8 +73,8 @@ export class App {
   }
   inkFor(scene) { if (scene && scene.cr) scene.cr.enemyInk = MARKS[this.save.d.settings.enemyMark] || null; }
 
-  start() {
-    this.router.go(needsAcceptance() ? 'legal' : 'lobby', {}, { root: true });
+  start({ entrance = false } = {}) {
+    this.router.go(needsAcceptance() ? 'legal' : 'lobby', { entrance }, { root: true });
     if (this.save.recovered) toast(t('app.recovered'));
   }
 

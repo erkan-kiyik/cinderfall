@@ -201,9 +201,10 @@ export function brickHelmet(g, P) {
   fill(g, TV, '#2a1406');
   glow(g, 'M 2.3 -8.45 L 6.8 -8.5 L 6.8 -8.0 L 4.85 -8.0 L 4.85 -4.7 L 4.35 -4.7 L 4.35 -8.0 L 2.3 -8.0 Z', P.hazard.m, 7);
   for (const [x, y] of [[1.8, -10.0], [6.3, -10.0], [2.2, -2.6], [5.6, -2.4]]) fill(g, dot(x, y, 0.3), P.plate.k);
-  // ear armour
-  cel(g, ell(-1.6, -6.4, 1.7, 2.1), P.steel, { sh: 0.5, hl: 0.3 });
-  fill(g, dot(-1.6, -6.4, 0.6), P.plate.m);
+  // ear armour: a vented plate, no round "eye"
+  const EAR = 'M -3.6 -8.8 L -0.4 -9.0 C 0.1 -7.6 0.1 -5.2 -0.4 -3.8 L -2.9 -3.6 C -3.6 -5.0 -3.9 -7.2 -3.6 -8.8 Z';
+  cel(g, EAR, P.steel, { sh: 0.5, hl: 0.3 });
+  for (const y of [-7.6, -6.6, -5.6, -4.6]) stroke(g, `M -3.1 ${y} L -0.7 ${y - 0.1}`, P.steel.k, 0.3);
   g.restore();
 }
 

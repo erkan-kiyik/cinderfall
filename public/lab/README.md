@@ -123,3 +123,25 @@ folder; the shipping game in `public/game` is untouched.
 - accessibility: colour-blind enemy outline (yellow / blue / magenta), camera
   shake, reduced motion, interface scale
 - tests: `node tools/lab/i18n.test.mjs` (every key in every language)
+- `js/ui/intro.js` — the opening, played over the bake: a CRT open, the
+  burning skyline (fire glow, smoke, searchlight, rain, embers), the five
+  operators on a rooftop painted with the game's own art and backlit by the
+  fires, visors lighting one by one, the title rising letter by letter, the
+  bake progress; at least 3.4 s, a tap skips, shorter with reduced motion;
+  `?nointro` turns it off (dev scenes never show it). The hand-off starts the
+  app, and the lobby plays its entrance (the camera settles, the operator
+  drops onto the street, the panels slide in)
+
+## Characters — body standard v2
+- `js/art/ops/body.js` — shared anatomy: heroic proportions (head about 1/7 of
+  the height, wide high shoulders, V torso, limbs with mass), big gloves,
+  chunky boots, knee and elbow pads, plate carrier, belt; every operator and
+  the Syndicate enemies are built on it
+- no faces: every operator wears a helmet, visor or mask (VEX's narrow ember
+  visor, HALE's goggles and ballistic mask, MORROW's hood and lenses, KITE's
+  visor and face guard, BRICK's slit helmet)
+- the skeleton (`SK` in `js/art/figure.js`) moved the shoulders and neck up;
+  hitboxes (`js/game/character.js`) and the ragdoll head follow it
+- the crouch is a half kneel (back knee down, heel up, front shin upright)
+- `dev/sheet.html?what=poses&op=vex&w=kestrel` — one character in idle, aim,
+  run, crouch and aim-up, real size, silhouette, grey and a head close-up

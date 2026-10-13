@@ -37,10 +37,14 @@ export class Showcase extends M2Scene {
   // id + { primary, sidearm } (null: the operator's defaults)
   setOperator(id, loadout) {
     const x = this.C.spawn[0];
-    this.mover = new Mover(this.L, x, -26); this.mover.facing = 1;
+    this.mover = new Mover(this.L, x, this.dropFrom ?? -26); this.mover.facing = 1; this.dropFrom = null;
     this.player = new Character(id, this.e.atlas, this.mover, loadout ? { weapon: loadout.primary, sidearm: loadout.sidearm } : {});
     this.opId = id; this.landed = false; this.look = 0;
   }
+
+  // after the opening: start wide and high so the camera settles in as the
+  // operator (set next) drops from above the frame
+  entrance() { this.e.camera.viewH = 168; this.cam.y -= 30; this.dropFrom = -120; }
 
   // where the operator stands on screen (0 left … 1 right) and how tall the view is
   frame(focus, zoom = 112) { this.focus = focus; this.zoom = zoom; }
@@ -56,7 +60,7 @@ export class Showcase extends M2Scene {
     P.preStep();
     m.step(dt, { moveX: 0, face: 1 });
     P.postStep(dt, this.L);
-    if (m.ev.land && !this.landed) { this.landed = true; this.puff(m.x, m.y, 8, 0.9); this.e.camera.addShake(0.08); }
+    if (m.ev.land && !this.landed) { const hard = m.ev.land > 320; this.landed = true; this.puff(m.x, m.y, hard ? 14 : 8, hard ? 1.3 : 0.9); this.e.camera.addShake(hard ? 0.18 : 0.08); }
     // embers drifting up through the light
     if (Math.random() < dt * 9) {
       const x = cam.x + rand(-cam.viewW / 2, cam.viewW / 2);

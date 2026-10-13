@@ -19,7 +19,7 @@ import { Sfx } from '../audio/sfx.js';
 import { CombatHud } from '../ui/combathud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'm3-2';
+export const BAKE_VERSION = 'm3-3';
 export const OPERATORS = M2.OPERATORS;
 
 // the M2 course with troopers along the way

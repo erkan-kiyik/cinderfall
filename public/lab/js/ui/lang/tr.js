@@ -2,6 +2,7 @@
 export default {
   'ui.back': 'Geri', 'ui.cancel': 'Vazgeç', 'ui.save': 'Kaydet', 'ui.soon': 'Yakında',
   'app.exitHint': 'Çıkmak için tekrar geri bas', 'app.recovered': 'Kayıt yedekten geri yüklendi',
+  'intro.loading': 'Sektör 9 hazırlanıyor', 'intro.ready': 'Hazır', 'intro.skip': 'Geçmek için dokun',
 
   'nav.lobby': 'Lobi', 'nav.operators': 'Operatörler', 'nav.arsenal': 'Cephanelik', 'nav.crates': 'Sandıklar', 'nav.trader': 'Tüccar',
   'nav.profile': 'Profil', 'nav.settings': 'Ayarlar',

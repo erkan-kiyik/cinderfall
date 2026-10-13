@@ -20,6 +20,7 @@ import { Save } from './core/save.js';
 import { Sfx } from './audio/sfx.js';
 import { setLang } from './ui/i18n.js';
 import { App } from './app.js';
+import { Intro } from './ui/intro.js';
 
 export const VERSION = 'M5 · ' + '2026-10-13';
 
@@ -45,6 +46,14 @@ async function main() {
   const savedQ = save && save.d.settings.quality !== 'auto' ? save.d.settings.quality : null;
   const quality = params.get('q') || savedQ || (DEV && store.get('cf-lab-q')) || autoQuality();
   await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter'].map((f) => document.fonts.load(f)));
+  // the opening plays over the bake (not for dev scenes; ?nointro skips it)
+  let intro = null;
+  if (!DEV && !params.has('nointro')) {
+    const cv = document.createElement('canvas'); cv.id = 'intro'; document.body.appendChild(cv);
+    $('#boot').classList.add('done');
+    intro = new Intro(cv, { reduce: save.d.settings.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches });
+    intro.run();
+  }
 
   const bar = $('#boot .fill');
   const atlas = new Atlas(gl, 2048);
@@ -52,7 +61,7 @@ async function main() {
   const play = SC !== M1;
   const bake = await bakeAll(atlas, SC.bakeList(quality), {
     key: params.has('nocache') ? null : `${SC.BAKE_VERSION}:${quality}:${atlas.size}`,
-    onProgress: (p) => { bar.style.width = (p * 100).toFixed(0) + '%'; },
+    onProgress: (p) => { bar.style.width = (p * 100).toFixed(0) + '%'; intro?.setProgress(p); },
   });
   const renderer = new Renderer(gl, canvas);
   renderer.setQuality(quality);
@@ -135,10 +144,11 @@ async function main() {
     eng.loop = loop;
     perf.toggle(); // hidden unless the player turns it on in Settings
     app = new App(eng, { save, version: VERSION, controls, perf, dyn });
-    app.start();
   }
   $('#boot').classList.add('done');
-  loop.start();
+  // with the opening, the lobby starts at the hand-off so its entrance plays as the intro fades
+  const go = () => { app?.start({ entrance: !!intro }); loop.start(); };
+  if (intro) { intro.onHandoff = go; intro.assetsDone(); } else go();
   // test harness hook
   window.__lab = { loop, get scene() { return app ? app.scene : scene; }, app, renderer, atlas, bake, batch, camera, controls, setStress: (n) => scene && scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
 }

@@ -28,13 +28,13 @@ export class Ragdoll {
     const put = (i, p) => { this.x[i] = x + p[0] * f; this.y[i] = y + p[1]; };
     put(PELVIS, J.hip); put(NECK, J.neck);
     const ha = J.a.head; // head points up the neck by the head angle
-    put(HEAD, [J.neck[0] + Math.sin(ha) * 11, J.neck[1] - Math.cos(ha) * 11]);
+    put(HEAD, [J.neck[0] + Math.sin(ha) * 9.6, J.neck[1] - Math.cos(ha) * 9.6]);
     put(NK, J.nKnee); put(NA, J.nAnkle); put(FK, J.fKnee); put(FA, J.fAnkle);
     put(NE, J.nElb); put(NW, J.nWr); put(FE, J.fElb); put(FW, J.fWr);
     const dt = 1 / 120;
     for (let i = 0; i < N; i++) { this.ox[i] = this.x[i] - vx * dt; this.oy[i] = this.y[i] - vy * dt; }
     this.len = {
-      torso: Math.hypot(SK.neck[0], SK.neck[1]), head: 11,
+      torso: Math.hypot(SK.neck[0], SK.neck[1]), head: 9.6,
       ph: Math.hypot(this.x[HEAD] - this.x[PELVIS], this.y[HEAD] - this.y[PELVIS]),
     };
     this.t = 0; this.rest = 0;

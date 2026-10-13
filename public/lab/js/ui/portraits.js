@@ -25,13 +25,14 @@ function copy(src, cssW, cssH) {
 export function avatar(id, px = 44) {
   const key = `a:${id}:${px}:${dpr()}`;
   if (!cache.has(key)) {
-    const size = Math.round(px * dpr()), z = size / 15;
+    const size = Math.round(px * dpr()), z = size / 13.5;
     const W = Math.round(80 * z), H = Math.round(82 * z);
     const fig = outlined(W, H, z, W * 0.42, H - 6 * z, (g) => drawFigure(g, OPS[id], OPS[id].pose));
     const c = document.createElement('canvas'); c.width = size; c.height = size;
     const g = c.getContext('2d');
-    // the head sits ~66 units above the feet; frame it with the shoulders
-    g.drawImage(fig, -(W * 0.42 - 7.5 * z), -(H - 6 * z - 66 * z));
+    // body standard v2: the crown sits ~66 units above the feet, the head is
+    // smaller, so frame a little tighter round the helmet and shoulders
+    g.drawImage(fig, -(W * 0.42 - 6.4 * z), -(H - 6 * z - 67 * z));
     cache.set(key, c);
   }
   return copy(cache.get(key), px, px);

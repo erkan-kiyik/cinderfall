@@ -8,7 +8,7 @@
 
 let ctx = { haptics: true, reduce: false, sfx: null };
 export function configureKit(o) { ctx = { ...ctx, ...o }; }
-const reduced = () => ctx.reduce || (matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+export const reduced = () => ctx.reduce || (matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 // h('div.card.cut', { onclick, style }, child, 'text', [more])
 export function h(sel, attrs, ...kids) {

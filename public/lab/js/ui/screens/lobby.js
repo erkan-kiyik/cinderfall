@@ -1,6 +1,6 @@
 // Lobby: the live operator on the left (the showcase draws it), the play
 // panel on the right.
-import { h, svg, press, popIn, ui } from '../kit.js';
+import { h, svg, press, popIn, ui, spring, reduced } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, soon, stars } from './common.js';
 import { avatar } from '../portraits.js';
@@ -8,7 +8,7 @@ import { OPS, MISSIONS } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 
 export const lobby = {
-  mount(ctx) {
+  mount(ctx, params = {}) {
     const d = ctx.save.d;
     const next = MISSIONS.find((m) => m.ready && !(d.campaign[m.id] && d.campaign[m.id].done)) || MISSIONS[0];
     const tag = h('div.op-tag');
@@ -52,7 +52,21 @@ export const lobby = {
         h('section.lobby-side.veil-r', play, tiles, crow)));
     return {
       el,
-      show() { ctx.showcase.frame(0.27, 112); renderOp(); popIn([play, tiles, crow], { delay: 40 }); },
+      show() {
+        ctx.showcase.frame(0.27, 112);
+        // after the opening: the camera pushes in, the operator drops onto the street and the panels slide in
+        const first = params.entrance && !reduced();
+        if (first) ctx.showcase.entrance();
+        renderOp();
+        if (first) {
+          params.entrance = false;
+          const ease = spring();
+          hub.animate([{ opacity: 0, transform: 'translateY(-110%)' }, { opacity: 1, transform: 'none' }], { duration: 520, delay: 380, easing: ease, fill: 'backwards' });
+          tag.animate([{ opacity: 0, transform: 'translateX(-28px)', clipPath: 'inset(0 100% 0 0)' }, { opacity: 1, transform: 'none', clipPath: 'inset(0 0 0 0)' }], { duration: 560, delay: 620, easing: ease, fill: 'backwards' });
+          popIn(picks.children, { delay: 760, step: 55, from: 18 });
+          for (const [i, n] of [play, tiles, crow].entries()) n.animate([{ opacity: 0, transform: 'translateX(48px)' }, { opacity: 1, transform: 'none' }], { duration: 560, delay: 460 + i * 80, easing: ease, fill: 'backwards' });
+        } else popIn([play, tiles, crow], { delay: 40 });
+      },
     };
   },
 };

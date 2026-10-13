@@ -2,6 +2,7 @@
 export default {
   'ui.back': 'Back', 'ui.cancel': 'Cancel', 'ui.save': 'Save', 'ui.soon': 'Soon',
   'app.exitHint': 'Press back again to exit', 'app.recovered': 'Save restored from backup',
+  'intro.loading': 'Preparing Sector 9', 'intro.ready': 'Ready', 'intro.skip': 'Tap to skip',
 
   'nav.lobby': 'Lobby', 'nav.operators': 'Operators', 'nav.arsenal': 'Arsenal', 'nav.crates': 'Crates', 'nav.trader': 'Trader',
   'nav.profile': 'Profile', 'nav.settings': 'Settings',

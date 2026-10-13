@@ -180,7 +180,7 @@ export class Character {
   }
   muzzle(out) { const W = this.W; return this.gunPoint(W.muzzle[0], W.muzzle[1], out); }
   // where a shot really starts (between the shoulders: no shooting through walls)
-  shoulder(out) { out[0] = this.m.x - this.facing * 1.5; out[1] = this.m.y - (this.m.crouching ? 38 : 50); return out; }
+  shoulder(out) { out[0] = this.m.x - this.facing * 1.5; out[1] = this.m.y - (this.m.crouching ? 40 : 52); return out; }
   // world direction of a shot with a local angle offset
   shotDir(off, out) { const a = this.aimLocal + off; out[0] = Math.cos(a) * this.facing; out[1] = Math.sin(a); return out; }
   // world angle of the gun (for effects), and of the gun's +x axis
@@ -193,11 +193,11 @@ export class Character {
     const J = this.J, f = this.facing, X = this.m.x, Y = this.m.y;
     const W = (p) => [X + p[0] * f, Y + p[1]];
     const cap = (a, b, r, zone) => { const p = W(a), q = W(b); out.push({ x0: p[0], y0: p[1], x1: q[0], y1: q[1], r, zone }); };
-    const ha = J.a.head, head = [J.neck[0] + Math.sin(ha) * 6.2 + Math.cos(ha) * 1.0, J.neck[1] - Math.cos(ha) * 6.2 + Math.sin(ha) * 1.0];
-    cap(head, head, 6.0, 'head');
+    const ha = J.a.head, head = [J.neck[0] + Math.sin(ha) * 5.6 + Math.cos(ha) * 1.0, J.neck[1] - Math.cos(ha) * 5.6 + Math.sin(ha) * 1.0];
+    cap(head, head, 5.4, 'head');
     const c = Math.cos(J.a.torso), s = Math.sin(J.a.torso);
     const tp = (x, y) => [J.hip[0] + x * c - y * s, J.hip[1] + x * s + y * c];
-    cap(tp(0.6, -3), tp(0.8, -17.5), 7.6, 'body');
+    cap(tp(0.4, -3), tp(0.6, -19.4), 7.8, 'body');
     cap(J.nHip, J.nKnee, 3.8, 'limb'); cap(J.nKnee, J.nAnkle, 3.0, 'limb');
     cap(J.fHip, J.fKnee, 3.8, 'limb'); cap(J.fKnee, J.fAnkle, 3.0, 'limb');
     cap(J.nSh, J.nElb, 2.8, 'limb'); cap(J.nElb, J.nWr, 2.5, 'limb');

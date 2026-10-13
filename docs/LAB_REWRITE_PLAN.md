@@ -209,6 +209,23 @@ kırmızısı, 1 etkileşim camgöbeği, faksiyon başına 2 renk. Hepsi
 **Ölçek:** Karakter 64 dünya birimi boyunda. Silahlar karaktere göre gerçekçi
 oranda, okunaklılık için %15 büyütülmüş.
 
+**Vücut standardı v2 (M5 sonrası karakter geçişi):**
+- Kahraman oranları: baş boyun yaklaşık 1/7'si, geniş ve yüksek omuzlar, V gövde,
+  kütleli kol ve bacaklar, büyük eldiven ve kalın botlar. Ortak parçalar
+  `art/ops/body.js` içinde; bütün operatörler ve Syndicate düşmanları bunu kullanır.
+- Yüz gösterilmez: her operatör kask, vizör ya da maske takar. Kimlik silüet,
+  renk ve vizör ışığıyla verilir (VEX turuncu, HALE camgöbeği, MORROW lila,
+  KITE gök mavisi, BRICK sarı).
+- Çömelme yarım diz çökme pozudur: arka diz yerde, topuk kalkık, ön kaval dik.
+
+**Açılış sahnesi (`js/ui/intro.js`):** Uygulama açılırken çizimler pişerken oynar:
+CRT açılışı, yanan Sektör 9 silueti, duman, projektör, yağmur ve kıvılcımlar,
+çatıda beş operatör (oyunun kendi çizimiyle, ateşe dönük kenar ışığı), sırayla
+yanan vizörler, harf harf yükselen CINDERFALL başlığı. En kısa 3,4 sn; pişirme
+sürerse son karede canlı bekler. Dokunuşla geçilir; azaltılmış harekette kısalır.
+Ardından lobi girişi: kamera yaklaşır, seçili operatör sokağa iner, paneller
+kayarak gelir.
+
 **M0 teslimi (onay kapısı):**
 - Stil panosu PNG'si: 5 operatörün silüet ve renk taslakları, 4 silah, 2 düşman,
   1 sokak kesiti ve 2 menü ekranı taslağı.
