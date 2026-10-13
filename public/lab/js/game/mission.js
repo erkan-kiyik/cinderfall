@@ -57,6 +57,7 @@ export class MissionScene extends M3.M3Scene {
     this.obj = 0; this.hack = 0; this.gateK = 0; this.gateOpen = false; this.waveIn = false;
     this.cp = -1; this.deaths = 0; this.clockT = 0; this.done = false; this.started = false;
     this.pickups = [];
+    this.hud.update(0, this.player);
     this.briefing();
     // the app going to the background pauses the mission
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.pause(); });
@@ -146,6 +147,8 @@ export class MissionScene extends M3.M3Scene {
   // the riot shield shoves the player back
   bash(e) {
     const P = this.player, f = e.facing;
+    // the trooper lunges behind the shield either way
+    e.m.vx = f * 230; e.anim.flinch(-1.3);
     if (!P.alive) return;
     const dx = (P.m.x - e.m.x) * f;
     if (dx < -4 || dx > 46 || Math.abs(P.m.y - e.m.y) > 30) return;
