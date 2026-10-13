@@ -4,6 +4,7 @@
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { M, tone } from '../style.js';
 import { UPPER, FORE, THIGH, SHIN, hand, boot, face, neck, HEAD } from './common.js';
+import { brickHelmet } from './helmets.js';
 
 const PAL = {
   skin: tone('#f2b994', '#d48e68', '#a6623f', '#5e3020'),
@@ -145,23 +146,8 @@ function foot(g, ctx) {
   cel(g, 'M 3.4 0.6 C 5.0 0.7 6.8 1.3 7.1 2.0 L 3.6 2.1 Z', ctx.t(PAL.steel), { sh: 0.3, hl: 0.25 });
 }
 
-function head(g) {
-  g.save(); g.translate(-0.4, 0); g.scale(1.45, 1); neck(g, PAL.skin); g.restore();
-  // a slightly wider skull and jaw for the big man
-  g.save(); g.scale(1.06, 1.02);
-  face(g, { skin: PAL.skin, iris: '#5b7a3c', brow: '#6e5233', lip: '#a4604a', browY: 0.25 });
-  // buzz cut: a stubble tint over the cranium
-  clip(g, HEAD, () => {
-    fill(g, 'M -6 -14 L 6 -14 L 6 -10.4 C 4.4 -10.8 2.6 -10.9 1.0 -10.4 C 0.0 -10.0 -0.6 -9.0 -1.0 -7.8 L -6 -7.8 Z', PAL.hair.m, 0.75);
-    fill(g, 'M -6 -14 L 6 -14 L 6 -12.6 C 2 -12.8 -2 -12.2 -6 -11.0 Z', PAL.hair.l, 0.35);
-  });
-  // scar across the near brow and cheek
-  stroke(g, 'M 0.6 -9.4 L 2.2 -6.2', PAL.skin.l, 0.34);
-  stroke(g, 'M 0.6 -9.4 L 2.2 -6.2', PAL.skin.k, 0.14);
-  // stubble shadow on the jaw
-  clip(g, HEAD, () => fill(g, 'M -1.2 -6.4 C 0.2 -5.2 1.6 -4.8 2.8 -4.9 C 3.6 -5.0 4.2 -4.9 5.4 -4.8 L 5.4 -1 L -2 -1 Z', PAL.hair.d, 0.28));
-  g.restore();
-}
+// the face is always covered (see helmets.js)
+function head(g) { brickHelmet(g, PAL); }
 
 export const BRICK = {
   id: 'brick', name: 'BRICK', role: 'AĞIR', pal: PAL,

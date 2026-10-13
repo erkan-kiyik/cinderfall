@@ -18,7 +18,7 @@ import { rgba } from '../gfx/batch.js';
 import { Sfx } from '../audio/sfx.js';
 import { CombatHud } from '../ui/combathud.js';
 
-export const BAKE_VERSION = 'm3-1';
+export const BAKE_VERSION = 'm3-2';
 export const OPERATORS = M2.OPERATORS;
 
 // the M2 course with troopers along the way

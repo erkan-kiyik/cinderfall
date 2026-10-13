@@ -14,7 +14,7 @@ import { CharRenderer } from '../gfx/charrender.js';
 import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 
-export const BAKE_VERSION = 'm2-1';
+export const BAKE_VERSION = 'm2-2';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 

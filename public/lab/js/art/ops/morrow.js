@@ -4,6 +4,7 @@
 import { cel, fill, stroke, clip, blob, curve, limb } from '../kit.js';
 import { M, tone } from '../style.js';
 import { UPPER, THIGH, SHIN, BOOT_SHAFT, hand, boot, face, neck } from './common.js';
+import { morrowMask } from './helmets.js';
 
 const PAL = {
   skin: M.skinD,
@@ -123,46 +124,8 @@ function shin(g, ctx) {
 
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole); }
 
-function head(g) {
-  neck(g, PAL.skin);
-  face(g, { skin: PAL.skin, iris: '#7a5bd0', brow: '#2a2230', lip: '#a9706a', browY: 0.1 });
-  // goggles: strap, frames and glowing lilac lenses
-  stroke(g, 'M -4.0 -8.4 C -2.0 -8.6 0.0 -8.4 1.0 -8.0', PAL.mask.k, 0.8);
-  const lens = (cx, cy, rx, ry) => {
-    const F = `M ${cx - rx - 0.4} ${cy} a ${rx + 0.4} ${ry + 0.4} 0 1 0 ${2 * rx + 0.8} 0 a ${rx + 0.4} ${ry + 0.4} 0 1 0 ${-2 * rx - 0.8} 0 Z`;
-    const L = `M ${cx - rx} ${cy} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
-    cel(g, F, PAL.mask, { sh: 0.4, hl: 0.25 });
-    g.save(); g.shadowColor = PAL.lens.m; g.shadowBlur = 8; fill(g, L, PAL.lens.m); g.restore();
-    clip(g, L, () => {
-      fill(g, `M ${cx - rx} ${cy + ry * 0.2} L ${cx + rx} ${cy - ry * 0.3} L ${cx + rx} ${cy + ry} L ${cx - rx} ${cy + ry} Z`, PAL.lens.d);
-      fill(g, `M ${cx - rx * 0.5} ${cy - ry * 0.5} a ${rx * 0.28} ${ry * 0.22} 0 1 0 ${rx * 0.56} 0 a ${rx * 0.28} ${ry * 0.22} 0 1 0 ${-rx * 0.56} 0 Z`, PAL.lens.l);
-    });
-  };
-  lens(1.9, -7.4, 1.15, 0.95);
-  lens(4.15, -7.3, 0.55, 0.85);
-  stroke(g, 'M 3.05 -7.5 L 3.6 -7.5', PAL.mask.k, 0.45);
-  // respirator over the lower face with two filters
-  const MASK = 'M 0.2 -6.0 C 1.8 -6.0 3.4 -6.0 4.9 -5.9 C 5.7 -5.2 5.9 -4.0 5.5 -3.0 C 4.9 -2.0 3.4 -1.6 2.0 -1.8 C 1.0 -2.0 0.1 -2.8 -0.3 -3.8 C -0.3 -4.6 -0.1 -5.4 0.2 -6.0 Z';
-  cel(g, MASK, PAL.mask, { sh: 0.8, hl: 0.4 });
-  clip(g, MASK, () => {
-    for (const y of [-4.6, -3.8, -3.0]) stroke(g, `M 2.4 ${y} L 4.4 ${y}`, PAL.mask.k, 0.22);
-  });
-  const filt = (cx, cy, r, w) => {
-    const D = `M ${cx - w} ${cy - r} L ${cx + w} ${cy - r} C ${cx + w + 0.6} ${cy - r} ${cx + w + 0.6} ${cy + r} ${cx + w} ${cy + r} L ${cx - w} ${cy + r} Z`;
-    cel(g, D, PAL.can, { sh: 0.4, hl: 0.3 });
-    stroke(g, `M ${cx + w} ${cy - r} C ${cx + w - 0.5} ${cy - r} ${cx + w - 0.5} ${cy + r} ${cx + w} ${cy + r}`, PAL.lining.m, 0.4);
-  };
-  filt(5.4, -3.9, 1.2, 0.5);
-  filt(0.4, -3.4, 1.0, 0.3);
-  // the hood over everything above and behind
-  cel(g, HOOD, PAL.coat, { sh: 1.2, hl: 0.5 });
-  clip(g, HOOD, () => {
-    // shadowed inner lip along the opening
-    fill(g, 'M 6.0 -11.2 C 4.6 -11.6 3.4 -11.4 2.4 -10.8 C 0.6 -9.8 -0.4 -7.6 -0.4 -5.4 C -0.4 -3.2 0.2 -0.6 1.2 1.8 L 2.6 1.8 C 1.2 -0.6 0.8 -3.2 0.8 -5.4 C 0.8 -7.6 1.8 -9.4 3.2 -10.2 C 4.0 -10.6 5.0 -10.8 6.0 -10.6 Z', PAL.coat.k, 0.75);
-    stroke(g, curve([[-4.4, -11.0], [-1.6, -13.4], [2.6, -13.6]]), PAL.coat.l, 0.3, 0.8);
-    stroke(g, curve([[-3.0, -9.0], [-3.6, -5.0], [-3.4, -1.0]]), PAL.coat.d, 0.3);
-  });
-}
+// the face is always covered (see helmets.js)
+function head(g) { morrowMask(g, PAL, HOOD); }
 
 export const MORROW = {
   id: 'morrow', name: 'MORROW', role: 'KONTROL', pal: PAL,

@@ -18,7 +18,7 @@ import { MissionHud, fmt } from '../ui/missionhud.js';
 import { rgba } from '../gfx/batch.js';
 import { col } from '../gfx/particles.js';
 
-export const BAKE_VERSION = 'm4-1';
+export const BAKE_VERSION = 'm5-1';
 const MISSION = buildMission1();
 
 export function bakeList(quality) {

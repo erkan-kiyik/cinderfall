@@ -4,6 +4,7 @@
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { M, tone } from '../style.js';
 import { UPPER, FORE, THIGH, SHIN, BOOT_SHAFT, hand, boot, face, neck, HEAD } from './common.js';
+import { vexHelmet } from './helmets.js';
 
 const PAL = {
   skin: M.skinB,
@@ -146,25 +147,8 @@ function shin(g, ctx) {
 
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole); }
 
-function head(g) {
-  neck(g, PAL.skin);
-  face(g, { skin: PAL.skin, iris: '#c77a2a', brow: '#17161b', lip: '#9a5745', browY: 0.05 });
-  // undercut: the shaved side reads as a cool stubble tint over the skin
-  const SHAVE = 'M -4.3 -7.0 C -4.2 -9.8 -3.0 -11.6 -1.2 -12.0 L -0.4 -10.4 C -1.4 -9.6 -1.9 -8.4 -2.0 -7.0 C -2.6 -6.4 -3.6 -6.2 -4.3 -7.0 Z';
-  clip(g, HEAD, () => fill(g, SHAVE, '#3a3036', 0.55));
-  // the swept top, falling toward the far brow, ember at the ends
-  const HAIR = 'M -3.3 -10.0 C -3.6 -12.0 -2.4 -13.7 -0.3 -14.3 L 1.5 -15.4 L 1.8 -14.4 C 2.8 -14.9 3.8 -15.1 4.9 -14.9 L 4.4 -14.0 C 5.7 -13.7 6.7 -13.0 7.3 -12.0 L 6.0 -11.9 C 6.5 -11.2 6.6 -10.3 6.3 -9.4 C 5.8 -10.2 5.2 -10.6 4.5 -10.7 C 4.4 -10.2 4.2 -9.8 3.9 -9.6 C 3.6 -10.3 3.0 -10.8 2.2 -11.0 C 1.0 -11.2 -0.6 -11.1 -1.6 -10.8 C -2.2 -10.6 -2.8 -10.3 -3.3 -10.0 Z';
-  cel(g, HAIR, PAL.hair, { sh: 0.9, hl: 0.45 });
-  clip(g, HAIR, () => {
-    fill(g, 'M 4.4 -16 L 9 -16 L 9 -8 L 5.0 -8 C 5.2 -10.4 4.6 -12.6 4.4 -16 Z', PAL.tip.m);
-    fill(g, 'M 5.6 -12.2 L 9 -12.2 L 9 -8 L 5.6 -8 Z', PAL.tip.d, 0.9);
-    stroke(g, curve([[-2.4, -11.6], [0.2, -13.2], [3.2, -13.8], [6.2, -12.6]]), PAL.hair.l, 0.32);
-    stroke(g, curve([[-1.6, -10.9], [1.0, -12.0], [3.6, -12.2], [5.6, -10.8]]), PAL.hair.k, 0.26);
-    stroke(g, curve([[0.4, -13.8], [2.4, -14.2], [4.2, -13.8]]), PAL.hair.k, 0.22);
-  });
-  // ember stud
-  fill(g, 'M -1.75 -5.35 a 0.32 0.32 0 1 0 0.64 0 a 0.32 0.32 0 1 0 -0.64 0 Z', PAL.tip.l);
-}
+// the face is always covered (see helmets.js)
+function head(g) { vexHelmet(g, PAL); }
 
 // Runtime scarf: tails simulated as verlet chains and drawn with this segment
 // (4×2 units along +x, centred on y = 0; stretched between chain points).

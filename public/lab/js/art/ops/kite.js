@@ -5,6 +5,7 @@
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { M, tone } from '../style.js';
 import { UPPER, FORE, THIGH, SHIN, BOOT_SHAFT, hand, boot, face, neck } from './common.js';
+import { kiteHelmet } from './helmets.js';
 
 const PAL = {
   skin: M.skinA,
@@ -130,32 +131,8 @@ function shin(g, ctx) {
 
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.yellow); }
 
-function head(g) {
-  neck(g, PAL.skin);
-  face(g, { skin: PAL.skin, iris: '#3f7fb8', brow: '#7a3418', lip: '#c4746a', browY: 0.25 });
-  // auburn bob with a blunt, notched fringe
-  const BOB = 'M -1.2 -3.2 C -1.6 -4.8 -1.0 -7.2 0.6 -9.0 L 1.6 -8.5 L 2.2 -9.3 L 3.0 -8.7 L 3.6 -9.4 L 4.4 -8.8 L 5.0 -9.6 C 5.4 -12.0 3.4 -13.7 0.4 -13.7 C -3.4 -13.7 -5.3 -11.0 -5.3 -7.6 C -5.3 -5.4 -4.7 -3.6 -3.7 -2.8 C -2.8 -2.5 -1.9 -2.7 -1.2 -3.2 Z';
-  cel(g, BOB, PAL.hair, { sh: 0.9, hl: 0.45 });
-  clip(g, BOB, () => {
-    stroke(g, curve([[-3.8, -10.4], [-1.2, -12.6], [2.2, -12.8], [4.4, -11.0]]), PAL.hair.l, 0.32);
-    stroke(g, curve([[-4.4, -8.0], [-4.0, -5.6], [-3.0, -3.4]]), PAL.hair.d, 0.28);
-    stroke(g, curve([[1.2, -11.6], [2.0, -10.2], [2.4, -9.2]]), PAL.hair.d, 0.24);
-  });
-  // headset: band over the crown, a big cup over the ear, a stub antenna
-  stroke(g, curve([[-1.6, -8.4], [-1.4, -12.4], [0.6, -14.2], [2.6, -14.0]]), PAL.dark.k, 1.1);
-  stroke(g, curve([[-1.6, -8.4], [-1.4, -12.4], [0.6, -14.2], [2.6, -14.0]]), PAL.yellow.m, 0.6);
-  stroke(g, 'M -2.8 -8.0 L -4.6 -12.4', PAL.dark.m, 0.45);
-  fill(g, 'M -5.05 -12.75 a 0.5 0.5 0 1 0 1.0 0 a 0.5 0.5 0 1 0 -1.0 0 Z', PAL.yellow.m);
-  const CUP = 'M -3.6 -8.4 C -3.6 -8.8 -3.3 -9.0 -2.9 -9.0 L -0.9 -9.0 C -0.5 -9.0 -0.2 -8.7 -0.2 -8.3 L -0.2 -4.8 C -0.2 -4.4 -0.5 -4.2 -0.9 -4.2 L -2.9 -4.2 C -3.3 -4.2 -3.6 -4.4 -3.6 -4.8 Z';
-  cel(g, CUP, PAL.dark, { sh: 0.6, hl: 0.3 });
-  fill(g, 'M -2.9 -8.3 L -0.9 -8.3 L -0.9 -4.9 L -2.9 -4.9 Z', PAL.yellow.m);
-  fill(g, 'M -2.4 -7.7 L -1.4 -7.7 L -1.4 -5.5 L -2.4 -5.5 Z', PAL.yellow.d);
-  // flip-down monocle on the near eye
-  stroke(g, 'M -0.3 -7.1 L 0.8 -7.3', PAL.dark.m, 0.45);
-  fill(g, 'M 0.5 -7.3 a 1.35 1.15 0 1 0 2.7 0 a 1.35 1.15 0 1 0 -2.7 0 Z', 'rgba(62,232,224,0.35)');
-  stroke(g, 'M 0.5 -7.3 a 1.35 1.15 0 1 0 2.7 0 a 1.35 1.15 0 1 0 -2.7 0 Z', PAL.dark.m, 0.42);
-  stroke(g, 'M 1.1 -7.9 C 1.4 -8.2 1.9 -8.3 2.3 -8.2', '#ffffff', 0.22, 0.9);
-}
+// the face is always covered (see helmets.js)
+function head(g) { kiteHelmet(g, PAL); }
 
 export const KITE = {
   id: 'kite', name: 'KITE', role: 'KEŞİF', pal: PAL,

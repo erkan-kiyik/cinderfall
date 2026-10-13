@@ -4,6 +4,7 @@
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { M, tone } from '../style.js';
 import { UPPER, FORE, THIGH, SHIN, BOOT_SHAFT, hand, boot, face, neck, HEAD } from './common.js';
+import { haleHelmet } from './helmets.js';
 
 const PAL = {
   skin: M.skinC,
@@ -127,29 +128,8 @@ function shin(g, ctx) {
 
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole); }
 
-function head(g) {
-  g.save(); g.translate(-0.35, 0); g.scale(1.3, 1); neck(g, PAL.skin); g.restore();
-  face(g, { skin: PAL.skin, iris: '#3b2416', brow: '#120f0e', lip: '#5a3226', browY: 0.1 });
-  // short fade: tight cap of hair a little proud of the skull
-  const HAIR = 'M -4.15 -8.0 C -4.45 -10.6 -2.5 -12.65 0.6 -12.65 C 3.1 -12.65 4.45 -11.2 4.4 -10.0 C 3.9 -10.3 3.3 -10.35 2.6 -10.2 C 1.6 -10.0 0.9 -9.6 0.5 -9.0 C 0.2 -8.5 0.0 -8.0 -0.3 -7.6 L -1.0 -7.8 C -2.0 -8.3 -3.2 -8.3 -4.15 -8.0 Z';
-  cel(g, HAIR, PAL.hair, { sh: 0.6, hl: 0.35, line: false });
-  clip(g, HAIR, () => {
-    stroke(g, curve([[-3.0, -11.4], [-0.6, -12.4], [2.4, -12.3], [3.8, -11.3]]), PAL.hair.l, 0.3);
-    for (const [x, y] of [[-2.6, -10.2], [-1.2, -11.0], [0.4, -11.4], [2.0, -11.4], [-2.8, -9.0], [-1.6, -9.6]]) stroke(g, `M ${x} ${y} l 0.5 -0.3`, PAL.hair.l, 0.16, 0.7);
-  });
-  // short boxed beard along the jaw and chin, and a moustache
-  const BEARD = 'M -0.9 -7.4 C -0.5 -6.2 0.4 -5.0 1.6 -4.3 C 2.4 -3.9 3.2 -3.85 4.0 -3.9 C 4.4 -3.9 4.7 -3.95 4.85 -4.0 C 4.9 -3.3 4.7 -2.5 4.1 -2.0 C 3.2 -1.4 1.6 -1.5 0.2 -2.4 C -1.0 -3.2 -1.8 -4.4 -2.0 -5.6 C -1.6 -6.2 -1.2 -6.8 -0.9 -7.4 Z';
-  cel(g, BEARD, PAL.beard, { sh: 0.6, hl: 0.3 });
-  clip(g, BEARD, () => {
-    stroke(g, curve([[0.0, -5.4], [1.4, -3.6], [3.2, -2.6]]), PAL.beard.l, 0.24);
-    stroke(g, curve([[-1.0, -5.6], [0.0, -3.8], [1.4, -2.6]]), PAL.beard.k, 0.2);
-  });
-  const MOUST = 'M 2.85 -4.7 C 3.3 -5.15 4.1 -5.25 4.75 -5.0 C 4.85 -4.75 4.75 -4.6 4.55 -4.55 C 4.0 -4.75 3.4 -4.7 2.85 -4.7 Z';
-  cel(g, MOUST, PAL.beard, { sh: 0.25, hl: 0.15 });
-  // earpiece with a boom mic and a teal status light
-  cel(g, 'M -2.4 -8.0 L -0.6 -8.2 L -0.5 -5.6 L -2.3 -5.4 Z', M.black, { sh: 0.3, hl: 0.2 });
-  fill(g, 'M -1.85 -7.4 a 0.32 0.32 0 1 0 0.64 0 a 0.32 0.32 0 1 0 -0.64 0 Z', PAL.teal.m);
-}
+// the face is always covered (see helmets.js)
+function head(g) { haleHelmet(g, PAL); }
 
 export const HALE = {
   id: 'hale', name: 'HALE', role: 'SAVUNMA', pal: PAL,
