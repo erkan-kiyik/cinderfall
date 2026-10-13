@@ -169,7 +169,8 @@ export class M2Scene {
     const vw = cam.viewW, x0 = cam.x - vw / 2 - 120, x1 = cam.x + vw / 2 + 120;
     for (const lx of this.C.lamps) if (lx > x0 && lx < x1) { R.addLight(lx + 15, -78, 100, 1.2, [1, 0.84, 0.6], Math.PI / 2, Math.cos(0.44), 0.18); R.addLight(lx + 15, -80, 22, 0.8, [1, 0.9, 0.7]); }
     const neon = (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
-    for (let k = -1; k < 4; k++) {
+    const kN = Math.ceil(this.C.width / 600) + 1;
+    for (let k = -1; k < kN; k++) {
       const ox = k * 600;
       if (232 + ox > x0 && 232 + ox < x1) { R.addLight(232 + ox, -72, 70, 0.95 * neon, [1, 0.4, 0.3]); R.addLight(221 + ox, -6, 60, 0.55, [1, 0.56, 0.32]); }
       if (364 + ox > x0 && 364 + ox < x1) R.addLight(364 + ox, -100, 54, 0.45, [1, 0.22, 0.26]);
@@ -180,10 +181,11 @@ export class M2Scene {
     R.beginScene();
     B.resetStats();
     const restore = () => { R.scene.bind(); };
+    const kMax = Math.ceil(this.C.width / 600) + 1;
     // each layer is 600 wide; copies every 600 cover the whole course
     const layer = (name, view) => {
       B.begin(view);
-      for (let k = -2; k < 5; k++) for (let i = 0; ; i++) {
+      for (let k = -2; k < kMax; k++) for (let i = 0; ; i++) {
         const r = A.get(`${name}#${i}`); if (!r) break;
         B.draw(r, -10 + i * 300 + k * 600, LAYER_Y[name]);
       }
@@ -217,7 +219,7 @@ export class M2Scene {
     const glow = A.get('fx.glow'), flame = A.get('fx.flame');
     B.begin(w); B.setBlend(1);
     for (const lx of this.C.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#fff1d0', 0.6));
-    for (let k = -1; k < 4; k++) B.draw(glow, 232 + k * 600, -74, 34, 14, 0, rgba('#ff6b52', 0.22 * neon));
+    for (let k = -1; k < kN; k++) B.draw(glow, 232 + k * 600, -74, 34, 14, 0, rgba('#ff6b52', 0.22 * neon));
     for (const en of this.enemies) if (en.alive) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
     for (let k = 0; k < 3; k++) {
       const ph = t * (9 + k * 3) + k * 2.1;

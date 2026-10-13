@@ -8,7 +8,7 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .perf { position: absolute; right: max(10px, env(safe-area-inset-right)); top: 10px; background: rgba(13,16,21,0.72); border: 1px solid var(--line); padding: 6px 8px; pointer-events: auto; }
 .perf pre { margin: 0 0 6px; font: 600 11px/1.35 var(--f-body); color: var(--n7); white-space: pre; }
 .perf canvas { display: block; width: 240px; height: 46px; }
-#boot { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; background: var(--n1); transition: opacity var(--d-slow) var(--ease-out); }
+#boot { position: fixed; inset: 0; z-index: 10; display: grid; place-content: center; justify-items: center; gap: 10px; background: var(--n1); transition: opacity var(--d-slow) var(--ease-out); }
 #boot.done { opacity: 0; pointer-events: none; }
 #boot .logo { font: 700 40px/1 var(--f-display); letter-spacing: 0.18em; color: var(--n8); }
 #boot .logo span { color: var(--ember); }
@@ -52,3 +52,40 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .dead { position: fixed; inset: 0; display: grid; place-content: center; pointer-events: none; font: 700 26px/1 var(--f-display); letter-spacing: 0.2em; color: var(--n8); opacity: 0; transition: opacity 400ms; z-index: 1; }
 .dead.on { opacity: 1; }
 #ctl, .perf { z-index: 2; }
+
+.hitdir { position: fixed; top: 15%; bottom: 15%; width: 70px; pointer-events: none; opacity: 0; z-index: 1; }
+.hitdir.l { left: 0; background: linear-gradient(90deg, rgba(255,40,50,0.65), rgba(255,40,50,0)); }
+.hitdir.r { right: 0; background: linear-gradient(270deg, rgba(255,40,50,0.65), rgba(255,40,50,0)); }
+
+/* mission (M4) */
+.mobj { position: fixed; top: max(48px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; z-index: 1; }
+.mobj .k { font: 700 10px/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--ember); }
+.mobj .t { font: 700 17px/1.2 var(--f-display); letter-spacing: 0.06em; color: var(--n8); text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+.mobj .p { width: 160px; height: 4px; margin: 5px auto 0; background: rgba(255,255,255,0.12); display: none; }
+.mobj .p i { display: block; height: 100%; width: 0; background: var(--interact); }
+.mobj.hack .p { display: block; }
+.mobj.flash .t { animation: objflash 900ms var(--ease-out); }
+@keyframes objflash { 0% { color: var(--ember); transform: scale(1.12); } 100% { color: var(--n8); transform: scale(1); } }
+.mtime { position: fixed; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); font: 700 14px/1 var(--f-display); letter-spacing: 0.08em; color: var(--n7); pointer-events: none; z-index: 1; }
+.marrow { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 1; display: none; }
+.marrow::before { content: ''; position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; background: var(--interact); clip-path: polygon(100% 50%, 0 0, 25% 50%, 0 100%); transform: rotate(var(--a, 0rad)); }
+.marrow span { position: absolute; left: -24px; top: 12px; width: 48px; text-align: center; font: 700 10px/1 var(--f-display); color: var(--interact); }
+.toast { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); font: 700 15px/1 var(--f-display); letter-spacing: 0.18em; color: var(--interact); opacity: 0; pointer-events: none; transition: opacity 300ms; z-index: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+.toast.on { opacity: 1; }
+.mcard { position: fixed; inset: 0; display: grid; place-content: center; background: rgba(9,11,15,0.82); z-index: 5; pointer-events: auto; }
+.mcard.hide { display: none; }
+.mcard .box { width: min(520px, 86vw); padding: 22px 26px; background: var(--n1); border: 1px solid var(--line); clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px)); }
+.mcard .kick { font: 700 11px/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--ember); }
+.mcard h1 { margin: 6px 0 10px; font: 700 34px/1 var(--f-display); letter-spacing: 0.12em; color: var(--n8); }
+.mcard p { margin: 0 0 12px; font: 400 13px/1.5 var(--f-body); color: var(--n7); }
+.mcard ol { margin: 0 0 16px; padding-left: 18px; font: 600 13px/1.6 var(--f-body); color: var(--n7); }
+.mcard .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 16px; }
+.mcard .stats div { background: var(--n2); padding: 8px; }
+.mcard .stats b { display: block; font: 700 22px/1 var(--f-display); color: var(--n8); }
+.mcard .stats span { font: 700 9px/1 var(--f-display); letter-spacing: 0.12em; color: var(--n6); }
+.mcard .stars { font-size: 28px; letter-spacing: 6px; color: var(--n3); margin-bottom: 4px; }
+.mcard .stars i { font-style: normal; }
+.mcard .stars i.on { color: var(--gold); }
+.mcard .why { font: 600 11px/1.6 var(--f-body); color: var(--n6); margin-bottom: 14px; }
+.mcard button { height: 40px; padding: 0 22px; font: 700 13px/1 var(--f-display); letter-spacing: 0.16em; color: var(--n0); background: var(--ember); border: 0; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px)); }
+.mcard button.ghost { background: var(--n3); color: var(--n8); margin-left: 8px; }

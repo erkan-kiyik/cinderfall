@@ -51,7 +51,7 @@ folder; the shipping game in `public/game` is untouched.
 - `js/art/env/course.js`, `js/test/m2scene.js` — the movement course
   (`?scene=m2`); tests: `node tools/lab/phys.test.mjs`
 
-## Status — M3 (weapon core) — default scene
+## Status — M3 (weapon core) — `?scene=m3`
 - `js/art/weapons/` — guns split into moving parts (magazine, slide, pump)
   with rig points (ejection port, magazine axis and grab point, charging
   handle, shell port); `items.js`: casings, shells, knife, holster, effect shapes
@@ -76,3 +76,21 @@ folder; the shipping game in `public/game` is untouched.
 - controls: mouse fire / right-click knife, R reload, Q (or wheel) swap,
   F knife; touch: aim stick fires past its outer ring, DOLDUR / BIÇAK / SİLAH
 - tests: `node tools/lab/guns.test.mjs`, `ballistics.test.mjs`, `ragdoll.test.mjs`
+
+## Status — M4 (vertical slice) — default scene
+- `js/game/ai/brain.js` — enemy AI on the same Mover and guns as the player:
+  guard / patrol, awareness from a sight cone with line of sight and from
+  gunfire, search, combat; rifleman takes the cover facing you and peeks to
+  fire bursts, the assault (HÜCUMCU, new) rushes and dodges your aim, the
+  shield trooper pushes in and bashes; squad fire tokens, suppression from
+  near misses, difficulty (reaction, aim error, damage)
+- `js/game/ai/cover.js` — cover points found in the tiles (4–6 tile obstacles)
+- `js/art/env/mission1.js` — campaign mission 1 "SIZMA": approach, checkpoint
+  post, container yard, gate court, extraction; new props (concrete barricade,
+  guard booth, gate, terminal, checkpoint posts, extraction beacon)
+- `js/game/mission.js` — objectives (reach, hack the gate terminal, extract),
+  checkpoints and respawn, the gate opening and the last wave, ammo drops,
+  health regeneration, briefing / pause / debrief with stars
+- `js/ui/missionhud.js` — objective line, hack progress, clock, edge arrow to
+  the objective, toasts, cards; damage direction in `combathud.js`
+- tests: `node tools/lab/ai.test.mjs` (+ the M2/M3 tests)

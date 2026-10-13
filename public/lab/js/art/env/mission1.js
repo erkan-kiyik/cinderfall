@@ -1,0 +1,197 @@
+// CINDERFALL LAB — campaign mission 1, "SIZMA" (infiltration): the level,
+// its props and the mission script data. Same rule as the M2 course: every
+// feature is placed in tile columns and painted inside the same box, so what
+// you see is what you collide with.
+//
+//   A  approach      crate, duct to slide under, a gap      → checkpoint 1
+//   B  checkpoint    Syndicate post behind concrete and sandbags
+//   C  container yard ladder, fire-escape deck, stacked containers → checkpoint 2
+//   D  gate court    shield trooper, riflemen, a rusher; hack the gate terminal
+//   E  extraction    the gate opens, a last squad arrives, reach the flare
+import { cel, fill, stroke, clip } from '../kit.js';
+import { M, tone, C } from '../style.js';
+import { Level, T } from '../../phys/level.js';
+import { crate, barrier, lampPost, burnBarrel, dumpster, cone } from './street.js';
+import { CONT, container, catwalk, ladder, pit, duct, sandbags } from './course.js';
+import { emblem } from '../enemies/syndicate.js';
+
+const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
+const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
+
+export const COLS = 400, TOPY = -200, ROWS = 30, STREET = 25;
+const CONC = tone('#b9bcc6', '#8d919d', '#666a76', '#2f323a');
+const STEEL = tone('#8a95a3', '#5d6878', '#3c4654', '#151a21');
+const SYN = tone('#9ab3cc', '#5e7d9c', '#3f5a76', '#1c2b3b');
+
+// --- painters ------------------------------------------------------------------
+// tall concrete barricade with a hazard band
+export function concrete(g, x0, x1, h) {
+  const B = poly([[x0, 0], [x0 + 1, -h + 3], [x0 + 3, -h], [x1 - 3, -h], [x1 - 1, -h + 3], [x1, 0]]);
+  cel(g, B, CONC, { sh: 1.6, hl: 0.7 });
+  clip(g, B, () => {
+    fill(g, rect(x0, -h + 6, x1, -h + 10), C.gold);
+    for (let x = x0 - 6; x < x1 + 4; x += 5) fill(g, poly([[x, -h + 10], [x + 2.4, -h + 10], [x + 6.4, -h + 6], [x + 4, -h + 6]]), '#1a1c20');
+    fill(g, rect(x0, -3, x1, 0), CONC.d, 0.7);
+    for (const [x, y, r] of [[x0 + 4, -h + 18, 1.2], [x1 - 5, -h + 26, 0.9], [x0 + 9, -12, 1]]) fill(g, `M ${x - r} ${y} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0 Z`, CONC.k, 0.6);
+    stroke(g, `M ${x0 + 2} ${-h + 2} L ${x1 - 2} ${-h + 2}`, CONC.l, 0.5, 0.7);
+  });
+  stroke(g, B, CONC.k, 0.5);
+}
+
+// guard booth (background)
+export function booth(g, x0, w = 44, h = 58) {
+  const x1 = x0 + w;
+  const B = rect(x0, -h, x1, 0);
+  cel(g, B, SYN, { sh: 2.0, hl: 0.6 });
+  clip(g, B, () => {
+    fill(g, rect(x0 + 5, -h + 12, x1 - 5, -h + 30), '#141c26');
+    fill(g, rect(x0 + 6, -h + 13, x0 + 14, -h + 29), 'rgba(170,200,230,0.18)');
+    fill(g, rect(x0, -h + 36, x1, -h + 39), M.visor.m);
+    fill(g, rect(x0, -4, x1, 0), SYN.d);
+  });
+  cel(g, rect(x0 - 3, -h - 5, x1 + 3, -h), STEEL, { sh: 0.6, hl: 0.4 });
+  stroke(g, B, SYN.k, 0.5);
+  emblem(g, x0 + w / 2, -h + 46, 4, M.white.m);
+}
+
+// the gate leaf (moves up when it opens), drawn from its bottom-left corner
+export function gateLeaf(g, w, h) {
+  const B = rect(0, -h, w, 0);
+  cel(g, B, STEEL, { sh: 1.4, hl: 0.5 });
+  clip(g, B, () => {
+    for (let y = -h + 6; y < 0; y += 8) { fill(g, rect(0, y, w, y + 1.4), STEEL.d); fill(g, rect(0, y + 1.4, w, y + 2), STEEL.l, 0.5); }
+    fill(g, rect(0, -h * 0.5 - 6, w, -h * 0.5 + 6), M.visor.d);
+    for (let x = -10; x < w + 6; x += 6) fill(g, poly([[x, -h * 0.5 + 6], [x + 3, -h * 0.5 + 6], [x + 9, -h * 0.5 - 6], [x + 6, -h * 0.5 - 6]]), '#1a1c20', 0.6);
+  });
+  stroke(g, B, STEEL.k, 0.6);
+}
+// posts and a beam around the gate opening (x0..x1, height h)
+export function gateFrame(g, x0, x1, h) {
+  for (const x of [x0 - 6, x1]) {
+    const P = rect(x, -h - 10, x + 6, 0);
+    cel(g, P, CONC, { sh: 1.2, hl: 0.5 });
+    clip(g, P, () => { for (let y = -h; y < 0; y += 14) fill(g, rect(x, y, x + 6, y + 6), C.gold, 0.9); for (let y = -h; y < 0; y += 14) fill(g, poly([[x, y + 6], [x + 6, y], [x + 6, y + 3], [x + 3, y + 6]]), '#1a1c20'); });
+    stroke(g, P, CONC.k, 0.5);
+  }
+  const Bm = rect(x0 - 8, -h - 14, x1 + 8, -h - 4);
+  cel(g, Bm, SYN, { sh: 0.8, hl: 0.4 });
+  stroke(g, Bm, SYN.k, 0.5);
+  emblem(g, (x0 + x1) / 2, -h - 9, 3.4, M.white.m);
+}
+
+// hacking terminal: a console with a dark screen (the glow is drawn live)
+export function terminal(g, x) {
+  const B = poly([[x - 7, 0], [x - 7, -22], [x - 5, -26], [x + 7, -26], [x + 7, 0]]);
+  cel(g, B, STEEL, { sh: 1.0, hl: 0.5 });
+  clip(g, B, () => {
+    fill(g, rect(x - 5, -23, x + 5, -15), '#071016');
+    for (let k = 0; k < 3; k++) fill(g, rect(x - 4 + k * 3, -11, x - 2 + k * 3, -9.6), k === 1 ? M.visor.m : STEEL.d);
+    fill(g, rect(x - 7, -3, x + 7, 0), STEEL.d);
+  });
+  stroke(g, B, STEEL.k, 0.5);
+  // cable into the ground
+  stroke(g, `M ${x + 7} -6 C ${x + 12} -6 ${x + 12} -1 ${x + 16} 0`, '#1a1c20', 1.2);
+}
+
+// extraction beacon: a short pole (the flare light is drawn live)
+export function beacon(g, x) {
+  cel(g, rect(x - 0.8, -22, x + 0.8, 0), STEEL, { sh: 0.3, hl: 0.2 });
+  cel(g, poly([[x - 3, -22], [x + 3, -22], [x + 2, -26], [x - 2, -26]]), STEEL, { sh: 0.4, hl: 0.3 });
+  cel(g, rect(x - 4, -2, x + 4, 0), STEEL, { sh: 0.4, hl: 0.3 });
+}
+// checkpoint post: a squat post with a lamp head (colour drawn live)
+export function cpPost(g, x) {
+  cel(g, rect(x - 1.2, -18, x + 1.2, 0), STEEL, { sh: 0.3, hl: 0.2 });
+  cel(g, rect(x - 3, -22, x + 3, -18), STEEL, { sh: 0.4, hl: 0.3 });
+  cel(g, rect(x - 3.4, -2, x + 3.4, 0), STEEL, { sh: 0.4, hl: 0.3 });
+}
+
+// --- the mission -------------------------------------------------------------------
+export function buildMission1() {
+  const g = Array.from({ length: ROWS }, () => Array(COLS).fill('.'));
+  for (let r = STREET; r < ROWS; r++) for (let x = 0; x < COLS; x++) g[r][x] = '#';
+  const at = (c, n, ch) => { const r = STREET - n; if (r >= 0 && r < ROWS && c >= 0 && c < COLS) g[r][c] = ch; };
+  const block = (c0, c1, n0, n1, ch = '#') => { for (let c = c0; c <= c1; c++) for (let n = n0; n <= n1; n++) at(c, n, ch); };
+  const X = (c) => c * T;
+  block(0, 1, 1, 25); block(COLS - 2, COLS - 1, 1, 25);
+  const props = [], front = [], deco = [], lamps = [];
+  const P = (name, box, paint, list = props) => list.push({ name, box, paint });
+
+  // A — approach -----------------------------------------------------------------
+  block(22, 23, 1, 2); P('m.crateA', [X(22) - 2, -18, X(24) + 2, 1], (g) => crate(g, X(22), 16, 16));
+  block(34, 42, 5, 6); P('m.duct', [X(34) - 2, -142, X(43) + 2, -30], (g) => duct(g, X(34), X(43), -48, -32));
+  for (let c = 50; c <= 53; c++) for (let r = STREET; r < STREET + 4; r++) g[r][c] = '.';
+  P('m.pit', [X(50) - 8, -3, X(54) + 8, 33], (g) => pit(g, X(50), X(54), 32));
+  P('m.cone1', [X(46) - 6, -12, X(46) + 8, 1], (g) => cone(g, X(46)), deco);
+  // B — checkpoint post -------------------------------------------------------------
+  block(72, 74, 1, 4); P('m.bagsB1', [X(72) - 4, -34, X(75) + 4, 1], (g) => sandbags(g, X(72), X(75), 32), front);
+  block(86, 89, 1, 2); P('m.barB', [X(86) - 4, -18, X(90) + 4, 1], (g) => barrier(g, X(86) + 1, 30), front);
+  P('m.booth', [X(104) - 4, -66, X(104) + 48, 1], (g) => booth(g, X(104)), deco);
+  block(100, 101, 1, 5); P('m.concB', [X(100) - 1, -42, X(102) + 1, 1], (g) => concrete(g, X(100), X(102), 40));
+  block(116, 118, 1, 4); P('m.bagsB2', [X(116) - 4, -34, X(119) + 4, 1], (g) => sandbags(g, X(116), X(119), 32), front);
+  P('m.barrelB', [X(124) - 2, -16, X(124) + 14, 1], (g) => burnBarrel(g, X(124)), deco);
+  // C — container yard -----------------------------------------------------------------
+  block(140, 149, 1, 5); P('m.contA', [X(140) - 2, -42, X(150) + 2, 1], (g) => container(g, X(140), -40, X(150), 0, CONT.teal));
+  block(160, 180, 12, 12, '='); block(159, 159, 1, 12, 'H');
+  P('m.deck', [X(160) - 2, -114, X(181) + 2, -78], (g) => catwalk(g, X(160), X(181), -96));
+  P('m.ladder', [X(159) - 1, -112, X(160) + 1, 1], (g) => ladder(g, X(159), -96, 0));
+  block(190, 191, 1, 2); P('m.crateC', [X(190) - 2, -18, X(192) + 2, 1], (g) => crate(g, X(190), 16, 16));
+  block(205, 214, 1, 5); block(209, 214, 6, 10);
+  P('m.contB', [X(205) - 2, -42, X(215) + 2, 1], (g) => container(g, X(205), -40, X(215), 0, CONT.navy));
+  P('m.contC', [X(209) - 2, -82, X(215) + 2, -39], (g) => container(g, X(209), -80, X(215), -40, CONT.rust));
+  P('m.dumpC', [X(220) - 4, -24, X(220) + 48, 1], (g) => dumpster(g, X(220)), deco);
+  // D — gate court ----------------------------------------------------------------------
+  block(246, 247, 1, 5); P('m.concD1', [X(246) - 1, -42, X(248) + 1, 1], (g) => concrete(g, X(246), X(248), 40));
+  block(274, 275, 1, 5); P('m.concD2', [X(274) - 1, -42, X(276) + 1, 1], (g) => concrete(g, X(274), X(276), 40));
+  block(294, 296, 1, 4); P('m.bagsD', [X(294) - 4, -34, X(297) + 4, 1], (g) => sandbags(g, X(294), X(297), 32), front);
+  P('m.term', [X(312) - 9, -28, X(312) + 18, 1], (g) => terminal(g, X(312)));
+  block(322, 323, 1, 12);
+  P('m.gateFrame', [X(322) - 16, -126, X(324) + 16, 1], (g) => gateFrame(g, X(322), X(324), 96), deco);
+  P('m.coneD', [X(286) - 6, -12, X(286) + 8, 1], (g) => cone(g, X(286)), deco);
+  // E — extraction -----------------------------------------------------------------------
+  block(350, 351, 1, 2); P('m.crateE', [X(350) - 2, -18, X(352) + 2, 1], (g) => crate(g, X(350), 16, 16));
+  block(362, 364, 1, 4); P('m.bagsE', [X(362) - 4, -34, X(365) + 4, 1], (g) => sandbags(g, X(362), X(365), 32), front);
+  P('m.beacon', [X(387) - 5, -28, X(387) + 5, 1], (g) => beacon(g, X(387)), deco);
+  // checkpoint posts
+  const checkpoints = [{ x: X(60) }, { x: X(228) }, { x: X(316) }];
+  checkpoints.forEach((c, i) => P(`m.cp${i}`, [c.x - 5, -24, c.x + 5, 1], (g) => cpPost(g, c.x), deco));
+  for (const x of [130, 520, 1000, 1260, 1600, 2100, 2450, 2750, 3050]) lamps.push(x);
+  deco.push({ name: 'c.lamp', box: [-8, -86, 24, 1], paint: (g) => lampPost(g, 0), at: lamps });
+
+  const level = new Level(g.map((r) => r.join('')), TOPY);
+  const E = (id, x, y, zone, o = {}) => ({ id, kind: id, x, y, zone, facing: -1, ...o });
+  return {
+    level, props, front, deco, lamps, width: COLS * T,
+    spawn: [64, 0],
+    checkpoints,
+    // the gate leaf is a live sprite; its tiles open when the terminal is done
+    gate: { c0: 322, c1: 323, n0: 1, n1: 12, x: X(322), w: 16, h: 96 },
+    terminal: { x: X(312), x0: X(312) - 26, x1: X(312) + 26, time: 5 },
+    extract: { x: X(387) },
+    objectives: [
+      { type: 'reach', x: X(132), text: 'Kontrol noktasını geç' },
+      { type: 'reach', x: X(228), text: 'Konteyner sahasından geç' },
+      { type: 'hack', text: 'Kapı terminalini hackle' },
+      { type: 'reach', x: X(384), text: 'Tahliye noktasına ulaş' },
+    ],
+    enemies: [
+      // B
+      E('tet', X(102) + 4, 0, [X(96), X(128)]),
+      E('tet', X(119) + 4, 0, [X(96), X(128)]),
+      E('tet', X(108), 0, [X(96), X(128)], { patrol: [X(105), X(114)] }),
+      // C
+      E('tet', X(176), -96, [X(161), X(180)]),
+      E('huc', X(196), 0, [X(152), X(226)], { patrol: [X(186), X(200)] }),
+      E('tet', X(207), -40, [X(205), X(208)]),
+      // D
+      E('kal', X(266), 0, [X(249), X(273)]),
+      E('tet', X(276) + 4, 0, [X(268), X(306)]),
+      E('tet', X(297) + 4, 0, [X(290), X(318)]),
+      E('huc', X(306), 0, [X(250), X(320)], { patrol: [X(300), X(312)] }),
+      // E — arrive when the gate opens
+      E('tet', X(392), 0, [X(352), X(396)], { wave: 1 }),
+      E('huc', X(395), 0, [X(326), X(396)], { wave: 1 }),
+      E('tet', X(380), 0, [X(366), X(396)], { wave: 1 }),
+    ],
+  };
+}

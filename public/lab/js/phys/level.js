@@ -25,6 +25,8 @@ export class Level {
     if (ty >= this.h) return SOLID;                     // bedrock
     return this.t[ty * this.w + tx];
   }
+  // change a tile at runtime (gates, breakable cover)
+  set(tx, ty, k) { if (tx >= 0 && tx < this.w && ty >= 0 && ty < this.h) this.t[ty * this.w + tx] = k; }
   left(tx) { return this.leftX + tx * T; }
   top(ty) { return this.topY + ty * T; }
 

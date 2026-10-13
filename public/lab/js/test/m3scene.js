@@ -42,17 +42,17 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
 export class M3Scene extends M2.M2Scene {
-  constructor(eng, controls) {
-    super(eng, controls, COURSE);
+  constructor(eng, controls, course = COURSE) {
+    super(eng, controls, course);
     this.sfx = new Sfx();
     this.fx = new Effects(eng, this.sfx);
     this.hud = new CombatHud(document.querySelector('#hud'));
     this.win = {};
     this.marker = { t: 9, kill: false };
-    this.spawns = COURSE.enemies.map((d) => ({ ...d }));
+    this.spawns = course.enemies.map((d) => ({ ...d }));
     this.ai = this.enemies.map(() => this.newBrain());
     this.player.hpMax = this.player.hp = 100;
-    this.deadT = 0;
+    this.deadT = 0; this.enemyDmg = ENEMY_DMG;
     this.stats = { shots: 0, hits: 0, kills: 0, heads: 0 };
     this._a = new Float32Array(2); this._b = new Float32Array(2); this._d = new Float32Array(2); this._n = {};
     this.shapes = [];
@@ -89,7 +89,7 @@ export class M3Scene extends M2.M2Scene {
   }
 
   respawnPlayer() {
-    const [sx, sy] = COURSE.spawn;
+    const [sx, sy] = this.C.spawn;
     this.mover = new Mover(this.L, sx, sy);
     this.player = new Character(OPERATORS[this.opIndex], this.e.atlas, this.mover);
     this.player.hpMax = this.player.hp = 100;
@@ -176,6 +176,10 @@ export class M3Scene extends M2.M2Scene {
   }
 
   targets(ch) { return ch.team === 0 ? this.enemies : [this.player]; }
+  // hooks for scenes built on this one
+  onShot() {}
+  onFire() {}
+  onKill() {}
 
   shoot(ch, e) {
     const gun = ch.gun, s = gun.s, W = ch.W, L = this.L, n = this._n, fx = this.fx;
@@ -201,16 +205,17 @@ export class M3Scene extends M2.M2Scene {
         }
       }
       const hx = sh[0] + d[0] * t, hy = sh[1] + d[1] * t;
+      this.onShot(ch, sh[0], sh[1], d[0], d[1], t, what === 'char' ? who : null);
       // tracer from the muzzle (skip when the hit is behind it, point-blank)
       const ahead = (hx - mz[0]) * d[0] + (hy - mz[1]) * d[1];
       if (ahead > 4 && (e.dirs.length === 1 || Math.random() < 0.5)) fx.tracer(mz[0], mz[1], hx, hy, s.tracer, ch.team ? '#ff9a7a' : '#ffd9a0');
       if (what === 'char') {
-        const dmg = falloff(s.dmg, t, s.falloff) * s.zone[zone] * (ch.team ? ENEMY_DMG : 1);
+        const dmg = falloff(s.dmg, t, s.falloff) * s.zone[zone] * (ch.team ? this.enemyDmg : 1);
         const dead = who.damage(dmg, zone, d[0], d[1], hx, hy);
         fx.flesh(hx, hy, d[0], d[1], zone === 'head');
         hitAny = true; head = head || zone === 'head';
-        if (dead) { killed = true; this.onDeath(who, d[0], d[1]); }
-        if (who === this.player) { this.hud.hit(dmg); this.sfx.play('hurt', null, null, { vol: 0.6 }); this.e.camera.addShake(0.12); }
+        if (dead) { killed = true; this.onDeath(who, d[0], d[1]); this.onKill(who, ch, zone); }
+        if (who === this.player) { this.hud.hit(dmg, Math.sign(ch.m.x - who.m.x)); this.sfx.play('hurt', null, null, { vol: 0.6 }); this.e.camera.addShake(0.12); }
       } else if (what === 'shield') {
         fx.shield(hx, hy, d[0], d[1]);
         this.sfx.play('shield', hx, hy, { rate: rand(0.9, 1.1) });
@@ -226,6 +231,7 @@ export class M3Scene extends M2.M2Scene {
       this.marker.t = 0; this.marker.kill = killed;
       this.sfx.play(killed ? 'kill' : head ? 'head' : 'marker', null, null, { vol: killed ? 0.8 : 0.6 });
     }
+    this.onFire(ch);
     void W;
   }
 
@@ -236,12 +242,18 @@ export class M3Scene extends M2.M2Scene {
       const dx = (c.m.x - sh[0]) * f, dy = c.m.y - 34 - sh[1];
       if (dx < -4 || dx > 30 || Math.abs(dy) > 30) continue;
       const back = c.facing === ch.facing; // stabbed from behind
+      if (c.spec.shield && !back) {
+        // the riot shield takes it
+        this.fx.shield(c.m.x - f * 10, c.m.y - 36, f, -0.2);
+        this.sfx.play('shield', c.m.x, c.m.y - 36);
+        break;
+      }
       const dmg = back ? 150 : 55;
       const dead = c.damage(dmg, 'body', f, -0.2, c.m.x - f * 4, c.m.y - 36);
       this.fx.flesh(c.m.x - f * 4, c.m.y - 36, f, -0.2);
       this.sfx.play('knifeHit', c.m.x, c.m.y - 36);
       if (ch === this.player) { this.marker.t = 0; this.marker.kill = dead; this.sfx.play(dead ? 'kill' : 'marker', null, null, { vol: 0.7 }); if (dead) this.stats.kills++; }
-      if (dead) this.onDeath(c, f, -0.3);
+      if (dead) { this.onDeath(c, f, -0.3); this.onKill(c, ch, 'knife'); }
       break;
     }
   }

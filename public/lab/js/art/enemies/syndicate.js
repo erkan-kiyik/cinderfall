@@ -155,3 +155,68 @@ export const KALKANLI = {
   pose: { nUpper: -0.35, nFore: -1.45, nHand: -0.2, fUpper: -0.1, fFore: -0.4, fHand: -0.2, nThigh: 0.26, nShin: 0.06, fThigh: -0.3, fShin: -0.04, head: 0.04 },
   parts: { ...PARTS, torso: heavyTorso, upper: heavyUpper, front: shieldFront },
 };
+
+// HÜCUMCU — the assault trooper: lighter kit, a hood and a respirator with
+// two red lenses instead of the helmet, a shell bandolier across the chest and
+// a red arm band, so the rusher reads differently at a glance.
+const PAL_H = {
+  ...PAL,
+  armor: tone('#7b8798', '#56627a', '#3a4458', '#171d29'),
+  hood: tone('#3c4352', '#2a2f3a', '#1c2028', '#0b0d11'),
+  band: tone('#ff6b6b', '#e03a3a', '#a32424', '#4a0f0f'),
+};
+
+function hoodHead(g) {
+  cel(g, NECK, PAL_H.suit, { sh: 1.0, hl: 0 });
+  // hood: a soft cowl falling to the shoulders at the back
+  const HOOD = 'M -5.6 -2.0 C -6.4 -6.4 -5.4 -12.2 -0.6 -13.6 C 3.4 -14.4 5.6 -12.0 5.6 -9.0 L 5.2 -5.6 C 4.4 -4.0 2.4 -3.4 0.6 -3.0 L -1.8 0.6 Z';
+  cel(g, HOOD, PAL_H.hood, { sh: 1.4, hl: 0.5 });
+  clip(g, HOOD, () => {
+    stroke(g, curve([[-4.6, -9.8], [-1.6, -12.6], [2.6, -12.8]]), PAL_H.hood.l, 0.3);
+    stroke(g, curve([[-5.0, -3.4], [-3.0, -6.6], [-2.2, -10.4]]), PAL_H.hood.k, 0.3);
+  });
+  // face opening with a respirator: dark mask, two filters, red lenses
+  const MASK = 'M 0.6 -10.4 C 3.0 -10.8 5.2 -10.0 5.4 -8.4 L 5.6 -5.6 C 6.6 -5.2 6.8 -3.8 6.0 -3.2 L 3.0 -2.4 C 1.4 -2.6 0.6 -3.6 0.4 -5.0 Z';
+  cel(g, MASK, PAL_H.suit, { sh: 0.8, hl: 0.35 });
+  cel(g, 'M 4.4 -5.2 C 5.8 -5.6 7.2 -5.0 7.2 -3.8 C 7.2 -2.6 5.8 -2.0 4.6 -2.4 Z', PAL_H.armor, { sh: 0.4, hl: 0.3 });
+  stroke(g, 'M 5.4 -4.8 L 5.6 -2.6 M 6.3 -4.8 L 6.4 -2.8', PAL_H.armor.k, 0.22);
+  g.save(); g.shadowColor = PAL.visor.m; g.shadowBlur = 6;
+  for (const [x, y] of [[2.6, -7.9], [4.7, -8.0]]) fill(g, `M ${x - 0.85} ${y} a 0.85 0.75 0 1 0 1.7 0 a 0.85 0.75 0 1 0 -1.7 0 Z`, PAL.visor.m);
+  g.restore();
+  for (const [x, y] of [[2.4, -8.15], [4.5, -8.25]]) fill(g, `M ${x - 0.3} ${y} a 0.3 0.25 0 1 0 0.6 0 a 0.3 0.25 0 1 0 -0.6 0 Z`, PAL.visor.l);
+}
+
+function lightTorso(g) {
+  cel(g, PELVIS, PAL_H.suit, { sh: 1.0, hl: 0.4 });
+  cel(g, VEST, PAL_H.suit, { sh: 1.6, hl: 0.45 });
+  const PLATE = blob([[-4.4, -18.6], [1.2, -19.6], [5.0, -18.6], [6.2, -15.0], [5.8, -10.4], [-0.4, -9.8], [-5.0, -10.6], [-5.4, -14.4]]);
+  cel(g, PLATE, PAL_H.armor, { sh: 1.5, hl: 0.5 });
+  clip(g, PLATE, () => emblem(g, 3.4, -15.4, 0.9, PAL.white.m));
+  // shell bandolier from the far shoulder to the near hip
+  const BAND = 'M -5.6 -19.0 L -3.6 -20.0 L 6.2 -6.6 L 4.6 -5.2 Z';
+  cel(g, BAND, PAL_H.hood, { sh: 0.5, hl: 0.25 });
+  for (let k = 0; k < 7; k++) {
+    const t = k / 6, x = -4.2 + t * 9.2, y = -18.4 + t * 12.2;
+    fill(g, `M ${x - 0.55} ${y - 0.2} L ${x + 0.55} ${y - 0.95} L ${x + 1.05} ${y - 0.2} L ${x - 0.05} ${y + 0.55} Z`, MAT.shell.m);
+    fill(g, `M ${x + 0.45} ${y - 0.85} L ${x + 0.75} ${y - 1.05} L ${x + 1.2} ${y - 0.35} L ${x + 0.95} ${y - 0.15} Z`, M.brass.m);
+  }
+  cel(g, 'M -5.8 -4.4 C -1 -4.7 2.5 -4.7 5.8 -4.5 L 5.8 -2.8 C 2.5 -3.0 -1 -3.0 -5.8 -2.7 Z', PAL_H.suit, { sh: 0.35, hl: 0.2 });
+}
+function lightUpper(g, ctx) {
+  const t = ctx.t;
+  cel(g, UPPER, t(PAL_H.suit), { sh: 1.4, hl: 0.45 });
+  clip(g, UPPER, () => fill(g, 'M -4 4.6 L 4 4.4 L 4 6.6 L -4 6.8 Z', t(PAL_H.band).m));
+}
+function lightChest(g) {
+  const COL = 'M -5.0 -19.6 C -4.6 -21.4 -2.0 -22.2 1.0 -22.0 C 3.6 -21.8 5.0 -21.0 5.4 -19.6 L 4.8 -19.0 C 2.8 -18.6 -1.8 -18.4 -5.0 -19.6 Z';
+  cel(g, COL, PAL_H.hood, { sh: 0.8, hl: 0.4 });
+}
+
+export const HUCUMCU = {
+  id: 'hucumcu', name: 'HÜCUMCU', role: 'ASH SYNDICATE', pal: PAL_H,
+  pose: {
+    nThigh: 0.24, nShin: 0.08, fThigh: -0.3, fShin: -0.05, head: 0.02,
+    gun: { w: WEAPONS.ramrod, at: [6.0, -40.6], ang: 0.35, k: 0.96, mat: SYN_MAT },
+  },
+  parts: { ...PARTS, head: hoodHead, torso: lightTorso, upper: lightUpper, chest: lightChest },
+};

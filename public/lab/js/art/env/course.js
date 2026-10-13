@@ -14,12 +14,12 @@ const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
 export const COLS = 200, TOPY = -200, ROWS = 30; // row 25 is the street
 
 // --- painters -----------------------------------------------------------------
-const CONT = {
+export const CONT = {
   teal: tone('#5fa7a0', '#3f807a', '#2b5c58', '#13302e'),
   rust: tone('#c8664a', '#a04a33', '#723323', '#36150d'),
   navy: tone('#5d7896', '#425a76', '#2d4057', '#131d2a'),
 };
-function container(g, x0, y0, x1, y1, t) {
+export function container(g, x0, y0, x1, y1, t) {
   const B = rect(x0, y0, x1, y1);
   cel(g, B, t, { sh: 2.2, hl: 0.8 });
   clip(g, B, () => {
@@ -38,7 +38,7 @@ function container(g, x0, y0, x1, y1, t) {
   stroke(g, B, t.k, 0.5);
 }
 
-function catwalk(g, x0, x1, y) {
+export function catwalk(g, x0, x1, y) {
   const S = tone('#8a95a3', '#5d6878', '#3c4654', '#151a21');
   // brackets back to the wall
   for (let x = x0 + 8; x < x1; x += 32) stroke(g, `M ${x} ${y + 2} L ${x + 10} ${y + 16}`, S.d, 1.2);
@@ -51,13 +51,13 @@ function catwalk(g, x0, x1, y) {
   cel(g, rect(x0, y - 8.6, x1, y - 7.6), S, { sh: 0.2, hl: 0.15 });
 }
 
-function ladder(g, x0, yTop, yBot) {
+export function ladder(g, x0, yTop, yBot) {
   const S = tone('#9aa5b3', '#6c7786', '#4a5361', '#1f242b');
   for (const x of [x0 + 0.8, x0 + 6.4]) cel(g, rect(x, yTop - 14, x + 1.2, yBot), S, { sh: 0.3, hl: 0.2 });
   for (let y = yBot - 4; y > yTop - 12; y -= 6) cel(g, rect(x0 + 1.4, y - 0.6, x0 + 6.8, y + 0.4), S, { sh: 0.2, hl: 0.15 });
 }
 
-function pit(g, x0, x1, depth) {
+export function pit(g, x0, x1, depth) {
   fill(g, rect(x0, 0, x1, depth), '#0d1015');
   fill(g, rect(x0, 0, x0 + 2, depth), '#2a303c'); fill(g, rect(x1 - 2, 0, x1, depth), '#1b2029');
   fill(g, rect(x0, depth - 1, x1, depth), '#3c4654');
@@ -68,7 +68,7 @@ function pit(g, x0, x1, depth) {
 }
 
 const CONC = tone('#b9bcc6', '#8d919d', '#666a76', '#2f323a');
-function ramp(g, x0, x1, x2, x3, h) {
+export function ramp(g, x0, x1, x2, x3, h) {
   const R = poly([[x0, 0], [x1, -h], [x2, -h], [x3, 0]]);
   cel(g, R, CONC, { sh: 2.5, hl: 0.9 });
   clip(g, R, () => {
@@ -79,7 +79,7 @@ function ramp(g, x0, x1, x2, x3, h) {
   stroke(g, R, CONC.k, 0.5);
 }
 
-function duct(g, x0, x1, yTop, yBot) {
+export function duct(g, x0, x1, yTop, yBot) {
   const S = tone('#a9b3c0', '#7c8796', '#56606e', '#232831');
   for (let x = x0 + 10; x < x1; x += 40) { stroke(g, `M ${x} ${yTop} L ${x} ${yTop - 90}`, S.k, 1.2); stroke(g, `M ${x} ${yTop} L ${x} ${yTop - 90}`, S.d, 0.6); }
   const D = rect(x0, yTop, x1, yBot);
@@ -93,7 +93,7 @@ function duct(g, x0, x1, yTop, yBot) {
   clip(g, rect(x0, yBot - 2.4, x0 + 16, yBot), () => { fill(g, rect(x0, yBot - 2.4, x0 + 16, yBot), C.gold); for (let x = x0 - 4; x < x0 + 18; x += 4) fill(g, poly([[x, yBot], [x + 2, yBot], [x + 4.4, yBot - 2.4], [x + 2.4, yBot - 2.4]]), '#1a1c20'); });
 }
 
-function sandbags(g, x0, x1, h) {
+export function sandbags(g, x0, x1, h) {
   const S = tone('#d8c49a', '#b8a27a', '#8c7856', '#3e3322');
   const rows = Math.round(h / 6);
   for (let r = 0; r < rows; r++) {

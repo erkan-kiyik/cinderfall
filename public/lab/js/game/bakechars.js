@@ -38,8 +38,8 @@ export function charBakeList(ids, scale) {
 export function itemBakeList(scale, fxScale) {
   const E = [];
   for (const [n, it] of Object.entries(ITEMS)) {
-    const loose = n.startsWith('casing');
-    E.push({ name: `i.${n}`, box: it.box, scale: loose ? scale * 1.5 : scale, paint: it.paint, outline: loose ? 0.3 : 0 });
+    const loose = n.startsWith('casing') || n.startsWith('pickup');
+    E.push({ name: `i.${n}`, box: it.box, scale: loose ? scale * 1.5 : scale, paint: it.paint, outline: n.startsWith('pickup') ? 0.7 : loose ? 0.3 : 0 });
   }
   for (const [n, it] of Object.entries(FX_SHAPES)) E.push({ name: `fx.${n}`, box: it.box, scale: n === 'white' ? 2 : fxScale, paint: it.paint });
   return E;

@@ -13,6 +13,7 @@ import { Loop } from './core/loop.js';
 import * as M1 from './test/m1scene.js';
 import * as M2 from './test/m2scene.js';
 import * as M3 from './test/m3scene.js';
+import * as M4 from './game/mission.js';
 import { Controls, bindKeyboard, bindTouch } from './game/input.js';
 import { PerfOverlay } from './ui/perf.js';
 
@@ -36,7 +37,7 @@ async function main() {
 
   const bar = $('#boot .fill');
   const atlas = new Atlas(gl, 2048);
-  const SC = { m1: M1, m2: M2 }[params.get('scene')] || M3;
+  const SC = { m1: M1, m2: M2, m3: M3 }[params.get('scene')] || M4;
   const play = SC !== M1;
   const bake = await bakeAll(atlas, SC.bakeList(quality), {
     key: params.has('nocache') ? null : `${SC.BAKE_VERSION}:${quality}:${atlas.size}`,
@@ -48,7 +49,7 @@ async function main() {
   const batch = new SpriteBatch(gl, atlas);
   const eng = { gl, atlas, batch, camera, renderer };
   const controls = new Controls();
-  const scene = SC === M1 ? new M1.M1Scene(eng) : SC === M2 ? new M2.M2Scene(eng, controls) : new M3.M3Scene(eng, controls);
+  const scene = SC === M1 ? new M1.M1Scene(eng) : SC === M2 ? new M2.M2Scene(eng, controls) : SC === M3 ? new M3.M3Scene(eng, controls) : new M4.MissionScene(eng, controls, { diff: params.get('diff') || 'normal' });
   if (play) {
     bindKeyboard(controls, canvas);
     if (matchMedia('(pointer: coarse)').matches || params.has('touch')) bindTouch(controls, $('#hud'));
@@ -97,6 +98,8 @@ async function main() {
   btn('IŞIK AÇIK', (b) => { renderer.lightsOn = !renderer.lightsOn; b.textContent = renderer.lightsOn ? 'IŞIK AÇIK' : 'IŞIK KAPALI'; });
   if (SC === M1) btn('PATLAT', () => scene.explode(scene.camX + (Math.random() - 0.5) * 120, -4));
   btn('PANEL', () => perf.toggle());
+  if (scene.pause) btn('DURAKLAT', () => scene.pause());
+  addEventListener('keydown', (e) => { if (e.code === 'Escape' && scene.pause) scene.pause(); });
 
   // drag pans the camera; a tap sets off an explosion where you touched
   let down = null;

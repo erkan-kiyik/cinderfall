@@ -56,6 +56,20 @@ export const ITEMS = {
       fill(g, rr(-4.3, -0.55, -3.6, 0.55, 0.2), MAT.accent.m);
     },
   },
+  // ammo box dropped by enemies (sits on its bottom edge)
+  'pickup.ammo': {
+    box: [-5.4, -6.4, 5.4, 1.2],
+    paint: (g) => {
+      const B = rr(-4.6, -5.0, 4.6, 0, 0.5);
+      cel(g, B, tone('#7a8a5a', '#5c6b40', '#434f2e', '#1d2412'), { sh: 0.6, hl: 0.3 });
+      clip(g, B, () => {
+        fill(g, rr(-4.6, -5.0, 4.6, -3.8, 0.2), '#2d3520');
+        fill(g, rr(-2.6, -3.0, 2.6, -1.0, 0.3), MAT.accent.m);
+        g.font = '700 1.6px Rajdhani'; g.fillStyle = '#1a1c20'; g.fillText('AMMO', -2.2, -1.5);
+      });
+      cel(g, rr(-1.6, -6.0, 1.6, -5.0, 0.3), MAT.dark, { sh: 0.3, hl: 0.2 });
+    },
+  },
   // thigh holster (drawn over a holstered pistol, weapon space)
   holster: {
     box: [-4.2, -6.6, 7.4, -0.8],

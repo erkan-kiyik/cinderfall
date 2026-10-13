@@ -10,7 +10,11 @@ export class CombatHud {
       <div class="wpn"><div class="n">—</div><div class="a">0<small>/ 0</small></div><div class="r"><i></i></div></div>`;
     this.hurtEl = document.createElement('div'); this.hurtEl.className = 'hurt';
     this.deadEl = document.createElement('div'); this.deadEl.className = 'dead'; this.deadEl.textContent = 'ETKİSİZ HALE GETİRİLDİN';
-    root.append(this.hurtEl, this.deadEl, this.el);
+    // damage direction: a red glow on the side the shot came from
+    this.dirL = document.createElement('div'); this.dirL.className = 'hitdir l';
+    this.dirR = document.createElement('div'); this.dirR.className = 'hitdir r';
+    root.append(this.hurtEl, this.dirL, this.dirR, this.deadEl, this.el);
+    this.side = { l: 0, r: 0 };
     const q = (s) => this.el.querySelector(s);
     this.$ = { hp: q('.hp'), hpV: q('.hp .v'), hpBar: q('.hp .bar i'), wpn: q('.wpn'), name: q('.wpn .n'), ammo: q('.wpn .a'), rl: q('.wpn .r i') };
     this.last = {}; this.hurt = 0;
@@ -32,7 +36,15 @@ export class CombatHud {
     this.hurt = Math.max(0, this.hurt - dt * 1.6);
     this.set('hurt', Math.round(this.hurt * 50), (v) => { this.hurtEl.style.opacity = (v / 50).toFixed(2); });
     this.set('dead', !ch.alive, (v) => this.deadEl.classList.toggle('on', v));
+    for (const k of ['l', 'r']) {
+      this.side[k] = Math.max(0, this.side[k] - dt * 1.4);
+      this.set('dir' + k, Math.round(this.side[k] * 40), (v) => { (k === 'l' ? this.dirL : this.dirR).style.opacity = (v / 40).toFixed(2); });
+    }
   }
 
-  hit(amount) { this.hurt = Math.min(1, this.hurt + 0.25 + amount / 60); }
+  // side: −1 the shooter is to the left, +1 to the right (0: unknown)
+  hit(amount, side = 0) {
+    this.hurt = Math.min(1, this.hurt + 0.25 + amount / 60);
+    if (side < 0) this.side.l = 1; else if (side > 0) this.side.r = 1;
+  }
 }

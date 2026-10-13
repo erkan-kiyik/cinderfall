@@ -13,7 +13,7 @@ const W = +(q.get('w') || 1800), H = +(q.get('h') || 560);
 const cv = document.getElementById('c'); cv.width = W; cv.height = H; cv.style.width = W + 'px'; cv.style.height = H + 'px';
 const gl = createGL(cv);
 const atlas = new Atlas(gl);
-const ids = ['vex', 'hale', 'morrow', 'kite', 'brick', 'tet', 'kal'];
+const ids = ['vex', 'hale', 'morrow', 'kite', 'brick', 'tet', 'huc', 'kal'];
 const ppu = +(q.get('ppu') || 6);
 await bakeAll(atlas, charBakeList(ids, ppu));
 const B = new SpriteBatch(gl, atlas);
