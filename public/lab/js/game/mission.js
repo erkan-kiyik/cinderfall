@@ -50,6 +50,8 @@ export class MissionScene extends M3.M3Scene {
       level: this.L, squad: this.squad, covers: this.covers, t: 0,
       get player() { return self.player; },
       alert: (b, x, y) => { for (const o of self.brains) if (o !== b && Math.abs(o.ch.m.x - b.ch.m.x) < 340) o.alarm(x, y, 0.7); },
+      // inside the camera view (with a small margin)
+      onScreen: (x, y) => { const c = self.e.camera, hw = c.viewW / 2 - 6, hh = c.viewH / 2; return Math.abs(x - self.cam.x) < hw && Math.abs(y - self.cam.y) < hh + 20; },
     };
     this.mhud = new MissionHud(document.querySelector('#hud'));
     this.obj = 0; this.hack = 0; this.gateK = 0; this.gateOpen = false; this.waveIn = false;
@@ -85,7 +87,14 @@ export class MissionScene extends M3.M3Scene {
       <h1>SIZMA</h1>
       <p>Syndicate Sektör 9'un girişini tuttu. Kontrol noktasını aş, konteyner sahasından geç, avludaki kapı terminalini hackle ve tahliye noktasına ulaş.</p>
       <ol>${MISSION.objectives.map((o) => `<li>${o.text}</li>`).join('')}</ol>`,
-    [{ label: 'BAŞLA', fn: () => { this.mhud.hide(); this.paused = false; this.started = true; this.sfx.unlock(); } }]);
+    [{ label: 'BAŞLA', fn: () => this.begin('normal') }, { label: 'ZOR', ghost: true, fn: () => this.begin('hard') }]);
+  }
+
+  begin(diff) {
+    this.D = DIFF[diff]; this.diff = diff;
+    this.enemyDmg = this.D.dmg; this.squad.max = this.D.tokens;
+    for (const b of this.brains) { b.D = this.D; b.err = this.D.errMax; }
+    this.mhud.hide(); this.paused = false; this.started = true; this.sfx.unlock();
   }
 
   debrief() {
@@ -93,7 +102,7 @@ export class MissionScene extends M3.M3Scene {
     const s = this.stats, acc = s.shots ? Math.round((s.hits / s.shots) * 100) : 0;
     const stars = [true, this.clockT <= PAR, this.deaths === 0];
     this.mhud.show(`
-      <div class="kick">GÖREV TAMAMLANDI</div>
+      <div class="kick">GÖREV TAMAMLANDI · ${this.diff === 'hard' ? 'ZOR' : 'NORMAL'}</div>
       <h1>SIZMA</h1>
       <div class="stars">${stars.map((on) => `<i class="${on ? 'on' : ''}">★</i>`).join('')}</div>
       <div class="why">★ Görevi bitir · ★ ${fmt(PAR)} altında · ★ Hiç ölmeden</div>
@@ -140,7 +149,7 @@ export class MissionScene extends M3.M3Scene {
     if (!P.alive) return;
     const dx = (P.m.x - e.m.x) * f;
     if (dx < -4 || dx > 46 || Math.abs(P.m.y - e.m.y) > 30) return;
-    const dmg = 22 * (this.D.dmg / 0.32);
+    const dmg = 22 * (this.D.dmg / DIFF.normal.dmg);
     P.damage(dmg, 'body', f, -0.3, P.m.x, P.m.y - 36);
     P.m.vx = f * 320; P.m.vy = -170; P.m.state = 'air'; P.m.grounded = false;
     this.hud.hit(dmg, -Math.sign(P.m.x - e.m.x));

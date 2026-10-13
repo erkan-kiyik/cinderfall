@@ -114,7 +114,7 @@ export class M2Scene {
     // lead in the facing direction and a little toward where you aim
     const lead = m.facing * 36 + m.vx * 0.12 + clamp((ax - m.x) * 0.12, -26, 26);
     const tx = clamp(m.x + lead, e.viewW / 2 + 4, this.C.width - e.viewW / 2 - 4);
-    const ty = clamp(m.y - 44 + clamp((ay - m.y + 48) * 0.3, -44, 30), -176 + e.viewH / 2, 40 - e.viewH / 2 + 8);
+    const ty = clamp(m.y - 44 + clamp((ay - m.y + 48) * 0.3, -44, 30), -176 + e.viewH / 2, 42 - e.viewH / 2);
     cam.x += (tx - cam.x) * (1 - Math.exp(-dt * 5));
     cam.y += (ty - cam.y) * (1 - Math.exp(-dt * 3.5));
     e.update(dt);

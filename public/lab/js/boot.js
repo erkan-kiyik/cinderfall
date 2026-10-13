@@ -45,7 +45,7 @@ async function main() {
   });
   const renderer = new Renderer(gl, canvas);
   renderer.setQuality(quality);
-  const camera = new Camera(); camera.viewH = play ? 178 : 150;
+  const camera = new Camera(); camera.viewH = play ? 192 : 150;
   const batch = new SpriteBatch(gl, atlas);
   const eng = { gl, atlas, batch, camera, renderer };
   const controls = new Controls();

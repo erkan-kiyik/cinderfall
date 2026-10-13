@@ -58,7 +58,7 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .hitdir.r { right: 0; background: linear-gradient(270deg, rgba(255,40,50,0.65), rgba(255,40,50,0)); }
 
 /* mission (M4) */
-.mobj { position: fixed; top: max(48px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; z-index: 1; }
+.mobj { position: fixed; top: max(48px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; z-index: 1; padding: 6px 16px 7px; background: rgba(13,16,21,0.55); clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
 .mobj .k { font: 700 10px/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--ember); }
 .mobj .t { font: 700 17px/1.2 var(--f-display); letter-spacing: 0.06em; color: var(--n8); text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
 .mobj .p { width: 160px; height: 4px; margin: 5px auto 0; background: rgba(255,255,255,0.12); display: none; }

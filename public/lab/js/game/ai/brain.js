@@ -218,7 +218,9 @@ export class Brain {
   fire(dt, world, force = false) {
     const g = this.ch.gun;
     if (!g) return { trigger: false, pressed: false };
-    const ready = this.see && this.seenT > this.D.reaction;
+    // fairness: nobody shoots from outside the player's screen
+    const onScreen = !world.onScreen || world.onScreen(this.ch.m.x, this.ch.m.y - 40);
+    const ready = this.see && onScreen && this.seenT > this.D.reaction;
     if (this.burst > 0) {
       if (!ready || g.state === 'reload') { this.burst = 0; world.squad.release(this); return { trigger: false, pressed: false }; }
       const before = this._ammo ?? g.ammo;

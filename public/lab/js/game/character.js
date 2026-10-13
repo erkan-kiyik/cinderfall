@@ -83,9 +83,12 @@ export class Character {
     const w = this.win, A = this.anim, m = this.m;
     this.ev.length = 0;
     if (!this.gun) { w.pressed = w.reload = w.swap = w.melee = false; return; }
+    // swap / knife presses wait a moment if the other one is still playing
+    this.swapBuf = w.swap ? 0.45 : Math.max(0, (this.swapBuf || 0) - dt);
+    this.meleeBuf = w.melee ? 0.45 : Math.max(0, (this.meleeBuf || 0) - dt);
     // weapon swap: lower, switch at the midpoint, raise
-    if (w.swap && this.swapT < 0 && A.meleeT < 0 && this.guns.length > 1 && this.armed) {
-      this.gun.cancel(); this.swapT = 0; this.swapTo = (this.slot + 1) % this.guns.length;
+    if (this.swapBuf > 0 && this.swapT < 0 && A.meleeT < 0 && this.guns.length > 1 && this.armed) {
+      this.gun.cancel(); this.swapT = 0; this.swapTo = (this.slot + 1) % this.guns.length; this.swapBuf = 0;
       this.ev.push({ type: 'swap' });
     }
     if (this.swapT >= 0) {
@@ -100,9 +103,9 @@ export class Character {
       if (this.swapT >= SWAP) { this.swapT = -1; A.swapK = 0; }
     }
     // knife
-    if (w.melee && A.meleeT < 0 && this.swapT < 0 && this.armed) {
+    if (this.meleeBuf > 0 && A.meleeT < 0 && this.swapT < 0 && this.armed) {
       if (this.gun.state === 'reload') this.gun.cancel();
-      A.startMelee(); this.meleeHit = false;
+      A.startMelee(); this.meleeHit = false; this.meleeBuf = 0;
       this.ev.push({ type: 'knife' });
     }
     if (A.meleeT >= 0 && !this.meleeHit && A.meleeT > A.meleeDur * 0.36) { this.meleeHit = true; this.ev.push({ type: 'meleeHit' }); }
