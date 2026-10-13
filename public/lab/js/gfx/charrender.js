@@ -56,6 +56,7 @@ export class CharRenderer {
     this.view = new Float32Array(9);
     this.ink = [0.059, 0.071, 0.094, 1]; // style INK
     this.outline = 0.85;
+    this.enemyInk = null; // accessibility: a bright outline colour for enemies
     this.ppu = 5; this.cols = 1; this.cap = 1;
     this.queue = []; this.done = new Map();
   }
@@ -110,10 +111,11 @@ export class CharRenderer {
     gl.uniformMatrix3fv(p.u.uView, false, view);
     gl.uniform4f(p.u.uRect, x + BOX[0] * f, y + BOX[1], x + BOX[2] * f, y + BOX[3]);
     gl.uniform4f(p.u.uUV, uv[0], uv[1], uv[2], uv[3]);
-    const W = this.size, r = this.outline * this.ppu / W;
+    const W = this.size, r = this.outline * (ch.team === 1 && this.enemyInk ? 1.7 : 1) * this.ppu / W;
     gl.uniform2f(p.u.uR, r, r);
     gl.uniform4f(p.u.uClamp, uv[0] + 0.5 / W, uv[3] + 0.5 / W, uv[2] - 0.5 / W, uv[1] - 0.5 / W);
-    gl.uniform4f(p.u.uInk, this.ink[0], this.ink[1], this.ink[2], this.ink[3]);
+    const ink = (ch.team === 1 && this.enemyInk) || this.ink;
+    gl.uniform4f(p.u.uInk, ink[0], ink[1], ink[2], ink[3]);
     const fc = ch.flashCol || [1, 1, 1];
     gl.uniform4f(p.u.uFlash, fc[0], fc[1], fc[2], (ch.flash || 0) * 0.45);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.sheet.tex); gl.uniform1i(p.u.uTex, 0);

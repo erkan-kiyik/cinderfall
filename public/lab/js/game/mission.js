@@ -15,6 +15,7 @@ import { EMPTY } from '../phys/level.js';
 import { Brain, Squad, DIFF } from './ai/brain.js';
 import { findCovers } from './ai/cover.js';
 import { MissionHud, fmt } from '../ui/missionhud.js';
+import { t } from '../ui/i18n.js';
 import { rgba } from '../gfx/batch.js';
 import { col } from '../gfx/particles.js';
 
@@ -37,8 +38,16 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const PAR = 300; // par time (s) for the time star
 
 export class MissionScene extends M3.M3Scene {
-  constructor(eng, controls, { diff = 'normal' } = {}) {
+  // opts: diff, op + loadout (from preparation), brief (show the briefing
+  // card), onExit(result) (back to the menus; without it the card reloads)
+  constructor(eng, controls, { diff = 'normal', op = null, loadout = null, brief = true, onExit = null } = {}) {
     super(eng, controls, MISSION);
+    this.onExit = onExit; this.diff = diff;
+    if (op) {
+      this.opId = op; this.loadout = loadout;
+      this.opIndex = Math.max(0, M2.OPERATORS.indexOf(op));
+      this.player = new Character(op, eng.atlas, this.mover, loadout ? { weapon: loadout.primary, sidearm: loadout.sidearm } : {});
+    }
     this.M = MISSION; this.D = DIFF[diff] || DIFF.normal;
     this.enemyDmg = this.D.dmg;
     this.squad = new Squad(this.D.tokens);
@@ -58,18 +67,22 @@ export class MissionScene extends M3.M3Scene {
     this.cp = -1; this.deaths = 0; this.clockT = 0; this.done = false; this.started = false;
     this.pickups = [];
     this.hud.update(0, this.player);
-    this.briefing();
+    if (brief) this.briefing(); else this.begin(diff);
     // the app going to the background pauses the mission
-    document.addEventListener('visibilitychange', () => { if (document.hidden) this.pause(); });
+    this._vis = () => { if (document.hidden) this.pause(); };
+    document.addEventListener('visibilitychange', this._vis);
   }
 
   pause() {
     if (!this.started || this.done || this.paused) return;
     this.paused = true;
-    this.mhud.show(`<div class="kick">GÖREV 1 · SIZMA</div><h1>DURAKLATILDI</h1>
-      <p>Hedef: ${this.objective ? this.objective.text : '—'} · Süre ${fmt(this.clockT)}</p>`,
-    [{ label: 'DEVAM', fn: () => { this.mhud.hide(); this.paused = false; this.sfx.unlock(); } },
-      { label: 'YENİDEN BAŞLA', ghost: true, fn: () => location.reload() }]);
+    this.mhud.show(`<div class="kick">${t('camp.mission', { n: 1 })} · ${t('mission.m1')}</div><h1>${t('game.paused')}</h1>
+      <p>${t('game.status', { o: this.objective ? this.objText(this.obj) : '—', t: fmt(this.clockT) })}</p>`,
+    [{ label: t('game.resume'), fn: () => { this.mhud.hide(); this.paused = false; this.sfx.unlock(); } },
+      ...(this.onExit
+        ? [{ label: t('game.restart'), ghost: true, fn: () => this.onExit({ ...this.result(false), retry: true }) },
+          { label: t('game.quit'), ghost: true, fn: () => this.onExit({ ...this.result(false), abandoned: true }) }]
+        : [{ label: t('game.restart'), ghost: true, fn: () => location.reload() }])]);
   }
 
   spawnEnemy(d) {
@@ -84,11 +97,11 @@ export class MissionScene extends M3.M3Scene {
   briefing() {
     this.paused = true;
     this.mhud.show(`
-      <div class="kick">KÜL HATTI · GÖREV 1</div>
-      <h1>SIZMA</h1>
-      <p>Syndicate Sektör 9'un girişini tuttu. Kontrol noktasını aş, konteyner sahasından geç, avludaki kapı terminalini hackle ve tahliye noktasına ulaş.</p>
-      <ol>${MISSION.objectives.map((o) => `<li>${o.text}</li>`).join('')}</ol>`,
-    [{ label: 'BAŞLA', fn: () => this.begin('normal') }, { label: 'ZOR', ghost: true, fn: () => this.begin('hard') }]);
+      <div class="kick">${t('camp.title')} · ${t('camp.mission', { n: 1 })}</div>
+      <h1>${t('mission.m1')}</h1>
+      <p>${t('mission.m1.brief')}</p>
+      <ol>${MISSION.objectives.map((o, i) => `<li>${this.objText(i)}</li>`).join('')}</ol>`,
+    [{ label: t('game.start'), fn: () => this.begin('normal') }, { label: t('diff.hard'), ghost: true, fn: () => this.begin('hard') }]);
   }
 
   begin(diff) {
@@ -100,29 +113,55 @@ export class MissionScene extends M3.M3Scene {
 
   debrief() {
     this.done = true; this.paused = true;
+    if (this.onExit) {
+      // the menus show the result; a beat to let the moment land first
+      this.mhud.toast(t('res.done'), 1.6);
+      this.sfx.ui('levelup', 0.8);
+      setTimeout(() => this.onExit(this.result(true)), 1700);
+      return;
+    }
     const s = this.stats, acc = s.shots ? Math.round((s.hits / s.shots) * 100) : 0;
     const stars = [true, this.clockT <= PAR, this.deaths === 0];
     this.mhud.show(`
-      <div class="kick">GÖREV TAMAMLANDI · ${this.diff === 'hard' ? 'ZOR' : 'NORMAL'}</div>
-      <h1>SIZMA</h1>
+      <div class="kick">${t('res.done')} · ${t(`diff.${this.diff === 'hard' ? 'hard' : 'normal'}`)}</div>
+      <h1>${t('mission.m1')}</h1>
       <div class="stars">${stars.map((on) => `<i class="${on ? 'on' : ''}">★</i>`).join('')}</div>
-      <div class="why">★ Görevi bitir · ★ ${fmt(PAR)} altında · ★ Hiç ölmeden</div>
+      <div class="why">${t('res.why')}</div>
       <div class="stats">
-        <div><b>${fmt(this.clockT)}</b><span>SÜRE</span></div>
-        <div><b>${s.kills}</b><span>ETKİSİZ</span></div>
-        <div><b>%${acc}</b><span>İSABET</span></div>
-        <div><b>${s.heads}</b><span>KAFA VURUŞU</span></div>
+        <div><b>${fmt(this.clockT)}</b><span>${t('res.time')}</span></div>
+        <div><b>${s.kills}</b><span>${t('prof.kills')}</span></div>
+        <div><b>%${acc}</b><span>${t('prof.acc')}</span></div>
+        <div><b>${s.heads}</b><span>${t('prof.heads')}</span></div>
       </div>`,
-    [{ label: 'TEKRAR OYNA', fn: () => location.reload() }]);
+    [{ label: t('game.again'), fn: () => location.reload() }]);
+  }
+
+  // what the menus record: { id, done, stars, time, kills, ... }
+  result(done) {
+    const s = this.stats;
+    return {
+      id: 'm1', done, diff: this.diff || 'normal', op: this.opId || M2.OPERATORS[this.opIndex],
+      stars: done ? [true, this.clockT <= PAR, this.deaths === 0] : [false, false, false],
+      time: this.clockT, kills: s.kills, heads: s.heads, shots: s.shots, hits: s.hits, deaths: this.deaths,
+      byWeapon: s.byWeapon,
+    };
+  }
+
+  // remove everything this scene put in the page
+  dispose() {
+    document.removeEventListener('visibilitychange', this._vis);
+    const H = this.hud, MH = this.mhud;
+    for (const n of [H.el, H.hurtEl, H.dirL, H.dirR, H.deadEl, MH.obj, MH.time, MH.arrow, MH.toastEl, MH.card]) n && n.remove();
   }
 
   get objective() { return MISSION.objectives[this.obj] || null; }
+  objText(i) { return t(`mission.m1.o${i + 1}`); }
 
   advance() {
     this.obj++;
     this.sfx.play('kill', null, null, { vol: 0.5, rate: 0.8 });
     if (!this.objective) { this.debrief(); return; }
-    this.mhud.toast('HEDEF GÜNCELLENDİ', 1.4);
+    this.mhud.toast(t('game.objUpdated'), 1.4);
   }
 
   // --- simulation -----------------------------------------------------------------------------
@@ -201,12 +240,13 @@ export class MissionScene extends M3.M3Scene {
     const cp = MISSION.checkpoints[this.cp];
     const x = cp ? cp.x : MISSION.spawn[0];
     this.mover = new Mover(this.L, x, -2);
-    this.player = new Character(M2.OPERATORS[this.opIndex], this.e.atlas, this.mover);
+    const lo = this.loadout;
+    this.player = new Character(this.opId || M2.OPERATORS[this.opIndex], this.e.atlas, this.mover, lo ? { weapon: lo.primary, sidearm: lo.sidearm } : {});
     this.player.hpMax = this.player.hp = 100;
     this.deadT = 0;
     // the squads calm down a little (no spawn-camping)
     for (const b of this.brains) if (b.ch.alive) { b.state = 'guard'; b.aw = 0.4; b.seenT = 0; b.burst = 0; this.squad.release(b); }
-    this.mhud.toast('KONTROL NOKTASI', 1.2);
+    this.mhud.toast(t('game.checkpoint'), 1.2);
   }
 
   afterUpdate(dt) {
@@ -218,7 +258,7 @@ export class MissionScene extends M3.M3Scene {
     if (P.alive && P.t - P.lastHit > 4 && P.hp < P.hpMax) P.hp = Math.min(P.hpMax, P.hp + 14 * dt);
     // checkpoints
     for (let i = this.cp + 1; i < MISSION.checkpoints.length; i++) {
-      if (P.alive && m.x >= MISSION.checkpoints[i].x) { this.cp = i; this.mhud.toast('KONTROL NOKTASI', 1.4); this.sfx.play('marker', null, null, { vol: 0.6, rate: 0.7 }); }
+      if (P.alive && m.x >= MISSION.checkpoints[i].x) { this.cp = i; this.mhud.toast(t('game.checkpoint'), 1.4); this.sfx.play('marker', null, null, { vol: 0.6, rate: 0.7 }); }
     }
     // objectives
     const o = this.objective;
@@ -264,7 +304,7 @@ export class MissionScene extends M3.M3Scene {
     }
     // objective HUD
     const ob = this.objective;
-    if (ob) this.mhud.objective(this.obj + 1, MISSION.objectives.length, ob.text, ob.type === 'hack' ? this.hack / MISSION.terminal.time : null);
+    if (ob) this.mhud.objective(this.obj + 1, MISSION.objectives.length, this.objText(this.obj), ob.type === 'hack' ? this.hack / MISSION.terminal.time : null);
     this.mhud.clock(this.clockT);
     this.pointTo();
   }
@@ -272,7 +312,7 @@ export class MissionScene extends M3.M3Scene {
   openGate() {
     this.gateOpen = true;
     this.sfx.play('gunDrop', MISSION.gate.x, -40, { rate: 0.5, vol: 1 });
-    this.mhud.toast('KAPI AÇILIYOR', 1.8);
+    this.mhud.toast(t('game.gate'), 1.8);
     this.e.camera.addShake(0.25);
   }
 

@@ -1,5 +1,6 @@
 // CINDERFALL LAB — combat HUD (DOM): health, weapon and ammo, reload bar,
 // hurt vignette, death banner. Writes to the DOM only when a value changes.
+import { t } from './i18n.js';
 
 export class CombatHud {
   constructor(root) {
@@ -9,7 +10,7 @@ export class CombatHud {
       <div class="hp"><div class="v">100</div><div class="bar"><i></i></div></div>
       <div class="wpn"><div class="n">—</div><div class="a">0<small>/ 0</small></div><div class="r"><i></i></div></div>`;
     this.hurtEl = document.createElement('div'); this.hurtEl.className = 'hurt';
-    this.deadEl = document.createElement('div'); this.deadEl.className = 'dead'; this.deadEl.textContent = 'ETKİSİZ HALE GETİRİLDİN';
+    this.deadEl = document.createElement('div'); this.deadEl.className = 'dead'; this.deadEl.textContent = t('game.down');
     // damage direction: a red glow on the side the shot came from
     this.dirL = document.createElement('div'); this.dirL.className = 'hitdir l';
     this.dirR = document.createElement('div'); this.dirR.className = 'hitdir r';

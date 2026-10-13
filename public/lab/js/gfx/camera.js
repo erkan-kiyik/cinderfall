@@ -10,6 +10,7 @@ export class Camera {
     this.viewH = 140;                // world units visible vertically
     this.aspect = 16 / 9;
     this.trauma = 0;                 // 0..1, decays; shake = trauma²
+    this.shakeMul = 1;               // accessibility: 0 turns shake off
     this.shakeX = 0; this.shakeY = 0; this.shakeR = 0;
     this._t = 0;
     this.m = new Float32Array(9);
@@ -17,7 +18,7 @@ export class Camera {
 
   get viewW() { return this.viewH * this.aspect; }
 
-  addShake(amount) { this.trauma = Math.min(1, this.trauma + amount); }
+  addShake(amount) { this.trauma = Math.min(1, this.trauma + amount * this.shakeMul); }
 
   // Called once per simulation step.
   update(dt) {

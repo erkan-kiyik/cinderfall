@@ -1,6 +1,7 @@
 // CINDERFALL LAB — mission HUD (DOM): objective line with hack progress,
 // mission clock, an edge arrow toward an off-screen objective, toasts, and
 // the briefing / debrief cards.
+import { t } from './i18n.js';
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
@@ -18,7 +19,7 @@ export class MissionHud {
 
   objective(i, n, text, hack = null) {
     this.set('obj', `${i}|${text}`, () => {
-      this.obj.querySelector('.k').textContent = i > n ? 'GÖREV TAMAM' : `HEDEF ${i}/${n}`;
+      this.obj.querySelector('.k').textContent = i > n ? t('game.allDone') : t('game.objCount', { i, n });
       this.obj.querySelector('.t').textContent = text;
       this.obj.classList.remove('flash'); void this.obj.offsetWidth; this.obj.classList.add('flash');
     });

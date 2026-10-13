@@ -17,6 +17,7 @@ import { rayTiles, rayCapsule, rayBox, falloff } from '../game/ballistics.js';
 import { rgba } from '../gfx/batch.js';
 import { Sfx } from '../audio/sfx.js';
 import { CombatHud } from '../ui/combathud.js';
+import { haptic } from '../ui/kit.js';
 
 export const BAKE_VERSION = 'm3-2';
 export const OPERATORS = M2.OPERATORS;
@@ -44,7 +45,7 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export class M3Scene extends M2.M2Scene {
   constructor(eng, controls, course = COURSE) {
     super(eng, controls, course);
-    this.sfx = new Sfx();
+    this.sfx = eng.sfx || new Sfx();
     this.fx = new Effects(eng, this.sfx);
     this.hud = new CombatHud(document.querySelector('#hud'));
     this.win = {};
@@ -53,12 +54,14 @@ export class M3Scene extends M2.M2Scene {
     this.ai = this.enemies.map(() => this.newBrain());
     this.player.hpMax = this.player.hp = 100;
     this.deadT = 0; this.enemyDmg = ENEMY_DMG;
-    this.stats = { shots: 0, hits: 0, kills: 0, heads: 0 };
+    this.stats = { shots: 0, hits: 0, kills: 0, heads: 0, byWeapon: {} };
     this._a = new Float32Array(2); this._b = new Float32Array(2); this._d = new Float32Array(2); this._n = {};
     this.shapes = [];
     // the first gesture starts the audio
-    const unlock = () => this.sfx.unlock();
-    for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, unlock, { passive: true });
+    if (!eng.sfx) {
+      const unlock = () => this.sfx.unlock();
+      for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, unlock, { passive: true });
+    }
   }
 
   newBrain() { return { seen: 0, aimX: 0, aimY: 0, burst: 0, pause: rand(0.8, 1.6), err: 0.13, respawn: 0 }; }
@@ -185,7 +188,8 @@ export class M3Scene extends M2.M2Scene {
     const gun = ch.gun, s = gun.s, W = ch.W, L = this.L, n = this._n, fx = this.fx;
     const sh = ch.shoulder(this._a), mz = ch.muzzle(this._b), d = this._d;
     const isPlayer = ch === this.player;
-    if (isPlayer) { this.stats.shots++; this.e.camera.addShake(s.shake); }
+    const ws = isPlayer ? (this.stats.byWeapon[gun.id] ||= { kills: 0, shots: 0, hits: 0, heads: 0 }) : null;
+    if (isPlayer) { this.stats.shots++; ws.shots++; this.e.camera.addShake(s.shake); }
     let hitAny = false, killed = false, head = false;
     for (const off of e.dirs) {
       ch.shotDir(off, d);
@@ -215,7 +219,7 @@ export class M3Scene extends M2.M2Scene {
         fx.flesh(hx, hy, d[0], d[1], zone === 'head');
         hitAny = true; head = head || zone === 'head';
         if (dead) { killed = true; this.onDeath(who, d[0], d[1]); this.onKill(who, ch, zone); }
-        if (who === this.player) { this.hud.hit(dmg, Math.sign(ch.m.x - who.m.x)); this.sfx.play('hurt', null, null, { vol: 0.6 }); this.e.camera.addShake(0.12); }
+        if (who === this.player) { this.hud.hit(dmg, Math.sign(ch.m.x - who.m.x)); this.sfx.play('hurt', null, null, { vol: 0.6 }); this.e.camera.addShake(0.12); haptic('soft'); }
       } else if (what === 'shield') {
         fx.shield(hx, hy, d[0], d[1]);
         this.sfx.play('shield', hx, hy, { rate: rand(0.9, 1.1) });
@@ -228,6 +232,8 @@ export class M3Scene extends M2.M2Scene {
     this.sfx.play(s.sound, mz[0], mz[1], { rate: rand(0.94, 1.06) * (ch.team ? 0.96 : 1), cap: 6 });
     if (isPlayer && hitAny) {
       this.stats.hits++; if (killed) this.stats.kills++; if (head) this.stats.heads++;
+      ws.hits++; if (killed) ws.kills++; if (head) ws.heads++;
+      haptic(killed ? 'soft' : 'tick');
       this.marker.t = 0; this.marker.kill = killed;
       this.sfx.play(killed ? 'kill' : head ? 'head' : 'marker', null, null, { vol: killed ? 0.8 : 0.6 });
     }
@@ -252,7 +258,10 @@ export class M3Scene extends M2.M2Scene {
       const dead = c.damage(dmg, 'body', f, -0.2, c.m.x - f * 4, c.m.y - 36);
       this.fx.flesh(c.m.x - f * 4, c.m.y - 36, f, -0.2);
       this.sfx.play('knifeHit', c.m.x, c.m.y - 36);
-      if (ch === this.player) { this.marker.t = 0; this.marker.kill = dead; this.sfx.play(dead ? 'kill' : 'marker', null, null, { vol: 0.7 }); if (dead) this.stats.kills++; }
+      if (ch === this.player) {
+        this.marker.t = 0; this.marker.kill = dead; this.sfx.play(dead ? 'kill' : 'marker', null, null, { vol: 0.7 });
+        if (dead) { this.stats.kills++; const k = this.stats.byWeapon.knife ||= { kills: 0, shots: 0, hits: 0, heads: 0 }; k.kills++; }
+      }
       if (dead) { this.onDeath(c, f, -0.3); this.onKill(c, ch, 'knife'); }
       break;
     }

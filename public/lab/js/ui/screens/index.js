@@ -1,0 +1,14 @@
+// Every menu screen, by id.
+export { lobby } from './lobby.js';
+export { play } from './play.js';
+export { campaign } from './campaign.js';
+export { prep } from './prep.js';
+export { operators } from './operators.js';
+export { arsenal } from './arsenal.js';
+export { crates } from './crates.js';
+export { trader } from './trader.js';
+export { profile } from './profile.js';
+export { settings } from './settings.js';
+export { legal } from './legal.js';
+export { hudedit } from './hudedit.js';
+export { result } from './result.js';

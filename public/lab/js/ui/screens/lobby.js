@@ -1,0 +1,58 @@
+// Lobby: the live operator on the left (the showcase draws it), the play
+// panel on the right.
+import { h, svg, press, popIn, ui } from '../kit.js';
+import { t } from '../i18n.js';
+import { hubbar, soon, stars } from './common.js';
+import { avatar } from '../portraits.js';
+import { OPS, MISSIONS } from '../data.js';
+import { WEAPONS } from '../../art/weapons/index.js';
+
+export const lobby = {
+  mount(ctx) {
+    const d = ctx.save.d;
+    const next = MISSIONS.find((m) => m.ready && !(d.campaign[m.id] && d.campaign[m.id].done)) || MISSIONS[0];
+    const tag = h('div.op-tag');
+    const picks = h('div.op-picks');
+    const renderOp = () => {
+      const id = ctx.save.d.roster.op, lo = ctx.save.d.roster.loadout[id], op = OPS.find((o) => o.id === id);
+      tag.replaceChildren(
+        h('div.eyebrow', t('lobby.operator')),
+        h('div.name', id.toUpperCase()),
+        h('div.role', t(`role.${op.role}`)),
+        h('div.loadout', h('span', '▸ ', WEAPONS[lo.primary].name), lo.sidearm && h('span', '▸ ', WEAPONS[lo.sidearm].name)));
+      for (const b of picks.children) b.classList.toggle('on', b.dataset.id === id);
+      ctx.showcase.setOperator(id, lo);
+    };
+    for (const o of OPS) {
+      picks.appendChild(press(h('button.op-pick.cut', { type: 'button', 'aria-label': o.id, dataset: { id: o.id }, onclick: () => {
+        if (ctx.save.d.roster.op === o.id) return;
+        ui('tab');
+        ctx.save.set((s) => { s.roster.op = o.id; });
+        renderOp();
+        hub.replaceWith(hub = hubbar(ctx, 'lobby'));
+      } }, avatar(o.id, 46)), { buzz: 'tick' }));
+    }
+    const best = d.campaign[next.id];
+    const play = press(h('button.play-cta.cut', { type: 'button', onclick: () => { ui('confirm'); ctx.router.go('play'); } },
+      h('div.eyebrow', t('lobby.campaign', { act: next.act })),
+      h('b', t('lobby.play')),
+      h('span', t('lobby.next', { n: next.id.slice(1), name: t(`mission.${next.id}`) }), best ? ' · ' : '', best ? stars(best.stars, 12) : null),
+      svg('arrow')), { scale: 0.97, sound: null, buzz: 'soft' });
+    const tiles = h('div.side-grid',
+      h('div.tile.cut.locked', h('span.lockbadge', svg('lock'), t('ui.soon')), h('div.eyebrow', t('mode.daily')), h('div.big', '0', h('small', '/ 3')), h('div.meter.cyan', h('i', { style: { width: '0%' } }))),
+      h('div.tile.cut.locked', h('span.lockbadge', svg('lock'), t('ui.soon')), h('div.eyebrow', t('mode.endless')), h('div.big', '—', h('small', t('lobby.record'))), h('div.eyebrow', { style: { color: 'var(--n5)' } }, t('lobby.boss5'))));
+    const crow = press(h('button.tile.cut.wide-row', { type: 'button', onclick: () => ctx.router.go('trader', {}, { root: true }) },
+      h('div', h('div.eyebrow', h('span.dot'), t('lobby.crow')), h('div.h3', { style: { marginTop: '6px' } }, t('lobby.crowSub'))),
+      h('div.tag', soon())));
+    let hub = hubbar(ctx, 'lobby');
+    const el = h('div',
+      hub,
+      h('div.lobby-body',
+        h('section.lobby-stage', tag, picks),
+        h('section.lobby-side.veil-r', play, tiles, crow)));
+    return {
+      el,
+      show() { ctx.showcase.frame(0.27, 112); renderOp(); popIn([play, tiles, crow], { delay: 40 }); },
+    };
+  },
+};

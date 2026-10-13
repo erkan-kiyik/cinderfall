@@ -1,0 +1,132 @@
+// CINDERFALL LAB — the application: menus over a live backdrop, missions,
+// the save, settings, the legal gate and the back button.
+//
+// One engine (renderer, atlas, loop) runs the whole time; `scene` is either
+// the Showcase (menus) or a MissionScene. The menus are DOM screens in #ui,
+// scaled as a whole with CSS zoom so they keep their composition on every
+// screen size.
+import { Router } from './ui/router.js';
+import { configureKit, toast, ui as uiSound } from './ui/kit.js';
+import { setLang, getLang, t } from './ui/i18n.js';
+import * as SCREENS from './ui/screens/index.js';
+import { hudLayout } from './ui/screens/hudedit.js';
+import { Showcase } from './game/showcase.js';
+import { MissionScene } from './game/mission.js';
+import { bindKeyboard, bindTouch } from './game/input.js';
+import { applyMission } from './core/save.js';
+import { needsAcceptance } from './legal/consent.js';
+
+const MARKS = { yellow: [1, 0.86, 0.12, 1], blue: [0.2, 0.62, 1, 1], magenta: [1, 0.25, 0.85, 1] };
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+export class App {
+  constructor(eng, { save, version, controls, perf, dyn }) {
+    this.e = eng; this.save = save; this.version = version; this.controls = controls; this.perf = perf; this.dyn = dyn;
+    bindKeyboard(controls, eng.renderer.canvas);
+    this.uiRoot = document.querySelector('#ui');
+    this.showcase = new Showcase(eng);
+    this.scene = this.showcase;
+    this.ctx = {
+      save, version, showcase: this.showcase, reduceMotion: false,
+      startMission: (id, o) => this.startMission(id, o),
+      applySettings: () => this.applySettings(),
+    };
+    this.router = this.ctx.router = new Router(this.uiRoot, this.ctx, SCREENS);
+    this.router.onRootBack = () => this.rootBack();
+    // the back button: one guard history entry, re-armed after every press
+    history.pushState({ g: 1 }, '');
+    addEventListener('popstate', () => this.onBack());
+    addEventListener('resize', () => this.fit());
+    addEventListener('keydown', (e) => { if (e.code === 'Escape') { if (this.scene !== this.showcase) this.scene.pause?.(); else if (!document.querySelector('.scrim')) this.router.back(); } });
+    // the first touch starts the audio
+    const unlock = () => eng.sfx.unlock();
+    for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, unlock, { passive: true });
+    this.applySettings(true);
+  }
+
+  // UI zoom. The menus are laid out on a canvas of at least 720×360: never
+  // shrunk below 1 by the screen, grown with it from ~800×390 up, times the
+  // player's scale, but never so far that the canvas drops under that floor.
+  // When the player scales down, the hit token grows so touch targets stay
+  // 44 real pixels.
+  fit() {
+    const W = innerWidth, H = innerHeight, root = document.documentElement.style;
+    let z = clamp(Math.min(H / 390, W / 800), 1, 2.6) * (this.save.d.settings.uiScale || 1);
+    z = Math.max(0.8, Math.min(z, Math.max(1, W / 720), Math.max(1, H / 360)));
+    root.setProperty('--zoom', z.toFixed(3));
+    root.setProperty('--hit', `${Math.max(44, 44 / z).toFixed(1)}px`);
+  }
+
+  applySettings(first = false) {
+    const st = this.save.d.settings, R = this.e.renderer;
+    if (st.quality !== 'auto' && st.quality !== R.qName) R.setQuality(st.quality);
+    R.bloomOn = st.bloom; R.lightsOn = st.lights;
+    this.dyn.on = st.dynRes; if (!st.dynRes) { this.dyn.step = 0; R.setDyn(1); }
+    if (this.perf && this.perf.visible !== st.fps) this.perf.toggle();
+    this.e.sfx.setVolumes(st.vol);
+    configureKit({ haptics: st.haptics, reduce: st.reduceMotion, sfx: this.e.sfx });
+    this.ctx.reduceMotion = st.reduceMotion;
+    this.e.camera.shakeMul = st.shake;
+    this.inkFor(this.scene);
+    if (st.lang !== getLang()) { setLang(st.lang); if (!first) this.router.refresh(); }
+    this.fit();
+  }
+  inkFor(scene) { if (scene && scene.cr) scene.cr.enemyInk = MARKS[this.save.d.settings.enemyMark] || null; }
+
+  start() {
+    this.router.go(needsAcceptance() ? 'legal' : 'lobby', {}, { root: true });
+    if (this.save.recovered) toast(t('app.recovered'));
+  }
+
+  // --- back button ---------------------------------------------------------------------
+  onBack() {
+    if (this.exitArmed) return; // the second press leaves the app (nothing re-armed)
+    history.pushState({ g: 1 }, '');
+    if (this.scene !== this.showcase) { this.scene.pause?.(); return; }
+    if (document.querySelector('.scrim')) { document.querySelector('.scrim').click(); return; }
+    this.router.back();
+  }
+  rootBack() {
+    const top = this.router.top;
+    if (top && top.id !== 'lobby' && top.id !== 'legal') { uiSound('back'); this.router.go('lobby', {}, { root: true }); return; }
+    // press back again within two seconds to leave
+    toast(t('app.exitHint'));
+    this.exitArmed = true;
+    history.back();
+    setTimeout(() => { if (this.exitArmed) { this.exitArmed = false; history.pushState({ g: 1 }, ''); } }, 2000);
+  }
+
+  // --- missions --------------------------------------------------------------------------
+  startMission(id, { diff = 'normal' } = {}) {
+    const d = this.save.d, op = d.roster.op, lo = d.roster.loadout[op];
+    this.router.clear();
+    document.body.classList.add('ui-hidden');
+    const coarse = matchMedia('(pointer: coarse)').matches || new URLSearchParams(location.search).has('touch');
+    this.touch = coarse ? bindTouch(this.controls, document.querySelector('#hud'), { layout: hudLayout(this.save), fireRing: d.settings.fireRing }) : null;
+    const scene = new MissionScene(this.e, this.controls, { diff, op, loadout: lo, brief: false, onExit: (r) => this.exitMission(r) });
+    this.inkFor(scene);
+    this.scene = scene;
+    this.e.camera.viewH = 192;
+  }
+
+  exitMission(r) {
+    const scene = this.scene;
+    if (scene === this.showcase) return;
+    scene.dispose();
+    if (this.touch) { this.touch.remove(); this.touch = null; }
+    Object.assign(this.controls, { moveX: 0, up: false, down: false, jump: false, sprint: false, crouch: false, fire: false, touchFire: false, aimHeld: false });
+    this.scene = this.showcase;
+    document.body.classList.remove('ui-hidden');
+    const gain = applyMission(this.save, r.id, r);
+    if (r.retry) { this.startMission(r.id, { diff: r.diff }); return; }
+    if (r.abandoned) { this.router.go('campaign', { sel: r.id }, { root: true }); return; }
+    this.router.go('result', { r, gain }, { root: true });
+  }
+
+  update(dt) { this.scene.update(dt); }
+  render(alpha) {
+    // the menus are a backdrop: half rate is plenty, and saves battery
+    if (this.scene === this.showcase && (this.frame = (this.frame || 0) + 1) % 2 && this.e.loop.hz > 70) return;
+    this.scene.render(alpha);
+  }
+}

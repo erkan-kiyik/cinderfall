@@ -32,7 +32,11 @@ export class Character {
     this.R.knife = atlas.get('i.knife'); this.R.holster = atlas.get('i.holster'); this.R.shell = atlas.get('i.casing.shell');
     // guns and their sprites
     const mat = this.spec.mat ? '.' + this.spec.mat : '';
-    this.loadout = [this.spec.weapon, this.spec.sidearm].filter(Boolean);
+    // loadout: the operator's defaults unless the player picked others
+    const prim = opts.weapon !== undefined ? opts.weapon : this.spec.weapon;
+    const side = opts.sidearm !== undefined ? opts.sidearm : this.spec.sidearm;
+    this.loadout = [prim, side !== prim ? side : null].filter(Boolean);
+    if (prim !== this.spec.weapon) this.anim.setWeapon(prim);
     this.guns = this.loadout.map((w) => new Gun(w, { infinite: !!this.spec.enemy || !!opts.infinite }));
     this.WR = {};
     for (const w of this.loadout) {

@@ -13,6 +13,8 @@
 //   buttons    — ZIPLA (jump), ÇÖMEL (crouch / slide), DOLDUR (reload),
 //                BIÇAK (knife), SİLAH (swap) bottom right
 
+import { t } from '../ui/i18n.js';
+
 export class Controls {
   constructor() {
     this.moveX = 0; this.up = false; this.down = false;
@@ -65,20 +67,22 @@ export function bindKeyboard(ctl, canvas) {
 }
 
 // Floating sticks: the ring appears where the thumb lands.
-export function bindTouch(ctl, root) {
+// opts: { layout: { jump|crouch|reload|knife|swap: { r, b, s } } (px from the
+// bottom-right corner, from the HUD editor), fireRing: 0..1 of the reach }
+export function bindTouch(ctl, root, opts = {}) {
   const layer = document.createElement('div');
   layer.className = 'touch';
   layer.innerHTML = `
     <div class="stick l"><div class="knob"></div></div>
     <div class="stick r"><div class="knob"></div></div>
-    <button class="tbtn jump">ZIPLA</button>
-    <button class="tbtn crouch">ÇÖMEL</button>
-    <button class="tbtn reload">DOLDUR</button>
-    <button class="tbtn knife">BIÇAK</button>
-    <button class="tbtn swap">SİLAH</button>`;
+    ${['jump', 'crouch', 'reload', 'knife', 'swap'].map((k) => `<button class="tbtn ${k}">${t(`hud.${k}`)}</button>`).join('')}`;
   root.appendChild(layer);
   const [sl, sr] = layer.querySelectorAll('.stick');
-  const R = 46, FIRE = 0.78; // fire past 78% of the stick's reach
+  const R = 46, FIRE = opts.fireRing || 0.78; // fire past this share of the stick's reach
+  if (opts.layout) for (const [k, L] of Object.entries(opts.layout)) {
+    const b = layer.querySelector('.tbtn.' + k);
+    if (b) Object.assign(b.style, { right: `${L.r}px`, bottom: `${L.b}px`, width: `${L.s}px`, height: `${L.s}px` });
+  }
   const pads = new Map(); // pointerId → { side, x0, y0 }
   const show = (el, x, y) => { el.style.display = 'block'; el.style.left = x - R + 'px'; el.style.top = y - R + 'px'; el.firstElementChild.style.transform = 'translate(0,0)'; };
   const knob = (el, dx, dy) => { el.firstElementChild.style.transform = `translate(${dx}px,${dy}px)`; };

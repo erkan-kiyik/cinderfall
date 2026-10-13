@@ -135,11 +135,21 @@ export const RECIPES = {
   knifeHit: () => norm(mix(0.2, [noise(0.08, 191, 0.0003, 0.015, [['lp', 1400]]), 1], [thump(0.1, 180, 70, 0.015, 0.03), 0.8]), 0.7),
   swap: () => norm(mix(0.25, [noise(0.12, 201, 0.01, 0.04, [['bp', 700, 0.8]]), 0.7], [noise(0.03, 202, 0.0002, 0.005, [['bp', 2400, 3]]), 1, 0.14]), 0.45),
   hurt: () => norm(mix(0.3, [thump(0.25, 90, 40, 0.04, 0.08), 1], [noise(0.2, 211, 0.001, 0.05, [['lp', 500]]), 0.6]), 0.8),
+  // interface: short, soft, tonal
+  uiTap: () => norm(mix(0.06, [ping(0.06, [1850], 0.012, 21), 1], [noise(0.02, 221, 0.0002, 0.003, [['bp', 3000, 3]]), 0.3]), 0.35),
+  uiTab: () => norm(mix(0.05, [ping(0.05, [2400], 0.008, 22), 1]), 0.25),
+  uiBack: () => norm(mix(0.07, [ping(0.07, [1250], 0.014, 23), 1], [noise(0.02, 222, 0.0002, 0.003, [['bp', 1800, 3]]), 0.3]), 0.3),
+  uiConfirm: () => norm(mix(0.22, [ping(0.12, [1320, 2640], 0.03, 24), 0.8], [ping(0.14, [1980, 3960], 0.035, 25), 0.9, 0.06]), 0.4),
+  uiDeny: () => norm(mix(0.18, [thump(0.16, 210, 150, 0.05, 0.05), 1], [thump(0.12, 180, 130, 0.05, 0.04), 0.8, 0.07]), 0.4),
+  uiReward: () => norm(mix(0.6, [ping(0.3, [1568, 3136], 0.08, 26), 0.7], [ping(0.3, [1976, 3952], 0.09, 27), 0.7, 0.08], [ping(0.4, [2349, 4698], 0.12, 28), 0.8, 0.16]), 0.45),
+  uiLevelup: () => norm(mix(0.9, [ping(0.4, [1047, 2093], 0.1, 29), 0.7], [ping(0.4, [1319, 2637], 0.1, 30), 0.7, 0.1], [ping(0.45, [1568, 3136], 0.12, 31), 0.8, 0.2], [ping(0.6, [2093, 4186], 0.18, 32), 0.9, 0.32]), 0.5),
 };
+const UI = { tap: 'uiTap', tab: 'uiTab', back: 'uiBack', confirm: 'uiConfirm', deny: 'uiDeny', reward: 'uiReward', levelup: 'uiLevelup' };
 
 export class Sfx {
   constructor() {
-    this.ctx = null; this.buf = {}; this.voices = new Map(); this.vol = 0.8; this.muted = false;
+    this.ctx = null; this.buf = {}; this.voices = new Map(); this.muted = false;
+    this.vols = { master: 0.8, sfx: 1, ui: 0.7, music: 0.6 };
     this.ear = { x: 0, y: 0 };
   }
 
@@ -152,8 +162,12 @@ export class Sfx {
     const c = this.ctx;
     this.comp = c.createDynamicsCompressor();
     this.comp.threshold.value = -14; this.comp.ratio.value = 6; this.comp.attack.value = 0.002; this.comp.release.value = 0.15;
-    this.master = c.createGain(); this.master.gain.value = this.vol;
-    this.master.connect(this.comp); this.comp.connect(c.destination);
+    // buses: game sounds through the compressor, the interface beside it
+    this.master = c.createGain(); this.master.gain.value = this.vols.master;
+    this.sfxBus = c.createGain(); this.sfxBus.gain.value = this.vols.sfx;
+    this.uiBus = c.createGain(); this.uiBus.gain.value = this.vols.ui;
+    this.sfxBus.connect(this.comp); this.comp.connect(this.master);
+    this.uiBus.connect(this.master); this.master.connect(c.destination);
     // synthesise in small slices so the first frames stay smooth
     const names = Object.keys(RECIPES);
     const next = () => {
@@ -168,8 +182,16 @@ export class Sfx {
     next();
   }
 
+  setVolumes(v) {
+    this.vols = { ...this.vols, ...v };
+    if (!this.ctx) return;
+    this.master.gain.value = this.vols.master; this.sfxBus.gain.value = this.vols.sfx; this.uiBus.gain.value = this.vols.ui;
+  }
+  // interface sound by short name (tap, tab, back, confirm, deny, reward, levelup)
+  ui(name, vol = 1) { if (UI[name]) this.play(UI[name], null, null, { vol, cap: 3, bus: 'ui' }); }
+
   // play at a world position (x, y); the listener is `ear` (the camera)
-  play(name, x = null, y = null, { vol = 1, rate = 1, cap = 4 } = {}) {
+  play(name, x = null, y = null, { vol = 1, rate = 1, cap = 4, bus = 'sfx' } = {}) {
     const c = this.ctx, b = this.buf[name];
     if (!c || !b || this.muted || c.state !== 'running') return;
     let g = vol, pan = 0;
@@ -186,7 +208,7 @@ export class Sfx {
     const gn = c.createGain(); gn.gain.value = g;
     let node = gn;
     if (c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = pan; gn.connect(p); node = p; }
-    s.connect(gn); node.connect(this.master);
+    s.connect(gn); node.connect(bus === 'ui' ? this.uiBus : this.sfxBus);
     s.onended = () => this.voices.set(name, Math.max(0, (this.voices.get(name) || 1) - 1));
     s.start();
   }

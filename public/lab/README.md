@@ -77,7 +77,7 @@ folder; the shipping game in `public/game` is untouched.
   F knife; touch: aim stick fires past its outer ring, DOLDUR / BIÇAK / SİLAH
 - tests: `node tools/lab/guns.test.mjs`, `ballistics.test.mjs`, `ragdoll.test.mjs`
 
-## Status — M4 (vertical slice) — default scene
+## Status — M4 (vertical slice) — `?scene=mission`
 - `js/game/ai/brain.js` — enemy AI on the same Mover and guns as the player:
   guard / patrol, awareness from a sight cone with line of sight and from
   gunfire, search, combat; rifleman takes the cover facing you and peeks to
@@ -94,3 +94,32 @@ folder; the shipping game in `public/game` is untouched.
 - `js/ui/missionhud.js` — objective line, hack progress, clock, edge arrow to
   the objective, toasts, cards; damage direction in `combathud.js`
 - tests: `node tools/lab/ai.test.mjs` (+ the M2/M3 tests)
+
+## Status — M5 (UI design system) — default
+- `js/app.js` — the application: one engine for the whole session, the
+  menus over a live backdrop (`js/game/showcase.js`, half rate), missions
+  started from preparation and handed back to the result screen; the Android
+  back button (one guard history entry: back pauses a mission, closes a
+  dialog, pops a screen, goes home, and twice in two seconds leaves)
+- `js/ui/router.js` — screen stack with spring slide transitions (180–260 ms)
+- `js/ui/kit.js` — element builder, icon set, press feedback (scale, haptics
+  through Capacitor or `navigator.vibrate`, interface sounds on their own
+  bus), dialogs, toasts, count-ups; `css/app.css` — the design system and
+  every screen
+- scaling: the menus are laid out on a canvas of at least 720×360 and zoomed
+  with the screen (CSS `zoom`), so the composition holds from a 740×360 phone
+  to a 2400×1080 display; the player's interface scale (85–115 %) never takes
+  touch targets under 44 px (the hit token grows instead)
+- `js/ui/screens/` — legal gate, lobby, mode select, campaign map,
+  preparation, operators, arsenal, crates, trader (CROW), profile (summary,
+  career, collection, achievements, statistics), settings (graphics, sound,
+  controls, accessibility, language, privacy & legal), HUD editor, result
+- `js/core/save.js` — versioned save with a backup copy and migration;
+  campaign stars and best times, per-operator and per-weapon statistics,
+  experience, levels and PARÇA
+- `js/ui/i18n.js`, `js/ui/lang/` — Turkish and English for every menu and
+  in-game string
+- `js/legal/` — the shipping game's consent rules and texts, unchanged
+- accessibility: colour-blind enemy outline (yellow / blue / magenta), camera
+  shake, reduced motion, interface scale
+- tests: `node tools/lab/i18n.test.mjs` (every key in every language)
