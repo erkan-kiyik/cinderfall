@@ -195,7 +195,7 @@ export const SCARF = {
 };
 
 export const VEX = {
-  id: 'vex', name: 'VEX', role: 'SALDIRI', pal: PAL,
+  id: 'vex', name: 'FLINT', role: 'SALDIRI', pal: PAL,
   pose: { nUpper: 0.62, nFore: -0.95, nHand: -0.5, fUpper: -0.06, fFore: -0.3, fHand: -0.15, nThigh: 0.18, nShin: 0.04, fThigh: -0.26, fShin: -0.08, head: -0.04 },
   parts: { backFar, torso, chest, head, upper, fore, hand, thigh, shin, foot },
 };

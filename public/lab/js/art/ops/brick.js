@@ -149,7 +149,7 @@ function foot(g, ctx) {
 function head(g) { scaledHead(g, () => brickHelmet(g, PAL)); }
 
 export const BRICK = {
-  id: 'brick', name: 'BRICK', role: 'AĞIR', pal: PAL,
+  id: 'brick', name: 'BULWARK', role: 'AĞIR', pal: PAL,
   pose: { nUpper: 0.32, nFore: 0.04, nHand: 0.0, fUpper: -0.32, fFore: -0.14, fHand: -0.1, nThigh: 0.24, nShin: 0.04, fThigh: -0.3, fShin: -0.04, head: -0.02 },
   parts: { backFar, torso, chest, head, upper, fore, hand: handP, thigh, shin, foot },
 };

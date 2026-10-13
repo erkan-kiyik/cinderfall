@@ -221,8 +221,10 @@ oranda, okunaklılık için %15 büyütülmüş.
 **Açılış sahnesi (`js/ui/intro.js`):** Uygulama açılırken çizimler pişerken oynar:
 CRT açılışı, yanan Sektör 9 silueti, duman, projektör, yağmur ve kıvılcımlar,
 çatıda beş operatör (oyunun kendi çizimiyle, ateşe dönük kenar ışığı), sırayla
-yanan vizörler, harf harf yükselen CINDERFALL başlığı. En kısa 3,4 sn; pişirme
+yanan vizörler, harf harf yükselen KOR başlığı. En kısa 3,4 sn; pişirme
 sürerse son karede canlı bekler. Dokunuşla geçilir; azaltılmış harekette kısalır.
+Menü portreleri de aynı ışıkla boyanır: yanan şehir önünde koyu figür, ateşe
+bakan kenarda kor ışığı, operatörün renginde parlayan vizör.
 Ardından lobi girişi: kamera yaklaşır, seçili operatör sokağa iner, paneller
 kayarak gelir.
 
@@ -237,6 +239,12 @@ kayarak gelir.
 
 Valorant'tan esinlenilir ama hiçbir isim, karakter ya da yetenek kopyalanmaz.
 İsimler taslaktır, M0'da onaylanır.
+
+**Güncel görünen adlar:** VEX → FLINT, HALE → WARDEN, MORROW → VESPER,
+KITE → SKYE, BRICK → BULWARK. Koddaki kimlikler (`vex`, `hale`…) kayıtlar
+bozulmasın diye aynı kalır; görünen ad `js/ui/data.js` içindeki `opName()`
+ile alınır. LAB'de oyunun adı **KOR**'dur (uygulama adı "KOR LAB"). Oyuncu
+adını profilden kendisi yazar; varsayılan ad OPERATÖR'dür.
 
 | Operatör | Rol | Yetenek 1 | Yetenek 2 | Ulti |
 |---|---|---|---|---|

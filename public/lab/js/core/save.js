@@ -17,7 +17,7 @@ export function freshSave() {
   return {
     v: SAVE_VERSION,
     created: Date.now(),
-    profile: { name: 'KÜLKUZGUN', level: 1, xp: 0, parca: 0 },
+    profile: { name: 'OPERATÖR', level: 1, xp: 0, parca: 0 },
     roster: { op: 'vex', loadout },
     campaign: {},          // missionId -> { done, stars: [bool×3], best, plays }
     stats: { missions: 0, kills: 0, heads: 0, shots: 0, hits: 0, deaths: 0, time: 0, byWeapon: {}, byOp: {} },
@@ -46,6 +46,8 @@ export function migrate(s) {
   if (!s || typeof s !== 'object') throw new Error('not a save');
   if (typeof s.v !== 'number' || s.v > SAVE_VERSION) throw new Error('unknown version');
   // if (s.v === 1) { ...; s.v = 2; }
+  // the first builds named every player KÜLKUZGUN; that default is gone
+  if (s.profile && s.profile.name === 'KÜLKUZGUN') s.profile.name = 'OPERATÖR';
   return deepFill(s, freshSave());
 }
 

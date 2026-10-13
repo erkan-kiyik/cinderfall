@@ -4,7 +4,7 @@ import { h, svg, press, popIn, ui, spring, reduced } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, soon, stars } from './common.js';
 import { avatar } from '../portraits.js';
-import { OPS, MISSIONS } from '../data.js';
+import { OPS, MISSIONS, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 
 export const lobby = {
@@ -17,7 +17,7 @@ export const lobby = {
       const id = ctx.save.d.roster.op, lo = ctx.save.d.roster.loadout[id], op = OPS.find((o) => o.id === id);
       tag.replaceChildren(
         h('div.eyebrow', t('lobby.operator')),
-        h('div.name', id.toUpperCase()),
+        h('div.name', opName(id)),
         h('div.role', t(`role.${op.role}`)),
         h('div.loadout', h('span', '▸ ', WEAPONS[lo.primary].name), lo.sidearm && h('span', '▸ ', WEAPONS[lo.sidearm].name)));
       for (const b of picks.children) b.classList.toggle('on', b.dataset.id === id);

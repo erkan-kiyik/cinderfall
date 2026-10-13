@@ -157,7 +157,7 @@ function head(g) {
 }
 
 export const MORROW = {
-  id: 'morrow', name: 'MORROW', role: 'KONTROL', pal: PAL,
+  id: 'morrow', name: 'VESPER', role: 'KONTROL', pal: PAL,
   pose: { nUpper: 0.06, nFore: -0.3, nHand: -0.05, fUpper: -0.1, fFore: -0.2, fHand: -0.1, nThigh: 0.12, nShin: 0.02, fThigh: -0.2, fShin: -0.06, head: 0.06 },
   parts: { torso, chest, head, upper, fore, hand, thigh, shin, foot },
 };

@@ -132,6 +132,17 @@ folder; the shipping game in `public/game` is untouched.
   app, and the lobby plays its entrance (the camera settles, the operator
   drops onto the street, the panels slide in)
 
+## Names
+- the game is **KOR** in the LAB (app name "KOR LAB"); the operators show as
+  FLINT (vex), WARDEN (hale), VESPER (morrow), SKYE (kite) and BULWARK
+  (brick) through `opName()` in `js/ui/data.js` — the ids stay, so saves
+  keep working; the player names themselves in the profile (default
+  OPERATÖR; the old default KÜLKUZGUN is migrated)
+- `js/ui/portraits.js` — menu portraits lit like the opening: the burning
+  skyline behind, the operator dark against it with an ember rim on the
+  fire side and the visor glowing in the operator's colour
+  (`dev/sheet.html?what=avatars`)
+
 ## Characters — body standard v2
 - `js/art/ops/body.js` — shared anatomy: heroic proportions (head about 1/7 of
   the height, wide high shoulders, V torso, limbs with mass), big gloves,

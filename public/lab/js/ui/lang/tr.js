@@ -2,7 +2,7 @@
 export default {
   'ui.back': 'Geri', 'ui.cancel': 'Vazgeç', 'ui.save': 'Kaydet', 'ui.soon': 'Yakında',
   'app.exitHint': 'Çıkmak için tekrar geri bas', 'app.recovered': 'Kayıt yedekten geri yüklendi',
-  'intro.loading': 'Sektör 9 hazırlanıyor', 'intro.ready': 'Hazır', 'intro.skip': 'Geçmek için dokun',
+  'intro.loading': 'Sektör 9 hazırlanıyor', 'intro.ready': 'Hazır', 'intro.skip': 'Geçmek için dokun', 'intro.sector': 'SEKTÖR 9',
 
   'nav.lobby': 'Lobi', 'nav.operators': 'Operatörler', 'nav.arsenal': 'Cephanelik', 'nav.crates': 'Sandıklar', 'nav.trader': 'Tüccar',
   'nav.profile': 'Profil', 'nav.settings': 'Ayarlar',
@@ -127,7 +127,7 @@ export default {
   'set.readPrivacy': 'Gizlilik politikası', 'set.readTerms': 'Kullanım koşulları',
   'set.resetProgress': 'İlerlemeyi sıfırla', 'set.resetHint': 'Profil, kampanya ve istatistikler silinir.', 'set.reset': 'Sıfırla',
   'set.resetConfirm': 'Bu cihazdaki LAB ilerlemen kalıcı olarak silinecek. Devam edilsin mi?', 'set.resetDone': 'İlerleme sıfırlandı',
-  'set.aboutHint': 'Sıfırdan yeniden yazılan CINDERFALL’ın test sürümü.', 'set.build': 'Sürüm', 'set.engine': 'Motor', 'set.engineHint': 'Kendi WebGL2 motoru · 120 Hz simülasyon',
+  'set.aboutHint': 'KOR’un sıfırdan yazılan test sürümü.', 'set.build': 'Sürüm', 'set.engine': 'Motor', 'set.engineHint': 'Kendi WebGL2 motoru · 120 Hz simülasyon',
 
   'hud.title': 'HUD düzenleyici', 'hud.size': 'Boyut', 'hud.reset': 'Varsayılan', 'hud.resetDone': 'Varsayılan düzen',
   'hud.moveZone': 'Hareket çubuğu', 'hud.aimZone': 'Nişan çubuğu',

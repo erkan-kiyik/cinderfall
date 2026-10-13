@@ -4,7 +4,7 @@ import { h, svg, press, popIn, ui, toast } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, soon } from './common.js';
 import { avatar } from '../portraits.js';
-import { OPS } from '../data.js';
+import { OPS, opName } from '../data.js';
 
 export const operators = {
   mount(ctx, params) {
@@ -16,12 +16,12 @@ export const operators = {
       const o = OPS.find((x) => x.id === sel), d = ctx.save.d, st = d.stats.byOp[o.id];
       list.replaceChildren(...OPS.map((x) => press(h(`button.op-row.cut${x.id === sel ? '.on' : ''}`, {
         type: 'button', onclick: () => { if (x.id !== sel) { sel = x.id; ui('tab'); render(); } },
-      }, avatar(x.id, 44), h('div', h('b', x.id.toUpperCase()), h('small', t(`role.${x.role}`))),
+      }, avatar(x.id, 44), h('div', h('b', opName(x.id)), h('small', t(`role.${x.role}`))),
       d.roster.op === x.id && h('span', { style: { marginLeft: 'auto', color: 'var(--ember)', display: 'flex' } }, svg('check'))), { buzz: 'tick', sound: null })));
       ctx.showcase.setOperator(o.id, d.roster.loadout[o.id]);
       mid.replaceChildren(
         h('div.card.cut.op-card',
-          h('div.op-title', h('div.h2', o.id.toUpperCase()), h('div.eyebrow.accent', t(`role.${o.role}`))),
+          h('div.op-title', h('div.h2', opName(o.id)), h('div.eyebrow.accent', t(`role.${o.role}`))),
           h('p.body', t(`op.${o.id}.bio`))),
         h('div.eyebrow', t('ops.abilities'), soon()),
         h('div.abil-list', o.abil.map(([k, icon], i) => h('div.abil.cut', h(`div.hex${i === 2 ? '.ult' : ''}`, svg(icon)), h('div', h('b', t(`ab.${o.id}.${k}`), i === 2 ? h('span.soon', t('ops.ult')) : null), h('p', t(`ab.${o.id}.${k}.d`)))))));
@@ -34,7 +34,7 @@ export const operators = {
         h('div.meter.ember', h('i', { style: { width: '8%' } })),
         h('div.wide-row', { style: { minHeight: 0 } }, h('div.eyebrow', t('ops.missions'), ' ', h('b', { style: { color: 'var(--n8)' } }, String(st ? st.missions : 0))), h('div.tag.eyebrow', t('ops.kills'), ' ', h('b', { style: { color: 'var(--n8)' } }, String(st ? st.kills : 0)))),
         press(h(`button.btn.${isOn ? 'secondary' : 'primary'}.cut`, { type: 'button', style: { marginTop: 'auto' }, 'aria-disabled': isOn ? 'true' : 'false',
-          onclick: () => { if (isOn) return; ui('confirm'); ctx.save.set((s) => { s.roster.op = o.id; }); toast(t('ops.selected', { n: o.id.toUpperCase() }), { kind: 'good' }); render(); } },
+          onclick: () => { if (isOn) return; ui('confirm'); ctx.save.set((s) => { s.roster.op = o.id; }); toast(t('ops.selected', { n: opName(o.id) }), { kind: 'good' }); render(); } },
         svg(isOn ? 'check' : 'user'), t(isOn ? 'ops.inSquad' : 'ops.select')), { sound: null }));
     }
     render();

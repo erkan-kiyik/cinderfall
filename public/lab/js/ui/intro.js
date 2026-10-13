@@ -9,14 +9,14 @@
 //   0.00  black; a CRT line snaps open
 //   0.30  the city fades up: fire glow, smoke, searchlight, rain, embers
 //   0.90  visors light, one operator at a time
-//   1.50  CINDERFALL rises letter by letter; the rule and SECTOR 9 follow
+//   1.50  KOR rises letter by letter; the rule and SECTOR 9 follow
 //   3.40  earliest hand-off (waits for the bake if it is still running)
 //
 // Any tap or key skips (after a beat, so the launch tap does not); the
 // hand-off fades into the lobby, which plays its own entrance.
-import { drawFigure, solve } from '../art/figure.js';
+import { drawFigure, solve, headPoint } from '../art/figure.js';
 import { outlined } from '../art/kit.js';
-import { OPS } from '../art/ops/index.js';
+import { OPS, VISOR } from '../art/ops/index.js';
 import { drone } from '../art/ops/kite.js';
 import { WEAPONS } from '../art/weapons/index.js';
 import { t } from './i18n.js';
@@ -25,18 +25,17 @@ const BG = '#07090c';
 const MIN_RUN = 3.4, FADE = 0.55, SKIP_AFTER = 0.45;
 const ss = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 // the strings (looked up per frame: the language can change before the intro ends)
-const TEXT = { loading: () => t('intro.loading'), ready: () => t('intro.ready'), skip: () => t('intro.skip') };
+const TEXT = { loading: () => t('intro.loading'), ready: () => t('intro.ready'), skip: () => t('intro.skip'), sector: () => t('intro.sector') };
 const hash = (n) => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
 
-// The squad, left to right on the roof, facing left toward the fires.
-// glow: visor / lens lights in the head frame [x, y, half width, half height].
+// The squad on the roof, facing left toward the fires; `on`: when the visor lights.
 const SQUAD = [
-  { id: 'kite', x: 0.565, k: 0.95, gun: 'marksman', glow: [[3.0, -6.9, 2.5, 1.0]], c: [143, 208, 255], on: 1.38 },
-  { id: 'hale', x: 0.65, k: 1.0, gun: 'ramrod', glow: [[2.9, -6.6, 2.0, 0.85]], c: [62, 232, 224], on: 1.16 },
-  { id: 'morrow', x: 0.925, k: 0.97, gun: 'wren9', glow: [[1.6, -6.3, 1.1, 0.85], [4.0, -6.3, 0.55, 0.75]], c: [196, 168, 255], on: 1.6 },
-  { id: 'brick', x: 0.84, k: 1.08, gun: 'kestrel', glow: [[3.7, -6.6, 2.0, 0.6]], c: [255, 201, 60], on: 1.27 },
-  { id: 'vex', x: 0.745, k: 1.04, gun: 'kestrel', glow: [[3.3, -6.6, 2.3, 0.75]], c: [255, 122, 53], on: 0.95 },
-];
+  { id: 'kite', x: 0.565, k: 0.95, gun: 'marksman', on: 1.38 },
+  { id: 'hale', x: 0.65, k: 1.0, gun: 'ramrod', on: 1.16 },
+  { id: 'morrow', x: 0.925, k: 0.97, gun: 'wren9', on: 1.6 },
+  { id: 'brick', x: 0.84, k: 1.08, gun: 'kestrel', on: 1.27 },
+  { id: 'vex', x: 0.745, k: 1.04, gun: 'kestrel', on: 0.95 },
+].map((m) => ({ ...m, c: VISOR[m.id].c, glow: VISOR[m.id].at }));
 
 function squadPose(m) {
   const op = OPS[m.id];
@@ -158,9 +157,9 @@ export class Intro {
       dg.globalCompositeOperation = 'source-atop'; dg.fillStyle = 'rgba(8,9,13,0.78)'; dg.fillRect(0, 0, fw, fh);
       sg.drawImage(dark, 0, 0);
       // visor lights: head frame → figure frame → mirrored
-      const J = solve(pose), a = -J.p.lean - J.p.head;
+      const J = solve(pose);
       const glows = m.glow.map(([hx, hy, rx, ry]) => {
-        const x = J.neck[0] + hx * Math.cos(a) - hy * Math.sin(a), y = J.neck[1] + hx * Math.sin(a) + hy * Math.cos(a);
+        const [x, y] = headPoint(pose, [hx, hy]);
         return { x: -x * s0 * m.k, y: y * s0 * m.k, rx: rx * s0 * m.k, ry: ry * s0 * m.k };
       });
       figs.push({ m, sil, w: fw / dpr, h: fh / dpr, ox: ox / dpr, oy: oy / dpr, glows, headY: J.neck[1] * s0 * m.k });
@@ -270,34 +269,36 @@ export class Intro {
     }
     g.restore();
 
-    // title over the fires: letters rise one after another, lit from below
-    const tcx = W * 0.27, ty = H * 0.3;
+    // title over the fires: the three letters rise one after another, lit from below
+    const tcx = W * 0.27, ty = H * 0.34;
     if (t > 1.5) {
-      const word = 'CINDERFALL', size = Math.min(u * 11, W / 11);
+      const word = 'KOR', size = Math.min(u * 22, W / 6.5);
       g.save(); g.font = `700 ${size}px Rajdhani, sans-serif`; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
-      const sp = size * 0.1, total = g.measureText(word).width + sp * (word.length - 1);
+      const sp = size * 0.14, total = g.measureText(word).width + sp * (word.length - 1);
       let lx = tcx - total / 2;
       for (let i = 0; i < word.length; i++) {
-        const ch = word[i], k = ss(1.5 + i * 0.05, 1.88 + i * 0.05, t), wch = g.measureText(ch).width;
+        const ch = word[i], k = ss(1.5 + i * 0.18, 1.9 + i * 0.18, t), wch = g.measureText(ch).width;
         if (k > 0) {
-          const yy = ty + (1 - k) * size * 0.35;
-          const grad = g.createLinearGradient(0, ty - size, 0, ty);
-          grad.addColorStop(0, `rgba(244,240,232,${k})`); grad.addColorStop(0.65, `rgba(236,226,214,${k})`); grad.addColorStop(1, `rgba(255,150,96,${k})`);
+          const yy = ty + (1 - k) * size * 0.3;
+          const grad = g.createLinearGradient(0, ty - size * 0.75, 0, ty);
+          grad.addColorStop(0, `rgba(244,240,232,${k})`); grad.addColorStop(0.6, `rgba(236,226,214,${k})`); grad.addColorStop(1, `rgba(255,140,84,${k})`);
           g.fillStyle = grad; g.fillText(ch, lx, yy);
           if (k < 1) { g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = `rgba(255,120,60,${0.6 * (1 - k)})`; g.fillText(ch, lx, yy); g.restore(); }
         }
         lx += wch + sp;
       }
-      const k2 = ss(2.15, 2.6, t);
+      // the rule, then SECTOR 9 typed out and the LAB tag
+      const label = TEXT.sector().split(' ').map((w) => [...w].join(' ')).join('   ');
+      g.font = `700 ${size * 0.17}px Rajdhani, sans-serif`;
+      const rw = Math.max(total, g.measureText(label).width) * 1.06, k2 = ss(2.15, 2.6, t);
       g.fillStyle = `rgba(214,69,58,${k2})`;
-      g.fillRect(tcx - total * 0.5 * k2, ty + size * 0.22, total * k2, Math.max(1.5, size * 0.035));
-      g.font = `700 ${size * 0.3}px Rajdhani, sans-serif`; g.textAlign = 'center';
-      const label = 'S E C T O R   9';
-      g.fillText(label.slice(0, Math.ceil(label.length * ss(2.25, 2.7, t))), tcx, ty + size * 0.62);
+      g.fillRect(tcx - rw * 0.5 * k2, ty + size * 0.12, rw * k2, Math.max(1.5, size * 0.022));
+      g.textAlign = 'center';
+      g.fillText(label.slice(0, Math.ceil(label.length * ss(2.25, 2.7, t))), tcx, ty + size * 0.36);
       const k3 = ss(2.7, 3.0, t);
       if (k3 > 0) {
-        g.font = `700 ${size * 0.22}px Rajdhani, sans-serif`;
-        g.fillStyle = `rgba(255,107,44,${k3})`; g.fillText('L A B', tcx, ty + size * 0.92);
+        g.font = `700 ${size * 0.12}px Rajdhani, sans-serif`;
+        g.fillStyle = `rgba(255,107,44,${k3})`; g.fillText('L A B', tcx, ty + size * 0.55);
       }
       g.restore();
     }

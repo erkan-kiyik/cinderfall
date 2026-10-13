@@ -2,7 +2,7 @@
 export default {
   'ui.back': 'Back', 'ui.cancel': 'Cancel', 'ui.save': 'Save', 'ui.soon': 'Soon',
   'app.exitHint': 'Press back again to exit', 'app.recovered': 'Save restored from backup',
-  'intro.loading': 'Preparing Sector 9', 'intro.ready': 'Ready', 'intro.skip': 'Tap to skip',
+  'intro.loading': 'Preparing Sector 9', 'intro.ready': 'Ready', 'intro.skip': 'Tap to skip', 'intro.sector': 'SECTOR 9',
 
   'nav.lobby': 'Lobby', 'nav.operators': 'Operators', 'nav.arsenal': 'Arsenal', 'nav.crates': 'Crates', 'nav.trader': 'Trader',
   'nav.profile': 'Profile', 'nav.settings': 'Settings',
@@ -127,7 +127,7 @@ export default {
   'set.readPrivacy': 'Privacy policy', 'set.readTerms': 'Terms of use',
   'set.resetProgress': 'Reset progress', 'set.resetHint': 'Profile, campaign and stats are deleted.', 'set.reset': 'Reset',
   'set.resetConfirm': 'Your LAB progress on this device will be deleted for good. Continue?', 'set.resetDone': 'Progress reset',
-  'set.aboutHint': 'Test build of CINDERFALL, rewritten from scratch.', 'set.build': 'Build', 'set.engine': 'Engine', 'set.engineHint': 'Own WebGL2 engine · 120 Hz simulation',
+  'set.aboutHint': 'Test build of KOR, written from scratch.', 'set.build': 'Build', 'set.engine': 'Engine', 'set.engineHint': 'Own WebGL2 engine · 120 Hz simulation',
 
   'hud.title': 'HUD editor', 'hud.size': 'Size', 'hud.reset': 'Default', 'hud.resetDone': 'Default layout',
   'hud.moveZone': 'Move stick', 'hud.aimZone': 'Aim stick',

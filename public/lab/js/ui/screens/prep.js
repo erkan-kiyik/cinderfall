@@ -4,7 +4,7 @@ import { h, svg, press, popIn, ui } from '../kit.js';
 import { t } from '../i18n.js';
 import { shead, statBar } from './common.js';
 import { avatar, weaponPic } from '../portraits.js';
-import { OPS, PRIMARIES, gunBars } from '../data.js';
+import { OPS, PRIMARIES, gunBars, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 
 export const prep = {
@@ -39,7 +39,7 @@ export const prep = {
       };
       const b = gunBars(lo.primary);
       const sideOK = lo.primary !== 'wren9';
-      stage.replaceChildren(opRow, h('div.op-tag', h('div.name', id.toUpperCase()), h('div.role', t(`role.${OPS.find((o) => o.id === id).role}`))));
+      stage.replaceChildren(opRow, h('div.op-tag', h('div.name', opName(id)), h('div.role', t(`role.${OPS.find((o) => o.id === id).role}`))));
       side.replaceChildren(
         h('div.eyebrow', t('prep.primary')),
         h('div.slotrow', PRIMARIES.map((w) => wtile(w, 'primary'))),

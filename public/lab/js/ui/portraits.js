@@ -1,8 +1,9 @@
 // CINDERFALL LAB — small painted pictures for the menus: operator avatars
-// (head and shoulders) and weapon side views, painted once and cached.
-import { outlined, setRoot } from '../art/kit.js';
-import { drawFigure } from '../art/figure.js';
-import { OPS } from '../art/ops/index.js';
+// (head and shoulders, lit like the opening) and weapon side views, painted
+// once and cached.
+import { outlined, setRoot, canvas, rng } from '../art/kit.js';
+import { drawFigure, headPoint } from '../art/figure.js';
+import { OPS, VISOR } from '../art/ops/index.js';
 import { WEAPONS } from '../art/weapons/index.js';
 
 const cache = new Map();
@@ -24,18 +25,77 @@ function copy(src, cssW, cssH) {
 // head and shoulders of an operator, `px` CSS pixels square
 export function avatar(id, px = 44) {
   const key = `a:${id}:${px}:${dpr()}`;
-  if (!cache.has(key)) {
-    const size = Math.round(px * dpr()), z = size / 13.5;
-    const W = Math.round(80 * z), H = Math.round(82 * z);
-    const fig = outlined(W, H, z, W * 0.42, H - 6 * z, (g) => drawFigure(g, OPS[id], OPS[id].pose));
-    const c = document.createElement('canvas'); c.width = size; c.height = size;
-    const g = c.getContext('2d');
-    // body standard v2: the crown sits ~66 units above the feet, the head is
-    // smaller, so frame a little tighter round the helmet and shoulders
-    g.drawImage(fig, -(W * 0.42 - 6.4 * z), -(H - 6 * z - 67 * z));
-    cache.set(key, c);
-  }
+  if (!cache.has(key)) cache.set(key, paintAvatar(id, Math.round(px * dpr())));
   return copy(cache.get(key), px, px);
+}
+
+// Lit like the opening: the burning city behind, the fires low on the right,
+// the operator dark against them with an ember rim on the edges that face
+// the fire, and the visor glowing in the operator's colour.
+function paintAvatar(id, size) {
+  const op = OPS[id], pose = op.pose, z = size / 17.5;
+  // the figure's feet origin in the portrait: x 0 left of centre, the crown
+  // (about -66) a little under the top edge, head and shoulders in frame
+  const fx = 8.2 * z, fy = 68.0 * z;
+  const W = Math.round(80 * z), H = Math.round(82 * z), ox = W * 0.42, oy = H - 6 * z;
+  const fig = outlined(W, H, z, ox, oy, (g) => drawFigure(g, op, pose));
+  const dx = fx - ox, dy = fy - oy;
+  const c = canvas(size, size), g = c.getContext('2d');
+  // sky, the fire glow, a few embers
+  const sky = g.createLinearGradient(0, 0, 0, size);
+  sky.addColorStop(0, '#08090d'); sky.addColorStop(0.55, '#1b0f12'); sky.addColorStop(1, '#3a1711');
+  g.fillStyle = sky; g.fillRect(0, 0, size, size);
+  const glow = g.createRadialGradient(size * 0.98, size * 1.02, 0, size * 0.98, size * 1.02, size);
+  glow.addColorStop(0, 'rgba(255,120,48,0.6)'); glow.addColorStop(0.45, 'rgba(200,60,30,0.2)'); glow.addColorStop(1, 'rgba(120,30,20,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, size, size);
+  // the skyline behind the shoulders, a few windows lit
+  const rnd = rng([...id].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7));
+  for (let x = -size * 0.05; x < size;) {
+    const bw = size * (0.1 + rnd() * 0.16), top = size * (0.5 + rnd() * 0.22);
+    g.fillStyle = '#140d10'; g.fillRect(x, top, bw, size - top);
+    for (let wy = top + size * 0.04; wy < size; wy += size * 0.06) for (let wx = x + size * 0.025; wx < x + bw - size * 0.03; wx += size * 0.05) {
+      if (rnd() > 0.8) { g.fillStyle = `rgba(255,${150 + (rnd() * 60) | 0},90,${0.3 + rnd() * 0.35})`; g.fillRect(wx, wy, Math.max(1, size * 0.018), Math.max(1, size * 0.024)); }
+    }
+    x += bw + size * 0.012;
+  }
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 6; i++) {
+    g.fillStyle = `rgba(255,${150 + (rnd() * 70) | 0},70,${0.35 + rnd() * 0.45})`;
+    g.beginPath(); g.arc(size * (0.55 + rnd() * 0.45), size * rnd(), Math.max(0.6, size * (0.008 + rnd() * 0.014)), 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+  // the figure, darker on the side away from the fire
+  const body = canvas(size, size), bg = body.getContext('2d');
+  bg.drawImage(fig, dx, dy);
+  bg.globalCompositeOperation = 'source-atop';
+  const shade = bg.createLinearGradient(0, 0, size, size * 0.4);
+  shade.addColorStop(0, 'rgba(8,9,13,0.74)'); shade.addColorStop(1, 'rgba(8,9,13,0.42)');
+  bg.fillStyle = shade; bg.fillRect(0, 0, size, size);
+  bg.fillStyle = 'rgba(255,110,50,0.07)'; bg.fillRect(0, 0, size, size);
+  g.drawImage(body, 0, 0);
+  // the ember rim: the silhouette pushed toward the fire, minus the figure
+  const r = Math.max(1, size * 0.028);
+  const rim = canvas(size, size), rg = rim.getContext('2d');
+  rg.drawImage(fig, dx + r, dy + r * 0.25);
+  rg.globalCompositeOperation = 'source-in'; rg.fillStyle = 'rgba(255,132,66,0.95)'; rg.fillRect(0, 0, size, size);
+  rg.globalCompositeOperation = 'destination-out'; rg.drawImage(fig, dx, dy);
+  g.drawImage(rim, 0, 0);
+  // the visor light
+  const V = VISOR[id], [cr, cg, cb] = V.c, hot = `rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 40)},${Math.min(255, cb + 40)},0.9)`;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (const [hx, hy, rx, ry] of V.at) {
+    const [x, y] = headPoint(pose, [hx, hy]), vx = fx + x * z, vy = fy + y * z, R = Math.max(rx, ry) * 2.6 * z;
+    const halo = g.createRadialGradient(vx, vy, 0, vx, vy, R);
+    halo.addColorStop(0, `rgba(${cr},${cg},${cb},0.42)`); halo.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    g.fillStyle = halo; g.fillRect(vx - R, vy - R, R * 2, R * 2);
+    g.fillStyle = hot; g.beginPath(); g.ellipse(vx, vy, rx * z * 0.8, Math.max(0.6, ry * z * 0.42), 0, 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+  // vignette
+  const vg = g.createRadialGradient(size * 0.55, size * 0.45, size * 0.3, size * 0.5, size * 0.5, size * 0.78);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+  g.fillStyle = vg; g.fillRect(0, 0, size, size);
+  return c;
 }
 
 // a weapon in profile, scaled to `h` CSS pixels tall at most (and `w` wide)

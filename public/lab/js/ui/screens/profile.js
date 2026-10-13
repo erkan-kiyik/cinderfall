@@ -4,7 +4,7 @@ import { h, svg, press, popIn, ui, modal, toast } from '../kit.js';
 import { t, num, clock } from '../i18n.js';
 import { shead, stars } from './common.js';
 import { avatar } from '../portraits.js';
-import { MISSIONS, OPS } from '../data.js';
+import { MISSIONS, OPS, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 import { xpFor } from '../../core/save.js';
 
@@ -68,7 +68,7 @@ export const profile = {
             : h('div.empty.cut', svg('chart'), h('b', t('prof.noStats'))),
           h('div.grp', t('prof.byOp')),
           h('table.tbl', h('thead', h('tr', [t('prof.operator'), t('prof.missions'), t('prof.kills')].map((x) => h('th', x)))),
-            h('tbody', OPS.map((o) => { const s = S.byOp[o.id] || { missions: 0, kills: 0 }; return h('tr', h('td', o.id.toUpperCase()), h('td.n', String(s.missions)), h('td.n', String(s.kills))); }))));
+            h('tbody', OPS.map((o) => { const s = S.byOp[o.id] || { missions: 0, kills: 0 }; return h('tr', h('td', opName(o.id)), h('td.n', String(s.missions)), h('td.n', String(s.kills))); }))));
       }
       popIn(body.firstElementChild ? [body.firstElementChild] : [], { from: 8 });
     }

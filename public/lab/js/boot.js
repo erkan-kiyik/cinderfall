@@ -20,6 +20,7 @@ import { Save } from './core/save.js';
 import { Sfx } from './audio/sfx.js';
 import { setLang } from './ui/i18n.js';
 import { App } from './app.js';
+import { opName } from './ui/data.js';
 import { Intro } from './ui/intro.js';
 
 export const VERSION = 'M5 · ' + '2026-10-13';
@@ -111,7 +112,7 @@ async function main() {
     const ctl = $('#ctl');
     const btn = (label, fn) => { const b = document.createElement('button'); b.className = 'chip cut'; b.textContent = label; b.onclick = (ev) => { ev.stopPropagation(); fn(b); }; ctl.appendChild(b); return b; };
     const STRESS = [0, 2000, 10000, 20000];
-    if (play) btn('OPERATÖR VEX', (b) => { b.textContent = 'OPERATÖR ' + scene.switchOperator().toUpperCase(); });
+    if (play) btn('OPERATÖR ' + opName('vex'), (b) => { b.textContent = 'OPERATÖR ' + opName(scene.switchOperator()); });
     else btn(`STRES ${scene.N}`, (b) => { const n = STRESS[(STRESS.indexOf(scene.N) + 1) % STRESS.length]; scene.setStress(n); b.textContent = `STRES ${n}`; });
     const QN = ['low', 'med', 'high'], QL = { low: 'DÜŞÜK', med: 'ORTA', high: 'YÜKSEK' };
     btn(`KALİTE ${QL[quality]}`, (b) => { const q = QN[(QN.indexOf(renderer.qName) + 1) % 3]; renderer.setQuality(q); store.set('cf-lab-q', q); b.textContent = `KALİTE ${QL[q]}`; });

@@ -176,7 +176,7 @@ function head(g) {
 }
 
 export const KITE = {
-  id: 'kite', name: 'KITE', role: 'KEŞİF', pal: PAL,
+  id: 'kite', name: 'SKYE', role: 'KEŞİF', pal: PAL,
   pose: { nUpper: 0.12, nFore: -0.18, nHand: -0.08, fUpper: -1.75, fFore: -2.05, fHand: -0.25, nThigh: 0.14, nShin: 0.0, fThigh: -0.16, fShin: -0.06, head: 0.1 },
   parts: { torso, chest, front, head, upper, fore, hand, thigh, shin, foot },
 };

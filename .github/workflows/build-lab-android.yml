@@ -57,7 +57,7 @@ jobs:
             const p = 'capacitor.config.json';
             const c = JSON.parse(fs.readFileSync(p, 'utf8'));
             c.appId = 'com.cinderfall.sector9.lab';
-            c.appName = 'CF LAB';
+            c.appName = 'KOR LAB';
             fs.writeFileSync(p, JSON.stringify(c, null, 2));
           "
 
@@ -90,10 +90,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: lab-build-${{ github.run_number }}
-          name: "Cinderfall LAB build #${{ github.run_number }}"
+          name: "KOR LAB build #${{ github.run_number }}"
           body: |
             LAB build (public/lab, rewrite) from commit ${{ github.sha }}.
-            Installs as a separate app ("CF LAB", com.cinderfall.sector9.lab)
+            Installs as a separate app ("KOR LAB", com.cinderfall.sector9.lab)
             next to the shipping game. Debug-key signed, for testing only.
           files: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           draft: false

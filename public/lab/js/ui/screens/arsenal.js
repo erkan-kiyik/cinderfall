@@ -5,7 +5,7 @@ import { h, svg, press, popIn, ui, deny, toast } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, statBar, soon } from './common.js';
 import { weaponPic } from '../portraits.js';
-import { WEAPON_LIST, gunBars } from '../data.js';
+import { WEAPON_LIST, gunBars, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 import { GUNS } from '../../game/guns.js';
 
@@ -62,11 +62,11 @@ export const arsenal = {
             if (equipped) return deny(e.currentTarget);
             ui('confirm');
             ctx.save.set((s) => { const L = s.roster.loadout[op]; if (w.slot === 'side') L.sidearm = w.id; else { L.primary = w.id; if (L.sidearm === w.id) L.sidearm = null; } });
-            toast(t('ars.equipped', { w: WEAPONS[w.id].name, o: op.toUpperCase() }), { kind: 'good' });
+            toast(t('ars.equipped', { w: WEAPONS[w.id].name, o: opName(op) }), { kind: 'good' });
             ctx.showcase.setOperator(op, ctx.save.d.roster.loadout[op]);
             renderDetail();
           },
-        }, svg(equipped ? 'check' : 'gun'), t(equipped ? 'ars.inUse' : 'ars.equip', { o: op.toUpperCase() })), { sound: null }));
+        }, svg(equipped ? 'check' : 'gun'), t(equipped ? 'ars.inUse' : 'ars.equip', { o: opName(op) })), { sound: null }));
     }
     renderList(); renderDetail();
     const el = h('div', hubbar(ctx, 'arsenal'), h('div.ars-body.veil', left, detail));

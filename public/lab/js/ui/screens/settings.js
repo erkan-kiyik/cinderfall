@@ -80,7 +80,7 @@ export const settings = {
           action(t('set.resetProgress'), t('set.resetHint'), t('set.reset'), () => modal({ kicker: t('set.legal'), title: t('set.resetProgress'), body: t('set.resetConfirm'),
             actions: [{ label: t('ui.cancel'), kind: 'ghost' }, { label: t('set.reset'), kind: 'danger', fn: (close) => { S.reset(); ctx.applySettings(); close(); toast(t('set.resetDone')); ctx.router.go('lobby', {}, { root: true }); } }] }), 'danger'),
           h('div.grp', t('set.about')),
-          row('CINDERFALL LAB', t('set.aboutHint')),
+          row('KOR LAB', t('set.aboutHint')),
           row(t('set.build'), `${ctx.version}`),
           row(t('set.engine'), t('set.engineHint')),
         ];

@@ -65,6 +65,11 @@ if (what === 'poses') {
   cg.drawImage(big, -(big.width * 0.42 - 13 * z), -(big.height - 6 * z - 70 * z));
   r2.appendChild(crop);
 }
+if (what === 'avatars') {
+  // the menu portraits at the sizes the menus use, and large
+  const { avatar } = await import('../js/ui/portraits.js');
+  for (const px of [30, 46, 64, 160]) { const r = row(); for (const id of ['vex', 'hale', 'morrow', 'kite', 'brick']) r.appendChild(avatar(id, px)); }
+}
 if (what === 'weapons') {
   for (const w of Object.values(WEAPONS)) {
     const s = Math.min(26, 880 / (w.box[2] - w.box[0]));

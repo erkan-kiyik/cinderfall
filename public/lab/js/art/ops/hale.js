@@ -162,7 +162,7 @@ function head(g) {
 }
 
 export const HALE = {
-  id: 'hale', name: 'HALE', role: 'SAVUNMA', pal: PAL,
+  id: 'hale', name: 'WARDEN', role: 'SAVUNMA', pal: PAL,
   pose: { nUpper: 0.2, nFore: -2.25, nHand: -0.3, fUpper: -0.08, fFore: -0.16, fHand: -0.1, nThigh: 0.22, nShin: 0.05, fThigh: -0.22, fShin: -0.05, head: 0.02 },
   parts: { backFar, torso, chest, head, upper, fore, hand, thigh, shin, foot },
 };

@@ -4,12 +4,14 @@
 import { GUNS } from '../game/guns.js';
 
 export const OPS = [
-  { id: 'vex', role: 'assault', color: '#ff6b2c', abil: [['dash', 'dash'], ['flash', 'flash'], ['overload', 'bolt']] },
-  { id: 'hale', role: 'defense', color: '#3ee8e0', abil: [['wall', 'wall'], ['mine', 'mine'], ['turret', 'turret']] },
-  { id: 'morrow', role: 'control', color: '#a98bff', abil: [['smoke', 'smoke'], ['slow', 'slow'], ['blackout', 'blind']] },
-  { id: 'kite', role: 'recon', color: '#4aa8ff', abil: [['drone', 'drone'], ['heat', 'heat'], ['watch', 'radar']] },
-  { id: 'brick', role: 'heavy', color: '#ffc93c', abil: [['charge', 'charge'], ['armor', 'armor'], ['unstop', 'shield']] },
+  { id: 'vex', name: 'FLINT', role: 'assault', color: '#ff6b2c', abil: [['dash', 'dash'], ['flash', 'flash'], ['overload', 'bolt']] },
+  { id: 'hale', name: 'WARDEN', role: 'defense', color: '#3ee8e0', abil: [['wall', 'wall'], ['mine', 'mine'], ['turret', 'turret']] },
+  { id: 'morrow', name: 'VESPER', role: 'control', color: '#a98bff', abil: [['smoke', 'smoke'], ['slow', 'slow'], ['blackout', 'blind']] },
+  { id: 'kite', name: 'SKYE', role: 'recon', color: '#4aa8ff', abil: [['drone', 'drone'], ['heat', 'heat'], ['watch', 'radar']] },
+  { id: 'brick', name: 'BULWARK', role: 'heavy', color: '#ffc93c', abil: [['charge', 'charge'], ['armor', 'armor'], ['unstop', 'shield']] },
 ];
+// the code name shown for an operator (ids stay as they are in saves)
+export const opName = (id) => (OPS.find((o) => o.id === id) || { name: id.toUpperCase() }).name;
 
 // cls: weapon class key; ready: playable in this build
 export const WEAPON_LIST = [
