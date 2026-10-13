@@ -177,6 +177,7 @@
 .mode p { margin: 0; font: 400 12px/1.4 var(--f-body); color: var(--n7); max-width: 26ch; }
 .mode.locked .ic.big-ic { color: var(--n5); }
 .mode.locked .h1, .mode.locked p { opacity: 0.55; }
+.mode > .lockbadge { position: absolute; right: 14px; top: 16px; }
 
 /* campaign map */
 .camp-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 280px; }
