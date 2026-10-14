@@ -1,6 +1,6 @@
-# CINDERFALL LAB — Sıfırdan Yeniden Yazım: Yapı Belgesi
+# KOR LAB — Sıfırdan Yeniden Yazım: Yapı Belgesi
 
-> Bu belge, CF LAB'ın (`com.cinderfall.sector9.lab`) her şeyiyle sıfırdan
+> Bu belge, CF LAB'ın (`com.kor.lab`) her şeyiyle sıfırdan
 > yazılmasının **yapısıdır**: verilen kararlar, mimari, her sistemin tasarımı,
 > içerik listesi, aşamalar ve her aşamanın kabul ölçütü.
 >
@@ -19,10 +19,10 @@
 | Silah kadrosu | **Daha az ama daha derin**: 12 silah + bıçak, eklenti sistemi, tam animasyon setleri |
 | Oyuncu karakteri | **Operatörler + yetenekler**: 5 operatör, her birinde 2 yetenek + 1 ulti |
 | Görevler | **İkisi birden**: hikâye kampanyası + tekrar oynanabilir görev tipleri (+ Sonsuz mod) |
-| Ekonomi | Para (PARÇA), sandıklar, CROW'un tezgâhı, başarımlar ve seviye **korunur, sıfırdan yazılır** |
+| Ekonomi | Para (PARÇA), sandıklar, HAWK'un tezgâhı, başarımlar ve seviye **korunur, sıfırdan yazılır** |
 | Kayıt | LAB **temiz kayıtla** başlar; eski veri taşınmaz |
 
-Korunan tek görsel varlık: **CROW** (yeni onaylanan v6). Yeni stile uyması için
+Korunan tek görsel varlık: **HAWK** (yeni onaylanan v6). Yeni stile uyması için
 çizgi ve renk tonları uyarlanır; yüz tasarımı aynı kalır.
 
 ---
@@ -66,7 +66,7 @@ public/lab/
     skin/         malzeme sistemi: kat (layer) tanımları, desenler, efekt shader'ları
     game/         dünya, oyuncu, operatör, yetenekler/, silahlar/, düşman/, ai/,
                   seviye/, görevler/, modlar/, fx yönetmeni, kamera yönetmeni
-    meta/         ekonomi, sandık, tüccar (CROW), seviye, ustalık, başarımlar,
+    meta/         ekonomi, sandık, tüccar (HAWK), seviye, ustalık, başarımlar,
                   istatistik, profil, günlük rotasyon
     ui/           bileşenler, ekranlar/, hud/, dokunmatik kontroller, geçişler
     audio/        mikser, sentez, silah sesleri, ortam, müzik
@@ -219,7 +219,7 @@ oranda, okunaklılık için %15 büyütülmüş.
 - Çömelme yarım diz çökme pozudur: arka diz yerde, topuk kalkık, ön kaval dik.
 
 **Açılış sahnesi (`js/ui/intro.js`):** Uygulama açılırken çizimler pişerken oynar:
-CRT açılışı, yanan Sektör 9 silueti, duman, projektör, yağmur ve kıvılcımlar,
+CRT açılışı, yanan şehir silueti, duman, projektör, yağmur ve kıvılcımlar,
 çatıda beş operatör (oyunun kendi çizimiyle, ateşe dönük kenar ışığı), sırayla
 yanan vizörler, harf harf yükselen KOR başlığı. En kısa 3,4 sn; pişirme
 sürerse son karede canlı bekler. Dokunuşla geçilir; azaltılmış harekette kısalır.
@@ -230,7 +230,7 @@ kayarak gelir.
 
 **Sokak (M5 sonrası çevre geçişi):** Cepheler tek bir 600 birimlik şerit
 olarak tekrarlanmaz; dokuz bina tipi (`art/env/city.js`) seviye boyunca son
-üç binada tekrar etmeyecek şekilde dizilir, CROW'un dükkânı bir kez görünür.
+üç binada tekrar etmeyecek şekilde dizilir, HAWK'un dükkânı bir kez görünür.
 Her bina kendi ışıklarını taşır. Zemin, ufuk ve bütün engeller ayrıntılı
 yeniden çizildi; engellerin ve karakterlerin altında temas gölgesi vardır.
 Görüntü kalitesi varsayılan olarak her cihazda Yüksek'tir; dinamik çözünürlük
@@ -328,7 +328,7 @@ karbon, mermer, hex…) → çıkartmalar (logo, numara, çizik) → kenar aşı
   1 bıçak ve 1 kart çerçevesi var.
 - **Başlangıç kadrosu:**
   - 6 koleksiyon ("Kül", "Neon Kuzgun", "Paslı Kraliyet", "Buz Hattı",
-    "Sektör 9 Polis", "Kuzgun Altını").
+    "Kuzgun Altını").
   - Silah başına en az 6 skin.
   - Operatör başına 4 kostüm.
 - **Önizleme:** Her skin dünya içinde, inceleme animasyonuyla ve 360° döndürülen
@@ -338,7 +338,7 @@ karbon, mermer, hex…) → çıkartmalar (logo, numara, çizik) → kenar aşı
 
 ## 10. Düşmanlar ve yapay zekâ
 
-**Faksiyon:** *Ash Syndicate* (Sektör 9'u tutan paralı ordu).
+**Faksiyon:** *Vanta Syndicate* (şehri tutan paralı ordu).
 
 **Tipler:**
 - **Tetikçi:** tüfek, siper kullanır.
@@ -370,8 +370,8 @@ karbon, mermer, hex…) → çıkartmalar (logo, numara, çizik) → kenar aşı
 
 ## 11. Modlar ve görevler
 
-### 11.1 Hikâye kampanyası: "Kül Hattı" (10 görev, 3 perde)
-- **Perde 1, Giriş (1-3):** Sektör 9'a sızma; CROW ile tanışma; ilk boss Gall.
+### 11.1 Hikâye kampanyası: "Kor Hattı" (10 görev, 3 perde)
+- **Perde 1, Giriş (1-3):** Şehre sızma; HAWK ile tanışma; ilk boss Gall.
 - **Perde 2, Derinlik (4-7):** Dökümhane, metro, dron fabrikası; operatörlerin
   açılması; "Ocak" ve Dron Kraliçesi.
 - **Perde 3, Çöküş (8-10):** Kule baskını, ihanet, Vasquez.
@@ -379,7 +379,7 @@ karbon, mermer, hex…) → çıkartmalar (logo, numara, çizik) → kenar aşı
 Her görev:
 - Elle tasarlanmış harita.
 - 2-3 ara hedef.
-- Konuşma balonlu diyaloglar (portreler: operatörler, CROW, düşman liderleri).
+- Konuşma balonlu diyaloglar (portreler: operatörler, HAWK, düşman liderleri).
 - 3 yıldız: bitir · süre · ek hedef.
 
 Hikâye taslağı (karakterler ve ana olaylar) M8 öncesi ayrıca onaya sunulur.
@@ -392,12 +392,12 @@ Hikâye taslağı (karakterler ve ana olaylar) M8 öncesi ayrıca onaya sunulur.
 | Savunma | Bir noktayı dalgalara karşı tut |
 | Suikast | Belirli hedefi bul ve indir (kaçmadan) |
 | Veri | Terminalleri hackle (beklerken savun) |
-| Temizlik | Sektörü sürede temizle |
+| Temizlik | Bölümü sürede temizle |
 
 - Haritalar, elle yapılmış parçaların tohumla birleştirilmesinden oluşur.
 - Günlük 3 görev rotasyonu, haftalık zor görev.
 
-### 11.3 Sonsuz Sektör
+### 11.3 Sonsuz Mod
 Mevcut sonsuz kampanyanın yeni hâli: artan zorluk, her 5 bölümde boss, liderlik
 tablosu (cihaz içi).
 
@@ -409,9 +409,9 @@ tablosu (cihaz içi).
 - **Sandıklar:** 3 tür (Standart / Takviyeli / Kuzgun). Olasılıklar ekranda açıkça
   yazar. Aynı skin tekrar gelirse karşılığında PARÇA verilir. 30 sandıkta bir
   en az Epik garanti (pity).
-- **CROW'un tezgâhı:**
+- **HAWK'un tezgâhı:**
   - Günlük 4 ürün, haftalık 1 özel ürün.
-  - CROW canlı sahnede durur ve satın almalara tepki verir.
+  - HAWK canlı sahnede durur ve satın almalara tepki verir.
 - **İlerleme:**
   - Hesap seviyesi.
   - Operatör ustalığı (kostüm ve poz açar).
@@ -451,7 +451,7 @@ Açılış → Yasal onay → Ana Lobi (operatör vitrini, OYNA)
   ├─ OPERATÖRLER (yetenek videoları, kostümler, ustalık)
   ├─ CEPHANELİK (silahlar, eklentiler, skinler, vitrin)
   ├─ SANDIKLAR (açılış animasyonu)
-  ├─ TÜCCAR (CROW)
+  ├─ TÜCCAR (HAWK)
   ├─ PROFİL (Özet · Kariyer · Koleksiyon · Başarımlar · İstatistik)
   └─ AYARLAR (grafik, ses, kontroller + HUD düzenleyici, dil, yasal)
 ```
@@ -521,8 +521,8 @@ teslimden önce düzeltilir.
 | **M4** | Dikey kesit | 3 düşman tipi + yapay zekâ, ilk kampanya görevi, HUD, dokunmatik | İlk oynanabilir görev uçtan uca — *onaylandı: Tetikçi, Hücumcu, Kalkanlı; Görev 1 "Sızma"* |
 | **M5** | UI tasarım sistemi | Bütün menü ekranları, geçişler, ayarlar, HUD düzenleyici, yasal | 740×360 ve 2400×1080'de bütün ekranlar temiz — *hazır: 15 ekran, TR/EN, kayıt sistemi, otomatik yerleşim denetimi (taşma, çakışma, 44 px hedef) 740×360 · 914×411 · 2400×1080'de temiz* |
 | **M6** | Operatörler + kadro | 5 operatör, 15 yetenek, kalan 8 silah, eklentiler | Her yetenek ve silah için inceleme sayfası |
-| **M7** | Skin + meta | Malzeme shader'ları, 6 koleksiyon, sandık, CROW, profil, istatistik, başarımlar | Skin vitrin sayfaları; ekonomi simülasyonu |
-| **M8** | İçerik | 10 kampanya görevi + boss'lar + diyaloglar, 6 görev tipi, Sonsuz Sektör | Her görev uçtan uca oynanır (otomatik demo) |
+| **M7** | Skin + meta | Malzeme shader'ları, 6 koleksiyon, sandık, HAWK, profil, istatistik, başarımlar | Skin vitrin sayfaları; ekonomi simülasyonu |
+| **M8** | İçerik | 10 kampanya görevi + boss'lar + diyaloglar, 6 görev tipi, Sonsuz Mod | Her görev uçtan uca oynanır (otomatik demo) |
 | **M9** | Cila + yayın | Ses ve müzik, 7 dil, performans cilası, erişilebilirlik, AAB | Perf tablosu hedeflerde; imzalı AAB |
 
 Her aşama sonunda: commit → LAB APK (otomatik) → PNG'ler sana → geri bildirim.

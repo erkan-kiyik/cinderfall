@@ -1,4 +1,4 @@
-// CINDERFALL LAB — combat HUD (DOM): health, weapon and ammo, reload bar,
+// KOR LAB — combat HUD (DOM): health, weapon and ammo, reload bar,
 // hurt vignette, death banner. Writes to the DOM only when a value changes.
 import { t } from './i18n.js';
 

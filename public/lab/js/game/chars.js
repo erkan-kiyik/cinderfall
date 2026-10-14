@@ -1,4 +1,4 @@
-// CINDERFALL LAB — runtime character registry.
+// KOR LAB — runtime character registry.
 // Which painters, weapon and extras each character uses in game.
 import { OPS } from '../art/ops/index.js';
 import { TETIKCI, KALKANLI, HUCUMCU, SYN_MAT, shield } from '../art/enemies/syndicate.js';

@@ -1,4 +1,4 @@
-// CINDERFALL LAB — gun handling: stats and the fire / reload state machine.
+// KOR LAB — gun handling: stats and the fire / reload state machine.
 //
 // Pure logic, no rendering: a Gun is stepped at the simulation rate with the
 // trigger state and reports events (shots, magazine out/in, pump, ...) that

@@ -1,4 +1,4 @@
-// CINDERFALL LAB — boot.
+// KOR LAB — boot.
 //
 // WebGL2 check → quality pick → bake or load the atlas from cache → start the
 // 120 Hz loop on the engine test scene, with the performance overlay and a
@@ -42,7 +42,7 @@ async function main() {
   const save = DEV ? null : new Save();
   if (save) setLang(save.d.settings.lang);
   const savedQ = save && save.d.settings.quality !== 'auto' ? save.d.settings.quality : null;
-  const quality = params.get('q') || savedQ || (DEV && store.get('cf-lab-q')) || autoQuality();
+  const quality = params.get('q') || savedQ || (DEV && store.get('kor-lab-q')) || autoQuality();
   await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter'].map((f) => document.fonts.load(f)));
   // the opening plays over the bake (not for dev scenes; ?nointro skips it)
   let intro = null;
@@ -112,7 +112,7 @@ async function main() {
     if (play) btn('OPERATÖR ' + opName('vex'), (b) => { b.textContent = 'OPERATÖR ' + opName(scene.switchOperator()); });
     else btn(`STRES ${scene.N}`, (b) => { const n = STRESS[(STRESS.indexOf(scene.N) + 1) % STRESS.length]; scene.setStress(n); b.textContent = `STRES ${n}`; });
     const QN = ['low', 'med', 'high'], QL = { low: 'DÜŞÜK', med: 'ORTA', high: 'YÜKSEK' };
-    btn(`KALİTE ${QL[quality]}`, (b) => { const q = QN[(QN.indexOf(renderer.qName) + 1) % 3]; renderer.setQuality(q); store.set('cf-lab-q', q); b.textContent = `KALİTE ${QL[q]}`; });
+    btn(`KALİTE ${QL[quality]}`, (b) => { const q = QN[(QN.indexOf(renderer.qName) + 1) % 3]; renderer.setQuality(q); store.set('kor-lab-q', q); b.textContent = `KALİTE ${QL[q]}`; });
     btn('OTO ÇÖZ. AÇIK', (b) => { dyn.on = !dyn.on; if (!dyn.on) { dyn.step = 0; renderer.setDyn(1); } b.textContent = dyn.on ? 'OTO ÇÖZ. AÇIK' : 'OTO ÇÖZ. KAPALI'; });
     btn('BLOOM AÇIK', (b) => { renderer.bloomOn = !renderer.bloomOn; b.textContent = renderer.bloomOn ? 'BLOOM AÇIK' : 'BLOOM KAPALI'; });
     btn('IŞIK AÇIK', (b) => { renderer.lightsOn = !renderer.lightsOn; b.textContent = renderer.lightsOn ? 'IŞIK AÇIK' : 'IŞIK KAPALI'; });

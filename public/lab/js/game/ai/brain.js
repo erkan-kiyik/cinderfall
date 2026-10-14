@@ -1,4 +1,4 @@
-// CINDERFALL LAB — enemy AI.
+// KOR LAB — enemy AI.
 //
 // One Brain per enemy drives its Character exactly like a player would: it
 // fills a movement input for the Mover, sets the aim point and pulls the

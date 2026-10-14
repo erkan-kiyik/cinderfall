@@ -1,4 +1,4 @@
-// CINDERFALL LAB — campaign mission 1, "SIZMA" (infiltration): the level,
+// KOR LAB — campaign mission 1, "SIZMA" (infiltration): the level,
 // its props and the mission script data. Same rule as the M2 course: every
 // feature is placed in tile columns and painted inside the same box, so what
 // you see is what you collide with.
@@ -42,7 +42,7 @@ export function concrete(g, x0, x1, h) {
     // chips, cracks, a stencil and a spray tag
     for (const [x, y, r] of [[x1 - 4, -h + 20, 1.0], [x0 + 3.6, -18, 0.8]]) fill(g, ell(x, y, r, r * 0.8), CONC.k, 0.55);
     stroke(g, `M ${x1 - 2} ${-h + 14} l -2 4 l 0.8 3 l -1.6 3`, CONC.k, 0.25, 0.8);
-    g.font = '700 2.6px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.75)'; g.fillText('T-09', x0 + 2.4, -h + 17);
+    g.font = '700 2.6px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.75)'; g.fillText('T-12', x0 + 2.4, -h + 17);
     stroke(g, `M ${x0 + 2} -14 C ${x0 + 4} -18 ${x0 + 6} -17 ${x0 + 6} -13.6 C ${x0 + 6} -11 ${x0 + 9} -11 ${x0 + 11} -15`, C.interact, 0.7, 0.65);
     stroke(g, `M ${x0 + 3} ${-h + 1.2} L ${x1 - 3} ${-h + 1.2}`, CONC.l, 0.5, 0.7);
   });
@@ -201,7 +201,7 @@ export function buildMission1() {
   const E = (id, x, y, zone, o = {}) => ({ id, kind: id, x, y, zone, facing: -1, ...o });
   return {
     level, props, front, deco, lamps, glows, lights, width: COLS * T,
-    // CROW's shop once, near the start; then the district, never twice the same in a row
+    // HAWK's shop once, near the start; then the street, never twice the same in a row
     facade: facadeLayout(-10, COLS * T + 10, 9, ['walkup', 'crow', 'alley', 'warehouse', 'synBlock', 'walkupB', 'hotel', 'ruin', 'garage']),
     fires: [X(124) + 5],
     spawn: [64, 0],

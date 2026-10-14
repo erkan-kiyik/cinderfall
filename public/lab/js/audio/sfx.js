@@ -1,4 +1,4 @@
-// CINDERFALL LAB — procedural sound effects.
+// KOR LAB — procedural sound effects.
 //
 // Every sound is synthesised once at start-up into a sample buffer (noise,
 // filters, pitch sweeps, envelopes, a short street slap-back) — no audio

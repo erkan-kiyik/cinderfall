@@ -1,4 +1,4 @@
-// CINDERFALL LAB — M2 movement course: collision tiles and art from one
+// KOR LAB — M2 movement course: collision tiles and art from one
 // description, so what you see is exactly what you stand on.
 //
 // 8-unit tiles, street level y = 0, 200 columns (1600 units). Every feature
@@ -39,7 +39,7 @@ export function container(g, x0, y0, x1, y1, t) {
     for (const [cx, cy] of [[x0, y0], [x1 - 3, y0], [x0, y1 - 3], [x1 - 3, y1 - 3]]) { fill(g, rect(cx, cy, cx + 3, cy + 3), t.k); fill(g, rect(cx + 0.9, cy + 0.9, cx + 2.1, cy + 2.1), '#0b0d10'); }
     fill(g, rect(dx - 9, y0 + 5, dx - 3, y0 + 9), '#c9ccd2', 0.8);
     for (const [x, h] of [[x0 + 9, 9], [x0 + 21, 14], [x0 + 33, 7]]) fill(g, rect(x, y0 + 2, x + 1.4, y0 + 2 + h), '#6a3a28', 0.35);
-    g.font = '700 5px Rajdhani'; g.fillStyle = 'rgba(244,241,234,0.75)'; g.fillText('CF·9', x0 + 5, y1 - 5);
+    g.font = '700 5px Rajdhani'; g.fillStyle = 'rgba(244,241,234,0.75)'; g.fillText('KOR', x0 + 5, y1 - 5);
   });
   stroke(g, B, t.k, 0.5);
 }

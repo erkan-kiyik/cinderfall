@@ -2,7 +2,7 @@
 export default {
   'ui.back': 'Geri', 'ui.cancel': 'Vazgeç', 'ui.save': 'Kaydet', 'ui.soon': 'Yakında',
   'app.exitHint': 'Çıkmak için tekrar geri bas', 'app.recovered': 'Kayıt yedekten geri yüklendi',
-  'intro.loading': 'Sektör 9 hazırlanıyor', 'intro.ready': 'Hazır', 'intro.skip': 'Geçmek için dokun', 'intro.sector': 'SEKTÖR 9',
+  'intro.loading': 'Hazırlanıyor', 'intro.ready': 'Hazır', 'intro.skip': 'Geçmek için dokun',
 
   'nav.lobby': 'Lobi', 'nav.operators': 'Operatörler', 'nav.arsenal': 'Cephanelik', 'nav.crates': 'Sandıklar', 'nav.trader': 'Tüccar',
   'nav.profile': 'Profil', 'nav.settings': 'Ayarlar',
@@ -13,26 +13,26 @@ export default {
   'rar.common': 'Sıradan', 'rar.rare': 'Nadir', 'rar.epic': 'Epik', 'rar.legendary': 'Efsanevi', 'rar.mythic': 'Mitik', 'rar.ultra': 'Ultra',
   'diff.normal': 'Normal', 'diff.hard': 'Zor',
 
-  'lobby.operator': 'Operatör', 'lobby.play': 'OYNA', 'lobby.campaign': 'Kampanya · Perde {act} · Kül Hattı',
+  'lobby.operator': 'Operatör', 'lobby.play': 'OYNA', 'lobby.campaign': 'Kampanya · Perde {act} · Kor Hattı',
   'lobby.next': 'Görev {n} — {name}', 'lobby.record': 'rekor', 'lobby.boss5': 'Her 5 bölümde boss',
-  'lobby.crow': 'CROW’un tezgâhı', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
+  'lobby.crow': 'HAWK’ın tezgâhı', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
 
   'play.title': 'Mod seç', 'play.kicker': 'Oyna',
-  'mode.campaign': 'Kampanya', 'mode.campaign.kicker': 'Kül Hattı · 10 görev', 'mode.campaign.desc': 'Sektör 9’a sız, Syndicate’in hattını kır. Üç perde, elle tasarlanmış görevler.',
+  'mode.campaign': 'Kampanya', 'mode.campaign.kicker': 'Kor Hattı · 10 görev', 'mode.campaign.desc': 'Şehre sız, Syndicate’in hattını kır. Üç perde, elle tasarlanmış görevler.',
   'mode.daily': 'Görevler', 'mode.daily.kicker': 'Günlük · haftalık', 'mode.daily.desc': 'Her gün üç yeni görev: baskın, savunma, kurtarma, sabotaj ve daha fazlası.',
-  'mode.endless': 'Sonsuz Sektör', 'mode.endless.kicker': 'Rekor peşinde', 'mode.endless.desc': 'Artan zorluk, her beş bölümde bir boss, liderlik tablosu.',
+  'mode.endless': 'Sonsuz Mod', 'mode.endless.kicker': 'Rekor peşinde', 'mode.endless.desc': 'Artan zorluk, her beş bölümde bir boss, liderlik tablosu.',
   'mode.fire.semi': 'Yarı otomatik', 'mode.fire.auto': 'Tam otomatik', 'mode.fire.pump': 'Pompalı',
 
-  'camp.title': 'Kül Hattı', 'camp.kicker': 'Kampanya', 'camp.act': 'Perde {n}', 'camp.mission': 'Görev {n}',
+  'camp.title': 'Kor Hattı', 'camp.kicker': 'Kampanya', 'camp.act': 'Perde {n}', 'camp.mission': 'Görev {n}',
   'camp.act1': 'Giriş', 'camp.act2': 'Derinlik', 'camp.act3': 'Çöküş',
   'camp.prepare': 'Hazırlık', 'camp.best': 'En iyi süre', 'camp.diff': 'Zorluk',
   'camp.locked': 'Kilitli', 'camp.lockedHint': 'Bu görev ilerleyen sürümlerde açılacak.',
 
-  'mission.m1': 'Sızma', 'mission.m1.where': 'Sektör 9 · Doğu kapısı',
-  'mission.m1.brief': 'Syndicate Sektör 9’un girişini tuttu. Kontrol noktasını aş, konteyner sahasından geç, avludaki kapı terminalini hackle ve tahliye noktasına ulaş.',
+  'mission.m1': 'Sızma', 'mission.m1.where': 'Doğu kapısı',
+  'mission.m1.brief': 'Syndicate şehrin girişini tuttu. Kontrol noktasını aş, konteyner sahasından geç, avludaki kapı terminalini hackle ve tahliye noktasına ulaş.',
   'mission.m1.o1': 'Kontrol noktasını geç', 'mission.m1.o2': 'Konteyner sahasından geç', 'mission.m1.o3': 'Kapı terminalini hackle', 'mission.m1.o4': 'Tahliye noktasına ulaş',
-  'mission.m2': 'CROW’un Tezgâhı', 'mission.m2.where': 'Sektör 9 · Pazar sokağı',
-  'mission.m3': 'Sekreter Gall', 'mission.m3.where': 'Sektör 9 · Valilik',
+  'mission.m2': 'HAWK’ın Tezgâhı', 'mission.m2.where': 'Pazar sokağı',
+  'mission.m3': 'Sekreter Gall', 'mission.m3.where': 'Valilik',
   'mission.m4': 'Dökümhane', 'mission.m4.where': 'Sanayi hattı',
   'mission.m5': 'Metro', 'mission.m5.where': 'Eski hat · 3. peron',
   'mission.m6': 'Dron Fabrikası', 'mission.m6.where': 'Kuzey depolar',
@@ -78,11 +78,11 @@ export default {
   'wpn.anvil': 'Büyük şarjör, ısınma ve yavaşlama.', 'wpn.thumper': 'Sekmeli bomba atar.',
 
   'crate.std': 'Standart', 'crate.std.k': 'Her yerde', 'crate.plus': 'Takviyeli', 'crate.plus.k': 'Nadir ve üstü',
-  'crate.crow': 'Kuzgun', 'crate.crow.k': 'Epik ve üstü',
+  'crate.crow': 'Doğan', 'crate.crow.k': 'Epik ve üstü',
   'crate.rules': 'Olasılıklar her sandığın üstünde yazar. Aynı görünüm tekrar gelirse karşılığında Parça verilir; 30 sandıkta bir en az Epik garantidir.',
 
-  'trader.k': 'Tüccar', 'trader.bio': 'Sektör 9’un her köşesinden mal toplayan, her şeyin fiyatını bilen eski bir kaçakçı.',
-  'trader.closed': 'Tezgâh kapalı', 'trader.closedHint': 'CROW tezgâhını yakında açıyor.',
+  'trader.k': 'Tüccar', 'trader.bio': 'Şehrin her köşesinden mal toplayan, her şeyin fiyatını bilen eski bir kaçakçı.',
+  'trader.closed': 'Tezgâh kapalı', 'trader.closedHint': 'HAWK tezgâhını yakında açıyor.',
   'trader.goods': 'Bugünün malları', 'trader.refresh': 'Yenilenme', 'trader.daily': 'Günlük', 'trader.weekly': 'Haftalık özel',
 
   'prof.title': 'Profil', 'prof.summary': 'Özet', 'prof.career': 'Kariyer', 'prof.collection': 'Koleksiyon', 'prof.achievements': 'Başarımlar', 'prof.stats': 'İstatistik',
@@ -90,7 +90,7 @@ export default {
   'prof.missions': 'Görev', 'prof.kills': 'Etkisiz', 'prof.acc': 'İsabet', 'prof.heads': 'Kafa vuruşu', 'prof.time': 'Süre', 'prof.deaths': 'Ölüm', 'prof.stars': 'Yıldız',
   'prof.mission': 'Görev', 'prof.state': 'Durum', 'prof.starsCol': 'Yıldız', 'prof.best': 'En iyi', 'prof.plays': 'Oynanış',
   'prof.cleared': 'Tamamlandı', 'prof.open': 'Açık',
-  'prof.collEmpty': 'Koleksiyon boş', 'prof.collHint': 'Görünümler, kostümler ve kart çerçeveleri sandıklar ve CROW ile gelecek.',
+  'prof.collEmpty': 'Koleksiyon boş', 'prof.collHint': 'Görünümler, kostümler ve kart çerçeveleri sandıklar ve HAWK ile gelecek.',
   'prof.achMore': 'Toplam 40 başarım ve madalya kademeleri meta sistemiyle gelecek.',
   'prof.byWeapon': 'Silah başına', 'prof.byOp': 'Operatör başına', 'prof.weapon': 'Silah', 'prof.operator': 'Operatör', 'prof.noStats': 'Henüz veri yok',
   'ach.first': 'İlk Adım', 'ach.first.d': 'Sızma görevini tamamla.',

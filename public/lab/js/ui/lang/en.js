@@ -2,7 +2,7 @@
 export default {
   'ui.back': 'Back', 'ui.cancel': 'Cancel', 'ui.save': 'Save', 'ui.soon': 'Soon',
   'app.exitHint': 'Press back again to exit', 'app.recovered': 'Save restored from backup',
-  'intro.loading': 'Preparing Sector 9', 'intro.ready': 'Ready', 'intro.skip': 'Tap to skip', 'intro.sector': 'SECTOR 9',
+  'intro.loading': 'Preparing', 'intro.ready': 'Ready', 'intro.skip': 'Tap to skip',
 
   'nav.lobby': 'Lobby', 'nav.operators': 'Operators', 'nav.arsenal': 'Arsenal', 'nav.crates': 'Crates', 'nav.trader': 'Trader',
   'nav.profile': 'Profile', 'nav.settings': 'Settings',
@@ -13,26 +13,26 @@ export default {
   'rar.common': 'Common', 'rar.rare': 'Rare', 'rar.epic': 'Epic', 'rar.legendary': 'Legendary', 'rar.mythic': 'Mythic', 'rar.ultra': 'Ultra',
   'diff.normal': 'Normal', 'diff.hard': 'Hard',
 
-  'lobby.operator': 'Operator', 'lobby.play': 'PLAY', 'lobby.campaign': 'Campaign · Act {act} · Cinder Line',
+  'lobby.operator': 'Operator', 'lobby.play': 'PLAY', 'lobby.campaign': 'Campaign · Act {act} · Ember Line',
   'lobby.next': 'Mission {n} — {name}', 'lobby.record': 'record', 'lobby.boss5': 'A boss every 5 stages',
-  'lobby.crow': 'CROW’s stall', 'lobby.crowSub': '4 daily goods · 1 special',
+  'lobby.crow': 'HAWK’s stall', 'lobby.crowSub': '4 daily goods · 1 special',
 
   'play.title': 'Choose a mode', 'play.kicker': 'Play',
-  'mode.campaign': 'Campaign', 'mode.campaign.kicker': 'Cinder Line · 10 missions', 'mode.campaign.desc': 'Infiltrate Sector 9 and break the Syndicate’s line. Three acts of hand-made missions.',
+  'mode.campaign': 'Campaign', 'mode.campaign.kicker': 'Ember Line · 10 missions', 'mode.campaign.desc': 'Infiltrate the city and break the Syndicate’s line. Three acts of hand-made missions.',
   'mode.daily': 'Operations', 'mode.daily.kicker': 'Daily · weekly', 'mode.daily.desc': 'Three new operations every day: raids, defense, rescue, sabotage and more.',
-  'mode.endless': 'Endless Sector', 'mode.endless.kicker': 'Chase the record', 'mode.endless.desc': 'Rising difficulty, a boss every five stages, a leaderboard.',
+  'mode.endless': 'Endless Mode', 'mode.endless.kicker': 'Chase the record', 'mode.endless.desc': 'Rising difficulty, a boss every five stages, a leaderboard.',
   'mode.fire.semi': 'Semi-auto', 'mode.fire.auto': 'Full auto', 'mode.fire.pump': 'Pump action',
 
-  'camp.title': 'Cinder Line', 'camp.kicker': 'Campaign', 'camp.act': 'Act {n}', 'camp.mission': 'Mission {n}',
+  'camp.title': 'Ember Line', 'camp.kicker': 'Campaign', 'camp.act': 'Act {n}', 'camp.mission': 'Mission {n}',
   'camp.act1': 'Entry', 'camp.act2': 'Depth', 'camp.act3': 'Collapse',
   'camp.prepare': 'Prepare', 'camp.best': 'Best time', 'camp.diff': 'Difficulty',
   'camp.locked': 'Locked', 'camp.lockedHint': 'This mission opens in a later build.',
 
-  'mission.m1': 'Infiltration', 'mission.m1.where': 'Sector 9 · East gate',
-  'mission.m1.brief': 'The Syndicate holds the way into Sector 9. Get past the checkpoint, cross the container yard, hack the gate terminal in the courtyard and reach extraction.',
+  'mission.m1': 'Infiltration', 'mission.m1.where': 'East gate',
+  'mission.m1.brief': 'The Syndicate holds the way into the city. Get past the checkpoint, cross the container yard, hack the gate terminal in the courtyard and reach extraction.',
   'mission.m1.o1': 'Get past the checkpoint', 'mission.m1.o2': 'Cross the container yard', 'mission.m1.o3': 'Hack the gate terminal', 'mission.m1.o4': 'Reach extraction',
-  'mission.m2': 'CROW’s Stall', 'mission.m2.where': 'Sector 9 · Market street',
-  'mission.m3': 'Secretary Gall', 'mission.m3.where': 'Sector 9 · Governor’s office',
+  'mission.m2': 'HAWK’s Stall', 'mission.m2.where': 'Market street',
+  'mission.m3': 'Secretary Gall', 'mission.m3.where': 'Governor’s office',
   'mission.m4': 'Foundry', 'mission.m4.where': 'Industrial line',
   'mission.m5': 'Metro', 'mission.m5.where': 'Old line · Platform 3',
   'mission.m6': 'Drone Factory', 'mission.m6.where': 'North depots',
@@ -78,11 +78,11 @@ export default {
   'wpn.anvil': 'Big magazine, spin-up and slow.', 'wpn.thumper': 'Bouncing grenade launcher.',
 
   'crate.std': 'Standard', 'crate.std.k': 'Anything', 'crate.plus': 'Reinforced', 'crate.plus.k': 'Rare and up',
-  'crate.crow': 'Raven', 'crate.crow.k': 'Epic and up',
+  'crate.crow': 'Falcon', 'crate.crow.k': 'Epic and up',
   'crate.rules': 'Odds are printed on every crate. A duplicate skin pays out in Scrap; at least one Epic is guaranteed every 30 crates.',
 
-  'trader.k': 'Trader', 'trader.bio': 'An old smuggler who gathers goods from every corner of Sector 9 and knows the price of everything.',
-  'trader.closed': 'Stall closed', 'trader.closedHint': 'CROW opens the stall soon.',
+  'trader.k': 'Trader', 'trader.bio': 'An old smuggler who gathers goods from every corner of the city and knows the price of everything.',
+  'trader.closed': 'Stall closed', 'trader.closedHint': 'HAWK opens the stall soon.',
   'trader.goods': 'Today’s goods', 'trader.refresh': 'Restock', 'trader.daily': 'Daily', 'trader.weekly': 'Weekly special',
 
   'prof.title': 'Profile', 'prof.summary': 'Summary', 'prof.career': 'Career', 'prof.collection': 'Collection', 'prof.achievements': 'Achievements', 'prof.stats': 'Stats',
@@ -90,7 +90,7 @@ export default {
   'prof.missions': 'Missions', 'prof.kills': 'Takedowns', 'prof.acc': 'Accuracy', 'prof.heads': 'Headshots', 'prof.time': 'Time', 'prof.deaths': 'Deaths', 'prof.stars': 'Stars',
   'prof.mission': 'Mission', 'prof.state': 'State', 'prof.starsCol': 'Stars', 'prof.best': 'Best', 'prof.plays': 'Plays',
   'prof.cleared': 'Cleared', 'prof.open': 'Open',
-  'prof.collEmpty': 'Collection empty', 'prof.collHint': 'Skins, costumes and card frames arrive with crates and CROW.',
+  'prof.collEmpty': 'Collection empty', 'prof.collHint': 'Skins, costumes and card frames arrive with crates and HAWK.',
   'prof.achMore': '40 achievements and medal tiers arrive with the meta systems.',
   'prof.byWeapon': 'By weapon', 'prof.byOp': 'By operator', 'prof.weapon': 'Weapon', 'prof.operator': 'Operator', 'prof.noStats': 'No data yet',
   'ach.first': 'First Step', 'ach.first.d': 'Finish the Infiltration mission.',

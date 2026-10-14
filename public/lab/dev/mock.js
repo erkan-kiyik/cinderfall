@@ -78,7 +78,7 @@ if (screen === 'lobby') {
         <div class="card cut"><div class="eyebrow">SONSUZ SEKTÖR</div><div class="big-num">27<small>REKOR BÖLÜM</small></div><div class="eyebrow" style="color:var(--n5)">HER 5 BÖLÜMDE BOSS</div></div>
       </div>
       <div class="card cut wide">
-        <div><div class="eyebrow"><span class="dot"></span>CROW'UN TEZGÂHI</div><div class="title" style="font-size:16px;margin-top:6px">4 YENİ ÜRÜN · 1 ÖZEL</div></div>
+        <div><div class="eyebrow"><span class="dot"></span>HAWK'UN TEZGÂHI</div><div class="title" style="font-size:16px;margin-top:6px">4 YENİ ÜRÜN · 1 ÖZEL</div></div>
         <div class="tag"><div class="eyebrow">YENİLENME</div><div class="title" style="font-size:16px;margin-top:6px;color:var(--ember-hi)">09:25:12</div></div>
       </div>
     </section>

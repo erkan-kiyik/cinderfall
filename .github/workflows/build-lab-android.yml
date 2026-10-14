@@ -1,4 +1,4 @@
-name: Build Cinderfall LAB Android APK
+name: Build KOR LAB Android APK
 
 # The LAB build packages public/lab — the from-scratch rewrite of the game
 # (docs/LAB_REWRITE_PLAN.md) — as a separate app (its own application id and
@@ -56,7 +56,7 @@ jobs:
             const fs = require('fs');
             const p = 'capacitor.config.json';
             const c = JSON.parse(fs.readFileSync(p, 'utf8'));
-            c.appId = 'com.cinderfall.sector9.lab';
+            c.appId = 'com.kor.lab';
             c.appName = 'KOR LAB';
             fs.writeFileSync(p, JSON.stringify(c, null, 2));
           "
@@ -93,7 +93,7 @@ jobs:
           name: "KOR LAB build #${{ github.run_number }}"
           body: |
             LAB build (public/lab, rewrite) from commit ${{ github.sha }}.
-            Installs as a separate app ("KOR LAB", com.cinderfall.sector9.lab)
+            Installs as a separate app ("KOR LAB", com.kor.lab)
             next to the shipping game. Debug-key signed, for testing only.
           files: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           draft: false

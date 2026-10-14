@@ -1,4 +1,4 @@
-// CINDERFALL LAB — character movement.
+// KOR LAB — character movement.
 //
 // One state machine for every character body (the player now, AI later):
 //   ground  walk / run / sprint / crouch, slopes, step off ledges (coyote time)

@@ -1,4 +1,4 @@
-// CINDERFALL LAB — Sector 9 buildings: the street-side facades as separate
+// KOR LAB — the buildings: the street-side facades as separate
 // pieces, laid out along a level so the street never repeats itself.
 //
 // Each building is painted in its own frame: x 0..w along the street, the
@@ -249,7 +249,7 @@ function walkupB(g) {
   fill(g, rect(60, -h - 9, 84, -h - 3), '#3a4448'); fill(g, rect(62, -h - 13, 66, -h - 9), '#3a4448');
 }
 
-// CROW's shop: awning, half-open roller door, neon sign, flat above
+// HAWK's shop: awning, half-open roller door, neon sign, flat above
 function crow(g) {
   const w = 160, h = 112;
   fill(g, rect(0, -h, w, 0), P.conc);
@@ -278,11 +278,11 @@ function crow(g) {
   const neon = '#ff6b52';
   const BIRD = 'M 44 -74 C 46 -79 51 -81 55 -79 L 61 -80.4 L 56.6 -77.2 C 56.4 -73.6 53 -71.4 48.6 -72 L 44.4 -68.6 L 45.6 -72.8 Z';
   g.save(); g.shadowColor = neon; g.shadowBlur = 12;
-  g.font = '700 22px Rajdhani'; g.fillStyle = neon; g.fillText('CROW', 64, -66);
+  g.font = '700 22px Rajdhani'; g.fillStyle = neon; g.fillText('HAWK', 64, -66);
   stroke(g, BIRD, neon, 1.1);
   g.restore();
   stroke(g, BIRD, '#ffd8cc', 0.45);
-  g.font = '700 22px Rajdhani'; g.fillStyle = '#ffd8cc'; g.fillText('CROW', 64, -66);
+  g.font = '700 22px Rajdhani'; g.fillStyle = '#ffd8cc'; g.fillText('HAWK', 64, -66);
   pipe(g, 6, -h, 0); pipe(g, 152, -h, 0);
   acUnit(g, 8, -36);
   tag(g, 140, -12, '#c9b991', 0.6);
@@ -306,9 +306,9 @@ function warehouse(g) {
   for (let y = -54; y < 0; y += 3) { stroke(g, `M 30 ${y} L 110 ${y}`, '#3a4458', 0.5); stroke(g, `M 30 ${y + 0.6} L 110 ${y + 0.6}`, '#222838', 0.4); }
   clip(g, rect(30, -62, 110, -56), () => { fill(g, rect(30, -62, 110, -56), C.gold); for (let x = 20; x < 120; x += 6) fill(g, poly([[x, -56], [x + 3, -56], [x + 9, -62], [x + 6, -62]]), '#1a1c20'); });
   fill(g, rect(26, -4, 30, 0), C.gold, 0.8); fill(g, rect(110, -4, 114, 0), C.gold, 0.8);
-  g.font = '700 26px Rajdhani'; g.fillStyle = 'rgba(232,226,214,0.25)'; g.fillText('09', 132, -50);
-  g.save(); g.font = '700 26px Rajdhani'; g.shadowColor = '#3ee8e0'; g.shadowBlur = 10; g.strokeStyle = '#3ee8e0'; g.lineWidth = 0.8; g.strokeText('09', 132, -50);
-  g.shadowBlur = 0; g.strokeStyle = '#eafffd'; g.lineWidth = 0.28; g.strokeText('09', 132, -50); g.restore();
+  g.font = '700 26px Rajdhani'; g.fillStyle = 'rgba(232,226,214,0.25)'; g.fillText('12', 132, -50);
+  g.save(); g.font = '700 26px Rajdhani'; g.shadowColor = '#3ee8e0'; g.shadowBlur = 10; g.strokeStyle = '#3ee8e0'; g.lineWidth = 0.8; g.strokeText('12', 132, -50);
+  g.shadowBlur = 0; g.strokeStyle = '#eafffd'; g.lineWidth = 0.28; g.strokeText('12', 132, -50); g.restore();
   tube(g, 'M 28 -64 L 112 -64', '#3ee8e0', 0.7);
   // pipes and a vent box
   fill(g, rect(120, -84, 124, 0), '#2a3242'); fill(g, rect(132, -84, 135, -20), '#2a3242');
@@ -516,7 +516,7 @@ export const BUILDINGS = {
 
 // A street of buildings from x0 to x1: the opening ones as given, then a
 // shuffled run in which no building comes back within three of its last
-// use, an alley now and then; CROW's shop only where it is asked for.
+// use, an alley now and then; HAWK's shop only where it is asked for.
 // Returns [{ type, x }].
 export function facadeLayout(x0, x1, seed = 1, first = ['walkup', 'crow', 'alley', 'warehouse']) {
   const r = rng(seed), out = [];

@@ -1,4 +1,4 @@
-// CINDERFALL LAB — weapon painters (factory finish).
+// KOR LAB — weapon painters (factory finish).
 //
 // Weapon space: origin at the trigger hand (gripA), +x toward the muzzle,
 // +y down, same units as characters (64 = a person). Each weapon also names

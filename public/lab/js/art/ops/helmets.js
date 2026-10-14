@@ -1,4 +1,4 @@
-// CINDERFALL LAB — operator helmets.
+// KOR LAB — operator helmets.
 //
 // Every operator's face is covered: a helmet or mask that carries the
 // operator's identity (colour, crest, optics) and keeps the warm operator

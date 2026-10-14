@@ -1,4 +1,4 @@
-// CINDERFALL LAB — ballistics: rays through the tile level and against
+// KOR LAB — ballistics: rays through the tile level and against
 // character hit shapes.
 //
 // Bullets are hitscan. A ray walks the tile grid cell by cell (DDA); solid

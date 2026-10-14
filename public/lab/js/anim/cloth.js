@@ -1,4 +1,4 @@
-// CINDERFALL LAB — verlet cloth chains (scarf tails, straps).
+// KOR LAB — verlet cloth chains (scarf tails, straps).
 // Points live in world space; the first point is pinned to an anchor that the
 // owner moves every step. Gravity is light and a back-wind keeps tails
 // streaming behind the character, with a little flutter.

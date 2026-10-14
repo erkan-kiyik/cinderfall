@@ -1,4 +1,4 @@
-// CINDERFALL LAB — art style tokens.
+// KOR LAB — art style tokens.
 //
 // Clean stylised look: flat colour blocks, three tones per material (light,
 // mid, shade) plus a line tone, a dark outer outline, and one key light from

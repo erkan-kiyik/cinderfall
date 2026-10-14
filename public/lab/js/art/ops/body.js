@@ -1,4 +1,4 @@
-// CINDERFALL LAB — the operator body standard (v2).
+// KOR LAB — the operator body standard (v2).
 //
 // Heroic stylised proportions on the shared skeleton (figure.js SK): head
 // about a seventh of the height, shoulders about twice the head's width, a

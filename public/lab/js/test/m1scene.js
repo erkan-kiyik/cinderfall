@@ -1,4 +1,4 @@
-// CINDERFALL LAB — M1 engine test scene.
+// KOR LAB — M1 engine test scene.
 //
 // The M0 street, rebuilt for the GPU: parallax layers, the five operators and
 // two Syndicate troopers as baked sprites, real lights (lamp cone, neon,
@@ -13,7 +13,7 @@ import { fill } from '../art/kit.js';
 import { rgba } from '../gfx/batch.js';
 import { ParticleSystem, col } from '../gfx/particles.js';
 
-export const BAKE_VERSION = 'm1-6';
+export const BAKE_VERSION = 'm1-7';
 
 // Pixel density per quality: background layers, characters, effects.
 const DENS = { low: [3, 3.6, 24], med: [4.5, 5.2, 32], high: [6, 7, 48] };

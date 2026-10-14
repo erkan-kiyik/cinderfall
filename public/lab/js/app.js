@@ -1,4 +1,4 @@
-// CINDERFALL LAB — the application: menus over a live backdrop, missions,
+// KOR LAB — the application: menus over a live backdrop, missions,
 // the save, settings, the legal gate and the back button.
 //
 // One engine (renderer, atlas, loop) runs the whole time; `scene` is either

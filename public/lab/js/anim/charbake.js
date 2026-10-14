@@ -1,4 +1,4 @@
-// CINDERFALL LAB — bake a character's parts for the runtime rig.
+// KOR LAB — bake a character's parts for the runtime rig.
 //
 // Every part painter of an operator or enemy is baked on its own, in its own
 // bone frame, so the anchor of each sprite is its joint. Limbs come in a near

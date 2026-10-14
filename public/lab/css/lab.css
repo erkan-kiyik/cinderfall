@@ -1,4 +1,4 @@
-/* CINDERFALL LAB — engine shell (canvas, boot screen, overlay). */
+/* KOR LAB — engine shell (canvas, boot screen, overlay). */
 html, body { background: var(--n0); touch-action: none; user-select: none; -webkit-user-select: none; }
 #game { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
 #hud { position: fixed; inset: 0; pointer-events: none; }

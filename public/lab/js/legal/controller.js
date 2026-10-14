@@ -5,7 +5,7 @@ export const CONTROLLER = {
   name: 'Erkan Kıyık',
   email: 'erkankiyikjr26@gmail.com',
   country: 'TR',              // ISO country of the controller — sets governing law
-  game: 'CINDERFALL',
+  game: 'KOR',
 };
 
 // Bump whenever a legal text changes materially. Every player is asked to

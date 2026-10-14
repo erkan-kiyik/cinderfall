@@ -1,4 +1,4 @@
-// CINDERFALL LAB — M3: weapon core.
+// KOR LAB — M3: weapon core.
 //
 // The movement course from M2, now with guns: every operator carries a
 // primary and a sidearm (fire, reload, swap, knife), bullets are hitscan
@@ -19,7 +19,7 @@ import { Sfx } from '../audio/sfx.js';
 import { CombatHud } from '../ui/combathud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'm3-5';
+export const BAKE_VERSION = 'm3-6';
 export const OPERATORS = M2.OPERATORS;
 
 // the M2 course with troopers along the way

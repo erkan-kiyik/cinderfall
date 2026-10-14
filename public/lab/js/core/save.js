@@ -1,4 +1,4 @@
-// CINDERFALL LAB — the save.
+// KOR LAB — the save.
 //
 // One JSON document with a schema version, kept in localStorage with a
 // backup copy of the last good state. Loading validates and migrates; a
@@ -6,7 +6,7 @@
 // are debounced so a burst of setting changes costs one write.
 
 export const SAVE_VERSION = 1;
-const KEY = 'cinderfall.lab.save', BAK = 'cinderfall.lab.save.bak';
+const KEY = 'kor.lab.save', BAK = 'kor.lab.save.bak';
 
 export const OPERATOR_IDS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 const DEFAULT_PRIMARY = { vex: 'kestrel', hale: 'ramrod', morrow: 'wren9', kite: 'marksman', brick: 'kestrel' };

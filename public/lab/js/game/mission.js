@@ -1,4 +1,4 @@
-// CINDERFALL LAB — M4: the first campaign mission, end to end.
+// KOR LAB — M4: the first campaign mission, end to end.
 //
 // Built on the M3 combat scene (guns, ballistics, effects, HUD): enemies are
 // now run by Brains (perception, cover, squad fire tokens), the level comes
@@ -19,7 +19,7 @@ import { t } from '../ui/i18n.js';
 import { rgba } from '../gfx/batch.js';
 import { col } from '../gfx/particles.js';
 
-export const BAKE_VERSION = 'c2-3';
+export const BAKE_VERSION = 'c2-4';
 const MISSION = buildMission1();
 
 export function bakeList(quality) {

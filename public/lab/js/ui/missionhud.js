@@ -1,4 +1,4 @@
-// CINDERFALL LAB — mission HUD (DOM): objective line with hack progress,
+// KOR LAB — mission HUD (DOM): objective line with hack progress,
 // mission clock, an edge arrow toward an off-screen objective, toasts, and
 // the briefing / debrief cards.
 import { t } from './i18n.js';

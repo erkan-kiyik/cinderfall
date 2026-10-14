@@ -1,4 +1,4 @@
-// CINDERFALL LAB — character renderer.
+// KOR LAB — character renderer.
 //
 // A character is a stack of overlapping part sprites. Outlining each part
 // would draw dark rings at every joint, so instead each character is first

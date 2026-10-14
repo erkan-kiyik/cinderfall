@@ -1,4 +1,4 @@
-// CINDERFALL LAB — frame pipeline.
+// KOR LAB — frame pipeline.
 //
 //   scene  (render scale)  world sprites, opaque background first
 //   light  (light scale)   ambient + additive point/cone lights, stored at ½

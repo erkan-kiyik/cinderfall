@@ -1,4 +1,4 @@
-// CINDERFALL LAB — instanced sprite batcher.
+// KOR LAB — instanced sprite batcher.
 //
 // Every sprite is one instance of a 4-vertex strip: 48 bytes of per-instance
 // data (position, size, anchor, rotation, UV rect, tint). The batch flushes

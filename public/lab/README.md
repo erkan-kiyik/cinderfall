@@ -1,4 +1,4 @@
-# CINDERFALL LAB — rewrite (in progress)
+# KOR LAB — rewrite (in progress)
 
 The from-scratch LAB rebuild described in `docs/LAB_REWRITE_PLAN.md`.
 Since M1 the LAB app (`build-lab-android.yml`, `GAME_DIR: lab`) packages this
@@ -11,9 +11,9 @@ folder; the shipping game in `public/game` is untouched.
 - `js/art/figure.js` — skeleton, pose solving, two-bone IK, held weapons;
   parts are painted per bone so the in-game rig reuses them
 - `js/art/ops/` — VEX, HALE, MORROW, KITE, BRICK
-- `js/art/enemies/syndicate.js` — Ash Syndicate rifleman and shield trooper
+- `js/art/enemies/syndicate.js` — Vanta Syndicate rifleman and shield trooper
 - `js/art/weapons/` — Wren-9, Kestrel AR, Ramrod-12, Marksman DMR
-- `js/art/env/street.js` — Sector 9 street cut and props
+- `js/art/env/street.js` — street cut and props
 - `css/` — design tokens, components, screen layouts (lobby, arsenal)
 - `dev/` — review sheets (`sheet.html?what=op&op=vex`, `weapons`, `street`,
   `board-*`) and UI mocks (`mock.html?screen=lobby|arsenal`); dev only
@@ -111,7 +111,7 @@ folder; the shipping game in `public/game` is untouched.
   to a 2400×1080 display; the player's interface scale (85–115 %) never takes
   touch targets under 44 px (the hit token grows instead)
 - `js/ui/screens/` — legal gate, lobby, mode select, campaign map,
-  preparation, operators, arsenal, crates, trader (CROW), profile (summary,
+  preparation, operators, arsenal, crates, trader (HAWK), profile (summary,
   career, collection, achievements, statistics), settings (graphics, sound,
   controls, accessibility, language, privacy & legal), HUD editor, result
 - `js/core/save.js` — versioned save with a backup copy and migration;
@@ -144,11 +144,11 @@ folder; the shipping game in `public/game` is untouched.
   (`dev/sheet.html?what=avatars`)
 
 ## The street
-- `js/art/env/city.js` — nine buildings (brick and plaster walk-ups, CROW's
+- `js/art/env/city.js` — nine buildings (brick and plaster walk-ups, HAWK's
   shop, warehouse, Syndicate block, hotel with a vertical neon sign, auto
   repair, a burnt-out ruin, an alley), each baked once and laid out along the
   level by `facadeLayout()`: no building returns within three of its last
-  use, CROW's shop appears once; each building lists the lights and glows it
+  use, HAWK's shop appears once; each building lists the lights and glows it
   throws, so neon, door lights and ember-lit windows follow the layout
 - the ground: pavement slabs, kerb and gutter, storm drains, worn lane
   dashes, manholes, patches, cracks, puddles catching the lights; the far

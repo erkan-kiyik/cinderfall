@@ -1,4 +1,4 @@
-// CINDERFALL LAB — performance overlay.
+// KOR LAB — performance overlay.
 // Text refreshes 4×/s; the frame-time graph redraws every frame from the
 // loop's ring buffer (one small 2D canvas, no allocation).
 

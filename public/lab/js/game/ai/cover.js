@@ -1,4 +1,4 @@
-// CINDERFALL LAB — cover points, found in the tile level.
+// KOR LAB — cover points, found in the tile level.
 //
 // A cover point is a standing spot on a floor right next to a solid obstacle
 // 4–6 tiles tall (32–48 units): crouched behind it a body (40 tall) is hidden

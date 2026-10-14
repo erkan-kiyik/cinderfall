@@ -1,4 +1,4 @@
-/* CINDERFALL LAB — screen layouts (lobby, arsenal). */
+/* KOR LAB — screen layouts (lobby, arsenal). */
 
 /* lobby -------------------------------------------------------------------- */
 .lobby { flex: 1; display: grid; grid-template-columns: 1.12fr 1fr; gap: var(--s4); padding: var(--s3) var(--s4) var(--s3); min-height: 0; }

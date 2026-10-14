@@ -1,4 +1,4 @@
-// CINDERFALL LAB — small weapon items: casings, shells, knife, holster, and
+// KOR LAB — small weapon items: casings, shells, knife, holster, and
 // the combat effect shapes that need real art (slash arc, bullet hole).
 //
 // Same units and light as the weapons. Casings are centred on their middle

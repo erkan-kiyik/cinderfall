@@ -1,4 +1,4 @@
-// CINDERFALL LAB — runtime rig.
+// KOR LAB — runtime rig.
 //
 // Same skeleton and part frames as art/figure.js (so every M0 painter works
 // unchanged), solved every frame without allocating. Everything is in the

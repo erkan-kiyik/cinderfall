@@ -1,4 +1,4 @@
-// CINDERFALL LAB — character skeleton and figure assembly.
+// KOR LAB — character skeleton and figure assembly.
 //
 // Units: a character is 64 tall, feet on y = 0, y grows downward. Characters
 // face +x in a three-quarter view: the near arm and leg (closer to the camera)

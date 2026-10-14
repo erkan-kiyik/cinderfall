@@ -1,4 +1,4 @@
-// CINDERFALL LAB — WebGL2 helpers: context, programs, render targets.
+// KOR LAB — WebGL2 helpers: context, programs, render targets.
 
 export function createGL(canvas) {
   const gl = canvas.getContext('webgl2', {

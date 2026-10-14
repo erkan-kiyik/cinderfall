@@ -1,4 +1,4 @@
-// CINDERFALL LAB — verlet ragdoll for deaths.
+// KOR LAB — verlet ragdoll for deaths.
 //
 // Starts from the solved skeleton at the moment of death, simulates a handful
 // of points in world space (pelvis, neck, head, knees, ankles, elbows, wrists)

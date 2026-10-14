@@ -1,4 +1,4 @@
-// CINDERFALL LAB — a rigged, animated, armed character.
+// KOR LAB — a rigged, animated, armed character.
 //
 // Glue between a Mover (physics), the Animator (pose from movement + aim),
 // the rig solver, the guns it carries and the part sprites. Drawing happens

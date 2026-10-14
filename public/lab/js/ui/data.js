@@ -1,4 +1,4 @@
-// CINDERFALL LAB — catalogue data the menus show: operators and abilities,
+// KOR LAB — catalogue data the menus show: operators and abilities,
 // the weapon list (what exists now, what is coming), the campaign map and
 // crate odds. Display text lives in the language files under these keys.
 import { GUNS } from '../game/guns.js';

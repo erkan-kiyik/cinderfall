@@ -1,4 +1,4 @@
-// CINDERFALL LAB — interface strings.
+// KOR LAB — interface strings.
 //
 // t('key', { n: 3 }) looks the key up in the current language, falls back to
 // Turkish, then to the key itself (so a missing string is visible, never

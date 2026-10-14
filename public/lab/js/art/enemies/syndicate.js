@@ -1,4 +1,4 @@
-// ASH SYNDICATE — the mercenary army holding Sector 9. Cool steel-blue
+// VANTA SYNDICATE — the mercenary army holding the city. Cool steel-blue
 // armour, faceless helmets with a red visor slit: readable as "enemy" from
 // across the street, the opposite of the operators' warm palette.
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
@@ -20,7 +20,7 @@ const PAL = {
 // The Syndicate's rifles: same frame, cold finish, red accent.
 export const SYN_MAT = { ...MAT, poly: tone('#4a5566', '#323b48', '#222831', '#0e1116'), accent: M.visor };
 
-// Syndicate mark: an inverted triangle (a falling cinder) crossed by a bar.
+// Syndicate mark: an inverted triangle (a falling ember) crossed by a bar.
 export function emblem(g, x, y, r, c) {
   stroke(g, `M ${x - r} ${y - r * 0.7} L ${x + r} ${y - r * 0.7} L ${x} ${y + r} Z`, c, r * 0.24);
   stroke(g, `M ${x - r * 0.45} ${y - r * 0.05} L ${x + r * 0.45} ${y - r * 0.05}`, c, r * 0.22);
@@ -111,7 +111,7 @@ function chest(g) {
 const PARTS = { torso, chest, head: helmet, upper, fore, hand: handP, thigh, shin, foot };
 
 export const TETIKCI = {
-  id: 'tetikci', name: 'TETİKÇİ', role: 'ASH SYNDICATE', pal: PAL,
+  id: 'tetikci', name: 'TETİKÇİ', role: 'VANTA SYNDICATE', pal: PAL,
   pose: {
     nThigh: 0.2, nShin: 0.06, fThigh: -0.26, fShin: -0.04, head: 0.02,
     gun: { w: WEAPONS.kestrel, at: [6.4, -41.4], ang: 0.4, k: 0.96, mat: SYN_MAT },
@@ -154,7 +154,7 @@ function heavyUpper(g, ctx) {
 }
 
 export const KALKANLI = {
-  id: 'kalkanli', name: 'KALKANLI', role: 'ASH SYNDICATE', pal: PAL,
+  id: 'kalkanli', name: 'KALKANLI', role: 'VANTA SYNDICATE', pal: PAL,
   pose: { nUpper: -0.35, nFore: -1.45, nHand: -0.2, fUpper: -0.1, fFore: -0.4, fHand: -0.2, nThigh: 0.26, nShin: 0.06, fThigh: -0.3, fShin: -0.04, head: 0.04 },
   parts: { ...PARTS, torso: heavyTorso, upper: heavyUpper, front: shieldFront },
 };
@@ -217,7 +217,7 @@ function lightChest(g) {
 }
 
 export const HUCUMCU = {
-  id: 'hucumcu', name: 'HÜCUMCU', role: 'ASH SYNDICATE', pal: PAL_H,
+  id: 'hucumcu', name: 'HÜCUMCU', role: 'VANTA SYNDICATE', pal: PAL_H,
   pose: {
     nThigh: 0.24, nShin: 0.08, fThigh: -0.3, fShin: -0.05, head: 0.02,
     gun: { w: WEAPONS.ramrod, at: [6.0, -40.6], ang: 0.35, k: 0.96, mat: SYN_MAT },

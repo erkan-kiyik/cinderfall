@@ -1,4 +1,4 @@
-// CINDERFALL LAB — street life: everything that moves over the painted street.
+// KOR LAB — street life: everything that moves over the painted street.
 //
 // Rain with splashes, steam from the manholes and drains, searchlights and
 // blinking beacons on the skyline, drones and flying traffic in the haze,

@@ -1,4 +1,4 @@
-// CINDERFALL LAB — player input: keyboard + mouse, and touch.
+// KOR LAB — player input: keyboard + mouse, and touch.
 //
 // Everything lands in one Controls object the simulation reads each step:
 //   moveX (−1..1 analog), up, down, jump, sprint, crouch, fire (held),

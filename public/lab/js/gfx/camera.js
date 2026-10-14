@@ -1,4 +1,4 @@
-// CINDERFALL LAB — camera.
+// KOR LAB — camera.
 //
 // World units, y down. `zoom` is how many world units fit in the view's
 // height, so framing is the same on every screen and resolution; parallax

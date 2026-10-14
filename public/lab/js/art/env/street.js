@@ -1,4 +1,4 @@
-// CINDERFALL LAB — Sector 9 street, style-board cut.
+// KOR LAB — the street, style-board cut.
 //
 // Units are world units (a person is 64 tall); the street surface is y = 0
 // and the scene spans x 0..600. Background layers are flat colour with no
@@ -18,7 +18,7 @@ const FAR = '#262e3e', FAR_WIN = '#6c6372';
 const MID = '#2e3748', MID_HI = '#38425a';
 
 function sky(g) {
-  // stepped dusk bands, warmer toward the horizon where the district burns
+  // stepped dusk bands, warmer toward the horizon where the city burns
   const top = -172, h = 150 / SKY.length;
   SKY.forEach((c, i) => fill(g, rect(-10, top + i * h, 610, top + (i + 1) * h + 0.5), c));
   fill(g, rect(-10, -64, 610, -22), '#6a4250', 0.35);
@@ -88,7 +88,7 @@ function midIndustry(g) {
   fill(g, rect(320, B - 10, 408, B - 6), C.danger, 0.8);
   emblem(g, 340, B - 22, 8, '#e8d9d9');
   g.font = '700 10px Rajdhani'; g.fillStyle = '#e8d9d9'; g.textBaseline = 'alphabetic';
-  g.fillText('ASH SYNDICATE', 354, B - 20);
+  g.fillText('VANTA SYNDICATE', 354, B - 20);
   g.font = '600 6px Rajdhani'; g.fillStyle = '#c9a9ae'; g.fillText('DÜZEN · GÜVENLİK · İTAAT', 354, B - 12);
   // haze between the layers
   fill(g, rect(-10, -64, 610, -40), '#5a5168', 0.16);
@@ -153,7 +153,7 @@ export function crate(g, x, w = 18, h = 16) {
     fill(g, poly([[x + f, -f - 1.6], [x + f + 1.6, -f], [x + w - f, -h + f + 1.6], [x + w - f - 1.6, -h + f]]), WOOD.m);
     stroke(g, `M ${x + f + 0.8} ${-f - 0.8} L ${x + w - f - 0.8} ${-h + f + 0.8}`, WOOD.l, 0.35, 0.6);
     // stencil
-    g.font = '700 3.4px Rajdhani'; g.fillStyle = 'rgba(40,24,12,0.7)'; g.fillText('S-9', x + w * 0.56, -f - 1.2);
+    g.font = '700 3.4px Rajdhani'; g.fillStyle = 'rgba(40,24,12,0.7)'; g.fillText('KOR', x + w * 0.56, -f - 1.2);
   });
   // steel corners with a rivet each
   for (const [cx, cy, sx, sy] of [[x, -h, 1, 1], [x + w, -h, -1, 1], [x, 0, 1, -1], [x + w, 0, -1, -1]]) {
@@ -179,7 +179,7 @@ export function barrier(g, x, w = 34) {
     stroke(g, `M ${x + w * 0.66} -6 l 1.4 2.6 l 1.8 0.8`, CONC.k, 0.25, 0.7);
     for (const sx of [x + 7, x + 15, x + 22]) fill(g, rect(sx, -4.4, sx + 3, -3.8), CONC.k, 0.35);
     fill(g, rect(x + w / 2 - 1.4, -6, x + w / 2 + 1.4, -4.4), '#ffb030');
-    g.font = '700 2.8px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.7)'; g.fillText('S9-114', x + 8, -13.4);
+    g.font = '700 2.8px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.7)'; g.fillText('B-114', x + 8, -13.4);
   });
   stroke(g, B, CONC.k, 0.4);
   // rebar lifting loops on top
@@ -220,7 +220,7 @@ export function dumpster(g, x) {
   clip(g, B, () => {
     for (let k = x + 6; k < x + 38; k += 8) { stroke(g, `M ${k} -18 L ${k} -4`, D.d, 0.8); stroke(g, `M ${k + 0.8} -18 L ${k + 0.8} -4`, D.l, 0.3, 0.5); }
     fill(g, rect(x + 26, -16, x + 36, -11), '#d9dee5');
-    g.font = '700 2.4px Rajdhani'; g.fillStyle = '#30503b'; g.fillText('ATIK · S9', x + 27, -12.6);
+    g.font = '700 2.4px Rajdhani'; g.fillStyle = '#30503b'; g.fillText('ATIK', x + 27, -12.6);
     fill(g, ell(x + 14, -9, 3, 2), D.d, 0.6);
     fill(g, rect(x, -7, x + 40, -2), '#000', 0.15);
   });

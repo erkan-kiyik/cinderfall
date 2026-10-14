@@ -1,4 +1,4 @@
-// CINDERFALL LAB — small painted pictures for the menus: operator avatars
+// KOR LAB — small painted pictures for the menus: operator avatars
 // (head and shoulders, lit like the opening) and weapon side views, painted
 // once and cached.
 import { outlined, setRoot, canvas, rng } from '../art/kit.js';

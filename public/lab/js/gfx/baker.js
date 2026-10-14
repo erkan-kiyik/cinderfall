@@ -1,4 +1,4 @@
-// CINDERFALL LAB — bake procedural art into the atlas, with a disk cache.
+// KOR LAB — bake procedural art into the atlas, with a disk cache.
 //
 // A bake entry describes a world-space box, a pixel density and a painter.
 // Wide layers are split into chunks that fit an atlas page; each chunk is
@@ -10,7 +10,7 @@
 // art version and quality: the second launch skips painting entirely.
 import { outlined, canvas, setRoot } from '../art/kit.js';
 
-const DB = 'cf-lab-bake', STORE = 'pages';
+const DB = 'kor-lab-bake', STORE = 'pages';
 
 function idb() {
   return new Promise((res, rej) => {

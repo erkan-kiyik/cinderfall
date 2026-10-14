@@ -153,7 +153,7 @@ const ABIL = {
 };
 if (what === 'board-ops') {
   const ids = ['vex', 'hale', 'morrow', 'kite', 'brick'];
-  const g = board(2400, 1090, 'OPERATÖRLER', 'CINDERFALL LAB · M0 STİL PANOSU · temiz stilize, 3 ton gölge, koyu dış çizgi');
+  const g = board(2400, 1090, 'OPERATÖRLER', 'KOR LAB · M0 STİL PANOSU · temiz stilize, 3 ton gölge, koyu dış çizgi');
   const s = 7.4;
   ids.forEach((id, i) => {
     const f = figureCanvas(OPS[id], s);
@@ -185,7 +185,7 @@ if (what === 'board-faces') {
   });
 }
 if (what === 'board-arms') {
-  const g = board(2400, 1240, 'SİLAHLAR VE DÜŞMANLAR', 'fabrika görünümü · metal açık çelik, polimer koyu, turuncu vurgu · ASH SYNDICATE soğuk mavi + kırmızı vizör');
+  const g = board(2400, 1240, 'SİLAHLAR VE DÜŞMANLAR', 'fabrika görünümü · metal açık çelik, polimer koyu, turuncu vurgu · VANTA SYNDICATE soğuk mavi + kırmızı vizör');
   const list = [['wren9', 'TABANCA · hızlı, isabetli yan silah'], ['kestrel', 'TÜFEK · tam otomatik, kırmızı nokta'], ['ramrod', 'POMPALI · yan saddle fişek, pompa'], ['marksman', 'KESKİN NİŞANCI · dürbün, susturucu, bipod']];
   let y = 150;
   for (const [id, desc] of list) {

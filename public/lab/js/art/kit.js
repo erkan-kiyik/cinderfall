@@ -1,4 +1,4 @@
-// CINDERFALL LAB — paint kit.
+// KOR LAB — paint kit.
 //
 // Small set of drawing primitives every painter uses:
 //   P(d)        cached Path2D from an SVG path string (Path2D passes through)

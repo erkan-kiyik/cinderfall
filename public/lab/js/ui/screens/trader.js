@@ -1,4 +1,4 @@
-// CROW's stall: four daily goods and one weekly special. CROW and the
+// HAWK's stall: four daily goods and one weekly special. HAWK and the
 // economy come with M7; the stall shows its shape and the refresh clock.
 import { h, svg, popIn } from '../kit.js';
 import { t } from '../i18n.js';
@@ -8,7 +8,7 @@ export const trader = {
   mount(ctx) {
     const left = h('div.card.cut', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
       h('div.eyebrow.accent', h('span.dot'), t('trader.k')),
-      h('div.h1', 'CROW'),
+      h('div.h1', 'HAWK'),
       h('p.body', { style: { margin: 0, fontSize: '12px' } }, t('trader.bio')),
       h('div.empty.cut', { style: { flex: 1 } }, svg('shop'), h('b', t('trader.closed')), h('span', t('trader.closedHint'))));
     const timer = h('div.h3.num', '—');

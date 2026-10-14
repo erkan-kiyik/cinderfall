@@ -1,4 +1,4 @@
-// CINDERFALL LAB — main loop.
+// KOR LAB — main loop.
 //
 // Simulation runs at a fixed 120 Hz step; rendering happens once per display
 // frame and interpolates between the last two simulation states (alpha). On a

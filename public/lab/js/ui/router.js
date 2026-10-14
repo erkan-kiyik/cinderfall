@@ -1,4 +1,4 @@
-// CINDERFALL LAB — screen stack.
+// KOR LAB — screen stack.
 //
 // Screens are modules { mount(ctx, params) → { el, show?(), hide?(),
 // dispose?(), back?() → true to swallow } }. go() pushes a screen with a

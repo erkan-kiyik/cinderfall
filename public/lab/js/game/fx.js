@@ -1,4 +1,4 @@
-// CINDERFALL LAB — combat effects.
+// KOR LAB — combat effects.
 //
 // Everything a shot leaves behind: muzzle flashes and their light, tracers,
 // sparks and dust at impacts, hit puffs on characters, bullet holes on

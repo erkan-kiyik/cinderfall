@@ -1,4 +1,4 @@
-/* CINDERFALL LAB — design tokens. Colours mirror js/art/style.js so the
+/* KOR LAB — design tokens. Colours mirror js/art/style.js so the
    canvas art and the DOM interface share one palette. */
 @font-face { font-family: 'Rajdhani'; font-weight: 500; font-display: swap; src: url(../assets/fonts/rajdhani-500.woff2) format('woff2'); }
 @font-face { font-family: 'Rajdhani'; font-weight: 600; font-display: swap; src: url(../assets/fonts/rajdhani-600.woff2) format('woff2'); }

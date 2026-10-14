@@ -1,4 +1,4 @@
-// CINDERFALL LAB — M2: movement course.
+// KOR LAB — M2: movement course.
 //
 // The first playable: an operator with the full movement set (run, sprint,
 // crouch, slide, jump, mantle, ladders, one-way decks, slopes) on a course
@@ -16,7 +16,7 @@ import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-5';
+export const BAKE_VERSION = 'm2-6';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -126,7 +126,7 @@ export class M2Scene {
     this.afterUpdate(dt);
   }
 
-  // light flicker by kind: CROW's neon stutters now and then, the hotel sign
+  // light flicker by kind: HAWK's neon stutters now and then, the hotel sign
   // on its own beat, fires breathe; each building on its own phase
   flicker(kind, seed = 0) {
     const t = this.t + seed * 0.013;

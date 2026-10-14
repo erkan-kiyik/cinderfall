@@ -1,4 +1,4 @@
-// CINDERFALL LAB — GPU particles.
+// KOR LAB — GPU particles.
 //
 // Each particle is written once, at birth, into a ring buffer: start
 // position and velocity, birth time, life, size and colour ramps, gravity,

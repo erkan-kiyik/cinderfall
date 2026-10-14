@@ -1,4 +1,4 @@
-// CINDERFALL LAB — texture atlas.
+// KOR LAB — texture atlas.
 //
 // Baked sprites are packed into square pages with a skyline packer, each
 // page is one GPU texture (premultiplied alpha, mipmapped), and every sprite

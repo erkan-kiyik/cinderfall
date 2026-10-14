@@ -1,4 +1,4 @@
-// CINDERFALL LAB — the live backdrop behind the menus.
+// KOR LAB — the live backdrop behind the menus.
 //
 // The street from the game, a slow camera drift, and the selected operator
 // standing at low ready with their loadout, breathing and glancing around.

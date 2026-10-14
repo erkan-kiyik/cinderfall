@@ -1,4 +1,4 @@
-// CINDERFALL LAB — interface kit: element builder, icons, and the feel of
+// KOR LAB — interface kit: element builder, icons, and the feel of
 // every touch (press squash + spring, haptic tick, UI sound), toasts,
 // modals, counters and staggered entrances.
 //

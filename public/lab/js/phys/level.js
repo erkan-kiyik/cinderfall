@@ -1,4 +1,4 @@
-// CINDERFALL LAB — tile level and collision queries.
+// KOR LAB — tile level and collision queries.
 //
 // The level is a grid of 8-unit tiles described by ASCII rows (top → bottom):
 //   .  empty        #  solid        =  one-way platform (stand on top only)

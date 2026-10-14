@@ -1,4 +1,4 @@
-// CINDERFALL LAB — locomotion animator.
+// KOR LAB — locomotion animator.
 //
 // Turns movement state into a Pose every frame. Lower body is procedural:
 // a gait cycle advanced by distance travelled (feet never skate), stance and
