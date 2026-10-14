@@ -4,7 +4,7 @@
 // you see is what you collide with.
 //
 //   A  approach      crate, duct to slide under, a gap      → checkpoint 1
-//   B  checkpoint    Syndicate post behind concrete and sandbags
+//   B  checkpoint    Syndicate post behind concrete and steel barricades
 //   C  container yard ladder, fire-escape deck, stacked containers → checkpoint 2
 //   D  gate court    shield trooper, riflemen, a rusher; hack the gate terminal
 //   E  extraction    the gate opens, a last squad arrives, reach the flare
@@ -12,7 +12,7 @@ import { cel, fill, stroke, clip } from '../kit.js';
 import { M, tone, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone } from './street.js';
-import { CONT, container, catwalk, ladder, pit, duct, sandbags } from './course.js';
+import { CONT, container, catwalk, ladder, pit, duct, barricade, barricadeFx } from './course.js';
 import { emblem } from '../enemies/syndicate.js';
 import { facadeLayout } from './city.js';
 
@@ -147,7 +147,13 @@ export function buildMission1() {
   const block = (c0, c1, n0, n1, ch = '#') => { for (let c = c0; c <= c1; c++) for (let n = n0; n <= n1; n++) at(c, n, ch); };
   const X = (c) => c * T;
   block(0, 1, 1, 25); block(COLS - 2, COLS - 1, 1, 25);
-  const props = [], front = [], deco = [], lamps = [];
+  const props = [], front = [], deco = [], lamps = [], glows = [], lights = [];
+  // a steel barricade over tiles c0..c1 (height in tiles), with its neon tube
+  const bar = (name, c0, c1, n, neon) => {
+    block(c0, c1 - 1, 1, n);
+    P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (g) => barricade(g, X(c0), X(c1), n * T, neon), front);
+    const f = barricadeFx(X(c0), X(c1), n * T, neon); glows.push(f.glow); lights.push(f.light);
+  };
   const P = (name, box, paint, list = props) => list.push({ name, box, paint });
 
   // A — approach -----------------------------------------------------------------
@@ -157,11 +163,11 @@ export function buildMission1() {
   P('m.pit', [X(50) - 8, -3, X(54) + 8, 33], (g) => pit(g, X(50), X(54), 32));
   P('m.cone1', [X(46) - 6, -12, X(46) + 8, 1], (g) => cone(g, X(46)), deco);
   // B — checkpoint post -------------------------------------------------------------
-  block(72, 74, 1, 4); P('m.bagsB1', [X(72) - 4, -34, X(75) + 4, 1], (g) => sandbags(g, X(72), X(75), 32), front);
+  bar('m.barB1', 72, 75, 4, '#3ee8e0');
   block(86, 89, 1, 2); P('m.barB', [X(86) - 4, -18, X(90) + 4, 1], (g) => barrier(g, X(86) + 1, 30), front);
   P('m.booth', [X(104) - 4, -66, X(104) + 48, 1], (g) => booth(g, X(104)), deco);
   block(100, 101, 1, 5); P('m.concB', [X(100) - 1, -42, X(102) + 1, 1], (g) => concrete(g, X(100), X(102), 40));
-  block(116, 118, 1, 4); P('m.bagsB2', [X(116) - 4, -34, X(119) + 4, 1], (g) => sandbags(g, X(116), X(119), 32), front);
+  bar('m.barB2', 116, 119, 4, '#ff3347');
   P('m.barrelB', [X(124) - 2, -16, X(124) + 14, 1], (g) => burnBarrel(g, X(124)), deco);
   // C — container yard -----------------------------------------------------------------
   block(140, 149, 1, 5); P('m.contA', [X(140) - 2, -42, X(150) + 2, 1], (g) => container(g, X(140), -40, X(150), 0, CONT.teal));
@@ -176,14 +182,14 @@ export function buildMission1() {
   // D — gate court ----------------------------------------------------------------------
   block(246, 247, 1, 5); P('m.concD1', [X(246) - 1, -42, X(248) + 1, 1], (g) => concrete(g, X(246), X(248), 40));
   block(274, 275, 1, 5); P('m.concD2', [X(274) - 1, -42, X(276) + 1, 1], (g) => concrete(g, X(274), X(276), 40));
-  block(294, 296, 1, 4); P('m.bagsD', [X(294) - 4, -34, X(297) + 4, 1], (g) => sandbags(g, X(294), X(297), 32), front);
+  bar('m.barD', 294, 297, 4, '#ff3fa4');
   P('m.term', [X(312) - 9, -28, X(312) + 18, 1], (g) => terminal(g, X(312)));
   block(322, 323, 1, 12);
   P('m.gateFrame', [X(322) - 16, -126, X(324) + 16, 1], (g) => gateFrame(g, X(322), X(324), 96), deco);
   P('m.coneD', [X(286) - 6, -12, X(286) + 8, 1], (g) => cone(g, X(286)), deco);
   // E — extraction -----------------------------------------------------------------------
   block(350, 351, 1, 2); P('m.crateE', [X(350) - 2, -18, X(352) + 2, 1], (g) => crate(g, X(350), 16, 16));
-  block(362, 364, 1, 4); P('m.bagsE', [X(362) - 4, -34, X(365) + 4, 1], (g) => sandbags(g, X(362), X(365), 32), front);
+  bar('m.barE', 362, 365, 4, '#3ee8e0');
   P('m.beacon', [X(387) - 5, -28, X(387) + 5, 1], (g) => beacon(g, X(387)), deco);
   // checkpoint posts
   const checkpoints = [{ x: X(60) }, { x: X(228) }, { x: X(316) }];
@@ -194,7 +200,7 @@ export function buildMission1() {
   const level = new Level(g.map((r) => r.join('')), TOPY);
   const E = (id, x, y, zone, o = {}) => ({ id, kind: id, x, y, zone, facing: -1, ...o });
   return {
-    level, props, front, deco, lamps, width: COLS * T,
+    level, props, front, deco, lamps, glows, lights, width: COLS * T,
     // CROW's shop once, near the start; then the district, never twice the same in a row
     facade: facadeLayout(-10, COLS * T + 10, 9, ['walkup', 'crow', 'alley', 'warehouse', 'synBlock', 'walkupB', 'hotel', 'ruin', 'garage']),
     fires: [X(124) + 5],

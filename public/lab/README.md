@@ -159,6 +159,15 @@ folder; the shipping game in `public/game` is untouched.
   with a keypad, lamp post with its flange, containers with corner castings
 - contact shadows under every obstacle and every character on its feet; the
   burn barrel's fire sits on the barrel (`course.fires`)
+- neon: every building carries signs and tubes (BAR, BAKKAL, the hotel's
+  OTEL, OTO SERVİS, the Syndicate's red emblem and İTAAT, the warehouse's 09,
+  an alley arrow); steel riot barricades with a neon tube along the top
+  replace the sandbags as cover (same tiles); each light flickers by kind
+  (neon, buzz, fire) and is smeared down the wet road
+- `js/game/streetlife.js` — the moving layer: rain with splashes, steam
+  from manholes and drains, searchlights sweeping from the Tower and the
+  works, blinking beacons, drones, flying traffic, the billboard's scan
+  line; thinned out on low quality and with reduced motion
 - `dev/sheet.html?what=env` — every building and obstacle on one page
 - quality: Auto is High on every device (2.5× pixel ratio cap); dynamic
   resolution never drops below 80 %

@@ -11,6 +11,7 @@ import { facadeLayout } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
+const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 
 export const COLS = 200, TOPY = -200, ROWS = 30; // row 25 is the street
 
@@ -98,22 +99,58 @@ export function duct(g, x0, x1, yTop, yBot) {
   clip(g, rect(x0, yBot - 2.4, x0 + 16, yBot), () => { fill(g, rect(x0, yBot - 2.4, x0 + 16, yBot), C.gold); for (let x = x0 - 4; x < x0 + 18; x += 4) fill(g, poly([[x, yBot], [x + 2, yBot], [x + 4.4, yBot - 2.4], [x + 2.4, yBot - 2.4]]), '#1a1c20'); });
 }
 
-export function sandbags(g, x0, x1, h) {
-  const S = tone('#d8c49a', '#b8a27a', '#8c7856', '#3e3322');
-  const S2 = tone('#cdb98e', '#a99470', '#7d6a4b', '#3a2f1f');
-  const rows = Math.round(h / 6), r = rng(Math.round(x0 * 7 + h));
-  for (let row = 0; row < rows; row++) {
-    const y = -6 * (row + 1), off = row % 2 ? 4 : 0;
-    for (let x = x0 - 2 + off; x < x1 + 2 - 4; x += 8) {
-      // each bag a little different: width, sag, a tied ear, its stitch
-      const bw = 7.6 + r() * 1.2, sag = 0.5 + r() * 0.7, bx = x + (r() - 0.5) * 0.6, t = r() > 0.55 ? S2 : S;
-      const B = `M ${bx + 1} ${y + 6} C ${bx - 0.5} ${y + 6} ${bx - 0.6} ${y + 0.2} ${bx + 1.4} ${y + sag * 0.4} Q ${bx + bw / 2} ${y - sag * 0.3} ${bx + bw - 1.2} ${y + sag * 0.4} C ${bx + bw + 0.6} ${y + 0.4} ${bx + bw + 0.6} ${y + 6} ${bx + bw - 0.8} ${y + 6} Z`;
-      cel(g, B, t, { sh: 1.0, hl: 0.5 });
-      stroke(g, `M ${bx + 2} ${y + 3.1} Q ${bx + bw / 2} ${y + 3.6} ${bx + bw - 2} ${y + 3.1}`, t.d, 0.3);
-      stroke(g, `M ${bx + 1.4} ${y + 1.2} l 0.6 1.2`, t.d, 0.3);
-      if (r() > 0.6) fill(g, `M ${bx + bw - 1} ${y + 1.2} l 1.6 -0.9 l -0.2 1.6 Z`, t.d);
+// A steel riot barricade: framed panels with mesh windows, a hazard band, a
+// kick plate and splayed feet, a neon tube along the top (its glow and the
+// light it throws are drawn live: see barricadeFx).
+export function barricade(g, x0, x1, h, neon = '#ff3fa4') {
+  const S = tone('#808a99', '#566172', '#3a4352', '#141920');
+  const B = poly([[x0 - 2, 0], [x0 - 2, -h + 1.6], [x0 - 0.4, -h], [x1 + 0.4, -h], [x1 + 2, -h + 1.6], [x1 + 2, 0]]);
+  cel(g, B, S, { sh: 1.4, hl: 0.6 });
+  const n = Math.max(1, Math.round((x1 - x0) / 12)), pw = (x1 - x0 + 4) / n;
+  clip(g, B, () => {
+    for (let i = 0; i < n; i++) {
+      const px = x0 - 2 + i * pw, wy0 = -h + 4, wy1 = -h + h * 0.48;
+      // the mesh window
+      const Wn = rect(px + 2.2, wy0, px + pw - 2.2, wy1);
+      fill(g, Wn, '#10151c');
+      clip(g, Wn, () => {
+        for (let k = px - 20; k < px + pw + 20; k += 2) { stroke(g, `M ${k} ${wy0} L ${k + 14} ${wy1}`, S.d, 0.22, 0.9); stroke(g, `M ${k} ${wy1} L ${k + 14} ${wy0}`, S.d, 0.22, 0.9); }
+        fill(g, rect(px + 2.2, wy0, px + pw - 2.2, wy0 + 1.2), '#000', 0.4);
+      });
+      // hazard band and the kick plate with its bolts
+      clip(g, rect(px + 1.4, -h * 0.4, px + pw - 1.4, -h * 0.4 + 3), () => {
+        fill(g, rect(px, -h * 0.4, px + pw, -h * 0.4 + 3), C.gold);
+        for (let k = px - 6; k < px + pw + 4; k += 4) fill(g, poly([[k, -h * 0.4 + 3], [k + 2, -h * 0.4 + 3], [k + 5, -h * 0.4], [k + 3, -h * 0.4]]), '#1a1c20');
+      });
+      fill(g, rect(px + 1.4, -h * 0.3, px + pw - 1.4, -2.6), S.d);
+      fill(g, rect(px + 1.4, -h * 0.3, px + pw - 1.4, -h * 0.3 + 0.6), S.l, 0.6);
+      for (const bx of [px + 3, px + pw - 3]) fill(g, ell(bx, -h * 0.3 + 2, 0.45, 0.45), S.l);
+      // the post between panels
+      if (i) { fill(g, rect(px - 0.8, -h, px + 0.8, 0), S.k); fill(g, rect(px - 0.8, -h, px - 0.2, 0), S.m); }
+      // scuffs
+      stroke(g, `M ${px + pw * 0.3} ${-h * 0.2} l 2.4 0.6`, S.k, 0.3, 0.6);
     }
-  }
+    fill(g, rect(x0 - 2, -2.6, x1 + 2, 0), S.k, 0.6);
+  });
+  stroke(g, B, S.k, 0.45);
+  // splayed feet
+  for (const fx of [x0 - 1, x1 + 1]) cel(g, poly([[fx - 3, 0], [fx - 1, -3], [fx + 1, -3], [fx + 3, 0]]), S, { sh: 0.3, hl: 0.2, lw: 0.3 });
+  // the neon tube in its clips
+  for (let x = x0 + 2; x <= x1 - 2; x += Math.max(6, (x1 - x0 - 4) / 3)) fill(g, rect(x - 0.6, -h - 1.8, x + 0.6, -h), S.k);
+  g.save(); g.shadowColor = neon; g.shadowBlur = 8;
+  stroke(g, `M ${x0} ${-h - 1.3} L ${x1} ${-h - 1.3}`, neon, 1.2);
+  g.restore();
+  stroke(g, `M ${x0 + 0.4} ${-h - 1.3} L ${x1 - 0.4} ${-h - 1.3}`, '#fff2fa', 0.42);
+}
+
+const rgb = (hex) => [parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255];
+// the live glow sprite and the light of a barricade's neon tube
+export function barricadeFx(x0, x1, h, neon) {
+  const cx = (x0 + x1) / 2;
+  return {
+    glow: [cx, -h - 1.3, (x1 - x0) / 2 + 4, 2.6, neon, 0.55, 'buzz'],
+    light: [cx, -h - 3, 46, 0.75, rgb(neon), 'buzz'],
+  };
 }
 
 // --- the course ------------------------------------------------------------------
@@ -125,7 +162,7 @@ export function buildCourse() {
   const block = (c0, c1, n0, n1, ch = '#') => { for (let c = c0; c <= c1; c++) for (let n = n0; n <= n1; n++) at(c, n, ch); };
   // walls at both ends
   block(0, 1, 1, 25); block(COLS - 2, COLS - 1, 1, 25);
-  const props = [], front = [], lamps = [], deco = [];
+  const props = [], front = [], lamps = [], deco = [], glows = [], lights = [];
   const P = (name, box, paint, list = props) => list.push({ name, box, paint });
   // crate (2 tiles)
   block(29, 30, 1, 2); P('c.crate', [230, -18, 250, 1], (g) => crate(g, 232, 16, 16));
@@ -150,7 +187,8 @@ export function buildCourse() {
   P('c.duct', [998, -142, 1082, -30], (g) => duct(g, 1000, 1080, -48, -32));
   // sandbag wall (3 tiles)
   block(145, 147, 1, 3);
-  P('c.bags', [1156, -26, 1188, 1], (g) => sandbags(g, 1160, 1184, 24), front);
+  P('c.bags', [1154, -32, 1190, 1], (g) => barricade(g, 1160, 1184, 24, '#ff3fa4'), front);
+  const bfx = barricadeFx(1160, 1184, 24, '#ff3fa4'); glows.push(bfx.glow); lights.push(bfx.light);
   // enemy zone: barrier cover, a container to stand on
   block(160, 163, 1, 2);
   P('c.barrier', [1276, -18, 1316, 1], (g) => barrier(g, 1279), front);
@@ -165,7 +203,7 @@ export function buildCourse() {
   P('c.cone', [1186, -12, 1200, 1], (g) => cone(g, 1194), deco);
   const level = new Level(g.map((r) => r.join('')), TOPY);
   return {
-    level, props, front, deco, lamps,
+    level, props, front, deco, lamps, glows, lights,
     facade: facadeLayout(-10, COLS * T + 10, 5, ['walkupB', 'crow', 'alley', 'warehouse', 'synBlock', 'ruin']),
     fires: [1107],
     spawn: [100, 0],

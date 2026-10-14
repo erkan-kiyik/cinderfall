@@ -164,6 +164,18 @@ function brickWall(g, x0, x1, top, seed) {
   }
 }
 
+// a neon tube along a path: a coloured halo, then the pale hot core
+function tube(g, d, c, w = 0.9) {
+  g.save(); g.shadowColor = c; g.shadowBlur = 9; stroke(g, d, c, w); g.restore();
+  stroke(g, d, '#fff3fa', w * 0.36);
+}
+function neonText(g, text, x, y, size, c, align = 'left') {
+  g.save(); g.font = `700 ${size}px Rajdhani`; g.textBaseline = 'alphabetic'; g.textAlign = align;
+  g.shadowColor = c; g.shadowBlur = 10; g.fillStyle = c; g.fillText(text, x, y);
+  g.shadowBlur = 0; g.strokeStyle = '#fff3fa'; g.lineWidth = Math.max(0.16, size * 0.05); g.strokeText(text, x, y);
+  g.restore();
+}
+
 // --- the buildings -------------------------------------------------------------------
 // brick walk-up with a fire escape, a water tank and a stoop
 function walkup(g) {
@@ -186,6 +198,10 @@ function walkup(g) {
   for (let y = -27; y > -30; y -= 3) fill(g, rect(52, -18, 56.7, -17.4), P.deep);
   // the entrance and its stoop
   door(g, 112, 14, 24);
+  // a basement bar's blade sign: a cocktail glass over the letters
+  fill(g, rect(99, -52, 108, -24), '#16121a'); fill(g, rect(98, -50, 99, -26), P.deep);
+  tube(g, 'M 100.6 -50 L 106.4 -50 L 103.5 -46.4 Z M 103.5 -46.4 L 103.5 -44 M 101.6 -44 L 105.4 -44', '#ff3fa4', 0.5);
+  ['B', 'A', 'R'].forEach((ch, i) => neonText(g, ch, 103.5, -37.6 + i * 5, 4.6, '#ff3fa4', 'center'));
   fill(g, rect(108, -3, 130, 0), P.concHi); fill(g, rect(110, -5, 128, -3), P.conc);
   acUnit(g, 18, -46); acUnit(g, 120, -84);
   pipe(g, 6, -h, 0);
@@ -222,8 +238,8 @@ function walkupB(g) {
   for (const [x, y, c] of [[14, -14, '#3d6b5a'], [20, -15, '#8a3a2a'], [32, -13, '#c9a95a'], [48, -15, '#3d5a7a']]) fill(g, rect(x, y, x + 4, -6), c);
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, rect(6, -34, 64, 0), '#ff9a5c', 0.07); g.restore();
   door(g, 68, 14, 26, false);
-  fill(g, rect(6, -40, 92, -34), '#2b5a5a');
-  g.font = '700 5px Rajdhani'; g.fillStyle = '#d7f3ee'; g.textBaseline = 'alphabetic'; g.fillText('BAKKAL · 24', 22, -35.4);
+  fill(g, rect(6, -40, 92, -34), '#0f2420');
+  neonText(g, 'BAKKAL · 24', 22, -35.4, 5, '#4dff9a');
   pipe(g, w - 5, -h, 0);
   acUnit(g, 96, -82);
   poster(g, 96, -28, 10, 14, '#7d2b2b', true);
@@ -290,7 +306,10 @@ function warehouse(g) {
   for (let y = -54; y < 0; y += 3) { stroke(g, `M 30 ${y} L 110 ${y}`, '#3a4458', 0.5); stroke(g, `M 30 ${y + 0.6} L 110 ${y + 0.6}`, '#222838', 0.4); }
   clip(g, rect(30, -62, 110, -56), () => { fill(g, rect(30, -62, 110, -56), C.gold); for (let x = 20; x < 120; x += 6) fill(g, poly([[x, -56], [x + 3, -56], [x + 9, -62], [x + 6, -62]]), '#1a1c20'); });
   fill(g, rect(26, -4, 30, 0), C.gold, 0.8); fill(g, rect(110, -4, 114, 0), C.gold, 0.8);
-  g.font = '700 26px Rajdhani'; g.fillStyle = 'rgba(232,226,214,0.55)'; g.fillText('09', 132, -50);
+  g.font = '700 26px Rajdhani'; g.fillStyle = 'rgba(232,226,214,0.25)'; g.fillText('09', 132, -50);
+  g.save(); g.font = '700 26px Rajdhani'; g.shadowColor = '#3ee8e0'; g.shadowBlur = 10; g.strokeStyle = '#3ee8e0'; g.lineWidth = 0.8; g.strokeText('09', 132, -50);
+  g.shadowBlur = 0; g.strokeStyle = '#eafffd'; g.lineWidth = 0.28; g.strokeText('09', 132, -50); g.restore();
+  tube(g, 'M 28 -64 L 112 -64', '#3ee8e0', 0.7);
   // pipes and a vent box
   fill(g, rect(120, -84, 124, 0), '#2a3242'); fill(g, rect(132, -84, 135, -20), '#2a3242');
   fill(g, rect(114, -70, 152, -66), '#2a3242');
@@ -330,7 +349,9 @@ function synBlock(g) {
   // reinforced door and propaganda
   fill(g, rect(92, -30, 118, 0), P.trim); fill(g, rect(94, -28, 116, 0), '#2a2f3a');
   for (let y = -26; y < 0; y += 5) fill(g, rect(94, y, 116, y + 0.8), '#1c2028');
-  fill(g, rect(96, -34, 114, -31), '#5a1219'); g.font = '700 3.2px Rajdhani'; g.fillStyle = '#f0d9d9'; g.fillText('İTAAT', 100, -31.6);
+  fill(g, rect(94, -36, 116, -30.6), '#1a0a0e');
+  neonText(g, 'İTAAT', 105, -31.6, 4.2, '#ff3347', 'center');
+  tube(g, 'M 128.5 -86 L 143.5 -86 L 136 -72 Z M 131.8 -82 L 140.2 -82', '#ff3347', 0.75);
   poster(g, 18, -30, 11, 15, '#8e2330', true); poster(g, 31, -28, 10, 13, '#8e2330', true); poster(g, 58, -26, 9, 12, '#c9b991');
   tag(g, 20, -6, '#3ee8e0', 0.8);
   grime(g, 0, w, 7, 13);
@@ -370,6 +391,7 @@ function hotel(g) {
   door(g, 36, 18, 26, false);
   fill(g, poly([[30, -30], [60, -30], [62, -26], [28, -26]]), '#5a2a3a');
   fill(g, rect(28, -26, 62, -25), '#2a1218');
+  tube(g, 'M 28.6 -25.6 L 61.4 -25.6', '#ff3fa4', 0.7);
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, rect(34, -25, 56, 0), '#ffcf8f', 0.08); g.restore();
   pipe(g, 4, -h, 0);
   acUnit(g, 10, -18);
@@ -386,8 +408,8 @@ function garage(g) {
   for (let y = -h + 8; y < 0; y += 8) fill(g, rect(0, y, w, y + 0.6), '#403c3c');
   cornice(g, 0, w, -h - 3, 3);
   // sign board
-  fill(g, rect(12, -70, 120, -56), '#2c4c6a'); fill(g, rect(12, -70, 120, -68), '#3a6288');
-  g.font = '700 10px Rajdhani'; g.fillStyle = '#f2eee4'; g.fillText('OTO SERVİS', 30, -59);
+  fill(g, rect(12, -70, 120, -56), '#142233'); fill(g, rect(12, -70, 120, -68), '#1e3248');
+  neonText(g, 'OTO SERVİS', 66, -59, 10, '#5aa8ff', 'center');
   fill(g, rect(14, -56, 118, -55), '#000', 0.3);
   // the open bay, lit inside: a car on the lift in silhouette
   fill(g, rect(14, -50, 96, 0), P.trim);
@@ -455,6 +477,9 @@ function alley(g) {
     for (let k = -30; k < w + 30; k += 3) { stroke(g, `M ${k} -30 L ${k + 30} 0`, '#3a4150', 0.25, 0.8); stroke(g, `M ${k} 0 L ${k + 30} -30`, '#3a4150', 0.25, 0.8); }
   });
   for (const [y0, y1, s] of [[-80, -84, 8], [-70, -66, 10], [-92, -90, 6]]) cable(g, -2, y0, w + 2, y1, s);
+  fill(g, rect(6, -64, 28, -55), '#16121a');
+  neonText(g, 'BAR', 13.4, -57.2, 5.6, '#ff3fa4', 'center');
+  tube(g, 'M 20.6 -59.6 L 26 -59.6 M 23.6 -62 L 26 -59.6 L 23.6 -57.2', '#ff3fa4', 0.55);
   fill(g, rect(6, -12, 14, 0), '#2e3a2e'); fill(g, rect(6, -13, 15, -11.6), '#3a473a');
 }
 
@@ -462,19 +487,31 @@ function alley(g) {
 // w: width, top: highest point (for the bake box); lights: [x, y, radius,
 // intensity, [r,g,b], flicker?]; glows: emissive sprites [x, y, sx, sy, colour, alpha, flicker?]
 export const BUILDINGS = {
-  walkup: { w: 150, top: -132, paint: walkup, lights: [[119, -26, 30, 0.5, [1, 0.85, 0.6]]] },
-  walkupB: { w: 128, top: -126, paint: walkupB, lights: [[35, -18, 46, 0.6, [1, 0.7, 0.45]]] },
+  walkup: { w: 150, top: -132, paint: walkup,
+    lights: [[119, -26, 30, 0.5, [1, 0.85, 0.6]], [103.5, -38, 42, 0.75, [1, 0.25, 0.65], 'buzz']],
+    glows: [[103.5, -38, 5.5, 13, '#ff3fa4', 0.4, 'buzz']] },
+  walkupB: { w: 128, top: -126, paint: walkupB,
+    lights: [[35, -18, 46, 0.6, [1, 0.7, 0.45]], [49, -40, 40, 0.6, [0.3, 1, 0.6]]],
+    glows: [[49, -37, 25, 3.8, '#4dff9a', 0.3]] },
   crow: { w: 160, top: -142, paint: crow,
     lights: [[90, -72, 70, 0.95, [1, 0.4, 0.3], 'neon'], [79, -6, 60, 0.55, [1, 0.56, 0.32]]],
     glows: [[90, -74, 34, 14, '#ff6b52', 0.22, 'neon']] },
-  warehouse: { w: 164, top: -100, paint: warehouse, lights: [[71, -74, 46, 0.7, [0.85, 0.9, 1]]], glows: [[71, -76, 6, 3, '#f2f4ff', 0.5]] },
-  synBlock: { w: 150, top: -134, paint: synBlock, lights: [[64, -100, 54, 0.45, [1, 0.22, 0.26]]], glows: [[75, -97.2, 76, 2.4, '#ff3347', 0.18]] },
+  warehouse: { w: 164, top: -100, paint: warehouse,
+    lights: [[71, -74, 46, 0.7, [0.85, 0.9, 1]], [146, -60, 46, 0.6, [0.25, 0.9, 0.9], 'neon2'], [70, -64, 40, 0.5, [0.25, 0.9, 0.9]]],
+    glows: [[71, -76, 6, 3, '#f2f4ff', 0.5], [146, -59, 14, 10, '#3ee8e0', 0.24, 'neon2'], [70, -64, 42, 2.2, '#3ee8e0', 0.3]] },
+  synBlock: { w: 150, top: -134, paint: synBlock,
+    lights: [[64, -100, 54, 0.45, [1, 0.22, 0.26]], [136, -79, 40, 0.6, [1, 0.2, 0.25], 'buzz'], [105, -33, 30, 0.5, [1, 0.2, 0.25]]],
+    glows: [[75, -97.2, 76, 2.4, '#ff3347', 0.18], [136, -79, 10, 9, '#ff3347', 0.34, 'buzz'], [105, -33, 10, 2.6, '#ff3347', 0.35]] },
   hotel: { w: 96, top: -162, paint: hotel,
-    lights: [[85, -84, 56, 0.8, [0.35, 0.9, 1], 'neon2']], glows: [[85, -84, 12, 38, '#56e6ff', 0.16, 'neon2']] },
-  garage: { w: 132, top: -86, paint: garage, lights: [[55, -26, 64, 0.8, [1, 0.82, 0.58]]] },
+    lights: [[85, -84, 56, 0.8, [0.35, 0.9, 1], 'neon2'], [45, -24, 36, 0.6, [1, 0.25, 0.65]]],
+    glows: [[85, -84, 12, 38, '#56e6ff', 0.16, 'neon2'], [45, -25.6, 18, 2.2, '#ff3fa4', 0.4]] },
+  garage: { w: 132, top: -86, paint: garage,
+    lights: [[55, -26, 64, 0.8, [1, 0.82, 0.58]], [66, -62, 56, 0.7, [0.35, 0.65, 1], 'neon2']],
+    glows: [[66, -62, 40, 5, '#5aa8ff', 0.22, 'neon2']] },
   ruin: { w: 120, top: -104, paint: ruin,
     lights: [[50, -56, 66, 0.75, [1, 0.45, 0.2], 'fire']], glows: [[19, -69, 9, 6, '#ff7a35', 0.35, 'fire'], [83, -41, 9, 6, '#ff7a35', 0.35, 'fire'], [51, -35, 9, 6, '#ff7a35', 0.35, 'fire']] },
-  alley: { w: 34, top: -106, paint: alley },
+  alley: { w: 34, top: -106, paint: alley,
+    lights: [[17, -60, 34, 0.6, [1, 0.25, 0.65], 'buzz']], glows: [[17, -60, 11, 4.4, '#ff3fa4', 0.4, 'buzz']] },
 };
 
 // A street of buildings from x0 to x1: the opening ones as given, then a

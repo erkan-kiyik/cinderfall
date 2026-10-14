@@ -66,6 +66,7 @@ export class App {
     this.e.sfx.setVolumes(st.vol);
     configureKit({ haptics: st.haptics, reduce: st.reduceMotion, sfx: this.e.sfx });
     this.ctx.reduceMotion = st.reduceMotion;
+    this.e.reduceMotion = st.reduceMotion;
     this.e.camera.shakeMul = st.shake;
     this.inkFor(this.scene);
     if (st.lang !== getLang()) { setLang(st.lang); if (!first) this.router.refresh(); }

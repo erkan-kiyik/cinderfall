@@ -94,7 +94,7 @@ if (what === 'env') {
     ['crate', 24, -20, (g) => env.crate(g, 4, 16, 16)],
     ['barrier', 42, -20, (g) => env.barrier(g, 4, 34)],
     ['concrete', 26, -44, (g) => m1.concrete(g, 5, 21, 40)],
-    ['sandbags', 36, -36, (g) => co.sandbags(g, 6, 30, 32)],
+    ['barricade', 36, -40, (g) => co.barricade(g, 6, 30, 32, '#ff3fa4')],
     ['burnBarrel', 18, -18, (g) => env.burnBarrel(g, 4)],
     ['dumpster', 48, -26, (g) => env.dumpster(g, 4)],
     ['cone', 14, -12, (g) => env.cone(g, 7)],

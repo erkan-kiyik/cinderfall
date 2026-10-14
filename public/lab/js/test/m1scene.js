@@ -13,7 +13,7 @@ import { fill } from '../art/kit.js';
 import { rgba } from '../gfx/batch.js';
 import { ParticleSystem, col } from '../gfx/particles.js';
 
-export const BAKE_VERSION = 'm1-5';
+export const BAKE_VERSION = 'm1-6';
 
 // Pixel density per quality: background layers, characters, effects.
 const DENS = { low: [3, 3.6, 24], med: [4.5, 5.2, 32], high: [6, 7, 48] };
@@ -49,6 +49,12 @@ const FX = {
     const gr = g.createLinearGradient(0, 0, 1, 0);
     gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, 'rgba(255,255,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,1)');
     g.fillStyle = gr; g.fillRect(0, -0.5, 1, 1);
+  },
+  // a light cone from its source at x 0 to its wide end at x 1, fading out
+  beam: (g) => {
+    const gr = g.createLinearGradient(0, 0, 1, 0);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(0, -0.05); g.lineTo(1, -0.5); g.lineTo(1, 0.5); g.lineTo(0, 0.05); g.closePath(); g.fill();
   },
   flame: (g) => {
     g.fillStyle = '#fff';
@@ -92,7 +98,7 @@ export function bakeList(quality) {
   E.push({ name: 's.coin', box: [-2, -2, 2, 2], scale: ch, outline: 0.35, paint: (g) => { fill(g, 'M 0 -1.6 L 1.4 -0.8 L 1.4 0.8 L 0 1.6 L -1.4 0.8 L -1.4 -0.8 Z', '#ffc93c'); fill(g, 'M -0.5 0 a 0.5 0.5 0 1 0 1 0 a 0.5 0.5 0 1 0 -1 0 Z', '#1a1c20'); } });
   // effects: 1×1-unit white shapes
   for (const [n, p] of Object.entries(FX)) {
-    const box = n === 'tracer' ? [0, -0.5, 1, 0.5] : n === 'flame' ? [-0.6, -1.05, 0.6, 0.05] : [-1, -1, 1, 1];
+    const box = n === 'tracer' || n === 'beam' ? [0, -0.5, 1, 0.5] : n === 'flame' ? [-0.6, -1.05, 0.6, 0.05] : [-1, -1, 1, 1];
     E.push({ name: 'fx.' + n, box, scale: fx * (n === 'tracer' ? 2 : 1), paint: p });
   }
   return E;

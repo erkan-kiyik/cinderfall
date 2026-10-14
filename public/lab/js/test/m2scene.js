@@ -14,8 +14,9 @@ import { Mover } from '../phys/mover.js';
 import { CharRenderer } from '../gfx/charrender.js';
 import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
+import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-4';
+export const BAKE_VERSION = 'm2-5';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -31,7 +32,7 @@ export function bakeList(quality, course = COURSE) {
   for (const p of [...course.props, ...course.front, ...course.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
   E.push(...charBakeList([...OPERATORS, 'tet', 'kal'], ch));
   for (const [n, p] of Object.entries(FX)) {
-    const box = n === 'tracer' ? [0, -0.5, 1, 0.5] : n === 'flame' ? [-0.6, -1.05, 0.6, 0.05] : [-1, -1, 1, 1];
+    const box = n === 'tracer' || n === 'beam' ? [0, -0.5, 1, 0.5] : n === 'flame' ? [-0.6, -1.05, 0.6, 0.05] : [-1, -1, 1, 1];
     E.push({ name: 'fx.' + n, box, scale: fx * (n === 'tracer' ? 2 : 1), paint: p });
   }
   return E;
@@ -59,6 +60,7 @@ export class M2Scene {
       const c = new Character(d.id, atlas, m); return c;
     });
     this.t = 0;
+    this.life = new StreetLife(this);
     this.cam = { x: sx + 60, y: -50, px: sx + 60, py: -50 };
     this.mats = { sky: new Float32Array(9), far: new Float32Array(9), mid: new Float32Array(9), world: new Float32Array(9) };
     this.inp = { moveX: 0, up: false, down: false, jump: false, jumpPressed: false, sprint: false, crouch: false, face: 1 };
@@ -131,6 +133,7 @@ export class M2Scene {
     if (kind === 'neon') return (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
     if (kind === 'neon2') return (t % 8.3) > 8.0 && ((t * 24) | 0) % 2 ? 0.3 : 1;
     if (kind === 'fire') return 0.8 + Math.sin(t * 11) * 0.1 + Math.sin(t * 4.7) * 0.1;
+    if (kind === 'buzz') { const v = Math.sin(t * 37 + seed) * Math.sin(t * 13.7 + seed * 1.3); return v > 0.9 ? 0.35 : 0.92 + 0.08 * Math.sin(t * 61 + seed); }
     return 1;
   }
 
@@ -184,6 +187,7 @@ export class M2Scene {
     // the buildings in view: their windows, neon and fires
     const vis = this.C.facade.filter((f) => f.x + BUILDINGS[f.type].w > x0 && f.x < x1);
     for (const f of vis) for (const [lx, ly, rad, k, c, fl] of BUILDINGS[f.type].lights || []) R.addLight(f.x + lx, ly, rad, k * this.flicker(fl, f.x), c);
+    for (const [lx, ly, rad, k, c, fl] of this.C.lights || []) if (lx > x0 && lx < x1) R.addLight(lx, ly, rad, k * this.flicker(fl, lx), c);
     const fire = 0.86 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06;
     for (const fx of this.C.fires || []) if (fx > x0 && fx < x1) R.addLight(fx, -20, 80, 1.2 * fire, [1, 0.55, 0.24]);
     for (const en of this.enemies) if (en.alive) R.addLight(en.rx + en.facing * 4, en.ry - 55, 12, 0.6, [1, 0.2, 0.25]);
@@ -201,9 +205,12 @@ export class M2Scene {
       }
       B.end();
     };
+    this.life.step(t, cam);
     layer('sky', this.viewFor('sky', PLX.sky, cam.x));
-    layer('far', this.viewFor('far', PLX.far, 300));
-    layer('mid', this.viewFor('mid', PLX.mid, 300));
+    const vFar = this.viewFor('far', PLX.far, 300);
+    layer('far', vFar); this.life.drawFar(B, vFar, A, t, kMax);
+    const vMid = this.viewFor('mid', PLX.mid, 300);
+    layer('mid', vMid); this.life.drawMid(B, vMid, A, t, kMax);
     layer('ground', w);
     B.begin(w);
     for (const f of vis) B.draw(A.get(`b.${f.type}`), f.x, 0);
@@ -235,6 +242,7 @@ export class M2Scene {
     B.end();
     this.dust.draw(w, t);
     this.drawFrontExtras(B, w);
+    this.life.drawRain(B, w, A);
     this.addLights(R);
     R.lightPass(w);
     R.compose();
@@ -242,7 +250,20 @@ export class M2Scene {
     const glow = A.get('fx.glow'), flame = A.get('fx.flame');
     B.begin(w); B.setBlend(1);
     for (const lx of this.C.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#fff1d0', 0.6));
-    for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) B.draw(glow, f.x + gx, gy, sx, sy, 0, rgba(c, a * this.flicker(fl, f.x)));
+    // neon: the buildings', the barricades', each smeared down the wet road
+    for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) {
+      const k = this.flicker(fl, f.x);
+      B.draw(glow, f.x + gx, gy, sx, sy, 0, rgba(c, a * k));
+      this.life.reflect(B, glow, t, f.x + gx, sx, c, a * k);
+    }
+    for (const [gx, gy, sx, sy, c, a, fl] of this.C.glows || []) {
+      if (gx < x0 || gx > x1) continue;
+      const k = this.flicker(fl, gx);
+      B.draw(glow, gx, gy, sx, sy, 0, rgba(c, a * k));
+      this.life.reflect(B, glow, t, gx, sx, c, a * k);
+    }
+    for (const lx of this.C.lamps) if (lx > x0 && lx < x1) this.life.reflect(B, glow, t, lx + 15, 8, '#ffd9a0', 0.5);
+    for (const fx of this.C.fires || []) if (fx > x0 && fx < x1) this.life.reflect(B, glow, t, fx, 6, '#ff8a3a', 0.6);
     for (const en of this.enemies) if (en.alive) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
     for (const fx of this.C.fires || []) for (let k = 0; k < 3; k++) {
       const ph = t * (9 + k * 3) + k * 2.1;

@@ -234,7 +234,10 @@ olarak tekrarlanmaz; dokuz bina tipi (`art/env/city.js`) seviye boyunca son
 Her bina kendi ışıklarını taşır. Zemin, ufuk ve bütün engeller ayrıntılı
 yeniden çizildi; engellerin ve karakterlerin altında temas gölgesi vardır.
 Görüntü kalitesi varsayılan olarak her cihazda Yüksek'tir; dinamik çözünürlük
-%80'in altına inmez.
+%80'in altına inmez. Sokak neonla yaşar: binalarda neon tabelalar, kum
+torbası yerine üstünde neon tüp olan çelik barikatlar (aynı siper), ıslak
+yolda neon yansımaları; yağmur, rögar buharı, dönen projektörler, dronlar ve
+uçan trafik (`game/streetlife.js`).
 
 **M0 teslimi (onay kapısı):**
 - Stil panosu PNG'si: 5 operatörün silüet ve renk taslakları, 4 silah, 2 düşman,
