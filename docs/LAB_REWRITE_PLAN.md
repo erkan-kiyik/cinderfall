@@ -218,15 +218,7 @@ oranda, okunaklılık için %15 büyütülmüş.
   KITE gök mavisi, BRICK sarı).
 - Çömelme yarım diz çökme pozudur: arka diz yerde, topuk kalkık, ön kaval dik.
 
-**Açılış sahnesi (`js/ui/intro.js`):** Uygulama açılırken çizimler pişerken oynar:
-CRT açılışı, yanan şehir silueti, duman, projektör, yağmur ve kıvılcımlar,
-çatıda beş operatör (oyunun kendi çizimiyle, ateşe dönük kenar ışığı), sırayla
-yanan vizörler, harf harf yükselen KOR başlığı. En kısa 3,4 sn; pişirme
-sürerse son karede canlı bekler. Dokunuşla geçilir; azaltılmış harekette kısalır.
-Menü portreleri de aynı ışıkla boyanır: yanan şehir önünde koyu figür, ateşe
-bakan kenarda kor ışığı, operatörün renginde parlayan vizör.
-Ardından lobi girişi: kamera yaklaşır, seçili operatör sokağa iner, paneller
-kayarak gelir.
+**Açılış sahnesi (`js/ui/intro.js`):** Oyunun kendi sokağında geçer ve oyunun kendi çizimleriyle boyanır: gece, yağmur, kamera sokak boyunca kayar; neon tabelalar sırayla yanar, ıslak yol onları yansıtır; beş operatör sırt sırta sokağa iner (inişte toz, vizör ışığı, pembe/camgöbeği neon kenar); en son sokağın üstüne asılı KOR tabelası cızırdayarak yanar. En kısa 3,4 sn; dokununca geçilir.
 
 **Sokak (M5 sonrası çevre geçişi):** Cepheler tek bir 600 birimlik şerit
 olarak tekrarlanmaz; dokuz bina tipi (`art/env/city.js`) seviye boyunca son
