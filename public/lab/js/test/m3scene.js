@@ -18,6 +18,7 @@ import { rgba } from '../gfx/batch.js';
 import { Sfx } from '../audio/sfx.js';
 import { CombatHud } from '../ui/combathud.js';
 import { haptic } from '../ui/kit.js';
+import { TINTS } from '../core/economy.js';
 
 export const BAKE_VERSION = 'm3-6';
 export const OPERATORS = M2.OPERATORS;
@@ -57,6 +58,7 @@ export class M3Scene extends M2.M2Scene {
     this.stats = { shots: 0, hits: 0, kills: 0, heads: 0, byWeapon: {} };
     this._a = new Float32Array(2); this._b = new Float32Array(2); this._d = new Float32Array(2); this._n = {};
     this.shapes = [];
+    this.rounds = []; this.booms = []; // launcher rounds in flight, explosions
     // the first gesture starts the audio
     if (!eng.sfx) {
       const unlock = () => this.sfx.unlock();
@@ -195,6 +197,15 @@ export class M3Scene extends M2.M2Scene {
     const ws = isPlayer ? (this.stats.byWeapon[gun.id] ||= { kills: 0, shots: 0, hits: 0, heads: 0 }) : null;
     if (isPlayer) { this.stats.shots++; ws.shots++; this.e.camera.addShake(s.shake); }
     let hitAny = false, killed = false, head = false;
+    // a launcher: the round flies (see updateRounds)
+    if (s.launcher) {
+      const d0 = ch.shotDir(e.dirs[0], d), v = s.launcher.speed;
+      this.rounds.push({ x: mz[0], y: mz[1], vx: d0[0] * v + ch.m.vx * 0.3, vy: d0[1] * v, t: 0, by: ch, L: s.launcher, gun: gun.id });
+      fx.muzzle(mz[0], mz[1], ch.gunAngle(), 1.1, false);
+      this.sfx.play(s.sound, mz[0], mz[1], { rate: rand(0.94, 1.06), cap: 4 });
+      this.onFire(ch);
+      return;
+    }
     for (const off of e.dirs) {
       ch.shotDir(off, d);
       let t = rayTiles(L, sh[0], sh[1], d[0], d[1], RANGE, n), what = null, who = null, zone = null;
@@ -234,8 +245,8 @@ export class M3Scene extends M2.M2Scene {
         if (Math.random() < (s.pellets > 1 ? 0.15 : 0.6)) this.sfx.play(Math.random() < 0.3 ? 'ricochet' : 'impact', hx, hy, { rate: rand(0.85, 1.2), cap: 5 });
       }
     }
-    fx.muzzle(mz[0], mz[1], ch.gunAngle(), s.pellets > 1 ? 1.35 : s.sound === 'pistol' ? 0.75 : 1, s.sound === 'dmr');
-    this.sfx.play(s.sound, mz[0], mz[1], { rate: rand(0.94, 1.06) * (ch.team ? 0.96 : 1), cap: 6 });
+    fx.muzzle(mz[0], mz[1], ch.gunAngle(), s.pellets > 1 ? 1.35 : s.sound === 'pistol' ? 0.75 : 1, s.sound === 'dmr' || !!s.suppressed);
+    this.sfx.play(s.sound, mz[0], mz[1], { rate: rand(0.94, 1.06) * (ch.team ? 0.96 : 1) * (s.pitch || 1), vol: s.vol, cap: 6 });
     if (isPlayer && hitAny) {
       this.stats.hits++; if (killed) this.stats.kills++; if (head) this.stats.heads++;
       ws.hits++; if (killed) ws.kills++; if (head) ws.heads++;
@@ -288,6 +299,7 @@ export class M3Scene extends M2.M2Scene {
   }
 
   eject(ch) {
+    if (!ch.W.casing) return;
     const W = ch.W, p = ch.gunPoint(W.eject[0], W.eject[1], this._b), f = ch.facing;
     const r = this.e.atlas.get(`i.casing.${W.casing}`);
     const ga = ch.P.ga;
@@ -307,7 +319,54 @@ export class M3Scene extends M2.M2Scene {
     this.fx.drop(WR.magO, p[0], p[1], ch.m.vx * 0.6 + rand(-10, 10) * ch.facing, 30, a, rand(-3, 3) * ch.facing, { scale: P.gk, flip: ch.facing, sound: 'magDrop', rest: 10, size: 3, c: [cx, cy] });
   }
 
+  // launcher rounds: fly, bounce once off what they hit, go off after a moment
+  updateRounds(dt) {
+    const L = this.L;
+    for (const r of this.rounds) {
+      r.t += dt; r.vy += 600 * dt;
+      const nx = r.x + r.vx * dt, ny = r.y + r.vy * dt;
+      let boom = r.t > 1.6;
+      if (L.solidBox(nx - 1.5, ny - 1.5, nx + 1.5, ny + 1.5)) {
+        if (r.bounced || Math.hypot(r.vx, r.vy) < 120) boom = true;
+        else { r.bounced = true; const hx = L.solidBox(nx - 1.5, r.y - 1.5, nx + 1.5, r.y + 1.5); if (hx) r.vx *= -0.45; else r.vy *= -0.4; r.vx *= 0.7; this.sfx.play('magDrop', r.x, r.y, { rate: 0.7, cap: 3 }); }
+      } else { r.x = nx; r.y = ny; }
+      // direct hits go off at once
+      for (const c of this.targets(r.by)) if (c.alive && Math.abs(c.m.x - r.x) < 8 && r.y > c.m.y - 60 && r.y < c.m.y) boom = true;
+      if (boom) { r.dead = true; this.explode(r); }
+    }
+    this.rounds = this.rounds.filter((r) => !r.dead);
+    for (const b of this.booms) b.t -= dt;
+    this.booms = this.booms.filter((b) => b.t > 0);
+  }
+  explode(r) {
+    const { x, y } = r, R = r.L.r, by = r.by, isPlayer = by === this.player;
+    let kills = 0, hit = false;
+    for (const c of this.targets(by)) {
+      if (!c.alive) continue;
+      const dx = c.m.x - x, dy = c.m.y - 30 - y, d = Math.hypot(dx, dy);
+      if (d > R || rayTiles(this.L, x, y, dx / (d || 1), dy / (d || 1), d, this._n) < d - 3) continue;
+      let dmg = r.L.dmg * (1 - (d / R) * 0.65) * (by.team ? this.enemyDmg : 1);
+      if (isPlayer) dmg *= this.dealtK(c, 'body'); else if (c === this.player) dmg = this.takenK(dmg);
+      const dead = c.damage(dmg, 'body', Math.sign(dx) || 1, -0.7, c.m.x, c.m.y - 34);
+      this.onHit(by, c, dmg, dead); hit = true;
+      this.fx.flesh(c.m.x, c.m.y - 34, Math.sign(dx) || 1, -0.7);
+      if (dead) { kills++; this.onDeath(c, Math.sign(dx) || 1, -0.8); this.onKill(c, by, 'body'); }
+    }
+    if (isPlayer) {
+      const ws = this.stats.byWeapon[r.gun] ||= { kills: 0, shots: 0, hits: 0, heads: 0 };
+      this.stats.shots++; ws.shots++;
+      if (hit) { this.stats.hits++; ws.hits++; this.marker.t = 0; this.marker.kill = kills > 0; }
+      this.stats.kills += kills; ws.kills += kills;
+      if (kills) this.sfx.play('kill', null, null, { vol: 0.8 });
+    }
+    this.booms.push({ x, y, t: 0.45 });
+    for (let k = 0; k < 7; k++) this.fx.impact(x, y, (Math.random() - 0.5) * 2, -1, (Math.random() - 0.5) * 2, -1, 1);
+    this.puff(x, y + 4, 14, 1.2);
+    this.sfx.play('boom', x, y, { vol: 1 }); this.e.camera.addShake(0.35);
+  }
+
   afterUpdate(dt) {
+    this.updateRounds(dt);
     this.fx.update(dt, this.L);
     this.marker.t += dt;
     this.hud.update(dt, this.player);
@@ -316,12 +375,37 @@ export class M3Scene extends M2.M2Scene {
   }
 
   // --- drawing hooks ----------------------------------------------------------------------------
-  drawWorldExtras(B, w, x0, x1) { this.fx.drawWorld(B, w, x0, x1); }
+  drawWorldExtras(B, w, x0, x1) {
+    this.fx.drawWorld(B, w, x0, x1);
+    if (!this.rounds.length) return;
+    const dot = this.e.atlas.get('fx.dot');
+    B.begin(w);
+    for (const r of this.rounds) { B.draw(dot, r.x, r.y, 2.2, 1.6, Math.atan2(r.vy, r.vx), rgba('#1b1f27')); B.draw(dot, r.x, r.y, 1.4, 1.0, Math.atan2(r.vy, r.vx), rgba('#5d6878')); }
+    B.end();
+  }
   drawFrontExtras(B, w) { this.fx.drawSmoke(w); }
-  addLights(R) { this.fx.addLights(R); }
+  addLights(R) {
+    this.fx.addLights(R);
+    for (const b of this.booms) R.addLight(b.x, b.y, 150, 2.6 * (b.t / 0.45), [1, 0.6, 0.3]);
+  }
 
   drawGlow(B, w) {
     this.fx.drawGlow(B, w);
+    // mythic and ultra finishes glow
+    const P = this.player, sk = P.alive && P.gun ? TINTS[P.gun.id] : null;
+    if (sk && sk.glow) {
+      const sh = P.shoulder(this._a), mz = P.muzzle(this._b), glow = this.e.atlas.get('fx.glow'), k = 0.22 + 0.06 * Math.sin(this.t * 4);
+      B.begin(w); B.setBlend(1);
+      B.draw(glow, (sh[0] + mz[0]) / 2, (sh[1] + mz[1]) / 2, Math.hypot(mz[0] - sh[0], mz[1] - sh[1]) * 0.6, 4, Math.atan2(mz[1] - sh[1], mz[0] - sh[0]), rgba(sk.glow, k));
+      B.setBlend(0); B.end();
+    }
+    if (this.rounds.length || this.booms.length) {
+      const glow = this.e.atlas.get('fx.glow');
+      B.begin(w); B.setBlend(1);
+      for (const r of this.rounds) { B.draw(glow, r.x, r.y, 3, 3, 0, rgba('#ff6b2c', 0.9)); B.draw(glow, r.x - r.vx * 0.02, r.y - r.vy * 0.02, 5, 2, Math.atan2(r.vy, r.vx), rgba('#ffb070', 0.35)); }
+      for (const b of this.booms) { const k = b.t / 0.45; B.draw(glow, b.x, b.y, 60 + (1 - k) * 30, 46 + (1 - k) * 20, 0, rgba('#ffb070', 0.9 * k)); }
+      B.setBlend(0); B.end();
+    }
     this.drawCrosshair(B, w);
   }
 

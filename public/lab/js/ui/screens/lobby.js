@@ -2,7 +2,8 @@
 // panel on the right.
 import { h, svg, press, popIn, ui, spring, reduced } from '../kit.js';
 import { t } from '../i18n.js';
-import { hubbar, soon, stars } from './common.js';
+import { hubbar, stars } from './common.js';
+import { dailyDone, traderStock, traderSold } from '../../core/economy.js';
 import { avatar } from '../portraits.js';
 import { OPS, MISSIONS, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
@@ -24,7 +25,7 @@ export const lobby = {
       ctx.showcase.setOperator(id, lo);
     };
     for (const o of OPS) {
-      picks.appendChild(press(h('button.op-pick.cut', { type: 'button', 'aria-label': o.id, dataset: { id: o.id }, onclick: () => {
+      picks.appendChild(press(h('button.op-pick.cut', { type: 'button', 'aria-label': o.name, dataset: { id: o.id }, onclick: () => {
         if (ctx.save.d.roster.op === o.id) return;
         ui('tab');
         ctx.save.set((s) => { s.roster.op = o.id; });
@@ -38,12 +39,16 @@ export const lobby = {
       h('b', t('lobby.play')),
       h('span', t('lobby.next', { n: next.id.slice(1), name: t(`mission.${next.id}`) }), best ? ' · ' : '', best ? stars(best.stars, 12) : null),
       svg('arrow')), { scale: 0.97, sound: null, buzz: 'soft' });
+    const done = dailyDone(d), rec = d.records.endless;
     const tiles = h('div.side-grid',
-      h('div.tile.cut.locked', h('span.lockbadge', svg('lock'), t('ui.soon')), h('div.eyebrow', t('mode.daily')), h('div.big', '0', h('small', '/ 3')), h('div.meter.cyan', h('i', { style: { width: '0%' } }))),
-      h('div.tile.cut.locked', h('span.lockbadge', svg('lock'), t('ui.soon')), h('div.eyebrow', t('mode.endless')), h('div.big', '—', h('small', t('lobby.record'))), h('div.eyebrow', { style: { color: 'var(--n5)' } }, t('lobby.boss5'))));
+      press(h('button.tile.cut', { type: 'button', onclick: () => { ui('confirm'); ctx.router.go('daily'); } },
+        h('div.eyebrow', t('mode.daily')), h('div.big', String(done), h('small', ' / 3')), h('div.meter.cyan', h('i', { style: { width: `${Math.round((done / 3) * 100)}%` } }))), { sound: null, buzz: 'soft' }),
+      press(h('button.tile.cut', { type: 'button', onclick: () => { ui('confirm'); ctx.router.go('prep', { mission: 'endless' }); } },
+        h('div.eyebrow', t('mode.endless')), h('div.big', rec ? String(rec) : '—', h('small', ' ', t('lobby.record'))), h('div.eyebrow', { style: { color: 'var(--n5)' } }, t('lobby.boss5'))), { sound: null, buzz: 'soft' }));
+    const st = traderStock(d), left = [...st.daily, st.weekly].filter((it) => !traderSold(d, it)).length;
     const crow = press(h('button.tile.cut.wide-row', { type: 'button', onclick: () => ctx.router.go('trader', {}, { root: true }) },
       h('div', h('div.eyebrow', h('span.dot'), t('lobby.crow')), h('div.h3', { style: { marginTop: '6px' } }, t('lobby.crowSub'))),
-      h('div.tag', soon())));
+      h('div.tag', h('div.eyebrow.accent', t('lobby.crowOpen', { n: left })))));
     let hub = hubbar(ctx, 'lobby');
     const el = h('div',
       hub,

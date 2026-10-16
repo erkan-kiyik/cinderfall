@@ -90,15 +90,24 @@ function paintAvatar(id, size) {
 }
 
 // a weapon in profile, scaled to `h` CSS pixels tall at most (and `w` wide)
-export function weaponPic(id, w = 120, h = 40) {
+// tint: a finish's colour multiplied over the paint (as the game draws it)
+export function weaponPic(id, w = 120, h = 40, tint = null) {
   const W0 = WEAPONS[id];
   if (!W0) return null;
-  const key = `w:${id}:${w}:${h}:${dpr()}`;
+  const key = `w:${id}:${w}:${h}:${dpr()}:${tint || ''}`;
   const [x0, y0, x1, y1] = W0.box;
   const s = Math.min(w / (x1 - x0 + 3), h / (y1 - y0 + 3)) * dpr();
   if (!cache.has(key)) {
     const cw = Math.round((x1 - x0 + 3) * s), ch = Math.round((y1 - y0 + 3) * s);
-    cache.set(key, outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g); }, 0.55));
+    let src = outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g); }, 0.55);
+    if (tint && tint !== '#ffffff') {
+      const c = canvas(src.width, src.height), g = c.getContext('2d');
+      g.drawImage(src, 0, 0);
+      g.globalCompositeOperation = 'multiply'; g.fillStyle = tint; g.fillRect(0, 0, c.width, c.height);
+      g.globalCompositeOperation = 'destination-in'; g.drawImage(src, 0, 0);
+      src = c;
+    }
+    cache.set(key, src);
   }
   const src = cache.get(key);
   return copy(src, src.width / dpr(), src.height / dpr());

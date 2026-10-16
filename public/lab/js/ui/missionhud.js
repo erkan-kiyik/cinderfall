@@ -17,9 +17,10 @@ export class MissionHud {
   }
   set(k, v, fn) { if (this.last[k] !== v) { this.last[k] = v; fn(v); } }
 
-  objective(i, n, text, hack = null) {
-    this.set('obj', `${i}|${text}`, () => {
-      this.obj.querySelector('.k').textContent = i > n ? t('game.allDone') : t('game.objCount', { i, n });
+  // kick: replaces the "objective i/n" line (endless: the wave)
+  objective(i, n, text, hack = null, kick = null) {
+    this.set('obj', `${i}|${text}|${kick}`, () => {
+      this.obj.querySelector('.k').textContent = kick || (i > n ? t('game.allDone') : t('game.objCount', { i, n }));
       this.obj.querySelector('.t').textContent = text;
       this.obj.classList.remove('flash'); void this.obj.offsetWidth; this.obj.classList.add('flash');
     });

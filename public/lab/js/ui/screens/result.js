@@ -15,12 +15,17 @@ export const result = {
     const tiles = [
       [clock(r.time), t('res.time')], [r.kills, t('prof.kills')], [`%${acc}`, t('prof.acc')], [r.heads, t('prof.heads')], [r.deaths, t('prof.deaths')],
     ].map(([v, k]) => h('div.tile.cut', h('b', String(v)), h('span.eyebrow', k)));
-    const cont = press(h('button.btn.primary.cut', { type: 'button', onclick: () => { ui('confirm'); ctx.router.go('campaign', { sel: r.id }, { root: false, replace: true }); } }, t('res.continue'), svg('arrow')), { sound: null });
+    const back = () => (r.endless ? ctx.router.go('play', {}, { replace: true }) : ctx.router.go('campaign', { sel: r.id }, { root: false, replace: true }));
+    const cont = press(h('button.btn.primary.cut', { type: 'button', onclick: () => { ui('confirm'); back(); } }, t('res.continue'), svg('arrow')), { sound: null });
     const again = press(h('button.btn.ghost.cut', { type: 'button', onclick: () => { ui('confirm'); ctx.startMission(r.id, { diff: r.diff }); } }, svg('reset'), t('res.again')), { sound: null });
     const box = h('div.card.cut.result',
       h('div.wide-row', { style: { minHeight: 0 } },
-        h('div', h('div.eyebrow.accent', r.done ? t('res.done') : t('res.left'), ' · ', t(`diff.${r.diff}`)), h('div.h1', t(`mission.${r.id}`))),
-        h('div.tag', stars(r.stars, 26), h('div.eyebrow', { style: { marginTop: '4px' } }, t('res.why')))),
+        r.endless
+          ? h('div', h('div.eyebrow.accent', t('mode.endless'), ' · ', t(`diff.${r.diff}`)), h('div.h1', t('res.wave', { n: r.wave })))
+          : h('div', h('div.eyebrow.accent', r.done ? t('res.done') : t('res.left'), ' · ', t(`diff.${r.diff}`)), h('div.h1', t(`mission.${r.id}`))),
+        r.endless
+          ? h('div.tag', h('div.eyebrow', t('res.best')), h('div.h2', String(d.records.endless)), g.record ? h('div.eyebrow.accent', t('res.record')) : null)
+          : h('div.tag', stars(r.stars, 26), h('div.eyebrow', { style: { marginTop: '4px' } }, t('res.why', { t: clock(r.par || 300) })))),
       h('div.res-tiles', tiles),
       h('div.reward',
         h('div.tile.cut', h('span.eyebrow', t('res.xp')), xpNum, lvl, xpBar),
@@ -36,7 +41,7 @@ export const result = {
         setTimeout(() => { countUp(xpNum, 0, g.xp, { fmt: (v) => `+${num(Math.round(v))}` }); countUp(coinNum, 0, g.parca, { fmt: (v) => `+${num(Math.round(v))}` }); ui('reward'); haptic('success'); }, 380);
         if (g.levelUps) setTimeout(() => { ui('levelup'); haptic('heavy'); lvl.textContent = `${t('hub.level', { n: d.profile.level })} · ${t('res.levelUp')}`; }, 1300);
       },
-      back: () => { ctx.router.go('campaign', { sel: r.id }, { replace: true }); return true; },
+      back: () => { back(); return true; },
     };
   },
 };

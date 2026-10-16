@@ -162,7 +162,7 @@ export class Abilities {
     this.ult = Math.min(1, this.ult + dt * 0.004);
     for (const k of Object.keys(this.on)) { this.on[k] -= dt; if (this.on[k] <= 0) delete this.on[k]; }
     this.flashT = Math.max(0, (this.flashT || 0) - dt);
-    if (P.alive) s.mover.speedK = this.speedK;
+    if (P.alive) s.mover.speedK = this.speedK * ((P.gun && P.gun.s.moveK) || 1);
     // the charge: keep the rush going, knock down whoever is in the way
     if (this.on.dash > 0 && P.alive) P.m.vx = this.rushDir * 560;
     if (this.on.charge > 0 && P.alive) {

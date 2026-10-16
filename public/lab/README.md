@@ -185,3 +185,25 @@ folder; the shipping game in `public/game` is untouched.
 - the crouch is a half kneel (back knee down, heel up, front shin upright)
 - `dev/sheet.html?what=poses&op=vex&w=kestrel` — one character in idle, aim,
   run, crouch and aim-up, real size, silhouette, grey and a head close-up
+
+## Status — content pass
+- `js/game/abilities.js`, `js/ui/abilityhud.js` — two skills and an ultimate
+  per operator in missions (E, G, X on a keyboard; buttons over the touch
+  cluster); enemies react through the AI (blinded, slowed, smoke cuts sight)
+- `js/art/env/mission2.js`, `mission3.js` — mission 2 (HAWK's stall: market,
+  hold objective, scaffolding over a wall) and mission 3 (Secretary Gall: the
+  plaza, a security gate, the act 1 boss with phases, grenades and a health
+  bar); `game/mission.js` builds each run from its description (reach / hack /
+  hold / boss) and runs the endless mode (the market walled off, waves, Gall
+  every fifth wave, one life)
+- `js/art/weapons/index.js`, `js/game/guns.js` — all twelve weapons: burst and
+  bolt modes, a suppressed SMG, a slow-carrying LMG, a bouncing grenade
+  launcher (rounds flown by `test/m3scene.js`)
+- `js/core/economy.js` — owned weapons, weapon finishes (a tint over the
+  factory paint, in the menus and in the game), crates with pity, HAWK's daily
+  and weekly goods (seeded by the date), three daily tasks
+- `js/audio/music.js` — synthesised lobby and mission music
+
+Operator ids (`vex`, `hale`, `morrow`, `kite`, `brick`) stay as they are: they
+key the save, the art and the strings; players only ever see the code names
+(FLINT, WARDEN, VESPER, SKYE, BULWARK) from `ui/data.js`.

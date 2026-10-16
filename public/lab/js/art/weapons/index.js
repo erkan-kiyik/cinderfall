@@ -239,6 +239,264 @@ function marksmanMag(g, m = MAT) {
   clip(g, MAG, () => { fill(g, 'M 0 5.0 L 5 5.0 L 5 6 L 0 6 Z', m.dark.m); stroke(g, 'M 0.8 1.6 L 3.8 1.6', m.poly.d, 0.25); });
 }
 
+// MULE .50 — heavy self-loading pistol ---------------------------------------
+function mule(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) {
+    g.save(); g.translate(-1.2, -2.0); g.rotate(0.2);
+    cel(g, rr(-1.1, 0.6, 1.1, 6.6, 0.2), m.metal, { sh: 0.4, hl: 0.25 });
+    fill(g, rr(-0.8, 0.3, 0.7, 0.9, 0.15), m.brass.m);
+    cel(g, rr(-1.6, 6.3, 1.4, 7.3, 0.3), m.dark, { sh: 0.3, hl: 0.2 });
+    g.restore();
+  }
+  if (on('body')) {
+    grip(g, m.poly, -1.2, -2.0, 6.6, 3.0, 0.2);
+    const FRAME = poly([[-3.4, -3.4], [7.6, -3.4], [7.6, -2.0], [3.6, -1.8], [-2.8, -1.6]]);
+    cel(g, FRAME, m.poly, { sh: 0.4, hl: 0.25 });
+    guard(g, m.poly, 0.2, 3.6, -1.9, 2.2);
+    fill(g, rr(8.0, -5.2, 8.7, -3.7, 0.15), m.dark.k);
+    fill(g, rr(-3.6, -2.2, -2.2, -1.2, 0.2), m.accent.m);
+  }
+  if (on('slide')) {
+    const SLIDE = poly([[-4.0, -6.2], [7.4, -6.2], [8.4, -5.6], [8.4, -3.4], [-4.0, -3.4]]);
+    cel(g, SLIDE, m.metal, { sh: 0.55, hl: 0.35 });
+    clip(g, SLIDE, () => {
+      for (let x = -3.4; x < -0.8; x += 0.6) stroke(g, `M ${x} -6.1 L ${x - 0.2} -3.6`, m.metal.d, 0.26);
+      fill(g, poly([[1.0, -5.6], [6.8, -5.6], [7.6, -4.6], [1.0, -4.4]]), m.metal.d);
+      stroke(g, 'M -3.8 -5.8 L 8.0 -5.8', m.metal.l, 0.2, 0.8);
+    });
+    fill(g, rr(6.8, -6.9, 7.6, -6.2, 0.1), m.dark.m);
+    fill(g, dot(7.2, -6.6, 0.2), m.accent.l);
+    fill(g, rr(-3.6, -6.9, -2.6, -6.2, 0.1), m.dark.m);
+  }
+}
+
+// HORNET — compact high-rate SMG ------------------------------------------------
+function hornet(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) {
+    const MAG = rr(0.8, -0.8, 3.0, 9.4, 0.3);
+    cel(g, MAG, m.poly, { sh: 0.5, hl: 0.3 });
+    clip(g, MAG, () => { for (const y of [2.4, 4.6, 6.8]) stroke(g, `M 0.6 ${y} L 3.2 ${y}`, m.poly.d, 0.24); fill(g, 'M 0.5 8.6 L 3.3 8.6 L 3.3 9.6 L 0.5 9.6 Z', m.dark.m); });
+  }
+  if (!on('body')) return;
+  // folded wire stock
+  stroke(g, 'M -4.6 -3.6 L -10.4 -3.6 L -10.4 -0.6 L -5.0 -0.6', m.metal.d, 0.9);
+  stroke(g, 'M -4.6 -3.6 L -10.4 -3.6 L -10.4 -0.6 L -5.0 -0.6', m.metal.m, 0.45);
+  cel(g, rr(-11.0, -4.2, -9.8, 0.0, 0.3), m.dark, { sh: 0.2, hl: 0.1 });
+  grip(g, m.poly, -1.6, 0.0, 6.0, 2.4, 0.3);
+  const REC = poly([[-5.2, -4.6], [7.6, -4.6], [7.6, -0.8], [-0.2, -0.4], [-5.2, -0.6]]);
+  cel(g, REC, m.metal, { sh: 0.5, hl: 0.3 });
+  clip(g, REC, () => {
+    fill(g, rr(-1.2, -3.6, 1.6, -2.4, 0.2), m.dark.k);
+    stroke(g, 'M -5.0 -4.2 L 7.4 -4.2', m.metal.l, 0.18, 0.8);
+    fill(g, 'M 5.8 -4.8 L 6.8 -4.8 L 6.8 -0.6 L 5.8 -0.6 Z', m.accent.m);
+  });
+  guard(g, m.metal, -1.0, 1.8, -0.4, 1.8);
+  // stubby barrel shroud and a short vertical grip
+  const SH = rr(7.6, -4.0, 11.4, -1.4, 0.4);
+  cel(g, SH, m.poly, { sh: 0.4, hl: 0.25 });
+  clip(g, SH, () => { for (let x = 8.2; x < 11; x += 1.0) fill(g, rr(x, -3.1, x + 0.5, -2.3, 0.2), m.poly.k); });
+  cel(g, rr(11.4, -3.2, 12.8, -2.2, 0.2), m.dark, { sh: 0.2, hl: 0.1 });
+  g.save(); g.translate(8.6, -1.4); g.rotate(-0.05); cel(g, rr(-0.9, 0, 0.9, 3.8, 0.4), m.poly, { sh: 0.3, hl: 0.2 }); g.restore();
+  rail(g, -4.6, 7.2, -4.6);
+  cel(g, poly([[-3.6, -4.6], [-3.6, -5.8], [-2.4, -5.8], [-2.0, -4.6]]), m.dark, { sh: 0.2, hl: 0.15 });
+  cel(g, poly([[6.0, -4.6], [6.2, -5.8], [7.0, -5.8], [7.2, -4.6]]), m.dark, { sh: 0.2, hl: 0.15 });
+}
+
+// LYNX — integrally suppressed SMG -------------------------------------------------
+function lynx(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) {
+    const MAG = 'M 0.8 -0.6 L 3.0 -0.6 L 3.0 0.4 C 3.3 2.8 3.9 5.2 4.8 7.4 L 2.6 8.0 C 1.7 5.8 1.0 3.2 0.8 0.4 Z';
+    cel(g, MAG, m.poly, { sh: 0.5, hl: 0.3 });
+    clip(g, MAG, () => { for (const y of [2.6, 4.8]) stroke(g, `M 0.4 ${y} L 5 ${y + 0.5}`, m.poly.d, 0.24); });
+  }
+  if (!on('body')) return;
+  // collapsible stock
+  cel(g, rr(-9.0, -3.4, -4.8, -2.2, 0.3), m.metal, { sh: 0.3, hl: 0.2 });
+  const STOCK = poly([[-13.0, -4.2], [-8.6, -4.2], [-8.6, -1.4], [-11.4, 0.6], [-13.0, 1.2]]);
+  cel(g, STOCK, m.poly, { sh: 0.6, hl: 0.3 });
+  fill(g, rr(-13.6, -4.4, -12.6, 1.4, 0.2), m.dark.m);
+  grip(g, m.poly, -1.4, 0.0, 6.0, 2.4, 0.32);
+  const REC = poly([[-5.0, -4.4], [6.6, -4.4], [6.6, -0.6], [-5.0, -0.4]]);
+  cel(g, REC, m.metal, { sh: 0.5, hl: 0.3 });
+  clip(g, REC, () => { fill(g, rr(0.0, -3.4, 2.8, -2.4, 0.2), m.dark.k); stroke(g, 'M -4.8 -4.0 L 6.4 -4.0', m.metal.l, 0.18, 0.8); });
+  guard(g, m.metal, -0.8, 2.0, -0.4, 1.8);
+  // the long suppressor with a cooling sleeve
+  const SUP = rr(6.4, -4.2, 17.4, -1.0, 0.8);
+  cel(g, SUP, m.dark, { sh: 0.5, hl: 0.3 });
+  clip(g, SUP, () => {
+    for (let x = 7.6; x < 16; x += 1.4) stroke(g, `M ${x} -4.2 L ${x} -1.0`, m.dark.l, 0.18, 0.6);
+    fill(g, 'M 6.4 -4.4 L 7.4 -4.4 L 7.4 -0.8 L 6.4 -0.8 Z', m.accent.m);
+  });
+  rail(g, -4.4, 6.0, -4.4);
+  redDot(g, -2.0);
+}
+
+// BASTION BR — burst-fire battle rifle ----------------------------------------------
+function bastion(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) {
+    const MAG = 'M 1.2 -0.6 L 4.0 -0.6 L 4.0 0.4 C 4.3 2.6 4.8 4.8 5.6 6.6 L 2.8 7.4 C 2.0 5.4 1.4 3.0 1.2 0.4 Z';
+    cel(g, MAG, m.metal, { sh: 0.6, hl: 0.3 });
+    clip(g, MAG, () => { for (const y of [1.8, 3.6, 5.4]) stroke(g, `M 0.8 ${y} L 6 ${y + 0.5}`, m.metal.d, 0.26); });
+  }
+  if (!on('body')) return;
+  const STOCK = poly([[-17.6, -4.8], [-6.4, -4.4], [-6.0, -0.6], [-12.4, 0.6], [-17.0, 2.4], [-18.0, 2.4], [-18.0, -4.6]]);
+  cel(g, STOCK, m.poly, { sh: 0.8, hl: 0.4 });
+  clip(g, STOCK, () => { fill(g, 'M -18.6 -5 L -17 -5 L -17 3 L -18.6 3 Z', m.dark.m); fill(g, rr(-15.6, -3.4, -9.4, -2.2, 0.4), m.poly.k); });
+  grip(g, m.poly, -1.6, 0.4, 6.4, 2.6, 0.34);
+  const LOWER = poly([[-6.2, -1.8], [5.2, -1.8], [5.2, 0.2], [4.4, 1.0], [0.6, 1.0], [-6.2, 0.4]]);
+  cel(g, LOWER, m.metal, { sh: 0.45, hl: 0.25 });
+  guard(g, m.metal, -0.8, 2.4, 0.6, 1.8);
+  const UPPER = poly([[-6.2, -4.8], [7.2, -4.8], [7.2, -1.8], [-6.2, -1.8]]);
+  cel(g, UPPER, m.metal, { sh: 0.55, hl: 0.3 });
+  clip(g, UPPER, () => { fill(g, rr(0.4, -4.0, 4.0, -2.6, 0.2), m.dark.k); stroke(g, 'M -6.0 -4.4 L 7.0 -4.4', m.metal.l, 0.18, 0.8); });
+  // heavy handguard, long barrel with a flash hider
+  const HG = 'M 7.2 -5.0 L 19.6 -5.0 Q 20.2 -5.0 20.2 -4.4 L 20.2 -0.8 Q 20.2 -0.2 19.6 -0.2 L 7.2 -0.2 Z';
+  cel(g, HG, m.poly, { sh: 0.6, hl: 0.3 });
+  clip(g, HG, () => { for (let x = 8.6; x < 19; x += 2.2) fill(g, poly([[x, -3.6], [x + 1.4, -3.6], [x + 1.0, -1.6], [x - 0.4, -1.6]]), m.poly.k); fill(g, 'M 7.2 -5.2 L 8.4 -5.2 L 8.4 0 L 7.2 0 Z', m.accent.m); });
+  cel(g, rr(20.2, -3.2, 25.4, -2.0, 0.2), m.metal, { sh: 0.2, hl: 0.15 });
+  const FH = rr(25.0, -3.6, 27.6, -1.6, 0.3);
+  cel(g, FH, m.dark, { sh: 0.3, hl: 0.2 });
+  clip(g, FH, () => { for (const x of [25.6, 26.5]) fill(g, rr(x, -3.4, x + 0.4, -1.8, 0.1), m.dark.k); });
+  rail(g, -6.0, 19.6, -4.8);
+  // a 1-4x scope
+  for (const x of [-1.2, 4.4]) cel(g, rr(x, -6.2, x + 1.2, -4.8, 0.2), m.dark, { sh: 0.2, hl: 0.15 });
+  cel(g, rr(-3.0, -7.8, 7.0, -6.2, 0.6), m.dark, { sh: 0.4, hl: 0.3 });
+  fill(g, rr(6.6, -7.6, 7.2, -6.4, 0.2), m.glass.m);
+}
+
+// SAW-20 — magazine-fed automatic shotgun -----------------------------------------
+function saw(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) {
+    // a stubby drum
+    cel(g, dot(3.4, 4.2, 3.6), m.poly, { sh: 0.6, hl: 0.3 });
+    cel(g, rr(1.4, -0.8, 5.0, 1.6, 0.3), m.poly, { sh: 0.3, hl: 0.2 });
+    fill(g, dot(3.4, 4.2, 1.2), m.dark.m);
+    stroke(g, dot(3.4, 4.2, 2.6), m.poly.d, 0.25);
+  }
+  if (!on('body')) return;
+  const STOCK = poly([[-16.4, -4.6], [-5.8, -4.2], [-5.4, 0.4], [-11.0, 1.4], [-15.8, 3.0], [-16.8, 3.0], [-16.8, -4.4]]);
+  cel(g, STOCK, m.poly, { sh: 0.8, hl: 0.4 });
+  fill(g, rr(-17.4, -4.8, -16.2, 3.2, 0.2), m.dark.m);
+  grip(g, m.poly, -1.6, 0.6, 6.4, 2.6, 0.34);
+  const REC = poly([[-5.8, -5.0], [7.4, -5.0], [7.4, 0.6], [-5.8, 0.6]]);
+  cel(g, REC, m.metal, { sh: 0.6, hl: 0.35 });
+  clip(g, REC, () => { fill(g, rr(0.6, -3.8, 4.4, -2.2, 0.25), m.dark.k); stroke(g, 'M -5.6 -4.6 L 7.2 -4.6', m.metal.l, 0.2, 0.8); stroke(g, 'M -5.8 -1.0 L 7.4 -1.0', m.metal.d, 0.24); });
+  guard(g, m.metal, -1.0, 2.4, 0.6, 2.0);
+  // fat barrel under a vented heat shield
+  cel(g, rr(7.4, -3.8, 24.6, -1.6, 0.5), m.metal, { sh: 0.35, hl: 0.25 });
+  const HS = rr(7.4, -5.0, 20.6, -3.4, 0.4);
+  cel(g, HS, m.poly, { sh: 0.4, hl: 0.25 });
+  clip(g, HS, () => { for (let x = 8.6; x < 20; x += 1.6) fill(g, rr(x, -4.6, x + 0.8, -3.8, 0.2), m.poly.k); });
+  const MZ = rr(23.8, -4.2, 26.0, -1.2, 0.4);
+  cel(g, MZ, m.dark, { sh: 0.3, hl: 0.2 });
+  fill(g, rr(7.4, -1.6, 9.0, 0.4, 0.2), m.accent.m);
+  cel(g, poly([[22.2, -5.0], [23.4, -5.0], [23.2, -6.2], [22.4, -6.2]]), m.dark, { sh: 0.2, hl: 0.15 });
+}
+
+// LONGBOW — bolt-action rifle with a long scope ---------------------------------------
+function longbow(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) {
+    const MAG = rr(1.0, -1.0, 4.4, 4.6, 0.3);
+    cel(g, MAG, m.metal, { sh: 0.5, hl: 0.3 });
+    fill(g, rr(0.8, 3.8, 4.6, 4.8, 0.2), m.dark.m);
+  }
+  if (!on('body')) return;
+  // a one-piece thumbhole stock
+  const STOCK = 'M 9.6 -3.4 L -6.0 -3.6 L -14.6 -5.4 L -20.0 -5.8 L -21.6 -4.6 L -21.6 2.6 L -20.0 2.8 L -14.4 1.0 L -8.4 1.0 C -6.0 1.0 -4.4 2.2 -3.4 4.4 L -2.0 6.6 L 0.8 6.0 L 0.2 1.0 L 9.6 0.6 Z';
+  cel(g, STOCK, m.poly, { sh: 0.8, hl: 0.4 });
+  clip(g, STOCK, () => {
+    fill(g, 'M -22 -6 L -20.4 -6 L -20.4 3 L -22 3 Z', m.dark.m);
+    fill(g, rr(-9.6, -1.6, -4.6, 0.0, 0.6), m.poly.k);
+    stroke(g, 'M -19.6 -5.0 L -14.8 -4.8 L -6.0 -3.0', m.poly.l, 0.2, 0.8);
+  });
+  guard(g, m.metal, -0.8, 2.2, 1.0, 1.8);
+  // receiver and the bolt handle
+  const REC = rr(-6.0, -4.8, 6.2, -2.4, 0.4);
+  cel(g, REC, m.metal, { sh: 0.5, hl: 0.3 });
+  stroke(g, 'M -3.4 -3.6 L -4.4 -0.6', m.metal.d, 0.8);
+  cel(g, dot(-4.5, -0.4, 0.9), m.dark, { sh: 0.2, hl: 0.2 });
+  // the long fluted barrel and a brake
+  cel(g, rr(9.6, -3.4, 33.6, -2.2, 0.3), m.metal, { sh: 0.25, hl: 0.15 });
+  for (let x = 11; x < 32; x += 2.4) stroke(g, `M ${x} -2.8 L ${x + 1.6} -2.8`, m.metal.d, 0.2);
+  const BR = rr(33.4, -3.9, 37.6, -1.7, 0.4);
+  cel(g, BR, m.dark, { sh: 0.3, hl: 0.2 });
+  clip(g, BR, () => { for (const x of [34.2, 35.4, 36.6]) fill(g, rr(x, -3.6, x + 0.5, -2.0, 0.15), m.dark.k); });
+  fill(g, rr(9.4, -3.6, 10.4, 0.8, 0.2), m.accent.m);
+  // big scope
+  for (const x of [-3.2, 3.6]) cel(g, rr(x, -6.6, x + 1.4, -4.8, 0.2), m.dark, { sh: 0.2, hl: 0.15 });
+  cel(g, rr(-5.2, -8.6, 9.4, -6.6, 0.7), m.dark, { sh: 0.45, hl: 0.3 });
+  cel(g, 'M 8.8 -8.6 L 10.4 -9.8 L 13.6 -9.8 Q 14.0 -9.8 14.0 -9.4 L 14.0 -5.8 Q 14.0 -5.4 13.6 -5.4 L 10.4 -5.4 L 8.8 -6.6 Z', m.dark, { sh: 0.45, hl: 0.3 });
+  cel(g, 'M -4.8 -8.6 L -6.0 -9.4 L -8.0 -9.4 Q -8.4 -9.4 -8.4 -9.0 L -8.4 -6.2 Q -8.4 -5.8 -8.0 -5.8 L -6.0 -5.8 L -4.8 -6.6 Z', m.dark, { sh: 0.45, hl: 0.3 });
+  fill(g, rr(1.2, -10.2, 2.8, -8.6, 0.25), m.dark.m);
+  fill(g, rr(13.6, -9.6, 14.2, -5.6, 0.2), m.glass.m);
+  fill(g, rr(13.65, -9.4, 13.95, -8.0, 0.1), m.glass.l);
+}
+
+// ANVIL LMG — belt-fed light machine gun --------------------------------------------------
+function anvil(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (on('mag')) {
+    // the ammo box under the receiver with the belt going up
+    const BOX = rr(-1.0, 0.0, 6.6, 7.8, 0.4);
+    cel(g, BOX, m.poly, { sh: 0.7, hl: 0.35 });
+    clip(g, BOX, () => { fill(g, rr(-1.2, 2.6, 6.8, 3.4, 0.2), m.poly.d); fill(g, rr(0.4, 4.6, 5.2, 6.4, 0.3), m.accent.m, 0.85); });
+    for (let i = 0; i < 4; i++) fill(g, rr(5.0 + i * 0.2, -0.6 - i * 0.9, 6.4 + i * 0.2, 0.0 - i * 0.9, 0.15), m.brass.m);
+  }
+  if (!on('body')) return;
+  const STOCK = poly([[-17.8, -5.0], [-7.0, -4.4], [-7.0, -0.4], [-12.4, 0.4], [-17.2, 2.6], [-18.4, 2.6], [-18.4, -4.8]]);
+  cel(g, STOCK, m.poly, { sh: 0.8, hl: 0.4 });
+  fill(g, rr(-19.0, -5.2, -17.8, 2.8, 0.2), m.dark.m);
+  grip(g, m.poly, -2.6, 0.6, 6.4, 2.6, 0.34);
+  const REC = poly([[-7.0, -5.6], [8.4, -5.6], [8.4, 0.6], [-7.0, 0.6]]);
+  cel(g, REC, m.metal, { sh: 0.6, hl: 0.35 });
+  clip(g, REC, () => {
+    fill(g, rr(-7.0, -6.0, 8.4, -4.4, 0.2), m.metal.d);
+    for (let x = -5.6; x < 7; x += 1.4) stroke(g, `M ${x} -6.0 L ${x} -4.6`, m.metal.k, 0.2);
+    stroke(g, 'M -7 -1.2 L 8.4 -1.2', m.metal.d, 0.24);
+  });
+  guard(g, m.metal, -2.0, 1.2, 0.6, 1.8);
+  // carry handle
+  stroke(g, 'M 0.4 -5.6 L 1.2 -8.2 L 6.2 -8.2 L 7.0 -5.6', m.dark.k, 1.2);
+  stroke(g, 'M 0.4 -5.6 L 1.2 -8.2 L 6.2 -8.2 L 7.0 -5.6', m.dark.m, 0.6);
+  // heavy barrel with a perforated jacket, bipod folded
+  const J = rr(8.4, -4.6, 22.4, -1.4, 0.5);
+  cel(g, J, m.dark, { sh: 0.45, hl: 0.3 });
+  clip(g, J, () => { for (let x = 9.4; x < 22; x += 1.6) fill(g, dot(x + 0.4, -3.0, 0.45), m.dark.k); fill(g, 'M 8.4 -4.8 L 9.6 -4.8 L 9.6 -1.2 L 8.4 -1.2 Z', m.accent.m); });
+  cel(g, rr(22.4, -3.6, 28.0, -2.4, 0.25), m.metal, { sh: 0.2, hl: 0.15 });
+  cel(g, rr(27.4, -4.0, 29.6, -2.0, 0.3), m.dark, { sh: 0.3, hl: 0.2 });
+  cel(g, rr(14.0, -1.4, 22.0, -0.6, 0.3), m.metal, { sh: 0.2, hl: 0.15 });
+  cel(g, poly([[25.6, -3.6], [26.6, -3.6], [26.4, -5.6], [25.8, -5.6]]), m.dark, { sh: 0.2, hl: 0.15 });
+}
+
+// THUMPER GL — four-shot revolving grenade launcher ----------------------------------------
+function thumper(g, m = MAT, part = null) {
+  const on = (k) => !part || part === k;
+  if (!on('body')) return;
+  const STOCK = poly([[-14.6, -4.0], [-5.6, -3.8], [-5.6, 0.0], [-10.8, 0.6], [-14.0, 2.6], [-15.0, 2.6], [-15.0, -3.8]]);
+  cel(g, STOCK, m.poly, { sh: 0.8, hl: 0.4 });
+  fill(g, rr(-15.6, -4.2, -14.4, 2.8, 0.2), m.dark.m);
+  grip(g, m.poly, -1.6, 0.4, 6.0, 2.6, 0.32);
+  guard(g, m.metal, -1.0, 2.2, 0.4, 1.8);
+  cel(g, rr(-5.8, -4.2, 3.0, 0.6, 0.4), m.metal, { sh: 0.5, hl: 0.3 });
+  // the cylinder: four fat chambers
+  const CY = rr(3.0, -6.0, 11.4, 1.6, 1.2);
+  cel(g, CY, m.dark, { sh: 0.7, hl: 0.4 });
+  clip(g, CY, () => { for (const y of [-4.2, -1.6, 0.8]) fill(g, rr(3.4, y - 0.9, 11.0, y + 0.3, 0.5), m.dark.k, 0.8); fill(g, rr(3.0, -6.2, 4.2, 1.8, 0.2), m.accent.m); });
+  // the wide barrel and a leaf sight
+  const BAR = rr(11.4, -5.2, 19.6, -0.4, 0.8);
+  cel(g, BAR, m.poly, { sh: 0.5, hl: 0.3 });
+  clip(g, BAR, () => { for (let x = 12.6; x < 19; x += 1.8) stroke(g, `M ${x} -5.2 L ${x} -0.4`, m.poly.d, 0.3); });
+  fill(g, rr(19.2, -4.8, 19.8, -0.8, 0.2), m.dark.k);
+  stroke(g, 'M 7.0 -6.0 L 6.4 -8.4 L 9.0 -8.4 L 8.4 -6.0', m.dark.m, 0.5);
+  cel(g, rr(12.0, -0.4, 16.0, 3.4, 0.6), m.poly, { sh: 0.3, hl: 0.2 });
+}
+
 // Rig points (weapon space):
 //   eject   ejection port; magAxis: unit pull-out direction; magGrab: where a
 //   hand holds the mag; magPull: distance until it clears the gun; slide /
@@ -252,4 +510,20 @@ export const WEAPONS = {
     parts: ['body', 'pump'], eject: [1.5, -1.9], casing: 'shell', pump: 4.2, port: [2.1, 0.6] },
   marksman: { id: 'marksman', name: 'MARKSMAN DMR', cls: 'KESKİN NİŞANCI', paint: marksman, box: [-21, -10, 34, 7], gripB: [16.0, -1.0], muzzle: [33.4, -2.8],
     parts: ['mag', 'body'], eject: [2.6, -2.9], casing: 'rifle', magAxis: [0, 1], magGrab: [2.3, 4.0], magPull: 8, charge: [-5.4, -3.0] },
+  mule: { id: 'mule', name: 'MULE .50', cls: 'TABANCA', paint: mule, box: [-5, -8, 10, 7], gripB: [1.2, 0.8], muzzle: [8.7, -4.5],
+    parts: ['mag', 'body', 'slide'], eject: [3.4, -5.4], casing: 'pistol', magAxis: [-0.2, 0.98], magGrab: [-2.5, 4.6], magPull: 8, slide: 2.8, charge: [-2.6, -5.0] },
+  hornet: { id: 'hornet', name: 'HORNET', cls: 'SMG', paint: hornet, box: [-12, -7, 14, 11], gripB: [8.6, 1.8], muzzle: [12.8, -2.7],
+    parts: ['mag', 'body'], eject: [0.2, -3.6], casing: 'pistol', magAxis: [0, 1], magGrab: [1.9, 5.0], magPull: 10, charge: [-3.6, -4.4] },
+  lynx: { id: 'lynx', name: 'LYNX', cls: 'SMG', paint: lynx, box: [-14, -8, 18, 9], gripB: [5.0, 0.2], muzzle: [17.4, -2.6],
+    parts: ['mag', 'body'], eject: [1.4, -3.4], casing: 'pistol', magAxis: [0.25, 0.97], magGrab: [2.6, 4.4], magPull: 8.5, charge: [-4.2, -4.2] },
+  bastion: { id: 'bastion', name: 'BASTION BR', cls: 'TÜFEK', paint: bastion, box: [-19, -9, 28, 9], gripB: [13.0, -0.4], muzzle: [27.6, -2.6],
+    parts: ['mag', 'body'], eject: [2.2, -3.4], casing: 'rifle', magAxis: [0.3, 0.95], magGrab: [4.0, 4.6], magPull: 8.5, charge: [-5.8, -4.6] },
+  saw: { id: 'saw', name: 'SAW-20', cls: 'POMPALI', paint: saw, box: [-18, -7, 27, 9], gripB: [14.0, -0.6], muzzle: [26.0, -2.7],
+    parts: ['mag', 'body'], eject: [2.6, -3.4], casing: 'shell', magAxis: [0, 1], magGrab: [3.4, 5.0], magPull: 9, charge: [-5.0, -4.6] },
+  longbow: { id: 'longbow', name: 'LONGBOW', cls: 'KESKİN NİŞANCI', paint: longbow, box: [-22, -11, 38, 7], gripB: [17.0, -0.8], muzzle: [37.6, -2.8],
+    parts: ['mag', 'body'], eject: [2.0, -4.6], casing: 'rifle', magAxis: [0, 1], magGrab: [2.7, 3.6], magPull: 7, charge: [-4.5, -0.6] },
+  anvil: { id: 'anvil', name: 'ANVIL LMG', cls: 'AĞIR', paint: anvil, box: [-19, -9, 30, 9], gripB: [15.0, -0.6], muzzle: [29.6, -3.0],
+    parts: ['mag', 'body'], eject: [2.8, -1.0], casing: 'rifle', magAxis: [0, 1], magGrab: [2.8, 6.0], magPull: 10, charge: [-5.6, -4.8] },
+  thumper: { id: 'thumper', name: 'THUMPER GL', cls: 'PATLAYICI', paint: thumper, box: [-16, -9, 20, 7], gripB: [14.0, 2.2], muzzle: [19.6, -2.8],
+    parts: ['body'], eject: [7.2, -2.2], casing: 'shell', port: [7.2, 1.2] },
 };

@@ -4,7 +4,8 @@ import { h, svg, press, popIn, ui } from '../kit.js';
 import { t } from '../i18n.js';
 import { shead, statBar } from './common.js';
 import { avatar, weaponPic } from '../portraits.js';
-import { OPS, PRIMARIES, gunBars, opName } from '../data.js';
+import { OPS, WEAPON_LIST, gunBars, opName } from '../data.js';
+import { owns, skinOf } from '../../core/economy.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 
 export const prep = {
@@ -17,7 +18,7 @@ export const prep = {
       const d = S.d, id = d.roster.op, lo = d.roster.loadout[id];
       ctx.showcase.setOperator(id, lo);
       const opRow = h('div.op-picks', OPS.map((o) => press(h(`button.op-pick.cut${o.id === id ? '.on' : ''}`, {
-        type: 'button', 'aria-label': o.id,
+        type: 'button', 'aria-label': o.name,
         onclick: () => { if (o.id !== id) { ui('tab'); S.set((s) => { s.roster.op = o.id; }); render(); } },
       }, avatar(o.id, 46)), { buzz: 'tick', sound: null })));
       const wtile = (w, slot) => {
@@ -34,23 +35,26 @@ export const prep = {
             });
             render();
           },
-          'aria-label': `${t(`cls.${w === 'wren9' ? 'pistol' : w === 'ramrod' ? 'shotgun' : w === 'marksman' ? 'sniper' : 'rifle'}`)} · ${WEAPONS[w].name}`,
-        }, weaponPic(w, mini ? 64 : 110, mini ? 22 : 26), h('b', WEAPONS[w].name)), { buzz: 'tick', sound: null });
+          'aria-label': `${t(`cls.${WEAPON_LIST.find((x) => x.id === w).cls}`)} · ${WEAPONS[w].name}`,
+        }, weaponPic(w, mini ? 64 : 110, mini ? 22 : 26, skinOf(d, w).tint), h('b', WEAPONS[w].name)), { buzz: 'tick', sound: null });
       };
       const b = gunBars(lo.primary);
-      const sideOK = lo.primary !== 'wren9';
+      // what you own: any weapon as the primary, pistols as the sidearm
+      const mine = WEAPON_LIST.filter((w) => owns(d, w.id));
+      const sides = mine.filter((w) => w.slot === 'side' && w.id !== lo.primary).map((w) => w.id);
+      const sideOK = sides.length > 0;
       stage.replaceChildren(opRow, h('div.op-tag', h('div.name', opName(id)), h('div.role', t(`role.${OPS.find((o) => o.id === id).role}`))));
       side.replaceChildren(
         h('div.eyebrow', t('prep.primary')),
-        h('div.slotrow', PRIMARIES.map((w) => wtile(w, 'primary'))),
+        h('div.slotrow.scroll', mine.map((w) => wtile(w.id, 'primary'))),
         h('div.statgrid', statBar(t('stat.damage'), b.damage, b.damage), statBar(t('stat.rate'), t('stat.rpm', { n: b.rpm }), b.rate), statBar(t('stat.range'), b.range, b.range), statBar(t('stat.control'), b.control, b.control)),
         h('div.prep-pair',
-          h('div', h('div.eyebrow', t('prep.sidearm')), sideOK ? wtile('wren9', 'side') : h('div.muted.note', t('prep.noSidearm'))),
+          h('div', h('div.eyebrow', t('prep.sidearm')), sideOK ? h('div.slotrow', sides.map((w) => wtile(w, 'side'))) : h('div.muted.note', t('prep.noSidearm'))),
           h('div', h('div.eyebrow', t('camp.diff')), h('div.seg', ['normal', 'hard'].map((k) => press(h(`button${diff === k ? '.on' : ''}`, { type: 'button', onclick: () => { diff = k; S.set((s) => { s.settings.diff = k; }); render(); } }, t(`diff.${k}`)), { buzz: 'tick', sound: 'tab' }))))),
-        press(h('button.btn.primary.lg.cut.go', { type: 'button', onclick: () => { ui('confirm'); ctx.startMission(params.mission || 'm1', { diff }); } }, svg('play'), t('prep.start')), { sound: null, buzz: 'heavy' }));
+        press(h('button.btn.primary.lg.cut.go', { type: 'button', onclick: () => { ui('confirm'); ctx.startMission(params.mission || 'm1', { diff }); } }, svg('play'), t(params.mission === 'endless' ? 'prep.startEndless' : 'prep.start')), { sound: null, buzz: 'heavy' }));
     }
     render();
-    const el = h('div', shead(ctx, t('prep.title'), t(`mission.${params.mission || 'm1'}`)), h('div.prep-body', stage, side));
+    const el = h('div', shead(ctx, t('prep.title'), params.mission === 'endless' ? t('mode.endless') : t(`mission.${params.mission || 'm1'}`)), h('div.prep-body', stage, side));
     return { el, show() { ctx.showcase.frame(0.22, 128); popIn(side.children, { step: 25 }); } };
   },
 };

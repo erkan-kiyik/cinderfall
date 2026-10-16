@@ -9,6 +9,7 @@ import { BUILDINGS, buildingBakeList, facadeLayout } from '../art/env/city.js';
 import { buildCourse } from '../art/env/course.js';
 import { FX, DENS } from './m1scene.js';
 import { charBakeList } from '../game/bakechars.js';
+import { WEAPONS } from '../art/weapons/index.js';
 import { Character } from '../game/character.js';
 import { Mover } from '../phys/mover.js';
 import { CharRenderer } from '../gfx/charrender.js';
@@ -16,7 +17,7 @@ import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-6';
+export const BAKE_VERSION = 'm2-7';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -30,7 +31,8 @@ export function bakeList(quality, course = COURSE) {
   E.push(...buildingBakeList(bg));
   layer('ground', [-10, -0.5, 610, 42], STREET.ground, bg);
   for (const p of [...course.props, ...course.front, ...course.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
-  E.push(...charBakeList([...OPERATORS, 'tet', 'kal'], ch));
+  // every weapon the player can carry, in the factory finish
+  E.push(...charBakeList([...OPERATORS, 'tet', 'kal'], ch, Object.keys(WEAPONS)));
   for (const [n, p] of Object.entries(FX)) {
     const box = n === 'tracer' || n === 'beam' ? [0, -0.5, 1, 0.5] : n === 'flame' ? [-0.6, -1.05, 0.6, 0.05] : [-1, -1, 1, 1];
     E.push({ name: 'fx.' + n, box, scale: fx * (n === 'tracer' ? 2 : 1), paint: p });

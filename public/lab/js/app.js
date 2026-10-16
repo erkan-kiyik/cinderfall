@@ -14,6 +14,8 @@ import { Showcase } from './game/showcase.js';
 import { MissionScene } from './game/mission.js';
 import { bindKeyboard, bindTouch } from './game/input.js';
 import { applyMission } from './core/save.js';
+import { syncTints, ensureDaily } from './core/economy.js';
+import { refreshCur } from './ui/screens/common.js';
 import { needsAcceptance } from './legal/consent.js';
 import { Music } from './audio/music.js';
 
@@ -23,6 +25,8 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export class App {
   constructor(eng, { save, version, controls, perf, dyn }) {
     this.e = eng; this.save = save; this.version = version; this.controls = controls; this.perf = perf; this.dyn = dyn;
+    // the economy: the hub's coin counter, the finishes the guns are drawn with, today's tasks
+    refreshCur.save = save; syncTints(save.d); ensureDaily(save);
     bindKeyboard(controls, eng.renderer.canvas);
     this.uiRoot = document.querySelector('#ui');
     this.showcase = new Showcase(eng);
@@ -127,7 +131,7 @@ export class App {
     document.body.classList.remove('ui-hidden');
     const gain = applyMission(this.save, r.id, r);
     if (r.retry) { this.startMission(r.id, { diff: r.diff }); return; }
-    if (r.abandoned) { this.router.go('campaign', { sel: r.id }, { root: true }); return; }
+    if (r.abandoned && !r.endless) { this.router.go('campaign', { sel: r.id }, { root: true }); return; }
     this.router.go('result', { r, gain }, { root: true });
   }
 

@@ -13,11 +13,12 @@ import * as M2 from '../test/m2scene.js';
 import { DENS } from '../test/m1scene.js';
 import { buildMission1, gateLeaf } from '../art/env/mission1.js';
 import { buildMission2 } from '../art/env/mission2.js';
+import { concrete } from '../art/env/mission1.js';
 import { buildMission3 } from '../art/env/mission3.js';
 import { itemBakeList, charBakeList } from './bakechars.js';
 import { Character } from './character.js';
 import { Mover } from '../phys/mover.js';
-import { EMPTY } from '../phys/level.js';
+import { EMPTY, SOLID, T as TILE } from '../phys/level.js';
 import { Brain, Squad, DIFF } from './ai/brain.js';
 import { findCovers } from './ai/cover.js';
 import { rayTiles } from './ballistics.js';
@@ -29,8 +30,18 @@ import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'c3-1';
-const BUILD = { m1: buildMission1, m2: buildMission2, m3: buildMission3 };
+export const BAKE_VERSION = 'c3-2';
+// Endless: the market from mission 2, walled off at both ends; squads come in
+// waves, every fifth one with Gall.
+function buildEndless() {
+  const M = buildMission2(), X = (c) => c * TILE;
+  for (const [c0, name] of [[106, 'me.wallL'], [242, 'me.wallR']]) {
+    for (let c = c0; c <= c0 + 1; c++) for (let n = 1; n <= 12; n++) M.level.set(c, 25 - n, SOLID);
+    M.front.push({ name, box: [X(c0) - 2, -98, X(c0 + 2) + 2, 1], paint: (g) => concrete(g, X(c0), X(c0 + 2), 96) });
+  }
+  return Object.assign(M, { id: 'endless', objectives: [{ type: 'endless' }], enemies: [], checkpoints: [], spawn: [X(170), 0], arena: [X(110), X(240)], extract: null, par: 0 });
+}
+const BUILD = { m1: buildMission1, m2: buildMission2, m3: buildMission3, endless: buildEndless };
 export const MISSION_IDS = Object.keys(BUILD);
 
 export function bakeList(quality) {
@@ -91,6 +102,7 @@ export class MissionScene extends M3.M3Scene {
     this.mhud = new MissionHud(document.querySelector('#hud'));
     this.obj = 0; this.hack = 0; this.gateK = 0; this.gateOpen = false; this.waveIn = false;
     this.holdT = 0; this.waveIdx = 0; this.phase = 0; this.nades = []; this.nadeT = 4;
+    this.endless = this.id === 'endless'; this.wave = 0; this.cleared = 0; this.breakT = 2.5;
     this.cp = -1; this.deaths = 0; this.clockT = 0; this.done = false; this.started = false;
     this.pickups = [];
     this.ab = new Abilities(this, this.opId || M2.OPERATORS[this.opIndex]);
@@ -102,7 +114,7 @@ export class MissionScene extends M3.M3Scene {
     document.addEventListener('visibilitychange', this._vis);
   }
 
-  get title() { return `${t('camp.mission', { n: this.id.slice(1) })} · ${t(`mission.${this.id}`)}`; }
+  get title() { return this.endless ? t('mode.endless') : `${t('camp.mission', { n: this.id.slice(1) })} · ${t(`mission.${this.id}`)}`; }
   get par() { return this.M.par || 300; }
 
   pause() {
@@ -164,7 +176,7 @@ export class MissionScene extends M3.M3Scene {
       <div class="kick">${t('res.done')} · ${t(`diff.${this.diff === 'hard' ? 'hard' : 'normal'}`)}</div>
       <h1>${t(`mission.${this.id}`)}</h1>
       <div class="stars">${stars.map((on) => `<i class="${on ? 'on' : ''}">★</i>`).join('')}</div>
-      <div class="why">${t('res.why')}</div>
+      <div class="why">${t('res.why', { t: fmt(this.par) })}</div>
       <div class="stats">
         <div><b>${fmt(this.clockT)}</b><span>${t('res.time')}</span></div>
         <div><b>${s.kills}</b><span>${t('prof.kills')}</span></div>
@@ -177,11 +189,15 @@ export class MissionScene extends M3.M3Scene {
   // what the menus record: { id, done, stars, time, kills, ... }
   result(done) {
     const s = this.stats;
+    if (this.endless) {
+      return { id: 'endless', endless: true, wave: this.cleared, done: false, diff: this.diff || 'normal', op: this.opId || M2.OPERATORS[this.opIndex], stars: [false, false, false],
+        time: this.clockT, kills: s.kills, heads: s.heads, shots: s.shots, hits: s.hits, deaths: this.deaths, byWeapon: s.byWeapon };
+    }
     return {
       id: this.id, done, diff: this.diff || 'normal', op: this.opId || M2.OPERATORS[this.opIndex],
       stars: done ? [true, this.clockT <= this.par, this.deaths === 0] : [false, false, false],
       time: this.clockT, kills: s.kills, heads: s.heads, shots: s.shots, hits: s.hits, deaths: this.deaths,
-      byWeapon: s.byWeapon,
+      byWeapon: s.byWeapon, par: this.par,
     };
   }
 
@@ -194,7 +210,7 @@ export class MissionScene extends M3.M3Scene {
   }
 
   get objective() { return this.M.objectives[this.obj] || null; }
-  objText(i) { return t(`mission.${this.id}.o${i + 1}`); }
+  objText(i) { return this.endless ? t('game.wave', { n: this.wave }) : t(`mission.${this.id}.o${i + 1}`); }
 
   advance() {
     this.obj++;
@@ -244,8 +260,8 @@ export class MissionScene extends M3.M3Scene {
   // a player shot: noise for everyone around, suppression for near misses
   onFire(ch) {
     if (ch !== this.player) return;
-    const x = ch.m.x, y = ch.m.y;
-    for (const b of this.brains) if (b.ch.alive && Math.abs(b.ch.m.x - x) < 520 && Math.abs(b.ch.m.y - y) < 200) b.alarm(x, y, 0.45);
+    const x = ch.m.x, y = ch.m.y, far = ch.gun && ch.gun.s.suppressed ? 200 : 520;
+    for (const b of this.brains) if (b.ch.alive && Math.abs(b.ch.m.x - x) < far && Math.abs(b.ch.m.y - y) < 200) b.alarm(x, y, 0.45);
   }
   onShot(ch, sx, sy, dx, dy, t, hit) {
     if (ch !== this.player) return;
@@ -285,8 +301,48 @@ export class MissionScene extends M3.M3Scene {
     this.handle(P, dt);
     if (!P.alive) {
       this.deadT += dt;
-      if (this.deadT > 2.6) this.respawnPlayer();
+      // endless: one life, the run ends
+      if (this.endless) { if (this.deadT > 2.2 && !this.done) this.endRun(); }
+      else if (this.deadT > 2.6) this.respawnPlayer();
     }
+  }
+
+  // --- endless --------------------------------------------------------------------------------
+  endRun() {
+    this.done = true; this.paused = true;
+    this.mhud.toast(t('game.runOver', { n: this.cleared }), 1.8);
+    if (this.onExit) setTimeout(() => this.onExit(this.result(false)), 1800);
+  }
+  // wave n: more of them, tougher kinds as it goes; every fifth, Gall
+  spawnEndlessWave() {
+    const n = ++this.wave, [a0, a1] = this.M.arena, X = (c) => c * TILE;
+    // clear the bodies of earlier waves (keeps the frame cheap)
+    for (let i = this.enemies.length - 1; i >= 0; i--) if (!this.enemies[i].alive) { this.enemies.splice(i, 1); this.brains.splice(i, 1); }
+    this.enemyDmg = this.D.dmg * (1 + 0.05 * (n - 1)); this.squad.max = this.D.tokens + Math.floor(n / 4);
+    const list = [], count = Math.min(3 + n, 11);
+    for (let i = 0; i < count; i++) list.push(n >= 4 && i % 5 === 4 ? 'kal' : n >= 2 && i % 3 === 2 ? 'huc' : 'tet');
+    if (n % 5 === 0) list.unshift('gall');
+    const awnings = [120, 134, 148, 182, 196, 210].map((c) => X(c) + 24);
+    list.forEach((id, i) => {
+      const left = i % 2 === 1, roof = id === 'tet' && i % 4 === 3;
+      const x = roof ? awnings[(i + n) % awnings.length] : left ? a0 + 6 + (i % 3) * 10 : a1 - 6 - (i % 3) * 10;
+      const b = this.spawnEnemy({ id, kind: id, x, y: roof ? -72 : 0, zone: [a0, a1], facing: left ? 1 : -1, boss: id === 'gall' });
+      if (id === 'gall') { b.ch.hpMax = b.ch.hp = 500 + n * 120; }
+      b.D = this.D; b.alarm(this.mover.x, this.mover.y, 1);
+    });
+    this.mhud.toast(n % 5 === 0 ? t('game.bossWave', { n }) : t('game.wave', { n }), 1.6);
+    this.sfx.play('charge', null, null, { vol: 0.9, rate: 0.55 });
+  }
+  updateEndless(dt) {
+    const left = this.brains.filter((b) => b.ch.alive).length;
+    if (this.wave > 0 && left === 0 && this.breakT <= 0) {
+      this.cleared = this.wave; this.breakT = 4;
+      this.mhud.toast(t('game.waveClear', { n: this.wave }), 1.6); this.sfx.ui('reward', 0.7);
+      const P = this.player; if (P.alive) { P.hp = Math.min(P.hpMax, P.hp + 35); for (const g of P.guns) g.reserve = Math.min(g.s.reserve * 2, g.reserve + g.s.mag); }
+    }
+    if (left === 0) { this.breakT -= dt; if (this.breakT <= 0) { this.spawnEndlessWave(); this.breakT = 0; } }
+    this.mhud.objective(1, 1, this.wave ? t('game.left', { n: left }) : t('game.ready'), null, t('game.wave', { n: Math.max(1, this.wave) }));
+    if (this.boss && this.boss.ch.alive) this.bossNades(dt, this.boss);
   }
 
   respawnPlayer() {
@@ -319,6 +375,7 @@ export class MissionScene extends M3.M3Scene {
     // objectives
     const o = this.objective;
     let prog = null;
+    if (this.endless) this.updateEndless(dt);
     if (o && P.alive) {
       if (o.type === 'reach' && m.x >= o.x) this.advance();
       else if (o.type === 'hack') {
@@ -361,7 +418,7 @@ export class MissionScene extends M3.M3Scene {
     this.updateNades(dt);
     if (o && o.type === 'hack') prog = this.hack / MS.terminal.time;
     else if (o && o.type === 'hold') prog = this.holdT / o.time;
-    this.mhud.boss(o && o.type === 'boss' && this.boss && this.boss.ch.alive ? t('boss.gall') : null, this.boss ? this.boss.ch.hp / this.boss.ch.hpMax : 0);
+    this.mhud.boss((this.endless || (o && o.type === 'boss')) && this.boss && this.boss.ch.alive ? t('boss.gall') : null, this.boss ? this.boss.ch.hp / this.boss.ch.hpMax : 0);
     // the gate rises, the squad behind it comes through
     if (this.gateOpen && this.gateK < 1) {
       this.gateK = Math.min(1, this.gateK + dt / 2.4);
@@ -387,7 +444,7 @@ export class MissionScene extends M3.M3Scene {
     }
     // objective HUD
     const ob = this.objective;
-    if (ob) this.mhud.objective(this.obj + 1, MS.objectives.length, this.objText(this.obj), prog);
+    if (ob && !this.endless) this.mhud.objective(this.obj + 1, MS.objectives.length, this.objText(this.obj), prog);
     this.mhud.clock(this.clockT);
     this.pointTo();
   }
@@ -446,6 +503,7 @@ export class MissionScene extends M3.M3Scene {
     if (o.type === 'hack') return [MS.terminal.x, -34];
     if (o.type === 'hold') return [(o.x0 + o.x1) / 2, -30];
     if (o.type === 'boss') return this.boss && this.boss.ch.alive ? [this.boss.ch.m.x, this.boss.ch.m.y - 40] : null;
+    if (o.type === 'endless') return null;
     if (o === MS.objectives[MS.objectives.length - 1]) return [MS.extract.x, -34];
     return [o.x, -30];
   }
@@ -487,7 +545,7 @@ export class MissionScene extends M3.M3Scene {
     if (o && o.type === 'hold') for (const x of [o.x0, o.x1]) R.addLight(x, -6, 40, 0.8, [0.25, 0.9, 0.9]);
     if (this.boss && this.boss.ch.alive) R.addLight(this.boss.ch.rx, this.boss.ch.ry - 40, 70, 0.6 + 0.2 * Math.sin(t * 4), [1, 0.2, 0.25]);
     for (const n of this.nades) R.addLight(n.x, n.y, 26, (n.t * 6) % 1 < 0.5 ? 1 : 0.3, [1, 0.25, 0.2]);
-    if (o === MS.objectives[MS.objectives.length - 1]) {
+    if (o === MS.objectives[MS.objectives.length - 1] && MS.extract) {
       const f = 0.8 + Math.sin(t * 17) * 0.1 + Math.sin(t * 6.1) * 0.1;
       R.addLight(MS.extract.x, -28, 90, 1.5 * f, [1, 0.35, 0.25]);
       if (Math.random() < 0.3) this.fx.smoke.emit(this.fx.t, MS.extract.x + rand(-1, 1), -27, rand(-6, 6), rand(-30, -18), rand(1.2, 2), 2, 9, col('#d06a5a', 0.3), col('#d06a5a', 0), -10, 0.6, rand(0, 6), rand(-1, 1));
@@ -530,7 +588,7 @@ export class MissionScene extends M3.M3Scene {
       B.draw(glow, n.tx, n.ty + 3, 30 * k + 8, 3, 0, rgba('#ff3347', 0.2 + 0.25 * k));
     }
     // extraction flare
-    if (o === MS.objectives[MS.objectives.length - 1]) {
+    if (o === MS.objectives[MS.objectives.length - 1] && MS.extract && !this.endless) {
       const f = 0.8 + Math.sin(t * 17) * 0.1;
       B.draw(glow, MS.extract.x, -28, 20 * f, 20 * f, 0, rgba('#ff5a40', 0.6));
       B.draw(white, MS.extract.x, -28, 1.2, 1.2, 0, rgba('#fff2dc', 1));

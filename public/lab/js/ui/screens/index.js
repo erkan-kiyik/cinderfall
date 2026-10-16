@@ -12,3 +12,4 @@ export { settings } from './settings.js';
 export { legal } from './legal.js';
 export { hudedit } from './hudedit.js';
 export { result } from './result.js';
+export { daily } from './daily.js';

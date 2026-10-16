@@ -1,6 +1,6 @@
 // English.
 export default {
-  'ui.back': 'Back', 'ui.cancel': 'Cancel', 'ui.save': 'Save', 'ui.soon': 'Soon',
+  'ui.back': 'Back', 'ui.cancel': 'Cancel', 'ui.save': 'Save', 'ui.soon': 'Soon', 'ui.ok': 'OK',
   'app.exitHint': 'Press back again to exit', 'app.recovered': 'Save restored from backup',
   'intro.loading': 'Preparing', 'intro.ready': 'Ready', 'intro.skip': 'Tap to skip',
 
@@ -15,7 +15,7 @@ export default {
 
   'lobby.operator': 'Operator', 'lobby.play': 'PLAY', 'lobby.campaign': 'Campaign · Act {act} · Ember Line',
   'lobby.next': 'Mission {n} — {name}', 'lobby.record': 'record', 'lobby.boss5': 'A boss every 5 stages',
-  'lobby.crow': 'HAWK’s stall', 'lobby.crowSub': '4 daily goods · 1 special',
+  'lobby.crow': 'HAWK’s stall', 'lobby.crowOpen': '{n} goods', 'lobby.crowSub': '4 daily goods · 1 special',
 
   'play.title': 'Choose a mode', 'play.kicker': 'Play',
   'mode.campaign': 'Campaign', 'mode.campaign.kicker': 'Ember Line · 10 missions', 'mode.campaign.desc': 'Infiltrate the city and break the Syndicate’s line. Three acts of hand-made missions.',
@@ -23,6 +23,9 @@ export default {
   'mode.endless': 'Endless Mode', 'mode.endless.kicker': 'Chase the record', 'mode.endless.desc': 'Rising difficulty, a boss every five stages, a leaderboard.',
   'mode.fire.semi': 'Semi-auto', 'mode.fire.auto': 'Full auto', 'mode.fire.pump': 'Pump action',
 
+  'daily.kicker': 'Today’s tasks', 'daily.claimed': 'Claimed', 'daily.rules': 'Tasks renew every midnight. Progress comes from missions and endless runs.',
+  'daily.kills': 'Take down {n} enemies', 'daily.heads': 'Land {n} headshots', 'daily.mission': 'Finish a campaign mission', 'daily.stars': 'Earn {n} stars in missions',
+  'daily.endless': 'Clear {n} waves in endless mode', 'daily.shots': 'Fire {n} shots',
   'camp.title': 'Ember Line', 'camp.kicker': 'Campaign', 'camp.act': 'Act {n}', 'camp.mission': 'Mission {n}',
   'camp.act1': 'Entry', 'camp.act2': 'Depth', 'camp.act3': 'Collapse',
   'camp.prepare': 'Prepare', 'camp.best': 'Best time', 'camp.diff': 'Difficulty',
@@ -46,7 +49,7 @@ export default {
   'mission.m10': 'Vasquez', 'mission.m10.where': 'Top of the tower',
 
   'prep.title': 'Preparation', 'prep.primary': 'Primary', 'prep.sidearm': 'Sidearm',
-  'prep.noSidearm': 'Primary is already a pistol', 'prep.start': 'Start mission',
+  'prep.noSidearm': 'Primary is already a pistol', 'prep.startEndless': 'Into the waves', 'prep.start': 'Start mission',
   'stat.damage': 'Damage', 'stat.rate': 'Fire rate', 'stat.range': 'Range', 'stat.control': 'Control', 'stat.rpm': '{n}/min',
 
   'ops.abilities': 'Abilities', 'ops.ult': 'Ultimate', 'ops.costumes': 'Costumes', 'ops.factory': 'Factory', 'ops.standard': 'Standard',
@@ -73,21 +76,26 @@ export default {
   'ab.brick.armor': 'Armor Pack', 'ab.brick.armor.d': '60 points of armour that melt first.',
   'ab.brick.unstop': 'Unstoppable', 'ab.brick.unstop.d': 'Damage taken −70% for 6 s, faster fire.',
 
-  'ars.all': 'All', 'ars.mag': 'Magazine', 'ars.skins': 'Skins', 'ars.attach': 'Attachments',
+  'ars.all': 'All', 'ars.mag': 'Magazine', 'ars.skins': 'Skins',
   'ars.equip': 'Equip for {o}', 'ars.inUse': 'Equipped', 'ars.equipped': '{w} → {o}',
-  'ars.lockedTitle': 'Incoming', 'ars.lockedHint': 'This weapon arrives with the operator roster.',
   'att.sight': 'Sight', 'att.barrel': 'Barrel', 'att.mag': 'Magazine', 'att.under': 'Under',
-  'wpn.mule': 'Heavy revolver, big headshot damage.', 'wpn.hornet': 'Very fast fire, short range.', 'wpn.lynx': 'Balanced, takes a suppressor.',
-  'wpn.bastion': '3-round burst, mid to long range.', 'wpn.saw': 'Magazine-fed automatic shotgun.', 'wpn.longbow': 'Bolt action, piercing rounds.',
-  'wpn.anvil': 'Big magazine, spin-up and slow.', 'wpn.thumper': 'Bouncing grenade launcher.',
+  'wpn.wren9': 'Quick, light sidearm for anything.', 'wpn.kestrel': 'Select-fire carbine, steady at any range.', 'wpn.ramrod': 'Pump shotgun; devastating up close.', 'wpn.marksman': 'Semi-auto marksman rifle, long range.',
+  'wpn.mule': 'Heavy pistol, big headshot damage.', 'wpn.hornet': 'Very fast fire, short range.', 'wpn.lynx': 'Suppressed; enemies do not hear it from afar.',
+  'wpn.bastion': '3-round burst, mid to long range.', 'wpn.saw': 'Magazine-fed automatic shotgun.', 'wpn.longbow': 'Bolt action; heavy damage in one shot.',
+  'wpn.anvil': 'Big magazine; slows you while carried.', 'wpn.thumper': 'Bouncing grenade launcher; area damage.',
+  'skin.factory': 'Factory', 'skin.sand': 'Sand', 'skin.olive': 'Olive', 'skin.arctic': 'Arctic', 'skin.cobalt': 'Cobalt', 'skin.crimson': 'Crimson',
+  'skin.violet': 'Violet', 'skin.gold': 'Gold', 'skin.ember': 'Ember', 'skin.kor': 'Neon Ice',
+  'shop.short': 'Not enough PARÇA', 'shop.bought': '{w} bought', 'shop.buyFor': 'Buy for {n} PARÇA',
 
   'crate.std': 'Standard', 'crate.std.k': 'Anything', 'crate.plus': 'Reinforced', 'crate.plus.k': 'Rare and up',
   'crate.crow': 'Falcon', 'crate.crow.k': 'Epic and up',
+  'crate.open': 'Open', 'crate.openFree': 'Open from stock', 'crate.new': 'New finish!', 'crate.dup': 'Already had it: +{n} PARÇA',
   'crate.rules': 'Odds are printed on every crate. A duplicate skin pays out in Scrap; at least one Epic is guaranteed every 30 crates.',
 
   'trader.k': 'Trader', 'trader.bio': 'An old smuggler who gathers goods from every corner of the city and knows the price of everything.',
-  'trader.closed': 'Stall closed', 'trader.closedHint': 'HAWK opens the stall soon.',
-  'trader.goods': 'Today’s goods', 'trader.refresh': 'Restock', 'trader.daily': 'Daily', 'trader.weekly': 'Weekly special',
+  'trader.line': '“Everything has a price, kid. Today mine is fair.”', 'trader.sold': 'Sold',
+  'trader.goods': 'Today’s goods', 'trader.refresh': 'Restock', 'trader.weekly': 'Weekly special',
+  'trader.kind.weapon': 'Weapon', 'trader.kind.skin': 'Finish', 'trader.kind.crate': 'Crate',
 
   'prof.title': 'Profile', 'prof.summary': 'Summary', 'prof.career': 'Career', 'prof.collection': 'Collection', 'prof.achievements': 'Achievements', 'prof.stats': 'Stats',
   'prof.callsign': 'Callsign', 'prof.rename': 'Change name', 'prof.nameShort': 'At least 3 characters',
@@ -107,7 +115,7 @@ export default {
   'ach.squad': 'Full Squad', 'ach.squad.d': 'Finish a mission with all five operators.',
 
   'res.done': 'Mission complete', 'res.left': 'Mission left', 'res.time': 'Time', 'res.xp': 'Experience',
-  'res.why': '★ Finish · ★ Under 5:00 · ★ No deaths', 'res.newStars': '{n} new stars', 'res.levelUp': 'Level up!',
+  'res.why': '★ Finish · ★ Under {t} · ★ No deaths', 'res.wave': 'Wave {n}', 'res.best': 'Best', 'res.record': 'New record!', 'res.newStars': '{n} new stars', 'res.levelUp': 'Level up!',
   'res.continue': 'Continue', 'res.again': 'Again',
 
   'set.title': 'Settings', 'set.graphics': 'Graphics', 'set.sound': 'Sound', 'set.controls': 'Controls', 'set.access': 'Accessibility', 'set.lang': 'Language', 'set.legal': 'Privacy & legal', 'set.about': 'About',
@@ -137,6 +145,7 @@ export default {
   'hud.moveZone': 'Move stick', 'hud.aimZone': 'Aim stick',
   'game.paused': 'Paused', 'game.status': 'Objective: {o} · Time {t}', 'game.resume': 'Resume', 'game.restart': 'Restart', 'game.quit': 'Quit mission',
   'game.start': 'Start', 'game.again': 'Play again', 'game.objUpdated': 'Objective updated', 'game.checkpoint': 'Checkpoint', 'game.gate': 'Gate opening',
+  'game.wave': 'Wave {n}', 'game.bossWave': 'Wave {n} · Gall is coming!', 'game.waveClear': 'Wave {n} cleared', 'game.left': 'Enemies left: {n}', 'game.ready': 'Get ready', 'game.runOver': 'Run over · {n} waves',
   'game.incoming': 'Squad incoming!', 'game.bossCall': 'Gall called for backup!', 'game.bossDown': 'Gall is down!', 'game.ammo': '+ Ammo', 'boss.gall': 'Secretary Gall',
   'game.objCount': 'Objective {i}/{n}', 'game.allDone': 'Mission clear', 'game.down': 'You are down',
 

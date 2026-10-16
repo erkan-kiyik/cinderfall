@@ -1,6 +1,6 @@
 // Türkçe — the source language of the interface.
 export default {
-  'ui.back': 'Geri', 'ui.cancel': 'Vazgeç', 'ui.save': 'Kaydet', 'ui.soon': 'Yakında',
+  'ui.back': 'Geri', 'ui.cancel': 'Vazgeç', 'ui.save': 'Kaydet', 'ui.soon': 'Yakında', 'ui.ok': 'Tamam',
   'app.exitHint': 'Çıkmak için tekrar geri bas', 'app.recovered': 'Kayıt yedekten geri yüklendi',
   'intro.loading': 'Hazırlanıyor', 'intro.ready': 'Hazır', 'intro.skip': 'Geçmek için dokun',
 
@@ -15,7 +15,7 @@ export default {
 
   'lobby.operator': 'Operatör', 'lobby.play': 'OYNA', 'lobby.campaign': 'Kampanya · Perde {act} · Kor Hattı',
   'lobby.next': 'Görev {n} — {name}', 'lobby.record': 'rekor', 'lobby.boss5': 'Her 5 bölümde boss',
-  'lobby.crow': 'HAWK’ın tezgâhı', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
+  'lobby.crow': 'HAWK’ın tezgâhı', 'lobby.crowOpen': '{n} mal', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
 
   'play.title': 'Mod seç', 'play.kicker': 'Oyna',
   'mode.campaign': 'Kampanya', 'mode.campaign.kicker': 'Kor Hattı · 10 görev', 'mode.campaign.desc': 'Şehre sız, Syndicate’in hattını kır. Üç perde, elle tasarlanmış görevler.',
@@ -23,6 +23,9 @@ export default {
   'mode.endless': 'Sonsuz Mod', 'mode.endless.kicker': 'Rekor peşinde', 'mode.endless.desc': 'Artan zorluk, her beş bölümde bir boss, liderlik tablosu.',
   'mode.fire.semi': 'Yarı otomatik', 'mode.fire.auto': 'Tam otomatik', 'mode.fire.pump': 'Pompalı',
 
+  'daily.kicker': 'Bugünün görevleri', 'daily.claimed': 'Alındı', 'daily.rules': 'Görevler her gece yarısı yenilenir. İlerleme görevlerden ve sonsuz moddan gelir.',
+  'daily.kills': '{n} düşman etkisiz hale getir', 'daily.heads': '{n} kafadan vuruş yap', 'daily.mission': 'Bir kampanya görevini bitir', 'daily.stars': 'Görevlerde {n} yıldız topla',
+  'daily.endless': 'Sonsuz modda {n} dalga temizle', 'daily.shots': '{n} el ateş et',
   'camp.title': 'Kor Hattı', 'camp.kicker': 'Kampanya', 'camp.act': 'Perde {n}', 'camp.mission': 'Görev {n}',
   'camp.act1': 'Giriş', 'camp.act2': 'Derinlik', 'camp.act3': 'Çöküş',
   'camp.prepare': 'Hazırlık', 'camp.best': 'En iyi süre', 'camp.diff': 'Zorluk',
@@ -46,7 +49,7 @@ export default {
   'mission.m10': 'Vasquez', 'mission.m10.where': 'Kulenin tepesi',
 
   'prep.title': 'Hazırlık', 'prep.primary': 'Ana silah', 'prep.sidearm': 'Yan silah',
-  'prep.noSidearm': 'Ana silah zaten tabanca', 'prep.start': 'Göreve başla',
+  'prep.noSidearm': 'Ana silah zaten tabanca', 'prep.startEndless': 'Dalgalara gir', 'prep.start': 'Göreve başla',
   'stat.damage': 'Hasar', 'stat.rate': 'Ateş hızı', 'stat.range': 'Menzil', 'stat.control': 'Kontrol', 'stat.rpm': '{n}/dk',
 
   'ops.abilities': 'Yetenekler', 'ops.ult': 'Ulti', 'ops.costumes': 'Kostümler', 'ops.factory': 'Fabrika', 'ops.standard': 'Standart',
@@ -73,21 +76,26 @@ export default {
   'ab.brick.armor': 'Zırh Paketi', 'ab.brick.armor.d': '60 puanlık zırh, önce o erir.',
   'ab.brick.unstop': 'Yenilmez', 'ab.brick.unstop.d': '6 sn hasar %70 azalır, ateş hızı artar.',
 
-  'ars.all': 'Tümü', 'ars.mag': 'Şarjör', 'ars.skins': 'Görünümler', 'ars.attach': 'Eklentiler',
+  'ars.all': 'Tümü', 'ars.mag': 'Şarjör', 'ars.skins': 'Görünümler',
   'ars.equip': '{o} için kuşan', 'ars.inUse': 'Kuşanıldı', 'ars.equipped': '{w} → {o}',
-  'ars.lockedTitle': 'Yolda', 'ars.lockedHint': 'Bu silah operatör kadrosuyla birlikte gelecek.',
   'att.sight': 'Nişangâh', 'att.barrel': 'Namlu', 'att.mag': 'Şarjör', 'att.under': 'Alt',
-  'wpn.mule': 'Ağır revolver, yüksek kafa hasarı.', 'wpn.hornet': 'Çok hızlı ateş, kısa menzil.', 'wpn.lynx': 'Dengeli, susturucuya uygun.',
-  'wpn.bastion': '3’lü atış, orta-uzak menzil.', 'wpn.saw': 'Otomatik pompalı, şarjörlü.', 'wpn.longbow': 'Sürgülü, delici mermi.',
-  'wpn.anvil': 'Büyük şarjör, ısınma ve yavaşlama.', 'wpn.thumper': 'Sekmeli bomba atar.',
+  'wpn.wren9': 'Hızlı, hafif, her işe yarar yan silah.', 'wpn.kestrel': 'Otomatik karabina; her mesafede dengeli.', 'wpn.ramrod': 'Pompalı; yakında yıkıcı.', 'wpn.marksman': 'Yarı otomatik nişancı tüfeği, uzun menzil.',
+  'wpn.mule': 'Ağır tabanca, yüksek kafa hasarı.', 'wpn.hornet': 'Çok hızlı ateş, kısa menzil.', 'wpn.lynx': 'Susturuculu; düşmanlar atışı uzaktan duymaz.',
+  'wpn.bastion': '3’lü atış, orta-uzak menzil.', 'wpn.saw': 'Otomatik pompalı, şarjörlü.', 'wpn.longbow': 'Sürgülü; tek atışta ağır hasar.',
+  'wpn.anvil': 'Büyük şarjör; taşırken yavaşlatır.', 'wpn.thumper': 'Seken bomba atar; alan hasarı.',
+  'skin.factory': 'Fabrika', 'skin.sand': 'Kum', 'skin.olive': 'Zeytin', 'skin.arctic': 'Kutup', 'skin.cobalt': 'Kobalt', 'skin.crimson': 'Kızıl',
+  'skin.violet': 'Menekşe', 'skin.gold': 'Altın', 'skin.ember': 'Kor', 'skin.kor': 'Neon Buz',
+  'shop.short': 'Yeterli Parça yok', 'shop.bought': '{w} alındı', 'shop.buyFor': '{n} Parça’ya al',
 
   'crate.std': 'Standart', 'crate.std.k': 'Her yerde', 'crate.plus': 'Takviyeli', 'crate.plus.k': 'Nadir ve üstü',
   'crate.crow': 'Doğan', 'crate.crow.k': 'Epik ve üstü',
+  'crate.open': 'Aç', 'crate.openFree': 'Stoktan aç', 'crate.new': 'Yeni görünüm!', 'crate.dup': 'Zaten vardı: +{n} Parça',
   'crate.rules': 'Olasılıklar her sandığın üstünde yazar. Aynı görünüm tekrar gelirse karşılığında Parça verilir; 30 sandıkta bir en az Epik garantidir.',
 
   'trader.k': 'Tüccar', 'trader.bio': 'Şehrin her köşesinden mal toplayan, her şeyin fiyatını bilen eski bir kaçakçı.',
-  'trader.closed': 'Tezgâh kapalı', 'trader.closedHint': 'HAWK tezgâhını yakında açıyor.',
-  'trader.goods': 'Bugünün malları', 'trader.refresh': 'Yenilenme', 'trader.daily': 'Günlük', 'trader.weekly': 'Haftalık özel',
+  'trader.line': '“Her şeyin bir fiyatı var, evlat. Bugün benimki makul.”', 'trader.sold': 'Satıldı',
+  'trader.goods': 'Bugünün malları', 'trader.refresh': 'Yenilenme', 'trader.weekly': 'Haftalık özel',
+  'trader.kind.weapon': 'Silah', 'trader.kind.skin': 'Görünüm', 'trader.kind.crate': 'Sandık',
 
   'prof.title': 'Profil', 'prof.summary': 'Özet', 'prof.career': 'Kariyer', 'prof.collection': 'Koleksiyon', 'prof.achievements': 'Başarımlar', 'prof.stats': 'İstatistik',
   'prof.callsign': 'Çağrı adı', 'prof.rename': 'Adı değiştir', 'prof.nameShort': 'En az 3 karakter',
@@ -107,7 +115,7 @@ export default {
   'ach.squad': 'Tam Kadro', 'ach.squad.d': 'Beş operatörle de görev bitir.',
 
   'res.done': 'Görev tamamlandı', 'res.left': 'Görevden çıkıldı', 'res.time': 'Süre', 'res.xp': 'Deneyim',
-  'res.why': '★ Bitir · ★ 5:00 altında · ★ Hiç ölmeden', 'res.newStars': '{n} yeni yıldız', 'res.levelUp': 'Seviye atladın!',
+  'res.why': '★ Bitir · ★ {t} altında · ★ Hiç ölmeden', 'res.wave': '{n}. dalga', 'res.best': 'En iyi', 'res.record': 'Yeni rekor!', 'res.newStars': '{n} yeni yıldız', 'res.levelUp': 'Seviye atladın!',
   'res.continue': 'Devam', 'res.again': 'Tekrar',
 
   'set.title': 'Ayarlar', 'set.graphics': 'Grafik', 'set.sound': 'Ses', 'set.controls': 'Kontroller', 'set.access': 'Erişilebilirlik', 'set.lang': 'Dil', 'set.legal': 'Gizlilik ve yasal', 'set.about': 'Hakkında',
@@ -137,6 +145,7 @@ export default {
   'hud.moveZone': 'Hareket çubuğu', 'hud.aimZone': 'Nişan çubuğu',
   'game.paused': 'Duraklatıldı', 'game.status': 'Hedef: {o} · Süre {t}', 'game.resume': 'Devam', 'game.restart': 'Yeniden başla', 'game.quit': 'Görevden çık',
   'game.start': 'Başla', 'game.again': 'Tekrar oyna', 'game.objUpdated': 'Hedef güncellendi', 'game.checkpoint': 'Kontrol noktası', 'game.gate': 'Kapı açılıyor',
+  'game.wave': '{n}. dalga', 'game.bossWave': '{n}. dalga · Gall geliyor!', 'game.waveClear': '{n}. dalga temizlendi', 'game.left': 'Kalan düşman: {n}', 'game.ready': 'Hazır ol', 'game.runOver': 'Koşu bitti · {n} dalga',
   'game.incoming': 'Saldırı geliyor!', 'game.bossCall': 'Gall destek çağırdı!', 'game.bossDown': 'Gall düştü!', 'game.ammo': '+ Cephane', 'boss.gall': 'Sekreter Gall',
   'game.objCount': 'Hedef {i}/{n}', 'game.allDone': 'Görev tamam', 'game.down': 'Etkisiz hale getirildin',
 

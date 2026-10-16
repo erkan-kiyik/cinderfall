@@ -22,8 +22,9 @@ export function weaponEntries(key, scale) {
   return E;
 }
 
-export function charBakeList(ids, scale) {
-  const E = [], weapons = new Set();
+// extra: weapon keys to bake besides the characters' own (the player's choices)
+export function charBakeList(ids, scale, extra = []) {
+  const E = [], weapons = new Set(extra);
   for (const id of ids) {
     const s = CHARS[id];
     E.push(...charEntries(id, s, scale));

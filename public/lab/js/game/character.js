@@ -14,6 +14,8 @@ import { Chain } from '../anim/cloth.js';
 import { Ragdoll } from '../anim/ragdoll.js';
 import { SK } from '../art/figure.js';
 import { WEAPONS } from '../art/weapons/index.js';
+import { TINTS } from '../core/economy.js';
+import { rgba } from '../gfx/batch.js';
 import { CHARS } from './chars.js';
 import { Gun } from './guns.js';
 
@@ -264,7 +266,9 @@ export class Character {
   drawGun(B, id, x, y, k, a, parts = true) {
     const WR = this.WR[id], W = WEAPONS[id], V = this.anim.vis, live = parts && id === this.weaponId;
     const c = Math.cos(a), s = Math.sin(a);
-    const at = (r, ox, oy) => { if (r) B.draw(r, x + (ox * c - oy * s) * k, y + (ox * s + oy * c) * k, k, k, a); };
+    // the player's guns wear their finish (a tint over the factory paint)
+    const sk = this.team === 0 ? TINTS[id] : null, tint = sk ? (sk.rgba ??= rgba(sk.tint)) : 0xffffffff;
+    const at = (r, ox, oy) => { if (r) B.draw(r, x + (ox * c - oy * s) * k, y + (ox * s + oy * c) * k, k, k, a, tint); };
     if (WR.mag && (!live || V.mag === 'in')) { const d = live ? V.magOff : 0; at(WR.mag, W.magAxis[0] * d, W.magAxis[1] * d); }
     at(WR.body, 0, 0);
     if (WR.slide) at(WR.slide, live ? -V.slide * W.slide : 0, 0);

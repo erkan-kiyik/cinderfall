@@ -16,19 +16,18 @@ export const opName = (id) => (OPS.find((o) => o.id === id) || { name: id.toUppe
 // cls: weapon class key; ready: playable in this build
 export const WEAPON_LIST = [
   { id: 'wren9', cls: 'pistol', ready: true, slot: 'side' },
-  { id: 'mule', cls: 'pistol', name: 'MULE .50' },
-  { id: 'hornet', cls: 'smg', name: 'HORNET' },
-  { id: 'lynx', cls: 'smg', name: 'LYNX' },
+  { id: 'mule', cls: 'pistol', ready: true, slot: 'side', price: 900 },
+  { id: 'hornet', cls: 'smg', ready: true, slot: 'primary', price: 1200 },
+  { id: 'lynx', cls: 'smg', ready: true, slot: 'primary', price: 1400 },
   { id: 'kestrel', cls: 'rifle', ready: true, slot: 'primary' },
-  { id: 'bastion', cls: 'rifle', name: 'BASTION BR' },
+  { id: 'bastion', cls: 'rifle', ready: true, slot: 'primary', price: 1800 },
   { id: 'ramrod', cls: 'shotgun', ready: true, slot: 'primary' },
-  { id: 'saw', cls: 'shotgun', name: 'SAW-20' },
+  { id: 'saw', cls: 'shotgun', ready: true, slot: 'primary', price: 1700 },
   { id: 'marksman', cls: 'sniper', ready: true, slot: 'primary' },
-  { id: 'longbow', cls: 'sniper', name: 'LONGBOW' },
-  { id: 'anvil', cls: 'heavy', name: 'ANVIL LMG' },
-  { id: 'thumper', cls: 'explosive', name: 'THUMPER GL' },
+  { id: 'longbow', cls: 'sniper', ready: true, slot: 'primary', price: 2200 },
+  { id: 'anvil', cls: 'heavy', ready: true, slot: 'primary', price: 2600 },
+  { id: 'thumper', cls: 'explosive', ready: true, slot: 'primary', price: 3000 },
 ];
-export const PRIMARIES = ['kestrel', 'ramrod', 'marksman', 'wren9'];
 
 // 0..100 bars for the stat panel, from the gun data
 export function gunBars(id) {
@@ -37,11 +36,11 @@ export function gunBars(id) {
   const dps = (s.dmg * s.pellets * s.rpm) / 60;
   const spread = s.spread + s.moveSpread * 0.5;
   return {
-    damage: Math.min(100, Math.round((s.dmg * s.pellets) / 1.2)),
+    damage: Math.min(100, Math.round((s.launcher ? s.launcher.dmg : s.dmg * s.pellets) / 1.2)),
     rate: Math.min(100, Math.round(s.rpm / 8)),
     range: Math.min(100, Math.round(s.falloff[1] / 17)),
     control: Math.max(5, Math.min(100, Math.round(100 - (s.climb.reduce((a, b) => a + b, 0) / s.climb.length) * 700 - spread * 400))),
-    mobility: id === 'wren9' ? 92 : id === 'marksman' ? 58 : id === 'ramrod' ? 70 : 76,
+    mobility: s.mob || 70,
     dps: Math.round(dps),
     mag: s.mag, rpm: s.rpm,
   };

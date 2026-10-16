@@ -10,6 +10,7 @@ import tr from '../../public/lab/js/ui/lang/tr.js';
 import en from '../../public/lab/js/ui/lang/en.js';
 import { OPS, WEAPON_LIST, MISSIONS, CRATES } from '../../public/lab/js/ui/data.js';
 import { HUD_KEYS } from '../../public/lab/js/ui/screens/hudedit.js';
+import { SKINS, TASKS } from '../../public/lab/js/core/economy.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/lab/js');
 let fails = 0, passes = 0;
@@ -38,7 +39,10 @@ for (const o of OPS) {
   add(`role.${o.role}`); add(`op.${o.id}.bio`);
   for (const [k] of o.abil) { add(`ab.${o.id}.${k}`); add(`ab.${o.id}.${k}.d`); }
 }
-for (const w of WEAPON_LIST) { add(`cls.${w.cls}`); if (!w.ready) add(`wpn.${w.id}`); }
+for (const w of WEAPON_LIST) { add(`cls.${w.cls}`); add(`wpn.${w.id}`); }
+for (const s of SKINS) add(`skin.${s.id}`);
+for (const k of Object.keys(TASKS)) add(`daily.${k}`);
+for (const k of ['weapon', 'skin', 'crate']) add(`trader.kind.${k}`);
 for (const m of MISSIONS) {
   add(`mission.${m.id}`); add(`mission.${m.id}.where`); add(`camp.act${m.act}`);
   if (m.ready) { add(`mission.${m.id}.brief`); for (let i = 1; i <= 4; i++) add(`mission.${m.id}.o${i}`); }
@@ -59,7 +63,7 @@ for (const k of setTabs) add(`set.${k}`);
 for (const k of achs) { add(`ach.${k}`); add(`ach.${k}.d`); }
 
 // every dynamic template must be one of the families above
-const FAMILIES = /^(role|op|ab|cls|wpn|mission|camp\.act|crate|rar|diff|mode|att|prof|set|ach|hud)[.$]/;
+const FAMILIES = /^(role|op|ab|cls|wpn|mission|camp\.act|crate|rar|diff|mode|att|prof|set|ach|hud|skin|daily|trader\.kind)[.$]/;
 for (const d of dynamic) ok(FAMILIES.test(d), `dynamic key family known: ${d}`);
 
 // 3. every key in every language, with matching placeholders

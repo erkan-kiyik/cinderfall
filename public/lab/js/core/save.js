@@ -5,6 +5,8 @@
 // corrupt main copy falls back to the backup, then to a fresh save. Writes
 // are debounced so a burst of setting changes costs one write.
 
+import { progressDaily } from './economy.js';
+
 export const SAVE_VERSION = 1;
 const KEY = 'kor.lab.save', BAK = 'kor.lab.save.bak';
 
@@ -20,6 +22,12 @@ export function freshSave() {
     profile: { name: 'OPERATÖR', level: 1, xp: 0, parca: 0 },
     roster: { op: 'vex', loadout },
     campaign: {},          // missionId -> { done, stars: [bool×3], best, plays }
+    // weapons owned, finishes owned per weapon, the finish in use per weapon
+    arsenal: { owned: ['wren9', 'kestrel', 'ramrod', 'marksman'], skins: {}, skin: {} },
+    inv: { crates: { std: 0, plus: 0, crow: 0 }, opened: 0, pity: 0 },
+    trader: { day: '', sold: [] },
+    daily: { day: '', tasks: [] },
+    records: { endless: 0, endlessKills: 0 },
     stats: { missions: 0, kills: 0, heads: 0, shots: 0, hits: 0, deaths: 0, time: 0, byWeapon: {}, byOp: {} },
     settings: {
       quality: 'auto', dynRes: true, bloom: true, lights: true, fps: false,
@@ -101,7 +109,8 @@ export const xpFor = (n) => 400 + (n - 1) * 150;
 
 // Apply a finished mission's result to the save; returns what was earned.
 export function applyMission(save, id, r) {
-  const out = { xp: 0, parca: 0, levelUps: 0, newStars: 0, firstClear: false };
+  const out = { xp: 0, parca: 0, levelUps: 0, newStars: 0, firstClear: false, record: false };
+  if (r.endless) return applyEndless(save, r, out);
   save.set((d) => {
     const c = d.campaign[id] || (d.campaign[id] = { done: false, stars: [false, false, false], best: null, plays: 0 });
     c.plays++;
@@ -125,9 +134,35 @@ export function applyMission(save, id, r) {
     out.xp = (r.done ? 300 : 60) + r.kills * 12 + r.heads * 6;
     out.parca = (r.done ? 150 : 20) + out.newStars * 100 + r.stars.filter(Boolean).length * 15 + r.kills * 4;
     d.profile.parca += out.parca;
-    let xp = d.profile.xp + out.xp;
-    while (xp >= xpFor(d.profile.level)) { xp -= xpFor(d.profile.level); d.profile.level++; out.levelUps++; }
-    d.profile.xp = xp;
+    levelUp(d, out);
+    progressDaily(d, r);
+  });
+  return out;
+}
+function levelUp(d, out) {
+  let xp = d.profile.xp + out.xp;
+  while (xp >= xpFor(d.profile.level)) { xp -= xpFor(d.profile.level); d.profile.level++; out.levelUps++; }
+  d.profile.xp = xp;
+}
+// an endless run: the record, kills into the totals, pay by waves cleared
+function applyEndless(save, r, out) {
+  save.set((d) => {
+    const S = d.stats;
+    S.kills += r.kills; S.heads += r.heads; S.shots += r.shots; S.hits += r.hits; S.deaths += r.deaths; S.time += r.time;
+    const o = S.byOp[r.op] || (S.byOp[r.op] = { missions: 0, kills: 0 });
+    o.kills += r.kills;
+    for (const [w, ws] of Object.entries(r.byWeapon || {})) {
+      const t = S.byWeapon[w] || (S.byWeapon[w] = { kills: 0, shots: 0, hits: 0, heads: 0 });
+      for (const k of Object.keys(t)) t[k] += ws[k] || 0;
+    }
+    out.record = r.wave > d.records.endless;
+    if (out.record) d.records.endless = r.wave;
+    d.records.endlessKills = Math.max(d.records.endlessKills, r.kills);
+    out.xp = 40 + r.wave * 60 + r.kills * 10;
+    out.parca = r.wave * 35 + r.kills * 4 + (out.record ? 150 : 0);
+    d.profile.parca += out.parca;
+    levelUp(d, out);
+    progressDaily(d, r);
   });
   return out;
 }

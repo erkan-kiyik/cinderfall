@@ -50,3 +50,10 @@ export function stars(arr, size) {
 }
 
 export const soon = () => h('span.soon', t('ui.soon'));
+
+// the PARÇA counter in the hub bar, after a purchase or a reward
+export function refreshCur() {
+  const el = document.querySelector('.hubbar .cur .num');
+  const ctxSave = refreshCur.save;
+  if (el && ctxSave) { el.textContent = num(ctxSave.d.profile.parca); el.animate([{ transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 300, easing: 'cubic-bezier(.3,1.6,.5,1)' }); }
+}
