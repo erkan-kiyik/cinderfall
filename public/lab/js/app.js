@@ -15,6 +15,7 @@ import { MissionScene } from './game/mission.js';
 import { bindKeyboard, bindTouch } from './game/input.js';
 import { applyMission } from './core/save.js';
 import { needsAcceptance } from './legal/consent.js';
+import { Music } from './audio/music.js';
 
 const MARKS = { yellow: [1, 0.86, 0.12, 1], blue: [0.2, 0.62, 1, 1], magenta: [1, 0.25, 0.85, 1] };
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -40,6 +41,10 @@ export class App {
     addEventListener('keydown', (e) => { if (e.code === 'Escape') { if (this.scene !== this.showcase) this.scene.pause?.(); else if (!document.querySelector('.scrim')) this.router.back(); } });
     // the first touch starts the audio
     const unlock = () => eng.sfx.unlock();
+    // music: the lobby track until a mission starts; quiet while the app is in the background
+    this.music = new Music(eng.sfx);
+    this.music.play('lobby');
+    document.addEventListener('visibilitychange', () => { const c = eng.sfx.ctx; if (!c) return; if (document.hidden) c.suspend?.(); else c.resume?.(); });
     for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, unlock, { passive: true });
     this.applySettings(true);
   }
@@ -108,6 +113,7 @@ export class App {
     this.inkFor(scene);
     this.scene = scene;
     this.e.camera.viewH = 192;
+    this.music.setIntensity(0); this.music.play('mission');
   }
 
   exitMission(r) {
@@ -117,6 +123,7 @@ export class App {
     if (this.touch) { this.touch.remove(); this.touch = null; }
     Object.assign(this.controls, { moveX: 0, up: false, down: false, jump: false, sprint: false, crouch: false, fire: false, touchFire: false, aimHeld: false });
     this.scene = this.showcase;
+    this.music.play('lobby');
     document.body.classList.remove('ui-hidden');
     const gain = applyMission(this.save, r.id, r);
     if (r.retry) { this.startMission(r.id, { diff: r.diff }); return; }
@@ -124,7 +131,15 @@ export class App {
     this.router.go('result', { r, gain }, { root: true });
   }
 
-  update(dt) { this.scene.update(dt); }
+  update(dt) {
+    this.scene.update(dt);
+    // the fight drives the music: share of enemies in combat, eased
+    if (this.scene !== this.showcase && this.scene.brains) {
+      const b = this.scene.brains, hot = b.length ? b.filter((x) => x.ch.alive && x.state === 'combat').length / Math.min(4, b.length) : 0;
+      this.heat = (this.heat || 0) + (Math.min(1, hot) - (this.heat || 0)) * Math.min(1, dt * 1.5);
+      this.music.setIntensity(this.heat);
+    }
+  }
   render(alpha) {
     // the menus are a backdrop: half rate is plenty, and saves battery
     if (this.scene === this.showcase && (this.frame = (this.frame || 0) + 1) % 2 && this.e.loop.hz > 70) return;

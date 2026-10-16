@@ -166,6 +166,7 @@ export class Sfx {
     this.master = c.createGain(); this.master.gain.value = this.vols.master;
     this.sfxBus = c.createGain(); this.sfxBus.gain.value = this.vols.sfx;
     this.uiBus = c.createGain(); this.uiBus.gain.value = this.vols.ui;
+    this.musicBus = c.createGain(); this.musicBus.gain.value = this.vols.music * 0.55; this.musicBus.connect(this.master);
     this.sfxBus.connect(this.comp); this.comp.connect(this.master);
     this.uiBus.connect(this.master); this.master.connect(c.destination);
     // synthesise in small slices so the first frames stay smooth
@@ -186,6 +187,7 @@ export class Sfx {
     this.vols = { ...this.vols, ...v };
     if (!this.ctx) return;
     this.master.gain.value = this.vols.master; this.sfxBus.gain.value = this.vols.sfx; this.uiBus.gain.value = this.vols.ui;
+    this.musicBus.gain.value = this.vols.music * 0.55;
   }
   // interface sound by short name (tap, tab, back, confirm, deny, reward, levelup)
   ui(name, vol = 1) { if (UI[name]) this.play(UI[name], null, null, { vol, cap: 3, bus: 'ui' }); }
