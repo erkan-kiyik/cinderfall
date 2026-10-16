@@ -84,7 +84,7 @@ export class Mover {
     } else {
       const mx = Math.abs(inp.moveX) < 0.12 ? 0 : inp.moveX;
       const backward = mx !== 0 && Math.sign(mx) !== this.facing;
-      let max = this.crouching ? M.crouch : inp.sprint && !backward ? M.sprint : M.run;
+      let max = (this.crouching ? M.crouch : inp.sprint && !backward ? M.sprint : M.run) * (this.speedK || 1);
       if (backward) max *= M.backpedal;
       const target = mx * max;
       let a;

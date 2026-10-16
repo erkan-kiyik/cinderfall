@@ -1,5 +1,5 @@
-// Operators: the roster, each one's role, story line, abilities (they arrive
-// with M6) and costumes (M7); pick who goes in.
+// Operators: the roster, each one's role, story line, abilities (used in
+// missions) and costumes (M7); pick who goes in.
 import { h, svg, press, popIn, ui, toast } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, soon } from './common.js';
@@ -23,7 +23,7 @@ export const operators = {
         h('div.card.cut.op-card',
           h('div.op-title', h('div.h2', opName(o.id)), h('div.eyebrow.accent', t(`role.${o.role}`))),
           h('p.body', t(`op.${o.id}.bio`))),
-        h('div.eyebrow', t('ops.abilities'), soon()),
+        h('div.eyebrow', t('ops.abilities')),
         h('div.abil-list', o.abil.map(([k, icon], i) => h('div.abil.cut', h(`div.hex${i === 2 ? '.ult' : ''}`, svg(icon)), h('div', h('b', t(`ab.${o.id}.${k}`), i === 2 ? h('span.soon', t('ops.ult')) : null), h('p', t(`ab.${o.id}.${k}.d`)))))));
       const isOn = d.roster.op === o.id;
       right.replaceChildren(

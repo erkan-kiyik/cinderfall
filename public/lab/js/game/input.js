@@ -24,6 +24,7 @@ export class Controls {
     this.aimSX = 0; this.aimSY = 0; // mouse position (CSS px) when aimMode = 'point'
     this.fire = false; this.firePressed = false; this.touchFire = false;
     this.reloadPressed = false; this.swapPressed = false; this.meleePressed = false;
+    this.ab1Pressed = false; this.ab2Pressed = false; this.ultPressed = false; // abilities (read by the mission)
   }
   // consumed by each simulation step
   take() { const j = this.jumpPressed; this.jumpPressed = false; return j; }
@@ -52,6 +53,9 @@ export function bindKeyboard(ctl, canvas) {
     if (e.code === 'KeyR') ctl.reloadPressed = true;
     if (e.code === 'KeyQ' || e.code === 'Digit1' || e.code === 'Digit2') ctl.swapPressed = true;
     if (e.code === 'KeyF' || e.code === 'KeyV') ctl.meleePressed = true;
+    if (e.code === 'KeyE') ctl.ab1Pressed = true;
+    if (e.code === 'KeyG') ctl.ab2Pressed = true;
+    if (e.code === 'KeyX') ctl.ultPressed = true;
     upd();
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); upd(); });

@@ -135,6 +135,29 @@ export const RECIPES = {
   knifeHit: () => norm(mix(0.2, [noise(0.08, 191, 0.0003, 0.015, [['lp', 1400]]), 1], [thump(0.1, 180, 70, 0.015, 0.03), 0.8]), 0.7),
   swap: () => norm(mix(0.25, [noise(0.12, 201, 0.01, 0.04, [['bp', 700, 0.8]]), 0.7], [noise(0.03, 202, 0.0002, 0.005, [['bp', 2400, 3]]), 1, 0.14]), 0.45),
   hurt: () => norm(mix(0.3, [thump(0.25, 90, 40, 0.04, 0.08), 1], [noise(0.2, 211, 0.001, 0.05, [['lp', 500]]), 0.6]), 0.8),
+  // operator abilities
+  boom: () => norm(slap(mix(1.6,
+    [noise(0.4, 231, 0.001, 0.08, [['lp', 3000]]), 1],
+    [thump(0.9, 90, 28, 0.08, 0.3), 1.4],
+    [noise(1.5, 232, 0.04, 0.4, [['lp', 500]]), 0.7]), 0.16, 0.4)),
+  bang: () => norm(mix(1.2,
+    [noise(0.12, 241, 0.0005, 0.03, [['hp', 600]]), 1],
+    [thump(0.3, 160, 50, 0.03, 0.1), 0.8],
+    [ping(1.1, [3800, 5400], 0.5, 33), 0.25, 0.05]), 0.85),
+  whoosh: () => {
+    const x = buf(0.32), r = rng(251);
+    for (let i = 0; i < x.length; i++) { const t = i / SR; x[i] = r() * Math.sin(Math.PI * Math.min(1, t / 0.3)) ** 2; }
+    const out = buf(0.32);
+    for (let b = 0; b < 10; b++) { const s0 = Math.floor((b / 10) * x.length), e = Math.floor(((b + 1) / 10) * x.length); const seg = x.slice(s0, e); biquad(seg, 'bp', 500 + b * 180, 1.1); out.set(seg, s0); }
+    return norm(out, 0.6);
+  },
+  zap: () => {
+    const x = buf(0.5); let ph = 0;
+    for (let i = 0; i < x.length; i++) { const t = i / SR, f = 300 + 1500 * (1 - Math.exp(-t / 0.08)); ph += (2 * Math.PI * f) / SR; x[i] = (Math.sin(ph) > 0 ? 1 : -1) * 0.4 * Math.exp(-t / 0.18) * Math.min(1, t / 0.003); }
+    biquad(x, 'lp', 3200);
+    return norm(mix(0.5, [x, 1], [noise(0.3, 261, 0.002, 0.06, [['bp', 4000, 2]]), 0.35]), 0.55);
+  },
+  hiss: () => norm(mix(1.2, [noise(0.04, 271, 0.0003, 0.01, [['bp', 2000, 2]]), 0.6], [noise(1.2, 272, 0.05, 0.45, [['hp', 2500]]), 1, 0.03]), 0.5),
   // interface: short, soft, tonal
   uiTap: () => norm(mix(0.06, [ping(0.06, [1850], 0.012, 21), 1], [noise(0.02, 221, 0.0002, 0.003, [['bp', 3000, 3]]), 0.3]), 0.35),
   uiTab: () => norm(mix(0.05, [ping(0.05, [2400], 0.008, 22), 1]), 0.25),

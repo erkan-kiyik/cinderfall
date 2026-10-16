@@ -141,9 +141,11 @@ export class Brain {
     let trigger = false, pressed = false;
     this.supp = Math.max(0, this.supp - dt * 0.5);
     this.dodgeT = Math.max(0, this.dodgeT - dt); this.bashT = Math.max(0, this.bashT - dt);
+    // operator abilities: blinded (flash, blackout, knock-down), slowed (field, mine)
+    this.blindT = Math.max(0, (this.blindT || 0) - dt); this.slowT = Math.max(0, (this.slowT || 0) - dt);
     if (!ch.alive) { if (this.cover) this.cover.used = null; world.squad.release(this); return inp; }
     const alive = P && P.alive;
-    this.see = alive && this.sees(L, P);
+    this.see = alive && !(this.blindT > 0) && this.sees(L, P) && !(world.smoke && world.smoke(m.x, m.y - 54, P.m.x, P.m.y - 40));
     const pm = alive ? P.m : null;
     const dist = pm ? Math.abs(pm.x - m.x) : 1e9;
     // --- awareness ------------------------------------------------------------------
@@ -182,6 +184,8 @@ export class Brain {
     const pmv = pm ? Math.min(1, Math.abs(pm.vx) / 200) : 0; // moving targets are harder
     const e = (this.err + pmv * 0.03) * Math.max(60, dist);
     ch.setAim(this.ax + Math.sin(world.t * 2.7 + this.home) * e, this.ay + Math.cos(world.t * 3.3 + this.home * 0.7) * e * 0.8);
+    if (this.blindT > 0) { trigger = pressed = false; inp.moveX *= 0.3; inp.jump = inp.jumpPressed = false; }
+    if (this.slowT > 0) { inp.moveX *= 0.6; inp.sprint = false; }
     ch.weaponInput({ trigger, pressed });
     // never leave the zone; only the rusher climbs over things
     if ((m.x < this.zone[0] && inp.moveX < 0) || (m.x > this.zone[1] && inp.moveX > 0)) inp.moveX = 0;

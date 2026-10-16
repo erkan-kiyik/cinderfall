@@ -151,7 +151,7 @@ export class M3Scene extends M2.M2Scene {
     const fx = this.fx, sfx = this.sfx, W = ch.W, mx = ch.m.x, my = ch.m.y - 40;
     for (const e of ch.ev) {
       switch (e.type) {
-        case 'fire': this.shoot(ch, e); break;
+        case 'fire': if (ch === this.player && ch.gun) ch.gun.cd *= this.fireK(); this.shoot(ch, e); break;
         case 'eject': this.eject(ch); break;
         case 'magOut': {
           sfx.play('magOut', mx, my);
@@ -183,6 +183,10 @@ export class M3Scene extends M2.M2Scene {
   onShot() {}
   onFire() {}
   onKill() {}
+  onHit() {}
+  dealtK() { return 1; }
+  takenK(dmg) { return dmg; }
+  fireK() { return 1; }
 
   shoot(ch, e) {
     const gun = ch.gun, s = gun.s, W = ch.W, L = this.L, n = this._n, fx = this.fx;
@@ -214,12 +218,14 @@ export class M3Scene extends M2.M2Scene {
       const ahead = (hx - mz[0]) * d[0] + (hy - mz[1]) * d[1];
       if (ahead > 4 && (e.dirs.length === 1 || Math.random() < 0.5)) fx.tracer(mz[0], mz[1], hx, hy, s.tracer, ch.team ? '#ff9a7a' : '#ffd9a0');
       if (what === 'char') {
-        const dmg = falloff(s.dmg, t, s.falloff) * s.zone[zone] * (ch.team ? this.enemyDmg : 1);
+        let dmg = falloff(s.dmg, t, s.falloff) * s.zone[zone] * (ch.team ? this.enemyDmg : 1);
+        if (isPlayer) dmg *= this.dealtK(who, zone); else if (who === this.player) dmg = this.takenK(dmg);
         const dead = who.damage(dmg, zone, d[0], d[1], hx, hy);
+        this.onHit(ch, who, dmg, dead);
         fx.flesh(hx, hy, d[0], d[1], zone === 'head');
         hitAny = true; head = head || zone === 'head';
         if (dead) { killed = true; this.onDeath(who, d[0], d[1]); this.onKill(who, ch, zone); }
-        if (who === this.player) { this.hud.hit(dmg, Math.sign(ch.m.x - who.m.x)); this.sfx.play('hurt', null, null, { vol: 0.6 }); this.e.camera.addShake(0.12); haptic('soft'); }
+        if (who === this.player && dmg > 0) { this.hud.hit(dmg, Math.sign(ch.m.x - who.m.x)); this.sfx.play('hurt', null, null, { vol: 0.6 }); this.e.camera.addShake(0.12); haptic('soft'); }
       } else if (what === 'shield') {
         fx.shield(hx, hy, d[0], d[1]);
         this.sfx.play('shield', hx, hy, { rate: rand(0.9, 1.1) });
@@ -256,6 +262,7 @@ export class M3Scene extends M2.M2Scene {
       }
       const dmg = back ? 150 : 55;
       const dead = c.damage(dmg, 'body', f, -0.2, c.m.x - f * 4, c.m.y - 36);
+      this.onHit(ch, c, dmg, dead);
       this.fx.flesh(c.m.x - f * 4, c.m.y - 36, f, -0.2);
       this.sfx.play('knifeHit', c.m.x, c.m.y - 36);
       if (ch === this.player) {

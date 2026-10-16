@@ -18,6 +18,8 @@ import { MissionHud, fmt } from '../ui/missionhud.js';
 import { t } from '../ui/i18n.js';
 import { rgba } from '../gfx/batch.js';
 import { col } from '../gfx/particles.js';
+import { Abilities } from './abilities.js';
+import { AbilityHud } from '../ui/abilityhud.js';
 
 export const BAKE_VERSION = 'c2-4';
 const MISSION = buildMission1();
@@ -60,12 +62,16 @@ export class MissionScene extends M3.M3Scene {
       get player() { return self.player; },
       alert: (b, x, y) => { for (const o of self.brains) if (o !== b && Math.abs(o.ch.m.x - b.ch.m.x) < 340) o.alarm(x, y, 0.7); },
       // inside the camera view (with a small margin)
+      // smoke from an ability cuts sight lines
+      smoke: (x0, y0, x1, y1) => self.ab.smokeBlocks(x0, y0, x1, y1),
       onScreen: (x, y) => { const c = self.e.camera, hw = c.viewW / 2 - 6, hh = c.viewH / 2; return Math.abs(x - self.cam.x) < hw && Math.abs(y - self.cam.y) < hh + 20; },
     };
     this.mhud = new MissionHud(document.querySelector('#hud'));
     this.obj = 0; this.hack = 0; this.gateK = 0; this.gateOpen = false; this.waveIn = false;
     this.cp = -1; this.deaths = 0; this.clockT = 0; this.done = false; this.started = false;
     this.pickups = [];
+    this.ab = new Abilities(this, this.opId || M2.OPERATORS[this.opIndex]);
+    this.abHud = new AbilityHud(document.querySelector('#hud'), this.ab, this.ctl);
     this.hud.update(0, this.player);
     if (brief) this.briefing(); else this.begin(diff);
     // the app going to the background pauses the mission
@@ -152,6 +158,7 @@ export class MissionScene extends M3.M3Scene {
     document.removeEventListener('visibilitychange', this._vis);
     const H = this.hud, MH = this.mhud;
     for (const n of [H.el, H.hurtEl, H.dirL, H.dirR, H.deadEl, MH.obj, MH.time, MH.arrow, MH.toastEl, MH.card]) n && n.remove();
+    this.abHud.remove(); this.ab.dispose();
   }
 
   get objective() { return MISSION.objectives[this.obj] || null; }
@@ -191,7 +198,7 @@ export class MissionScene extends M3.M3Scene {
     if (!P.alive) return;
     const dx = (P.m.x - e.m.x) * f;
     if (dx < -4 || dx > 46 || Math.abs(P.m.y - e.m.y) > 30) return;
-    const dmg = 22 * (this.D.dmg / DIFF.normal.dmg);
+    const dmg = this.takenK(22 * (this.D.dmg / DIFF.normal.dmg));
     P.damage(dmg, 'body', f, -0.3, P.m.x, P.m.y - 36);
     P.m.vx = f * 320; P.m.vy = -170; P.m.state = 'air'; P.m.grounded = false;
     this.hud.hit(dmg, -Math.sign(P.m.x - e.m.x));
@@ -227,6 +234,18 @@ export class MissionScene extends M3.M3Scene {
   }
   onPlayerDown() { this.deaths++; this.deadT = 0; }
 
+  // --- abilities ------------------------------------------------------------------------------
+  beforePlayerStep(dt, inp) {
+    super.beforePlayerStep(dt, inp);
+    if (this.started && !this.done) this.ab.input(this.ctl);
+  }
+  dealtK(who, zone) { return this.ab.dmgK(who, zone); }
+  takenK(dmg) { return this.ab.taken(dmg); }
+  fireK() { return this.ab.fireK; }
+  onHit(by, who, dmg, dead) {
+    if (by === this.player && who.team === 1) this.ab.gainUlt(dmg / 420 + (dead ? 0.1 : 0));
+  }
+
   afterPlayerStep(dt) {
     const P = this.player;
     this.handle(P, dt);
@@ -244,6 +263,7 @@ export class MissionScene extends M3.M3Scene {
     this.player = new Character(this.opId || M2.OPERATORS[this.opIndex], this.e.atlas, this.mover, lo ? { weapon: lo.primary, sidearm: lo.sidearm } : {});
     this.player.hpMax = this.player.hp = 100;
     this.deadT = 0;
+    this.ab.onRespawn();
     // the squads calm down a little (no spawn-camping)
     for (const b of this.brains) if (b.ch.alive) { b.state = 'guard'; b.aw = 0.4; b.seenT = 0; b.burst = 0; this.squad.release(b); }
     this.mhud.toast(t('game.checkpoint'), 1.2);
@@ -251,6 +271,7 @@ export class MissionScene extends M3.M3Scene {
 
   afterUpdate(dt) {
     super.afterUpdate(dt);
+    this.ab.update(dt); this.abHud.update();
     const P = this.player, m = this.mover;
     if (!this.done && this.started) this.clockT += dt;
     this.mhud.update(dt);
@@ -340,6 +361,9 @@ export class MissionScene extends M3.M3Scene {
     B.begin(w);
     // the gate leaf slides up into the beam
     B.draw(A.get('m.gateLeaf'), G.x, -this.gateK * (G.h - 6), 1, 1, 0);
+    B.end();
+    this.ab.drawWorld(B, w);
+    B.begin(w);
     const box = A.get('i.pickup.ammo');
     for (const p of this.pickups) B.draw(box, p.x, p.y + Math.sin(p.t * 3) * 0.4 - 0.4, 1, 1, 0);
     B.end();
@@ -347,6 +371,7 @@ export class MissionScene extends M3.M3Scene {
 
   addLights(R) {
     super.addLights(R);
+    this.ab.lights(R);
     const T = MISSION.terminal, t = this.t;
     const tc = this.gateOpen ? [0.3, 1, 0.6] : this.hack > 0 ? [1, 0.75, 0.3] : [1, 0.25, 0.25];
     R.addLight(T.x, -19, 26, 0.9, tc);
@@ -391,6 +416,7 @@ export class MissionScene extends M3.M3Scene {
       B.line(white, p[0], y + s, p[0] - s, y, 0.7, c); B.line(white, p[0] - s, y, p[0], y - s, 0.7, c);
     }
     B.end();
+    this.ab.drawGlow(B, w);
     super.drawGlow(B, w);
   }
 }
