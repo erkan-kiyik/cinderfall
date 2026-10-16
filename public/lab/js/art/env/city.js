@@ -165,11 +165,11 @@ function brickWall(g, x0, x1, top, seed) {
 }
 
 // a neon tube along a path: a coloured halo, then the pale hot core
-function tube(g, d, c, w = 0.9) {
+export function tube(g, d, c, w = 0.9) {
   g.save(); g.shadowColor = c; g.shadowBlur = 9; stroke(g, d, c, w); g.restore();
   stroke(g, d, '#fff3fa', w * 0.36);
 }
-function neonText(g, text, x, y, size, c, align = 'left') {
+export function neonText(g, text, x, y, size, c, align = 'left') {
   g.save(); g.font = `700 ${size}px Rajdhani`; g.textBaseline = 'alphabetic'; g.textAlign = align;
   g.shadowColor = c; g.shadowBlur = 10; g.fillStyle = c; g.fillText(text, x, y);
   g.shadowBlur = 0; g.strokeStyle = '#fff3fa'; g.lineWidth = Math.max(0.16, size * 0.05); g.strokeText(text, x, y);

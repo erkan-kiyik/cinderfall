@@ -47,11 +47,12 @@ export function gunBars(id) {
   };
 }
 
-// The campaign map: three acts, ten missions; only mission 1 exists so far.
+// The campaign map: three acts, ten missions; act 1 (missions 1–3) is playable,
+// each one opens when the one before it is done.
 export const MISSIONS = [
   { id: 'm1', act: 1, x: 0.10, y: 0.62, ready: true },
-  { id: 'm2', act: 1, x: 0.21, y: 0.36 },
-  { id: 'm3', act: 1, x: 0.32, y: 0.66, boss: true },
+  { id: 'm2', act: 1, x: 0.21, y: 0.36, ready: true },
+  { id: 'm3', act: 1, x: 0.32, y: 0.66, boss: true, ready: true },
   { id: 'm4', act: 2, x: 0.44, y: 0.40 },
   { id: 'm5', act: 2, x: 0.53, y: 0.70 },
   { id: 'm6', act: 2, x: 0.62, y: 0.34 },

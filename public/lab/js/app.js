@@ -109,7 +109,7 @@ export class App {
     document.body.classList.add('ui-hidden');
     const coarse = matchMedia('(pointer: coarse)').matches || new URLSearchParams(location.search).has('touch');
     this.touch = coarse ? bindTouch(this.controls, document.querySelector('#hud'), { layout: hudLayout(this.save), fireRing: d.settings.fireRing }) : null;
-    const scene = new MissionScene(this.e, this.controls, { diff, op, loadout: lo, brief: false, onExit: (r) => this.exitMission(r) });
+    const scene = new MissionScene(this.e, this.controls, { id, diff, op, loadout: lo, brief: false, onExit: (r) => this.exitMission(r) });
     this.inkFor(scene);
     this.scene = scene;
     this.e.camera.viewH = 192;

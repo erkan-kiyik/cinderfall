@@ -224,3 +224,96 @@ export const HUCUMCU = {
   },
   parts: { ...PARTS, head: hoodHead, torso: lightTorso, upper: lightUpper, chest: lightChest },
 };
+
+// GALL — the Syndicate's secretary, the act 1 boss: a heavy officer in a
+// long crimson coat over black plate, gold on the shoulders and a crested
+// helmet with a wide red visor. Bigger plates, same rig.
+const PAL_G = {
+  ...PAL,
+  armor: tone('#6a7080', '#474d5c', '#2f3440', '#101318'),
+  suit: tone('#3a2c32', '#2a1d23', '#1c1217', '#0a0507'),
+  coat: tone('#d4545e', '#a8333e', '#76202a', '#2e0a10'),
+  gold: M.brass,
+};
+
+function gallHead(g) { scaledHead(g, () => gallHead0(g)); }
+function gallHead0(g) {
+  cel(g, NECK, PAL_G.suit, { sh: 1.0, hl: 0 });
+  const H = 'M -5.0 -7.0 C -5.4 -11.4 -3.0 -14.2 0.6 -14.2 C 4.2 -14.2 5.8 -11.9 5.8 -9.0 L 5.8 -5.2 C 5.8 -3.5 4.8 -2.2 3.4 -1.8 L 0.4 -1.8 C -2.0 -2.2 -4.0 -4.0 -5.0 -7.0 Z';
+  // the crest: a gold fin from brow to nape
+  cel(g, 'M -4.6 -10.4 C -4.2 -15.6 0.4 -17.4 4.2 -15.0 L 3.2 -13.4 C 0.6 -14.8 -2.4 -13.8 -3.2 -10.0 Z', PAL_G.gold, { sh: 0.4, hl: 0.3, lw: 0.26 });
+  cel(g, H, PAL_G.armor, { sh: 1.2, hl: 0.5 });
+  clip(g, H, () => {
+    fill(g, 'M 0.2 -6.4 L 7 -6.4 L 7 0 L 0.2 0 Z', PAL_G.suit.m);
+    for (const y of [-4.6, -3.6, -2.6]) stroke(g, `M 2.4 ${y} L 5.8 ${y}`, PAL_G.gold.d, 0.24);
+    stroke(g, curve([[-3.8, -11.4], [-0.6, -13.4], [3.8, -13.0]]), PAL_G.armor.l, 0.32);
+  });
+  g.save(); g.shadowColor = PAL.visor.m; g.shadowBlur = 8;
+  fill(g, 'M 0.4 -9.2 L 5.9 -9.4 L 6.0 -6.8 L 0.4 -6.6 Z', PAL.visor.m);
+  g.restore();
+  fill(g, 'M 0.9 -8.9 L 5.7 -9.1 L 5.75 -8.4 L 0.9 -8.2 Z', PAL.visor.l);
+  cel(g, 'M -2.8 -9.0 L -0.6 -9.0 L -0.6 -5.0 L -2.8 -5.0 Z', PAL_G.gold, { sh: 0.3, hl: 0.2, lw: 0.24 });
+}
+function gallTorso(g) {
+  g.save(); g.scale(1.14, 1);
+  cel(g, PELVIS, PAL_G.coat, { sh: 1.1, hl: 0.4 });
+  cel(g, VEST, PAL_G.coat, { sh: 1.8, hl: 0.5 });
+  clip(g, VEST, () => fold(g, [[-6.8, -14.0], [-6.2, -10.6], [-5.4, -8.2]], PAL_G.coat));
+  cel(g, PLATE, PAL_G.armor, { sh: 1.8, hl: 0.55 });
+  clip(g, PLATE, () => {
+    stroke(g, curve([[-5.0, -14.8], [0.8, -15.4], [7.2, -14.8]]), PAL_G.armor.d, 0.32);
+    fill(g, 'M 2.6 -20.0 L 6.2 -20.2 L 6.3 -16.8 L 2.7 -16.6 Z', PAL_G.suit.m);
+    emblem(g, 4.45, -18.4, 1.1, PAL_G.gold.m);
+  });
+  // the sash across, gold buttons down the coat front, the belt with a gold buckle
+  cel(g, 'M -5.6 -21.0 L -3.8 -21.8 L 6.8 -9.4 L 5.2 -8.4 Z', PAL.visor, { sh: 0.4, hl: 0.25, lw: 0.26 });
+  for (const y of [-12.6, -10.4]) fill(g, `M 6.2 ${y} a 0.5 0.5 0 1 0 1 0 a 0.5 0.5 0 1 0 -1 0 Z`, PAL_G.gold.m);
+  cel(g, 'M -6.0 -5.0 C -1.2 -5.35 2.6 -5.35 5.8 -5.1 L 5.85 -3.2 C 2.6 -3.45 -1.2 -3.45 -6.05 -3.1 Z', PAL_G.suit, { sh: 0.35, hl: 0.2, lw: 0.28 });
+  cel(g, 'M 1.6 -5.6 L 4.2 -5.65 L 4.2 -2.8 L 1.6 -2.75 Z', PAL_G.gold, { sh: 0.3, hl: 0.2, lw: 0.26 });
+  g.restore();
+}
+function gallChest(g) {
+  const COL = 'M -5.6 -21.4 C -5.4 -25.0 -2.2 -26.0 1.0 -25.8 C 4.0 -25.6 5.8 -24.4 6.0 -21.6 L 5.2 -20.8 C 3.0 -20.4 -1.8 -20.2 -5.6 -21.4 Z';
+  cel(g, COL, PAL_G.coat, { sh: 0.8, hl: 0.4 });
+  clip(g, COL, () => stroke(g, curve([[-5.0, -22.8], [0.6, -24.0], [5.6, -22.6]]), PAL_G.gold.m, 0.4));
+}
+function gallUpper(g, ctx) {
+  const t = ctx.t;
+  cel(g, UPPER, t(PAL_G.coat), { sh: 1.5, hl: 0.45 });
+  clip(g, UPPER, () => fold(g, [[-1.8, 8.6], [-0.4, 9.6], [1.2, 9.8]], t(PAL_G.coat)));
+  // a gold epaulette with fringe over a black pauldron
+  const PAD = blob([[-4.2, -2.8], [0.2, -4.0], [4.4, -2.6], [4.4, 2.6], [-4.2, 2.8]]);
+  cel(g, PAD, t(PAL_G.armor), { sh: 0.9, hl: 0.45 });
+  cel(g, blob([[-3.6, -3.0], [0.2, -3.8], [3.8, -2.8], [3.6, -0.8], [-3.4, -0.6]]), t(PAL_G.gold), { sh: 0.4, hl: 0.3, lw: 0.26 });
+  for (let x = -3; x <= 3; x += 1.2) stroke(g, `M ${x} -0.8 L ${x} 1.0`, t(PAL_G.gold).d, 0.3);
+}
+function gallFore(g, ctx) {
+  const t = ctx.t;
+  cel(g, FORE, t(PAL_G.coat), { sh: 1.3, hl: 0.4 });
+  cel(g, blob([[-2.5, 6.6], [2.4, 6.4], [2.3, 9.6], [-2.3, 9.8]]), t(PAL_G.suit), { sh: 0.4, hl: 0.25, lw: 0.26 });
+  fill(g, 'M -2.4 6.6 L 2.4 6.4 L 2.4 7.1 L -2.4 7.3 Z', t(PAL_G.gold).m);
+  cel(g, ELBOW_PAD, t(PAL_G.armor), { sh: 0.5, hl: 0.3, lw: 0.28 });
+}
+function gallThigh(g, ctx) {
+  const t = ctx.t;
+  cel(g, THIGH, t(PAL_G.suit), { sh: 1.6, hl: 0.45 });
+  // the coat's skirt falls over the thigh
+  const SK = blob([[-3.8, -0.6], [3.6, -0.8], [4.4, 11.6], [-3.4, 12.6]]);
+  cel(g, SK, t(PAL_G.coat), { sh: 1.0, hl: 0.4, lw: 0.3 });
+  clip(g, SK, () => { fill(g, 'M -4 11.0 L 5 10.2 L 5 13 L -4 13 Z', t(PAL_G.gold).m); fold(g, [[0.4, 2], [0.8, 7], [0.6, 11]], t(PAL_G.coat)); });
+}
+function gallShin(g, ctx) {
+  const t = ctx.t;
+  cel(g, SHIN, t(PAL_G.suit), { sh: 1.4, hl: 0.4 });
+  cel(g, BOOT_SHAFT, t(PAL.boot), { sh: 0.7, hl: 0.35 });
+  kneePad(g, ctx, PAL_G.armor, PAL_G.gold);
+}
+
+export const GALL = {
+  id: 'gall', name: 'GALL', role: 'VANTA SYNDICATE', pal: PAL_G,
+  pose: {
+    nThigh: 0.2, nShin: 0.06, fThigh: -0.26, fShin: -0.04, head: 0.02,
+    gun: { w: WEAPONS.kestrel, at: [6.4, -41.4], ang: 0.4, k: 0.96, mat: SYN_MAT },
+  },
+  parts: { ...PARTS, head: gallHead, torso: gallTorso, chest: gallChest, upper: gallUpper, fore: gallFore, thigh: gallThigh, shin: gallShin },
+};

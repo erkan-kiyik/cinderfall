@@ -22,6 +22,8 @@ const KIND = {
   tet: { sight: 430, cone: 0.85, walk: 0.32, prefer: [170, 330], burst: [3, 5], pause: [0.9, 1.6] },
   huc: { sight: 380, cone: 0.85, walk: 0.4, prefer: [0, 70], burst: [1, 1], pause: [0.5, 0.9] },
   kal: { sight: 360, cone: 0.85, walk: 0.3, prefer: [0, 30], burst: [0, 0], pause: [1.4, 1.4] },
+  // the boss: sees far, long bursts, holds the middle distance
+  gall: { sight: 520, cone: 1, walk: 0.3, prefer: [140, 320], burst: [6, 10], pause: [0.7, 1.2] },
 };
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -142,7 +144,7 @@ export class Brain {
     this.supp = Math.max(0, this.supp - dt * 0.5);
     this.dodgeT = Math.max(0, this.dodgeT - dt); this.bashT = Math.max(0, this.bashT - dt);
     // operator abilities: blinded (flash, blackout, knock-down), slowed (field, mine)
-    this.blindT = Math.max(0, (this.blindT || 0) - dt); this.slowT = Math.max(0, (this.slowT || 0) - dt);
+    this.blindT = Math.max(0, (this.blindT || 0) - dt * (this.boss ? 2 : 1)); this.slowT = Math.max(0, (this.slowT || 0) - dt);
     if (!ch.alive) { if (this.cover) this.cover.used = null; world.squad.release(this); return inp; }
     const alive = P && P.alive;
     this.see = alive && !(this.blindT > 0) && this.sees(L, P) && !(world.smoke && world.smoke(m.x, m.y - 54, P.m.x, P.m.y - 40));
@@ -168,7 +170,7 @@ export class Brain {
     else {
       if (this.lostT > 5) { this.enter('search'); world.squad.release(this); }
       face = this.lx < m.x ? -1 : 1;
-      if (this.kind === 'tet') ({ trigger, pressed } = this.rifleman(dt, world, dist));
+      if (this.kind === 'tet' || this.kind === 'gall') ({ trigger, pressed } = this.rifleman(dt, world, dist));
       else if (this.kind === 'huc') ({ trigger, pressed } = this.assault(dt, world, dist));
       else this.shield(dt, world, dist);
     }

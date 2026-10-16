@@ -8,7 +8,7 @@ import { MISSIONS } from '../data.js';
 export const campaign = {
   mount(ctx, params) {
     const d = ctx.save.d;
-    let sel = params.sel || MISSIONS.find((m) => m.ready && !(d.campaign[m.id] && d.campaign[m.id].done))?.id || 'm1';
+    let sel = params.sel || [...MISSIONS].reverse().find((m) => m.ready && (MISSIONS.indexOf(m) === 0 || (d.campaign[MISSIONS[MISSIONS.indexOf(m) - 1].id] || {}).done))?.id || 'm1';
     const map = h('div.map');
     // route lines between the missions
     const NS = 'http://www.w3.org/2000/svg';
@@ -26,15 +26,17 @@ export const campaign = {
     }
     map.appendChild(lines);
     for (const [act, x] of [[1, 0.04], [2, 0.42], [3, 0.78]]) map.appendChild(h('div.act-label', { style: { left: `${x * 100}%`, top: '8%' } }, t('camp.act', { n: act }), ' · ', t(`camp.act${act}`)));
+    // a mission opens once the one before it is done
+    const open = (m) => { const i = MISSIONS.indexOf(m); return m.ready && (i === 0 || !!(d.campaign[MISSIONS[i - 1].id] && d.campaign[MISSIONS[i - 1].id].done)); };
     const nodes = MISSIONS.map((m) => {
       const c = d.campaign[m.id];
-      const state = !m.ready ? 'locked' : c && c.done ? 'done' : 'open';
+      const state = !open(m) ? 'locked' : c && c.done ? 'done' : 'open';
       const n = press(h(`button.node.${state}`, {
         type: 'button', style: { left: `${m.x * 100}%`, top: `${m.y * 100}%` },
         'aria-label': t(`mission.${m.id}`),
         onclick: () => { sel = m.id; ui('tab'); render(); },
       },
-      h('span.pin', m.ready ? (m.boss ? svg('skull') : m.id.slice(1)) : svg('lock')),
+      h('span.pin', open(m) ? (m.boss ? svg('skull') : m.id.slice(1)) : svg('lock')),
       h('span.nm', t(`mission.${m.id}`)),
       c ? stars(c.stars) : null), { buzz: 'tick', sound: null });
       n.dataset.id = m.id;
@@ -47,10 +49,11 @@ export const campaign = {
       for (const n of nodes) n.classList.toggle('on', n.dataset.id === sel);
       const m = MISSIONS.find((x) => x.id === sel), c = d.campaign[m.id];
       const seg = h('div.seg', ['normal', 'hard'].map((k) => press(h(`button${diff === k ? '.on' : ''}`, { type: 'button', onclick: () => { diff = k; ctx.save.set((s) => { s.settings.diff = k; }); render(); } }, t(`diff.${k}`)), { buzz: 'tick', sound: 'tab' })));
+      const ok = open(m);
       const go = press(h('button.btn.primary.lg.cut', {
-        type: 'button', 'aria-disabled': m.ready ? 'false' : 'true',
-        onclick: (e) => { if (!m.ready) return deny(e.currentTarget); ui('confirm'); ctx.router.go('prep', { mission: m.id, diff }); },
-      }, m.ready ? t('camp.prepare') : t('ui.soon'), svg('arrow')), { sound: null, buzz: m.ready ? 'soft' : null });
+        type: 'button', 'aria-disabled': ok ? 'false' : 'true',
+        onclick: (e) => { if (!ok) return deny(e.currentTarget); ui('confirm'); ctx.router.go('prep', { mission: m.id, diff }); },
+      }, ok ? t('camp.prepare') : m.ready ? t('camp.locked') : t('ui.soon'), svg('arrow')), { sound: null, buzz: ok ? 'soft' : null });
       side.replaceChildren(...[
         h('div.eyebrow.accent', t('camp.act', { n: m.act }), ' · ', t('camp.mission', { n: m.id.slice(1) })),
         h('div.h1', { style: { fontSize: '28px' } }, t(`mission.${m.id}`)),
@@ -60,8 +63,9 @@ export const campaign = {
             ? [h('p.body', { style: { margin: '6px 0', fontSize: '12.5px' } }, t(`mission.${m.id}.brief`)),
               h('ol.obj', [1, 2, 3, 4].map((i) => h('li', t(`mission.${m.id}.o${i}`))))]
             : h('div.empty.cut', { style: { marginTop: '8px' } }, svg('lock'), h('b', t('camp.locked')), h('span', t('camp.lockedHint')))),
+        m.ready && !ok && h('div.empty.cut', { style: { marginTop: '4px' } }, svg('lock'), h('span', t('camp.needPrev'))),
         c && h('div.wide-row', stars(c.stars, 18), h('div.tag', h('div.eyebrow', t('camp.best')), h('div.h3', c.best !== null ? clock(c.best) : '—'))),
-        m.ready && h('div.diff-row', h('div.eyebrow', t('camp.diff')), seg),
+        ok && h('div.diff-row', h('div.eyebrow', t('camp.diff')), seg),
         go].filter(Boolean));
     }
     render();

@@ -111,3 +111,11 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .abhud .abtn.on { transform: scale(0.9); }
 @keyframes abpulse { 50% { box-shadow: 0 0 22px var(--ab), inset 0 0 14px color-mix(in srgb, var(--ab) 45%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .abhud .ult.ready { animation: none; } }
+/* boss health (mission) */
+.mboss { position: fixed; top: calc(max(48px, env(safe-area-inset-top)) + 62px); left: 50%; transform: translateX(-50%); width: min(340px, 46vw); text-align: center; pointer-events: none; z-index: 1; opacity: 0; transition: opacity .4s; }
+.mboss.on { opacity: 1; }
+.mboss b { display: block; font: 700 11px/1 var(--f-display); letter-spacing: var(--track-wide); color: #ff6b6b; text-shadow: 0 0 8px rgba(255,51,71,0.6); margin-bottom: 4px; }
+.mboss .bar { position: relative; height: 6px; background: rgba(13,16,21,0.7); border: 1px solid rgba(255,51,71,0.5); clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
+.mboss .bar s, .mboss .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; }
+.mboss .bar s { background: rgba(255,201,60,0.7); transition: width .5s; }
+.mboss .bar i { background: linear-gradient(90deg, #ff3347, #ff6b6b); box-shadow: 0 0 8px #ff3347; z-index: 1; transition: width .12s; }

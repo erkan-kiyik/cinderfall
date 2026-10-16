@@ -28,6 +28,22 @@ export class MissionHud {
       if (v >= 0) this.obj.querySelector('.p i').style.width = v + '%';
     });
   }
+  // the boss's name and health bar under the objective (null hides it)
+  boss(name, k) {
+    if (!this.bossEl && name) {
+      this.bossEl = document.createElement('div'); this.bossEl.className = 'mboss';
+      this.bossEl.innerHTML = '<b></b><div class="bar"><i></i><s></s></div>';
+      this.obj.parentNode.appendChild(this.bossEl);
+    }
+    if (!this.bossEl) return;
+    this.set('bossN', name, (v) => { this.bossEl.classList.toggle('on', !!v); if (v) this.bossEl.querySelector('b').textContent = v; });
+    this.set('bossK', Math.round(k * 200), (v) => {
+      const p = `${v / 2}%`, bar = this.bossEl.querySelector('.bar');
+      bar.querySelector('i').style.width = p;
+      // the trailing chunk catches up a moment later
+      setTimeout(() => { bar.querySelector('s').style.width = p; }, 260);
+    });
+  }
   clock(sec) { this.set('time', Math.floor(sec), () => { this.time.textContent = fmt(sec); }); }
 
   // screen position (CSS px) of the objective, or null to hide; dist in metres-ish

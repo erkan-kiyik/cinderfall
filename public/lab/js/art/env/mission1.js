@@ -200,7 +200,7 @@ export function buildMission1() {
   const level = new Level(g.map((r) => r.join('')), TOPY);
   const E = (id, x, y, zone, o = {}) => ({ id, kind: id, x, y, zone, facing: -1, ...o });
   return {
-    level, props, front, deco, lamps, glows, lights, width: COLS * T,
+    id: 'm1', level, props, front, deco, lamps, glows, lights, width: COLS * T, par: 300,
     // HAWK's shop once, near the start; then the street, never twice the same in a row
     facade: facadeLayout(-10, COLS * T + 10, 9, ['walkup', 'crow', 'alley', 'warehouse', 'synBlock', 'walkupB', 'hotel', 'ruin', 'garage']),
     fires: [X(124) + 5],

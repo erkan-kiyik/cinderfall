@@ -189,7 +189,8 @@ export class M2Scene {
     for (const f of vis) for (const [lx, ly, rad, k, c, fl] of BUILDINGS[f.type].lights || []) R.addLight(f.x + lx, ly, rad, k * this.flicker(fl, f.x), c);
     for (const [lx, ly, rad, k, c, fl] of this.C.lights || []) if (lx > x0 && lx < x1) R.addLight(lx, ly, rad, k * this.flicker(fl, lx), c);
     const fire = 0.86 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06;
-    for (const fx of this.C.fires || []) if (fx > x0 && fx < x1) R.addLight(fx, -20, 80, 1.2 * fire, [1, 0.55, 0.24]);
+    // a fire is an x on the street, or [x, y] (a brazier up on something)
+    for (const f of this.C.fires || []) { const [fx, fy] = f.length ? f : [f, 0]; if (fx > x0 && fx < x1) R.addLight(fx, fy - 20, 80, 1.2 * fire, [1, 0.55, 0.24]); }
     for (const en of this.enemies) if (en.alive) R.addLight(en.rx + en.facing * 4, en.ry - 55, 12, 0.6, [1, 0.2, 0.25]);
     // background: parallax layers repeated along the street
     R.beginScene();
@@ -218,7 +219,8 @@ export class M2Scene {
     const glow0 = A.get('fx.glow'), shade = rgba('#05060a', 0.55);
     const foot = (x, y, hw) => B.draw(glow0, x, y + 0.4, hw, 2.4, 0, shade);
     for (const p of [...this.C.deco, ...this.C.props, ...this.C.front]) {
-      if (p.at) { for (const x of p.at) if (x > x0 && x < x1) foot(x, 0, 5); continue; }
+      // pieces drawn at several spots: their shadow is [dx, half width] from the spot
+      if (p.at) { const [fdx, fw] = p.foot || [0, 5]; for (const x of p.at) if (x > x0 && x < x1) foot(x + fdx, 0, fw); continue; }
       if (!p.box) continue;
       const [bx0, by0, bx1, by1] = p.box;
       if (by1 < -2 || by1 > 2 || by0 > -6) continue;
@@ -231,14 +233,14 @@ export class M2Scene {
       const r = A.get(p.name);
       if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0);
     }
-    for (const p of this.C.props) B.draw(A.get(p.name), 0, 0);
+    for (const p of this.C.props) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }
     B.end();
     this.drawWorldExtras(B, w, x0, x1);
     // characters (each composited through the outline shader)
     for (const c of chars) this.cr.composite(c, w, restore);
     // cover in front
     B.begin(w);
-    for (const p of this.C.front) B.draw(A.get(p.name), 0, 0);
+    for (const p of this.C.front) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }
     B.end();
     this.dust.draw(w, t);
     this.drawFrontExtras(B, w);
@@ -263,11 +265,11 @@ export class M2Scene {
       this.life.reflect(B, glow, t, gx, sx, c, a * k);
     }
     for (const lx of this.C.lamps) if (lx > x0 && lx < x1) this.life.reflect(B, glow, t, lx + 15, 8, '#ffd9a0', 0.5);
-    for (const fx of this.C.fires || []) if (fx > x0 && fx < x1) this.life.reflect(B, glow, t, fx, 6, '#ff8a3a', 0.6);
+    for (const f of this.C.fires || []) { const fx = f.length ? f[0] : f; if (fx > x0 && fx < x1) this.life.reflect(B, glow, t, fx, 6, '#ff8a3a', 0.6); }
     for (const en of this.enemies) if (en.alive) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
-    for (const fx of this.C.fires || []) for (let k = 0; k < 3; k++) {
-      const ph = t * (9 + k * 3) + k * 2.1;
-      B.draw(flame, fx + (k - 1) * 2.4, -14, 3.6 + Math.sin(ph) * 0.6, 6 + Math.sin(ph * 1.3) * 1.6 - k * 0.8, Math.sin(ph * 0.7) * 0.15, rgba(k === 1 ? '#ffd56a' : '#ff8a3a', 0.9));
+    for (const f of this.C.fires || []) for (let k = 0; k < 3; k++) {
+      const [fx, fy] = f.length ? f : [f, 0], ph = t * (9 + k * 3) + k * 2.1;
+      B.draw(flame, fx + (k - 1) * 2.4, fy - 14, 3.6 + Math.sin(ph) * 0.6, 6 + Math.sin(ph * 1.3) * 1.6 - k * 0.8, Math.sin(ph * 0.7) * 0.15, rgba(k === 1 ? '#ffd56a' : '#ff8a3a', 0.9));
     }
     B.end();
     this.drawGlow(B, w);
