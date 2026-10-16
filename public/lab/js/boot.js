@@ -62,10 +62,14 @@ async function main() {
     onProgress: (p) => { bar.style.width = (p * 100).toFixed(0) + '%'; intro?.setProgress(p); },
   });
   const renderer = new Renderer(gl, canvas);
+  // phones with 3 GB or less: the same quality, at most 2× pixel ratio
+  if ((navigator.deviceMemory || 8) <= 3) renderer.dprCap = 2;
   renderer.setQuality(quality);
   const camera = new Camera(); camera.viewH = play ? 192 : 150;
   const batch = new SpriteBatch(gl, atlas);
   const eng = { gl, atlas, batch, camera, renderer, sfx: DEV ? null : new Sfx() };
+  // street effects level 0..2: phones with little memory start one step lighter
+  eng.fxMax = 2; eng.fxLevel = (navigator.deviceMemory || 8) <= 3 ? 1 : 2;
   const controls = new Controls();
   let scene = null, app = null;
   if (DEV) scene = SC === M1 ? new M1.M1Scene(eng) : SC === M2 ? new M2.M2Scene(eng, controls) : SC === M3 ? new M3.M3Scene(eng, controls) : new M4.MissionScene(eng, controls, { diff: params.get('diff') || 'normal' });
@@ -84,6 +88,9 @@ async function main() {
     const budget = 1000 / loop.hz;
     if (s.avg > budget * 1.08) { dyn.over++; dyn.under = 0; } else if (s.avg < budget * 1.02 && s.p95 < budget * 1.35) { dyn.under++; dyn.over = 0; } else { dyn.over = 0; dyn.under = 0; }
     if (dyn.over >= 2 && dyn.step < RES_STEPS.length - 1) { dyn.failedAt[dyn.step] = now; dyn.step++; dyn.over = 0; renderer.setDyn(RES_STEPS[dyn.step]); }
+    // resolution already at its floor and still over budget: thin the street effects (rain, reflections, steam)
+    else if (dyn.over >= 4 && dyn.step === RES_STEPS.length - 1 && eng.fxLevel > 0) { eng.fxLevel--; dyn.over = 0; dyn.fxAt = now; }
+    else if (dyn.under >= 16 && eng.fxLevel < eng.fxMax && now - (dyn.fxAt || 0) > 30000) { eng.fxLevel++; dyn.under = 0; }
     else if (dyn.under >= 8 && dyn.step > 0 && now - dyn.failedAt[dyn.step - 1] > 20000) { dyn.step--; dyn.under = 0; renderer.setDyn(RES_STEPS[dyn.step]); }
   }
 

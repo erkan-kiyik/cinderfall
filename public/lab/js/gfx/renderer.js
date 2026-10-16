@@ -140,7 +140,7 @@ export class Renderer {
 
   // Canvas backing store follows CSS size × DPR (capped); targets follow it.
   resize(force = false) {
-    const c = this.canvas, dpr = Math.min(window.devicePixelRatio || 1, this.q.dpr);
+    const c = this.canvas, dpr = Math.min(window.devicePixelRatio || 1, this.q.dpr, this.dprCap || 9);
     const W = Math.round(c.clientWidth * dpr), H = Math.round(c.clientHeight * dpr);
     if (!force && W === c.width && H === c.height) return;
     c.width = W; c.height = H;

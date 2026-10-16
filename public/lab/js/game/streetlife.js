@@ -23,9 +23,12 @@ export class StreetLife {
     this.seeded = false; this.splash = []; this.last = null; this.steamAt = 0;
   }
   get reduce() { return !!this.s.e.reduceMotion; }
+  // set by the frame-time guard in boot.js: 2 full, 1 lighter, 0 bare
+  get level() { const l = this.s.e.fxLevel; return l === undefined ? 2 : l; }
   get count() {
     const n = RAIN[this.s.e.renderer.qName] || RAIN.high;
-    return this.reduce ? Math.round(n * 0.35) : n;
+    const lvl = this.level;
+    return Math.round(n * (this.reduce ? 0.35 : 1) * (lvl === 2 ? 1 : lvl === 1 ? 0.55 : 0.2));
   }
 
   // advance by the scene clock (works for scenes that do not call it from update)
@@ -55,7 +58,7 @@ export class StreetLife {
     for (let i = 0; i < this.splash.length; i += 3) if (t - this.splash[i + 2] < 0.2) { this.splash[k++] = this.splash[i]; this.splash[k++] = this.splash[i + 1]; this.splash[k++] = this.splash[i + 2]; }
     this.splash.length = k;
     // steam from the manholes and drains in view
-    if (t >= this.steamAt && !this.reduce) {
+    if (t >= this.steamAt && !this.reduce && this.level > 0) {
       this.steamAt = t + 0.09;
       const dust = this.s.dust;
       for (let base = Math.floor(L / 600) * 600; base < R; base += 600) {
@@ -148,6 +151,7 @@ export class StreetLife {
 
   // emissive: the street's lights smeared down the wet road (call with additive blending on)
   reflect(B, glow, t, x, sx, c, a) {
+    if (this.level === 0) return;
     const sh = 0.8 + 0.2 * Math.sin(t * 3.1 + x * 0.07), w = Math.max(4, Math.min(sx, 36));
     B.draw(glow, x, 20, w * 0.8, 12, 0, rgba(c, Math.min(1, a * 1.1 * sh)));
     B.draw(glow, x, 13, w * 0.55, 4.5, 0, rgba(c, Math.min(1, a * 0.9 * sh)));
