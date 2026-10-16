@@ -3,7 +3,7 @@
 // the same box, so what you see is what you collide with.
 //
 //   A  cordon       a Syndicate barricade across the street        → checkpoint 1
-//   B  the market   stalls with awnings you can stand on; HAWK's stall in the
+//   B  the market   HAWK's stall in the
 //                   middle: hold it while three squads come at it  → checkpoint 2
 //   C  scaffolding  the street is walled off: up the ladders, over the wall
 //   D  extraction   down on the far side, through the last post to the flare
@@ -163,16 +163,12 @@ export function buildMission2() {
   P('m2.barrelA', [X(80) - 2, -16, X(80) + 14, 1], (g) => burnBarrel(g, X(80)), deco);
   addCrate(96);
   // B — the market ----------------------------------------------------------------------
-  addStall('fruit', 120); addStall('tech', 134);
-  addStall('cloth', 148);
   // HAWK's stall: counter over 8 tiles, awning over 8
   block(166, 171, 1, 2); block(165, 172, 9, 9, '=');
   P('m2.hawk', [X(165) - 2, -100, X(165) + 66, 1], (g) => { g.translate(X(165), 0); hawkStall(g); });
   glows.push([X(165) + 32, -86, 26, 8, C.gold, 0.45, 'neon'], [X(165) + 32, -94, 22, 1.6, '#ff3fa4', 0.6, 'buzz']);
   lights.push([X(165) + 32, -80, 80, 0.9, rgb(C.gold), 'neon']);
   for (let k = 0; k < 5; k++) glows.push([X(165) + 4 + k * 14, -63.6 + Math.sin((k / 4) * Math.PI) * 1.6, 2.2, 2.2, '#ffe6b0', 0.8, 'neon2']);
-  addStall('fruit', 182); addStall('cloth', 196);
-  addStall('tech', 210);
   addCrate(226);
   P('m2.dumpB', [X(229) - 4, -24, X(229) + 48, 1], (g) => dumpster(g, X(229)), deco);
   // C — scaffolding over the wall -------------------------------------------------------------
@@ -195,7 +191,6 @@ export function buildMission2() {
   P('m2.coneD', [X(366) - 6, -12, X(366) + 8, 1], (g) => cone(g, X(366)), deco);
   P('m2.beacon', [X(388) - 5, -28, X(388) + 5, 1], (g) => beacon(g, X(388)), deco);
   // shared pieces, painted once and drawn at each spot
-  for (const kind of Object.keys(stalls)) props.push({ name: `m2.stall.${kind}`, box: [-3, -76, STALL_W + 3, 1], paint: (g) => stall(g, kind), at: stalls[kind], foot: [STALL_W / 2, 18] });
   props.push({ name: 'm2.crate', box: [-2, -18, 18, 1], paint: (g) => crate(g, 0, 16, 16), at: crates, foot: [8, 9] });
   // checkpoints
   const checkpoints = [{ x: X(104) }, { x: X(232) }, { x: X(320) }];
@@ -226,11 +221,11 @@ export function buildMission2() {
       E('tet', X(74) + 4, 0, [X(60), X(100)]),
       E('tet', X(90), 0, [X(76), X(110)], { patrol: [X(84), X(100)] }),
       // B, before HAWK's stall
-      E('tet', X(137), -72, [X(134), X(140)]),
+      E('tet', X(137), 0, [X(124), X(150)]),
       E('huc', X(156), 0, [X(112), X(200)]),
       // B, the squads that come for the stall
       E('tet', X(232), 0, MZ, { wave: 2 }), E('huc', X(228), 0, MZ, { wave: 2 }),
-      E('tet', X(114), 0, MZ, { wave: 3, facing: 1 }), E('huc', X(118), 0, MZ, { wave: 3, facing: 1 }), E('tet', X(214), -72, [X(210), X(216)], { wave: 3 }),
+      E('tet', X(114), 0, MZ, { wave: 3, facing: 1 }), E('huc', X(118), 0, MZ, { wave: 3, facing: 1 }), E('tet', X(214), 0, [X(200), X(230)], { wave: 3 }),
       E('kal', X(234), 0, MZ, { wave: 4 }), E('tet', X(230), 0, MZ, { wave: 4 }), E('huc', X(112), 0, MZ, { wave: 4, facing: 1 }),
       // C, on the scaffolding and behind the wall
       E('tet', X(262), -80, [X(244), X(266)]),

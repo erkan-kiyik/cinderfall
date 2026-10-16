@@ -30,7 +30,7 @@ import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'c3-2';
+export const BAKE_VERSION = 'c3-3';
 // Endless: the market from mission 2, walled off at both ends; squads come in
 // waves, every fifth one with Gall.
 function buildEndless() {
@@ -322,11 +322,10 @@ export class MissionScene extends M3.M3Scene {
     const list = [], count = Math.min(3 + n, 11);
     for (let i = 0; i < count; i++) list.push(n >= 4 && i % 5 === 4 ? 'kal' : n >= 2 && i % 3 === 2 ? 'huc' : 'tet');
     if (n % 5 === 0) list.unshift('gall');
-    const awnings = [120, 134, 148, 182, 196, 210].map((c) => X(c) + 24);
     list.forEach((id, i) => {
-      const left = i % 2 === 1, roof = id === 'tet' && i % 4 === 3;
-      const x = roof ? awnings[(i + n) % awnings.length] : left ? a0 + 6 + (i % 3) * 10 : a1 - 6 - (i % 3) * 10;
-      const b = this.spawnEnemy({ id, kind: id, x, y: roof ? -72 : 0, zone: [a0, a1], facing: left ? 1 : -1, boss: id === 'gall' });
+      const left = i % 2 === 1;
+      const x = left ? a0 + 6 + (i % 3) * 10 : a1 - 6 - (i % 3) * 10;
+      const b = this.spawnEnemy({ id, kind: id, x, y: 0, zone: [a0, a1], facing: left ? 1 : -1, boss: id === 'gall' });
       if (id === 'gall') { b.ch.hpMax = b.ch.hp = 500 + n * 120; }
       b.D = this.D; b.alarm(this.mover.x, this.mover.y, 1);
     });
