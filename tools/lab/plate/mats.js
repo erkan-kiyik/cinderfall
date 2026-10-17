@@ -1,8 +1,9 @@
 // KOR — cinematics: materials for the plate tracer (trace.js). Each is
-//   fn(m, x, y, z, nx, ny, nz, fw, S, i, B)
+//   fn(m, x, y, z, nx, ny, nz, fw, S, i, B, K)
 // m: its parameters; (x, y, z) the hit; n the face's normal; fw the size of a
 // pixel there (metres), so fine detail fades instead of crawling; i the prim
-// (−2: the ground) and B the prims' bounds, for things placed on a face.
+// (−2: the ground), B the prims' bounds (for things placed on a face) and K
+// their kinds (1 = an upright cylinder, for materials that wrap round one).
 // It writes S: albedo ar/ag/ab (linear), roughness ro, wetness wet (1 =
 // standing water), emission er/eg/eb, metal, glass, ao, the bent normal
 // nx/ny/nz (bend()) — the water film keeps the face's normal.
@@ -38,6 +39,10 @@ function face(x, y, z, nx, ny, nz) {
   else { F.U = x; F.V = y; F.tx = 1; F.ty = 0; F.tz = 0; F.bx = 0; F.by = 1; F.bz = 0; }
   return F;
 }
+// the colour of something glowing hot (k: 0 cooling red … 1 orange-yellow), linear, bright
+const K_EMB = (k) => [3.5 * k, 0.9 * k * k + 0.15 * k, 0.12 * k * k * k];
+// whether prim i is an upright cylinder (K: the prims' kinds; 1 = cylinder)
+const K_CYL = (K, i) => i >= 0 && K && K[i] === 1;
 // a cylinder's face: U round it, V up
 function faceCyl(x, y, z, B, i) {
   const b = i * 6, cx = (B[b] + B[b + 3]) / 2, cz = (B[b + 2] + B[b + 5]) / 2, r = (B[b + 3] - B[b]) / 2;
@@ -54,6 +59,38 @@ const set = (S, c, k = 1) => { S.ar = c[0] * k; S.ag = c[1] * k; S.ab = c[2] * k
 const mul = (S, r, g = r, b = r) => { S.ar *= r; S.ag *= g; S.ab *= b; };
 
 export const MAT_DEFAULTS = { kind: 'flat', col: [0.4, 0.4, 0.4], ro: 0.7, wet: 0 };
+
+// a picture (linear RGBA, rows from the top) sampled between its texels
+const TX = [0, 0, 0, 0];
+export function sample(T, u, v) {
+  const x = Math.min(T.w - 1.001, Math.max(0, u * T.w - 0.5)), y = Math.min(T.h - 1.001, Math.max(0, (1 - v) * T.h - 0.5));
+  const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, d = T.data, a = (j * T.w + i) * 4, b = a + 4, c = a + T.w * 4, e = c + 4;
+  for (let k = 0; k < 4; k++) TX[k] = (d[a + k] * (1 - fx) + d[b + k] * fx) * (1 - fy) + (d[c + k] * (1 - fx) + d[e + k] * fx) * fy;
+  return TX;
+}
+// where on a picture a point lies: an explicit frame { c, u, v, w, h } (centre, right and up unit
+// vectors, size), or else the face of the prim's box it sits on, seen from outside, upright
+function frameUV(m, x, y, z, nx, ny, nz, B, i) {
+  const f = m.frame;
+  if (f) { const dx = x - f.c[0], dy = y - f.c[1], dz = z - f.c[2]; F.U = (dx * f.u[0] + dy * f.u[1] + dz * f.u[2]) / f.w + 0.5; F.V = (dx * f.v[0] + dy * f.v[1] + dz * f.v[2]) / f.h + 0.5; return F; }
+  if (m.turn) { frameBox(x, y, z, nx, ny, nz, B, i); F.U = 1 - F.U; F.V = 1 - F.V; return F; } // a page lying the other way round
+  return frameBox(x, y, z, nx, ny, nz, B, i);
+}
+function frameBox(x, y, z, nx, ny, nz, B, i) {
+  const b = i * 6, x0 = B[b], y0 = B[b + 1], z0 = B[b + 2], x1 = B[b + 3], y1 = B[b + 4], z1 = B[b + 5];
+  if (Math.abs(ny) > 0.7) { F.U = (x - x0) / (x1 - x0); F.V = ny > 0 ? (z - z0) / (z1 - z0) : (z1 - z) / (z1 - z0); }
+  else { F.V = (y - y0) / (y1 - y0); F.U = Math.abs(nz) > Math.abs(nx) ? (nz < 0 ? (x - x0) / (x1 - x0) : (x1 - x) / (x1 - x0)) : (nx > 0 ? (z - z0) / (z1 - z0) : (z1 - z) / (z1 - z0)); }
+  return F;
+}
+// how many times a picture repeats across and up (tile: n, or [across, up])
+const tiles = (m) => (Array.isArray(m.tile) ? m.tile : [m.tile || 1, m.tile || 1]);
+// cut-outs: whether a ray stops on this prim here
+export const ALPHA = {
+  image(m, x, y, z, nx, ny, nz, B, i) {
+    const f = frameUV(m, x, y, z, nx, ny, nz, B, i); if (f.U < 0 || f.U > 1 || f.V < 0 || f.V > 1) return false;
+    const [tu, tv] = tiles(m); return sample(m.T, ((f.U * tu) % 1 + 1) % 1, ((f.V * tv) % 1 + 1) % 1)[3] > 0.5;
+  },
+};
 
 export const MATS = {
   flat(m, x, y, z, nx, ny, nz, fw, S) { set(S, m.col); S.ro = m.ro; S.wet = m.wet; },
@@ -167,7 +204,7 @@ export const MATS = {
     const s = m.seed;
     const ag = 0.8 + 0.4 * fbm(x * 14, z * 14, 3, s, fw * 14) + 0.14 * (vn(x * 90, z * 90, s + 1) - 0.5) * (1 - ss(0.003, 0.012, fw));
     const pt = fbm(x * 0.09, z * 0.09, 3, s + 2), patch = ss(0.6, 0.62, pt);
-    const cr = Math.abs(fbm(x * 0.35, z * 0.35, 4, s + 3) - 0.5), crack = 1 - ss(0.004, 0.01 + fw * 0.5, cr);
+    const cr = Math.abs(fbm(x * 0.35, z * 0.35, 4, s + 3) - 0.5), crack = (1 - ss(0.004, 0.01 + fw * 0.5, cr)) * (m.cracks ?? 1);
     set(S, m.col, ag * (1 - 0.25 * patch) * (1 - 0.6 * crack));
     let paint = 0;
     if (m.lane != null) { const d = Math.abs(x - m.lane); paint = (1 - ss(0.06, 0.06 + fw, d)) * ss(0.35, 0.55, fbm(x * 3, z * 0.8, 3, s + 9)) * (((z / 3) % 2 + 2) % 2 < 1.2 ? 1 : 0); }
@@ -429,6 +466,157 @@ export const MATS = {
     set(S, m.col, (0.9 + 0.2 * fbm(f.U * 2, f.V * 2, 3, s + 1, fw * 2)));
     if (sc > 0) { S.ar += (0.16 - S.ar) * sc * 0.5; S.ag += (0.16 - S.ag) * sc * 0.5; S.ab += (0.16 - S.ab) * sc * 0.5; }
     S.ro = m.ro ?? 0.45; S.wet = m.wet ?? 0.45;
+  },
+
+  // a picture on a thing: a poster, a sign, a page, a screen. Its colours are the albedo
+  // (where it is clear the base colour shows), `emit` makes it shine (a lit screen, a sign's
+  // face), `tile` repeats it; paper soaks up the rain at its edges
+  image(m, x, y, z, nx, ny, nz, fw, S, i, B) {
+    const f = frameUV(m, x, y, z, nx, ny, nz, B, i), [tu, tv] = tiles(m);
+    const c = sample(m.T, ((f.U * tu) % 1 + 1) % 1, ((f.V * tv) % 1 + 1) % 1), a = m.cut ? 1 : c[3], base = m.col;
+    set(S, [base[0] + (c[0] - base[0]) * a, base[1] + (c[1] - base[1]) * a, base[2] + (c[2] - base[2]) * a], m.k ?? 1);
+    if (m.emit) { S.er = S.ar * m.emit; S.eg = S.ag * m.emit; S.eb = S.ab * m.emit; S.ar *= 0.2; S.ag *= 0.2; S.ab *= 0.2; }
+    S.ro = m.ro ?? 0.85; S.wet = m.wet ?? 0;
+    if (m.soak) { const e = Math.min(f.U, 1 - f.U, f.V, 1 - f.V); const k = (1 - ss(0, m.soak, e)) * (0.6 + 0.4 * fbm(f.U * 9, f.V * 9, 3, m.seed)); mul(S, 1 - 0.3 * k); S.wet = Math.max(S.wet, 0.5 * k); }
+    if (m.dirt) mul(S, 1 - m.dirt * ss(0.45, 0.8, fbm(f.U * 5 + 3, f.V * 5, 4, m.seed + 1, fw * 5)));
+    if (m.bump) { face(x, y, z, nx, ny, nz); const e2 = 0.004, b0 = fbm(x * 40, y * 40 + z * 40, 3, m.seed + 2); bend(S, (fbm((x + e2) * 40, y * 40 + z * 40, 3, m.seed + 2) - b0) / e2 * m.bump, 0); }
+  },
+
+  // the furnace's shell: riveted plates gone a dark rust-brown, orange where the
+  // rust is fresh (round the seams, in runs down from them), and the white of the
+  // cooling water that has run down it for forty years
+  rust(m, x, y, z, nx, ny, nz, fw, S, i, B, K) {
+    const f = Math.abs(ny) > 0.7 ? face(x, y, z, nx, ny, nz) : (K_CYL(K, i) ? faceCyl(x, y, z, B, i) : face(x, y, z, nx, ny, nz)), s = m.seed;
+    const ph = m.plate ?? 2.0, pw = m.plateW ?? 3.0;
+    const pv = ((f.V / ph) % 1 + 1) % 1, pu = ((f.U / pw) % 1 + 1) % 1, ev = Math.min(pv, 1 - pv) * ph, eu = Math.min(pu, 1 - pu) * pw;
+    const seam = 1 - ss(0.01, 0.025 + fw, Math.min(ev, eu));
+    const pl = h2(Math.floor(f.U / pw), Math.floor(f.V / ph), s), r1 = fbm(f.U * 5, f.V * 5, 3, s + 1, fw * 5);
+    const base = m.col || [0.075, 0.045, 0.032];
+    set(S, base, (0.85 + 0.25 * pl) * (0.85 + 0.3 * r1));
+    // fresh rust: along the seams and in runs hanging from them
+    const runs = ss(0.55, 0.78, fbm(f.U * 2.5, f.V * 0.16, 4, s + 2, fw)) * (0.3 + 0.7 * ss(0, 0.7, 1 - pv));
+    const fresh = Math.max(runs * 0.8, ss(0.12, 0, Math.min(ev, eu)) * 0.6) * (m.fresh ?? 0.8);
+    if (fresh > 0) { S.ar += (0.2 - S.ar) * fresh; S.ag += (0.075 - S.ag) * fresh; S.ab += (0.03 - S.ab) * fresh; }
+    // lime: pale, from the cooling plates down
+    const lime = ss(0.66, 0.82, fbm(f.U * 3, f.V * 0.12, 4, s + 3, fw)) * (m.lime ?? 0.5) * (0.5 + 0.5 * ss(0, 0.8, 1 - pv));
+    if (lime > 0) { S.ar += (0.36 - S.ar) * lime; S.ag += (0.34 - S.ag) * lime; S.ab += (0.31 - S.ab) * lime; }
+    mul(S, 1 - 0.4 * seam);
+    S.ro = 0.8; S.wet = m.wet ?? 0.25; S.metal = 0;
+    bend(S, -(fbm((f.U + 0.02) * 5, f.V * 5, 3, s + 1, fw * 5) - r1) / 0.02 * 0.015, seam * 0.3);
+  },
+  // ribbed sheet cladding on a shed: vertical ribs, one tired paint, rain marks down
+  // it, rust low down and along the laps
+  cladding(m, x, y, z, nx, ny, nz, fw, S) {
+    const f = face(x, y, z, nx, ny, nz), s = m.seed, pitch = m.pitch ?? 0.2, sh = m.sheetH ?? 6;
+    const p = ((f.U / pitch) % 1 + 1) % 1, kk = 1 - ss(pitch * 0.15, pitch * 0.45, fw);
+    const sheet = ((f.V / sh) % 1 + 1) % 1, lap = 1 - ss(0.004, 0.02 + fw, Math.min(sheet, 1 - sheet) * sh);
+    const col = Math.floor(f.U / 1.0), tone = 0.92 + 0.12 * h2(col, Math.floor(f.V / sh), s);
+    set(S, m.col, tone * (0.9 + 0.16 * fbm(f.U * 0.3, f.V * 0.2, 3, s, fw * 0.3)) * (1 - 0.3 * lap));
+    if (Math.abs(ny) < 0.7) mul(S, 1 - kk * (p < 0.2 ? 0.1 : p < 0.5 ? -0.04 : p < 0.7 ? 0.15 : 0));
+    const marks = ss(0.6, 0.8, fbm(f.U * 3, f.V * 0.12, 4, s + 4, fw)) * 0.35;
+    mul(S, 1 - marks);
+    const rust = cl((1 - ss(0, 1.2, y - (m.base ?? 0))) * 0.7 + lap * 0.4 * ss(0.5, 0.7, fbm(f.U * 2, f.V, 3, s + 3, fw))) * (m.rust ?? 0.7);
+    if (rust > 0) { S.ar += (0.12 - S.ar) * rust; S.ag += (0.055 - S.ag) * rust; S.ab += (0.03 - S.ab) * rust; }
+    S.ro = 0.55 + 0.3 * rust; S.wet = m.wet ?? 0.3;
+    if (Math.abs(ny) < 0.7) bend(S, kk * (p < 0.2 ? 0.7 : p < 0.5 ? 0 : p < 0.7 ? -0.7 : 0), 0);
+  },
+  // brick in running bond: a tone per brick, recessed mortar, soot toward the top of a stack
+  brick(m, x, y, z, nx, ny, nz, fw, S, i, B, K) {
+    const f = Math.abs(ny) < 0.7 && K_CYL(K, i) ? faceCyl(x, y, z, B, i) : face(x, y, z, nx, ny, nz), s = m.seed;
+    const bh = 0.075, bl = 0.225, row = Math.floor(f.V / bh), su = f.U + (row & 1) * bl * 0.5, col = Math.floor(su / bl);
+    const fu = su - col * bl, fv = f.V - row * bh, e = Math.min(fu, bl - fu, fv, bh - fv), jw = 0.008;
+    const jk = 1 - ss(jw - fw * 0.6, jw + fw * 0.6, e), hb = h2(col, row, s), c = m.col || [0.24, 0.1, 0.07];
+    const soot = m.soot ? ss(m.soot[0], m.soot[1], y) : 0;
+    set(S, [c[0] * (0.8 + 0.4 * hb), c[1] * (0.8 + 0.35 * h2(col, row, s + 1)), c[2] * (0.85 + 0.3 * hb)], (0.85 + 0.25 * fbm(f.U * 8, f.V * 8, 3, s + 2, fw * 8)) * (1 - 0.7 * soot));
+    if (jk > 0) { const g = 1 - jk; S.ar = S.ar * g + 0.2 * jk * (1 - soot); S.ag = S.ag * g + 0.19 * jk * (1 - soot); S.ab = S.ab * g + 0.17 * jk * (1 - soot); }
+    S.ro = 0.85; S.wet = m.wet ?? 0.2;
+    // limewash over it (paint: how much), gone in patches where it flaked, the brick showing
+    if (m.paint) {
+      const fl = ss(0.56, 0.6, fbm(f.U * 2.5, f.V * 2.5, 5, s + 9, fw * 2.5)), pk = m.paint * (1 - fl), pc = m.paintCol || [0.55, 0.53, 0.48];
+      const pv = 0.88 + 0.16 * fbm(f.U * 11, f.V * 11, 3, s + 10, fw * 11), sh = jk ? 1 - 0.25 * jk : 1;
+      S.ar += (pc[0] * pv * sh - S.ar) * pk; S.ag += (pc[1] * pv * sh - S.ag) * pk; S.ab += (pc[2] * pv * sh - S.ab) * pk;
+      const grime = (1 - ss(0, 1.2, y)) * 0.35 + ss(0.6, 0.8, fbm(f.U * 1.5 + 4, f.V * 0.15, 4, s + 11, fw)) * 0.25; mul(S, 1 - grime);
+    }
+    // the mortar sits back: the brick's arrises catch the light
+    if (e < jw + 0.012) { const k = 1 - cl((e - jw) / 0.012); bend(S, (fu < bl / 2 ? -1 : 1) * (Math.min(fu, bl - fu) === e ? 0.5 * k : 0), (fv < bh / 2 ? -1 : 1) * (Math.min(fv, bh - fv) === e ? 0.5 * k : 0)); }
+  },
+
+  // a block of flats far off: a grid of windows on a concrete face, a few lit (warm
+  // bulbs, cold tubes, a television's blue), the rest dark glass
+  flats(m, x, y, z, nx, ny, nz, fw, S) {
+    const f = face(x, y, z, nx, ny, nz), s = m.seed;
+    if (ny > 0.7) { set(S, [0.05, 0.05, 0.05]); S.ro = 0.8; S.wet = 0.4; return; }
+    const fh = m.fh ?? 2.9, wp = m.wp ?? 3.3, fl = Math.floor(f.V / fh), cu = Math.floor(f.U / wp), lu = f.U / wp - cu, lv = f.V / fh - fl;
+    const wall = (m.col || [0.13, 0.125, 0.12]);
+    set(S, wall, 0.75 + 0.5 * fbm(f.U * 0.1, f.V * 0.1, 3, s, fw * 0.1));
+    S.ro = 0.85; S.wet = 0.3;
+    const lit = h2(cu, fl, s) < (m.lit ?? 0.14) && fl > 0, hue = h2(cu, fl, s + 1);
+    const ec = hue < 0.6 ? [1, 0.62, 0.32] : hue < 0.85 ? [0.8, 0.85, 0.95] : [0.4, 0.55, 1];
+    const e = (m.e ?? 0.5) * (0.5 + h2(cu, fl, s + 2));
+    if (fw > wp * 0.35) {
+      // too far for the grid: its average
+      const k = lit ? 0.32 : 0; S.er = ec[0] * e * k; S.eg = ec[1] * e * k; S.eb = ec[2] * e * k; mul(S, 0.75);
+      return;
+    }
+    if (lu > 0.28 && lu < 0.72 && lv > 0.3 && lv < 0.82) {
+      if (lit) { set(S, [0, 0, 0]); const cur = lu > 0.5 && h2(cu, fl, s + 3) < 0.5 ? 0.35 : 1; S.er = ec[0] * e * cur; S.eg = ec[1] * e * cur; S.eb = ec[2] * e * cur; }
+      else { set(S, [0.01, 0.011, 0.012]); S.glass = 0.8; S.ro = 0.1; }
+    }
+  },
+
+  // open water (a harbour, a canal): dark, a mirror broken by swell and chop
+  water(m, x, y, z, nx, ny, nz, fw, S) {
+    const s = m.seed;
+    set(S, m.col || [0.01, 0.012, 0.012]); S.ro = 0.1; S.wet = 1;
+    const e = 0.05, a = m.chop ?? 0.06, sc = m.scale ?? 0.6;
+    const h0 = fbm(x * sc, z * sc * 1.6, 5, s), hx = fbm((x + e) * sc, z * sc * 1.6, 5, s), hz = fbm(x * sc, (z + e) * sc * 1.6, 5, s);
+    let wx = -(hx - h0) / e * a, wz = -(hz - h0) / e * a;
+    const fine = 1 - ss(0.02, 0.08, fw); if (fine > 0) { const f0 = vn(x * 7, z * 9, s + 3); wx -= (vn((x + 0.01) * 7, z * 9, s + 3) - f0) / 0.01 * 0.004 * fine; wz -= (vn(x * 7, (z + 0.01) * 9, s + 3) - f0) / 0.01 * 0.004 * fine; }
+    const l = Math.hypot(wx, 1, wz); S.wx = wx / l; S.wy = 1 / l; S.wz = wz / l; S.nx = S.wx; S.ny = S.wy; S.nz = S.wz;
+  },
+  // glazed tiles on a wall (metro, a wash house): a grid of joints, a little colour per tile, grime low down
+  tile(m, x, y, z, nx, ny, nz, fw, S) {
+    const f = face(x, y, z, nx, ny, nz), s = m.seed, tw = m.tw ?? 0.15, th = m.th ?? 0.075;
+    const row = Math.floor(f.V / th), su = f.U + (m.bond ? (row & 1) * tw * 0.5 : 0), col = Math.floor(su / tw);
+    const fu = su - col * tw, fv = f.V - row * th, e = Math.min(fu, tw - fu, fv, th - fv), jk = 1 - ss(0.0015 - fw * 0.5, 0.0025 + fw * 0.5, e);
+    const c = m.band && f.V > m.band[0] && f.V < m.band[1] ? m.bandCol : m.col;
+    set(S, c, (0.92 + 0.12 * h2(col, row, s)) * (1 - 0.45 * (1 - ss(0, m.grime ?? 1.2, y)) * ss(0.3, 0.6, fbm(f.U * 2, f.V * 2, 3, s + 1, fw * 2))));
+    if (jk > 0) { const g = m.joint || [0.12, 0.11, 0.1]; S.ar += (g[0] - S.ar) * jk; S.ag += (g[1] - S.ag) * jk; S.ab += (g[2] - S.ab) * jk; }
+    S.ro = jk > 0.5 ? 0.9 : 0.12; S.wet = 0; S.glass = jk > 0.5 ? 0 : (m.gloss ?? 0.5);
+    if (h2(col, row, s + 2) < (m.broken ?? 0.02)) { set(S, [0.12, 0.11, 0.1]); S.ro = 0.9; S.glass = 0; }
+  },
+  // boards (a floor, panelling, a table top): planks along U, grain, a varnish worn where it's used
+  wood(m, x, y, z, nx, ny, nz, fw, S) {
+    const f = face(x, y, z, nx, ny, nz), s = m.seed, pw = m.pw ?? 0.14, across = m.across ? f.U : f.V, along = m.across ? f.V : f.U;
+    const pl = Math.floor(across / pw), pa = across / pw - pl, seam = 1 - ss(0.02, 0.05 + fw / pw, Math.min(pa, 1 - pa));
+    const grain = fbm(along * 2 + pl * 7.3, across * 40 + fbm(along * 1.5, pl, 2, s + 1) * 3, 3, s + 2, fw * 40);
+    const c = m.col || [0.2, 0.11, 0.055];
+    set(S, c, (0.75 + 0.35 * h2(pl, 3, s)) * (0.75 + 0.5 * grain) * (1 - 0.5 * seam));
+    S.ro = m.ro ?? 0.4; S.wet = 0; S.glass = m.varnish ?? 0.15;
+    bend(S, 0, seam * (pa < 0.5 ? 0.3 : -0.3));
+  },
+  // red wool, knitted: ribs along it, the fuzz catching light at grazing angles
+  knit(m, x, y, z, nx, ny, nz, fw, S) {
+    const f = face(x, y, z, nx, ny, nz), s = m.seed, cw = 0.006, rh = 0.005;
+    // stitches: a V in each column, rows of them; fades to the wool's tone where a pixel is wider
+    const cu = f.U / cw, rv = f.V / rh, pu = cu - Math.floor(cu), pv = rv - Math.floor(rv), k = 1 - ss(0.002, 0.006, fw);
+    const v = Math.abs(pu - 0.5) * 2, st = Math.cos((pv - v * 0.5) * 2 * Math.PI);
+    const fuzz = fbm(f.U * 60, f.V * 60, 3, s, fw * 60);
+    set(S, m.col || [0.32, 0.025, 0.02], (0.82 + 0.14 * st * k + 0.1 * (fbm(f.U * 3, f.V * 3, 3, s + 4) - 0.5)) * (0.85 + 0.3 * fuzz));
+    S.ro = 0.95; S.wet = 0;
+    bend(S, (pu < 0.5 ? -0.35 : 0.35) * k + (fbm(f.U * 4, f.V * 6, 3, s + 1) - 0.5) * 0.5, Math.sin((pv - v * 0.5) * 2 * Math.PI) * 0.3 * k);
+  },
+  // coals and ash: grey ash with cracks glowing from inside; `heat` how much of it still burns
+  ember(m, x, y, z, nx, ny, nz, fw, S) {
+    const s = m.seed, f = face(x, y, z, nx, ny, nz), q = m.scale ?? 1;
+    const n = fbm(x * 30 * q, z * 30 * q + y * 30 * q, 4, s, fw * 30 * q), cr = Math.abs(fbm(x * 18 * q + y * 9 * q, z * 18 * q, 4, s + 1, fw * 18 * q) - 0.5);
+    // charcoal black, a grey film of ash over the cooler parts
+    const ash = ss(0.45, 0.7, fbm(x * 40 * q, z * 40 * q + y * 20 * q, 3, s + 5, fw * 40 * q)) * (1 - (m.heat ?? 0.6) * 0.6);
+    const k = 0.03 + 0.04 * n; set(S, [k + ash * 0.22, k * 0.95 + ash * 0.21, k * 0.9 + ash * 0.2]);
+    S.ro = 0.95;
+    const glow = (1 - ss(0.0, 0.05, cr)) * (m.heat ?? 0.6) * ss(0.3, 0.6, fbm(x * 6 * q, z * 6 * q, 3, s + 2)) * (0.6 + 0.4 * (1 - ny)) * (1 - ash * 0.8);
+    if (glow > 0) { const e = K_EMB(glow); S.er = e[0]; S.eg = e[1]; S.eb = e[2]; }
+    bend(S, (n - 0.5) * 0.8, (fbm(x * 30 * q + 7, z * 30 * q, 3, s + 3) - 0.5) * 0.8); void f;
   },
 
   // painted or bare metal

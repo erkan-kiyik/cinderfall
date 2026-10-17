@@ -269,3 +269,29 @@ altyazı) kişileri taşır:
 - i18n testleri geçer; tüm altyazılar TR/EN.
 - Telefonda (orta sınıf) ≥ 30 fps hedefi: iç çözünürlük düşer, katmanlar
   önceden pişer.
+
+## 8. Seri: otuz kare
+
+Hikâyenin otuz durağan karesi, sırasıyla; hiçbirinde insan yok. Önsöz (01–03),
+bugün (04–11), Perde 1 (12–21), Perde 2 (22–26), Perde 3 (27–29), başlık (30).
+Her kare 2.39:1, 1920 × 803, 2×2 süper örnekleme.
+
+- Çekim listesi: `tools/lab/series/shots.js` (kamera: konum, bakılan nokta,
+  mm; sahne; kullandığı resimler; üstüne çizilen yağmur/buhar/kıvılcım; film).
+- Sahneler: `tools/lab/series/scenes/` (çelikhane, liman, şehir ve kule,
+  odalar, diğer yerler); kapı, pazar ve valilik plaka sahnelerinden gelir.
+- Yüzeydeki resimler (afiş, harita, Kül Planı, defter, dosya sırtları, tabela,
+  tel örgü): `tools/lab/series/textures.js`, tarayıcıda çizilir.
+- Çalıştırma: `node tools/lab/series/render.mjs 01 02 … [--quick] [--w 1920] [--ss 2]`.
+  Hızlı bakış ~7 sn, tam kalite ~70 sn/kare (4 çekirdek).
+- Test: `node tools/lab/series.test.mjs` (otuz çekim kurulur, her şeyin
+  malzemesi ve resmi var, kameralar makul).
+
+İzleyiciye eklenenler: projektör huzmesi artık yalnız koninin içinde kalan ışın
+parçasında örneklenir (ince bir huzme uzaktan noktalı görünmüyor; test kaba
+kuvvet integralle karşılaştırır); dolaylı ışıkta tek örneğin parlaklığı kırpılır
+(lambanın dibine düşen ışın benek yapmıyor); resimler eni ve boyu ayrı tekrar
+edebilir; kâğıt ters yatırılabilir (`turn`); badanalı tuğla, örgü yün ve kor
+malzemeleri. Post-process'te halation katmanı kenarda turuncu çerçeve
+bırakıyordu (bulanıklık kenardan taşınca saydam kısmı renklendiriliyordu);
+düzeltildi, sinematiklerde de geçerli.

@@ -25,7 +25,7 @@
 //             gradients don't band; edges traced again at five samples
 //
 // Pure (no DOM): bake.mjs runs it in node worker threads, a band each.
-import { MATS, MAT_DEFAULTS } from './mats.js';
+import { MATS, MAT_DEFAULTS, ALPHA } from './mats.js';
 
 const EPS = 1e-3, PI = Math.PI;
 const BOX = 0, CYL = 1, SPH = 2, HULL = 3, CAP = 4, ELL = 5;
@@ -36,12 +36,13 @@ const hash = (i, j) => { let h = Math.imul(i, 374761393) + Math.imul(j, 66826526
 export function compile(spec) {
   const prims = spec.prims || [], N = prims.length;
   const K = new Uint8Array(N), B = new Float64Array(N * 6), P = new Float64Array(N * 12), NS = new Uint8Array(N), NE = new Uint8Array(N);
-  const HP = new Array(N).fill(null), M = new Array(N);
-  const mats = spec.mats || {};
+  const HP = new Array(N).fill(null), M = new Array(N), HOLE = new Uint8Array(N);
+  const mats = spec.mats || {}, TEX = spec.textures || {};
   const matOf = (m, o) => {
     const base = typeof m === 'string' ? mats[m] : m;
     const r = { ...MAT_DEFAULTS, ...(base || {}), ...(o || {}) };
     r.fn = MATS[r.kind] || MATS.flat;
+    if (r.tex) { r.T = TEX[r.tex]; if (!r.T) throw new Error('no texture ' + r.tex); }
     return r;
   };
   for (let i = 0; i < N; i++) {
@@ -59,6 +60,7 @@ export function compile(spec) {
     }
     else if (q.hull) { K[i] = HULL; B.set(q.hull.aabb, b); HP[i] = Float64Array.from(q.hull.planes.flat()); }
     NS[i] = q.noShadow || q.lamp ? 1 : 0;
+    HOLE[i] = q.cut ? 1 : 0; // a picture with holes in it (a torn poster): rays pass where it is clear
     NE[i] = q.lamp ? 1 : 0; // a lamp's bulb: its glint on wet things comes from the lamp itself
     M[i] = matOf(q.m, q.o);
     M[i].seed = M[i].seed ?? i * 7 + 3;
@@ -76,7 +78,7 @@ export function compile(spec) {
     return o;
   });
   return {
-    spec, N, K, B, P, NS, NE, HP, M, G, lights,
+    spec, N, K, B, P, NS, NE, HOLE, HP, M, G, lights,
     pts: lights.filter((l) => !l.shafts && !l.dir), shafts: lights.filter((l) => l.shafts),
     W: spec.W, H: spec.H, cam: spec.cam,
     sky: { zen: [0.004, 0.0045, 0.006], hor: [0.02, 0.016, 0.012], cloud: 0, cloudCol: [0.03, 0.022, 0.016], seed: 5, scale: 0.6, ...(spec.sky || {}) },
@@ -86,13 +88,13 @@ export function compile(spec) {
     refl: { streak: 18, ...(spec.refl || {}) },
     exposure: spec.exposure ?? 1, vs: spec.vs ?? 4, vn: spec.vn ?? 10, aa: spec.aa !== false,
     aoStep: spec.aoStep ?? 2, shadowN: spec.shadowN ?? 1, hdr: !!spec.hdr,
-    gi: spec.gi ? { n: 16, step: 2, fill: 0.5, ...spec.gi } : null,
+    gi: spec.gi ? { n: 16, step: 2, fill: 0.5, clamp: 1.5, ...spec.gi } : null,
   };
 }
 
 // The tracer for one compiled scene. Hits land in t/i/nx/ny/nz.
 export function tracer(sc) {
-  const { N, K, B, P, NS, NE, HP, M, G, lights } = sc;
+  const { N, K, B, P, NS, NE, HOLE, HP, M, G, lights } = sc;
   const gy = G ? G.y : 0;
   const T = { t: 0, i: -1, nx: 0, ny: 0, nz: 0 };
 
@@ -145,7 +147,9 @@ export function tracer(sc) {
     const k = K[i];
     if (k === BOX) {
       if (tn < EPS) return false; // from inside: not a hit
-      best = tn; bi = i; bnx = ax === 0 ? (dx > 0 ? -1 : 1) : 0; bny = ax === 1 ? (dy > 0 ? -1 : 1) : 0; bnz = ax === 2 ? (dz > 0 ? -1 : 1) : 0;
+      const nx = ax === 0 ? (dx > 0 ? -1 : 1) : 0, ny = ax === 1 ? (dy > 0 ? -1 : 1) : 0, nz = ax === 2 ? (dz > 0 ? -1 : 1) : 0;
+      if (HOLE[i] && !ALPHA[M[i].kind](M[i], ox + dx * tn, oy + dy * tn, oz + dz * tn, nx, ny, nz, B, i)) return false;
+      best = tn; bi = i; bnx = nx; bny = ny; bnz = nz;
       return any;
     }
     const p = i * 12;
@@ -284,7 +288,7 @@ export function tracer(sc) {
     const m = i === -2 ? G.m : M[i];
     S.ar = S.ag = S.ab = 0.5; S.ro = 0.7; S.wet = 0; S.er = S.eg = S.eb = 0; S.metal = 0; S.glass = 0; S.ao = 1;
     S.nx = S.wx = nx; S.ny = S.wy = ny; S.nz = S.wz = nz;
-    m.fn(m, x, y, z, nx, ny, nz, fw, S, i, B);
+    m.fn(m, x, y, z, nx, ny, nz, fw, S, i, B, K);
     return m;
   }
 
@@ -392,6 +396,26 @@ export function tracer(sc) {
     }
     out[0] = r; out[1] = g; out[2] = b;
   }
+  // where a ray (from the lamp's apex at c = o − apex, direction d) is inside a spot lamp's
+  // cone (the forward nappe; cos of the outer half-angle c0): [t0, t1] or null
+  const SPAN = [0, 0];
+  function coneSpan(cx, cy, cz, dx, dy, dz, L) {
+    const c2 = L.c0 * L.c0, dv = dx * L.sx + dy * L.sy + dz * L.sz, cv = cx * L.sx + cy * L.sy + cz * L.sz;
+    const a = dv * dv - c2, b = 2 * (dv * cv - c2 * (dx * cx + dy * cy + dz * cz)), cc = cv * cv - c2 * (cx * cx + cy * cy + cz * cz);
+    const disc = b * b - 4 * a * cc;
+    if (Math.abs(a) < 1e-9) { // the ray runs parallel to the cone's side: one crossing
+      const tc = -cc / b; if (!isFinite(tc)) return null;
+      if (dv > 0) { SPAN[0] = tc; SPAN[1] = 1e9; } else { SPAN[0] = -1e9; SPAN[1] = tc; }
+    } else if (disc < 0) {
+      if (a < 0) return null;
+      if (dv > 0) { SPAN[0] = -cv / dv; SPAN[1] = 1e9; } else { SPAN[0] = -1e9; SPAN[1] = -cv / dv; }
+    } else {
+      const q = Math.sqrt(disc), t1 = (-b - q) / (2 * a), t2 = (-b + q) / (2 * a), lo = Math.min(t1, t2), hi = Math.max(t1, t2);
+      if (a > 0) { if (dv > 0) { SPAN[0] = hi; SPAN[1] = 1e9; } else { SPAN[0] = -1e9; SPAN[1] = lo; } }
+      else { const m = (lo + hi) / 2; if (cv + dv * m < 0) return null; SPAN[0] = lo; SPAN[1] = hi; }
+    }
+    return SPAN;
+  }
   // spot lamps through the mist, with their shadows: equi-angular samples
   const HG = (c) => { const g = FG.g, d = 1 + g * g - 2 * g * c; return (1 - g * g) / (4 * PI * d * Math.sqrt(d)); };
   function mistShafts(ox, oy, oz, dx, dy, dz, t, ns, jit, out) {
@@ -414,7 +438,11 @@ export function tracer(sc) {
       }
       const lx = L.x - ox, ly = L.y - oy, lz = L.z - oz, dl = lx * dx + ly * dy + lz * dz;
       const D = Math.sqrt(Math.max(4e-4, lx * lx + ly * ly + lz * lz - dl * dl));
-      const ta = Math.atan2(-dl, D), tb = Math.atan2(t - dl, D);
+      // a spot lamp lights only the part of the ray inside its cone: sample there (a thin beam
+      // far off is otherwise mostly missed, and comes out as a spray of dots)
+      let s0 = 0, s1 = t;
+      if (L.spot) { const iv = coneSpan(-lx, -ly, -lz, dx, dy, dz, L); if (!iv) continue; s0 = Math.max(0, iv[0]); s1 = Math.min(t, iv[1]); if (s1 <= s0) continue; }
+      const ta = Math.atan2(s0 - dl, D), tb = Math.atan2(s1 - dl, D);
       let acc = 0;
       for (let k = 0; k < ns; k++) {
         const th = ta + (tb - ta) * ((k + ((jit + k * 0.618034) % 1)) / ns), sx = dl + D * Math.tan(th);
@@ -531,7 +559,10 @@ export function tracer(sc) {
       direct(hx, hy, hz, -dx, -dy, -dz, CUT * 20, GC);
       const dm = 1 - S.metal, AM = sc.amb, fl = GI.fill;
       const Tr = Math.exp(-FG.s * t);
-      r += (GC[0] + S.er + AM.sky[0] * S.ar * dm * fl) * Tr; g += (GC[1] + S.eg + AM.sky[1] * S.ag * dm * fl) * Tr; b += (GC[2] + S.eb + AM.sky[2] * S.ab * dm * fl) * Tr;
+      // one ray landing right under a lamp would otherwise speckle the bounce: clamp it
+      let sr = (GC[0] + S.er + AM.sky[0] * S.ar * dm * fl) * Tr, sg = (GC[1] + S.eg + AM.sky[1] * S.ag * dm * fl) * Tr, sb = (GC[2] + S.eb + AM.sky[2] * S.ab * dm * fl) * Tr;
+      const mx = Math.max(sr, sg, sb); if (mx > GI.clamp) { const k = GI.clamp / mx; sr *= k; sg *= k; sb *= k; }
+      r += sr; g += sg; b += sb;
     }
     DEP.gr = r / n; DEP.gg = g / n; DEP.gb = b / n;
   }

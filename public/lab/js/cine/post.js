@@ -48,7 +48,9 @@ export class Post {
       const sw = Math.max(8, Math.round(src.width / 4)), sh = Math.max(8, Math.round(src.height / 4));
       const s = this.small; if (s.width !== sw || s.height !== sh) { s.width = sw; s.height = sh; }
       const g = s.getContext('2d');
-      g.globalCompositeOperation = 'source-over';
+      // on black first: the blur reaches past the edge, and a see-through edge would take the
+      // tint below at full strength (an orange frame round the picture)
+      g.globalCompositeOperation = 'source-over'; g.filter = 'none'; g.fillStyle = '#000'; g.fillRect(0, 0, sw, sh);
       g.filter = 'brightness(0.55) contrast(3.2) blur(3px)';
       g.drawImage(src, 0, 0, sw, sh);
       g.filter = 'none';

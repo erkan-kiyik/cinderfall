@@ -115,6 +115,33 @@ function atOf(P, [x, y, z]) {
   ok(f[0] <= 2 && f[4] >= 253, 'the film curve: black stays black, a blaze clips white');
 }
 
+// a spot lamp's shaft in the mist: sampled only where the ray is inside the cone, it must still
+// come to the integral taken the long way (fine even steps along the whole ray); rays from
+// outside the cone, from inside it, and ones that miss it
+{
+  const cam = { W: 8, H: 8, f: 8, cx: 4, cy: 4, p: [0, 0, 0], yaw: 0, pitch: 0 };
+  const sc = compile({ W: 8, H: 8, cam, prims: [], lights: [{ p: [3, 10, 20], c: [1, 1, 1], I: 100, spot: { d: [-0.2, -1, 0.1], c0: Math.cos(0.3), c1: Math.cos(0.1) }, shafts: true, vol: 1, shadow: false }], fog: { s: 0.01, g: 0.5, c: [0, 0, 0], sky: 100 } });
+  const tr = tracer(sc), L = sc.shafts[0], out = [0, 0, 0], g = sc.fog.g;
+  const HG = (c) => { const d = 1 + g * g - 2 * g * c; return (1 - g * g) / (4 * Math.PI * d * Math.sqrt(d)); };
+  const brute = (O, D, t) => {
+    let acc = 0; const N = 60000, dt = t / N;
+    for (let k = 0; k < N; k++) {
+      const s = (k + 0.5) * dt; let qx = L.x - O[0] - D[0] * s, qy = L.y - O[1] - D[1] * s, qz = L.z - O[2] - D[2] * s; const q = Math.hypot(qx, qy, qz); qx /= q; qy /= q; qz /= q;
+      const c = -(qx * L.sx + qy * L.sy + qz * L.sz), u = Math.min(1, Math.max(0, (c - L.c0) / (L.c1 - L.c0))), sp = u * u * (3 - 2 * u);
+      if (sp > 0) acc += sp * HG(qx * D[0] + qy * D[1] + qz * D[2]) * Math.exp(-sc.fog.s * (s + q)) / (q * q) * dt;
+    }
+    return sc.fog.s * L.vol * acc * L.cr;
+  };
+  let worst = 0;
+  for (const [O, d, t] of [[[0, 0, 0], [0.12, 0.37, 0.92], 100], [[0, 0, 0], [0.06, 0.03, 1], 100], [[2.4, 4, 20.3], [0, 1, 0], 30], [[2.4, 4, 20.3], [0.3, 0.5, -1], 30], [[0, 0, 0], [-0.5, 0.1, 1], 100]]) {
+    const l = Math.hypot(...d), D = d.map((x) => x / l), ref = brute(O, D, t);
+    tr.mistShafts(O[0], O[1], O[2], D[0], D[1], D[2], t, 3000, 0.37, out);
+    worst = Math.max(worst, Math.abs(out[0] - ref) / Math.max(ref, 1e-6));
+    if (ref === 0) ok(out[0] === 0, 'a ray that misses the cone gets no shaft');
+  }
+  ok(worst < 0.01, `spot shafts sampled over the cone's span match the long way (worst ${(worst * 100).toFixed(2)}%)`);
+}
+
 // every plate has a scene, and its scene builds
 for (const name of Object.keys(PLATES)) {
   ok(typeof SCENES[name] === 'function', `${name}: has a scene`);
