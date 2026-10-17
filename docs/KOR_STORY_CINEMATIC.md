@@ -268,6 +268,20 @@ Verlet zinciri: 9 düğüm, 2.6 cm; yerçekimi 9.8, rüzgâr gürültü 0.4–1.
 - Odak dışı ışıklar diyafram diski (`bokeh`), yumuşak leke değil.
 - Şehir (`city.js`): dar apartmanlardan iç avlulu adalar, karışık ışık sıcaklığında pencereler, sodyum + LED sokaklar.
 - Yürüyüşte ayak topuktan basar, parmak ucuyla iter (test: parmak ≤ 4 mm kayar).
+- Görev sahneleri (`m1`–`m3`) artık "plaka" üzerinde: binalar, zemin, lambalar
+  önceden ışın izlenir (`tools/lab/plate/`: kutu/silindir/küre/dışbükey gövde,
+  gölge ışınları, ortam perdelemesi, ıslak zeminde Fresnel yansıması ve
+  GGX parıltısı, sisteki ışık hüzmeleri eşit-açılı örneklemeyle, ACES), 2×
+  süper örneklemeyle, WebP olarak `public/lab/assets/plates/`'e yazılır
+  (`node tools/lab/plate/bake.mjs governor`). Sahne kamerası plakanınkiyle
+  aynı yerde durur (`js/cine/plates.js`), el titremesi ve yavaş zum plakayı
+  kaydırıp büyütür; insanlar, yağmur, tabela neonları, TV ışığı, pencerede
+  Gall canlı çizilir. Telefonda pişirme yok, yalnız resim yüklenir.
+- `m2` pazar: göz hizası yerine karşı binanın birinci katından (VESPER'in
+  gözetlediği pencere) aşağı bakan çekim; tenteler, kasalar, sisli sokak.
+- `m1` kapı: kamera aynı yerde kalır, ileri kayma yerine yavaş zum.
+- Figürler sise göre koyulaştırılır, ışığa göre gölge ve temas gölgesi alır;
+  plakada önlerinde bir şey olmayan yerlerde dururlar (plakanın derinliği yok).
 
 ## 6. "Yapay zekâ gibi durmasın" kuralları
 1. Neon her yerde değil: sadece gerçekten tabela olan yerde. Kadrajın çoğu

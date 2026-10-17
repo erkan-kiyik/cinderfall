@@ -80,3 +80,17 @@ export function mirrorCam(cam, y0 = 0) {
     coc: (Z, s) => cam.coc(Z, s),
   };
 }
+
+// the same camera looking at shadows: every point is first carried along the
+// ray from a lamp at L down onto the ground at y0, so whatever is drawn
+// through it lands where its shadow falls (k is held, so a point level with
+// the lamp doesn't run off to infinity)
+export function shadowCam(cam, L, y0 = 0) {
+  const at = (x, y, z) => { const k = Math.min(12, Math.max(0, (L[1] - y0) / Math.max(1e-3, L[1] - y))); return [L[0] + (x - L[0]) * k, y0 + 0.002, L[2] + (z - L[2]) * k]; };
+  return {
+    W: cam.W, H: cam.H, f: cam.f, pos: cam.pos, _p: cam._p, focus: cam.focus, shadow: true,
+    project: (x, y, z, out = [0, 0, 0, 0]) => { const p = at(x, y, z); return cam.project(p[0], p[1], p[2], out); },
+    toCam: (x, y, z, out) => { const p = at(x, y, z); return cam.toCam(p[0], p[1], p[2], out); },
+    coc: (Z, s) => cam.coc(Z, s),
+  };
+}
