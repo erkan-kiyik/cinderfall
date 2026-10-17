@@ -119,3 +119,22 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .mboss .bar s, .mboss .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; }
 .mboss .bar s { background: rgba(255,201,60,0.7); transition: width .5s; }
 .mboss .bar i { background: linear-gradient(90deg, #ff3347, #ff6b6b); box-shadow: 0 0 8px #ff3347; z-index: 1; transition: width .12s; }
+/* cinematics: full screen, black bars, subtitles under the picture */
+.cine { position: fixed; inset: 0; z-index: 60; background: #000; opacity: 1; transition: opacity .4s; }
+.cine.out { opacity: 0; pointer-events: none; }
+.cine-tap { position: fixed; inset: 0; z-index: 59; background: #050506; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12vh; opacity: 0; transition: opacity .5s; cursor: pointer; }
+.cine-tap.on { opacity: 1; }
+.cine-tap span { font: 500 12px/1 Inter, system-ui, sans-serif; letter-spacing: .32em; text-transform: uppercase; color: rgba(236,230,220,.7); animation: cineTap 2.4s ease-in-out infinite; }
+@keyframes cineTap { 50% { opacity: .35; } }
+.cine canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cine-sub { position: absolute; left: 50%; bottom: max(calc(var(--barH, 0px) + 10px), 4%); transform: translateX(-50%); max-width: 78%; text-align: center; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.cine-sub.on { opacity: 1; }
+.cine-sub b { display: block; font: 600 9px/1 Inter, system-ui, sans-serif; letter-spacing: .22em; color: rgba(230,224,214,.55); margin-bottom: 5px; }
+.cine-sub span { font: 400 15px/1.35 Inter, system-ui, sans-serif; color: #ece6dc; text-shadow: 0 1px 2px rgba(0,0,0,.85), 0 0 1px rgba(0,0,0,.9); }
+.cine-sub.radio span { font-style: italic; color: #dfe6ea; }
+.cine-cap { position: absolute; opacity: 0; transition: opacity .6s; pointer-events: none; font: 500 11px/1 Inter, system-ui, sans-serif; letter-spacing: .3em; text-transform: uppercase; color: rgba(236,230,220,.82); }
+.cine-cap.on { opacity: 1; }
+.cine-cap[data-pos="bl"] { left: max(6%, env(safe-area-inset-left)); bottom: calc(var(--barH, 0px) + 9%); }
+.cine-cap[data-pos="title"] { left: 0; right: 0; text-align: center; top: calc(50% + var(--picH, 50vh) * 0.2); text-transform: none; letter-spacing: .14em; font-size: 12px; color: rgba(236,226,210,.78); }
+.cine-skip { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); padding: 8px 12px; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.18); color: rgba(240,236,228,.75); font: 500 11px/1 Inter, system-ui, sans-serif; letter-spacing: .12em; opacity: 0; transition: opacity .4s; pointer-events: none; }
+.cine-skip.on { opacity: 1; pointer-events: auto; }

@@ -36,6 +36,7 @@ export function freshSave() {
       lang: 'tr', fireRing: 0.78, diff: 'normal',
     },
     hud: { layout: null },  // touch button positions (HUD editor)
+    story: { prologue: false, seen: {} }, // cinematics watched (prologue, m1, m2, m3, act1)
   };
 }
 

@@ -99,7 +99,8 @@ export const legal = {
           doNotSell: P.model === 'optout' ? !!F.doNotSell : false,
         });
         ui('confirm');
-        if (manage) ctx.router.back(); else ctx.router.go('lobby', { entrance: true }, { root: true });
+        const lobby = () => ctx.router.go('lobby', { entrance: true }, { root: true });
+        if (manage) ctx.router.back(); else if (ctx.playStory && !ctx.save.d.story.prologue) ctx.playStory('prologue', { then: lobby }); else lobby();
       } }, U[manage ? 'save' : 'accept']), { sound: null });
       const actions = h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' } }, accept,
         manage && press(h('button.btn.danger.sm.cut', { type: 'button', onclick: () => modal({ title: U.deleteData, body: U.deleteConfirm,

@@ -21,8 +21,9 @@ const files = [path.join(ROOT, 'app.js')];
 const walk = (d) => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) { if (f !== 'lang') walk(p); } else if (f.endsWith('.js')) files.push(p); } };
 walk(path.join(ROOT, 'ui'));
 walk(path.join(ROOT, 'game'));
+walk(path.join(ROOT, 'cine'));
 const used = new Set(), dynamic = [];
-const NS = /(?<!h\()'((?:ui|app|nav|hub|lobby|play|camp|prep|stat|ops|ars|att|trader|prof|res|set|hud|game)\.\w+)'/g;
+const NS = /(?<!h\()'((?:ui|app|nav|hub|lobby|play|camp|prep|stat|ops|ars|att|trader|prof|res|set|hud|game|story|cine)\.[\w.]+)'/g;
 const src = {};
 for (const f of files) {
   const s = src[f] = fs.readFileSync(f, 'utf8').replace(/^\s*\/\/.*$/gm, '');

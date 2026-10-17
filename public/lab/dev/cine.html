@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOR cine</title>
+<link rel="stylesheet" href="../css/tokens.css"><link rel="stylesheet" href="../css/lab.css">
+<style>html,body{margin:0;background:#000}</style></head>
+<body><script type="module">
+// dev: ?scene=prologue|title|m1..  &t=seconds (paused there) — harness: window.__cine
+import { CinePlayer } from '../js/cine/player.js';
+import * as SC from '../js/cine/scenes.js';
+import { setLang } from '../js/ui/i18n.js';
+const q = new URLSearchParams(location.search);
+setLang(q.get('lang') || 'tr');
+await Promise.all(['700 20px Rajdhani', '400 12px Inter'].map((f) => document.fonts.load(f).catch(() => {})));
+const scene = { prologue: SC.PROLOGUE, title: SC.TITLE }[q.get('scene') || 'prologue'] || SC.STORY[q.get('scene')] || SC[q.get('scene')];
+const p = new CinePlayer(scene, { reduce: q.has('reduce') });
+window.__cine = p;
+p.play();
+if (q.has('t')) p.seek(+q.get('t'));
+</script></body></html>

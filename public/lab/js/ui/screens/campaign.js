@@ -66,6 +66,7 @@ export const campaign = {
         m.ready && !ok && h('div.empty.cut', { style: { marginTop: '4px' } }, svg('lock'), h('span', t('camp.needPrev'))),
         c && h('div.wide-row', stars(c.stars, 18), h('div.tag', h('div.eyebrow', t('camp.best')), h('div.h3', c.best !== null ? clock(c.best) : '—'))),
         ok && h('div.diff-row', h('div.eyebrow', t('camp.diff')), seg),
+        ok && ctx.hasStory?.(m.id) && press(h('button.btn.ghost.sm.cut', { type: 'button', onclick: () => ctx.playStory(m.id) }, svg('play'), t('camp.scene')), { sound: 'tap' }),
         go].filter(Boolean));
     }
     render();

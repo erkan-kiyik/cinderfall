@@ -18,6 +18,8 @@ import { syncTints, ensureDaily } from './core/economy.js';
 import { refreshCur } from './ui/screens/common.js';
 import { needsAcceptance } from './legal/consent.js';
 import { Music } from './audio/music.js';
+import { CinePlayer } from './cine/player.js';
+import { PROLOGUE, STORY } from './cine/scenes.js';
 
 const MARKS = { yellow: [1, 0.86, 0.12, 1], blue: [0.2, 0.62, 1, 1], magenta: [1, 0.25, 0.85, 1] };
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -34,6 +36,8 @@ export class App {
     this.ctx = {
       save, version, showcase: this.showcase, reduceMotion: false,
       startMission: (id, o) => this.startMission(id, o),
+      playStory: (id, o) => this.playStory(id, o),
+      hasStory: (id) => !!STORY[id],
       applySettings: () => this.applySettings(),
     };
     this.router = this.ctx.router = new Router(this.uiRoot, this.ctx, SCREENS);
@@ -83,9 +87,42 @@ export class App {
   }
   inkFor(scene) { if (scene && scene.cr) scene.cr.enemyInk = MARKS[this.save.d.settings.enemyMark] || null; }
 
-  start({ entrance = false } = {}) {
+  start({ entrance = false, story = true } = {}) {
     this.router.go(needsAcceptance() ? 'legal' : 'lobby', { entrance }, { root: true });
     if (this.save.recovered) toast(t('app.recovered'));
+    // a player from before the story: the prologue once, on a tap (sound needs one)
+    if (story && !needsAcceptance() && !this.save.d.story.prologue && !new URLSearchParams(location.search).has('nostory')) this.tapToStart();
+  }
+  tapToStart() {
+    const el = document.createElement('div');
+    el.className = 'cine-tap'; el.innerHTML = `<span>${t('story.tap')}</span>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('on'));
+    el.addEventListener('pointerdown', () => { el.remove(); this.playStory('prologue'); }, { once: true });
+  }
+
+  // --- the films: the prologue and the scenes before missions -------------------------------
+  // The film covers everything; the backdrop's loop and the music stop until it ends.
+  playStory(id, { then } = {}) {
+    const scene = id === 'prologue' ? PROLOGUE : STORY[id];
+    // ?nostory (test harnesses): the films are taken as seen
+    const seen = () => this.save.set((d) => { if (id === 'prologue') d.story.prologue = true; else d.story.seen[id] = true; });
+    if (!scene || this.film || new URLSearchParams(location.search).has('nostory')) { if (scene && !this.film) seen(); then?.(); return; }
+    this.e.sfx.unlock();
+    this.music.play(null);
+    const loop = this.e.loop; loop?.stop();
+    const st = this.save.d.settings, quality = st.quality === 'low' ? 'low' : st.quality === 'med' ? 'med' : 'high';
+    this.film = new CinePlayer(scene, {
+      sfx: this.e.sfx, reduce: st.reduceMotion, quality,
+      onEnd: () => {
+        this.film = null;
+        seen();
+        loop?.start();
+        this.music.play('lobby');
+        then?.();
+      },
+    });
+    this.film.play();
   }
 
   // --- back button ---------------------------------------------------------------------
@@ -108,6 +145,8 @@ export class App {
 
   // --- missions --------------------------------------------------------------------------
   startMission(id, { diff = 'normal' } = {}) {
+    // the first time: the scene before the mission
+    if (STORY[id] && !this.save.d.story.seen[id]) { this.playStory(id, { then: () => this.startMission(id, { diff }) }); return; }
     const d = this.save.d, op = d.roster.op, lo = d.roster.loadout[op];
     this.router.clear();
     document.body.classList.add('ui-hidden');
@@ -132,6 +171,8 @@ export class App {
     const gain = applyMission(this.save, r.id, r);
     if (r.retry) { this.startMission(r.id, { diff: r.diff }); return; }
     if (r.abandoned && !r.endless) { this.router.go('campaign', { sel: r.id }, { root: true }); return; }
+    // the end of the first act, the first time the governor's building falls
+    if (r.id === 'm3' && gain.firstClear && !this.save.d.story.seen.act1) { this.playStory('act1', { then: () => this.router.go('result', { r, gain }, { root: true }) }); return; }
     this.router.go('result', { r, gain }, { root: true });
   }
 

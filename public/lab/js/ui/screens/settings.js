@@ -69,6 +69,7 @@ export const settings = {
           seg(t('set.enemyMark'), t('set.enemyMarkHint'), [['off', t('set.off')], ['yellow', t('set.yellow')], ['blue', t('set.blue')], ['magenta', t('set.magenta')]], () => st.enemyMark, (s, v) => { s.settings.enemyMark = v; }),
           range(t('set.shake'), t('set.shakeHint'), 0, 1, 0.1, () => st.shake, (s, v) => { s.settings.shake = v; }),
           toggle(t('set.reduce'), t('set.reduceHint'), () => st.reduceMotion, (s, v) => { s.settings.reduceMotion = v; }),
+          action(t('set.prologue'), t('set.prologueHint'), t('set.watch'), () => ctx.playStory?.('prologue')),
         ];
       } else if (tab === 'lang') {
         rows = [seg(t('set.language'), t('set.languageHint'), Object.entries(LANG_NAMES), () => st.lang, (s, v) => { s.settings.lang = v; })];
