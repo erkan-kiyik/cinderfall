@@ -8,7 +8,7 @@ export default {
   'story.p.3': 'Once a furnace goes cold, they say it never burns again.', 'story.p.4': 'The furnace is still cold. The city is still theirs.',
   'story.p.5': 'Patrol’s past. Ninety seconds.', 'story.p.6': 'I can hold the gate five minutes. No more.',
   'story.p.7': 'Roofs are clear. The tower isn’t looking this way.', 'story.p.8': 'Furnaces go out. Embers stay.', 'story.p.9': 'Operator, the channel is yours.',
-  'story.m1.1': 'Two guards at the gate, one hut. No cameras, just eyes.',
+  'story.m1.1': 'Two guards in the hut. No cameras, just eyes.',
   'story.m1.2': "The terminal's in the yard. I open it, you hold.",
   'story.m1.3': "Let's go in.",
   'story.m2.1': "Vanta are raiding HAWK's stall this morning.",

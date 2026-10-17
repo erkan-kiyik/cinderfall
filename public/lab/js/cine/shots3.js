@@ -1,12 +1,10 @@
 // KOR — cinematics: the scenes before the missions (docs/KOR_STORY_CINEMATIC.md §4).
 // One shot each, under a few lines of radio.
-import { Cam, mirrorCam, shadowCam } from './cam.js';
-import { Human } from './human.js';
-import { Rain, Puffs, softDot, tinted, glow, reflect, beam, contact } from './fx.js';
-import { canvas, fbm2, noise1, rng, clamp, lerp, smooth, fogTexture } from './noise.js';
-import { Ground, asphalt, concrete, bokeh } from './surf.js';
+import { Cam } from './cam.js';
+import { Rain, Puffs, softDot, tinted, glow, reflect } from './fx.js';
+import { canvas, noise1, clamp, smooth, fogTexture } from './noise.js';
 import { softEdges } from './city.js';
-import { v3, lit, tone, capsule3, box3, capsulePts, boxPts, shadow } from './solid.js';
+import { v3, lit, capsule3, box3, capsulePts, boxPts } from './solid.js';
 import { Basement } from './shots2.js';
 import { PLATES, Plate } from './plates.js';
 
@@ -32,10 +30,10 @@ const box = (g, cam, x0, y0, z0, x1, y1, z1, front, side, top) => {
 // m1: the gate into the port at night, from behind a container, on a 50 mm,
 // creeping in. The road, the barrier, the guard hut, the floodlight's cone in
 // the rain, the stacks and the lamps down the road into the mist are a
-// ray-traced plate (plates.js; tools/lab/plate/scenes.js). Live on it: one
-// sentry leaning by the hut, one walking the barrier, the television's light
-// in the hut window, the rain (bright where it falls through the cone), the
-// edge of our container, out of focus.
+// ray-traced plate (plates.js; tools/lab/plate/scenes.js). Live on it: the
+// television's light jumping in the hut window (the two of them are in
+// there), the heater's breath off the hut, the rain (bright where it falls
+// through the cone), the edge of our container, out of focus.
 export class Gate {
   init(W, H, env) {
     this.W = W; this.H = H; this.env = env;
@@ -43,16 +41,14 @@ export class Gate {
     cam.mm = P.mm; cam.pos = P.pos.slice(); cam.yaw = P.yaw; cam.pitch = P.pitch; cam.hand = 0.45; cam.seed = 101; cam.update(0);
     this.plate = new Plate('gate'); this.ready = this.plate.ready;
     this.flood = [5.22, 7.3, 26.1]; this.axis = norm([-0.55, -1, -0.45]);
-    this.sentry1 = new Human({ kit: 'vanta', x: 2.55, z: 23.05, yaw: -Math.PI / 2 - 0.5, pose: 'stand', seed: 111 });
-    this.sentry2 = new Human({ kit: 'vanta', x: -3.8, z: 21.4, yaw: 0, gait: 'careful', seed: 112 });
+    this.vent = [5.97, 1.85, 24.6];
+    this.breath = new Puffs({ rate: 7, life: 3.4, rise: 0.35, grow: 0.7, size: 0.12, col: '#c9ccd2', a: 0.09, seed: 115, lumpy: true });
+    for (let i = 0; i < 70; i++) this.breath.update(0.05, [this.vent], 0.3);
     this.rain = new Rain({ n: [1100, 400, 40], box: [9, 8, 0.5, 40], speed: 8.6, wind: 0.6, seed: 113 });
   }
   update(dt, t) {
     const cam = this.cam; cam.mm = PLATES.gate.mm * (1 + smooth(0, 16, t) * 0.08); cam.update(t);
-    // the walking sentry turns at the ends of his beat
-    const s = this.sentry2; if (s.x > 1.6 && Math.cos(s.yaw) > 0) s.yaw = Math.PI; else if (s.x < -4.3 && Math.cos(s.yaw) < 0) s.yaw = 0;
-    s.step(dt); this.sentry1.step(dt);
-    for (const st of s.takeSteps()) this.env.audio?.cue('step', { wet: 1, vol: 0.25, pan: clamp(s.x / 6, -1, 1) });
+    this.breath.update(dt, [this.vent], 0.3);
     this.rain.update(dt, cam, 0, true);
   }
   // how far into the floodlight's cone a point is (0 outside)
@@ -72,23 +68,8 @@ export class Gate {
       g.beginPath(); q.forEach((v, i) => (i ? g.lineTo(v[0], v[1]) : g.moveTo(v[0], v[1]))); g.closePath();
       const gr = g.createLinearGradient(q[0][0], 0, q[1][0], 0); gr.addColorStop(0, '#5a80d0'); gr.addColorStop(1, '#1a2850'); g.fillStyle = gr; g.fill();
       g.restore(); }
-    // the sentries: the floodlight above and behind (their shadows thrown toward us across the
-    // road), the hut's window warm beside them; their doubles in the wet; the haze between
-    const fq = cam.project(...this.flood), wq = cam.project(3.8, 1.5, 23.5), sc = shadowCam(cam, this.flood, 0);
-    for (const s of [this.sentry2, this.sentry1]) {
-      g.save(); g.globalAlpha = 0.5 * clamp(this.cone(s.x, 0.5, s.z) * 3); g.filter = `blur(${(W * 0.002).toFixed(1)}px)`;
-      s.draw(g, sc, [], { body: '#000000', far: '#000000', visor: 0, emissive: false, simpleLegs: true });
-      g.restore();
-      contact(g, cam, s.x, s.z, 0.5, 0.55);
-    }
-    for (const s of [this.sentry2, this.sentry1]) {
-      const q = cam.project(s.x, 1.2, s.z);
-      const L = [{ dir: [0.35, -1], col: 'rgba(225,232,245,0.75)', w: 1.3, soft: 0.6 }, { dir: 'back', col: 'rgba(225,232,245,0.45)', w: 0.8, soft: 0.5, at: [fq[0], fq[1]], fall: W * 0.6 }, { dir: [wq[0] - q[0], wq[1] - q[1]], col: 'rgba(240,170,100,0.45)', w: 0.7, soft: 0.5, at: [wq[0], wq[1]], fall: W * 0.1 }];
-      g.save(); g.globalAlpha = 0.2; g.filter = `blur(${(W * 0.0015).toFixed(1)}px)`;
-      s.draw(g, mirrorCam(cam, 0), L, { body: '#14110f', far: '#110e0c', visor: 0.5 });
-      g.restore();
-      s.draw(g, cam, L, { body: '#16120f', far: '#120f0c', visor: 0.8, fill: s === this.sentry1 ? { at: [wq[0], wq[1]], r: W * 0.05, col: 'rgba(120,80,50,0.35)' } : null });
-    }
+    // the heater's breath off the side of the hut, lit by the floodlight
+    g.save(); g.globalCompositeOperation = 'screen'; this.breath.draw(g, cam, 0.9); g.restore();
     this.rain.draw(g, cam, { col: '#c4cbd4', light: 0.5, puddle: true, tint: (x, y, z) => { const k = this.cone(x, y, z); return k > 0.02 ? ['#eef3fa', Math.min(1, k * 2.2)] : null; } });
     // the edge of the container we hide behind, out of focus, left of frame
     { const a = cam.project(-1.25, -1, 0.4), b = cam.project(-1.25, 4, 0.4);
@@ -104,25 +85,24 @@ export class Gate {
 // houses, shutters half up, stalls under wet tarps, crates of fruit, cables
 // slung across, the sodium lamp not yet off, mist down to the end where the
 // sky is going pale — is a ray-traced plate. Live on it: the HAWK sign's
-// tubes (W dead, K stuttering) and their red in the wet; the man at HAWK's
-// stall; a woman going away up the street; drizzle; drops off the lintel over
-// our window; the window's edge, out of focus, at the left.
+// tubes (W dead, K stuttering) and their red in the wet; a kettle steaming on
+// a stall, someone's first tea; drizzle; drops off the lintel over our
+// window; the window's edge, out of focus, at the left.
 export class Market {
   init(W, H, env) {
     this.W = W; this.H = H; this.env = env;
     const P = PLATES.market, cam = this.cam = new Cam(W, H);
     cam.mm = P.mm; cam.pos = P.pos.slice(); cam.yaw = P.yaw - 0.03; cam.pitch = P.pitch; cam.hand = 0.22; cam.seed = 121; cam.update(0);
     this.plate = new Plate('market'); this.ready = this.plate.ready;
-    // (both kept in the open lane between the stalls: the plate has nothing in front of them there)
-    this.keeper = new Human({ kit: 'worker', x: 0.85, z: 19.0, yaw: -Math.PI / 2 + 0.5, pose: 'arms', seed: 151 });
-    this.woman = new Human({ kit: 'worker', H: 1.64, x: 0.1, z: 8.5, yaw: Math.PI / 2 + 0.01, gait: 'normal', seed: 152 });
+    this.kettle = [2.1, 1.05, 19.9];
+    this.tea = new Puffs({ rate: 9, life: 3.0, rise: 0.45, grow: 0.5, size: 0.06, col: '#e8ecef', a: 0.12, seed: 151, lumpy: true });
+    for (let i = 0; i < 60; i++) this.tea.update(0.05, [this.kettle], 0.15);
     this.rain = new Rain({ n: [500, 160, 0], box: [8, 7, 1.5, 30], speed: 6.5, wind: 0.25, seed: 123 });
     this.drops = [[0.18, 1.3, 0], [0.37, 0.9, 0.5], [0.61, 1.7, 0.2], [0.83, 1.1, 0.8]];
   }
   update(dt, t) {
     const cam = this.cam; cam.yaw = PLATES.market.yaw - 0.03 + smooth(0, 17, t) * 0.06; cam.update(t);
-    this.keeper.lookYaw = Math.sin(t * 0.4) * 0.4; this.keeper.step(dt);
-    this.woman.step(dt);
+    this.tea.update(dt, [this.kettle], 0.15);
     this.rain.update(dt, cam, 0, true);
   }
   // the tubes: H and A on, W dead, K stuttering
@@ -141,13 +121,8 @@ export class Market {
       if (on > 0.5) { glow(g, q[0], q[1], 0.75 * ppm, '#ff4a26', 0.45 * on); glow(g, q[0], q[1], 0.3 * ppm, '#ff8a60', 0.35 * on); reflect(g, cam, [0.45 + i * 0.68, 4.27, 18.17], 0, '#ff5530', 0.22 * on, 0.5, t); }
     });
     g.restore();
-    // the people: lit by the grey sky, the sodium lamp on the left side of them
-    const lq = cam.project(-3.22, 5.85, 14);
-    for (const p of [this.woman, this.keeper]) {
-      const q = cam.project(p.x, 1.2, p.z);
-      contact(g, cam, p.x, p.z, 0.4, 0.45);
-      p.draw(g, cam, [{ dir: [0, -1], col: 'rgba(190,200,215,0.35)', w: 0.9, soft: 0.6 }, { dir: [lq[0] - q[0], lq[1] - q[1]], col: 'rgba(255,170,90,0.4)', w: 0.7, soft: 0.5, at: [lq[0], lq[1]], fall: W * 0.25 }], { body: '#2a2a2c', far: '#232325', scarf: '#3a2a22' });
-    }
+    // steam off the kettle under HAWK's tarp, drifting in the damp
+    g.save(); g.globalCompositeOperation = 'screen'; this.tea.draw(g, cam, 1); g.restore();
     this.rain.draw(g, cam, { col: '#dfe5ec', light: 0.35 });
     // drops off the lintel over our window, close, out of focus: they gather and let go
     g.save(); g.filter = `blur(${(W * 0.004).toFixed(1)}px)`;
@@ -169,31 +144,21 @@ export class Market {
 // ---------------------------------------------------------------------------------------------
 // m3: the governor's building at night, from across the wet square, on a
 // 24 mm, creeping in. The building, the steps, the square and its lamps are a
-// ray-traced plate (plates.js; tools/lab/plate/scenes.js). On it, live: two
-// sentries at the top of the steps, a patrol crossing the square, Gall at the
-// one lit window (he stands; on FLINT's line he turns away), the banners
-// stirring, mist drifting low over the square, the rain.
+// ray-traced plate (plates.js; tools/lab/plate/scenes.js), one window lit
+// over the door: his. On it, live: the banners stirring, mist drifting low
+// over the square, the rain.
 export class Governor {
   init(W, H, env) {
     this.W = W; this.H = H; this.env = env;
     const P = PLATES.governor, cam = this.cam = new Cam(W, H);
     cam.mm = P.mm; cam.pos = P.pos.slice(); cam.yaw = P.yaw; cam.pitch = P.pitch; cam.hand = 0.3; cam.seed = 131; cam.update(0);
     this.plate = new Plate('governor'); this.ready = this.plate.ready;
-    const top = 1.92;
-    this.sentries = [
-      new Human({ kit: 'vanta', x: -1.35, y: top, z: 28.95, yaw: -Math.PI / 2 + 0.05, seed: 141 }),
-      new Human({ kit: 'vanta', x: 1.45, y: top, z: 28.95, yaw: -Math.PI / 2 - 0.1, seed: 142 }),
-    ];
-    this.patrol = new Human({ kit: 'vanta', x: -10.5, z: 16.6, yaw: 0, gait: 'careful', seed: 143 });
     this.rain = new Rain({ n: [1200, 420, 40], box: [10, 9, 0.5, 34], speed: 8.6, wind: 0.5, seed: 133 });
     this.mist = softEdges(fogTexture(256, 64, 134, 3));
   }
   update(dt, t) {
     const cam = this.cam;
     cam.mm = PLATES.governor.mm * (1 + smooth(0, 16, t) * 0.07); cam.update(t);
-    for (const s of this.sentries) s.step(dt);
-    this.patrol.step(dt);
-    for (const st of this.patrol.takeSteps()) this.env.audio?.cue('step', { wet: 1, vol: 0.12, pan: clamp(this.patrol.x / 10, -1, 1) });
     this.rain.update(dt, cam, 0, true);
   }
   draw(g, t) {
@@ -202,31 +167,11 @@ export class Governor {
     // up from a soft focus while the plate lands (it is a local file: a frame or two)
     if (!this.plate.draw(g, cam)) return;
     this.banners(g, t);
-    this.gall(g, t);
     // the mist low over the square, drifting left
     { const hz = cam.project(0, 0, 60)[1], k = (t * 0.012) % 1;
       g.save(); g.globalAlpha = 0.07; g.globalCompositeOperation = 'screen';
       for (const o of [-1, 0]) g.drawImage(this.mist, (o + 1 - k) * W * 1.4 - W * 0.4, hz - H * 0.12, W * 1.4, H * 0.3);
       g.restore(); }
-    // the sentries: the floods behind and below them, the cold lamps on the square to either side
-    const warm = 'rgba(255,180,110,0.38)', cold = 'rgba(205,220,240,0.14)';
-    for (const s of this.sentries) {
-      const fx = cam.project(Math.sign(s.x) * 2.6, 2.2, 29.1);
-      contact(g, cam, s.x, s.z, 0.45, 0.5, s.y);
-      s.draw(g, cam, [{ dir: 'back', col: warm, w: 0.8, soft: 0.6, at: [fx[0], fx[1]], fall: W * 0.05 }, { dir: [-Math.sign(s.x), -0.3], col: cold, w: 0.5, soft: 0.5 }], { body: '#1a1512', far: '#161210', visor: 0.8 });
-    }
-    // the patrol: lit from the cold lamp on his side, his double in the wet
-    { const p = this.patrol, side = p.x < 0 ? -1 : 1, lq = cam.project(side * 12.5, 7, 9);
-      const L = [{ dir: [lq[0] - cam.project(p.x, 1.2, p.z)[0], lq[1] - cam.project(p.x, 1.2, p.z)[1]], col: 'rgba(215,228,245,0.55)', w: 0.8, soft: 0.5 }, { dir: 'back', col: 'rgba(255,170,100,0.35)', w: 0.6, soft: 0.6 }];
-      // his shadow from the cold lamp, long across the stones
-      g.save(); g.globalAlpha = 0.35; g.filter = `blur(${(W * 0.0025).toFixed(1)}px)`;
-      p.draw(g, shadowCam(cam, [side * 12.5, 7, 9], 0), [], { body: '#000000', far: '#000000', visor: 0, emissive: false, simpleLegs: true });
-      g.restore();
-      contact(g, cam, p.x, p.z, 0.5, 0.5);
-      g.save(); g.globalAlpha = 0.22; g.filter = `blur(${(W * 0.0015).toFixed(1)}px)`;
-      p.draw(g, mirrorCam(cam, 0), L, { body: '#141110', far: '#110f0e', visor: 0.5 });
-      g.restore();
-      p.draw(g, cam, L, { body: '#15120f', far: '#120f0d', visor: 0.8 }); }
     this.rain.draw(g, cam, { col: '#c6ccd4', light: 0.55, puddle: true, tint: (x, y, z) => {
       for (const s of [-1, 1]) { const d2 = (x - s * 15.5) ** 2 + (y - 6.1) ** 2 + (z - 24.5) ** 2; if (d2 < 30) return ['#ffc890', clamp(12 / (d2 + 4))]; }
       return null; } });
@@ -245,23 +190,6 @@ export class Governor {
     }
     g.restore();
     void P;
-  }
-  // Gall, against the lamp of his room: still; he turns from the window on FLINT's line
-  gall(g, t) {
-    const cam = this.cam, z = 35.3, zg = 34.7;
-    const q = [[-0.95, 8.35], [0.95, 8.35], [0.95, 10.65], [-0.95, 10.65]].map(([u, v]) => cam.project(u, v, zg));
-    const turn = smooth(12.2, 13.6, t), sw = Math.sin(t * 0.37) * 0.012, cx = -0.22 + sw + turn * 0.05;
-    const P = (u, v) => cam.project(cx + u, v, z);
-    g.save();
-    g.beginPath(); q.forEach((v, i) => (i ? g.lineTo(v[0], v[1]) : g.moveTo(v[0], v[1]))); g.closePath(); g.clip();
-    g.filter = `blur(${(this.W * 0.0009).toFixed(1)}px)`;
-    g.fillStyle = 'rgba(38,24,14,0.82)';
-    const sh = 0.25 * (1 - turn * 0.35), hx = turn * 0.03;
-    const pts = [[-sh, 8.0], [-sh, 9.22], [-sh * 0.8, 9.33], [-0.07, 9.4], [-0.06, 9.47], [0.06, 9.47], [0.07, 9.4], [sh * 0.8, 9.33], [sh, 9.22], [sh, 8.0]].map(([u, v]) => P(u, v));
-    g.beginPath(); pts.forEach((v, i) => (i ? g.lineTo(v[0], v[1]) : g.moveTo(v[0], v[1]))); g.closePath(); g.fill();
-    const h = P(hx, 9.6), r = P(hx + 0.1, 9.6);
-    g.beginPath(); g.ellipse(h[0], h[1], Math.abs(r[0] - h[0]) * (1 - turn * 0.1), Math.abs(r[0] - h[0]) * 1.25, 0, 0, TAU); g.fill();
-    g.restore();
   }
   post() { return { grain: 0.08, halation: 0.5, lift: [3, 4, 5], warm: 0.02, vignette: 0.65, dirt: 0.45, flicker: 0.015 }; }
 }

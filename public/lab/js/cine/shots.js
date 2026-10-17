@@ -1,7 +1,6 @@
 // KOR — cinematics: the shots of the prologue (docs/KOR_STORY_CINEMATIC.md §2).
 // Each shot builds its still layers once in init() and animates the rest.
 import { Cam, mirrorCam } from './cam.js';
-import { Human } from './human.js';
 import { Rain, Puffs, Sparks, softDot, tinted, glow, beam, reflect, poly } from './fx.js';
 import { canvas, fbm2, noise1, noise2, rng, fogTexture, kelvin, krgba, clamp, lerp, smooth } from './noise.js';
 import { Ground, mud, asphalt, concrete, bokeh } from './surf.js';
@@ -211,8 +210,8 @@ export class Title {
 
 // ---------------------------------------------------------------------------------------------
 // The blast furnace, 420 m away through a 135 mm lens (shots 1 and 3).
-// The plant is painted once in metres on the plane z = Z; workers on its
-// platforms are rigged figures; floodlights come on from the left.
+// The plant is painted once in metres on the plane z = Z; floodlights come
+// on from the left. Nobody is shown: the plant tells it.
 const PLANT_Z = 900;
 export class Furnace {
   constructor(o = {}) { this.o = { dying: false, ...o }; }
@@ -245,14 +244,6 @@ export class Furnace {
     lg.drawImage(lay, -1.5, 1.5); lg.globalAlpha = 1;
     // the glow sources of the furnace (taphole, cast house openings, the top)
     this.hot = [[3.5, 3.2, 1.0], [-6, 2.5, 0.7], [9, 2.2, 0.5], [2, 34, 0.35]];
-    // workers on the platforms and at the cast house
-    const r = rng(12);
-    this.men = [];
-    const spots = [[-1, 24.4], [1.4, 24.4], [4.2, 24.4], [-12.5, 14.2], [-11, 14.2], [7.5, 14.2], [9.4, 14.2], [-4, 0.3], [-2.5, 0.3], [6, 0.3], [11, 0.3], [13.2, 0.3]];
-    for (const [x, y] of spots) {
-      const h = new Human({ kit: 'worker', x, y, z: PLANT_Z - 6, yaw: r() < 0.5 ? Math.PI : 0, seed: Math.floor(r() * 99), pose: r() < 0.3 ? 'arms' : 'stand' });
-      h.lookYaw = (r() - 0.5) * 1.2; this.men.push(h);
-    }
     // three floodlights on trucks, coming on one by one from the left
     this.lamps = [{ at: 2.6, x: -95, y: 3.2, z: 560, aim: [0.83, 0.03, 0.55] }, { at: 3.2, x: -80, y: 3.4, z: 520, aim: [0.8, 0.05, 0.6] }, { at: 3.8, x: -66, y: 3.0, z: 470, aim: [0.75, 0.07, 0.66] }];
     this.rain = new Rain({ n: [900, 300, 20], box: [60, 40, 2, 260], speed: 8.5, wind: 1.4, seed: 2 });
@@ -368,8 +359,6 @@ export class Furnace {
     const sp = cam.project(3, 0, PLANT_Z - 30);
     g.globalAlpha = 0.5 * hot; g.drawImage(tinted(softDot(64), rgb(1600)), sp[0] - sp[3] * 40, sp[1] - sp[3] * 4, sp[3] * 80, sp[3] * 9); g.globalAlpha = 1;
     g.restore();
-    // the men on the platforms and in front of the cast house
-    for (const m of this.men) m.draw(g, cam, hot > 0.05 ? { dir: [0, 1], col: rgb(1800, 1, 0.9 * hot), w: 1 } : {}, { emissive: false, body: '#070607' });
     // the yard between us and the plant: wet ground, rails, the fire in the puddles
     const gy = hor[1];
     const gr = g.createLinearGradient(0, gy, 0, H);
@@ -414,9 +403,8 @@ export class Furnace {
 // ---------------------------------------------------------------------------------------------
 // shot 2: through the fence (§2, shot 2). The lens a step behind a chain-link
 // fence at shin height. Behind it, in the yard: a red road flare burning in
-// the mud, the floodlight tower and two trucks far off, all of it soft. A
-// trooper's boots walk across between us and the flare, a second one further
-// back. Focus starts on the wire; it pulls to the boots as they come in.
+// the mud, the floodlight tower and two trucks far off, all of it soft.
+// Focus starts on the wire; it pulls to the flare, spitting where it fell.
 const FLARE_COL = [1, 0.16, 0.1];
 export class Fence {
   init(W, H, env) {
@@ -491,14 +479,10 @@ export class Fence {
     this.fz = (x) => 0.92 + x * 0.22;
     this.drops = [];
     this.fenceAt = this.buildFence(r);
-    // --- the people ---
-    this.boots = new Human({ kit: 'vanta', gait: 'careful', x: -2.1, z: 2.75, yaw: 0, seed: 8, phase: 0.15 });
-    this.boots2 = new Human({ kit: 'vanta', gait: 'normal', x: -4.3, z: 6.8, yaw: 0, seed: 5, phase: 0.6 });
     this.mid = canvas(W, H);
     this.sparks = new Sparks({ seed: 7, col: '#ff6a4a', drag: 1.6, gravity: -3.2 });
     this.smoke = new Puffs({ rate: 30, life: 1.3, rise: 0.32, grow: 0.4, size: 0.045, col: '#d0524a', a: 0.32, seed: 13, lumpy: true });
     this.smoke2 = new Puffs({ rate: 10, life: 4.5, rise: 0.45, grow: 0.9, size: 0.12, col: '#2e2628', a: 0.2, seed: 14, lumpy: true });
-    this.spray = [];
     this.rain = new Rain({ n: [700, 380, 50], box: [7, 4.2, 0.5, 30], speed: 8.8, wind: 0.7, seed: 9 });
     this.drips = [];
     for (let i = 0; i < 60; i++) { this.smoke.update(0.05, [[this.flare[0] + 0.1, 0.04, this.flare[2]]], 0.3); this.smoke2.update(0.08, [[this.flare[0] + 0.2, 0.3, this.flare[2]]], 0.35); }
@@ -573,20 +557,10 @@ export class Fence {
     return { sharp: c, soft };
   }
   prepare(ms) { this.ground.step(ms); }
-  // focus distance over the shot: on the wire, then pulled to the boots
-  focusAt(t) { return lerp(this.fz(0), 2.9, smooth(0.7, 1.9, t)); }
+  // focus distance over the shot: on the wire, then pulled to the flare in the mud
+  focusAt(t) { return lerp(this.fz(0), this.flare[2], smooth(0.7, 1.9, t)); }
   update(dt, t) {
     const cam = this.cam; cam.update(t);
-    for (const B of [this.boots, this.boots2]) {
-      B.step(dt);
-      for (const st of B.takeSteps()) {
-        const K = st.side > 0 ? 'R' : 'L', a = B.J['heel' + K];
-        if (B === this.boots) for (let i = 0; i < 14; i++) this.spray.push({ x: a[0] + 0.1 + Math.random() * 0.12, y: 0.02, z: a[2] + (Math.random() - 0.5) * 0.12, vx: 0.4 + Math.random() * 1.2, vy: 0.5 + Math.random() * 1.3, vz: (Math.random() - 0.5) * 0.6, t: 0, mud: Math.random() < 0.35 });
-        this.env.audio?.cue('step', { wet: 1, vol: B === this.boots ? 1 : 0.45, pan: clamp(a[0] / 2.5, -1, 1) });
-      }
-    }
-    for (const p of this.spray) { p.t += dt; p.vy -= 9.8 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; }
-    this.spray = this.spray.filter((p) => p.y > -0.01 && p.t < 0.9);
     // the flare spits: sparks and burning drips
     if (Math.random() < dt * 34) this.sparks.burst(this.flare[0] + 0.1, this.flare[1] + 0.02, this.flare[2], 1, 0.7, 1);
     this.sparks.update(dt);
@@ -624,19 +598,13 @@ export class Fence {
     }
     // the floodlight's glare in the rain: a wide soft bloom round the tower
     { const f = cam.project(...this.flood); glow(g, f[0], f[1], H * 0.55, '#8d99a8', 0.12); }
-    // --- mid: ground, flare, smoke, the boots ---
+    // --- mid: ground, flare, smoke ---
     const m = this.mid.getContext('2d');
     m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1; m.filter = 'none';
     m.clearRect(0, 0, W, H);
     this.ground.draw(m, cam, [fl]);
     // the floodlight smeared in the puddles, alive with the rain
     reflect(m, cam, [this.flood[0] + 0.4, this.flood[1], this.flood[2]], 0, '#c9d2de', 0.12, 1.2, t);
-    // the second trooper, further back (his reflection first: it blocks the light in the water)
-    const B2 = this.boots2;
-    B2.drawLegs(m, cam, [], { mirror: true, body: '#050506', far: '#050506', alpha: 0.55 });
-    this.boots.drawLegs(m, cam, [], { mirror: true, body: '#040405', far: '#040405', alpha: 0.6 });
-    const fxp = cam.project(this.flare[0] + 0.1, 0.1, this.flare[2]);
-    B2.drawLegs(m, cam, [{ dir: [-0.5, -1], col: 'rgba(150,165,185,0.42)', w: 0.8, soft: 0.6 }, { dir: [1, 0.2], col: 'rgba(255,58,40,0.6)', w: 1.0, at: [fxp[0], fxp[1]], fall: fxp[3] * 1.4, soft: 0.6 }], { body: '#08080a', far: '#060607' });
     // the flare: a red tube lying in the mud, the burning end white
     // the tube half sunk in the mud: dark paper, lit along its length by its own fire
     const F0 = cam.project(this.flare[0] - 0.19, 0.008, this.flare[2] + 0.06), F1 = cam.project(this.flare[0] + 0.08, 0.016, this.flare[2]);
@@ -657,25 +625,8 @@ export class Fence {
     for (let i = 0; i < 3; i++) { const j = noise1(t * 20 + i * 3, 11) * 0.012; glow(m, fx[0] + (0.02 + i * 0.012) * pr, fx[1] - (0.012 + i * 0.01 + j) * pr, pr * (0.03 - i * 0.006), '#ffd9d0', 0.8 * fl); }
     glow(m, fx[0], fx[1], pr * 0.035, '#ffffff', 1);
     this.sparks.draw(m, cam, 1);
-    // the near trooper's legs: black against the red, rimmed by it
-    const B = this.boots, kz = cam.project(B.x, 0.25, B.z), dx = fx[0] - kz[0], dy = fx[1] - kz[1], dist = Math.hypot(this.flare[0] - B.x, this.flare[2] - B.z);
-    const redA = clamp(1.4 / (dist * dist + 0.4)) * fl;
-    void dx; void dy; void redA;
-    B.drawLegs(m, cam, [{ dir: 'back', col: `rgba(255,${70 + fl * 30 | 0},52,${(0.95 * fl).toFixed(3)})`, w: 1.3, at: [fx[0], fx[1]], fall: fx[3] * 0.6, glow: 0.5, soft: 0.5 }, { dir: [-0.6, -1], col: 'rgba(170,185,205,0.32)', w: 0.7, soft: 0.5 }], { body: '#070708', far: '#050506' });
-    // the spray off the boots: water lit from behind, flecks of mud
-    m.save(); m.globalCompositeOperation = 'lighter';
-    for (const p of this.spray) {
-      if (p.mud) continue;
-      const s = cam.project(p.x, p.y, p.z); if (s[2] <= 0) continue;
-      const d2 = (p.x - this.flare[0]) ** 2 + (p.z - this.flare[2]) ** 2, k = clamp(0.6 / (d2 + 0.3)) * (1 - p.t / 0.9);
-      m.fillStyle = `rgba(255,${90 + k * 60 | 0},70,${(0.25 + k * 0.7).toFixed(3)})`;
-      m.beginPath(); m.arc(s[0], s[1], Math.max(0.5, 0.004 * s[3]), 0, TAU); m.fill();
-    }
-    m.restore();
-    m.fillStyle = '#0a0807';
-    for (const p of this.spray) { if (!p.mud) continue; const s = cam.project(p.x, p.y, p.z); if (s[2] > 0) { m.beginPath(); m.arc(s[0], s[1], Math.max(0.6, 0.007 * s[3]), 0, TAU); m.fill(); } }
     // the mid layer, blurred by how far it sits from the focus
-    const bm = blurAt(3.2);
+    const bm = blurAt(this.flare[2]);
     if (bm > 0.6) { g.filter = `blur(${bm.toFixed(1)}px)`; g.drawImage(this.mid, 0, 0); g.filter = 'none'; } else g.drawImage(this.mid, 0, 0);
     // rain: white in the floodlight, red near the flare
     const flr = this.flare;
@@ -886,11 +837,11 @@ export class Rooftop {
 // ---------------------------------------------------------------------------------------------
 // shot 6: the street, seen in a puddle (§2, shot 6). The lens a hand above a
 // puddle, looking down into it. At the top of the frame, the real street:
-// the far kerb, the bottom of a wall, the boots of a three-man patrol going
-// by. Most of the frame is the puddle, and in it the same street upside
-// down: the troopers whole, their visors, the wall and on it a torn poster,
-// DÜZEN · GÜVENLİK · İTAAT, with KOR sprayed across it. The rain rings the
-// water. Focus starts on the rings and pulls into the reflection.
+// the far kerb, the bottom of a wall. Most of the frame is the puddle, and
+// in it the same street upside down: the wall and on it a torn poster,
+// DÜZEN · GÜVENLİK · İTAAT, with KOR sprayed across it; the patrol has just
+// gone by. The rain rings the water. Focus starts on the rings and pulls
+// into the reflection.
 const WALL_Z = 10.5, KERB_Z = 7.4, PPM_WALL = 190;
 export class Street {
   init(W, H, env) {
@@ -901,9 +852,6 @@ export class Street {
     const r = rng(66);
     // the wall: x −5..5 m, 0..3.2 m, painted once with its light
     this.wall = this.paintWall(r);
-    // the patrol
-    const gait = { stride: 1.5, cadence: 116, lean: 0.08 };
-    this.patrol = [-0.9, -2.3, -3.7].map((x, i) => new Human({ kit: 'vanta', gait, x, z: 8.1 + (i % 2) * 0.4, yaw: 0, seed: 20 + i, phase: i * 0.37 }));
     // the ground: asphalt, the puddle covering most of what we see
     const A = asphalt(9, { lanes: 0 });
     // a long puddle in the dip of the road; dry ground shows at its edges
@@ -1068,10 +1016,6 @@ export class Street {
   update(dt, t) {
     const cam = this.cam; cam.update(t);
     this.mcam = mirrorCam(cam, 0);
-    for (const B of this.patrol) {
-      B.step(dt);
-      for (const st of B.takeSteps()) this.env.audio?.cue('step', { wet: 1, vol: 0.7, pan: clamp(B.x / 3, -1, 1) });
-    }
     // rain on the puddle: rings
     const n = dt * 26;
     for (let i = 0; i < n || Math.random() < n - i; i++) { const x = (Math.random() - 0.5) * 6, z = 1.8 + Math.random() * 5; if (this.puddle(x, z)) this.rings.push({ x, z, t: 0, s: 0.7 + Math.random() * 0.6 }); if (i > 40) break; }
@@ -1108,13 +1052,7 @@ export class Street {
     g.fillStyle = '#26211b'; g.beginPath(); g.moveTo(c0[0], c0[1]); g.lineTo(c1[0], c1[1]); g.lineTo(k1[0], k1[1]); g.lineTo(k0[0], k0[1]); g.closePath(); g.fill();
     // the tube glows; in the water it is a bar of light
     if (this.tubeOn > 0.1) { const tq = cam.project(0.25, 2.75, WALL_Z - 0.05); glow(g, tq[0], tq[1], 0.9 * tq[3], '#cfe0ea', 0.3 * this.tubeOn); glow(g, tq[0], tq[1], 0.12 * tq[3], '#ffffff', 0.7 * this.tubeOn); }
-    // the patrol
-    for (const B of this.patrol) {
-      const tq = cam.project(0.25, 2.75, WALL_Z);
-      const rimA = [{ dir: mir ? [-0.7, 1] : [-0.7, -1], col: 'rgba(255,160,90,0.4)', w: 0.9, soft: 0.6 }, { dir: 'back', col: `rgba(200,220,235,${(0.45 * this.tubeOn).toFixed(2)})`, w: 0.7, at: [tq[0], tq[1]], fall: W * 0.22, soft: 0.6 }];
-      B.draw(g, cam, rimA, { body: '#0b0b0d', far: '#08080a', detailLegs: true, showVisor: mir, visor: 0.9 });
-    }
-    void H;
+    void W; void H;
   }
   draw(g, t) {
     const W = this.W, H = this.H, cam = this.cam, mc = this.mcam;

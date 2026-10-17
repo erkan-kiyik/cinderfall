@@ -414,6 +414,23 @@ export const MATS = {
     if (ny < 0) { S.er = S.ar * (m.glow ?? 0.12); S.eg = S.ag * (m.glow ?? 0.12); S.eb = S.ab * (m.glow ?? 0.12); S.wet = 0.1; }
   },
 
+  // cloth (uniform, coat, trousers): a weave, creases that run round the limb, soaked dark in the rain
+  fabric(m, x, y, z, nx, ny, nz, fw, S) {
+    const f = face(x, y, z, nx, ny, nz), s = m.seed;
+    const cr = fbm(f.U * 9 + y * 2, f.V * 14, 3, s, fw * 14);
+    set(S, m.col, (0.8 + 0.4 * fbm(f.U * 3, f.V * 3, 3, s + 1, fw * 3)) * (0.88 + 0.24 * cr));
+    S.ro = m.ro ?? 0.85; S.wet = m.wet ?? 0.35;
+    const e = 0.01; bend(S, -(fbm((f.U + e) * 9 + y * 2, f.V * 14, 3, s, fw * 14) - cr) / e * 0.02, -(fbm(f.U * 9 + y * 2, (f.V + e) * 14, 3, s, fw * 14) - cr) / e * 0.03);
+  },
+  // moulded armour and gear: a satin polymer, scuffed pale on the edges of wear
+  armor(m, x, y, z, nx, ny, nz, fw, S) {
+    const f = face(x, y, z, nx, ny, nz), s = m.seed;
+    const sc = ss(0.62, 0.72, fbm(f.U * 7, f.V * 7, 4, s, fw * 7));
+    set(S, m.col, (0.9 + 0.2 * fbm(f.U * 2, f.V * 2, 3, s + 1, fw * 2)));
+    if (sc > 0) { S.ar += (0.16 - S.ar) * sc * 0.5; S.ag += (0.16 - S.ag) * sc * 0.5; S.ab += (0.16 - S.ab) * sc * 0.5; }
+    S.ro = m.ro ?? 0.45; S.wet = m.wet ?? 0.45;
+  },
+
   // painted or bare metal
   metal(m, x, y, z, nx, ny, nz, fw, S) {
     const f = face(x, y, z, nx, ny, nz);

@@ -1,5 +1,5 @@
 // KOR — cinematics: small solids lit by one lamp (§5.8): capsules, boxes,
-// cylinders and hands, each shaded by the cosine to the lamp and falling off
+// and cylinders, each shaded by the cosine to the lamp and falling off
 // with distance; and the same shapes thrown as shadows onto a plane.
 import { clamp } from './noise.js';
 
@@ -106,31 +106,4 @@ export function shadow(g, cam, lampP, pts, y0, col = '#000') {
   for (let i = q.length - 1; i >= 0; i--) { const p = q[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
   const h = lo.slice(0, -1).concat(up.slice(0, -1));
   g.fillStyle = col; g.beginPath(); h.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
-}
-
-// A gloved hand. pose: 'flat' (palm down, fingers out), 'fist' (knuckles
-// down on the table), 'grip' (round a mug or a pencil). wrist: [x,y,z];
-// dir: the way the fingers point (on the table plane); returns its parts
-// as capsules [a, b, ra, rb] so they can be drawn and thrown as shadows.
-export function handParts(wrist, dir, pose, side = 1, curl = 0) {
-  const f = norm([dir[0], 0, dir[2]]), up = [0, 1, 0], r = mul(norm(cross(up, f)), side);
-  const P = (x, y, z) => add(wrist, add(mul(f, x), add(mul(up, y), mul(r, z))));
-  const parts = [];
-  if (pose === 'fist') {
-    // the fist sits on its knuckles: a block of fingers rolled under the palm
-    parts.push([P(0.0, 0.035, 0), P(0.06, 0.04, 0), 0.042, 0.044]);
-    for (let i = 0; i < 4; i++) { const z = (i - 1.5) * 0.02; parts.push([P(0.075, 0.035, z), P(0.085, 0.012, z * 1.05), 0.012, 0.011]); }
-    parts.push([P(0.03, 0.045, 0.04 * 1), P(0.07, 0.04, 0.028), 0.012, 0.011]); // thumb across
-  } else if (pose === 'flat') {
-    // palm down: the palm, four fingers close together, the thumb out to the side
-    parts.push([P(0.0, 0.024, -0.012), P(0.07, 0.016, -0.012), 0.026, 0.024], [P(0.0, 0.024, 0.014), P(0.07, 0.016, 0.014), 0.026, 0.024]);
-    for (let i = 0; i < 4; i++) { const z = (i - 1.5) * 0.019, L = [0.07, 0.082, 0.078, 0.062][i], sp = (i - 1.5) * 0.035; parts.push([P(0.085, 0.013, z), P(0.085 + L * Math.cos(sp), 0.008, z + L * Math.sin(sp)), 0.0095, 0.0085]); }
-    parts.push([P(0.03, 0.018, 0.036), P(0.075, 0.01, 0.068), 0.012, 0.01]);
-  } else {
-    // grip: fingers curled round something about 3 cm across
-    parts.push([P(0.0, 0.035, 0), P(0.06, 0.04, 0), 0.032, 0.03]);
-    for (let i = 0; i < 4; i++) { const z = (i - 1.5) * 0.02; parts.push([P(0.07, 0.04, z), P(0.085 + curl * 0.01, 0.0, z), 0.011, 0.01]); }
-    parts.push([P(0.03, 0.03, 0.035), P(0.08, 0.035, 0.02), 0.012, 0.01]);
-  }
-  return parts;
 }

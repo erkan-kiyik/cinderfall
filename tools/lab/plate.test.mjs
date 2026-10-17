@@ -59,6 +59,43 @@ function atOf(P, [x, y, z]) {
   ok(tr.hit(0, 1, 0, 0, 0, 1, 5.1, true, false) === true, 'and is stopped by it');
 }
 
+// capsules and ellipsoids
+{
+  const s3 = Math.SQRT1_2;
+  const sc = compile({ W: 8, H: 8, cam: { p: [0, 0, 0], yaw: 0, pitch: 0, f: 8, cx: 4, cy: 4 }, prims: [
+    { cap: [-1, 0, 5, 1, 0, 5, 0.25], m: { kind: 'flat' } },
+    { cap: [10, -1, 5, 10, 1, 5, 0.5], m: { kind: 'flat' } },
+    { ell: { c: [0, 5, 5], axes: [[s3, s3, 0], [-s3, s3, 0], [0, 0, 1]], r: [2, 0.5, 0.3] }, m: { kind: 'flat' } },
+  ] });
+  const tr = tracer(sc), T = tr.T;
+  ok(tr.hit(0, 0, 0, 0, 0, 1, 1e4, false, false) && near(T.t, 4.75, 1e-9) && near(T.nz, -1, 1e-9), 'capsule: its side');
+  ok(tr.hit(-3, 0, 5, 1, 0, 0, 1e4, false, false) && near(T.t, 1.75, 1e-9) && near(T.nx, -1, 1e-9), 'capsule: the ball at its end');
+  ok(tr.hit(10, 3, 5, 0, -1, 0, 1e4, false, false) && near(T.t, 1.5, 1e-9) && near(T.ny, 1, 1e-9), 'capsule: end on, along its axis');
+  ok(tr.hit(0, 5, 0, 0, 0, 1, 1e4, false, false) && near(T.t, 4.7, 1e-9) && near(T.nz, -1, 1e-9), 'ellipsoid: through its thin axis');
+  ok(tr.hit(-5 * s3 * 2, 5 - 5 * s3 * 2, 5, s3, s3, 0, 1e4, false, false) && near(T.t, 5 * 2 - 2, 1e-6), `ellipsoid: along its long axis (${T.t.toFixed(4)})`);
+}
+
+// the sun: a directional light, shadowed by a roof
+{
+  const spec = (roof) => ({ W: 8, H: 8, cam: { p: [0, 1, -3], yaw: 0, pitch: 0, f: 8, cx: 4, cy: 4 }, ground: { y: 0, m: { kind: 'flat', col: [0.5, 0.5, 0.5] } },
+    prims: roof ? [{ box: [-5, 3, -5, 5, 3.2, 5], m: { kind: 'flat' } }] : [], lights: [{ dir: [0, -1, 0], c: [1, 1, 1], I: 3 }],
+    sky: { zen: [0, 0, 0], hor: [0, 0, 0], cloud: 0 }, amb: { sky: [0, 0, 0], gnd: [0, 0, 0] }, fog: { s: 0 }, ao: { n: 0 }, aa: false, refl: { streak: 0 } });
+  const L = (tr) => { const out = [0, 0, 0], rf = [0, 0, 0, 0], am = [0, 0, 0], n = Math.hypot(1, 3); tr.shade(0, 1, -3, 0, -1 / n, 3 / n, 0, 0, 0, out, rf, am); return out[0]; };
+  const a = L(tracer(compile(spec(false)))), b = L(tracer(compile(spec(true))));
+  ok(a >= 0.5 / Math.PI * 3 * 0.999 && a < 0.5 / Math.PI * 3 * 1.1, `sun on grey ground: ρ/π·E (${a.toFixed(4)})`);
+  ok(b < 1e-6, 'and none under a roof');
+}
+
+// one bounce: a floor under a roof, lit only through the open sides by a bright sky
+{
+  const spec = { W: 24, H: 10, cam: { p: [0, 1, -1], yaw: 0, pitch: -0.3, f: 20, cx: 12, cy: 5 }, ground: { y: 0, m: { kind: 'flat', col: [0.5, 0.5, 0.5] } },
+    prims: [{ box: [-3, 3, -3, 3, 3.2, 3], m: { kind: 'flat' } }], lights: [],
+    sky: { zen: [1, 1, 1], hor: [1, 1, 1], cloud: 0 }, amb: { sky: [0, 0, 0], gnd: [0, 0, 0] }, fog: { s: 0 }, ao: { n: 0 }, aa: false, refl: { streak: 0 }, gi: { n: 64, step: 1, fill: 0 }, hdr: true };
+  const r = renderBand(compile(spec), 0, 10);
+  let m = 0; for (let i = 0; i < r.fl.length; i += 3) m = Math.max(m, r.fl[i]);
+  ok(m > 0.05 && m < 0.5, `gathered sky light under a roof stays between none and open sky (${m.toFixed(3)})`);
+}
+
 // light and shadow: a lamp over the ground, a box between them
 {
   const spec = (block) => ({ W: 32, H: 14, cam: { p: [0, 1.6, -4], yaw: 0, pitch: -0.25, f: 30, cx: 16, cy: 7 }, ground: { y: 0, m: { kind: 'flat', col: [0.5, 0.5, 0.5] } },

@@ -1,9 +1,8 @@
 // KOR — cinematics: shots 7–9 of the prologue (docs/KOR_STORY_CINEMATIC.md §2).
-import { Cam, mirrorCam } from './cam.js';
-import { Human, ik2 } from './human.js';
+import { Cam } from './cam.js';
 import { Rain, Puffs, softDot, tinted, glow, poly, reflect } from './fx.js';
 import { canvas, fbm2, noise1, noise2, rng, clamp, lerp, smooth } from './noise.js';
-import { v3, lit, tone, capsule3, box3, cyl3, capsulePts, boxPts, shadow, handParts } from './solid.js';
+import { v3, lit, tone, capsule3, box3, cyl3, capsulePts, boxPts, shadow } from './solid.js';
 
 const TAU = Math.PI * 2;
 const { add, sub, mul, norm } = v3;
@@ -13,12 +12,10 @@ const ease = (a, b, t) => smooth(a, b, t);
 // shot 7: the table (§2, shot 7). Seen from above, under a lamp with an enamel
 // shade swinging on its flex (0.45 Hz, 14°): the pool of light moves over a
 // map of the town marked up in pencil and red; a radio with a green light and
-// its aerial, two mugs, a magazine and loose rounds. The four of them are
-// their hands: WARDEN's fists on the far edge (he puts one down on the gate
-// as he talks), SKYE's palms flat at the right end (one slides to the tower),
-// BULWARK's hand round a mug (he takes it away at 5.5 s, leaving its ring),
-// VESPER's hand near us with a pencil on the route. Every shadow swings with
-// the lamp. The camera creeps in (a slow zoom, 40 → 43 mm).
+// its aerial, two mugs, a magazine and loose rounds, a pencil put down on the
+// route, a cigarette burning in the ashtray. Nobody is in the frame: the four
+// of them are their voices over it. Every shadow swings with the lamp. The
+// camera creeps in (a slow zoom, 40 → 43 mm).
 const TY = 0.78, TB = { x0: -0.82, x1: 0.82, z0: -0.46, z1: 0.46 };
 const MAP = { cx: -0.02, cz: 0.02, w: 0.92, h: 0.62, rot: 0.045 };
 export class Basement {
@@ -147,39 +144,9 @@ export class Basement {
     const a = cam.project(...ref), b = bc.project(...ref);
     return { k, ox: a[0] - b[0] * k, oy: a[1] - b[1] * k };
   }
-  // where the hands are at time t
-  pose(t) {
-    const o = {};
-    // WARDEN: fists on the far edge; the right one lifts and comes down on the gate
-    const tap = ease(1.25, 1.75, t), up = Math.sin(clamp((t - 1.25) / 0.5) * Math.PI) * 0.06;
-    o.wL = { w: [-0.14, TY, 0.4], dir: [0.15, 0, -1], pose: 'fist', side: -1, elbow: [-0.24, 1.08, 0.66], sh: [-0.24, 1.42, 0.8], col: [30, 33, 26] };
-    o.wR = { w: [lerp(0.15, 0.17, tap), TY + up, lerp(0.41, 0.24, tap)], dir: [-0.15, 0, -1], pose: 'fist', side: 1, elbow: [0.27, 1.08, 0.66], sh: [0.24, 1.42, 0.8], col: [30, 33, 26] };
-    // SKYE: palms flat at the right end; one slides to the tower at 4.4 s
-    const sl = ease(4.3, 5.0, t);
-    o.sL = { w: [lerp(0.7, 0.13, sl), TY, lerp(-0.13, 0.11, sl)], dir: [-1, 0, 0.1], pose: 'flat', side: -1, elbow: [1.3, 1.25, -0.1], sh: [lerp(1.12, 0.72, sl), lerp(1.36, 1.24, sl), lerp(-0.06, 0.02, sl)], col: [34, 37, 42] };
-    o.sR = { w: [0.72, TY, 0.17], dir: [-1, 0, -0.15], pose: 'flat', side: 1, elbow: [1.3, 1.25, 0.3], sh: [1.15, 1.38, 0.1], col: [34, 37, 42] };
-    // BULWARK: his hand round a mug; he takes it away at 5.5 s
-    const lift = ease(5.4, 6.4, t);
-    o.mug = [lerp(-0.52, -0.78, lift), TY + lift * 0.55, lerp(-0.05, 0.0, lift)];
-    o.b = { w: [o.mug[0] - 0.095, o.mug[1] + 0.045, o.mug[2] - 0.01], dir: [1, 0, 0.05], pose: 'grip', side: 1, elbow: [-0.86 - lift * 0.1, 1.0 + lift * 0.2, -0.02], sh: [-1.12, 1.38, 0.05], col: [18, 18, 19] };
-    // VESPER: near us, a pencil on the route, tracing it
-    const tr = ease(0.4, 3.6, t) * 0.07;
-    o.vTip = [-0.15 + tr, TY, -0.25 + tr * 0.6];
-    o.v = { w: [o.vTip[0] - 0.1, TY + 0.05, o.vTip[2] - 0.11], dir: [0.5, 0, 0.6], pose: 'grip', side: 1, elbow: [-0.45, 0.86, -0.56], sh: [-0.66, 1.12, -0.82], col: [40, 30, 24] };
-    return o;
-  }
-  // every hand and arm as capsules [a, b, ra, rb, col]
-  armParts(h0) {
-    let h = h0;
-    const parts = handParts(h0.w, h0.dir, h0.pose, h0.side).map(([a, b, ra, rb]) => [a, b, ra, rb, [16, 16, 17]]);
-    // the elbow from the shoulder and the wrist (upper arm 0.31 m, forearm 0.28 m),
-    // bending the way the hint points
-    const mid = v3.lerp(h.sh, h.w, 0.5), elbow = ik2(h.sh, h.w, 0.31, 0.28, sub(h.elbow, mid));
-    h = { ...h, elbow };
-    // the cuff of the sleeve over the glove, the forearm, the upper arm
-    const cuff = add(h.w, mul(norm(sub(h.elbow, h.w)), 0.05));
-    parts.unshift([h.w, cuff, 0.036, 0.046, [14, 14, 15]], [cuff, h.elbow, 0.05, 0.06, h.col], [h.elbow, h.sh, 0.064, 0.07, h.col]);
-    return parts;
+  // where the things that were just put down lie
+  pose() {
+    return { mug: [-0.52, TY, -0.05], vTip: [-0.12, TY, -0.23] };
   }
   draw(g, t) {
     const W = this.W, H = this.H, cam = this.cam, Lm = this.lamp(t), o = this.pose(t);
@@ -214,7 +181,7 @@ export class Basement {
     // the near edge of the table
     { const a = cam.project(TB.x0, TY, TB.z0), b = cam.project(TB.x1, TY, TB.z0), c = cam.project(TB.x1, TY - 0.04, TB.z0), e = cam.project(TB.x0, TY - 0.04, TB.z0);
       g.fillStyle = '#1a120c'; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]); g.lineTo(e[0], e[1]); g.closePath(); g.fill(); }
-    // the things and the hands, far to near
+    // the things, far to near
     for (const fn of things.draw) fn(g, Lm, t);
     // VESPER's arm is close to us: out of focus, on its own layer
     const ng = this.near.getContext('2d'); ng.setTransform(1, 0, 0, 1, 0, 0); ng.globalCompositeOperation = 'source-over'; ng.globalAlpha = 1; ng.filter = 'none'; ng.clearRect(0, 0, W, H);
@@ -249,12 +216,10 @@ export class Basement {
     shadows.push(boxPts(mag0, [0.08, 0, 0.02], [0, 0.012, 0], [-0.006, 0, 0.018]));
     const torch = [[0.62, TY + 0.018, -0.3], [0.74, TY + 0.02, -0.18]];
     shadows.push(capsulePts(torch[0], torch[1], 0.018, 0.022));
-    const arms = ['wL', 'wR', 'sL', 'sR', 'b'].map((k) => this.armParts(o[k]));
-    const vArm = this.armParts(o.v);
-    for (const a of arms.concat([vArm])) for (const [a1, b1, ra, rb] of a) shadows.push(capsulePts(a1, b1, ra, rb));
-    const pencil = [o.vTip, add(o.vTip, [-0.07, 0.09, -0.06])];
-    shadows.push(capsulePts(pencil[0], pencil[1], 0.003, 0.004));
-    // drawing order: the things on the table, then the arms over them (far first)
+    // a pencil put down across the route
+    const pencil = [add(o.vTip, [0, 0.004, 0]), add(o.vTip, [-0.11, 0.004, -0.05])];
+    shadows.push(capsulePts(pencil[0], pencil[1], 0.0035, 0.0035));
+    // drawing order: far to near
     draw.push((g, L) => box3(g, cam, R0, RX, RY, RZ, L, [38, 40, 36], 0.05));
     draw.push((g, L, t) => {
       const fr = cam.project(R0[0], R0[1], R0[2] - 0.076);
@@ -276,10 +241,7 @@ export class Basement {
       const lq = cam.project(mugB[0] + (L.p[0] - mugB[0]) * 0.02, TY + 0.1, mugB[2]); glow(g, lq[0], lq[1], 0.01 * lq[3], '#ffe0b0', 0.6); void m;
     });
     draw.push((g, L) => { cyl3(g, cam, mugA, 0.042, 0.095, L, [44, 62, 50], [16, 14, 12], 0.05); const h0 = add(mugA, [-0.045, 0.07, 0]), h1 = add(mugA, [-0.07, 0.03, 0]); capsule3(g, cam, h0, h1, 0.007, 0.007, L, [44, 62, 50], 0.05); });
-    // the arms: WARDEN's (far), then SKYE's and BULWARK's
-    for (const a of arms) draw.push((g, L) => { a.forEach(([a1, b1, ra, rb, col], i) => capsule3(g, cam, a1, b1, ra, rb, L, col, 0.035, i === 1 || i === 2 ? { folds: 4, seed: i * 7 + a1[0] * 100 } : {})); });
-    // VESPER's pencil and hand, near
-    near.push((g, L) => { capsule3(g, cam, pencil[0], pencil[1], 0.0025, 0.0045, L, [170, 140, 60], 0.05); vArm.forEach(([a1, b1, ra, rb, col], i) => capsule3(g, cam, a1, b1, ra, rb, L, col, 0.035, i === 1 || i === 2 ? { folds: 4, seed: 11 + i } : {})); });
+    draw.push((g, L) => capsule3(g, cam, pencil[0], pencil[1], 0.0035, 0.0035, L, [170, 140, 60], 0.05));
     return { draw, near, shadows };
   }
   // a thread of smoke: it rises straight a little way, then breaks into
@@ -312,9 +274,10 @@ export class Basement {
 // shot 8: the scarf (§2, shot 8). 100 mm, close on the basement wall: old
 // plaster raked by the bulb from the right, so every bump throws a shadow; a
 // black-and-white photograph pinned up (workers in front of a furnace, a name
-// written on the border); beside it a red wool scarf over a rusty nail. A
-// gloved hand comes in from the right (its shadow first), takes the scarf
-// and pulls it off the nail; the camera follows a beat late.
+// written on the border); beside it a red wool scarf over a rusty nail. At
+// 2.4 s someone out of the frame takes it: the scarf is pulled up off the
+// nail and gone; the camera starts after it a beat late and stays on the
+// empty nail and the photograph.
 const NAIL = [0.1, 1.5, -0.03], LAMP8 = [0.95, 1.75, -0.5];
 export class Scarf {
   init(W, H, env) {
@@ -325,8 +288,7 @@ export class Scarf {
     this.M = Math.round(W * 0.4);
     this.gen = this.bake(); this.ready = false;
     this.cloth = this.makeCloth();
-    this.hand = { p: [0.42, 1.36, -0.12] };
-    this.hs = canvas(W, H); this.hl = canvas(W, H);
+    this.hs = canvas(W, H);
     this.photo = this.paintPhoto(rng(88));
   }
   prepare(ms) { if (this.ready) return; const t0 = performance.now(); while (performance.now() - t0 < ms) if (this.gen.next().done) { this.ready = true; return; } }
@@ -447,7 +409,7 @@ export class Scarf {
       if (i + 1 < nl && j + 1 < nw) { L.push([at(i, j), at(i + 1, j + 1), Math.hypot(w, sl), true]); L.push([at(i, j + 1), at(i + 1, j), Math.hypot(w, sl), true]); }
     }
     // settle it before the shot starts
-    const c = { P, L, nw, nl, mid, grab: -1, onNail: true };
+    const c = { P, L, nw, nl, mid, onNail: true, pull: false, pullP: null };
     for (let k = 0; k < 120; k++) this.stepCloth(c, 1 / 60, 0);
     return c;
   }
@@ -456,8 +418,9 @@ export class Scarf {
   stepCloth(c, dt, t) {
     const g = -9.8 * dt * dt, wind = 0.02 * noise1(t * 0.7, 3) * dt * dt;
     for (let n = 0; n < c.P.length; n++) {
-      const q = c.P[n]; if (q.pin && c.onNail) { const j = n % c.nw; q.p = [NAIL[0] + (j - (c.nw - 1) / 2) * 0.004, NAIL[1] + 0.006 + Math.abs(j - (c.nw - 1) / 2) * 0.001, NAIL[2] + 0.008 - (j % 2) * 0.006]; q.o = q.p.slice(); continue; }
-      if (n === c.grab) continue;
+      const q = c.P[n], j = n % c.nw;
+      if (q.pin && c.onNail) { q.p = [NAIL[0] + (j - (c.nw - 1) / 2) * 0.004, NAIL[1] + 0.006 + Math.abs(j - (c.nw - 1) / 2) * 0.001, NAIL[2] + 0.008 - (j % 2) * 0.006]; q.o = q.p.slice(); continue; }
+      if (q.pin && c.pull) { const P0 = c.pullP; q.o = q.p.slice(); q.p = [P0[0] + (j - (c.nw - 1) / 2) * 0.005, P0[1] + Math.abs(j - (c.nw - 1) / 2) * 0.001, P0[2] - (j % 2) * 0.006]; continue; }
       const v = [(q.p[0] - q.o[0]) * 0.985, (q.p[1] - q.o[1]) * 0.985, (q.p[2] - q.o[2]) * 0.985];
       q.o = q.p.slice(); q.p = [q.p[0] + v[0] + wind, q.p[1] + v[1] + g, q.p[2] + v[2]];
     }
@@ -466,7 +429,7 @@ export class Scarf {
         const A = c.P[a], B = c.P[b], dx = B.p[0] - A.p[0], dy = B.p[1] - A.p[1], dz = B.p[2] - A.p[2], d = Math.hypot(dx, dy, dz) || 1e-6;
         if (slack && d < l) continue;
         const k = (d - l) / d * 0.5;
-        const fa = (A.pin && c.onNail) || a === c.grab ? 0 : 1, fb = (B.pin && c.onNail) || b === c.grab ? 0 : 1, s = fa + fb; if (!s) continue;
+        const fa = A.pin && (c.onNail || c.pull) ? 0 : 1, fb = B.pin && (c.onNail || c.pull) ? 0 : 1, s = fa + fb; if (!s) continue;
         A.p[0] += dx * k * 2 * fa / s; A.p[1] += dy * k * 2 * fa / s; A.p[2] += dz * k * 2 * fa / s;
         B.p[0] -= dx * k * 2 * fb / s; B.p[1] -= dy * k * 2 * fb / s; B.p[2] -= dz * k * 2 * fb / s;
       }
@@ -474,28 +437,15 @@ export class Scarf {
       for (let n = 0; n < c.P.length; n++) { const q = c.P[n], i = (n / c.nw) | 0; const zmax = i > c.mid ? -0.016 : -0.005; if (q.p[2] > zmax) q.p[2] = zmax; }
     }
   }
-  // the hand's path: in from the right at 1.0 s, on the scarf at 2.2, away by 3.5
-  handAt(t) {
-    const a = [0.4, 1.33, -0.16], b = [0.13, 1.405, -0.04], e = [0.58, 1.28, -0.3];
-    if (t < 1.0) return a;
-    if (t < 2.2) return v3.lerp(a, b, smooth(1.0, 2.2, t));
-    return v3.lerp(b, e, smooth(2.35, 3.6, t));
-  }
   update(dt, t) {
     const c = this.cloth;
-    this.hand.p = this.handAt(t);
-    // the grip closes on the front of the scarf, a hand's length below the nail
-    if (t >= 2.2 && c.grab < 0) {
-      let best = 1e9; c.P.forEach((q, n) => { const d = Math.hypot(q.p[0] - this.hand.p[0] + 0.02, q.p[1] - this.hand.p[1], q.p[2] + 0.024); if (((n / c.nw) | 0) > c.mid && d < best) { best = d; c.grab = n; } });
-      this.env.audio?.cue('cloth', { vol: 1.2 });
-    }
-    if (c.grab >= 0) { const q = c.P[c.grab]; q.o = q.p.slice(); q.p = add(this.hand.p, [-0.03, -0.005, 0.03]); }
-    // it comes off the nail once the pull lifts it
-    if (c.onNail && t > 2.55) { c.onNail = false; this.env.audio?.cue('nail'); }
+    // taken from above, out of the frame: the bunch on the nail is lifted and pulled away fast
+    if (c.onNail && t > 2.4) { c.onNail = false; c.pull = true; this.env.audio?.cue('cloth', { vol: 1.2 }); this.env.audio?.cue('nail'); }
+    if (c.pull) { const k = clamp((t - 2.4) / 0.65); c.pullP = [NAIL[0] + 0.02 * k, NAIL[1] + 0.006 + 0.85 * k * k, NAIL[2] - 0.07 * k]; }
     const n = Math.max(1, Math.ceil(dt / (1 / 120)));
     for (let i = 0; i < n; i++) this.stepCloth(c, dt / n, t);
-    // the operator follows the hand, late
-    const tgt = t < 2.2 ? [0.06, 1.47] : [lerp(0.06, 0.13, smooth(2.3, 4.0, t)), lerp(1.47, 1.45, smooth(2.3, 4.0, t))];
+    // the operator starts after it, late, and settles on the empty nail
+    const tgt = t < 2.4 ? [0.06, 1.47] : [lerp(0.06, 0.08, smooth(2.5, 3.6, t)), lerp(1.47, 1.5, smooth(2.5, 3.2, t)) - 0.02 * smooth(3.2, 4.4, t)];
     const k = 1 - Math.exp(-dt / 0.15); this.follow.x += (tgt[0] - this.follow.x) * k; this.follow.y += (tgt[1] - this.follow.y) * k;
     this.cam.pos[0] = this.follow.x; this.cam.pos[1] = this.follow.y; this.cam.update(t);
   }
@@ -523,31 +473,14 @@ export class Scarf {
       g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 0.004 * n0[3]; g.lineCap = 'round'; g.beginPath(); g.moveTo(n0[0], n0[1]); g.lineTo(s1[0], s1[1]); g.stroke();
       g.strokeStyle = '#3d2a1f'; g.lineWidth = 0.0035 * n0[3]; g.beginPath(); g.moveTo(n0[0], n0[1]); g.lineTo(n1[0], n1[1]); g.stroke();
       g.fillStyle = '#5a4030'; g.beginPath(); g.ellipse(n1[0], n1[1], 0.004 * n0[3], 0.0045 * n0[3], 0, 0, TAU); g.fill(); }
-    // shadows thrown on the wall by the scarf and the hand
+    // the scarf's shadow on the wall
     const sg = this.hs.getContext('2d'); sg.setTransform(1, 0, 0, 1, 0, 0); sg.clearRect(0, 0, W, H);
     const wallShadow = (pts) => { const q = pts.map((p) => { const k = (0 - LAMP8[2]) / (p[2] - LAMP8[2]); return cam.project(LAMP8[0] + (p[0] - LAMP8[0]) * k, LAMP8[1] + (p[1] - LAMP8[1]) * k, 0); }); hull(sg, q); };
     const c = this.cloth;
     for (let i = 0; i < c.nl - 1; i++) wallShadow([c.P[i * c.nw].p, c.P[i * c.nw + c.nw - 1].p, c.P[(i + 1) * c.nw].p, c.P[(i + 1) * c.nw + c.nw - 1].p]);
-    const hp = this.handParts();
-    for (const [a1, b1, ra, rb] of hp) wallShadow(capsulePts(a1, b1, ra, rb));
     g.save(); g.globalAlpha = 0.6; g.filter = `blur(${(W * 0.006).toFixed(1)}px)`; g.drawImage(this.hs, 0, 0); g.restore();
     // the scarf: quads shaded by their facing, ribs along its length, fuzz at the edge
     this.drawCloth(g, lamp);
-    // the hand, a hand-width nearer than the wall: out of focus
-    const hg = this.hl.getContext('2d'); hg.setTransform(1, 0, 0, 1, 0, 0); hg.clearRect(0, 0, W, H);
-    for (const [a1, b1, ra, rb, col] of hp) capsule3(hg, cam, a1, b1, ra, rb, lamp, col, 0.03, col === SLEEVE ? { folds: 5, seed: 3 } : {});
-    g.save(); g.filter = `blur(${(W * 0.004).toFixed(1)}px)`; g.drawImage(this.hl, 0, 0); g.restore();
-  }
-  handParts() {
-    const p = this.hand.p, grip = this.cloth.grab >= 0;
-    const parts = handParts(p, [-1, 0.0, -0.15], grip ? 'grip' : 'flat', 1).map(([a, b, ra, rb]) => {
-      // the hand stands up off the table pose: turn it to face the wall (fingers left)
-      const r = (q) => [p[0] + (q[0] - p[0]), p[1] + (q[2] - p[2]) * 0.9, p[2] - (q[1] - p[1]) * 1.2 + 0.0];
-      return [r(a), r(b), ra, rb, [24, 22, 20]];
-    });
-    const el = add(p, [0.26, -0.12, -0.14]);
-    parts.unshift([p, add(p, [0.05, -0.02, -0.02]), 0.034, 0.042, [22, 20, 19]], [add(p, [0.05, -0.02, -0.02]), el, 0.05, 0.058, SLEEVE]);
-    return parts;
   }
   // the scarf: every quad of the cloth gets a patch of knitted stitches
   // (mapped onto it, so the knit moves with the cloth), shaded by how the
@@ -599,7 +532,6 @@ export class Scarf {
   }
   post() { return { grain: 0.085, halation: 0.35, lift: [6, 5, 4], warm: 0.08, vignette: 0.7, dirt: 0.35, flicker: 0.02 }; }
 }
-const SLEEVE = [44, 38, 32];
 // a tile of knitted stocking stitch: columns of little V's, light on top,
 // a dark gap between them (white = the wool's own colour, shaded later)
 function knitTile() {
@@ -626,10 +558,10 @@ function hull(g, q) {
 // ---------------------------------------------------------------------------------------------
 // shot 9: the alley (§2, shot 9). Night, rain. A narrow alley seen from low
 // down, the camera backing away. A door opens in the right-hand wall and the
-// five come out one after another into the rain, turn, and walk at us. At the
-// far end a sodium lamp on a bracket and the street beyond light them from
-// behind: black figures with a rim of orange, the rain lit round them, their
-// reflections in the wet ground, steam off a grate they walk through.
+// room's light falls out across the wet ground; they have gone out into the
+// rain ahead of us. At the far end a sodium lamp on a bracket and the street
+// beyond; steam off a grate; the lamps smeared in the water. As VESPER hands
+// over the channel, the light in the room goes off.
 const AW = 1.65, AL = { lamp: [-1.42, 4.6, 19.5], far: [0.4, 5.6, 27], door: [AW, 0, 9.1] };
 export class Alley {
   init(W, H, env) {
@@ -638,13 +570,9 @@ export class Alley {
     cam.mm = 32; cam.pos = [0.05, 0.88, 0]; cam.pitch = 0.035; cam.hand = 0.5; cam.seed = 91; cam.update(0);
     const r = rng(99);
     this.wallL = this.paintWall(r, -1); this.wallR = this.paintWall(r, 1); this.floor = this.paintFloor(r);
-    // the five: when each steps out, where they walk, how
-    const plan = [['flint', 0.8, 0.15, 'normal'], ['warden', 1.55, -0.55, 'normal'], ['vesper', 2.2, 0.62, 'careful'], ['skye', 2.8, -0.15, 'normal'], ['bulwark', 3.5, 0.5, 'heavy']];
-    this.squad = plan.map(([kit, t0, lane, gait], i) => ({ h: new Human({ kit, x: AW - 0.25, z: AL.door[2], yaw: Math.PI, gait, seed: 50 + i, phase: i * 0.3 }), t0, lane, out: false }));
-    this.splash = []; this.steam = new Puffs({ rate: 9, life: 3.2, rise: 0.55, grow: 0.9, size: 0.18, col: '#e2b07a', a: 0.12, seed: 93, lumpy: true });
+    this.steam = new Puffs({ rate: 9, life: 3.2, rise: 0.55, grow: 0.9, size: 0.18, col: '#e2b07a', a: 0.12, seed: 93, lumpy: true });
     for (let i = 0; i < 60; i++) this.steam.update(0.05, [[0.25, 0.05, 6.2]], 0.1);
     this.rain = new Rain({ n: [900, 420, 50], box: [3, 6, 0.5, 30], speed: 8.8, wind: 0.35, seed: 94 });
-    this.refl = canvas(W, H);
   }
   // a wall of the alley as a texture, lit by the lamps (diffuse doesn't depend
   // on where we stand, so it is baked); 30 m long, 7 m high, 70 px a metre
@@ -712,24 +640,6 @@ export class Alley {
   update(dt, t) {
     const cam = this.cam;
     cam.pos[2] = -0.38 * t; cam.update(t);
-    for (const m of this.squad) {
-      const h = m.h;
-      if (t < m.t0) { h.t += dt; continue; }
-      // out of the door, a turn, then down the alley at us
-      const out = h.x < AW - 0.75;
-      const target = out ? [m.lane, h.z - 3] : [AW - 1.0, AL.door[2] - 0.3];
-      const want = Math.atan2(target[1] - h.z, target[0] - h.x);
-      let dy = want - h.yaw; while (dy > Math.PI) dy -= TAU; while (dy < -Math.PI) dy += TAU;
-      h.yaw += dy * Math.min(1, dt * 3.5);
-      h.step(dt);
-      for (const st of h.takeSteps()) {
-        const K = st.side > 0 ? 'R' : 'L', a = h.J['heel' + K];
-        for (let i = 0; i < 8; i++) this.splash.push({ x: a[0], y: 0.02, z: a[2], vx: (Math.random() - 0.5) * 0.8, vy: 0.5 + Math.random() * 0.9, vz: (Math.random() - 0.5) * 0.8, t: 0 });
-        this.env.audio?.cue('step', { wet: 1, vol: clamp(3 / Math.max(1, h.z - cam.pos[2])), pan: clamp(h.x / 2, -1, 1) });
-      }
-    }
-    for (const p of this.splash) { p.t += dt; p.vy -= 9.8 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; }
-    this.splash = this.splash.filter((p) => p.y > 0 && p.t < 0.7);
     this.steam.update(dt, [[0.25, 0.05, 6.2]], 0.12);
     this.rain.update(dt, cam, 0, true);
   }
@@ -776,13 +686,13 @@ export class Alley {
     { const a = cam.project(-3, 0, 28.5), b = cam.project(3, 12, 28.5); g.fillStyle = 'rgba(40,26,18,0.85)'; g.fillRect(a[0], b[1], b[0] - a[0], a[1] - b[1]); for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) if ((i * 7 + j * 3) % 5 === 1) { const q = cam.project(-2.4 + i * 0.9, 3 + j * 3, 28.4); g.fillStyle = 'rgba(255,190,120,0.55)'; g.fillRect(q[0], q[1], 0.5 * q[3], 0.8 * q[3]); } }
     this.drawFloor(g);
     this.drawWall(g, this.wallL, -1); this.drawWall(g, this.wallR, 1);
-    // the open door: the room's light spilling out onto the wet ground
-    const op = smooth(0.25, 0.9, t);
+    // the open door: the room's light spilling out onto the wet ground (until it is switched off)
+    const op = smooth(0.25, 0.9, t), on = 1 - smooth(5.45, 5.55, t);
     if (op > 0) {
       const z0 = AL.door[2] - 0.55, z1 = AL.door[2] + 0.55, zo = lerp(z0, z1, 1 - op);
       const q = [cam.project(AW, 2.2, zo), cam.project(AW, 2.2, z1), cam.project(AW, 0, z1), cam.project(AW, 0, zo)];
-      g.fillStyle = 'rgba(120,70,36,0.9)'; g.beginPath(); q.forEach((v, i) => (i ? g.lineTo(v[0], v[1]) : g.moveTo(v[0], v[1]))); g.closePath(); g.fill();
-      const sp = cam.project(AW - 0.8, 0, AL.door[2]); g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.35 * op; g.drawImage(tinted(softDot(64), '#ff9a50'), sp[0] - sp[3] * 1.0, sp[1] - sp[3] * 0.15, sp[3] * 2, sp[3] * 0.3); g.restore();
+      g.fillStyle = `rgba(${(14 + 106 * on) | 0},${(10 + 60 * on) | 0},${(8 + 28 * on) | 0},0.9)`; g.beginPath(); q.forEach((v, i) => (i ? g.lineTo(v[0], v[1]) : g.moveTo(v[0], v[1]))); g.closePath(); g.fill();
+      const sp = cam.project(AW - 0.8, 0, AL.door[2]); g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.35 * op * on; g.drawImage(tinted(softDot(64), '#ff9a50'), sp[0] - sp[3] * 1.0, sp[1] - sp[3] * 0.15, sp[3] * 2, sp[3] * 0.3); g.restore();
       // the door leaf, swung in
       const lf = [cam.project(AW, 2.2, zo), cam.project(AW - 1.1 * op * 0.9, 2.2, zo + 0.05), cam.project(AW - 1.1 * op * 0.9, 0, zo + 0.05), cam.project(AW, 0, zo)];
       g.fillStyle = '#121110'; g.beginPath(); lf.forEach((v, i) => (i ? g.lineTo(v[0], v[1]) : g.moveTo(v[0], v[1]))); g.closePath(); g.fill();
@@ -792,32 +702,12 @@ export class Alley {
     { const a = cam.project(-AW, 4.75, 19.5), b = cam.project(AL.lamp[0], 4.75, 19.5); g.strokeStyle = '#0c0b0b'; g.lineWidth = Math.max(1, 0.03 * a[3]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
     // cables slung across overhead, black against the glow
     g.strokeStyle = '#080707'; for (const [z, y, sag] of [[12, 5.2, 0.35], [16.5, 5.6, 0.5], [21, 5.0, 0.3], [23.5, 6.0, 0.6]]) { const a = cam.project(-AW, y, z), b = cam.project(AW, y + 0.2, z + 0.3), m = cam.project(0, y - sag, z + 0.15); g.lineWidth = Math.max(0.8, 0.015 * m[3]); g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(m[0], m[1] + (m[1] - (a[1] + b[1]) / 2), b[0], b[1]); g.stroke(); }
-    // reflections on the wet ground: the lamps smeared toward us, and the five, upside down
+    // reflections on the wet ground: the lamps smeared toward us, the door's light
     reflect(g, cam, AL.lamp, 0, '#ffb070', 0.5, 0.35, t);
     reflect(g, cam, AL.far, 0, '#ffb070', 0.45, 0.5, t);
-    const people = this.squad.filter((m) => t >= m.t0).map((m) => m.h).sort((a, b) => b.z - a.z);
-    const rg = this.refl.getContext('2d'); rg.setTransform(1, 0, 0, 1, 0, 0); rg.clearRect(0, 0, W, H);
-    const mc = mirrorCam(cam, 0);
-    for (const h of people) h.draw(rg, mc, [], { body: '#050505', far: '#050505', emissive: false });
-    g.save(); g.globalAlpha = 0.5; g.filter = 'blur(1.5px)'; g.drawImage(this.refl, 0, 0); g.restore();
+    if (op * on > 0.05) reflect(g, cam, [AW - 0.02, 1.4, AL.door[2]], 0, '#ff9a50', 0.25 * op * on, 0.5, t);
     // steam off the grate, lit from behind
     g.save(); g.globalCompositeOperation = 'lighter'; this.steam.draw(g, cam, 1); g.restore();
-    // the five, black against the light, rimmed by it
-    const lampQ = cam.project(...AL.far);
-    for (const h of people) {
-      const q = cam.project(h.x, 1.2, h.z), d = h.z - cam.pos[2];
-      if (h.x > AW - 0.2) continue; // still inside
-      // the light is behind and above them: a thin rim, strongest at the head
-      // and shoulders, fading down the body; a little cold fill from the street
-      // behind us on their fronts
-      const hq = cam.project(h.x, h.H * 0.95, h.z), ppm = hq[3];
-      h.draw(g, cam, [{ dir: 'back', col: 'rgba(255,180,105,1)', w: 0.85, soft: 0.5, at: [hq[0], hq[1] - ppm * 0.5], fall: ppm * 1.3, glow: 0.25 }, { dir: [lampQ[0] - q[0], lampQ[1] - q[1]], col: 'rgba(255,190,120,0.55)', w: 0.6, soft: 0.5, at: [lampQ[0], lampQ[1]], fall: ppm * 2.4 }],
-        { body: '#070708', far: '#060607', fill: { at: [q[0], q[1] + ppm * 0.4], r: ppm * 1.2, col: `rgba(40,48,58,${clamp(0.14 - d * 0.01, 0, 0.14).toFixed(3)})` }, visor: 0.22, scarf: '#3c0c0b' });
-    }
-    // the splashes off their boots, lit from behind
-    g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(255,190,130,0.55)';
-    for (const p of this.splash) { const q = cam.project(p.x, p.y, p.z); if (q[2] > 0) { g.beginPath(); g.arc(q[0], q[1], Math.max(0.5, 0.006 * q[3]), 0, TAU); g.fill(); } }
-    g.restore();
     // rain: bright where it falls through the lamps' light
     const L1 = AL.lamp, L2 = AL.far;
     this.rain.draw(g, cam, { col: '#a9a39b', light: 0.45, puddle: true, tint: (x, y, z) => { const d1 = (x - L1[0]) ** 2 + (y - L1[1]) ** 2 + (z - L1[2]) ** 2, d2 = (x - L2[0]) ** 2 + (y - L2[1]) ** 2 + (z - L2[2]) ** 2, k = 6 / (d1 + 2) + 8 / (d2 + 3); return k > 0.15 ? ['#ffc890', clamp(k)] : null; } });

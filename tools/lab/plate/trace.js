@@ -5,10 +5,15 @@
 // for a slow zoom: js/cine/plate.js) with the moving things on top.
 //
 // Per pixel:
-//   hit       boxes, upright cylinders, spheres, convex hulls, a ground plane
+//   hit       boxes, upright cylinders, spheres, capsules, ellipsoids, convex
+//             hulls (oriented boxes, prisms, slabs), a ground plane
 //   material  mats.js: albedo, roughness, wetness, emission, a bent normal
-//   lamps     point and spot lamps with shadow rays; GGX highlights
-//   ambient   sky above, bounce below, with ambient occlusion
+//   lamps     point and spot lamps and the sun or moon, with shadow rays
+//             (soft for big lamps); GGX highlights
+//   ambient   sky above, bounce below, with ambient occlusion — or (gi) one
+//             bounce of light gathered over the hemisphere: the sky through a
+//             window, a lit wall lighting the floor; worked out on a grid and
+//             brought up along normals and depth
 //   wet       a water film reflects the scene (one ray, its hit lit with
 //             shadows); the reflection is smeared up and down the screen the
 //             way a wet street streaks a light, less where water stands
@@ -23,14 +28,14 @@
 import { MATS, MAT_DEFAULTS } from './mats.js';
 
 const EPS = 1e-3, PI = Math.PI;
-const BOX = 0, CYL = 1, SPH = 2, HULL = 3;
+const BOX = 0, CYL = 1, SPH = 2, HULL = 3, CAP = 4, ELL = 5;
 const smoothstep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 const hash = (i, j) => { let h = Math.imul(i, 374761393) + Math.imul(j, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 
 // spec → a scene ready to trace (see plate.js for the fields)
 export function compile(spec) {
   const prims = spec.prims || [], N = prims.length;
-  const K = new Uint8Array(N), B = new Float64Array(N * 6), P = new Float64Array(N * 6), NS = new Uint8Array(N), NE = new Uint8Array(N);
+  const K = new Uint8Array(N), B = new Float64Array(N * 6), P = new Float64Array(N * 12), NS = new Uint8Array(N), NE = new Uint8Array(N);
   const HP = new Array(N).fill(null), M = new Array(N);
   const mats = spec.mats || {};
   const matOf = (m, o) => {
@@ -42,8 +47,16 @@ export function compile(spec) {
   for (let i = 0; i < N; i++) {
     const q = prims[i], b = i * 6;
     if (q.box) { K[i] = BOX; for (let k = 0; k < 6; k++) B[b + k] = q.box[k]; }
-    else if (q.cyl) { const [x, z, r, y0, y1] = q.cyl; K[i] = CYL; B.set([x - r, y0, z - r, x + r, y1, z + r], b); P.set([x, z, r, y0, y1, 0], b); }
-    else if (q.sph) { const [x, y, z, r] = q.sph; K[i] = SPH; B.set([x - r, y - r, z - r, x + r, y + r, z + r], b); P.set([x, y, z, r, 0, 0], b); }
+    else if (q.cyl) { const [x, z, r, y0, y1] = q.cyl; K[i] = CYL; B.set([x - r, y0, z - r, x + r, y1, z + r], b); P.set([x, z, r, y0, y1], i * 12); }
+    else if (q.sph) { const [x, y, z, r] = q.sph; K[i] = SPH; B.set([x - r, y - r, z - r, x + r, y + r, z + r], b); P.set([x, y, z, r], i * 12); }
+    else if (q.cap) { const [ax, ay, az, bx, by, bz, r] = q.cap; K[i] = CAP; B.set([Math.min(ax, bx) - r, Math.min(ay, by) - r, Math.min(az, bz) - r, Math.max(ax, bx) + r, Math.max(ay, by) + r, Math.max(az, bz) + r], b); P.set([ax, ay, az, bx, by, bz, r], i * 12); }
+    else if (q.ell) {
+      // an ellipsoid: centre, three unit axes, three radii (kept as axis/radius, so a point maps to the unit ball)
+      const { c, axes, r } = q.ell; K[i] = ELL;
+      const ext = [0, 1, 2].map((k) => Math.abs(axes[0][k]) * r[0] + Math.abs(axes[1][k]) * r[1] + Math.abs(axes[2][k]) * r[2]);
+      B.set([c[0] - ext[0], c[1] - ext[1], c[2] - ext[2], c[0] + ext[0], c[1] + ext[1], c[2] + ext[2]], b);
+      P.set([c[0], c[1], c[2], ...axes[0].map((v) => v / r[0]), ...axes[1].map((v) => v / r[1]), ...axes[2].map((v) => v / r[2])], i * 12);
+    }
     else if (q.hull) { K[i] = HULL; B.set(q.hull.aabb, b); HP[i] = Float64Array.from(q.hull.planes.flat()); }
     NS[i] = q.noShadow || q.lamp ? 1 : 0;
     NE[i] = q.lamp ? 1 : 0; // a lamp's bulb: its glint on wet things comes from the lamp itself
@@ -54,14 +67,17 @@ export function compile(spec) {
   if (G) G.m.seed = G.m.seed ?? 991;
   const lights = (spec.lights || []).map((L) => {
     const c = (L.c || [1, 1, 1]).map((v) => v * (L.I ?? 1));
-    const o = { x: L.p[0], y: L.p[1], z: L.p[2], cr: c[0], cg: c[1], cb: c[2], r: L.r ?? 0.05, shadow: L.shadow !== false, vol: L.vol ?? 1, shafts: !!L.shafts };
+    const p = L.p || [0, 0, 0];
+    const o = { x: p[0], y: p[1], z: p[2], cr: c[0], cg: c[1], cb: c[2], r: L.r ?? 0.05, shadow: L.shadow !== false, vol: L.vol ?? 1, shafts: !!L.shafts };
+    // the sun or the moon: a direction the light travels in, no falloff; `ang` its angular radius, `far` how far its shafts are sampled
+    if (L.dir) { const l = Math.hypot(...L.dir); o.dir = true; o.dx = L.dir[0] / l; o.dy = L.dir[1] / l; o.dz = L.dir[2] / l; o.ang = L.ang ?? 0.01; o.far = L.far ?? 120; o.r = 0; }
     o.r2 = o.r * o.r;
     if (L.spot) { const d = L.spot.d, l = Math.hypot(d[0], d[1], d[2]); o.spot = true; o.sx = d[0] / l; o.sy = d[1] / l; o.sz = d[2] / l; o.c0 = L.spot.c0; o.c1 = L.spot.c1; }
     return o;
   });
   return {
     spec, N, K, B, P, NS, NE, HP, M, G, lights,
-    pts: lights.filter((l) => !l.shafts), shafts: lights.filter((l) => l.shafts),
+    pts: lights.filter((l) => !l.shafts && !l.dir), shafts: lights.filter((l) => l.shafts),
     W: spec.W, H: spec.H, cam: spec.cam,
     sky: { zen: [0.004, 0.0045, 0.006], hor: [0.02, 0.016, 0.012], cloud: 0, cloudCol: [0.03, 0.022, 0.016], seed: 5, scale: 0.6, ...(spec.sky || {}) },
     amb: { sky: [0.004, 0.0045, 0.0055], gnd: [0.002, 0.0018, 0.0015], ...(spec.amb || {}) },
@@ -70,6 +86,7 @@ export function compile(spec) {
     refl: { streak: 18, ...(spec.refl || {}) },
     exposure: spec.exposure ?? 1, vs: spec.vs ?? 4, vn: spec.vn ?? 10, aa: spec.aa !== false,
     aoStep: spec.aoStep ?? 2, shadowN: spec.shadowN ?? 1, hdr: !!spec.hdr,
+    gi: spec.gi ? { n: 16, step: 2, fill: 0.5, ...spec.gi } : null,
   };
 }
 
@@ -131,8 +148,9 @@ export function tracer(sc) {
       best = tn; bi = i; bnx = ax === 0 ? (dx > 0 ? -1 : 1) : 0; bny = ax === 1 ? (dy > 0 ? -1 : 1) : 0; bnz = ax === 2 ? (dz > 0 ? -1 : 1) : 0;
       return any;
     }
+    const p = i * 12;
     if (k === CYL) {
-      const cx = P[b], cz = P[b + 1], r = P[b + 2], y0 = P[b + 3], y1 = P[b + 4];
+      const cx = P[p], cz = P[p + 1], r = P[p + 2], y0 = P[p + 3], y1 = P[p + 4];
       const ex = ox - cx, ez = oz - cz;
       let t = best, nx = 0, ny = 0, nz = 0;
       const a = dx * dx + dz * dz;
@@ -151,11 +169,48 @@ export function tracer(sc) {
       return false;
     }
     if (k === SPH) {
-      const ex = ox - P[b], ey = oy - P[b + 1], ez = oz - P[b + 2], r = P[b + 3];
+      const ex = ox - P[p], ey = oy - P[p + 1], ez = oz - P[p + 2], r = P[p + 3];
       const a = dx * dx + dy * dy + dz * dz, bb = ex * dx + ey * dy + ez * dz, c = ex * ex + ey * ey + ez * ez - r * r, disc = bb * bb - a * c;
       if (disc < 0) return false;
       const tt = (-bb - Math.sqrt(disc)) / a;
       if (tt > EPS && tt < best) { best = tt; bi = i; bnx = (ex + dx * tt) / r; bny = (ey + dy * tt) / r; bnz = (ez + dz * tt) / r; return any; }
+      return false;
+    }
+    if (k === CAP) {
+      // a capsule (Quilez): the swept cylinder, else the ball at the end the ray comes in by
+      const ax = P[p], ay = P[p + 1], az = P[p + 2], bax = P[p + 3] - ax, bay = P[p + 4] - ay, baz = P[p + 5] - az, r = P[p + 6];
+      const oax = ox - ax, oay = oy - ay, oaz = oz - az;
+      const baba = bax * bax + bay * bay + baz * baz, bard = bax * dx + bay * dy + baz * dz, baoa = bax * oax + bay * oay + baz * oaz;
+      const rdoa = dx * oax + dy * oay + dz * oaz, oaoa = oax * oax + oay * oay + oaz * oaz;
+      const a = baba - bard * bard;
+      let t = -1;
+      const ball = (cx, cy, cz) => { const q = dx * cx + dy * cy + dz * cz, c = cx * cx + cy * cy + cz * cz - r * r, h = q * q - c; return h > 0 ? -q - Math.sqrt(h) : -1; };
+      if (a > 1e-12) {
+        const q = baba * rdoa - baoa * bard, c = baba * oaoa - baoa * baoa - r * r * baba, h = q * q - a * c;
+        if (h < 0) return false;
+        t = (-q - Math.sqrt(h)) / a;
+        const y = baoa + t * bard;
+        if (!(y > 0 && y < baba)) t = y <= 0 ? ball(oax, oay, oaz) : ball(ox - P[p + 3], oy - P[p + 4], oz - P[p + 5]);
+      } else { const t0 = ball(oax, oay, oaz), t1 = ball(ox - P[p + 3], oy - P[p + 4], oz - P[p + 5]); t = t0 > EPS && (t1 <= EPS || t0 < t1) ? t0 : t1; }
+      if (t > EPS && t < best) {
+        const px = oax + dx * t, py = oay + dy * t, pz = oaz + dz * t, hh = Math.min(1, Math.max(0, (px * bax + py * bay + pz * baz) / baba));
+        best = t; bi = i; bnx = (px - bax * hh) / r; bny = (py - bay * hh) / r; bnz = (pz - baz * hh) / r; return any;
+      }
+      return false;
+    }
+    if (k === ELL) {
+      // an ellipsoid: into the space where it is the unit ball, and back for the normal
+      const ex = ox - P[p], ey = oy - P[p + 1], ez = oz - P[p + 2];
+      const ou = ex * P[p + 3] + ey * P[p + 4] + ez * P[p + 5], ov = ex * P[p + 6] + ey * P[p + 7] + ez * P[p + 8], ow = ex * P[p + 9] + ey * P[p + 10] + ez * P[p + 11];
+      const du = dx * P[p + 3] + dy * P[p + 4] + dz * P[p + 5], dv = dx * P[p + 6] + dy * P[p + 7] + dz * P[p + 8], dw = dx * P[p + 9] + dy * P[p + 10] + dz * P[p + 11];
+      const a = du * du + dv * dv + dw * dw, q = ou * du + ov * dv + ow * dw, c = ou * ou + ov * ov + ow * ow - 1, h = q * q - a * c;
+      if (h < 0) return false;
+      const t = (-q - Math.sqrt(h)) / a;
+      if (t > EPS && t < best) {
+        const lu = ou + du * t, lv = ov + dv * t, lw = ow + dw * t;
+        let nx = lu * P[p + 3] + lv * P[p + 6] + lw * P[p + 9], ny = lu * P[p + 4] + lv * P[p + 7] + lw * P[p + 10], nz = lu * P[p + 5] + lv * P[p + 8] + lw * P[p + 11];
+        const l = Math.hypot(nx, ny, nz) || 1; best = t; bi = i; bnx = nx / l; bny = ny / l; bnz = nz / l; return any;
+      }
       return false;
     }
     const pl = HP[i];
@@ -249,18 +304,24 @@ export function tracer(sc) {
     let r = 0, g = 0, b = 0;
     for (let j = 0; j < lights.length; j++) {
       const L = lights[j];
-      let lx = L.x - px, ly = L.y - py, lz = L.z - pz;
-      const d2 = lx * lx + ly * ly + lz * lz, d = Math.sqrt(d2);
-      lx /= d; ly /= d; lz /= d;
+      let lx, ly, lz, d, att;
+      if (L.dir) { lx = -L.dx; ly = -L.dy; lz = -L.dz; d = 1e4; att = 1; }
+      else { lx = L.x - px; ly = L.y - py; lz = L.z - pz; const d2 = lx * lx + ly * ly + lz * lz; d = Math.sqrt(d2); lx /= d; ly /= d; lz /= d; att = 1 / (d2 + L.r2); }
       const ndl = nx * lx + ny * ly + nz * lz;
       if (ndl <= 0 || (S.wx * lx + S.wy * ly + S.wz * lz) <= -0.05) continue;
-      let att = 1 / (d2 + L.r2);
       if (L.spot) { att *= smoothstep(L.c0, L.c1, -(lx * L.sx + ly * L.sy + lz * L.sz)); if (att <= 0) continue; }
       // a lamp too weak here to matter is added without its shadow ray; a big
       // lamp casts soft shadows (rays to points over its ball, a few per pixel)
       if (L.shadow && (L.cm * att * ndl > cut)) {
-        const n = L.r > 0.06 ? SN : 1; let vis = 0;
+        const n = L.r > 0.06 || L.dir ? SN : 1; let vis = 0;
         for (let q = 0; q < n; q++) {
+          if (L.dir) {
+            // a sun's disc: rays a little off its centre
+            let qx = lx, qy = ly, qz = lz;
+            if (n > 1) { qx += (hash(PXH, q * 31 + j * 7) - 0.5) * 2 * L.ang; qy += (hash(PXH + 5, q * 17 + j) - 0.5) * 2 * L.ang; qz += (hash(PXH + 17, q * 13 + j * 5) - 0.5) * 2 * L.ang; const ql = Math.hypot(qx, qy, qz); qx /= ql; qy /= ql; qz /= ql; }
+            if (!hit(ox, oy, oz, qx, qy, qz, 1e4, true, false)) vis++;
+            continue;
+          }
           let sx = L.x, sy = L.y, sz = L.z;
           if (n > 1 || L.r > 0.06) { const u = hash(PXH, q * 31 + j * 7) * 2 - 1, a = hash(PXH + 17, q * 13 + j * 5) * 2 * PI, w = Math.sqrt(1 - u * u) * L.r * 0.9; sx += w * Math.cos(a); sy += u * L.r * 0.9; sz += w * Math.sin(a); }
           let qx = sx - px, qy = sy - py, qz = sz - pz; const ql = Math.sqrt(qx * qx + qy * qy + qz * qz); qx /= ql; qy /= ql; qz /= ql;
@@ -285,7 +346,7 @@ export function tracer(sc) {
         const wl = S.wx * lx + S.wy * ly + S.wz * lz; if (wl <= 0) continue;
         let qx = lx + vx, qy = ly + vy, qz = lz + vz; const ql = Math.hypot(qx, qy, qz) || 1; qx /= ql; qy /= ql; qz /= ql;
         const wh = Math.max(0, S.wx * qx + S.wy * qy + S.wz * qz), lh = Math.max(0, lx * qx + ly * qy + lz * qz), wv = Math.max(1e-3, S.wx * vx + S.wy * vy + S.wz * vz);
-        const a0 = rw * rw, aw = Math.min(1, a0 + L.r / (2 * d)), a2w = aw * aw, en = (a0 / aw) * (a0 / aw);
+        const a0 = rw * rw, aw = Math.min(1, a0 + (L.dir ? L.ang : L.r / (2 * d))), a2w = aw * aw, en = (a0 / aw) * (a0 / aw);
         const dw = wh * wh * (a2w - 1) + 1, Dw = a2w / (PI * dw * dw) * en, kw = aw * 0.5;
         const Vw = 1 / ((wl * (1 - kw) + kw) * (wv * (1 - kw) + kw));
         const sw = Dw * Vw * 0.25 * wl * (0.02 + 0.98 * Math.pow(1 - lh, 5)) * film;
@@ -338,6 +399,19 @@ export function tracer(sc) {
     const sl = sc.shafts, s = FG.s * FG.k;
     for (let j = 0; j < sl.length; j++) {
       const L = sl[j];
+      if (L.dir) {
+        // the sun through gaps: even steps along the ray, each in light or in shadow
+        const tm = Math.min(t, L.far), ph = HG(-(L.dx * dx + L.dy * dy + L.dz * dz));
+        let acc = 0;
+        for (let k = 0; k < ns; k++) {
+          const sx = tm * (k + ((jit + k * 0.618034) % 1)) / ns, px = ox + dx * sx, py = oy + dy * sx, pz = oz + dz * sx;
+          if (L.shadow && hit(px, py, pz, -L.dx, -L.dy, -L.dz, 1e4, true, false)) continue;
+          acc += Math.exp(-FG.s * sx);
+        }
+        const k = s * L.vol * ph * acc * tm / ns;
+        r += L.cr * k; g += L.cg * k; b += L.cb * k;
+        continue;
+      }
       const lx = L.x - ox, ly = L.y - oy, lz = L.z - oz, dl = lx * dx + ly * dy + lz * dz;
       const D = Math.sqrt(Math.max(4e-4, lx * lx + ly * ly + lz * lz - dl * dl));
       const ta = Math.atan2(-dl, D), tb = Math.atan2(t - dl, D);
@@ -384,7 +458,7 @@ export function tracer(sc) {
     direct(x, y, z, vx, vy, vz, level === 0 ? CUT : CUT * 40, out);
     if (level === 0) { DEP.nx = gnx; DEP.ny = gny; DEP.nz = gnz; DEP.ao = DEP.wantAO ? occlusion(x, y, z, hash(px_, py_ * 7 + 1), hash(px_ * 3 + 5, py_)) : 1; }
     const ny = S.ny, dm = (1 - S.metal) * (1 - 0.45 * S.wet);
-    const AM = sc.amb, hs = 0.5 + 0.5 * ny, hg = 0.5 - 0.5 * ny, ao = S.ao;
+    const AM = sc.amb, hs = 0.5 + 0.5 * ny, hg = 0.5 - 0.5 * ny, ao = S.ao * (GI && level === 0 ? 0 : 1);
     const a0 = (AM.sky[0] * hs + AM.gnd[0] * hg) * S.ar * dm * ao, a1 = (AM.sky[1] * hs + AM.gnd[1] * hg) * S.ag * dm * ao, a2 = (AM.sky[2] * hs + AM.gnd[2] * hg) * S.ab * dm * ao;
     if (amb) { amb[0] = a0; amb[1] = a1; amb[2] = a2; } else { out[0] += a0; out[1] += a1; out[2] += a2; }
     out[0] += S.er; out[1] += S.eg; out[2] += S.eb;
@@ -418,8 +492,13 @@ export function tracer(sc) {
       }
     }
     if (ref) { ref[0] = wr; ref[1] = wg; ref[2] = wb; ref[3] = rough; } else { out[0] += wr; out[1] += wg; out[2] += wb; }
-    // the mist on the way
+    // the light from everything else (one bounce): its colour here is the albedo times what is gathered
     const Tm = Math.exp(-FG.s * t);
+    if (GI && level === 0) {
+      DEP.ar = S.ar * dm * S.ao * Tm; DEP.ag = S.ag * dm * S.ao * Tm; DEP.ab = S.ab * dm * S.ao * Tm;
+      if (DEP.wantGI) { const sv = { ...S }; gather(x, y, z, gnx, gny, gnz, px_, py_); Object.assign(S, sv); }
+    }
+    // the mist on the way
     out[0] = out[0] * Tm + FG.c[0] * (1 - Tm); out[1] = out[1] * Tm + FG.c[1] * (1 - Tm); out[2] = out[2] * Tm + FG.c[2] * (1 - Tm);
     if (ref) { ref[0] *= Tm; ref[1] *= Tm; ref[2] *= Tm; }
     if (amb) { amb[0] *= Tm; amb[1] *= Tm; amb[2] *= Tm; }
@@ -427,7 +506,35 @@ export function tracer(sc) {
     else DEP.t = t;
     return i;
   }
-  const DEP = { t: 0, ao: 1, wantAO: false, nx: 0, ny: 0, nz: 0 };
+  const DEP = { t: 0, ao: 1, wantAO: false, nx: 0, ny: 0, nz: 0, wantGI: false, ar: 0, ag: 0, ab: 0, gr: 0, gg: 0, gb: 0 };
+
+  // one bounce: cosine-weighted rays over the hemisphere; each hit lit by the lamps (shadows only
+  // where they matter) plus a little fill for the bounces after; a ray that gets out sees the sky
+  const GI = sc.gi, GC = [0, 0, 0];
+  function gather(px, py, pz, nx, ny, nz, h1x, h1y) {
+    const n = GI.n, f = sc.cam.f;
+    let tx, ty, tz;
+    if (Math.abs(ny) < 0.9) { tx = nz; ty = 0; tz = -nx; } else { tx = 1; ty = 0; tz = 0; }
+    const tl = Math.hypot(tx, ty, tz); tx /= tl; ty /= tl; tz /= tl;
+    const bx = ny * tz - nz * ty, by = nz * tx - nx * tz, bz = nx * ty - ny * tx;
+    const ox = px + nx * 3e-3, oy = py + ny * 3e-3, oz = pz + nz * 3e-3, h1 = hash(h1x * 13 + 7, h1y * 3 + 1), h2 = hash(h1x * 5 + 3, h1y * 11 + 2);
+    let r = 0, g = 0, b = 0;
+    for (let k = 0; k < n; k++) {
+      const u1 = (k + h1) / n, u2 = (k * 0.618034 + h2) % 1;
+      const rr = Math.sqrt(u1), th = 2 * PI * u2, a = rr * Math.cos(th), c = rr * Math.sin(th), w = Math.sqrt(1 - u1);
+      const dx = tx * a + bx * c + nx * w, dy = ty * a + by * c + ny * w, dz = tz * a + bz * c + nz * w;
+      if (!hit(ox, oy, oz, dx, dy, dz, 1e4, false, true, NE)) { sky(dx, dy, dz, GC); r += GC[0]; g += GC[1]; b += GC[2]; continue; }
+      const t = T.t, i = T.i, hx = ox + dx * t, hy = oy + dy * t, hz = oz + dz * t, gx = T.nx, gy2 = T.ny, gz = T.nz;
+      material(i, hx, hy, hz, gx, gy2, gz, t / f);
+      if (S.nx * -dx + S.ny * -dy + S.nz * -dz < 0.02) { S.nx = gx; S.ny = gy2; S.nz = gz; }
+      S.wet = 0; S.glass = 0;
+      direct(hx, hy, hz, -dx, -dy, -dz, CUT * 20, GC);
+      const dm = 1 - S.metal, AM = sc.amb, fl = GI.fill;
+      const Tr = Math.exp(-FG.s * t);
+      r += (GC[0] + S.er + AM.sky[0] * S.ar * dm * fl) * Tr; g += (GC[1] + S.eg + AM.sky[1] * S.ag * dm * fl) * Tr; b += (GC[2] + S.eb + AM.sky[2] * S.ab * dm * fl) * Tr;
+    }
+    DEP.gr = r / n; DEP.gg = g / n; DEP.gb = b / n;
+  }
 
   // the camera ray through plate pixel (px, py)
   const cam = sc.cam, cy_ = Math.cos(cam.yaw), sy_ = Math.sin(cam.yaw), cp_ = Math.cos(cam.pitch), sp_ = Math.sin(cam.pitch);
@@ -451,17 +558,19 @@ const srgb = (x) => (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) -
 export function* renderRows(sc, y0, y1) {
   const tr = tracer(sc), W = sc.W, H = sc.H, cam = sc.cam;
   const streak = sc.refl.streak, vs = sc.vs;
-  const m = (sc.hdr ? 0 : streak) + vs + 4;
+  const m = (sc.hdr ? 0 : streak) + vs + 4 + (sc.gi ? sc.gi.step : 0);
   const ya = Math.max(0, y0 - m), yb = Math.min(H, y1 + m), rows = yb - ya;
   const n = W * rows;
   const col = new Float32Array(n * 3), ref = new Float32Array(n * 3), amb = new Float32Array(n * 3), rr = new Float32Array(n), dep = new Float32Array(n), id = new Int32Array(n);
   const nrm = new Float32Array(n * 3), aog = new Float32Array(n);
+  const GI = sc.gi, gs = GI ? GI.step : 1, alb = GI ? new Float32Array(n * 3) : null, gig = GI ? new Float32Array(n * 3) : null;
   const out = [0, 0, 0], rf = [0, 0, 0, 0], am = [0, 0, 0], mp = [0, 0, 0];
   // 1. one sample per pixel; the occlusion on every other pixel of every other row
   for (let y = ya; y < yb; y++) {
     for (let x = 0; x < W; x++) {
       const d = tr.ray(x + 0.5, y + 0.5), k = (y - ya) * W + x;
-      tr.DEP.wantAO = sc.aoStep === 1 || ((x & 1) === 0 && (y & 1) === 0);
+      tr.DEP.wantAO = !GI && (sc.aoStep === 1 || ((x & 1) === 0 && (y & 1) === 0));
+      tr.DEP.wantGI = !!GI && x % gs === 0 && y % gs === 0;
       const i = tr.shade(cam.p[0], cam.p[1], cam.p[2], d[0], d[1], d[2], 0, x, y, out, rf, am);
       const t = tr.DEP.t;
       tr.mistPts(cam.p[0], cam.p[1], cam.p[2], d[0], d[1], d[2], t, mp);
@@ -469,11 +578,12 @@ export function* renderRows(sc, y0, y1) {
       ref[k * 3] = rf[0]; ref[k * 3 + 1] = rf[1]; ref[k * 3 + 2] = rf[2]; rr[k] = rf[3];
       amb[k * 3] = am[0]; amb[k * 3 + 1] = am[1]; amb[k * 3 + 2] = am[2];
       nrm[k * 3] = tr.DEP.nx; nrm[k * 3 + 1] = tr.DEP.ny; nrm[k * 3 + 2] = tr.DEP.nz; aog[k] = tr.DEP.ao;
+      if (GI) { alb[k * 3] = i === -1 ? 0 : tr.DEP.ar; alb[k * 3 + 1] = i === -1 ? 0 : tr.DEP.ag; alb[k * 3 + 2] = i === -1 ? 0 : tr.DEP.ab; if (tr.DEP.wantGI) { gig[k * 3] = tr.DEP.gr; gig[k * 3 + 1] = tr.DEP.gg; gig[k * 3 + 2] = tr.DEP.gb; } }
       dep[k] = t; id[k] = i;
     }
     yield;
   }
-  tr.DEP.wantAO = false;
+  tr.DEP.wantAO = false; tr.DEP.wantGI = false;
   // 2. edges again, at five samples (where the thing hit changes, or the light jumps)
   if (sc.aa) {
     const lum = (k) => col[k * 3] * 0.3 + col[k * 3 + 1] * 0.59 + col[k * 3 + 2] * 0.11 + (ref[k * 3] + ref[k * 3 + 1] + ref[k * 3 + 2] + amb[k * 3] + amb[k * 3 + 1] + amb[k * 3 + 2]) * 0.33;
@@ -492,9 +602,11 @@ export function* renderRows(sc, y0, y1) {
         const k = y * W + x; if (!edge[k]) continue;
         let r = col[k * 3], g = col[k * 3 + 1], b = col[k * 3 + 2], fr = ref[k * 3], fg = ref[k * 3 + 1], fb = ref[k * 3 + 2], ro = rr[k];
         let ar = amb[k * 3], ag = amb[k * 3 + 1], ab = amb[k * 3 + 2];
+        let lr = GI ? alb[k * 3] : 0, lg = GI ? alb[k * 3 + 1] : 0, lb = GI ? alb[k * 3 + 2] : 0;
         for (const [ox, oy] of OFF) {
           const d = tr.ray(x + ox, y + ya + oy);
-          tr.shade(cam.p[0], cam.p[1], cam.p[2], d[0], d[1], d[2], 0, x * 5 + 1, y * 3 + 2, out, rf, am);
+          const si = tr.shade(cam.p[0], cam.p[1], cam.p[2], d[0], d[1], d[2], 0, x * 5 + 1, y * 3 + 2, out, rf, am);
+          if (GI && si !== -1) { lr += tr.DEP.ar; lg += tr.DEP.ag; lb += tr.DEP.ab; }
           const t = tr.DEP.t;
           tr.mistPts(cam.p[0], cam.p[1], cam.p[2], d[0], d[1], d[2], t, mp);
           r += out[0] + mp[0]; g += out[1] + mp[1]; b += out[2] + mp[2]; fr += rf[0]; fg += rf[1]; fb += rf[2]; ro = Math.max(ro, rf[3]);
@@ -502,6 +614,7 @@ export function* renderRows(sc, y0, y1) {
         }
         col[k * 3] = r / 5; col[k * 3 + 1] = g / 5; col[k * 3 + 2] = b / 5; ref[k * 3] = fr / 5; ref[k * 3 + 1] = fg / 5; ref[k * 3 + 2] = fb / 5; rr[k] = ro;
         amb[k * 3] = ar / 5; amb[k * 3 + 1] = ag / 5; amb[k * 3 + 2] = ab / 5;
+        if (GI) { alb[k * 3] = lr / 5; alb[k * 3 + 1] = lg / 5; alb[k * 3 + 2] = lb / 5; }
       }
       if (y % 8 === 7) yield;
     }
@@ -526,6 +639,25 @@ export function* renderRows(sc, y0, y1) {
     }
   }
   for (let k = 0; k < n; k++) { const a = ao[k]; col[k * 3] += amb[k * 3] * a; col[k * 3 + 1] += amb[k * 3 + 1] * a; col[k * 3 + 2] += amb[k * 3 + 2] * a; }
+  // the bounce light, up from its grid the same way, times each pixel's own albedo
+  if (GI) {
+    for (let y = 0; y < rows; y++) {
+      const Y = y + ya, gy0 = Y - (Y % gs);
+      for (let x = 0; x < W; x++) {
+        const k = y * W + x, gx0 = x - (x % gs), fx = (x - gx0) / gs, fy = (Y - gy0) / gs, t0 = dep[k];
+        let sr = 0, sg = 0, sb = 0, sw = 0;
+        for (let j = 0; j < 4; j++) {
+          const gx = gx0 + (j & 1) * gs, gy = gy0 + (j >> 1) * gs - ya;
+          if (gx >= W || gy < 0 || gy >= rows) continue;
+          const g = gy * W + gx, nd = nrm[k * 3] * nrm[g * 3] + nrm[k * 3 + 1] * nrm[g * 3 + 1] + nrm[k * 3 + 2] * nrm[g * 3 + 2];
+          const dz = (dep[g] - t0) / (0.03 * t0 + 0.02);
+          const w = ((j & 1) ? fx : 1 - fx) * ((j >> 1) ? fy : 1 - fy) * (nd > 0.8 ? 1 : 0.01) * Math.exp(-dz * dz) + 1e-6;
+          sr += gig[g * 3] * w; sg += gig[g * 3 + 1] * w; sb += gig[g * 3 + 2] * w; sw += w;
+        }
+        if (sw > 0) { col[k * 3] += alb[k * 3] * sr / sw; col[k * 3 + 1] += alb[k * 3 + 1] * sg / sw; col[k * 3 + 2] += alb[k * 3 + 2] * sb / sw; }
+      }
+    }
+  }
   // 3. the reflections smeared up and down (for a whole image that is done after the bands meet)
   if (streak > 0 && !sc.hdr) { smear(ref, rr, W, rows, streak); yield; }
   // 4. the spot lamps' shafts in the mist, on a coarse grid

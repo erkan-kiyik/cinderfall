@@ -254,16 +254,3 @@ export function reflect(g, cam, p, groundY, K, a, w = 0.25, t = 0) {
   }
   g.restore();
 }
-
-// where a figure stands: the ground darkened under and round its feet (the
-// light that can't get in there), a soft ellipse in perspective
-export function contact(g, cam, x, z, r = 0.45, a = 0.5, y = 0) {
-  const c = cam.project(x, y, z), e = cam.project(x + r, y, z), f = cam.project(x, y, z + r);
-  if (c[2] <= 0) return;
-  const rx = Math.abs(e[0] - c[0]), ry = Math.max(0.6, Math.abs(f[1] - c[1]));
-  g.save(); g.globalCompositeOperation = 'multiply'; g.globalAlpha = a;
-  g.translate(c[0], c[1]); g.scale(1, ry / rx);
-  const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.5, 'rgba(40,40,40,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = gr; g.fillRect(-rx, -rx, rx * 2, rx * 2);
-  g.restore();
-}

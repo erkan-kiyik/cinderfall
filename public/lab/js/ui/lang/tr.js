@@ -8,7 +8,7 @@ export default {
   'story.p.3': 'Ocak bir soğudu mu, bir daha yanmaz derler.', 'story.p.4': 'Ocak hâlâ soğuk. Şehir hâlâ onların.',
   'story.p.5': 'Devriye geçti. Doksan saniye.', 'story.p.6': 'Kapıyı beş dakika tutarım. Fazlası olmaz.',
   'story.p.7': 'Çatılar temiz. Kule bu tarafa bakmıyor.', 'story.p.8': 'Ocak söner. Kor kalır.', 'story.p.9': 'Operatör, kanal senin.',
-  'story.m1.1': 'Kapıda iki nöbetçi, bir kulübe. Kamera yok, sadece göz.',
+  'story.m1.1': 'Kulübede iki nöbetçi. Kamera yok, sadece göz.',
   'story.m1.2': 'Terminal avluda. Ben açarım, siz tutun.',
   'story.m1.3': 'Girelim.',
   'story.m2.1': "Vanta bu sabah HAWK'ın tezgâhını basacak.",

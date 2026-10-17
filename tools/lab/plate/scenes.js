@@ -407,3 +407,24 @@ export function market(cam) {
     exposure: 1.25,
   };
 }
+
+// small vector helpers for building things
+const v = {
+  add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+  mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k], dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+  cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+  norm: (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; },
+};
+// an oriented box: centre, three unit axes, half sizes
+export function obox(c, ax, h) {
+  const planes = [], ext = [0, 0, 0];
+  for (let k = 0; k < 3; k++) { const a = ax[k], d = v.dot(a, c); planes.push([...a, d + h[k]], [...v.mul(a, -1), -d + h[k]]); for (let j = 0; j < 3; j++) ext[j] += Math.abs(a[j]) * h[k]; }
+  return { planes, aabb: [c[0] - ext[0], c[1] - ext[1], c[2] - ext[2], c[0] + ext[0], c[1] + ext[1], c[2] + ext[2]] };
+}
+// a box along a segment a→b (thickness w across, h up-ish): rifle parts, planks, beams
+export function bar(a, b, w, h, up = [0, 1, 0]) {
+  const d = v.sub(b, a), L = Math.hypot(...d), x = v.norm(d);
+  let y = v.norm(v.sub(up, v.mul(x, v.dot(up, x)))); if (!isFinite(y[0])) y = [0, 0, 1];
+  const z = v.cross(x, y);
+  return obox(v.mul(v.add(a, b), 0.5), [x, y, z], [L / 2, h / 2, w / 2]);
+}

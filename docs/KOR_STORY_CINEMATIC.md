@@ -129,7 +129,7 @@ görev ilk kez başlatılırken oynar, kampanyada "Sahne" düğmesiyle tekrar iz
 
 | Sahne | Çekim | Satırlar |
 |---|---|---|
-| `m1` öncesi | Gece kapı: bariyer, kulübe ışığı, konteyner yığını, yağmur; nöbetçi siluetleri | VESPER: *Kapıda iki nöbetçi, bir kulübe. Kamera yok, sadece göz.* · WARDEN: *Terminal avluda. Ben açarım, siz tutun.* · FLINT: *Girelim.* |
+| `m1` öncesi | Gece kapı: bariyer, kulübe ışığı, konteyner yığını, yağmur | VESPER: *Kulübede iki nöbetçi. Kamera yok, sadece göz.* · WARDEN: *Terminal avluda. Ben açarım, siz tutun.* · FLINT: *Girelim.* |
 | `m2` öncesi | Şafak, pazar: kepenkler yarı açık, HAWK tabelası yarım yanıyor, ıslak tezgâh örtüsü | VESPER: *Vanta bu sabah HAWK'ın tezgâhını basacak.* · SKYE: *HAWK giderse mermi de gider, ekmek de.* · HAWK (telefon): *Her şeyin bir fiyatı var, evlat. Bugün benimki sizsiniz.* |
 | `m3` öncesi | Valilik cephesi: Vanta bayrakları, sütunlar, ıslak merdiven, pencerede tek yanan oda | VESPER: *Gall bu gece valilikte. Sözleşmenin aslı onda.* · SKYE: *Salonda üç kat koruma. Gall kaçmaz, bekler.* · FLINT: *Bekletmeyelim.* |
 | Perde 1 sonu (`m3` bitince) | Masa lambası altında belge: başlıkta **KÜL PLANI**; yanında titreşen telefon, ekranda arayan: HAWK | VESPER: *Satmışlar. Ocağı, limanı, hepsini.* · BULWARK: *Satamazlar. Daha bizim.* · (telefon titrer, kimse açmaz) · yazı: *Perde 1 sonu* |
@@ -143,7 +143,6 @@ görev ilk kez başlatılırken oynar, kampanyada "Sahne" düğmesiyle tekrar iz
 |---|---|
 | `cine/noise.js` | Tohumlu rastgele, değer gürültüsü, fbm; önceden pişmiş dokular (gren karesi ×8, bulut/sis, kir/leke) |
 | `cine/cam.js` | Perspektif kamera: konum, yön, odak uzaklığı (mm→piksel), el titremesi (3 oktav gürültü), odak kayması |
-| `cine/human.js` | 3B insan iskeleti, yürüyüş/duruş/uzanma, IK, kumaş zinciri, siluet + kenar ışığı çizimi |
 | `cine/fx.js` | Yağmur (3 derinlik), sıçrama, buhar, kıvılcım, hacimsel huzme, ıslak zemin yansıması |
 | `cine/post.js` | Renk düzenleme, halation, gren, vinyet, sinema bandı, kapı titremesi (gate weave), pozlama titremesi, geçişler |
 | `cine/audio.js` | Ses: ambiyans katmanları ve zamanlı olaylar (WebAudio, dosyasız) |
@@ -152,60 +151,8 @@ görev ilk kez başlatılırken oynar, kampanyada "Sahne" düğmesiyle tekrar iz
 | `cine/scenes.js` | Sahne tanımları: çekim sırası, süreler, altyazı ve ses ipuçları |
 | `ui/intro.js` | Başlık animasyonu (yeni), eski arayüzle |
 
-### 5.2 İnsan iskeleti (3B, metre)
-Kemik uzunlukları boy `H` cinsinden (H = 1.78 m varsayılan; BULWARK 1.92,
-SKYE 1.70, VESPER 1.68, WARDEN 1.80, FLINT 1.79, Vanta 1.82):
-
-| Kemik | Uzunluk / H | Kalınlık (çap, m) | Not |
-|---|---|---|---|
-| pelvis (kök) | — | 0.34 genişlik | yerden 0.53 H |
-| omurga alt (pelvis→bel) | 0.10 | 0.30 | |
-| omurga üst (bel→göğüs) | 0.16 | 0.36 | yelek/zırh burada |
-| boyun | 0.05 | 0.12 | |
-| baş | 0.13 | 0.20 × 0.24 | kask/kapüşon ayrı şekil |
-| omuz genişliği | 0.26 | — | |
-| üst kol | 0.172 | 0.105 | |
-| ön kol | 0.157 | 0.085 | |
-| el | 0.10 | 0.08 | eldiven |
-| kalça genişliği | 0.19 | — | |
-| uyluk | 0.245 | 0.15 | |
-| baldır | 0.246 | 0.11 | |
-| ayak (topuk→uç) | 0.15 | 0.10 | bilek yerden 0.045 H |
-
-Eklem sınırları: diz 0–150°, dirsek 0–145°, omurga öne eğilme ±12°, baş
-sapma ±50°. Diz ve dirsek için iki-kemik IK; diz ipucu ileri, dirsek ipucu
-aşağı-dışarı.
-
-### 5.3 Yürüyüş (adım döngüsü)
-- Faz φ ∈ [0,1): sağ ayak φ, sol ayak φ+0.5.
-- Basma %62, salınım %38. Basmada ayak dünyada sabit (kayma yok); salınımda
-  yay: yükseklik 0.11 m × sin(π·u), ayak ucu %70'te iner (topuk önce).
-- Adım uzunluğu (iki adım = bir döngü): temkinli 1.30 m, normal 1.50 m,
-  ağır yük 1.20 m. Kadans: temkinli 96, normal 110, ağır 88 adım/dk.
-- Pelvis: dikey salınım 2×/döngü, genlik 0.025 m (en alçak: topuk vuruşu);
-  yanal salınım 0.02 m; pelvis dönüşü ±4°, göğüs ters yönde ±3°.
-- Gövde öne eğik: temkinli 8°, normal 4°, yüklü 6°. Baş dengelenir (bakış sabit).
-- Kollar: silahsız ±16° omuz, dirsek 15–35°; tüfek tutan: eller silahta (sağ
-  el kabzada, sol el el kundağında), silah göğüs hizasında, adımla ±1.5 cm
-  sekme, namlu aşağı 25° (taşıma).
-- Ses: her topuk vuruşu bir ayak sesi olayı üretir (zemin türüne göre).
-
-### 5.4 Duruş ve küçük hareketler
-- Nefes: göğüs 0.22 Hz, genlik 0.6 cm; omuzlar 0.3 cm.
-- Ağırlık aktarma: 6–9 sn'de bir, pelvis 2 cm yana, karşı diz bükülür.
-- Mikro hareket: baş 0.1–0.4 Hz gürültü ±2°.
-- Bodrumdaki dört siluet: biri haritaya eğilir (gövde 25°), biri kollarını
-  kavuşturur, biri kupayı kaldırır (4.1 sn'de), VESPER kulaklığa dokunur.
-
-### 5.5 Çizim (siluet + kenar ışığı)
-1. Karakter ayrı bir tuvale tek renk maske olarak çizilir (uzuvlar konik
-   kapsül, gövde/yelek/kask/sırt çantası ayrı şekiller, uzak taraf önce).
-2. Kenar ışığı: maske, ışığa doğru kaydırılmış maskeden çıkarılır →
-   sadece ışık tarafında 1–2 piksellik kenar; rengi ışığın Kelvin rengi.
-3. Gövde: çok koyu (#0a0c0f–#14171c), üstten-alta hafif degrade, ön dolgu ışığı
-   varsa %6–10 aydınlatma.
-4. Vizör/telsiz LED'i gibi küçük ışık noktaları en son, 1–2 piksel.
-5. Derinlik: uzaktaki karakterler sise karışır (renk sise doğru lerp).
+### 5.2–5.5 İnsan iskeleti, yürüyüş, duruş, siluet çizimi
+Kaldırıldı (bkz. 2.4): sinematiklerde insan gösterilmez.
 
 ### 5.6 Kumaş (FLINT'in atkısı, bayraklar)
 Verlet zinciri: 9 düğüm, 2.6 cm; yerçekimi 9.8, rüzgâr gürültü 0.4–1.2 m/s²,
@@ -262,7 +209,6 @@ Verlet zinciri: 9 düğüm, 2.6 cm; yerçekimi 9.8, rüzgâr gürültü 0.4–1.
 ---
 
 ### 2.3 Uygulamada değişenler (yapım sırasında)
-- Figürler yakın ve aydınlıkken karton gibi duruyor; bu yüzden insanlar ya arkadan aydınlatılmış siluet (ara sokak, tel örgü), ya yansıma (sokak), ya da yalnız elleriyle (bodrum, atkı) gösterilir.
 - Çekim 6 ve 7 yukarıdaki gibi yeniden kurgulandı; diğer çekimler tabloya uyar.
 - Islak zemin (`surf.js`): piksel başına ışık, Fresnel, su birikintisi aynası, bir kerede pişirilir (lamba titremesi ayrı katman).
 - Odak dışı ışıklar diyafram diski (`bokeh`), yumuşak leke değil.
@@ -275,13 +221,30 @@ Verlet zinciri: 9 düğüm, 2.6 cm; yerçekimi 9.8, rüzgâr gürültü 0.4–1.
   süper örneklemeyle, WebP olarak `public/lab/assets/plates/`'e yazılır
   (`node tools/lab/plate/bake.mjs governor`). Sahne kamerası plakanınkiyle
   aynı yerde durur (`js/cine/plates.js`), el titremesi ve yavaş zum plakayı
-  kaydırıp büyütür; insanlar, yağmur, tabela neonları, TV ışığı, pencerede
-  Gall canlı çizilir. Telefonda pişirme yok, yalnız resim yüklenir.
+  kaydırıp büyütür; yağmur, tabela neonları, TV ışığı, buhar canlı çizilir.
+  Telefonda pişirme yok, yalnız resim yüklenir.
 - `m2` pazar: göz hizası yerine karşı binanın birinci katından (VESPER'in
   gözetlediği pencere) aşağı bakan çekim; tenteler, kasalar, sisli sokak.
 - `m1` kapı: kamera aynı yerde kalır, ileri kayma yerine yavaş zum.
-- Figürler sise göre koyulaştırılır, ışığa göre gölge ve temas gölgesi alır;
-  plakada önlerinde bir şey olmayan yerlerde dururlar (plakanın derinliği yok).
+
+### 2.4 Karakterler kaldırıldı
+Çizilen insanlar (2B iskelet, siluetler, eller, ışın izlenmiş deneme
+figürleri) gerçekçi durmadı; hiçbir sinematikte insan gösterilmez. Hikâye
+yerlerle, ışıkla ve bırakılmış eşyalarla anlatılır; sesler (telsiz,
+altyazı) kişileri taşır:
+- Çekim 1–3 (fırın): platformda işçi yok; fırının ışığı ve projektörler.
+- Çekim 2 (tel örgü): asker botları yok; odak tele, sonra çamurda yanan meşaleye.
+- Çekim 6 (birikinti): devriye geçmiş; birikintide duvar, afiş, KOR yazısı.
+- Çekim 7 (masa): el yok; harita, telsiz, kupalar, rotanın üstüne bırakılmış
+  kalem, kül tablasında yanan sigara, sallanan lamba.
+- Çekim 8 (atkı): el görünmez; atkı kadraj dışından yukarı çekilir, çividen
+  kurtulup çıkar; çivi ve fotoğraf kalır.
+- Çekim 9 (ara sokak): kapı açılır, odanın ışığı ıslak zemine düşer, ekip
+  çoktan çıkmıştır; VESPER kanalı devrederken içerideki ışık söner.
+- `m1`: nöbetçiler kulübede (TV ışığı, ısıtıcının buharı); satır: *Kulübede
+  iki nöbetçi. Kamera yok, sadece göz.*
+- `m2`: tezgâhta demlenen çaydanlığın buharı.
+- `m3`: Gall'ın penceresi yanar, kendisi görünmez.
 
 ## 6. "Yapay zekâ gibi durmasın" kuralları
 1. Neon her yerde değil: sadece gerçekten tabela olan yerde. Kadrajın çoğu
@@ -295,16 +258,14 @@ Verlet zinciri: 9 düğüm, 2.6 cm; yerçekimi 9.8, rüzgâr gürültü 0.4–1.
    izler.
 6. Yazı: fütüristik font yok, parlama yok, "glitch" yok; altyazı Inter, konuşan
    küçük harf aralıklı.
-7. Yüz yok: karakterler siluet, kask ve kenar ışığıyla anlatılır (tekinsiz
-   vadiye düşmemek için).
+7. İnsan yok: kişiler sesleriyle, bıraktıkları eşyayla ve ışıkla anlatılır.
 8. Metin: somut, kısa, deyimli Türkçe; rakam ve ayrıntı.
 
 ## 7. Kabul ölçütleri
 - 844×390 ve 2400×1080'de her çekimden 2 kare; hiçbirinde taşma yok.
 - Önsöz baştan sona hatasız; geç düğmesi çalışır; ikinci açılışta tekrar oynamaz.
 - Başlık animasyonu yükleme bitene kadar bekler, bitince lobiye devreder.
-- Ayak kayması yok: basma fazında ayak dünya konumu ≤ 1 mm değişir (test).
-- Kemik uzunlukları her karede sabit (IK testi, ≤ 0.5 mm).
+- Plaka ışınları sahne kamerasının yansıttığı yere düşer (test, ≤ 1e-6 px).
 - i18n testleri geçer; tüm altyazılar TR/EN.
 - Telefonda (orta sınıf) ≥ 30 fps hedefi: iç çözünürlük düşer, katmanlar
   önceden pişer.
