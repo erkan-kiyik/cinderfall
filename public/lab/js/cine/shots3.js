@@ -295,6 +295,16 @@ export class Plan extends Basement {
     // a signature and a red stamp, a little crooked
     g.strokeStyle = 'rgba(20,30,80,0.8)'; g.lineWidth = 2; g.beginPath(); g.moveTo(w * 0.55, h * 0.86); g.bezierCurveTo(w * 0.6, h * 0.8, w * 0.66, h * 0.92, w * 0.72, h * 0.84); g.bezierCurveTo(w * 0.76, h * 0.8, w * 0.8, h * 0.88, w * 0.86, h * 0.85); g.stroke();
     g.save(); g.translate(w * 0.72, h * 0.72); g.rotate(-0.18); g.strokeStyle = 'rgba(170,30,26,0.75)'; g.lineWidth = 4; g.strokeRect(-90, -26, 180, 52); g.fillStyle = 'rgba(170,30,26,0.75)'; g.font = '700 30px "Courier New", monospace'; g.textAlign = 'center'; g.fillText('GİZLİDİR', 0, 10); g.restore();
+    // it came in an envelope: folded in three, the middle panel tipped away from the lamp,
+    // each crease a dark line with the lit edge of the fold beside it
+    g.fillStyle = 'rgba(40,30,20,0.07)'; g.fillRect(0, h / 3, w, h / 3);
+    for (const fy of [h / 3, (2 * h) / 3]) {
+      const y = Math.round(fy);
+      g.fillStyle = 'rgba(30,22,14,0.22)'; g.fillRect(0, y - 1, w, 2);
+      g.fillStyle = 'rgba(255,250,235,0.16)'; g.fillRect(0, y + 1, w, 2);
+      const gr = g.createLinearGradient(0, y - 14, 0, y + 14); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.45, 'rgba(40,30,20,0.06)'); gr.addColorStop(0.55, 'rgba(255,250,235,0.05)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.fillRect(0, y - 14, w, 28);
+    }
     // paper: fibres, a coffee drip, the corner turned
     const img = g.getImageData(0, 0, w, h), d = img.data;
     for (let i = 0; i < d.length; i += 4) { const k = 0.93 + Math.random() * 0.07; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k * 0.98; }

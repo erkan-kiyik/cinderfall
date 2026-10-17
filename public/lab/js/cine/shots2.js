@@ -122,6 +122,9 @@ export class Basement {
           const grain = fbm2(x * 3 + plank * 7, z * 60 + fbm2(x * 2, plank, 2, 61) * 3, 3, 62);
           const wear = Math.max(0, fbm2(x * 4, z * 4, 2, 63) - 0.55) * 1.5;
           let l = (0.42 + grain * 0.35 + (noise2(plank, 3, 64) - 0.5) * 0.15) * (seam ? 0.45 : 1) + wear * 0.15;
+          // the paper lying on it keeps the light off a hair of wood all round (more on the far side from the lamp)
+          const ou = Math.max(0, Math.abs(u - 0.5) - 0.5) * MAP.w, ov = Math.max(0, Math.abs(v - 0.5) - 0.5) * MAP.h, e = Math.hypot(ou, ov) - (u > 0.5 ? 0.0015 : 0);
+          if (e < 0.007) l *= 1 - 0.4 * (1 - Math.max(0, e) / 0.007) ** 2;
           c = [l * 120, l * 82, l * 52];
         }
         // rings from mugs, darker at their edge
