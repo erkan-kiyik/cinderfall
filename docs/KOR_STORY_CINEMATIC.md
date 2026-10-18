@@ -510,3 +510,38 @@ hikâyeden kurar.
     kapıda tebliğ panosu: *MECLİS ASKIYA ALINMIŞTIR*, *SOKAĞA ÇIKMA YASAĞI*.
   - Meydan: revak sütunları sıcak kesme taş, budanmış çalılar, bayrak
     direkleri.
+
+### 10.6 Pazar (görev 2 · HAWK'ın Tezgâhı)
+Pazar şehrin kendi ekonomisidir: Vanta karneyle dağıtır, halk takasla ve
+HAWK'ın getirdiğiyle yaşar. HAWK'ın tezgâhı şehre giren tek erzak hattıdır;
+onu korumak görevin kendisidir.
+
+- **Kural:** pazar kaldırımda, dükkânların önünde kurulur; yolu kesen tezgâh
+  yoktur (sokağın ortasına çıkan tezgâhlar daha önce kaldırıldı). Oyun alanında
+  tek tezgâh HAWK'ınkidir.
+- **Dükkânlar ve önleri:**
+  - *Manav:* çizgili soluk branda, kasalarda soğan, patates, lahana; boş
+    kasalar; kartona keçeli kalemle fiyat (*SOĞAN 30*, *PATATES 35*, *ELMA
+    YOK*); brandadan sarkan kantar.
+  - *Eskici:* sehpada eski radyolar, çaydanlık, bir çift ayakkabı, akü,
+    piller, kablo; *PİL VAR*, *TAMİR*.
+  - *Fırın:* boş ekmek rafları, camda *KİŞİ BAŞI 1 EKMEK*, önünde sıra ipi.
+  - *Battaniye ve palto:* askıda kışlıklar, katlanmış battaniyeler.
+  - *Hal:* şehrin eski sebze-meyve hali; büyük kemerli kapısı Vanta
+    mühürüyle kapalı (*KAPATILMIŞTIR*), alınlıkta soluk *SEBZE · MEYVE
+    HALİ*. Kapısının önünde çuvallarla bakliyat (*MERCİMEK*, *BULGUR*,
+    *NOHUT*) ve teneke yağ satılır.
+  - Balkondan sarkan çarşafa spreyle: *EKMEK HAKTIR*.
+- **Sokağın üstü:** binadan binaya gerilmiş halatlar, sarkan brandalar,
+  jeneratörden ampuller.
+- **Yerde:** lahana yaprağı, ezilmiş karton, kasa tahtası, ip.
+- **HAWK'ın tezgâhı:** iskele borusundan çatı, yamalı aşı boyası branda,
+  arkada paslı oluklu sac ve raflar (teneke yağ, kavanoz, mum, ilaç
+  kutuları, pil); asılı soğan ve sarımsak; tezgâh kasaların üstüne çakılmış
+  tahta: pirinç terazi, açık veresiye defteri, gaz lambası; tezgâhın altında
+  bezle örtülmüş cephane kutusu; yanında un çuvalları ve jeneratör; üstte
+  boyalı tahta tabelası ve ampuller.
+- **Kordon (A):** Vanta'nın dağıtım noktası: beyaz ışıklı *DAĞITIM NOKTASI*,
+  kırmızı LED *BUGÜN DAĞITIM YOK*, sıra direkleri, kepenk kapalı.
+- **İskele (C):** inşaat Söndürme'den beri durmuş: *İNŞAAT ALANI · GİRİLMEZ*
+  levhası, üstünde Vanta damgası *DURDURULDU*; yeşil file.

@@ -94,11 +94,12 @@ function blob(x, y, w, h, r) {
   return poly(pts);
 }
 
-// a bare bulb hanging on its flex from (x, y - drop)
-export function bulb(g, x, y, drop = 3) {
+// a bare bulb hanging on its flex from (x, y - drop); halo: a soft glow baked
+// round it (not on outlined props, where it would pick up the outline)
+export function bulb(g, x, y, drop = 3, halo = true) {
   stroke(g, `M ${x} ${y - drop} L ${x} ${y - 0.9}`, '#0f0e0c', 0.22);
   fill(g, rect(x - 0.42, y - 1.2, x + 0.42, y - 0.4), '#3a3632');
-  g.save(); g.globalCompositeOperation = 'lighter'; fill(g, ell(x, y + 0.3, 3.2, 3.2), '#ffb060', 0.08); g.restore();
+  if (halo) { g.save(); g.globalCompositeOperation = 'lighter'; fill(g, ell(x, y + 0.3, 3.2, 3.2), '#ffb060', 0.08); g.restore(); }
   fill(g, ell(x, y + 0.3, 0.75, 0.9), '#ffe6b8');
   fill(g, ell(x, y + 0.25, 0.36, 0.45), '#fffaf0');
 }
@@ -1032,6 +1033,231 @@ function teahouse(g) {
   antenna(g, 30, -h - 3, 14);
 }
 
+// --- the market (mission 2) ---------------------------------------------------------------
+// Docs §10.6: the street market, the city's own economy against Vanta's
+// rations. It lives on the pavement in front of the shops (nothing in the
+// road): tarps on poles out from the wall, crates and sacks, prices in marker
+// on cardboard, a hanging scale, bulbs off a generator.
+
+// a crate of produce standing on y = base: slats, and what is left in it
+export function produce(g, x, w, h, kind, seed = 1, base = 0) {
+  const B = rect(x, base - h, x + w, base);
+  fill(g, B, '#6a5034');
+  clip(g, B, () => { for (let y = base - h + 2; y < base; y += 3) fill(g, rect(x, y, x + w, y + 0.6), '#2e2014', 0.8); texture(g, 'wood', 0.6, 2); });
+  fill(g, rect(x, base - h, x + w, base - h + 0.8), '#8a6a44');
+  fill(g, rect(x + w - 0.8, base - h, x + w, base), '#000', 0.25);
+  const r = rng(seed);
+  const C = { onion: ['#b07a3a', '#d4a464'], potato: ['#7e6040', '#a08460'], cabbage: ['#5e7e48', '#7e9e5e'], apple: ['#7e2a22', '#a8443a'], grain: ['#b8a070', '#d0b888'] }[kind];
+  if (C) for (let i = 0; i < w / 1.5; i++) {
+    const px = x + 1 + r() * (w - 2), py = base - h - 0.3 - r() * 1.4, k = kind === 'cabbage' ? 1.5 : kind === 'grain' ? 0.5 : 0.9;
+    fill(g, ell(px, py, k, k * 0.85), r() < 0.5 ? C[0] : C[1]);
+    fill(g, ell(px - k * 0.3, py - k * 0.3, k * 0.3, k * 0.25), '#fff', 0.14);
+  }
+}
+
+// a price in marker on a torn bit of cardboard, stuck on a stick
+export function price(g, x, y, lines, seed = 1, rot = -0.06) {
+  g.save(); g.translate(x, y); g.rotate(rot);
+  const w = Math.max(...lines.map((t) => t.length)) * 1.3 + 2.2, h = lines.length * 2.8 + 1;
+  stroke(g, `M 0 0 L 0 ${3.4}`, '#4a3a28', 0.3);
+  fill(g, poly([[-w / 2, -h], [w / 2, -h + 0.3], [w / 2 - 0.3, 0], [-w / 2 + 0.4, 0.2]]), '#b89a6a');
+  fill(g, rect(-w / 2, -h, w / 2, -h + 0.6), '#fff', 0.1);
+  lines.forEach((t, i) => letters(g, t, 0, -h + 2.7 + i * 2.8, 2.5, '#17130f', { align: 'center', jit: 0.14, seed: seed + i }));
+  g.restore();
+}
+
+// a tarp on two poles out from the wall over the pavement, seen from the
+// front: wall edge at yTop, front edge at yEdge sagging between the poles;
+// faded stripes, a sewn-on patch, the guy ropes
+function tarp(g, x0, x1, yTop, yEdge, c, stripe = null, seed = 1) {
+  const r = rng(seed), mid = (x0 + x1) / 2;
+  const T = `M ${x0} ${yTop} L ${x1} ${yTop} L ${x1 + 2} ${yEdge} Q ${mid} ${yEdge + 2.6} ${x0 - 2} ${yEdge} Z`;
+  fill(g, T, c);
+  clip(g, T, () => {
+    if (stripe) for (let x = x0 - 4; x < x1 + 4; x += 6) fill(g, poly([[x, yTop], [x + 3, yTop], [x + 3 + (x - mid) * 0.05, yEdge + 4], [x + (x - mid) * 0.05, yEdge + 4]]), stripe, 0.6);
+    const gr = g.createLinearGradient(0, yTop, 0, yEdge + 3); gr.addColorStop(0, 'rgba(0,0,0,0.32)'); gr.addColorStop(1, 'rgba(255,240,220,0.08)');
+    fill(g, T, gr);
+    const px = x0 + 4 + r() * Math.max(1, x1 - x0 - 16);
+    const Pt = rect(px, yTop + 1.2, px + 8, yTop + (yEdge - yTop) * 0.7);
+    fill(g, Pt, '#6c6450', 0.9);
+    g.save(); g.setLineDash([0.5, 0.45]); stroke(g, Pt, '#2a2016', 0.15, 0.8); g.restore();
+    texture(g, 'canvas', 0.6, 2.4);
+  });
+  stroke(g, `M ${x0 - 2} ${yEdge} Q ${mid} ${yEdge + 2.6} ${x1 + 2} ${yEdge}`, '#000', 0.4, 0.3);
+  for (const x of [x0 - 1.4, x1 + 1.4]) { fill(g, rect(x - 0.45, yEdge - 0.4, x + 0.45, 0), '#3a3a38'); fill(g, rect(x - 0.45, yEdge - 0.4, x - 0.1, 0), '#5a5a56'); }
+}
+
+// a spring scale hanging off a tarp, its pan
+function kantar(g, x, y) {
+  stroke(g, `M ${x} ${y} L ${x} ${y + 2.4}`, '#2a2622', 0.25);
+  fill(g, ell(x, y + 4, 1.8, 1.8), '#c9a548'); fill(g, ell(x, y + 4, 1.3, 1.3), '#e6dcc0');
+  stroke(g, `M ${x} ${y + 4} L ${x + 0.8} ${y + 3.2}`, '#8e2a22', 0.2);
+  stroke(g, `M ${x} ${y + 5.8} L ${x} ${y + 7} M ${x} ${y + 7} L ${x - 2.6} ${y + 9.4} M ${x} ${y + 7} L ${x + 2.6} ${y + 9.4}`, '#4a4440', 0.18);
+  fill(g, `M ${x - 3} ${y + 9.4} L ${x + 3} ${y + 9.4} Q ${x} ${y + 11.6} ${x - 3} ${y + 9.4} Z`, '#8a8478');
+}
+
+// a shopfront: the frame, the shutter half up, the inside lit warm (or dark)
+function shopfront(g, x0, x1, top, half, lit = true) {
+  fill(g, rect(x0, top, x1, 0), P.trim);
+  const IN = rect(x0 + 1.4, half, x1 - 1.4, 0);
+  if (lit) { const gr = g.createLinearGradient(0, half, 0, 0); gr.addColorStop(0, '#3a2414'); gr.addColorStop(1, '#7a4a2a'); fill(g, IN, gr); }
+  else fill(g, IN, '#16130f');
+  shutter(g, x0 + 1.4, x1 - 1.4, top + 1.4, half);
+}
+
+// a trestle table on the pavement
+function trestle(g, x0, x1, y) {
+  fill(g, rect(x0, y, x1, y + 1.2), '#5a4430'); fill(g, rect(x0, y, x1, y + 0.4), '#7a5e40');
+  for (const x of [x0 + 2, x1 - 3]) stroke(g, `M ${x} ${y + 1.2} L ${x - 1.4} 0 M ${x} ${y + 1.2} L ${x + 1.4} 0`, '#3a2a1c', 0.5);
+}
+
+// two shops with the market out in front of them: the greengrocer's crates
+// under a striped tarp, the junk man's table under a plain one; a bedsheet
+// off the balcony sprayed EKMEK HAKTIR
+function pazar(g) {
+  const w = 150, h = 104;
+  renderWall(g, 0, w, -h, '#4e4a42', 83, 4);
+  cornice(g, 0, w, -h - 3, 3);
+  cornice(g, 0, w, -50, 2);
+  [['curtain', 14], ['dark', 54], ['gas', 90], ['taped', 124]].forEach(([k, x]) => win(g, x, -96, 14, 17, k));
+  [['dark', 14], ['curtain', 54], ['dark', 90], ['dark', 124]].forEach(([k, x]) => win(g, x, -72, 14, 15, k));
+  laundry(g, 88, -78.6, 108, -78.6, 87, 1.6);
+  // the sheet off the balcony
+  const SH = poly([[31, -97], [48, -96.4], [47.4, -70], [44, -71.4], [40, -69.6], [36, -71], [31.6, -70.2]]);
+  fill(g, SH, '#d8d2c2');
+  clip(g, SH, () => { for (const x of [35, 41, 46]) fill(g, rect(x, -97, x + 0.8, -70), '#000', 0.08); texture(g, 'canvas', 0.5, 2); });
+  spray(g, 'EKMEK', 39.6, -87, 4.4, '#8e2a22', { align: 'center', rot: -0.04, seed: 61, a: 0.9 });
+  spray(g, 'HAKTIR', 39.6, -79.4, 4.4, '#8e2a22', { align: 'center', rot: -0.03, seed: 62, a: 0.9 });
+  stroke(g, 'M 30 -97.4 L 49 -96.6', '#2a2622', 0.3);
+  // the greengrocer
+  shopfront(g, 4, 72, -46, -26);
+  board(g, 6, -49, 70, -43.4, '#2c4a3a', { seed: 31 });
+  letters(g, 'MANAV', 38, -44.6, 5, P.cream, { align: 'center', seed: 33, track: 0.2 });
+  tarp(g, 4, 72, -42, -32, '#4e6a82', '#c6ccd0', 35);
+  trestle(g, 3, 66, -9.6);
+  produce(g, 5, 12, 6, 'onion', 41, -9.6); produce(g, 18, 12, 6, 'potato', 42, -9.6); produce(g, 31, 12, 6, 'cabbage', 43, -9.6); produce(g, 44, 12, 6, null, 44, -9.6);
+  produce(g, 57, 9, 5, null, 45, 0); produce(g, 58, 8, 5, null, 46, -5);
+  price(g, 10, -17.2, ['SOĞAN', '30'], 51); price(g, 24, -17.2, ['PATATES', '35'], 52, 0.04); price(g, 37, -17.2, ['LAHANA', '20'], 53); price(g, 50, -16.6, ['ELMA', 'YOK'], 54, 0.08);
+  kantar(g, 62, -31.4);
+  bulb(g, 30, -29.4, 2);
+  // the junk man
+  shopfront(g, 78, 146, -46, -28, false);
+  board(g, 80, -49, 144, -43.4, '#4a3a2a', { seed: 37 });
+  letters(g, 'ESKİCİ', 112, -44.6, 5, P.cream, { align: 'center', seed: 39, track: 0.2 });
+  tarp(g, 78, 146, -42, -33, '#5a6448', null, 47);
+  trestle(g, 80, 142, -9);
+  // radios, a kettle, a pair of shoes, a car battery, batteries, a coil of wire, a lamp
+  fill(g, rect(82, -15, 92, -9), '#3a3028'); fill(g, ell(85, -12, 1.8, 1.8), '#5a5246'); fill(g, rect(88, -14, 91, -11), '#c99a4a', 0.8);
+  fill(g, rect(94, -13.4, 101, -9), '#4a4a4c'); fill(g, rect(95, -12.4, 100, -11.6), '#7a7a7c'); fill(g, rect(98.6, -14.4, 100, -13.4), '#8e2a22'); fill(g, rect(95.2, -14.4, 96.6, -13.4), '#2a2a2c');
+  fill(g, `M 104 -9 L 104 -12.4 C 104 -14.6 110 -14.6 110 -12.4 L 110 -9 Z`, '#8a8a84'); stroke(g, 'M 105 -13.4 C 105 -16 109 -16 109 -13.4', '#3a3a38', 0.3); fill(g, rect(110, -12, 112.4, -11.2), '#8a8a84');
+  for (const x of [114, 119]) fill(g, `M ${x} -9 L ${x} -11 C ${x} -12 ${x + 2} -12.2 ${x + 2.6} -11 L ${x + 4} -10 L ${x + 4} -9 Z`, '#3a2a1e');
+  for (let k = 0; k < 4; k++) { fill(g, rect(124 + k * 1.6, -11.6, 125.2 + k * 1.6, -9), k % 2 ? '#c9a548' : '#2a2a2a'); fill(g, rect(124 + k * 1.6, -11.6, 125.2 + k * 1.6, -11), '#a8a8a8'); }
+  for (let k = 0; k < 4; k++) stroke(g, ell(134, -10.6, 2.6 - k * 0.3, 1.4 - k * 0.15), '#7a4a2a', 0.25);
+  fill(g, rect(138, -16, 139, -9), '#3a3632'); fill(g, poly([[136, -16], [141, -16], [140, -18.6], [137, -18.6]]), '#6a5a3a');
+  price(g, 96, -17.6, ['PİL', 'VAR'], 55, 0.05); price(g, 129, -17.2, ['TAMİR'], 56, -0.08);
+  bulb(g, 112, -30.4, 2);
+  pipe(g, 75, -h, -50);
+  notice(g, 66, -70, 7, 9, 'kayip', 'KAYIP', 89);
+  weather(g, 0, w, -h, 83);
+  antenna(g, 20, -h - 3, 18); chimney(g, 110, -h - 3, true, 13);
+}
+
+// the bakery with its racks bare and a queue rope in front; beside it the
+// winter coats and blankets on a rail under a brown tarp
+function pazarB(g) {
+  const w = 140, h = 98;
+  renderWall(g, 0, w, -h, '#524a40', 91, 3);
+  cornice(g, 0, w, -h - 3, 3);
+  cornice(g, 0, w, -50, 2);
+  [['dark', 12], ['curtain', 46], ['dark', 80], ['gas', 112]].forEach(([k, x]) => win(g, x, -86, 15, 20, k));
+  stovepipe(g, 104, -60, -h - 3, 21);
+  // the bakery: racks with one loaf left, the note, the queue rope
+  fill(g, rect(4, -46, 70, 0), P.trim);
+  const SW = rect(6, -40, 44, -8);
+  const gr = g.createRadialGradient(25, -30, 0, 25, -24, 26); gr.addColorStop(0, '#d8a874'); gr.addColorStop(1, '#5a3a22'); fill(g, SW, gr);
+  clip(g, SW, () => {
+    for (const y of [-32, -24, -16]) { fill(g, rect(6, y, 44, y + 0.8), '#3a2416'); for (let x = 9; x < 44; x += 7) fill(g, rect(x, y - 0.5, x + 4, y), '#4a3020', 0.7); }
+    fill(g, ell(30, -25, 3, 1.3), '#b8783a'); fill(g, ell(29.4, -25.4, 2, 0.6), '#d8a060');
+    bulb(g, 25, -37, 2);
+  });
+  for (const x of [18.6, 31.4]) fill(g, rect(x, -40, x + 0.8, -8), P.trim);
+  g.save(); g.translate(15, -14); g.rotate(-0.05); fill(g, rect(-7, -3.4, 7, 3.6), P.paper); letters(g, 'KİŞİ BAŞI', 0, -0.6, 2.1, '#1e1a16', { align: 'center', jit: 0.08, seed: 71 }); letters(g, '1 EKMEK', 0, 2.4, 2.4, '#8e2a22', { align: 'center', jit: 0.08, seed: 72 }); g.restore();
+  fill(g, rect(48, -36, 64, 0), '#2a241f'); fill(g, rect(49, -34, 63, -18), '#3a2c20');
+  board(g, 6, -49, 68, -42.6, '#e2d6b6', { seed: 73 });
+  letters(g, 'FIRIN', 37, -43.8, 5.6, '#7a2420', { align: 'center', seed: 75, track: 0.3 });
+  for (const x of [6, 24, 42, 60]) { fill(g, rect(x - 0.5, -9, x + 0.5, 0), '#3a3a38'); fill(g, ell(x, -9.2, 0.8, 0.6), '#5a5a56'); fill(g, rect(x - 1.6, -0.8, x + 1.6, 0), '#2a2a28'); }
+  for (let k = 0; k < 3; k++) { const a = 6 + k * 18; stroke(g, `M ${a} -8.6 Q ${a + 9} -5.6 ${a + 18} -8.6`, '#8e2a22', 0.45); }
+  // coats and blankets
+  shopfront(g, 74, 136, -46, -30, false);
+  tarp(g, 74, 136, -42, -34, '#6a5234', null, 77);
+  stroke(g, 'M 78 -30 L 132 -30', '#3a3632', 0.5);
+  const COLS = ['#4a4e56', '#5a4636', '#3a4250', '#6a5e4a', '#4a3a3a', '#5e5a50'];
+  for (let k = 0; k < 7; k++) {
+    const x = 80 + k * 7.4, c = COLS[k % COLS.length], L = 14 + (k % 3) * 3;
+    stroke(g, `M ${x + 3} -30 L ${x + 3} -28.6`, '#2a2622', 0.25);
+    const D = k % 2 ? `M ${x} -28.6 L ${x + 6} -28.6 L ${x + 6.4} ${-28.6 + L} L ${x - 0.4} ${-28.6 + L} Z` : `M ${x + 1} -28.6 L ${x + 5} -28.6 L ${x + 6.6} -26.6 L ${x + 6} ${-28.6 + L} L ${x} ${-28.6 + L} L ${x - 0.6} -26.6 Z`;
+    fill(g, D, c);
+    clip(g, D, () => { if (k % 2) for (let y = -28; y < -28.6 + L; y += 2.4) fill(g, rect(x - 1, y, x + 7, y + 0.6), '#c9b991', 0.3); fill(g, rect(x + 4.6, -29, x + 7, -10), '#000', 0.2); texture(g, 'wool', 0.6, 2); });
+  }
+  for (let k = 0; k < 4; k++) fill(g, rect(114, -2.6 - k * 2.4, 130, -0.4 - k * 2.4), COLS[(k + 2) % COLS.length]);
+  produce(g, 112, 20, 2.6, null, 79, 0);
+  price(g, 92, -9.4, ['BATTANİYE'], 81, -0.04); price(g, 106, -8.8, ['PALTO'], 82, 0.06);
+  bulb(g, 105, -32.2, 2);
+  pipe(g, 72, -h, -50);
+  tag(g, 50, -60, C.ember, 0.6);
+  weather(g, 0, w, -h, 91);
+  antenna(g, 30, -h - 3, 16);
+}
+
+// the old wholesale hall, shut: a long brick shed under an arched roof, its
+// great door sealed, the name faded on the gable; at its door people sell
+// pulses out of sacks and oil from tins
+function hal(g) {
+  const w = 200, top = -76;
+  const OUT = `M 0 0 L 0 ${top} Q ${w / 2} -132 ${w} ${top} L ${w} 0 Z`;
+  clip(g, OUT, () => brickWall(g, 0, w, -116, 101));
+  stroke(g, `M -1 ${top} Q ${w / 2} -133 ${w + 1} ${top}`, '#2a2622', 2.2);
+  stroke(g, `M -1 ${top - 1} Q ${w / 2} -134 ${w + 1} ${top - 1}`, '#6a645a', 0.6);
+  // the name on its band of render
+  const BAND = rect(30, -96, 170, -86);
+  fill(g, BAND, '#5a5448'); clip(g, BAND, () => texture(g, 'concrete', 0.5, 3));
+  letters(g, 'SEBZE · MEYVE HALİ', 100, -88.4, 7, P.cream, { align: 'center', jit: 0.02, track: 0.12, a: 0.55, kind: 'sten' });
+  // the clerestory: small arched windows, most of the glass gone
+  for (let x = 12; x < w - 10; x += 16) {
+    if (x > 50 && x < 140) continue;
+    fill(g, `M ${x} -58 L ${x} -66 A 4 4 0 0 1 ${x + 8} -66 L ${x + 8} -58 Z`, (x / 16) % 3 === 1 ? '#2a2d33' : '#121315');
+    fill(g, rect(x - 1, -58, x + 9, -57), P.sill);
+  }
+  // the great door: shutter down, sealed
+  fill(g, `M 62 0 L 62 -42 A 38 38 0 0 1 138 -42 L 138 0 Z`, '#3a3632');
+  const D = `M 66 0 L 66 -42 A 34 34 0 0 1 134 -42 L 134 0 Z`;
+  clip(g, D, () => { shutter(g, 66, 134, -78, 0); fill(g, rect(66, -78, 134, -42), '#000', 0.25); });
+  // Vanta's seal tape across it, red and white
+  for (const d of ['M 66 -44 L 134 -6', 'M 134 -44 L 66 -6']) { stroke(g, d, '#e8e4dc', 1.4); g.save(); g.setLineDash([2.4, 2.4]); stroke(g, d, '#a8232d', 1.4); g.restore(); }
+  notice(g, 93, -36, 14, 12, 'vanta', 'KAPATILMIŞTIR', 103);
+  // pulses in sacks under a red-striped tarp
+  tarp(g, 6, 56, -42, -33, '#8a4a3a', '#d8cdb8', 105);
+  for (const [x, t, c] of [[8, 'MERCİMEK', '#a8402a'], [24, 'BULGUR', '#b8a070'], [40, 'NOHUT', '#c8b080']]) {
+    const S = `M ${x} 0 C ${x - 0.6} -6 ${x} -10 ${x + 2} -11 L ${x + 12} -11 C ${x + 14} -10 ${x + 14.6} -6 ${x + 14} 0 Z`;
+    fill(g, S, '#b8aa88'); clip(g, S, () => { texture(g, 'canvas', 0.7, 2); fill(g, rect(x + 13, -12, x + 15, 0), '#000', 0.2); });
+    fill(g, ell(x + 7, -11, 5.4, 1.4), c); fill(g, ell(x + 6, -11.3, 3, 0.6), '#fff', 0.15);
+    letters(g, t, x + 7, -4.6, 2, '#3a2a1c', { kind: 'sten', align: 'center', jit: 0, a: 0.8 });
+  }
+  price(g, 15, -17.6, ['MERCİMEK', '60'], 107); price(g, 31, -17.6, ['BULGUR', '40'], 108, 0.05); price(g, 47, -17.2, ['NOHUT', 'YOK'], 109, -0.08);
+  bulb(g, 31, -30.4, 2);
+  // oil in tins under a plain one
+  tarp(g, 144, 194, -42, -33, '#4e6a82', null, 111);
+  trestle(g, 146, 192, -9);
+  for (let k = 0; k < 5; k++) { const x = 148 + k * 8.4; fill(g, rect(x, -17, x + 6.4, -9), '#9aa0a4'); fill(g, rect(x, -17, x + 6.4, -15.8), '#7a8084'); fill(g, rect(x + 0.8, -14.4, x + 5.6, -11), k % 2 ? '#c9a548' : '#2a5a3a'); letters(g, 'YAĞ', x + 3.2, -11.8, 1.8, '#f0e8d0', { kind: 'print', align: 'center', jit: 0 }); }
+  for (let k = 0; k < 3; k++) { const x = 150 + k * 6; fill(g, rect(x, -4.4, x + 4, 0), '#9aa0a4'); }
+  price(g, 170, -20, ['YAĞ', '90'], 112, 0.06);
+  bulb(g, 169, -30.4, 2);
+  vposter(g, 182, -64, 10, 14, 113); korSpray(g, 187, -57, 1);
+  notice(g, 60, -40, 8, 10, 'kayip', 'KAYIP', 114);
+  clip(g, OUT, () => weather(g, 0, w, -116, 101, 0.8));
+  for (const x of [2, 197]) pipe(g, x, top, 0);
+}
+
 // --- the governor's office (mission 3) -----------------------------------------------
 // Docs §10.5: the city's old governor's office, now the Secretariat. Cut
 // stone and tall arched windows; the only building in town with its lights on
@@ -1197,6 +1423,15 @@ export const BUILDINGS = {
   union: { w: 140, top: -112, paint: union,
     lights: [[70, -10, 30, 0.4, [1, 0.6, 0.3], 'fire']],
     glows: [[58, -10.5, 5, 3, '#ffb060', 0.3, 'fire'], [82.4, -10, 5, 3, '#ffb060', 0.3, 'fire']] },
+  pazar: { w: 150, top: -132, paint: pazar,
+    lights: [[30, -27, 40, 0.6, WARM, 'bulb'], [112, -28, 36, 0.5, WARM, 'bulb'], [36, -12, 36, 0.35, [1, 0.6, 0.32]]],
+    glows: [[30, -29.1, 2.4, 2.4, BULB, 0.8, 'bulb'], [112, -30.1, 2.4, 2.4, BULB, 0.8, 'bulb']] },
+  pazarB: { w: 140, top: -126, paint: pazarB,
+    lights: [[25, -30, 36, 0.45, WARM, 'bulb'], [105, -30, 36, 0.5, WARM, 'bulb']],
+    glows: [[25, -36.7, 2.2, 2.2, BULB, 0.7, 'bulb'], [105, -31.9, 2.4, 2.4, BULB, 0.8, 'bulb']] },
+  hal: { w: 200, top: -136, paint: hal,
+    lights: [[31, -28, 38, 0.55, WARM, 'bulb'], [169, -28, 38, 0.55, WARM, 'bulb']],
+    glows: [[31, -30.1, 2.4, 2.4, BULB, 0.8, 'bulb'], [169, -30.1, 2.4, 2.4, BULB, 0.8, 'bulb']] },
   valWing: { w: 160, top: -134, paint: valWing,
     lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [108, -110, 50, 0.45, [0.9, 0.95, 1]], [80, -123, 80, 0.3, [1, 0.2, 0.24]]],
     glows: [[80, -124.4, 80, 1.8, '#ff3347', 0.18], [108, -117, 5, 2, '#f2f6ff', 0.5], [149, -36, 1.2, 1.2, '#ff2a35', 0.8]] },

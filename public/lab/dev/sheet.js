@@ -161,6 +161,23 @@ if (what === 'places') {
   const r2 = row();
   r2.append(pane('welcome', -24, 24, -52, 4, (g) => m1.welcomeSign(g, 0)), pane('roadSign', -14, 14, -48, 4, (g) => m1.roadSign(g, 0, ['KONTROL', 'NOKTASI', 'YAVAŞLA'])), pane('booth', -6, 52, -70, 4, (g) => m1.booth(g, 0)), pane('lamp', -10, 26, -88, 4, (g) => env.lampPost(g, 0)), pane('column', -10, 66, -118, 4, (g) => m3.column(g)), pane('planter', -4, 28, -24, 4, (g) => m3.planter(g)));
 }
+if (what === 'market') {
+  // the market's own pieces (docs §10.6)
+  const m2 = await import('../js/art/env/mission2.js');
+  const { outlined, setRoot: sr } = await import('../js/art/kit.js');
+  const s = +(q.get('s') || 5);
+  const pane = (name, x0, x1, top, bottom, paint) => {
+    const W = Math.ceil((x1 - x0) * s), H = Math.ceil((bottom - top) * s);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.fillStyle = '#151b27'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#2a303c'; g.fillRect(0, -top * s, W, H);
+    const o = outlined(W, H, s, -x0 * s, -top * s, (gg) => { sr(gg); paint(gg); }, 0.55); g.drawImage(o, 0, 0);
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif;margin:4px';
+    wrap.append(c, name); return wrap;
+  };
+  row().append(pane('hawk', -4, 68, -102, 4, (g) => m2.hawkStall(g)), pane('ration', -36, 64, -54, 4, (g) => m2.rationPoint(g, 0)), pane('site', -4, 32, -50, 4, (g) => m2.siteBoard(g, 0)));
+  row().append(pane('tarps', -4, 4 * (m2.TARP_W + 6), -132, -98, (g) => { for (let k = 0; k < 4; k++) { g.save(); g.translate(k * (m2.TARP_W + 6), 0); m2.crossTarp(g, k); g.restore(); } }), pane('litter', -4, 44, -6, 3, (g) => m2.litter(g, 3)));
+}
 if (what === 'avatars') {
   // the menu portraits at the sizes the menus use, and large
   const { avatar } = await import('../js/ui/portraits.js');
