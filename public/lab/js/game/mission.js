@@ -11,6 +11,7 @@
 import * as M3 from '../test/m3scene.js';
 import * as M2 from '../test/m2scene.js';
 import { DENS } from '../test/m1scene.js';
+import { hideoutBakeList } from '../art/env/hideout.js';
 import { buildMission1, gateLeaf } from '../art/env/mission1.js';
 import { buildMission2 } from '../art/env/mission2.js';
 import { concrete } from '../art/env/mission1.js';
@@ -30,7 +31,7 @@ import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'd3-6';
+export const BAKE_VERSION = 'd3-7';
 // Endless: the market from mission 2, walled off at both ends; squads come in
 // waves, every fifth one with Gall.
 function buildEndless() {
@@ -64,6 +65,8 @@ export function bakeList(quality) {
   }
   return [
     ...E,
+    // the lobby's basement (docs §10.9)
+    ...hideoutBakeList(DENS[quality][0]),
     ...charBakeList(['huc', 'gall'], ch),
     ...itemBakeList(ch, fx),
     // both gates are the same size

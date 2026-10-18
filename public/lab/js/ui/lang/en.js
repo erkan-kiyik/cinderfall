@@ -39,7 +39,7 @@ export default {
 
   'lobby.operator': 'Operator', 'lobby.play': 'MOVE OUT', 'lobby.campaign': 'Campaign · Act {act} · Ember Line',
   'lobby.next': 'Mission {n} — {name}', 'lobby.record': 'record', 'lobby.boss5': 'A boss every 5 stages',
-  'lobby.crow': 'HAWK’s stall', 'lobby.crowOpen': '{n} goods', 'lobby.crowSub': '4 daily goods · 1 special',
+  'lobby.radio': 'Radio', 'lobby.crow': 'HAWK’s stall', 'lobby.crowOpen': '{n} goods', 'lobby.crowSub': '4 daily goods · 1 special',
 
   'play.title': 'Choose a mode', 'play.kicker': 'Play',
   'mode.campaign': 'Campaign', 'mode.campaign.kicker': 'Ember Line · 10 missions', 'mode.campaign.desc': 'Infiltrate the city and break the Syndicate’s line. Three acts of hand-made missions.',

@@ -194,6 +194,17 @@
 .op-tag .role::before { content: ''; width: 16px; height: 3px; background: var(--ember); clip-path: polygon(0 30%, 100% 0, 96% 100%, 4% 80%); }
 .op-tag .loadout { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
 .op-tag .loadout span { font: 600 13px/1.2 var(--f-type); color: var(--n7); text-shadow: 0 1px 4px #000; }
+/* the stage's left edge darkened so the name reads over the lit map */
+.lobby-stage::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(12,10,9,0.62), rgba(12,10,9,0.3) 30%, rgba(12,10,9,0) 50%); }
+.op-tag .eyebrow { text-shadow: 0 1px 4px #000; }
+/* the radio's chatter: the LED, then one line at a time, typed out */
+.radio-log { position: absolute; left: 16px; bottom: 90px; width: 196px; padding: 7px 10px 8px; background: rgba(14,12,10,0.72); border-left: 2px solid #3fae5a; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.radio-log .eyebrow { display: flex; align-items: center; gap: 0; color: var(--n6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.radio-log .led { width: 6px; height: 6px; flex: none; margin-right: 6px; border-radius: 50%; background: #5cff7a; box-shadow: 0 0 6px #5cff7a; animation: led 1.6s steps(1) infinite; }
+@keyframes led { 50% { opacity: 0.35; } }
+.radio-log .said { margin: 5px 0 0; min-height: 3.9em; font: 400 11.5px/1.3 var(--f-type); color: var(--n7); }
+.radio-log .said b { margin-right: 6px; font: 700 11px/1 var(--f-display); letter-spacing: var(--track-mid); color: var(--ember-hi); }
+@media (prefers-reduced-motion: reduce) { .radio-log .led { animation: none; } }
 .op-picks { position: absolute; left: 14px; bottom: 14px; display: flex; gap: 8px; }
 /* the roster as photos pinned along the wall */
 .op-pick { width: max(48px, var(--hit)); height: max(52px, var(--hit)); padding: 3px 3px 7px; background: #e9e2d2; --cut: 0px; display: grid; place-items: center; overflow: hidden;

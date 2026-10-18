@@ -39,7 +39,7 @@ export default {
 
   'lobby.operator': 'Operatör', 'lobby.play': 'GÖREVE ÇIK', 'lobby.campaign': 'Kampanya · Perde {act} · Kor Hattı',
   'lobby.next': 'Görev {n} — {name}', 'lobby.record': 'rekor', 'lobby.boss5': 'Her 5 bölümde boss',
-  'lobby.crow': 'HAWK’ın tezgâhı', 'lobby.crowOpen': '{n} mal', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
+  'lobby.radio': 'Telsiz', 'lobby.crow': 'HAWK’ın tezgâhı', 'lobby.crowOpen': '{n} mal', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
 
   'play.title': 'Mod seç', 'play.kicker': 'Oyna',
   'mode.campaign': 'Kampanya', 'mode.campaign.kicker': 'Kor Hattı · 10 görev', 'mode.campaign.desc': 'Şehre sız, Syndicate’in hattını kır. Üç perde, elle tasarlanmış görevler.',

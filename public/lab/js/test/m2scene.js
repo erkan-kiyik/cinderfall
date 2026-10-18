@@ -215,14 +215,19 @@ export class M2Scene {
       }
       B.end();
     };
-    this.life.step(t, cam);
-    layer('sky', this.viewFor('sky', PLX.sky, cam.x));
-    const vFar = this.viewFor('far', PLX.far, 300);
-    layer('far', vFar); this.life.drawFar(B, vFar, A, t, kMax);
-    const vMid = this.viewFor('mid', PLX.mid, 300);
-    layer('mid', vMid); this.life.drawMid(B, vMid, A, t, kMax);
-    layer('ground', w);
+    // indoors (the lobby's basement) there is no sky, no street and no rain
+    const out = !this.C.interior;
+    if (out) {
+      this.life.step(t, cam);
+      layer('sky', this.viewFor('sky', PLX.sky, cam.x));
+      const vFar = this.viewFor('far', PLX.far, 300);
+      layer('far', vFar); this.life.drawFar(B, vFar, A, t, kMax);
+      const vMid = this.viewFor('mid', PLX.mid, 300);
+      layer('mid', vMid); this.life.drawMid(B, vMid, A, t, kMax);
+      layer('ground', w);
+    }
     B.begin(w);
+    for (const p of this.C.back || []) B.draw(A.get(p.name), 0, 0);
     for (const p of this.C.floor || []) { const r = A.get(p.name); if (p.at) { for (const x of p.at) if (x + p.box[2] > x0 && x + p.box[0] < x1) B.draw(r, x, 0); } else B.draw(r, 0, 0); }
     for (const f of vis) B.draw(A.get(`b.${f.type}`), f.x, 0);
     // contact shadows: every prop that stands on the street, every character on its feet
@@ -254,7 +259,7 @@ export class M2Scene {
     B.end();
     this.dust.draw(w, t);
     this.drawFrontExtras(B, w);
-    this.life.drawRain(B, w, A);
+    if (out) this.life.drawRain(B, w, A);
     this.addLights(R);
     R.lightPass(w);
     R.compose();
@@ -266,13 +271,13 @@ export class M2Scene {
     for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) {
       const k = this.flicker(fl, f.x);
       B.draw(glow, f.x + gx, gy, sx, sy, 0, rgba(c, a * k));
-      this.life.reflect(B, glow, t, f.x + gx, sx, c, a * k);
+      if (out) this.life.reflect(B, glow, t, f.x + gx, sx, c, a * k);
     }
     for (const [gx, gy, sx, sy, c, a, fl] of this.C.glows || []) {
       if (gx < x0 || gx > x1) continue;
       const k = this.flicker(fl, gx);
       B.draw(glow, gx, gy, sx, sy, 0, rgba(c, a * k));
-      this.life.reflect(B, glow, t, gx, sx, c, a * k);
+      if (out) this.life.reflect(B, glow, t, gx, sx, c, a * k);
     }
     for (const lx of this.C.lamps) if (lx > x0 && lx < x1) this.life.reflect(B, glow, t, lx + 15, 8, '#ffb868', 0.5);
     for (const f of this.C.fires || []) { const fx = f.length ? f[0] : f; if (fx > x0 && fx < x1) this.life.reflect(B, glow, t, fx, 6, '#ff8a3a', 0.6); }

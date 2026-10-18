@@ -605,3 +605,37 @@ yoktur.
 - **İçerisi (E):** kapı açılınca şehrin ilk sokağı: lojmanlar, çay ocağı ve
   HAWK'ın dükkânı (şehre giren tek mal bu kapıdan geçer); hücrenin elde
   yapılmış barikatı, işaret fişeği.
+
+### 10.9 Lobi: KOR'un sığınağı
+Menülerin arkasındaki sahne artık sokak değil, prologdaki bodrumdur (çekim 7
+ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
+önünde açılır (§10.3'teki "sığınak" fikrinin kendisi).
+
+- **Işık:** tek kaynak masanın üstünde sallanan emaye abajurlu lamba (2700 K,
+  0,45 Hz, ±14°); ışık havuzu masada ve operatörün üstünde gezer. Ek olarak
+  sobanın kapağından titreyen kor ışığı, telsizin yeşil LED'i, sokak
+  seviyesindeki parmaklıklı pencereden süzülen sodyum, merdivenin
+  tepesindeki kapının altından ince bir çizgi. Havada lambanın ışığında toz.
+- **Oda (soldan sağa):**
+  - Sokağa çıkan beton merdiven ve kapı (çekim 9: "kapı açılır").
+  - Telsiz köşesi (VESPER): raf, telsiz, kulaklık, antene giden kablo;
+    duvarda kaybolanların fotoğrafları ve boş bir çivi: atkı FLINT'in
+    boynunda, çivide Halil Usta'nın fotoğrafı kalmış.
+  - Masa (çekim 7): kalemle işaretlenmiş şehir haritası, telsiz, iki kupa,
+    şarjör, mermiler, kül tablası; duvarda iplerle bağlanmış harita: kapı,
+    pazar, valilik, dökümhane, liman, kule.
+  - Delikli pano ve tezgâh (Cephanelik): aletler, WARDEN'ın halligan'ı,
+    BULWARK'ın bareti, SKYE'ın dron parçaları.
+  - Soba ve borusu, sedir/portatif yatak ve yün battaniye; üst üste el konmuş
+    Vanta sandıkları (Sandıklar ekranı).
+  - Duvarda elle boyanmış kor işareti ve ocakçıların sözü: *OCAK SÖNER KOR
+    KALIR*.
+- **Malzeme:** nemli beton ve tuğla, kireç izleri, tavanda borular ve kiriş;
+  zeminde beton, eski kilim, kablolar, damlayan tavanın altına konmuş kova.
+- **Arayüz:** lobi panellerinin yanında telsiz kaydı: sıradaki görevin
+  telsiz satırları konuşanıyla, daktilo harfiyle (görev sahnesindeki
+  satırların aynısı), yeşil LED yanıp söner, satırlar sırayla yazılır.
+- **Kadraj:** lobide kamera operatörü lambanın altına, haritanın önüne alır;
+  lamba kadrajda görünür, botlar operatör fotoğraflarının üstünde kalır.
+  Sahnenin sol kenarı hafifçe kararır ki operatörün adı aydınlık haritanın
+  üstünde okunsun.

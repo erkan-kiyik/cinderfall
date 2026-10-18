@@ -1,5 +1,6 @@
-// Lobby: the live operator on the left (the showcase draws it), the play
-// panel on the right.
+// Lobby: the cells' basement. The live operator on the left (the showcase
+// draws it) with the radio's chatter for the next job under their name, the
+// play panel on the right.
 import { h, svg, press, popIn, ui, spring, reduced } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, stars } from './common.js';
@@ -7,6 +8,7 @@ import { dailyDone, traderStock, traderSold } from '../../core/economy.js';
 import { avatar, hawkPic } from '../portraits.js';
 import { OPS, MISSIONS, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
+import { STORY } from '../../cine/scenes.js';
 
 export const lobby = {
   mount(ctx, params = {}) {
@@ -49,16 +51,35 @@ export const lobby = {
     const crow = press(h('button.tile.cut.hawk-tile', { type: 'button', onclick: () => ctx.router.go('trader', {}, { root: true }) },
       hawkPic(64),
       h('div', h('div.eyebrow', h('span.dot'), t('lobby.crow')), h('div.typed', t('lobby.crowSub')), h('div.eyebrow.accent', t('lobby.crowOpen', { n: left })))));
+    // the radio on the shelf: the next job's lines, one at a time, typed out
+    const lines = STORY[next.id] ? STORY[next.id].subs : [];
+    const said = h('p.said');
+    const radio = lines.length ? h('div.radio-log', { 'aria-hidden': 'true' },
+      h('div.eyebrow', h('i.led'), t('lobby.radio'), ' · ', t('lobby.next', { n: next.id.slice(1), name: t(`mission.${next.id}`) })), said) : null;
+    let li = 0, cycle = 0, typing = 0;
+    const say = () => {
+      const s = lines[li++ % lines.length], txt = t(s.key), body = h('span');
+      said.replaceChildren(h('b', s.who), body);
+      clearInterval(typing);
+      if (reduced()) { body.textContent = txt; return; }
+      let n = 0;
+      typing = setInterval(() => { body.textContent = txt.slice(0, ++n); if (n >= txt.length) clearInterval(typing); }, 32);
+    };
+    const quiet = () => { clearInterval(cycle); clearInterval(typing); };
     let hub = hubbar(ctx, 'lobby');
     const el = h('div',
       hub,
       h('div.lobby-body',
-        h('section.lobby-stage', tag, picks),
+        h('section.lobby-stage', tag, radio, picks),
         h('section.lobby-side.veil-r', play, tiles, crow)));
     return {
       el,
+      hide: quiet,
+      dispose: quiet,
       show() {
-        ctx.showcase.frame(0.27, 112);
+        // the operator under the lamp, their boots clear of the photos
+        ctx.showcase.frame(0.32, 128, 28);
+        if (radio) { quiet(); li = 0; say(); cycle = setInterval(say, 6500); }
         // after the opening: the camera pushes in, the operator drops onto the street and the panels slide in
         const first = params.entrance && !reduced();
         if (first) ctx.showcase.entrance();
@@ -69,6 +90,7 @@ export const lobby = {
           hub.animate([{ opacity: 0, transform: 'translateY(-110%)' }, { opacity: 1, transform: 'none' }], { duration: 520, delay: 380, easing: ease, fill: 'backwards' });
           tag.animate([{ opacity: 0, transform: 'translateX(-28px)', clipPath: 'inset(0 100% 0 0)' }, { opacity: 1, transform: 'none', clipPath: 'inset(0 0 0 0)' }], { duration: 560, delay: 620, easing: ease, fill: 'backwards' });
           popIn(picks.children, { delay: 760, step: 55, from: 18 });
+          if (radio) radio.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 900, fill: 'backwards' });
           for (const [i, n] of [play, tiles, crow].entries()) n.animate([{ opacity: 0, transform: 'translateX(48px)' }, { opacity: 1, transform: 'none' }], { duration: 560, delay: 460 + i * 80, easing: ease, fill: 'backwards' });
         } else popIn([play, tiles, crow], { delay: 40 });
       },
