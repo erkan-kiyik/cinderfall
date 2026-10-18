@@ -7,7 +7,7 @@
 // density in three pieces (x 80..980, an atlas page is only so wide), the
 // floor in three more; the lamp is its own sprite so the scene can swing it.
 // The floor is at y = 0, the ceiling at y = -150.
-import { fill, stroke, clip, rng } from '../kit.js';
+import { fill, stroke, clip, rng, weatherOver } from '../kit.js';
 import { texture } from '../tex.js';
 import { emblem } from '../enemies/syndicate.js';
 import { letters, notice } from './city.js';
@@ -229,10 +229,12 @@ export function hideoutBakeList(scale) {
   for (let i = 0; i < 3; i++) {
     const a = ROOM.x0 + i * 300, b = Math.min(ROOM.x1, a + 300);
     // a unit of overlap each side so the soft edges sit under the neighbour
-    out.push({ name: `h.room${i}`, box: [a - 1, ROOM.top, b + 1, 0.5], scale, paint: room });
-    out.push({ name: `h.floor${i}`, box: [a - 1, -0.5, b + 1, 42], scale, paint: floor });
+    // a basement's years on its walls: damp running down from the street, stains,
+    // the dark that gathers where wall meets floor (docs §10.9)
+    out.push({ name: `h.room${i}`, box: [a - 1, ROOM.top, b + 1, 0.5], scale, paint: (g) => { room(g); weatherOver(g, [a - 1, ROOM.top, b + 1, 0.5], 61 + i, { night: 0.2, foot: 0.45, stain: 1.1, rain: 1.6, speck: 0.3, big: 0.9 }); } });
+    out.push({ name: `h.floor${i}`, box: [a - 1, -0.5, b + 1, 42], scale, paint: (g) => { floor(g); weatherOver(g, [a - 1, -0.5, b + 1, 42], 71 + i, { foot: 0, stain: 0.9, rain: 0, speck: 0.35, big: 1.2 }); } });
   }
-  out.push({ name: 'h.table', box: [TABLE.x0 - 16, -36, TABLE.x1 + 16, 0.5], scale, paint: table });
+  out.push({ name: 'h.table', box: [TABLE.x0 - 16, -36, TABLE.x1 + 16, 0.5], scale, paint: (g) => { table(g); weatherOver(g, [TABLE.x0 - 16, -36, TABLE.x1 + 16, 0.5], 81, { foot: 0.35, stain: 1.2, rain: 0, speck: 0.4, big: 0.5 }); } });
   out.push({ name: 'h.lamp', box: [-10, -1, 10, LAMP.len + 6], scale: scale * 1.5, paint: lamp });
   return out;
 }

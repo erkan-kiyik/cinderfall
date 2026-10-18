@@ -46,7 +46,7 @@ function redDot(g, x) {
   fill(g, dot(x + 2.6, -6.2, 0.2), '#ff4a5a');
 }
 
-// WREN-9 — compact striker pistol -------------------------------------------
+// SERÇE-9 — compact striker pistol -------------------------------------------
 function wren(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) wrenMag(g, m);
@@ -80,7 +80,7 @@ function wrenMag(g, m = MAT) {
   g.restore();
 }
 
-// KESTREL AR — select-fire carbine --------------------------------------------
+// KERKENEZ AR — select-fire carbine --------------------------------------------
 function kestrel(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) kestrelMag(g, m);
@@ -130,7 +130,7 @@ function kestrelMag(g, m = MAT) {
   clip(g, MAG, () => { for (const y of [2.6, 4.8]) stroke(g, `M 0.5 ${y} L 6 ${y + 0.6}`, m.poly.d, 0.25); fill(g, 'M 2.8 8.4 L 6.2 7.4 L 6.6 9.4 L 3.2 9.6 Z', m.dark.m); });
 }
 
-// RAMROD-12 — pump-action shotgun -------------------------------------------
+// HARBİ-12 — pump-action shotgun -------------------------------------------
 function ramrod(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('body')) ramrodBody(g, m);
@@ -182,7 +182,7 @@ function ramrodPump(g, m) {
   });
 }
 
-// MARKSMAN DMR — semi-auto designated marksman rifle --------------------------
+// ATMACA DMR — semi-auto designated marksman rifle --------------------------
 function marksman(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) marksmanMag(g, m);
@@ -239,7 +239,7 @@ function marksmanMag(g, m = MAT) {
   clip(g, MAG, () => { fill(g, 'M 0 5.0 L 5 5.0 L 5 6 L 0 6 Z', m.dark.m); stroke(g, 'M 0.8 1.6 L 3.8 1.6', m.poly.d, 0.25); });
 }
 
-// MULE .50 — heavy self-loading pistol ---------------------------------------
+// KATIR .50 — heavy self-loading pistol ---------------------------------------
 function mule(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) {
@@ -271,7 +271,7 @@ function mule(g, m = MAT, part = null) {
   }
 }
 
-// HORNET — compact high-rate SMG ------------------------------------------------
+// ARI — compact high-rate SMG ------------------------------------------------
 function hornet(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) {
@@ -304,7 +304,7 @@ function hornet(g, m = MAT, part = null) {
   cel(g, poly([[6.0, -4.6], [6.2, -5.8], [7.0, -5.8], [7.2, -4.6]]), m.dark, { sh: 0.2, hl: 0.15 });
 }
 
-// LYNX — integrally suppressed SMG -------------------------------------------------
+// VAŞAK — integrally suppressed SMG -------------------------------------------------
 function lynx(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) {
@@ -334,7 +334,7 @@ function lynx(g, m = MAT, part = null) {
   redDot(g, -2.0);
 }
 
-// BASTION BR — burst-fire battle rifle ----------------------------------------------
+// BURÇ BR — burst-fire battle rifle ----------------------------------------------
 function bastion(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) {
@@ -368,7 +368,7 @@ function bastion(g, m = MAT, part = null) {
   fill(g, rr(6.6, -7.6, 7.2, -6.4, 0.2), m.glass.m);
 }
 
-// SAW-20 — magazine-fed automatic shotgun -----------------------------------------
+// TESTERE-20 — magazine-fed automatic shotgun -----------------------------------------
 function saw(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) {
@@ -398,7 +398,7 @@ function saw(g, m = MAT, part = null) {
   cel(g, poly([[22.2, -5.0], [23.4, -5.0], [23.2, -6.2], [22.4, -6.2]]), m.dark, { sh: 0.2, hl: 0.15 });
 }
 
-// LONGBOW — bolt-action rifle with a long scope ---------------------------------------
+// KARTAL — bolt-action rifle with a long scope ---------------------------------------
 function longbow(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) {
@@ -438,7 +438,7 @@ function longbow(g, m = MAT, part = null) {
   fill(g, rr(13.65, -9.4, 13.95, -8.0, 0.1), m.glass.l);
 }
 
-// ANVIL LMG — belt-fed light machine gun --------------------------------------------------
+// ÖRS LMG — belt-fed light machine gun --------------------------------------------------
 function anvil(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (on('mag')) {
@@ -474,7 +474,7 @@ function anvil(g, m = MAT, part = null) {
   cel(g, poly([[25.6, -3.6], [26.6, -3.6], [26.4, -5.6], [25.8, -5.6]]), m.dark, { sh: 0.2, hl: 0.15 });
 }
 
-// THUMPER GL — four-shot revolving grenade launcher ----------------------------------------
+// TOKMAK GL — four-shot revolving grenade launcher ----------------------------------------
 function thumper(g, m = MAT, part = null) {
   const on = (k) => !part || part === k;
   if (!on('body')) return;
