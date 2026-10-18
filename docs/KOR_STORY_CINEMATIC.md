@@ -471,3 +471,42 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
   sobalarından çıkar.
 - **Pazar (görev 2):** tezgâh tenteleri solmuş branda (kiremit, hardal,
   zeytin); teknoloji tezgâhı radyo ve pil tamircisi; ampuller jeneratörden.
+
+### 10.5 Sokaklar ve yerler
+Önceki sokak her görevde aynı, kimliksiz bir gece yoluydu: düz koyu asfalt,
+ince bir bordür, beyaz ışıklı modern lambalar; kapı iki sarı-siyah direkti,
+valilik rastgele binaların önünde gri sütunlardı. Bu bölüm sokağı ve üç yeri
+hikâyeden kurar.
+
+- **Sokak (her görev):**
+  - *Kaldırım:* kilitli parke taşı, gri ve yer yer kırmızı; çökmüş, eksik
+    taşlar, derzlerde ot.
+  - *Bordür:* granit; bir zamanlar belediyenin çektiği beyaz boyanın izi.
+  - *Yol:* yama yama asfalt, katran derzleri, çatlaklar, zırhlı araç izleri;
+    çelikhanenin eski sanayi hattı yol boyunca asfalta gömülü, raylar ışığı
+    yakalar; belediyenin döküm rögar kapakları, ızgaralı yağmur giderleri;
+    birikintilerde sodyum ışığı; drondan atılmış Vanta bildirileri.
+  - *Lambalar:* eski çelik direk, kuğu boyunlu kol, turuncu sodyum ışık;
+    her direğe Vanta'nın hoparlörü bağlanmış (sokağa çıkma anonsları), kablo
+    bantla direğe sarılmış, gövdede yasak tebliği.
+- **Kapı (görev 1 · Sızma):** şehre girilen yer, Vanta'nın kontrol noktası.
+  - Yaklaşma: belediyenin eski mavi *HOŞ GELDİNİZ* levhası; şehrin adının
+    üstüne Vanta'nın *KONTROLLÜ BÖLGE* etiketi yapıştırılmış.
+  - Çelikhanenin buhar boru köprüsü yolu alçaktan keser (altından kayılır):
+    yalıtım sargılı iki boru, kafes ayaklar, *DİKKAT · ALÇAK GEÇİT*.
+  - Çökmüş yol: kırık asfalt kenarı, toprak, açıkta kalmış eski kanal borusu.
+  - Kontrol kulübesi Vanta grisi; yolda *KONTROL NOKTASI · YAVAŞLA* levhası.
+  - Kapının kendisi: çelik portal, üstünde beyaz ışıklı *KONTROL NOKTASI ·
+    DUR · KİMLİK HAZIRLAYIN* levhası, iki projektör, kamera, kırmızı LED;
+    iki yanında T-duvarlar ve jiletli tel.
+- **Pazar (görev 2 · HAWK'ın Tezgâhı):** §10.4'teki tezgâhlar; sokağı kesen
+  Vanta T-duvarı ve tel.
+- **Valilik (görev 3 · Sekreter Gall):** şehrin eski valilik binası, şimdi
+  Vanta'nın sekreterliği. Şehirde temiz tutulan tek yer.
+  - Bina: kesme taş, kemerli yüksek pencereler, kalın silmeler; ortada
+    alınlıkta kabartma *VALİLİK*; geniş merdiven.
+  - Vanta'nın eklediği: dev kırmızı pankartlar, kırmızı LED, kameralar,
+    projektörler, beyaz ışıklı *VANTA SYNDICATE · SEKRETERLİK* levhası;
+    kapıda tebliğ panosu: *MECLİS ASKIYA ALINMIŞTIR*, *SOKAĞA ÇIKMA YASAĞI*.
+  - Meydan: revak sütunları sıcak kesme taş, budanmış çalılar, bayrak
+    direkleri.

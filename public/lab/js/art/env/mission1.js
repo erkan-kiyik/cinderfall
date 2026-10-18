@@ -14,7 +14,7 @@ import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
 import { CONT, container, catwalk, ladder, pit, duct, barricade, barricadeFx, scrapBarricade } from './course.js';
 import { emblem } from '../enemies/syndicate.js';
-import { facadeLayout } from './city.js';
+import { facadeLayout, letters, lightbox, razor } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -23,7 +23,7 @@ const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 
 export const COLS = 400, TOPY = -200, ROWS = 30, STREET = 25;
 const CONC = mat(tone('#b7b7b0', '#8e8e87', '#676761', '#2f2f2b'), 'concrete', 0.7);
 const STEEL = tone('#8a95a3', '#5d6878', '#3c4654', '#151a21');
-const SYN = tone('#9ab3cc', '#5e7d9c', '#3f5a76', '#1c2b3b');
+const SYN = mat(tone('#a3acb9', '#78818e', '#565e6a', '#1e232a'), 'paint', 0.3);
 
 // --- painters ------------------------------------------------------------------
 // tall concrete barricade with a hazard band
@@ -92,18 +92,69 @@ export function gateLeaf(g, w, h) {
   });
   stroke(g, B, STEEL.k, 0.6);
 }
-// posts and a beam around the gate opening (x0..x1, height h)
+// The city gate (docs §10.5): a steel portal round the opening (x0..x1,
+// height h) with the white checkpoint sign across it, floodlights, a camera,
+// a red LED line; T-walls topped with razor wire run off either side.
+function tWall(g, x0, x1, h) {
+  const B = poly([[x0 - 0.6, 0], [x0 - 0.6, -3], [x0 + 1.4, -6], [x0 + 1.4, -h + 2], [x0 + 3, -h], [x1 - 2, -h], [x1 - 1.4, -h + 1.2], [x1 - 1.4, -6], [x1 + 0.6, -3], [x1 + 0.6, 0]]);
+  cel(g, B, CONC, { sh: 1.4, hl: 0.6, lw: 0.4 });
+  clip(g, B, () => { fill(g, rect(x0 - 1, -6, x1 + 1, 0), CONC.d, 0.5); emblem(g, (x0 + x1) / 2, -h + 9, 2.6, 'rgba(240,242,244,0.8)'); fill(g, ell(x0 + 4.4, -h + 4, 1.2, 1.2), '#0f1116'); });
+}
 export function gateFrame(g, x0, x1, h) {
+  const S = mat(tone('#9aa3ad', '#6e7781', '#4d545d', '#1a1e23'), 'steel', 0.4);
+  // the walls either side
+  for (let k = 0; k < 5; k++) { tWall(g, x0 - 18 - k * 12, x0 - 6 - k * 12, 48); tWall(g, x1 + 6 + k * 12, x1 + 18 + k * 12, 48); }
+  razor(g, x0 - 76, x0 - 6, -50.4); razor(g, x1 + 6, x1 + 76, -50.4);
+  // the portal: two box columns, hazard paint at their feet
   for (const x of [x0 - 6, x1]) {
-    const P = rect(x, -h - 10, x + 6, 0);
-    cel(g, P, CONC, { sh: 1.2, hl: 0.5 });
-    clip(g, P, () => { for (let y = -h; y < 0; y += 14) fill(g, rect(x, y, x + 6, y + 6), C.gold, 0.9); for (let y = -h; y < 0; y += 14) fill(g, poly([[x, y + 6], [x + 6, y], [x + 6, y + 3], [x + 3, y + 6]]), '#1a1c20'); });
-    stroke(g, P, CONC.k, 0.5);
+    const P = rect(x, -h - 14, x + 6, 0);
+    cel(g, P, S, { sh: 1.2, hl: 0.5 });
+    clip(g, P, () => { for (let y = -18; y < 0; y += 6) fill(g, poly([[x, y + 6], [x + 6, y], [x + 6, y + 3], [x + 3, y + 6]]), '#1a1c20'); fill(g, rect(x, -18, x + 6, 0), C.gold, 0.55); fill(g, rect(x + 4.6, -h - 14, x + 6, 0), '#000', 0.2); });
   }
-  const Bm = rect(x0 - 8, -h - 14, x1 + 8, -h - 4);
-  cel(g, Bm, SYN, { sh: 0.8, hl: 0.4 });
-  stroke(g, Bm, SYN.k, 0.5);
-  emblem(g, (x0 + x1) / 2, -h - 9, 3.4, M.white.m);
+  // the box girder and the sign hung on it
+  const Bm = rect(x0 - 44, -h - 26, x1 + 44, -h - 14);
+  cel(g, Bm, S, { sh: 0.8, hl: 0.4 });
+  clip(g, Bm, () => { for (let x = x0 - 42; x < x1 + 44; x += 8) stroke(g, `M ${x} ${-h - 25} L ${x + 4} ${-h - 15} L ${x + 8} ${-h - 25}`, S.d, 0.5); });
+  lightbox(g, x0 - 36, -h - 24.4, x1 + 36, -h - 15.4, 'KONTROL NOKTASI');
+  fill(g, rect(x0 - 26, -h - 14, x1 + 26, -h - 9), '#a8232d');
+  letters(g, 'DUR · KİMLİK HAZIRLAYIN', (x0 + x1) / 2, -h - 10.3, 3.3, '#f4ecec', { kind: 'print', align: 'center', jit: 0, track: 0.06 });
+  for (const x of [x0 - 26, x1 + 26]) stroke(g, `M ${x} ${-h - 14} L ${x} ${-h - 9}`, '#1a1e23', 0.4);
+  // red LED under it; floodlights and a camera on top
+  fill(g, rect(x0 - 22, -h - 8.2, x1 + 22, -h - 7.2), '#ff2a35'); fill(g, rect(x0 - 22, -h - 7.9, x1 + 22, -h - 7.5), '#ffc9cc');
+  for (const x of [(x0 + x1) / 2 - 30, (x0 + x1) / 2 + 30]) {
+    fill(g, rect(x - 0.8, -h - 30, x + 0.8, -h - 26), '#2a2f36');
+    fill(g, poly([[x - 4, -h - 30], [x + 4, -h - 30], [x + 3, -h - 27.4], [x - 3, -h - 27.4]]), '#3a3f47');
+    fill(g, rect(x - 3, -h - 27.8, x + 3, -h - 27.2), '#f2f6ff');
+  }
+  const cx = (x0 + x1) / 2;
+  fill(g, rect(cx - 0.6, -h - 32, cx + 0.6, -h - 26), '#2a2f36'); fill(g, poly([[cx - 4, -h - 34], [cx + 5, -h - 34.6], [cx + 5, -h - 30.6], [cx - 4, -h - 31]]), '#c9ced6'); fill(g, ell(cx - 3.4, -h - 32.4, 0.6, 0.6), '#14181d'); fill(g, ell(cx + 4, -h - 33.6, 0.4, 0.4), '#ff2a35');
+}
+
+// The old council sign on the way in, HOŞ GELDİNİZ; the name of the city
+// under it hidden by Vanta's sticker
+export function welcomeSign(g, x) {
+  const S = tone('#8a929a', '#646c74', '#474e55', '#181b1f');
+  for (const px of [x - 14, x + 13]) cel(g, rect(px, -36, px + 1.4, 0), S, { sh: 0.3, hl: 0.2, lw: 0.3 });
+  const B = rect(x - 20, -48, x + 20, -32);
+  cel(g, B, mat(tone('#4f78a8', '#2f5a8c', '#1f4068', '#0c1a2c'), 'paint', 0.8), { sh: 0.6, hl: 0.3 });
+  clip(g, B, () => {
+    stroke(g, rect(x - 19, -47, x + 19, -33), '#d9dde2', 0.4, 0.8);
+    letters(g, 'HOŞ GELDİNİZ', x, -42.4, 4.4, '#e6e9ec', { kind: 'print', align: 'center', jit: 0, track: 0.06 });
+    fill(g, rect(x - 15, -40.6, x + 15, -35), '#e4e3df');
+    fill(g, rect(x - 15, -40.6, x + 15, -39.4), '#a8232d');
+    letters(g, 'KONTROLLÜ BÖLGE', x, -36.2, 2.8, '#1d2129', { kind: 'print', align: 'center', jit: 0 });
+    for (let i = 0; i < 7; i++) fill(g, ell(x - 18 + i * 6.2, -47 + (i % 3) * 5, 0.8, 0.5), '#6a3a1e', 0.6);
+  });
+}
+
+// Vanta's road sign: white, red border, three short lines
+export function roadSign(g, x, lines) {
+  const S = tone('#8a929a', '#646c74', '#474e55', '#181b1f');
+  cel(g, rect(x - 0.7, -30, x + 0.7, 0), S, { sh: 0.3, hl: 0.2, lw: 0.3 });
+  const B = rect(x - 10, -44, x + 10, -28);
+  cel(g, B, tone('#ffffff', '#e8eaec', '#c9ccd0', '#2a2d32'), { sh: 0.4, hl: 0.2 });
+  stroke(g, rect(x - 9, -43, x + 9, -29), '#b3232e', 1.1);
+  lines.forEach((t, i) => letters(g, t, x, -38.8 + i * 4.2, 3.3, '#1d2129', { kind: 'print', align: 'center', jit: 0 }));
 }
 
 // hacking terminal: a console with a dark screen (the glow is drawn live)
@@ -158,12 +209,14 @@ export function buildMission1() {
   const P = (name, box, paint, list = props) => list.push({ name, box, paint });
 
   // A — approach -----------------------------------------------------------------
+  P('m.welcome', [X(12) - 22, -50, X(12) + 22, 1], (g) => welcomeSign(g, X(12)), deco);
   block(22, 23, 1, 2); P('m.crateA', [X(22) - 2, -18, X(24) + 2, 1], (g) => crate(g, X(22), 16, 16));
-  block(34, 42, 5, 6); P('m.duct', [X(34) - 2, -142, X(43) + 2, -30], (g) => duct(g, X(34), X(43), -48, -32));
+  block(34, 42, 5, 6); P('m.duct', [X(34) - 16, -50, X(43) + 16, 1], (g) => duct(g, X(34), X(43), -48, -32));
   for (let c = 50; c <= 53; c++) for (let r = STREET; r < STREET + 4; r++) g[r][c] = '.';
-  P('m.pit', [X(50) - 8, -3, X(54) + 8, 33], (g) => pit(g, X(50), X(54), 32));
+  P('m.pit', [X(50) - 8, -11, X(54) + 8, 33], (g) => pit(g, X(50), X(54), 32));
   P('m.cone1', [X(46) - 6, -12, X(46) + 8, 1], (g) => cone(g, X(46)), deco);
   // B — checkpoint post -------------------------------------------------------------
+  P('m.roadSign', [X(66) - 12, -46, X(66) + 12, 1], (g) => roadSign(g, X(66), ['KONTROL', 'NOKTASI', 'YAVAŞLA']), deco);
   bar('m.barB1', 72, 75, 4, '#3ee8e0');
   block(86, 89, 1, 2); P('m.barB', [X(86) - 4, -18, X(90) + 4, 1], (g) => barrier(g, X(86) + 1, 30), front);
   P('m.booth', [X(104) - 4, -66, X(104) + 48, 1], (g) => booth(g, X(104)), deco);
@@ -186,7 +239,9 @@ export function buildMission1() {
   bar('m.barD', 294, 297, 4, '#ff3fa4');
   P('m.term', [X(312) - 9, -28, X(312) + 18, 1], (g) => terminal(g, X(312)));
   block(322, 323, 1, 12);
-  P('m.gateFrame', [X(322) - 16, -126, X(324) + 16, 1], (g) => gateFrame(g, X(322), X(324), 96), deco);
+  P('m.gateFrame', [X(322) - 76, -150, X(324) + 76, 1], (g) => gateFrame(g, X(322), X(324), 96), deco);
+  lights.push([X(323), -118, 110, 0.6, [0.9, 0.95, 1]]);
+  glows.push([X(323), -113, 36, 5, '#e8f0ff', 0.3], [X(323) - 30, -125, 4, 2, '#f2f6ff', 0.6], [X(323) + 30, -125, 4, 2, '#f2f6ff', 0.6], [X(323), -103.4, 44, 1.6, '#ff3347', 0.3]);
   P('m.coneD', [X(286) - 6, -12, X(286) + 8, 1], (g) => cone(g, X(286)), deco);
   // E — extraction -----------------------------------------------------------------------
   block(350, 351, 1, 2); P('m.crateE', [X(350) - 2, -18, X(352) + 2, 1], (g) => crate(g, X(350), 16, 16));

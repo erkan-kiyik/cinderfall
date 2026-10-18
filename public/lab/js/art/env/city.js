@@ -52,8 +52,11 @@ const FONT = {
 // align, jit, seed, a, track (letter spacing in em), shadow: [colour, dx, dy] }
 export function letters(g, text, x, y, size, c, o = {}) {
   const { kind = 'paint', align = 'left', jit = 0.05, seed = 1, a = 1, track = 0, shadow = null } = o;
-  g.save(); g.font = FONT[kind](size); g.textBaseline = 'alphabetic'; g.textAlign = 'center';
-  const chars = [...text], ws = chars.map((ch) => g.measureText(ch).width + track * size);
+  // set and measured at 64 px and scaled down: at a few px the browser rounds
+  // the advances and small lettering falls apart
+  const K = 64 / size;
+  g.save(); g.font = FONT[kind](64); g.textBaseline = 'alphabetic'; g.textAlign = 'center';
+  const chars = [...text], ws = chars.map((ch) => g.measureText(ch).width / K + track * size);
   const total = ws.reduce((s, v) => s + v, 0) - track * size;
   const x0 = align === 'center' ? x - total / 2 : align === 'right' ? x - total : x;
   const draw = (col, dx, dy, al) => {
@@ -61,7 +64,7 @@ export function letters(g, text, x, y, size, c, o = {}) {
     g.fillStyle = col; g.globalAlpha = al;
     chars.forEach((ch, i) => {
       const oy = (r() - 0.5) * jit * size, rot = (r() - 0.5) * jit * 0.7;
-      g.save(); g.translate(cx + ws[i] / 2 + dx, y + oy + dy); g.rotate(rot); g.fillText(ch, 0, 0); g.restore();
+      g.save(); g.translate(cx + ws[i] / 2 + dx, y + oy + dy); g.rotate(rot); g.scale(1 / K, 1 / K); g.fillText(ch, 0, 0); g.restore();
       cx += ws[i];
     });
   };
@@ -164,7 +167,7 @@ function oldNeon(g, chars, pos, size, lit = [], c = '#ff6a3d') {
 }
 
 // Vanta's lightbox: a white face lit from inside, the ring-and-bar mark, the name
-function lightbox(g, x0, y0, x1, y1, text) {
+export function lightbox(g, x0, y0, x1, y1, text) {
   const h = y1 - y0;
   fill(g, rect(x0 - 1, y0 - 1, x1 + 1, y1 + 1), '#2b2f36');
   const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, '#f5f8fb'); gr.addColorStop(1, '#d6dde6');
@@ -176,7 +179,7 @@ function lightbox(g, x0, y0, x1, y1, text) {
 }
 
 // Vanta's LED board: red dot-matrix lettering on black. lines: [text, y, size]
-function ledBoard(g, x0, y0, x1, y1, lines) {
+export function ledBoard(g, x0, y0, x1, y1, lines) {
   fill(g, rect(x0 - 0.9, y0 - 0.9, x1 + 0.9, y1 + 0.9), '#262a30');
   fill(g, rect(x0, y0, x1, y1), '#0a0a0b');
   clip(g, rect(x0, y0, x1, y1), () => {
@@ -192,7 +195,7 @@ function ledBoard(g, x0, y0, x1, y1, lines) {
 
 // a pasted notice: Vanta's (white, red band, a stamp) or a paper (kind 'kayip':
 // a missing person, a photo and lines of type); torn: bite off a corner
-function notice(g, x, y, w, h, kind, title, seed = 1, torn = false) {
+export function notice(g, x, y, w, h, kind, title, seed = 1, torn = false) {
   const r = rng(seed);
   const pts = [[x, y + r() * 0.5], [x + w, y], [x + w - r() * 0.5, y + h], [x + r() * 0.4, y + h - r() * 0.4]];
   if (torn) pts.splice(2, 1, [x + w - r() * 0.5, y + h * 0.45], [x + w * 0.55, y + h * 0.7], [x + w * 0.7, y + h]);
@@ -409,6 +412,27 @@ function cladWall(g, x0, x1, y0, y1) {
     for (let y = y0 + 26; y < y1; y += 26) fill(g, rect(x0, y - 0.3, x1, y + 0.3), P.cladLo);
     for (let x = x0; x <= x1; x += 30) for (let y = y0; y <= y1; y += 26) for (const [dx, dy] of [[1.4, 1.4], [-1.4, 1.4], [1.4, -1.4], [-1.4, -1.4]]) fill(g, ell(x + dx, y + dy, 0.28, 0.28), P.cladLo);
     texture(g, 'paint', 0.3, 3);
+  });
+}
+
+// coiled razor wire along y from x0 to x1
+export function razor(g, x0, x1, y) {
+  for (let x = x0 + 1, i = 0; x < x1; x += 1.7, i++) stroke(g, ell(x, y + (i % 2) * 0.4, 1.9 + (i % 3) * 0.3, 2.3 + (i % 2) * 0.3), i % 2 ? '#8a8e94' : '#5e6268', 0.16, 0.85);
+  stroke(g, `M ${x0} ${y + 1.6} L ${x1} ${y + 1.6}`, '#4a4e54', 0.25);
+}
+
+// cut stone: ashlar courses, each block its own shade, kept clean
+function stoneWall(g, x0, x1, top, seed, c = '#5c574c') {
+  const W = rect(x0, top, x1, 0);
+  fill(g, W, c);
+  clip(g, W, () => {
+    const r = rng(seed);
+    for (let y = top, i = 0; y < 0; y += 6, i++) for (let x = x0 - (i % 2) * 7; x < x1; x += 14) fill(g, rect(x + 0.2, y + 0.2, x + 13.8, y + 5.8), r() < 0.5 ? '#fff' : '#000', 0.03 + r() * 0.04);
+    for (let y = top + 6, i = 1; y < 0; y += 6, i++) {
+      fill(g, rect(x0, y - 0.2, x1, y + 0.2), '#2e2b25', 0.7);
+      for (let x = x0 - (i % 2) * 7; x < x1; x += 14) fill(g, rect(x - 0.15, y, x + 0.15, y + 6), '#2e2b25', 0.55);
+    }
+    texture(g, 'concrete', 0.5, 3);
   });
 }
 
@@ -1008,6 +1032,115 @@ function teahouse(g) {
   antenna(g, 30, -h - 3, 14);
 }
 
+// --- the governor's office (mission 3) -----------------------------------------------
+// Docs §10.5: the city's old governor's office, now the Secretariat. Cut
+// stone and tall arched windows; the only building in town with its lights on
+// (cold, behind blinds), the only one kept clean. Vanta's banners, LEDs,
+// floodlights and cameras on it. A wing repeats along the plaza; the centre
+// block has the carved name, the stopped clock and the door.
+function archWin(g, x, y, w, h, lit = true, seed = 1) {
+  const A = `M ${x} ${y + h} L ${x} ${y + w / 2} A ${w / 2} ${w / 2} 0 0 1 ${x + w} ${y + w / 2} L ${x + w} ${y + h} Z`;
+  fill(g, `M ${x - 1.6} ${y + h + 1} L ${x - 1.6} ${y + w / 2} A ${w / 2 + 1.6} ${w / 2 + 1.6} 0 0 1 ${x + w + 1.6} ${y + w / 2} L ${x + w + 1.6} ${y + h + 1} Z`, '#6e685b');
+  if (lit) {
+    const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, '#dfe8f2'); gr.addColorStop(1, '#8c9cb0');
+    fill(g, A, gr);
+    const r = rng(seed), down = 0.25 + r() * 0.5;
+    clip(g, A, () => { for (let k = y; k < y + h * down; k += 1.4) fill(g, rect(x, k, x + w, k + 0.7), '#6a7686', 0.8); });
+    g.save(); g.globalCompositeOperation = 'lighter'; fill(g, rect(x - 3, y - 2, x + w + 3, y + h + 3), '#cfe0ff', 0.05); g.restore();
+  } else fill(g, A, '#191b20');
+  for (const fx of [x + w / 2]) fill(g, rect(fx - 0.35, y + 1, fx + 0.35, y + h), '#2a2824');
+  for (let k = y + w / 2 + 4; k < y + h; k += 8) fill(g, rect(x, k - 0.35, x + w, k + 0.35), '#2a2824');
+  fill(g, poly([[x + w / 2 - 2, y - 1.6], [x + w / 2 + 2, y - 1.6], [x + w / 2 + 1.4, y + 2.6], [x + w / 2 - 1.4, y + 2.6]]), '#7a7466');
+  fill(g, rect(x - 2.4, y + h + 1, x + w + 2.4, y + h + 2.6), '#76705f');
+}
+
+function valCommon(g, w, h, seed) {
+  stoneWall(g, 0, w, -h, seed);
+  // the rusticated ground floor: big blocks, deep joints
+  fill(g, rect(0, -30, w, 0), '#544f45');
+  clip(g, rect(0, -30, w, 0), () => {
+    for (let y = -30, i = 0; y < 0; y += 7.5, i++) { fill(g, rect(0, y - 0.5, w, y + 0.4), '#1e1c18', 0.8); for (let x = -(i % 2) * 9; x < w; x += 18) fill(g, rect(x - 0.4, y, x + 0.4, y + 7.5), '#1e1c18', 0.7); }
+    texture(g, 'concrete', 0.5, 3);
+  });
+  cornice(g, 0, w, -32, 2.4);
+  cornice(g, 0, w, -h - 4, 4);
+  for (let x = 1; x < w; x += 3.2) fill(g, rect(x, -h, x + 1.6, -h + 2), '#3a362f');
+  // Vanta's red line under the cornice
+  fill(g, rect(0, -h + 3, w, -h + 4.2), '#ff2a35'); fill(g, rect(0, -h + 3.4, w, -h + 3.8), '#ffc9cc');
+}
+
+function valWing(g) {
+  const w = 160, h = 128;
+  valCommon(g, w, h, 61);
+  for (const [x, lit] of [[14, true], [71, false], [128, true]]) {
+    archWin(g, x, -104, 18, 38, lit, x);
+    win(g, x, -24, 18, 14, 'dark');
+    for (let k = x + 2; k < x + 18; k += 3) fill(g, rect(k, -24, k + 0.6, -10), '#111316');
+  }
+  // the banner between the first bays, a floodlight, a camera
+  const BN = poly([[40, -122], [62, -122], [62, -58], [51, -64], [40, -58]]);
+  fill(g, BN, '#8e2330');
+  clip(g, BN, () => { for (let x = 43; x < 62; x += 5) fill(g, rect(x, -122, x + 1.2, -56), '#000', 0.12); texture(g, 'canvas', 0.5, 2.4); });
+  fill(g, rect(39, -123, 63, -120.6), '#2a2f36');
+  emblem(g, 51, -96, 6.4, '#f0dede');
+  fill(g, rect(107, -127, 109, -121), '#2a2f36'); fill(g, poly([[103, -121], [113, -121], [111, -117], [105, -117]]), '#3a3f47'); fill(g, rect(105, -117.4, 111, -116.6), '#f2f6ff');
+  g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[105, -116.6], [111, -116.6], [126, -40], [90, -40]]), '#dfe9ff', 0.04); g.restore();
+  fill(g, rect(150, -40, 156, -38.6), '#2a2f36'); fill(g, poly([[150, -38.6], [140, -40], [140, -35], [150, -34.4]]), '#c9ced6'); fill(g, ell(140.6, -37.4, 0.6, 0.6), '#14181d'); fill(g, ell(149, -36, 0.4, 0.4), '#ff2a35');
+  weather(g, 0, w, -h, 61, 0.35);
+}
+
+function valilik(g) {
+  const w = 220, h = 150;
+  valCommon(g, w, h, 71);
+  // the pilasters
+  for (const x of [28, 70, 144, 186]) {
+    fill(g, rect(x, -h + 22, x + 6, -32), '#67614f'); fill(g, rect(x + 5, -h + 22, x + 6, -32), '#000', 0.25);
+    fill(g, rect(x - 1.2, -h + 20, x + 7.2, -h + 23), '#76705f'); fill(g, rect(x - 1.2, -35, x + 7.2, -32), '#76705f');
+  }
+  // the frieze and its carved name
+  fill(g, rect(20, -h + 2, 200, -h + 18), '#625c4f');
+  letters(g, 'VALİLİK', 110.5, -h + 14.5, 12, '#000', { align: 'center', jit: 0, track: 0.3, a: 0.45 });
+  letters(g, 'VALİLİK', 109.7, -h + 13.7, 12, '#fff', { align: 'center', jit: 0, track: 0.3, a: 0.12 });
+  letters(g, 'VALİLİK', 110, -h + 14, 12, '#625c4f', { align: 'center', jit: 0, track: 0.3 });
+  // the attic with the clock, stopped at ten
+  fill(g, rect(88, -h - 22, 132, -h - 4), '#5c574c'); cornice(g, 88, 132, -h - 25, 3);
+  fill(g, ell(110, -h - 13, 7.4, 7.4), '#6e685b'); fill(g, ell(110, -h - 13, 6.4, 6.4), '#d9d4c4');
+  for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; fill(g, ell(110 + Math.cos(a) * 5.4, -h - 13 + Math.sin(a) * 5.4, 0.35, 0.35), '#2a2824'); }
+  stroke(g, `M 110 ${-h - 13} L ${110 - 2.6} ${-h - 14.5}`, '#1a1816', 0.6); stroke(g, `M 110 ${-h - 13} L 110 ${-h - 18.4}`, '#1a1816', 0.45);
+  // flags on the roof
+  for (const x of [40, 180]) { fill(g, rect(x - 0.5, -h - 30, x + 0.5, -h - 4), '#8a7a4a'); fill(g, poly([[x + 0.5, -h - 29], [x + 13, -h - 28], [x + 12, -h - 20], [x + 0.5, -h - 21]]), '#8e2330'); emblem(g, x + 6.6, -h - 24.6, 2, '#f0dede'); }
+  // windows in the bays
+  for (const [x, lit] of [[42, true], [154, false]]) { archWin(g, x, -118, 22, 46, lit, x); win(g, x + 2, -24, 18, 14, 'dark'); }
+  archWin(g, 98, -126, 24, 44, true, 3);
+  // the banners in the outer bays
+  for (const x0 of [3, 195]) {
+    const BN = poly([[x0, -h + 22], [x0 + 22, -h + 22], [x0 + 22, -52], [x0 + 11, -58], [x0, -52]]);
+    fill(g, BN, '#8e2330');
+    clip(g, BN, () => { for (let x = x0 + 3; x < x0 + 22; x += 5) fill(g, rect(x, -h + 22, x + 1.2, -50), '#000', 0.12); texture(g, 'canvas', 0.5, 2.4); });
+    emblem(g, x0 + 11, -96, 6.6, '#f0dede');
+  }
+  // the lightbox over the door, the door, the steps
+  lightbox(g, 76, -74, 144, -64, 'SEKRETERLİK');
+  fill(g, `M 92 -6 L 92 -40 A 18 18 0 0 1 128 -40 L 128 -6 Z`, '#76705f');
+  const D = `M 95 -6 L 95 -40 A 15 15 0 0 1 125 -40 L 125 -6 Z`;
+  const dg = g.createLinearGradient(0, -55, 0, -6); dg.addColorStop(0, '#a8b8cc'); dg.addColorStop(1, '#e2eaf2');
+  fill(g, D, dg);
+  fill(g, rect(95, -38, 102, -6), '#3a2a1e'); fill(g, rect(118, -38, 125, -6), '#3a2a1e');
+  clip(g, D, () => { for (let x = 95; x < 125; x += 2.4) fill(g, rect(x, -55, x + 0.5, -38), '#2a2f36'); });
+  for (const [y, x0, x1] of [[-6, 82, 138], [-4, 76, 144], [-2, 70, 150]]) { fill(g, rect(x0, y, x1, y + 2), '#6e685b'); fill(g, rect(x0, y, x1, y + 0.5), '#8a8474'); }
+  // the board by the door: what the Secretariat has decided
+  fill(g, rect(132, -44, 152, -24), '#2a2f36');
+  notice(g, 133, -43, 9, 9, 'vanta', 'MECLİS ASKIYA ALINMIŞTIR', 81);
+  notice(g, 143, -43, 8.4, 9, 'vanta', 'SOKAĞA ÇIKMA YASAĞI', 82);
+  notice(g, 133, -33.4, 18.4, 8.6, 'vanta', 'TOPLANMA YASAKTIR', 83);
+  // floodlights on the frieze washing the front
+  for (const x of [52, 168]) {
+    fill(g, rect(x - 1, -h + 18, x + 1, -h + 22), '#2a2f36'); fill(g, poly([[x - 4, -h + 22], [x + 4, -h + 22], [x + 3, -h + 25], [x - 3, -h + 25]]), '#3a3f47'); fill(g, rect(x - 3, -h + 24.6, x + 3, -h + 25.4), '#f2f6ff');
+    g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[x - 3, -h + 25.4], [x + 3, -h + 25.4], [x + 18, -30], [x - 18, -30]]), '#dfe9ff', 0.04); g.restore();
+  }
+  weather(g, 0, w, -h, 71, 0.3);
+}
+
 // --- old exports kept for the set pieces ----------------------------------------------
 // a neon tube along a path: a coloured halo, then the pale hot core
 export function tube(g, d, c, w = 0.9) {
@@ -1064,6 +1197,12 @@ export const BUILDINGS = {
   union: { w: 140, top: -112, paint: union,
     lights: [[70, -10, 30, 0.4, [1, 0.6, 0.3], 'fire']],
     glows: [[58, -10.5, 5, 3, '#ffb060', 0.3, 'fire'], [82.4, -10, 5, 3, '#ffb060', 0.3, 'fire']] },
+  valWing: { w: 160, top: -134, paint: valWing,
+    lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [108, -110, 50, 0.45, [0.9, 0.95, 1]], [80, -123, 80, 0.3, [1, 0.2, 0.24]]],
+    glows: [[80, -124.4, 80, 1.8, '#ff3347', 0.18], [108, -117, 5, 2, '#f2f6ff', 0.5], [149, -36, 1.2, 1.2, '#ff2a35', 0.8]] },
+  valilik: { w: 220, top: -184, paint: valilik,
+    lights: [[110, -69, 50, 0.6, [0.85, 0.92, 1]], [110, -24, 40, 0.5, [0.9, 0.95, 1]], [53, -95, 32, 0.35, [0.82, 0.9, 1]], [110, -104, 34, 0.35, [0.82, 0.9, 1]], [110, -145, 110, 0.3, [1, 0.2, 0.24]]],
+    glows: [[110, -146.4, 110, 1.8, '#ff3347', 0.18], [110, -69, 36, 7, '#e8f0ff', 0.3], [52, -125, 5, 2, '#f2f6ff', 0.5], [168, -125, 5, 2, '#f2f6ff', 0.5]] },
   teahouse: { w: 96, top: -126, paint: teahouse,
     lights: [[32, -20, 44, 0.55, WARM, 'bulb']],
     glows: [[30, -27.7, 2.4, 2.4, BULB, 0.65, 'bulb']] },

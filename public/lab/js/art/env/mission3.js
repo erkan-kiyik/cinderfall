@@ -7,7 +7,7 @@
 //                    calls squads in as the fight turns
 //   D  extraction    the flare past the dais
 import { cel, fill, stroke, clip } from '../kit.js';
-import { M, tone, C } from '../style.js';
+import { M, tone, mat, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, lampPost, cone } from './street.js';
 import { barricade, barricadeFx } from './course.js';
@@ -32,7 +32,7 @@ export function planter(g) {
   cel(g, B, STONE, { sh: 1.4, hl: 0.6 });
   clip(g, B, () => { fill(g, rect(-1, -13, 25, -11.6), STONE.l, 0.7); stroke(g, 'M 0 -4 L 24 -4', STONE.d, 0.4); for (const x of [8, 16]) stroke(g, `M ${x} -11.6 L ${x} 0`, STONE.d, 0.3, 0.7); });
   stroke(g, B, STONE.k, 0.4);
-  const H = tone('#6fbf7a', '#3f8a52', '#2a6038', '#0e2414');
+  const H = tone('#8aa878', '#577a4c', '#3c5836', '#141e10');
   const hedge = 'M 1 -13 C 0 -17 3 -19.6 6 -18.6 C 8 -21 12 -21 14 -19 C 17 -21 22 -20 23 -17 C 25 -15.6 24.6 -13.6 23 -13 Z';
   cel(g, hedge, H, { sh: 1.2, hl: 0.5 });
   clip(g, hedge, () => { for (const [x, y] of [[5, -16], [11, -18], [17, -17], [20, -15]]) fill(g, ell(x, y, 1.6, 1.1), H.l, 0.7); });
@@ -77,7 +77,7 @@ export const DAIS_FIRES = (x0, x1) => [x0 + 10, x1 - 10];
 // a portico bay in the background: one column and the beam over the next
 // 40 units (drawn side by side along the hall)
 export const BAY = 64;
-const DARK = tone('#8a8c94', '#64666e', '#4a4c54', '#1c1d22');
+const DARK = mat(tone('#a39d90', '#7a7468', '#5a554b', '#22201c'), 'concrete', 0.6);
 export function column(g, h = 104) {
   const STONE = DARK;
   cel(g, rect(-0.5, -h - 10, BAY + 0.5, -h), STONE, { sh: 1.2, hl: 0.5, line: false });
@@ -125,7 +125,9 @@ export function buildMission3() {
   conc('m3.concB', 184);
   P('m3.term', [X(204) - 9, -28, X(204) + 18, 1], (g) => terminal(g, X(204)));
   block(214, 215, 1, 12);
-  P('m3.gateFrame', [X(214) - 16, -126, X(216) + 16, 1], (g) => gateFrame(g, X(214), X(216), 96), deco);
+  P('m3.gateFrame', [X(214) - 76, -150, X(216) + 76, 1], (g) => gateFrame(g, X(214), X(216), 96), deco);
+  lights.push([X(215), -118, 110, 0.6, [0.9, 0.95, 1]]);
+  glows.push([X(215), -113, 36, 5, '#e8f0ff', 0.3], [X(215) - 30, -125, 4, 2, '#f2f6ff', 0.6], [X(215) + 30, -125, 4, 2, '#f2f6ff', 0.6], [X(215), -103.4, 44, 1.6, '#ff3347', 0.3]);
   // C — the hall --------------------------------------------------------------------------------
   addPlanter(240); conc('m3.concC1', 266); addPlanter(292); conc('m3.concC2', 318); addPlanter(340);
   // the dais (2 tiles) and Gall's backdrop
@@ -151,7 +153,8 @@ export function buildMission3() {
   const HALL = [X(224), X(396)];
   return {
     id: 'm3', level, props, front, deco, lamps, glows, lights, width: COLS * T,
-    facade: facadeLayout(-10, COLS * T + 10, 31, ['synBlock', 'hotel', 'walkupB', 'synBlock', 'alley', 'union', 'warehouse', 'synBlock', 'teahouse', 'hotel', 'synBlock', 'walkup']),
+    // the street up to the plaza, then the governor's office: its wings either side of the centre block
+    facade: facadeLayout(-10, COLS * T + 10, 31, ['synBlock', 'walkupB', ...Array(8).fill('valWing'), 'valilik', ...Array(9).fill('valWing')]),
     fires,
     spawn: [64, 0],
     par: 360,

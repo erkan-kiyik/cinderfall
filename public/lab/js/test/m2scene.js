@@ -17,7 +17,7 @@ import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-9';
+export const BAKE_VERSION = 'm2-10';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -188,7 +188,7 @@ export class M2Scene {
     this.cr.begin(chars);
     // lights
     const vw = cam.viewW, x0 = cam.x - vw / 2 - 120, x1 = cam.x + vw / 2 + 120;
-    for (const lx of this.C.lamps) if (lx > x0 && lx < x1) { R.addLight(lx + 15, -78, 100, 1.2, [1, 0.84, 0.6], Math.PI / 2, Math.cos(0.44), 0.18); R.addLight(lx + 15, -80, 22, 0.8, [1, 0.9, 0.7]); }
+    for (const lx of this.C.lamps) if (lx > x0 && lx < x1) { R.addLight(lx + 15, -78, 100, 1.2, [1, 0.7, 0.4], Math.PI / 2, Math.cos(0.44), 0.18); R.addLight(lx + 15, -80, 22, 0.8, [1, 0.8, 0.55]); }
     // the buildings in view: their windows, neon and fires
     const vis = this.C.facade.filter((f) => f.x + BUILDINGS[f.type].w > x0 && f.x < x1);
     for (const f of vis) for (const [lx, ly, rad, k, c, fl] of BUILDINGS[f.type].lights || []) R.addLight(f.x + lx, ly, rad, k * this.flicker(fl, f.x), c);
@@ -256,7 +256,7 @@ export class M2Scene {
     // emissive
     const glow = A.get('fx.glow'), flame = A.get('fx.flame');
     B.begin(w); B.setBlend(1);
-    for (const lx of this.C.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#fff1d0', 0.6));
+    for (const lx of this.C.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#ffd9a0', 0.6));
     // neon: the buildings', the barricades', each smeared down the wet road
     for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) {
       const k = this.flicker(fl, f.x);
@@ -269,7 +269,7 @@ export class M2Scene {
       B.draw(glow, gx, gy, sx, sy, 0, rgba(c, a * k));
       this.life.reflect(B, glow, t, gx, sx, c, a * k);
     }
-    for (const lx of this.C.lamps) if (lx > x0 && lx < x1) this.life.reflect(B, glow, t, lx + 15, 8, '#ffd9a0', 0.5);
+    for (const lx of this.C.lamps) if (lx > x0 && lx < x1) this.life.reflect(B, glow, t, lx + 15, 8, '#ffb868', 0.5);
     for (const f of this.C.fires || []) { const fx = f.length ? f[0] : f; if (fx > x0 && fx < x1) this.life.reflect(B, glow, t, fx, 6, '#ff8a3a', 0.6); }
     for (const en of this.enemies) if (en.alive) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
     for (const f of this.C.fires || []) for (let k = 0; k < 3; k++) {

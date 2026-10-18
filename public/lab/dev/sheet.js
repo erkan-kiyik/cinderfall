@@ -139,6 +139,28 @@ if (what === 'env' || what === 'props') {
     wrap.append(c, n); r.appendChild(wrap); acc += w + 6;
   }
 }
+if (what === 'places') {
+  // the mission set pieces (docs §10.5) on the street, outlined as in the game
+  const m1 = await import('../js/art/env/mission1.js');
+  const m3 = await import('../js/art/env/mission3.js');
+  const co = await import('../js/art/env/course.js');
+  const env = await import('../js/art/env/street.js');
+  const { outlined, setRoot: sr } = await import('../js/art/kit.js');
+  const s = +(q.get('s') || 4);
+  const pane = (name, x0, x1, top, bottom, paint) => {
+    const W = Math.ceil((x1 - x0) * s), H = Math.ceil((bottom - top) * s);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.fillStyle = '#151b27'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#2a303c'; g.fillRect(0, -top * s, W, H);
+    const o = outlined(W, H, s, -x0 * s, -top * s, (gg) => { sr(gg); paint(gg); }, 0.55); g.drawImage(o, 0, 0);
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif;margin:4px';
+    wrap.append(c, name); return wrap;
+  };
+  const r1 = row();
+  r1.append(pane('gate', -80, 100, -152, 6, (g) => m1.gateFrame(g, 0, 16, 96)), pane('duct', -20, 100, -52, 6, (g) => co.duct(g, 0, 80, -48, -32)), pane('pit', -12, 60, -12, 34, (g) => co.pit(g, 0, 48, 32)));
+  const r2 = row();
+  r2.append(pane('welcome', -24, 24, -52, 4, (g) => m1.welcomeSign(g, 0)), pane('roadSign', -14, 14, -48, 4, (g) => m1.roadSign(g, 0, ['KONTROL', 'NOKTASI', 'YAVAŞLA'])), pane('booth', -6, 52, -70, 4, (g) => m1.booth(g, 0)), pane('lamp', -10, 26, -88, 4, (g) => env.lampPost(g, 0)), pane('column', -10, 66, -118, 4, (g) => m3.column(g)), pane('planter', -4, 28, -24, 4, (g) => m3.planter(g)));
+}
 if (what === 'avatars') {
   // the menu portraits at the sizes the menus use, and large
   const { avatar } = await import('../js/ui/portraits.js');

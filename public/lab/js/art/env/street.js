@@ -6,6 +6,7 @@
 // use is a prop with the dark outline, so the play layer always reads first.
 import { cel, fill, stroke, clip, rng, setRoot } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
+import { texture } from '../tex.js';
 import { emblem } from '../enemies/syndicate.js';
 import { facadeStrip } from './city.js';
 
@@ -118,40 +119,78 @@ function midIndustry(g) {
 }
 
 // --- ground -----------------------------------------------------------------
+// docs §10.5: interlocking pavers on the pavement, a granite kerb with the
+// ghost of the council's white paint, patched asphalt with the works' old
+// line sunk in it, cast manholes and drains, puddles holding the sodium
+// light, tracks of Vanta's armour, the leaflets their drones drop
 function ground(g) {
   const r = rng(77);
-  // the pavement: slabs, joints, a few cracked and stained ones
-  fill(g, rect(-10, 0, 610, 4.2), '#56607a');
-  fill(g, rect(-10, 0, 610, 0.8), '#7a849c');
-  for (let x = -4; x < 610; x += 12) stroke(g, `M ${x} 0.8 L ${x - 0.8} 4.2`, '#46506a', 0.35);
-  for (let i = 0; i < 14; i++) {
-    const x = r() * 600, k = r();
-    if (k < 0.5) stroke(g, `M ${x} 1 l 1.4 1.2 l -0.6 1.6`, '#3e4760', 0.25);
-    else fill(g, ell(x, 2.4, 2 + r() * 3, 0.8), '#3e4760', 0.5);
+  // the pavement: pavers in running bond, grey with a red one here and there,
+  // some sunk, one or two gone, weeds in the joints
+  fill(g, rect(-10, 0, 610, 4.2), '#3a3e4a');
+  for (let row = 0; row < 2; row++) {
+    const y0 = row * 2.1, off = row ? 2.4 : 0;
+    for (let x = -10 + off; x < 610; x += 4.8) {
+      const k = r(), P = rect(x + 0.18, y0 + 0.18, x + 4.62, y0 + 1.92);
+      fill(g, P, k < 0.1 ? '#5e4c4c' : k < 0.55 ? '#5a5f6e' : '#525768');
+      if (k > 0.985) fill(g, P, '#1c1e24');
+      else if (k > 0.95) fill(g, P, '#000', 0.22);
+      fill(g, rect(x + 0.18, y0 + 0.18, x + 4.62, y0 + 0.5), '#fff', 0.06);
+    }
   }
-  // the kerb: a lit edge, its face, the gutter
-  fill(g, rect(-10, 4.2, 610, 5.1), '#8c94a8');
-  fill(g, rect(-10, 5.1, 610, 7.2), '#394052');
-  for (let x = 0; x < 610; x += 24) stroke(g, `M ${x} 4.2 L ${x} 7.2`, '#2c3242', 0.3);
-  fill(g, rect(-10, 7.2, 610, 8.8), '#1b2029');
-  // storm drains in the kerb
-  for (const x of [70, 330, 540]) { fill(g, rect(x, 5.4, x + 10, 8.8), '#0f1217'); for (let k = x + 1; k < x + 10; k += 1.6) fill(g, rect(k, 5.4, k + 0.6, 8.8), '#2c3242'); }
-  // the road
-  fill(g, rect(-10, 8.8, 610, 42), '#222833');
-  for (let i = 0; i < 7; i++) { const x = r() * 590, w = 24 + r() * 50, y = 10 + r() * 22; fill(g, rect(x, y, x + w, y + 4 + r() * 6), r() > 0.5 ? '#262c38' : '#1f242e'); }
+  for (let i = 0; i < 18; i++) { const x = r() * 600, y = r() < 0.5 ? 0.1 : 2.1; stroke(g, `M ${x} ${y} l -0.4 -0.9 M ${x + 0.3} ${y} l 0.1 -1.2 M ${x + 0.6} ${y} l 0.5 -0.8`, '#4a5a3a', 0.2, 0.8); }
+  fill(g, rect(-10, 0, 610, 0.5), '#7a8296', 0.5);
+  // the kerb: granite blocks, a lit arris, the council's white long faded
+  fill(g, rect(-10, 4.2, 610, 5.1), '#8a909e');
+  fill(g, rect(-10, 5.1, 610, 7.2), '#3c414c');
+  for (let x = 0; x < 610; x += 12) { stroke(g, `M ${x} 4.2 L ${x} 7.2`, '#262a33', 0.3); if (x > 370 && x < 520 && (x / 12) % 2 === 0) fill(g, rect(x + 0.3, 4.3, x + 11.7, 7.1), '#dfe2e6', 0.16); }
+  for (let i = 0; i < 10; i++) { const x = r() * 600; fill(g, ell(x, 4.6, 1 + r() * 1.4, 0.35), '#2a2e36'); }
+  fill(g, rect(-10, 7.2, 610, 8.8), '#191c23');
+  for (const x of [70, 330, 540]) { fill(g, rect(x, 5.4, x + 10, 8.8), '#0e1014'); for (let k = x + 1; k < x + 10; k += 1.6) fill(g, rect(k, 5.4, k + 0.6, 8.8), '#2c3039'); }
+  // the road: old asphalt, patched and patched again, tar run along the seams
+  fill(g, rect(-10, 8.8, 610, 42), '#23262e');
   for (let i = 0; i < 9; i++) {
-    const x = r() * 600, y = 11 + r() * 26;
-    stroke(g, `M ${x} ${y} l ${2 + r() * 3} ${r() * 1.6 - 0.8} l ${2 + r() * 3} ${r() * 1.6 - 0.8} l ${1 + r() * 2} ${r() * 1.6 - 0.8}`, '#171b23', 0.3);
+    const x = r() * 590, w = 22 + r() * 60, y = 9.5 + r() * 26, h = 3 + r() * 7;
+    fill(g, rect(x, y, x + w, y + h), r() > 0.5 ? '#272a33' : '#1f2229');
+    stroke(g, rect(x, y, x + w, y + h), '#121419', 0.35, 0.8);
   }
-  // worn lane dashes
-  for (let x = 0; x < 610; x += 40) { fill(g, rect(x, 22.6, x + 20, 24.2), '#5b6377'); fill(g, rect(x + 4 + r() * 10, 22.6, x + 7 + r() * 10, 24.2), '#222833', 0.7); }
-  // manholes, oil stains, puddles catching the street lights
-  for (const x of [150, 470]) { fill(g, ell(x, 31, 7, 1.8), '#14171d'); fill(g, ell(x, 30.8, 6.2, 1.4), '#2c323e'); for (let k = -4; k <= 4; k += 2) stroke(g, `M ${x + k} 29.8 L ${x + k} 31.8`, '#1b1f27', 0.3); }
-  for (const [x, y, w] of [[220, 14, 9], [410, 33, 12], [590, 17, 7]]) fill(g, ell(x, y, w, 1.4), '#15191f', 0.7);
-  for (const [x, y, w, c] of [[100, 12.6, 14, '#ffcf8f'], [300, 16, 10, '#ff6b52'], [520, 13, 16, '#ffcf8f']]) {
-    fill(g, ell(x, y, w, 1.6), '#181c24');
-    fill(g, ell(x - w * 0.2, y - 0.2, w * 0.5, 0.5), c, 0.22);
-    fill(g, ell(x + w * 0.3, y + 0.3, w * 0.25, 0.3), '#8a96b0', 0.18);
+  // the works' line: two rails sunk in a concrete strip along the street
+  fill(g, rect(-10, 15.2, 610, 21.6), '#2b2e36');
+  stroke(g, 'M -10 15.2 L 610 15.2 M -10 21.6 L 610 21.6', '#15171c', 0.4);
+  for (const y of [16.6, 20.2]) { fill(g, rect(-10, y, 610, y + 0.7), '#0f1115'); fill(g, rect(-10, y - 0.1, 610, y + 0.25), '#7e8798', 0.55); }
+  fill(g, rect(212, 14.6, 268, 22.4), '#262930'); stroke(g, rect(212, 14.6, 268, 22.4), '#121419', 0.35, 0.8);
+  for (let i = 0; i < 4; i++) { const x = r() * 560; fill(g, rect(x, 16.4, x + 6 + r() * 8, 17.4), '#5a3a26', 0.35); }
+  // the grain of it: aggregate, a stone showing through here and there
+  clip(g, rect(-10, 8.8, 610, 42), () => texture(g, 'concrete', 0.5, 1.6));
+  clip(g, rect(-10, 0, 610, 7.2), () => texture(g, 'concrete', 0.4, 1.2));
+  for (let i = 0; i < 90; i++) { const x = r() * 600, y = 9.5 + r() * 31; fill(g, ell(x, y, 0.25, 0.12), '#4a4e5a', 0.6); }
+  // cracks
+  for (let i = 0; i < 12; i++) {
+    const x = r() * 600, y = 10 + r() * 30;
+    stroke(g, `M ${x} ${y} l ${2 + r() * 3} ${r() * 1.6 - 0.8} l ${2 + r() * 3} ${r() * 1.6 - 0.8} l ${1 + r() * 2} ${r() * 1.6 - 0.8}`, '#14161b', 0.3);
+  }
+  // the lane line, worn to a ghost
+  for (let x = 0; x < 610; x += 40) { fill(g, rect(x, 26.6, x + 20, 27.8), '#5d6373', 0.55); fill(g, rect(x + 4 + r() * 10, 26.6, x + 7 + r() * 10, 27.8), '#23262e', 0.8); }
+  // the tracks of Vanta's armour, a long smear of tread
+  for (const y of [33.6, 38.2]) { fill(g, rect(-10, y, 610, y + 1.6), '#1b1d23', 0.6); for (let x = -8; x < 610; x += 2.2) fill(g, rect(x, y + 0.2, x + 0.8, y + 1.4), '#15171c', 0.5); }
+  // manholes cast with the council's ring, oil, puddles holding the sodium light
+  for (const x of [150, 470]) {
+    fill(g, ell(x, 31, 7, 1.8), '#121419'); fill(g, ell(x, 30.8, 6.2, 1.4), '#2c303a');
+    stroke(g, ell(x, 30.8, 4.4, 1), '#1a1d24', 0.3);
+    for (let k = -3; k <= 3; k += 1.5) stroke(g, `M ${x + k} 30.2 L ${x + k} 31.4`, '#1a1d24', 0.25);
+  }
+  for (const [x, y, w] of [[220, 12, 9], [410, 35, 12], [590, 13, 7]]) fill(g, ell(x, y, w, 1.4), '#121418', 0.7);
+  for (const [x, y, w] of [[100, 11.6, 14], [300, 24, 10], [520, 12.4, 16]]) {
+    fill(g, ell(x, y, w, 1.6), '#16181e');
+    fill(g, ell(x - w * 0.2, y - 0.2, w * 0.5, 0.5), '#ffb060', 0.2);
+    fill(g, ell(x + w * 0.3, y + 0.3, w * 0.25, 0.3), '#8a96b0', 0.16);
+  }
+  // Vanta's leaflets, dropped from the drones, trodden into the wet
+  for (let i = 0; i < 16; i++) {
+    const x = r() * 600, y = r() < 0.3 ? 0.6 + r() * 3 : 9 + r() * 30, a = r() * 3;
+    g.save(); g.translate(x, y); g.scale(1, 0.4); g.rotate(a);
+    fill(g, rect(-1.2, -1.6, 1.2, 1.6), '#cfccc2', 0.75); fill(g, rect(-1.2, -1.6, 1.2, -0.9), '#8e2330', 0.75);
+    g.restore();
   }
   fill(g, rect(-10, 36, 610, 42), '#000', 0.2);
 }
@@ -234,30 +273,44 @@ export function barrier(g, x, w = 34) {
   fill(g, rect(x + 7.4, -16.85, x + w - 7.4, -16.65), '#ffb0b8');
 }
 
+// an old council lamp: a tapered steel pole, a swan-neck arm, a sodium head;
+// Vanta's loudspeaker strapped on for the curfew, its cable taped down the pole
 export function lampPost(g, x, h = 82) {
-  const P = tone('#5d6878', '#3c4654', '#2a323d', '#12151b');
-  cel(g, rect(x - 1.2, -h, x + 1.2, 0), P, { sh: 0.8, hl: 0.3 });
-  // joints, an access hatch, a sticker, the base flange with bolts
-  for (const y of [-h + 20, -h + 44]) cel(g, rect(x - 1.6, y, x + 1.6, y + 1.6), P, { sh: 0.3, hl: 0.2, lw: 0.25 });
-  fill(g, rect(x - 0.8, -18, x + 0.8, -12), P.d);
-  fill(g, rect(x - 1, -30, x + 1, -27), '#c9b991', 0.8);
-  cel(g, poly([[x - 3.2, 0], [x - 2.4, -4], [x + 2.4, -4], [x + 3.2, 0]]), P, { sh: 0.6, hl: 0.3 });
-  for (const bx of [x - 2.2, x + 2.2]) fill(g, ell(bx, -0.9, 0.4, 0.4), P.l);
-  // the arm and the lamp head
-  cel(g, poly([[x, -h], [x + 14, -h - 2], [x + 14, -h + 0.6], [x, -h + 2.2]]), P, { sh: 0.5, hl: 0.2 });
-  stroke(g, `M ${x} ${-h + 6} Q ${x + 4} ${-h + 1} ${x + 9} ${-h - 0.6}`, P.d, 0.5);
-  cel(g, poly([[x + 10, -h - 1.4], [x + 20, -h - 1.4], [x + 22, -h + 2.4], [x + 8, -h + 2.4]]), P, { sh: 0.5, hl: 0.3 });
-  fill(g, rect(x + 12, -h - 2.6, x + 18, -h - 1.4), P.d);
-  fill(g, rect(x + 9.6, -h + 2.2, x + 20.4, -h + 3.2), '#fff1d0');
+  const P = mat(tone('#646c69', '#434a48', '#2d3331', '#121514'), 'paint', 0.6);
+  cel(g, poly([[x - 1.5, 0], [x - 0.9, -h], [x + 0.9, -h], [x + 1.5, 0]]), P, { sh: 0.8, hl: 0.3 });
+  for (const y of [-h + 18, -h + 46]) cel(g, rect(x - 1.5, y, x + 1.5, y + 1.4), P, { sh: 0.3, hl: 0.2, lw: 0.25 });
+  // the cast foot with its door, rust run down from the bolts
+  const F = poly([[x - 3.4, 0], [x - 2.6, -10], [x - 1.8, -11.4], [x + 1.8, -11.4], [x + 2.6, -10], [x + 3.4, 0]]);
+  cel(g, F, P, { sh: 0.7, hl: 0.3 });
+  clip(g, F, () => { fill(g, rect(x - 1.3, -8.4, x + 1.3, -2.6), P.d); fill(g, ell(x + 0.8, -5.5, 0.25, 0.25), P.l); rust(g, [[x - 2, -9.6, 0.5, 3], [x + 1.8, -4, 0.6, 2]]); });
+  // the swan neck out to the head
+  stroke(g, `M ${x} ${-h + 4} C ${x} ${-h - 5} ${x + 7} ${-h - 6} ${x + 11} ${-h - 1.2}`, P.k, 1.9);
+  stroke(g, `M ${x} ${-h + 4} C ${x} ${-h - 5} ${x + 7} ${-h - 6} ${x + 11} ${-h - 1.2}`, P.m, 1.2);
+  stroke(g, `M ${x - 0.3} ${-h + 3} C ${x - 0.3} ${-h - 4.4} ${x + 6} ${-h - 5.6} ${x + 9} ${-h - 2.6}`, P.l, 0.35, 0.7);
+  // the sodium head: a long shell, the amber refractor under it
+  const H = `M ${x + 8.4} ${-h + 0.4} C ${x + 9.4} ${-h - 2.6} ${x + 20} ${-h - 2.6} ${x + 22.4} ${-h + 0.8} L ${x + 21.6} ${-h + 2.4} L ${x + 9} ${-h + 2.4} Z`;
+  cel(g, H, P, { sh: 0.6, hl: 0.4 });
+  fill(g, `M ${x + 9.4} ${-h + 2.2} Q ${x + 15} ${-h + 4.6} ${x + 21} ${-h + 2.2} Z`, '#ffc27a');
+  fill(g, `M ${x + 11} ${-h + 2.3} Q ${x + 15} ${-h + 3.6} ${x + 19} ${-h + 2.3} Z`, '#fff0d2');
+  // Vanta's horn, facing the street, and its cable taped down the pole
+  fill(g, rect(x - 1.6, -62.2, x + 1.6, -60.8), '#16181c');
+  const S = mat(tone('#c9ced6', '#9aa2ae', '#6c7480', '#24282e'), 'paint', 0.3);
+  cel(g, poly([[x - 1.6, -63.4], [x - 7.4, -66.2], [x - 7.4, -56.6], [x - 1.6, -59.4]]), S, { sh: 0.5, hl: 0.3, lw: 0.3 });
+  fill(g, ell(x - 7.4, -61.4, 0.9, 4.6), '#1a1c20');
+  stroke(g, `M ${x + 1.2} -60 L ${x + 1.2} -14`, '#0e1012', 0.35);
+  for (let y = -54; y < -16; y += 9) fill(g, rect(x - 1.3, y, x + 1.6, y + 0.9), '#2a2b2e');
+  // the curfew notice at eye height
+  fill(g, rect(x - 1.5, -38, x + 1.5, -31), '#d9d5cb'); fill(g, rect(x - 1.5, -38, x + 1.5, -36.6), '#8e2330');
+  fill(g, rect(x - 1.5, -38, x - 0.6, -31), '#000', 0.2);
 }
 
 function lampLight(g, x, h = 82) {
   g.save(); g.globalCompositeOperation = 'lighter';
   const cx = x + 15;
-  fill(g, poly([[cx - 5, -h + 3], [cx + 5, -h + 3], [cx + 26, 0], [cx - 26, 0]]), '#ffcf8f', 0.10);
-  fill(g, poly([[cx - 4, -h + 3], [cx + 4, -h + 3], [cx + 16, 0], [cx - 16, 0]]), '#ffcf8f', 0.08);
-  fill(g, ell(cx, 1.5, 26, 3), '#ffcf8f', 0.16);
-  fill(g, ell(cx, -h + 3, 6, 3), '#fff1d0', 0.35);
+  fill(g, poly([[cx - 5, -h + 3], [cx + 5, -h + 3], [cx + 26, 0], [cx - 26, 0]]), '#ffb766', 0.10);
+  fill(g, poly([[cx - 4, -h + 3], [cx + 4, -h + 3], [cx + 16, 0], [cx - 16, 0]]), '#ffb766', 0.08);
+  fill(g, ell(cx, 1.5, 26, 3), '#ffb766', 0.16);
+  fill(g, ell(cx, -h + 3, 6, 3), '#ffe0b0', 0.35);
   g.restore();
 }
 

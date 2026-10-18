@@ -5,10 +5,11 @@
 // is placed in tile columns; its painter draws inside the same tile box.
 import { cel, fill, stroke, clip, rng } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
+import { texture } from '../tex.js';
 import { emblem } from '../enemies/syndicate.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
-import { facadeLayout } from './city.js';
+import { facadeLayout, letters } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -64,14 +65,29 @@ export function ladder(g, x0, yTop, yBot) {
   for (let y = yBot - 4; y > yTop - 12; y -= 6) cel(g, rect(x0 + 1.4, y - 0.6, x0 + 6.8, y + 0.4), S, { sh: 0.2, hl: 0.15 });
 }
 
+// a hole where the road has fallen in (docs §10.5): the asphalt broken at
+// its lip, the earth in layers, an old drain pipe across it, water at the bottom
 export function pit(g, x0, x1, depth) {
-  fill(g, rect(x0, 0, x1, depth), '#0d1015');
-  fill(g, rect(x0, 0, x0 + 2, depth), '#2a303c'); fill(g, rect(x1 - 2, 0, x1, depth), '#1b2029');
-  fill(g, rect(x0, depth - 1, x1, depth), '#3c4654');
-  clip(g, rect(x0 - 4, -1.6, x1 + 4, 0.4), () => {
-    fill(g, rect(x0 - 4, -1.6, x1 + 4, 0.4), C.gold);
-    for (let x = x0 - 8; x < x1 + 6; x += 4) fill(g, poly([[x, 0.4], [x + 2, 0.4], [x + 4, -1.6], [x + 2, -1.6]]), '#1a1c20');
+  const r = rng(x0 | 0);
+  fill(g, rect(x0, 0, x1, depth), '#14110e');
+  clip(g, rect(x0, 0, x1, depth), () => {
+    for (const [y, c] of [[3, '#2a2420'], [9, '#221d19'], [17, '#1b1714'], [24, '#151210']]) fill(g, rect(x0, y, x1, y + 5 + r() * 2), c);
+    for (let i = 0; i < 26; i++) fill(g, ell(x0 + r() * (x1 - x0), 2 + r() * (depth - 6), 0.4 + r() * 0.8, 0.3 + r() * 0.5), '#3a3229', 0.8);
+    texture(g, 'concrete', 0.5, 1.6);
+    const gr = g.createLinearGradient(x0, 0, x1, 0); gr.addColorStop(0, 'rgba(0,0,0,0.5)'); gr.addColorStop(0.2, 'rgba(0,0,0,0)'); gr.addColorStop(0.8, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.6)'); fill(g, rect(x0, 0, x1, depth), gr);
+    // the old drain, cracked open
+    fill(g, rect(x0 - 2, 12, x1 + 2, 18), '#4a4a46'); fill(g, rect(x0 - 2, 12, x1 + 2, 13), '#6a6a64'); fill(g, rect(x0 - 2, 17, x1 + 2, 18), '#2a2a28');
+    fill(g, poly([[x0 + (x1 - x0) * 0.45, 12], [x0 + (x1 - x0) * 0.6, 12], [x0 + (x1 - x0) * 0.56, 18], [x0 + (x1 - x0) * 0.48, 18]]), '#0d0c0b');
+    fill(g, rect(x0, depth - 3, x1, depth), '#1d232c'); fill(g, rect(x0 + 4, depth - 3, x1 - 6, depth - 2.6), '#ffb060', 0.18);
   });
+  fill(g, rect(x0, depth - 1, x1, depth), '#3c4654');
+  // the broken lip of the road
+  for (const [x, d] of [[x0, 1], [x1, -1]]) fill(g, poly([[x - d * 3, -0.2], [x + d * 1.4, -0.2], [x + d * 2.6, 1.4], [x + d * 1, 3.6], [x + d * 1.8, 5.2], [x, 6], [x - d * 3, 6]]), '#2a2e36');
+  for (let i = 0; i < 6; i++) { const x = x0 + 2 + r() * (x1 - x0 - 4); fill(g, poly([[x, -0.2], [x + 1.6, -0.6], [x + 2.6, 0.4], [x + 1, 1.2]]), '#3a3f4a'); }
+  // a strip of warning tape tied between two rods, one of them down
+  stroke(g, `M ${x0 - 3} 0 L ${x0 - 3} -9 M ${x1 + 3} 0 L ${x1 + 6} -6`, '#5a5a56', 0.6);
+  stroke(g, `M ${x0 - 3} -8.4 Q ${(x0 + x1) / 2} -4 ${x1 + 5.4} -5.6`, '#d9533a', 0.7);
+  for (let t = 0.1; t < 1; t += 0.14) { const x = x0 - 3 + (x1 + 8.4 - x0) * t; fill(g, rect(x, -8.4 + 4.4 * Math.sin(t * Math.PI) + (2.8 * t) - 0.35, x + 1.6, -8.4 + 4.4 * Math.sin(t * Math.PI) + 2.8 * t + 0.35), '#ece6d8', 0.9); }
 }
 
 const CONC = tone('#b9bcc6', '#8d919d', '#666a76', '#2f323a');
@@ -86,18 +102,44 @@ export function ramp(g, x0, x1, x2, x3, h) {
   stroke(g, R, CONC.k, 0.5);
 }
 
+// the works' pipe bridge across the street (docs §10.5): a lagged steam main
+// and a yellow gas line on lattice trestles, low enough that you slide under
+// it; the trestles stand clear of the pipes' ends
 export function duct(g, x0, x1, yTop, yBot) {
-  const S = tone('#a9b3c0', '#7c8796', '#56606e', '#232831');
-  for (let x = x0 + 10; x < x1; x += 40) { stroke(g, `M ${x} ${yTop} L ${x} ${yTop - 90}`, S.k, 1.2); stroke(g, `M ${x} ${yTop} L ${x} ${yTop - 90}`, S.d, 0.6); }
-  const D = rect(x0, yTop, x1, yBot);
-  cel(g, D, S, { sh: 2.0, hl: 0.8 });
-  clip(g, D, () => {
-    for (let x = x0 + 14; x < x1; x += 20) { fill(g, rect(x, yTop, x + 2, yBot), S.d); fill(g, rect(x + 2, yTop, x + 2.6, yBot), S.l, 0.6); }
-    fill(g, rect(x0, yBot - 3, x1, yBot), S.d, 0.7);
+  const S = mat(tone('#a9b0b6', '#80878e', '#5b6167', '#20242a'), 'steel', 0.5);
+  const Y = mat(tone('#d8b25a', '#b08a36', '#7c6022', '#2e220a'), 'paint', 0.7);
+  const L = tone('#6a6e72', '#4a4e54', '#33363b', '#141619');
+  // the trestles: lattice legs down to the street
+  for (const tx of [x0 - 10, x1 + 4]) {
+    for (const lx of [tx, tx + 6]) cel(g, rect(lx, yBot, lx + 1.2, 0), L, { sh: 0.3, hl: 0.2, lw: 0.3 });
+    for (let y = yBot + 2; y < -4; y += 8) stroke(g, `M ${tx + 1} ${y} L ${tx + 6} ${y + 7} M ${tx + 6} ${y} L ${tx + 1} ${y + 7}`, L.d, 0.45);
+    cel(g, rect(tx - 1.6, -1.6, tx + 8.8, 0), L, { sh: 0.3, hl: 0.2, lw: 0.3 });
+    cel(g, rect(tx - 1, yBot - 0.4, tx + 8.2, yBot + 1.6), L, { sh: 0.3, hl: 0.2, lw: 0.3 });
+  }
+  // the steam main, lagged in aluminium sheet with banded seams and a dent
+  const top = yTop + 0.5, mid = yTop + (yBot - yTop) * 0.62;
+  const M = rect(x0 - 14, top, x1 + 14, mid);
+  cel(g, M, S, { sh: 1.6, hl: 0.9 });
+  clip(g, M, () => {
+    for (let x = x0 - 12; x < x1 + 14; x += 7) { fill(g, rect(x, top, x + 0.5, mid), S.d, 0.8); fill(g, rect(x + 0.5, top, x + 0.9, mid), S.l, 0.6); }
+    fill(g, ell(x0 + (x1 - x0) * 0.4, (top + mid) / 2, 3, 2), S.d, 0.5);
+    fill(g, rect(x0 + 18, top, x0 + 26, mid), '#7a4a30', 0.3);
   });
-  stroke(g, D, S.k, 0.5);
-  // hazard: low clearance
-  clip(g, rect(x0, yBot - 2.4, x0 + 16, yBot), () => { fill(g, rect(x0, yBot - 2.4, x0 + 16, yBot), C.gold); for (let x = x0 - 4; x < x0 + 18; x += 4) fill(g, poly([[x, yBot], [x + 2, yBot], [x + 4.4, yBot - 2.4], [x + 2.4, yBot - 2.4]]), '#1a1c20'); });
+  // the gas line under it, yellow, flow arrows and its stencil
+  const G = rect(x0 - 14, mid + 0.6, x1 + 14, yBot - 0.4);
+  cel(g, G, Y, { sh: 0.8, hl: 0.5 });
+  clip(g, G, () => {
+    const cy = (mid + yBot) / 2;
+    for (const x of [x0 + 3, x0 + 14, x1 - 20, x1 - 9]) fill(g, poly([[x, cy - 1], [x + 4, cy - 1], [x + 4, cy - 1.8], [x + 6.4, cy], [x + 4, cy + 1.8], [x + 4, cy + 1], [x, cy + 1]]), '#2a2010', 0.75);
+    letters(g, 'YÜKSEK FIRIN GAZI', (x0 + x1) / 2 + 8, cy + 1.2, 3.2, '#2a2010', { kind: 'sten', align: 'center', jit: 0, a: 0.75 });
+    for (const [x, l] of [[x0 + 30, 2.6], [x1 - 6, 2]]) fill(g, rect(x, mid + 0.8, x + 0.6, mid + 0.8 + l), '#6a3a1e', 0.6);
+  });
+  // a pipe shoe on each trestle; the clearance plate hanging at the near end
+  for (const tx of [x0 - 10, x1 + 4]) fill(g, rect(tx, mid - 0.4, tx + 7.2, mid + 0.6), L.k);
+  const px = x0 - 13.4, py = yBot + 6;
+  fill(g, rect(px, py, px + 14, py + 5.6), '#e8c43a'); stroke(g, rect(px, py, px + 14, py + 5.6), '#1a1810', 0.35);
+  letters(g, 'DİKKAT', px + 7, py + 2.4, 2.2, '#1a1810', { kind: 'print', align: 'center', jit: 0 });
+  letters(g, 'ALÇAK GEÇİT', px + 7, py + 4.9, 2.2, '#1a1810', { kind: 'print', align: 'center', jit: 0 });
 }
 
 // A Vanta checkpoint barricade (docs §10.2): steel-framed panels of
@@ -219,7 +261,7 @@ export function buildCourse() {
   P('c.ladder', [575, -112, 585, 1], (g) => ladder(g, 576, -96, 0));
   // pit, 4 tiles deep
   for (let c = 80; c <= 85; c++) for (let r = street; r < street + 4; r++) g[r][c] = '.';
-  P('c.pit', [632, -3, 696, 33], (g) => pit(g, 640, 688, 32));
+  P('c.pit', [632, -11, 696, 33], (g) => pit(g, 640, 688, 32));
   // ramp up, plateau, ramp down
   for (let k = 0; k < 5; k++) { at(92 + k, k + 1, '/'); block(92 + k, 92 + k, 1, k, '#'); }
   block(97, 111, 1, 5);
@@ -227,7 +269,7 @@ export function buildCourse() {
   P('c.ramp', [734, -42, 938, 1], (g) => ramp(g, 736, 776, 896, 936, 40));
   // overhead duct with 32 of clearance
   block(125, 134, 5, 6);
-  P('c.duct', [998, -142, 1082, -30], (g) => duct(g, 1000, 1080, -48, -32));
+  P('c.duct', [984, -50, 1096, 1], (g) => duct(g, 1000, 1080, -48, -32));
   // sandbag wall (3 tiles)
   block(145, 147, 1, 3);
   P('c.bags', [1154, -32, 1190, 1], (g) => scrapBarricade(g, 1160, 1184, 24), front);
