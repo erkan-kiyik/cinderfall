@@ -11,6 +11,7 @@
 // proximal joint with +x the bone's front; torso up -y from the hip centre;
 // head up -y from the neck base; foot at the ankle with the ground at +2.5.
 import { cel, fill, stroke, clip, blob, limb, curve } from '../kit.js';
+import { Brush } from '../paint.js';
 
 // Heads drawn for the old 64-unit figure are painted at this scale: with the
 // higher neck they land at ~1/7.
@@ -209,4 +210,68 @@ export function headShape({ jaw = 1 } = {}) {
     [4.45, -3.95], [4.25, -3.3], [4.2 + jaw * 0.15, -2.5], [cx, cy],
     [1.6 + jaw * 0.2, -1.8 + jaw * 0.05], [-0.1 - jaw * 0.3, -2.7], [-1.9, -3.4], [-3.1, -4.4],
   ]);
+}
+
+// --- faces, painted (docs §11) --------------------------------------------------
+// An eye painted with a soft brush instead of drawn: the socket's shadow, the
+// white dimmed (it is never white), the iris and its catchlight, the upper
+// lid's shadow across it, the lid line, the crease above, the lower lid
+// catching a little light. (x, y) the eye's centre, w its width, head frame.
+export function softEye(g, x, y, w = 1.6, o = {}) {
+  const M = g.getTransform(), B = new Brush(g, Math.hypot(M.a, M.b)), h = w * 0.36;
+  B.dab(x - w * 0.05, y - h * 0.4, w * 0.95, w * 0.62, o.socket ?? 'rgba(70,36,22,0.42)');
+  const E = `M ${x - w / 2} ${y} C ${x - w * 0.2} ${y - h} ${x + w * 0.25} ${y - h} ${x + w / 2} ${y - h * 0.2} C ${x + w * 0.2} ${y + h * 0.62} ${x - w * 0.2} ${y + h * 0.62} ${x - w / 2} ${y} Z`;
+  B.fill(E, o.white ?? '#c9beb1', w * 0.03);
+  B.inside(E, () => {
+    B.dab(x + w * 0.12, y - h * 0.12, w * 0.25, w * 0.25, o.iris ?? '#3a2a1f');
+    B.dab(x + w * 0.12, y - h * 0.12, w * 0.11, w * 0.11, '#0b0807');
+    B.fill(`M ${x - w} ${y - h * 2} L ${x + w} ${y - h * 2} L ${x + w} ${y - h * 0.3} L ${x - w} ${y - h * 0.2} Z`, 'rgba(30,16,10,0.5)', w * 0.08);
+  });
+  B.dab(x + w * 0.21, y - h * 0.3, w * 0.07, w * 0.055, '#fff2dc', 0.85);
+  B.line(`M ${x - w / 2} ${y} C ${x - w * 0.2} ${y - h * 1.05} ${x + w * 0.25} ${y - h * 1.05} ${x + w / 2} ${y - h * 0.25}`, o.lid ?? 'rgba(22,11,8,0.9)', w * 0.1, w * 0.03);
+  B.line(`M ${x - w * 0.42} ${y - h * 1.55} C ${x - w * 0.1} ${y - h * 2.1} ${x + w * 0.3} ${y - h * 2} ${x + w * 0.5} ${y - h * 1.3}`, 'rgba(70,36,22,0.35)', w * 0.06, w * 0.05);
+  B.line(`M ${x - w * 0.38} ${y + h * 0.32} C ${x - w * 0.1} ${y + h * 0.75} ${x + w * 0.25} ${y + h * 0.7} ${x + w * 0.45} ${y + h * 0.1}`, 'rgba(255,222,192,0.28)', w * 0.05, w * 0.04);
+}
+// A brow: a soft mass and short hairs along it, lighter where it thins out.
+export function softBrow(g, x0, y0, x1, y1, lift, col, seed = 3) {
+  const M = g.getTransform(), B = new Brush(g, Math.hypot(M.a, M.b)), w = x1 - x0;
+  const mid = (u) => [x0 + u * w, y0 + (y1 - y0) * u - Math.sin(u * Math.PI) * lift];
+  const [mx, my] = mid(0.5);
+  B.line(`M ${x0} ${y0} Q ${mx} ${my - lift} ${x1} ${y1}`, col, w * 0.14, w * 0.05, 0.75);
+  B.hairs(Math.round(w * 30), seed, (i, r) => {
+    const u = r(), [x, y] = mid(u);
+    return [x, y + (r() - 0.5) * w * 0.08, -0.35 - r() * 0.4, w * (0.08 + r() * 0.08), col, w * 0.025, 0.55 * (1 - u * 0.4)];
+  });
+}
+
+// Skin glazed like a painting over the head shape (head frame, facing +x):
+// the back of the skull away from the key light, the forehead and cheekbone
+// toward it, the warmth of blood in the cheek, the temple's hollow.
+export function skinGlaze(g, d, o = {}) {
+  const M = g.getTransform(), B = new Brush(g, Math.hypot(M.a, M.b)), k = o.k ?? 1;
+  B.inside(d, () => {
+    B.dab(-3.2, -6.4, 3.8, 4.6, `rgba(50,26,16,${0.42 * k})`);
+    B.dab(3.4, -8.7, 2.6, 1.5, `rgba(255,230,204,${0.26 * k})`);
+    B.dab(3.2, -5.6, 1.7, 1.0, `rgba(255,226,198,${0.28 * k})`);
+    B.dab(2.5, -4.9, 1.5, 1.1, `rgba(196,86,66,${0.13 * k})`);
+    B.dab(1.5, -7.2, 1.0, 1.3, `rgba(70,36,22,${0.2 * k})`);
+    B.dab(1.0, -2.6, 3.0, 1.2, `rgba(40,20,12,${0.3 * k})`);
+  });
+}
+// Hair as a soft mass combed in one direction: the shape filled and lit, then
+// strands along (dx, dy), lighter on top where the key light catches.
+export function softHair(g, d, col, light, dir = [-1, 0.25], n = 260, seed = 5) {
+  const M = g.getTransform(), k = Math.hypot(M.a, M.b), B = new Brush(g, k), p = new Path2D(d);
+  B.fill(d, col, 0.05);
+  B.inside(d, () => { B.dab(1.5, -10, 4, 2.2, light, 0.45); B.dab(-3, -5.5, 3, 3, 'rgba(0,0,0,0.35)'); B.dab(-4.6, -9.2, 1.2, 0.9, light, 0.3); });
+  const a = Math.atan2(dir[1], dir[0]), bb = [-7, -13, 6, -1];
+  const inv = g.getTransform();
+  // the strands stay inside the mass: hair has an edge, it does not spray
+  B.inside(d, () => B.hairs(n, seed, (i, r) => {
+    const x = bb[0] + r() * (bb[2] - bb[0]), y = bb[1] + r() * (bb[3] - bb[1]);
+    const px = inv.a * x + inv.c * y + inv.e, py = inv.b * x + inv.d * y + inv.f;
+    if (!g.isPointInPath(p, px, py)) return null;
+    const lit = r() < 0.35 && y < -8.6;
+    return [x, y, a + (r() - 0.5) * 0.3, 0.8 + r() * 1.4, lit ? light : r() < 0.5 ? col : 'rgba(0,0,0,0.55)', 0.06, lit ? 0.5 : 0.4];
+  }));
 }

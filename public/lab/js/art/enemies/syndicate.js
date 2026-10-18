@@ -9,7 +9,7 @@
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { M, tone, mat } from '../style.js';
 import { WEAPONS, MAT } from '../weapons/index.js';
-import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, stitch, rivet, buckle, grime, scuffs } from '../ops/body.js';
+import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, stitch, rivet, buckle, grime, scuffs } from '../ops/body.js';
 
 const PAL = {
   armor: mat(tone('#b0c2d2', '#8197ad', '#5a7087', '#233242'), 'paint', 0.22),
@@ -376,6 +376,7 @@ function gallHead(g) {
   cel(g, 'M -1.7 1.2 L 2.1 1.0 L 2.0 -2.6 L 0.6 -3.6 L -1.8 -4.4 Z', S, { sh: 1.1, hl: 0.25 });
   const HD = headShape({ jaw: 0.85 });
   cel(g, HD, S, { sh: 1.1, hl: 0.4 });
+  skinGlaze(g, HD, { k: 1.1 });
   clip(g, HD, () => {
     // short grey hair at the temple and the back, cut close
     cel(g, 'M -4.2 -9.4 C -4.4 -7.6 -4.0 -6.0 -3.0 -4.8 L -1.8 -5.2 C -2.2 -6.4 -2.0 -7.6 -1.4 -8.6 C -0.4 -9.2 0.8 -9.4 1.6 -9.4 L 1.6 -11 L -4.2 -11 Z', G.hair, { sh: 0.5, hl: 0.3, line: false, ao: 0.2 });
@@ -387,10 +388,7 @@ function gallHead(g) {
     stroke(g, 'M 4.4 -4.8 C 4.0 -4.2 3.8 -3.6 3.9 -3.0', S.d, 0.12, 0.8);
   });
   // the eye: narrow, pale grey iris, the lid heavy over it; a straight brow
-  fill(g, 'M 2.8 -6.9 C 3.2 -7.25 3.8 -7.3 4.2 -7.0 C 3.9 -6.75 3.3 -6.7 2.8 -6.9 Z', '#f1eee8');
-  fill(g, ell(3.75, -6.98, 0.22, 0.2), '#8e9aa3');
-  fill(g, ell(3.78, -6.98, 0.09, 0.09), '#1c1d1f');
-  stroke(g, 'M 2.75 -6.95 C 3.2 -7.35 3.8 -7.4 4.25 -7.05', S.k, 0.16);
+  softEye(g, 3.5, -6.95, 1.45, { iris: '#7d8a93', white: '#bdb4a9' });
   fill(g, 'M 2.5 -7.9 C 3.2 -8.05 3.9 -8.05 4.4 -7.8 L 4.35 -7.6 C 3.9 -7.8 3.2 -7.8 2.55 -7.65 Z', G.hair.d);
   // thin lips, pressed
   stroke(g, 'M 3.9 -3.05 C 4.2 -3.0 4.4 -3.0 4.55 -3.1', '#8a5a4e', 0.16);

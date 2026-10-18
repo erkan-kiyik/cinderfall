@@ -11,7 +11,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, kneePad, headShape, korBand, stitch, rivet, buckle, grime, scuffs,
+  glove, kneePad, headShape, skinGlaze, korBand, stitch, rivet, buckle, grime, scuffs,
 } from './body.js';
 
 const PAL = {
@@ -219,6 +219,7 @@ function head(g) {
   cel(g, 'M -1.6 1.2 L 2.0 1.0 L 1.9 -2.6 L 0.5 -3.6 L -1.7 -4.2 Z', S, { sh: 1.1, hl: 0.25 });
   const HD = headShape({ jaw: 0.5 });
   cel(g, HD, S, { sh: 0.9, hl: 0.35 });
+  skinGlaze(g, HD);
   clip(g, HD, () => fill(g, 'M -6 -12 L 0 -12 C 0.4 -9 0.4 -7 0 -5.4 L -6 -5.4 Z', S.d, 0.4));
   // short dark hair out from under the helmet at the nape, the ear
   fill(g, 'M -3.8 -7.2 C -4.0 -5.8 -3.4 -4.6 -2.4 -4.0 L -1.6 -5.0 C -2.2 -5.8 -2.4 -6.6 -2.2 -7.4 Z', '#1d1714');

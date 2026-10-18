@@ -11,7 +11,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, boot, headShape, korBand, stitch, rivet, buckle, grime, scuffs,
+  glove, boot, headShape, korBand, stitch, rivet, buckle, grime, scuffs, softEye, softBrow, skinGlaze, softHair,
 } from './body.js';
 
 const PAL = {
@@ -182,20 +182,16 @@ function head(g) {
   const S = PAL.skin, Hr = PAL.hair;
   cel(g, 'M -1.6 1.2 L 2.0 1.0 L 1.9 -2.6 L 0.5 -3.6 L -1.7 -4.2 Z', PAL.gaiter, { sh: 1.1, hl: 0.25 });
   // the knot at the back, under the hair's line
-  cel(g, ell(-4.4, -8.6, 1.55, 1.45), Hr, { sh: 0.6, hl: 0.35 });
-  clip(g, ell(-4.4, -8.6, 1.55, 1.45), () => { for (const a of [-0.6, 0, 0.6]) stroke(g, `M ${-5.6} ${-8.6 + a} C -4.8 ${-9.6 + a} -3.8 ${-9.4 + a} -3.2 ${-8.4 + a}`, Hr.l, 0.16, 0.6); });
+  softHair(g, ell(-4.4, -8.6, 1.55, 1.45), Hr.m, 'rgba(150,110,80,0.7)', [-0.4, -1], 90, 11);
   const HD = headShape({ jaw: 0.2 });
   cel(g, HD, S, { sh: 0.9, hl: 0.35 });
-  clip(g, HD, () => fill(g, 'M -6 -12 L 0 -12 C 0.4 -9 0.4 -7 0 -5.4 L -6 -5.4 Z', S.d, 0.4));
+  skinGlaze(g, HD);
   // hair pulled back hard from the brow to the knot
   const HAIR = 'M 3.4 -9.0 C 2.4 -10.0 0.6 -10.6 -1.2 -10.4 C -3.2 -10.1 -4.2 -8.6 -4.0 -6.6 C -3.9 -5.6 -3.4 -4.6 -2.8 -4.0 L -1.8 -4.4 C -1.4 -5.6 -1.0 -6.6 -0.2 -7.6 C 0.8 -8.4 2.2 -8.8 3.4 -9.0 Z';
-  cel(g, HAIR, Hr, { sh: 0.8, hl: 0.4 });
-  clip(g, HAIR, () => { for (const k of [0, 1, 2, 3]) stroke(g, curve([[3.2, -9.0 + k * 0.05], [0.6, -9.6 + k * 0.6], [-2.6, -9.0 + k * 0.9], [-3.8, -7.6 + k * 0.7]]), k % 2 ? Hr.l : Hr.d, 0.14, 0.7); });
+  softHair(g, HAIR, Hr.m, 'rgba(150,110,80,0.75)', [-1, 0.22], 320, 12);
   // the near eye under a level brow; the far eye behind the monocle
-  fill(g, 'M 2.3 -8.05 C 2.9 -8.35 3.7 -8.35 4.2 -8.0 L 4.1 -7.7 C 3.6 -7.95 2.9 -7.95 2.4 -7.75 Z', Hr.m);
-  fill(g, 'M 2.5 -6.9 C 2.9 -7.35 3.5 -7.4 3.95 -7.0 C 3.6 -6.6 3.0 -6.55 2.5 -6.9 Z', '#f3efe6');
-  fill(g, 'M 3.3 -7.0 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 Z', '#2a2420');
-  stroke(g, 'M 2.45 -6.95 C 2.9 -7.45 3.55 -7.5 4.0 -7.05', S.k, 0.2);
+  softBrow(g, 2.3, -7.95, 4.2, -7.85, 0.12, '#2a1d16', 41);
+  softEye(g, 3.25, -6.95, 1.5, { iris: '#3a2c22' });
   // the monocle: Vanta grey housing standing off the far eye, the lens lit cyan
   cel(g, 'M 4.3 -7.7 L 5.5 -7.6 L 5.5 -6.1 L 4.3 -6.0 Z', PAL.vanta, { sh: 0.3, hl: 0.25, lw: 0.24 });
   stroke(g, 'M 4.3 -7.3 C 2.6 -7.9 0.4 -7.9 -1.0 -7.2', PAL.vanta.d, 0.2);
