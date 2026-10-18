@@ -9,7 +9,7 @@ export const play = {
       type: 'button', 'aria-disabled': open ? 'false' : 'true',
       onclick: (e) => { if (open) { ui('confirm'); onclick(); } else deny(e.currentTarget); },
     },
-    h('div.art', { style: { background: open ? 'linear-gradient(160deg, rgba(255,107,44,0.22), rgba(255,107,44,0) 60%)' : 'none' } }),
+    h('div.art', { style: { background: open ? 'linear-gradient(160deg, rgba(226,105,47,0.24), rgba(226,105,47,0) 60%)' : 'none' } }),
     svg(icon, 'ic big-ic'),
     !open && h('span.lockbadge', svg('lock'), t('ui.soon')),
     h('div.eyebrow.accent', t(`mode.${id}.kicker`)),

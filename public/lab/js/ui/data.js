@@ -4,11 +4,11 @@
 import { GUNS } from '../game/guns.js';
 
 export const OPS = [
-  { id: 'vex', name: 'FLINT', role: 'assault', color: '#ff6b2c', abil: [['dash', 'dash'], ['flash', 'flash'], ['overload', 'bolt']] },
-  { id: 'hale', name: 'WARDEN', role: 'defense', color: '#3ee8e0', abil: [['wall', 'wall'], ['mine', 'mine'], ['turret', 'turret']] },
-  { id: 'morrow', name: 'VESPER', role: 'control', color: '#a98bff', abil: [['smoke', 'smoke'], ['slow', 'slow'], ['blackout', 'blind']] },
-  { id: 'kite', name: 'SKYE', role: 'recon', color: '#4aa8ff', abil: [['drone', 'drone'], ['heat', 'heat'], ['watch', 'radar']] },
-  { id: 'brick', name: 'BULWARK', role: 'heavy', color: '#ffc93c', abil: [['charge', 'charge'], ['armor', 'armor'], ['unstop', 'shield']] },
+  { id: 'vex', name: 'FLINT', role: 'assault', color: '#d9533a', abil: [['dash', 'dash'], ['flash', 'flash'], ['overload', 'bolt']] },
+  { id: 'hale', name: 'WARDEN', role: 'defense', color: '#e6c25c', abil: [['wall', 'wall'], ['mine', 'mine'], ['turret', 'turret']] },
+  { id: 'morrow', name: 'VESPER', role: 'control', color: '#4fd2c4', abil: [['smoke', 'smoke'], ['slow', 'slow'], ['blackout', 'blind']] },
+  { id: 'kite', name: 'SKYE', role: 'recon', color: '#7ec8ff', abil: [['drone', 'drone'], ['heat', 'heat'], ['watch', 'radar']] },
+  { id: 'brick', name: 'BULWARK', role: 'heavy', color: '#e2782f', abil: [['charge', 'charge'], ['armor', 'armor'], ['unstop', 'shield']] },
 ];
 // the code name shown for an operator (ids stay as they are in saves)
 export const opName = (id) => (OPS.find((o) => o.id === id) || { name: id.toUpperCase() }).name;
@@ -62,7 +62,7 @@ export const MISSIONS = [
 ];
 
 export const CRATES = [
-  { id: 'std', color: '#9aa4b1', price: 300, odds: [['common', 62], ['rare', 28], ['epic', 8.5], ['legendary', 1.4], ['mythic', 0.1]] },
-  { id: 'plus', color: '#4aa8ff', price: 750, odds: [['rare', 58], ['epic', 31], ['legendary', 9.5], ['mythic', 1.4], ['ultra', 0.1]] },
-  { id: 'crow', color: '#ffc93c', price: 1600, odds: [['epic', 60], ['legendary', 32], ['mythic', 7.4], ['ultra', 0.6]] },
+  { id: 'std', color: '#a39b8f', price: 300, odds: [['common', 62], ['rare', 28], ['epic', 8.5], ['legendary', 1.4], ['mythic', 0.1]] },
+  { id: 'plus', color: '#6aa6d6', price: 750, odds: [['rare', 58], ['epic', 31], ['legendary', 9.5], ['mythic', 1.4], ['ultra', 0.1]] },
+  { id: 'crow', color: '#e6a93c', price: 1600, odds: [['epic', 60], ['legendary', 32], ['mythic', 7.4], ['ultra', 0.6]] },
 ];

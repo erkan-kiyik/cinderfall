@@ -2,11 +2,11 @@
 import { outlined, setRoot } from '../js/art/kit.js';
 import { drawFigure, gunPoint } from '../js/art/figure.js';
 import { OPS as OPS0 } from '../js/art/ops/index.js';
-import { TETIKCI, KALKANLI, HUCUMCU } from '../js/art/enemies/syndicate.js';
+import { TETIKCI, KALKANLI, HUCUMCU, GALL } from '../js/art/enemies/syndicate.js';
 import { WEAPONS } from '../js/art/weapons/index.js';
 import { STREET, crate, barrier, lampPost, dumpster, burnBarrel, cone } from '../js/art/env/street.js';
 
-export const OPS = { ...OPS0, tetikci: TETIKCI, kalkanli: KALKANLI, hucumcu: HUCUMCU };
+export const OPS = { ...OPS0, tetikci: TETIKCI, kalkanli: KALKANLI, hucumcu: HUCUMCU, gall: GALL };
 export { WEAPONS };
 
 export function figureCanvas(op, s, pose) {

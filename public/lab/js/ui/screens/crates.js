@@ -7,13 +7,13 @@ import { t, num } from '../i18n.js';
 import { hubbar, refreshCur } from './common.js';
 import { CRATES } from '../data.js';
 import { SKIN, buyCrate, crateFromStock } from '../../core/economy.js';
-import { weaponPic } from '../portraits.js';
+import { weaponPic, crateArt } from '../portraits.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 
 export function reveal(res, crate) {
   const sk = SKIN[res.skin], col = `var(--r-${res.rar})`;
   const box = h('div.crate-open', { style: { '--rar': col, '--c': crate.color } },
-    h('div.cr-art', svg('crate')),
+    h('div.cr-art', crateArt(crate.color, 120)),
     h('div.cr-res', { hidden: true },
       h('div.eyebrow', { style: { color: col } }, t(`rar.${res.rar}`)),
       h('div.h2', t(`skin.${sk.id}`)),
@@ -51,7 +51,7 @@ export const crates = {
         return h('div.tile.crate.cut', { style: { '--c': c.color } },
           h('div.eyebrow.accent', t(`crate.${c.id}.k`)),
           h('div.h2', t(`crate.${c.id}`)),
-          h('div.art', svg('crate'), stock > 0 && h('span.stock', `×${stock}`)),
+          h('div.art', crateArt(c.color, 104), stock > 0 && h('span.stock', `×${stock}`)),
           h('div.odds', c.odds.map(([r, p]) => [h('span', t(`rar.${r}`)), h('b', { style: { '--rar': `var(--r-${r})` } }, `%${p}`)])),
           press(h(`button.btn.${stock > 0 ? 'primary' : 'secondary'}.cut`, { type: 'button', onclick: open },
             stock > 0 ? [svg('crate'), t('crate.openFree')] : [svg('coin'), num(c.price), h('span', t('crate.open'))]), { sound: null, buzz: 'soft' }));

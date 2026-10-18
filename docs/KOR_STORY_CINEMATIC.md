@@ -308,3 +308,98 @@ edebilir; kâğıt ters yatırılabilir (`turn`); badanalı tuğla, örgü yün 
 malzemeleri. Post-process'te halation katmanı kenarda turuncu çerçeve
 bırakıyordu (bulanıklık kenardan taşınca saydam kısmı renklendiriliyordu);
 düzeltildi, sinematiklerde de geçerli.
+
+## 9. Karakter tasarımı (sıfırdan, hikâyeye göre)
+
+Bu bölüm çizimden önce yazıldı; kodlar (`public/lab/js/art/ops/*.js`,
+`art/enemies/syndicate.js`, HAWK portresi) birebir buna uyar.
+
+### 9.1 Ortak kurallar
+- **Kostüm yok, iş elbisesi var.** Beşi de eski işinin giysisini giyer:
+  tamir edilmiş, üstüne toplama koruma eklenmiş. Malzemeler gerçek: mumlu
+  kanvas, deri, yün, yansıtıcı bant, solmuş güvenlik turuncusu, konteyner
+  sacı. Neon, uzay giysisi, mor cüppe, robot zırhı yok.
+- **Renkler soluk ve kirli.** Her birinin tek imza rengi geçmişinden gelir
+  (FLINT'in atkısı, WARDEN'in kaskı, VESPER'in sinyal ışığı, SKYE'ın gözlüğü,
+  BULWARK'ın turuncusu); gerisi is, pas, kömür, lacivert.
+- **Takım işareti:** sol üst kolda aynı yerde, aynı boyda kor bandı: koyu
+  kumaş üstünde turuncu bir kor lekesi. Vanta'dan ayıran ortak öğe.
+- **Yüzler kapalı, ama işten gelen bir şeyle:** kaynak gözlüğü ve atkı,
+  itfaiye kaskının vizörü, kulaklık ve boyunluk, kurye kaskı ve bandana,
+  baret ve gaz maskesi. Lens ışıkları (portre ve intro) bu camlardan.
+- **Vanta tek tip ve temizdir:** mavi-gri polimer zırh, lacivert üniforma,
+  beyaz halka-şerit arması, kırmızı vizör yarığı. Takımın yamalı, eskimiş
+  görünüşünün tersi: yeni, aynı, tekrarlanan.
+
+### 9.2 Operatörler
+| | Kim | Silüet | Baş | Gövde | Kollar / bacaklar | Renkler |
+|---|---|---|---|---|---|---|
+| **FLINT** (saldırı) | 29, üçüncü kuşak ocakçı | yuvarlak kaynak gözlüğü, örgü bere, uçuşan uzun kırmızı atkı, kalın deri ceket | siyah örgü bere; deri çerçeveli yuvarlak yeşil kaynak gözlüğü; babasının atkısı burnun üstüne çekili | yanık kahve deri ocakçı ceketi (yamalı, kıvılcım lekeli); önünde ocak çeliğinden kesilmiş paslı plaka, "3" şablonu, iki deri kayış | uzun deri kaynak eldiveni; is grisi kanvas pantolon, dizde deri yama; çelik burunlu ocakçı botu | is siyahı, yanık kahve, kül grisi, pas; **sendika kırmızısı** atkı |
+| **WARDEN** (savunma) | 41, kapatılan itfaiyenin son ekip amiri | yuvarlak itfaiye kaskı, inik altın vizör, dizüstü itfaiye ceketi, sırtta halligan | **beyaz amir kaskı** (isli, siyah şerit), altın vizör, gri yanmaz başlık | kömür grisi itfaiye ceketi, göğüste ve etekte sarı-gümüş-sarı yansıtıcı bant, göğüs cebinde telsiz | sarı-kahve itfaiye eldiveni; aynı kumaştan pantolon, dizde bant; siyah itfaiye çizmesi | kömür, kum, yansıtıcı gümüş/sarı; **kask beyazı** |
+| **VESPER** (kontrol) | 33, eski Vanta sinyal analisti | uzun ince; diz altı lacivert kaban; sırtta telsiz çantası ve tek esnek anten | topuzlu koyu saç; burnun üstüne boyunluk; tek kulaklık ve mikrofon; sağ gözde eski Vanta monoklü, ışığı **camgöbeğine** çevrilmiş | lacivert yün kaban, yaka kalkık; altında Vanta gri-mavi kazak, göğsünde **sökülmüş armanın izi** | sol önkolda bileğe bağlı küçük terminal; dar koyu pantolon, uzun bağcıklı bot | lacivert-siyah, Vanta gri-mavisi (sökülmüş), kemik rengi kulaklık; **camgöbeği** |
+| **SKYE** (keşif) | 22, eski kurye; dron yapar | kısa, hafif; bisiklet kaskı, bol rüzgârlık, çapraz postacı çantası, dizlik; yanında hurda dron | çıkartmalı mat siyah bisiklet kaskı; aynalı **gök mavisi** spor gözlük; desenli bandana | soluk hardal rüzgârlık (sırtta yansıtıcı şerit), altında koyu sweatshirt; yamalı kanvas postacı çantası | sıvanmış kollar, parmaksız bisiklet eldiveni; siyah tayt üstüne kısa kargo şort, siyah dizlik, yıpranmış koşu ayakkabısı | hardal, kömür, krem; **gök mavisi** |
+| **BULWARK** (ağır) | 47, liman vinç operatörü | en iri; baret, iki filtreli yarım maske, kalın turuncu iş ceketi, konteyner sacından göğüs ve omuz plakaları | soluk sarı baret, kafa lambası; koyu güvenlik gözlüğü; iki **magenta filtreli** yarım yüz maske | soluk **güvenlik turuncusu** iş ceketi, iki yansıtıcı bant, yağ lekeleri; üstünde konteyner kapısından kesilmiş oluklu mavi plaka, beyaz şablon kod | omuzlarda oluklu sac; kalın deri iş eldiveni; lacivert iş tulumu, dizde yansıtıcı; büyük çelik burunlu bot | güvenlik turuncusu, konteyner mavisi, gri; magenta filtre |
+
+Arayüz renkleri (yetenek HUD'u, listeler) imza renginden: FLINT `#d9533a`,
+WARDEN `#e6c25c`, VESPER `#4fd2c4`, SKYE `#7ec8ff`, BULWARK `#e2782f`.
+
+### 9.3 Vanta
+| | Ne | Ayırt edici |
+|---|---|---|
+| **TETİKÇİ** | standart asker | tam yüz kask, tek ince kırmızı vizör yarığı; mavi-gri göğüs/omuz/diz plakaları; lacivert üniforma; sol omuzda beyaz arma; temiz |
+| **KALKANLI** | kalkanlı asker | daha ağır plakalar (kollar dahil); duman renkli polikarbon çevik kuvvet kalkanı, üstünde beyaz VANTA ve arma, gözetleme penceresi |
+| **HÜCUMCU** | yakın dövüş | hafif zırh; gaz maskeli kask, iki yuvarlak kırmızı lens ve tek filtre; kırmızı birlik kol bandı; pompalı |
+| **GALL** | Sekreter, perde 1 sonu | asker değil bürokrat: diz altı kruvaze lacivert-siyah resmî palto, kemerli; altında ince zırh yeleği; siperli subay şapkası (kırmızı şerit, gümüş arma); deri eldiven; yüz açık: 50'ler, kısa kır saç, sinekkaydı tıraş, ince dudak, soğuk gri gözler |
+
+### 9.4 HAWK
+Tüccar ekranında baş-omuz portresi: 60'lar, düz kasket, kır kısa sakal, yorgun
+gözler, kalın yün palto, boynunda eski yün atkı, dudağında sigara; tezgâh
+lambasının sıcak ışığı.
+
+## 10. Görsel dil v3: karakter, engel, arayüz (sıfırdan)
+
+Önceki karakterler kalın siyah konturlu, düz üç tonlu çizgi film gibiydi;
+arayüz herhangi bir taktik nişancı oyunundan alınmış gibi duruyordu; engeller
+neon ışıklı, hikâyeyle bağsız bariyerlerdi. Bu bölüm üçünü hikâyeden yeniden
+kurar; kodlar buna uyar.
+
+### 10.1 Karakterler: boyanmış, gerçek oranlı
+- **Oran:** baş boyun ~1/7,5'i; omuz ~2 baş; kollar ve bacaklar ince ve
+  gerçek (üst kol baş genişliğinin ~yarısı); eller ve botlar abartısız.
+- **Boyama:** düz bantlar yerine yumuşak gölge geçişi (ışık sağ üstten),
+  kenarlarda ortam gölgesi (AO), malzemeye göre doku (deri gren, kanvas
+  örgü, yün tüy, örgü, kauçuk, çelik fırça izi), deri/kauçuk/metalde parlama
+  çizgisi, kenarlarda aşınma, etek ve botlarda kir; ince, sıcak koyu kontur
+  (siyah değil). Her karakterde en az 30 ayrı parça/ayrıntı.
+- **Kim ne giyer:** §9.2 aynen; ayrıntı eklenir (dikiş, perçin, yama, etiket,
+  tamir izi, kayış tokası, cep kapağı, kablo).
+
+### 10.2 Engeller: üç taraf, üç malzeme
+- **Vanta (temiz, tekrarlanan):** gri-mavi polimer jersey bariyer, beyaz
+  halka-şerit arması, kırmızı LED şerit, sıra numarası; kontrol noktası çelik
+  kapısı; kalkan gibi düzgün, yeni.
+- **Kor direnişi (elden yapılma):** ocak sacından kaynaklı barikat (kaynak
+  dikişi, pas, turuncu sprey kor işareti), eski un çuvallarından kum
+  torbaları, palet + konteyner sacı, tel ve zincir; hepsi tamirli.
+- **Şehir (eskimiş):** paslı çöp konteyneri, sebze kasaları, varil (içinde kor
+  ateşi), soluk trafik konisi. Neon yok; ışık sokak lambası ve ateşten gelir.
+
+### 10.3 Arayüz: "Kor Hattı'nın duvarı"
+Menüler direnişin sığınağındaki duvar ve tezgâhtır; Vanta'nın soğuk
+mavi-grisi yalnızca Vanta'ya ait şeylerde görünür.
+- **Malzemeler:** is siyahı zemin (beton/sıva dokusu), kraft kâğıt, maskeleme
+  bandı, boyalı sac plaka, tebeşir beyazı yazı, kor turuncusu (tek vurgu),
+  sendika kırmızısı damga.
+- **Yazı:** başlıklar Big Shoulders Stencil (çelikhane şablon harfi), etiket
+  ve düğmeler Barlow Condensed, metin Barlow, dosya/brifing/alıntılar
+  Special Elite (daktilo). Hepsi OFL, uygulamanın içinde.
+- **Bileşenler:** turuncu boyalı sac düğme (köşesi kesik, kenarı aşınmış,
+  basınca içe göçer); perçinli sac panel; bantlı kâğıt kart; mürekkep damga;
+  klasör sırtı sekmeler; şablon rakamlı sayaçlar; "parça" para birimi (somun).
+- **Ekranlar:** Lobi = sığınak (operatör, "GÖREVE ÇIK" levhası, duvardaki
+  notlar); Kampanya = duvardaki şehir haritası (kâğıt, kırmızı ip, raptiye,
+  görev fotoğrafları); Operatörler = kişi dosyaları (ataşlı fotoğraf, rol
+  damgası, daktilo özgeçmiş); Cephanelik = delikli pano ve tezgâh; Sandıklar =
+  el konmuş Vanta sandıkları; Tüccar = HAWK'ın tezgâhı ve portresi; Profil =
+  sendika üye kartı; Görevler = panoya iğnelenmiş iş emirleri; Ayarlar = sade
+  sac panel; HUD = şablon rakamlar, kor turuncusu, ince ve okunur.

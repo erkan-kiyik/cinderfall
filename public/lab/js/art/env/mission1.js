@@ -9,10 +9,10 @@
 //   D  gate court    shield trooper, riflemen, a rusher; hack the gate terminal
 //   E  extraction    the gate opens, a last squad arrives, reach the flare
 import { cel, fill, stroke, clip } from '../kit.js';
-import { M, tone, C } from '../style.js';
+import { M, tone, mat, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
-import { crate, barrier, lampPost, burnBarrel, dumpster, cone } from './street.js';
-import { CONT, container, catwalk, ladder, pit, duct, barricade, barricadeFx } from './course.js';
+import { crate, barrier, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
+import { CONT, container, catwalk, ladder, pit, duct, barricade, barricadeFx, scrapBarricade } from './course.js';
 import { emblem } from '../enemies/syndicate.js';
 import { facadeLayout } from './city.js';
 
@@ -21,7 +21,7 @@ const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
 const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 
 export const COLS = 400, TOPY = -200, ROWS = 30, STREET = 25;
-const CONC = tone('#b9bcc6', '#8d919d', '#666a76', '#2f323a');
+const CONC = mat(tone('#b7b7b0', '#8e8e87', '#676761', '#2f2f2b'), 'concrete', 0.7);
 const STEEL = tone('#8a95a3', '#5d6878', '#3c4654', '#151a21');
 const SYN = tone('#9ab3cc', '#5e7d9c', '#3f5a76', '#1c2b3b');
 
@@ -35,15 +35,16 @@ export function concrete(g, x0, x1, h) {
     fill(g, rect(x0 - 1, -6, x1 + 1, 0), CONC.d, 0.55);
     stroke(g, `M ${x0 - 1} -6 L ${x1 + 1} -6`, CONC.k, 0.3, 0.8);
     stroke(g, `M ${(x0 + x1) / 2} ${-h + 4} L ${(x0 + x1) / 2} -6`, CONC.d, 0.4, 0.8);
-    fill(g, rect(x0, -h + 8, x1, -h + 12), C.gold);
-    for (let x = x0 - 6; x < x1 + 4; x += 5) fill(g, poly([[x, -h + 12], [x + 2.4, -h + 12], [x + 6.4, -h + 8], [x + 4, -h + 8]]), '#1a1c20');
+    // Vanta's stencil: the mark and the wall's number, white
+    emblem(g, (x0 + x1) / 2, -h + 10, Math.min(3.2, (x1 - x0) * 0.2), 'rgba(240,242,244,0.85)');
     fill(g, ell(x0 + 5, -h + 4.4, 1.5, 1.5), CONC.k);
     fill(g, ell(x0 + 5, -h + 4.0, 1.5, 1.1), '#0f1116');
     // chips, cracks, a stencil and a spray tag
     for (const [x, y, r] of [[x1 - 4, -h + 20, 1.0], [x0 + 3.6, -18, 0.8]]) fill(g, ell(x, y, r, r * 0.8), CONC.k, 0.55);
     stroke(g, `M ${x1 - 2} ${-h + 14} l -2 4 l 0.8 3 l -1.6 3`, CONC.k, 0.25, 0.8);
-    g.font = '700 2.6px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.75)'; g.fillText('T-12', x0 + 2.4, -h + 17);
-    stroke(g, `M ${x0 + 2} -14 C ${x0 + 4} -18 ${x0 + 6} -17 ${x0 + 6} -13.6 C ${x0 + 6} -11 ${x0 + 9} -11 ${x0 + 11} -15`, C.interact, 0.7, 0.65);
+    g.font = '700 2.2px sans-serif'; g.fillStyle = 'rgba(240,242,244,0.7)'; g.fillText('T-12', x0 + 2.4, -h + 17);
+    // the cells were here: the ember sprayed low, where a patrol would not look
+    korMark(g, (x0 + x1) / 2, -12, Math.min(3, (x1 - x0) * 0.18), 0.8);
     stroke(g, `M ${x0 + 3} ${-h + 1.2} L ${x1 - 3} ${-h + 1.2}`, CONC.l, 0.5, 0.7);
   });
   stroke(g, B, CONC.k, 0.5);
@@ -189,7 +190,8 @@ export function buildMission1() {
   P('m.coneD', [X(286) - 6, -12, X(286) + 8, 1], (g) => cone(g, X(286)), deco);
   // E — extraction -----------------------------------------------------------------------
   block(350, 351, 1, 2); P('m.crateE', [X(350) - 2, -18, X(352) + 2, 1], (g) => crate(g, X(350), 16, 16));
-  bar('m.barE', 362, 365, 4, '#3ee8e0');
+  // the cells hold the extraction: their own barricade, no light
+  block(362, 364, 1, 4); P('m.barE', [X(362) - 4, -4 * T - 8, X(365) + 8, 1], (g) => scrapBarricade(g, X(362), X(365), 4 * T), front);
   P('m.beacon', [X(387) - 5, -28, X(387) + 5, 1], (g) => beacon(g, X(387)), deco);
   // checkpoint posts
   const checkpoints = [{ x: X(60) }, { x: X(228) }, { x: X(316) }];

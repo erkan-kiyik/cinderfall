@@ -171,8 +171,8 @@ class Coals extends PlateShot {
       const sh = g.createRadialGradient(W / 2, H * 0.44, H * 0.05, W / 2, H * 0.44, H * 0.5);
       sh.addColorStop(0, `rgba(0,0,0,${0.45 * ta})`); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, H);
       const fs = Math.round(H * 0.17);
-      g.save(); g.font = `600 ${fs}px Rajdhani, 'Arial Narrow', sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-      if ('letterSpacing' in g) g.letterSpacing = `${Math.round(fs * 0.55)}px`;
+      g.save(); g.font = `800 ${fs}px 'Big Shoulders Stencil', Rajdhani, 'Arial Narrow', sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      if ('letterSpacing' in g) g.letterSpacing = `${Math.round(fs * 0.38)}px`;
       g.shadowColor = `rgba(255,120,40,${0.5 * ta})`; g.shadowBlur = H * 0.04;
       g.fillStyle = `rgba(242,230,214,${ta})`; g.fillText('KOR', W / 2 + fs * 0.27, H * 0.42);
       g.restore();

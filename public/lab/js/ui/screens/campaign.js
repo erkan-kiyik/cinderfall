@@ -18,10 +18,10 @@ export const campaign = {
       const a = MISSIONS[i], b = MISSIONS[i + 1], l = document.createElementNS(NS, 'line');
       l.setAttribute('x1', a.x * 100); l.setAttribute('y1', a.y * 100); l.setAttribute('x2', b.x * 100); l.setAttribute('y2', b.y * 100);
       const done = d.campaign[a.id] && d.campaign[a.id].done;
-      l.setAttribute('stroke', done ? '#ff6b2c' : 'rgba(217,222,229,0.22)');
+      l.setAttribute('stroke', done ? '#b8352b' : 'rgba(58,44,30,0.5)');
       l.setAttribute('stroke-width', '0.5'); l.setAttribute('stroke-dasharray', done ? '0' : '1.2 1.2');
       l.setAttribute('vector-effect', 'non-scaling-stroke');
-      l.style.strokeWidth = '2px';
+      l.style.strokeWidth = done ? '2.5px' : '1.5px';
       lines.appendChild(l);
     }
     map.appendChild(lines);
@@ -55,6 +55,7 @@ export const campaign = {
         onclick: (e) => { if (!ok) return deny(e.currentTarget); ui('confirm'); ctx.router.go('prep', { mission: m.id, diff }); },
       }, ok ? t('camp.prepare') : m.ready ? t('camp.locked') : t('ui.soon'), svg('arrow')), { sound: null, buzz: ok ? 'soft' : null });
       side.replaceChildren(...[
+        h('div.stamp', t('camp.stamp')),
         h('div.eyebrow.accent', t('camp.act', { n: m.act }), ' · ', t('camp.mission', { n: m.id.slice(1) })),
         h('div.h1', { style: { fontSize: '28px' } }, t(`mission.${m.id}`)),
         h('div.eyebrow', t(`mission.${m.id}.where`)),

@@ -6,7 +6,7 @@
 // bounds are measured automatically by painting once at low resolution.
 import { canvas, setRoot } from '../art/kit.js';
 
-const darker = (t) => ({ l: t.m, m: t.d, d: t.k, k: t.k });
+const darker = (t) => ({ ...t, l: t.m, m: t.d, d: t.k, k: t.k });
 const NEAR = { far: false, t: (t) => t, J: null, rt: true };
 const FAR = { far: true, t: darker, J: null, rt: true };
 

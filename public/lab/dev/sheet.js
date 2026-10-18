@@ -36,6 +36,27 @@ if (what === 'op') {
   const real = figureCanvas(op, 2.6 * 2.5);
   const r3 = row(); r3.appendChild(toCanvasEl(real, '#1e252e'));
 }
+if (what === 'hawk') {
+  const { paintHawk } = await import('../js/art/hawk.js');
+  const r = row();
+  for (const px of [120, 520]) { const c = document.createElement('canvas'); c.width = c.height = px; paintHawk(c.getContext('2d'), px, 1); r.appendChild(c); }
+}
+if (what === 'row') {
+  // several figures side by side at one scale: ?ids=a,b,c&s=
+  const r = row(), s = +(q.get('s') || 8);
+  for (const id of (q.get('ids') || 'tetikci,kalkanli,hucumcu,gall').split(',')) r.appendChild(toCanvasEl(figureCanvas(OPS[id], s), q.get('bg') || '#2a2522'));
+}
+if (what === 'big') {
+  // one operator large, on the warm dark of the shelter, for the detail review
+  const op = OPS[q.get('op') || 'vex'], fig = figureCanvas(op, +(q.get('s') || 15));
+  row().appendChild(toCanvasEl(fig, q.get('bg') || '#2a2522'));
+  // and the head and shoulders at 40 px per unit
+  const z = 40, big = figureCanvas(op, z), crop = document.createElement('canvas');
+  crop.width = 24 * z; crop.height = 20 * z;
+  const cg = crop.getContext('2d'); cg.fillStyle = q.get('bg') || '#2a2522'; cg.fillRect(0, 0, crop.width, crop.height);
+  cg.drawImage(big, -(big.width * 0.42 - 12 * z), -(big.height - 6 * z - 72 * z));
+  row().appendChild(crop);
+}
 if (what === 'poses') {
   // one operator in the poses the game uses most, on one strip, plus real size and the silhouette
   const op = OPS[q.get('op') || 'vex'];
@@ -65,7 +86,7 @@ if (what === 'poses') {
   cg.drawImage(big, -(big.width * 0.42 - 13 * z), -(big.height - 6 * z - 70 * z));
   r2.appendChild(crop);
 }
-if (what === 'env') {
+if (what === 'env' || what === 'props') {
   // every building and every obstacle at a readable size, on the night ground
   const { BUILDINGS } = await import('../js/art/env/city.js');
   const env = await import('../js/art/env/street.js');
@@ -74,17 +95,18 @@ if (what === 'env') {
   const { outlined, setRoot: sr } = await import('../js/art/kit.js');
   const s = +(q.get('s') || 3);
   const pane = (w, top, bottom, paint, outline) => {
+    void 0;
     const W = Math.ceil(w * s), H = Math.ceil((bottom - top) * s);
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d'); g.fillStyle = '#151b27'; g.fillRect(0, 0, W, H);
     g.fillStyle = '#2a303c'; g.fillRect(0, -top * s, W, H);
-    if (outline) { const o = outlined(W, H, s, 0, -top * s, (gg) => { sr(gg); paint(gg); }, 0.85); g.drawImage(o, 0, 0); }
+    if (outline) { const o = outlined(W, H, s, 0, -top * s, (gg) => { sr(gg); paint(gg); }, 0.55); g.drawImage(o, 0, 0); }
     else { g.save(); g.translate(0, -top * s); g.scale(s, s); sr(g); paint(g); g.restore(); }
     return c;
   };
   let r = row();
   let acc = 0;
-  for (const [t, b] of Object.entries(BUILDINGS)) {
+  for (const [t, b] of what === 'props' ? [] : Object.entries(BUILDINGS)) {
     if (acc + b.w > 520) { r = row(); acc = 0; }
     const c = pane(b.w + 6, b.top - 2, 8, (g) => { g.translate(3, 0); b.paint(g); });
     const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif';
@@ -95,6 +117,7 @@ if (what === 'env') {
     ['barrier', 42, -20, (g) => env.barrier(g, 4, 34)],
     ['concrete', 26, -44, (g) => m1.concrete(g, 5, 21, 40)],
     ['barricade', 36, -40, (g) => co.barricade(g, 6, 30, 32, '#ff3fa4')],
+    ['scrap', 44, -40, (g) => co.scrapBarricade(g, 6, 34, 32)],
     ['burnBarrel', 18, -18, (g) => env.burnBarrel(g, 4)],
     ['dumpster', 48, -26, (g) => env.dumpster(g, 4)],
     ['cone', 14, -12, (g) => env.cone(g, 7)],
@@ -105,7 +128,7 @@ if (what === 'env') {
   ];
   r = row(); acc = 0;
   for (const [n, w, top, paint] of props) {
-    if (acc + w > 300) { r = row(); acc = 0; }
+    if (acc + w > (what === 'props' ? 160 : 300)) { r = row(); acc = 0; }
     const c = pane(w, top, 4, paint, true);
     const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif';
     wrap.append(c, n); r.appendChild(wrap); acc += w + 6;

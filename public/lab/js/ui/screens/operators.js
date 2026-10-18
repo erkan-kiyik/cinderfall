@@ -20,8 +20,10 @@ export const operators = {
       d.roster.op === x.id && h('span', { style: { marginLeft: 'auto', color: 'var(--ember)', display: 'flex' } }, svg('check'))), { buzz: 'tick', sound: null })));
       ctx.showcase.setOperator(o.id, d.roster.loadout[o.id]);
       mid.replaceChildren(
-        h('div.card.cut.op-card',
-          h('div.op-title', h('div.h2', opName(o.id)), h('div.eyebrow.accent', t(`role.${o.role}`))),
+        h('div.card.op-card',
+          h('div.stamp', t(`role.${o.role}`)),
+          h('div.eyebrow', t('ops.file'), ' · ', `K-${String(OPS.indexOf(o) + 3).padStart(2, '0')}`),
+          h('div.op-title', h('div.h2', opName(o.id))),
           h('p.body', t(`op.${o.id}.bio`))),
         h('div.eyebrow', t('ops.abilities')),
         h('div.abil-list', o.abil.map(([k, icon], i) => h('div.abil.cut', h(`div.hex${i === 2 ? '.ult' : ''}`, svg(icon)), h('div', h('b', t(`ab.${o.id}.${k}`), i === 2 ? h('span.soon', t('ops.ult')) : null), h('p', t(`ab.${o.id}.${k}.d`)))))));

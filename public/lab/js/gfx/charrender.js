@@ -54,8 +54,8 @@ export class CharRenderer {
     this.prog = program(gl, VS, FS);
     this.vao = gl.createVertexArray();
     this.view = new Float32Array(9);
-    this.ink = [0.059, 0.071, 0.094, 1]; // style INK
-    this.outline = 0.85;
+    this.ink = [0.086, 0.067, 0.055, 1]; // style INK
+    this.outline = 0.55;    // style OUTLINE
     this.enemyInk = null; // accessibility: a bright outline colour for enemies
     this.ppu = 5; this.cols = 1; this.cap = 1;
     this.queue = []; this.done = new Map();

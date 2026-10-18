@@ -21,6 +21,7 @@ export default {
   'story.a1.2': "They can't. It's still ours.",
   'story.a1.cap': 'End of Act 1',
   'story.tap': 'Tap to start',
+  'camp.stamp': 'CLASSIFIED', 'prof.card': 'Ember Line · Member card', 'ops.file': 'File',
   'camp.scene': 'Scene',
   'set.prologue': 'Watch the prologue',
   'set.prologueHint': 'Plays the opening scene again.',
@@ -36,7 +37,7 @@ export default {
   'rar.common': 'Common', 'rar.rare': 'Rare', 'rar.epic': 'Epic', 'rar.legendary': 'Legendary', 'rar.mythic': 'Mythic', 'rar.ultra': 'Ultra',
   'diff.normal': 'Normal', 'diff.hard': 'Hard',
 
-  'lobby.operator': 'Operator', 'lobby.play': 'PLAY', 'lobby.campaign': 'Campaign · Act {act} · Ember Line',
+  'lobby.operator': 'Operator', 'lobby.play': 'MOVE OUT', 'lobby.campaign': 'Campaign · Act {act} · Ember Line',
   'lobby.next': 'Mission {n} — {name}', 'lobby.record': 'record', 'lobby.boss5': 'A boss every 5 stages',
   'lobby.crow': 'HAWK’s stall', 'lobby.crowOpen': '{n} goods', 'lobby.crowSub': '4 daily goods · 1 special',
 

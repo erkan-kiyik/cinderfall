@@ -12,20 +12,21 @@
 // head up -y from the neck base; foot at the ankle with the ground at +2.5.
 import { cel, fill, stroke, clip, blob, limb, curve } from '../kit.js';
 
-// The head is painted at this scale of the old 64-unit head (helmets in
-// helmets.js were drawn for it): with the higher neck it lands at ~1/7.
+// Heads drawn for the old 64-unit figure are painted at this scale: with the
+// higher neck they land at ~1/7.
 export const HEAD_K = 0.8;
 export function scaledHead(g, fn) { g.save(); g.scale(HEAD_K, HEAD_K); fn(); g.restore(); }
 
 // --- limb forms -------------------------------------------------------------
+// v3 (docs §10.1): real proportions, the limbs slimmer than the heroic v2.
 // upper arm: round deltoid cap, biceps on the front, triceps behind
-export const UPPER = limb(11.6, [[0, 3.05], [0.18, 3.05], [0.45, 2.75], [0.75, 2.3], [1, 2.1]], [[0, 3.1], [0.25, 3.0], [0.55, 2.7], [0.85, 2.2], [1, 2.05]], 0.6, 0.5);
+export const UPPER = limb(11.6, [[0, 2.7], [0.18, 2.68], [0.45, 2.42], [0.75, 2.05], [1, 1.88]], [[0, 2.75], [0.25, 2.65], [0.55, 2.38], [0.85, 1.95], [1, 1.85]], 0.6, 0.5);
 // forearm: thick below the elbow, tapering to the wrist
-export const FORE = limb(10.4, [[0, 2.2], [0.22, 2.45], [0.55, 2.15], [1, 1.7]], [[0, 2.15], [0.2, 2.5], [0.5, 2.2], [1, 1.65]], 0.5, 0.4);
+export const FORE = limb(10.4, [[0, 1.98], [0.22, 2.16], [0.55, 1.88], [1, 1.48]], [[0, 1.94], [0.2, 2.2], [0.5, 1.92], [1, 1.44]], 0.5, 0.4);
 // thigh: full at the hip, quad on the front, narrowing to the knee
-export const THIGH = limb(15.2, [[0, 3.9], [0.3, 3.85], [0.65, 3.25], [1, 2.65]], [[0, 4.05], [0.25, 4.0], [0.7, 3.0], [1, 2.6]], 0.45, 0.5);
+export const THIGH = limb(15.2, [[0, 3.6], [0.3, 3.52], [0.65, 2.98], [1, 2.42]], [[0, 3.72], [0.25, 3.66], [0.7, 2.76], [1, 2.38]], 0.45, 0.5);
 // shin: the calf swells behind, the shin bone stays straight in front
-export const SHIN = limb(14.4, [[0, 2.6], [0.3, 2.45], [0.7, 2.15], [1, 2.05]], [[0, 2.55], [0.22, 3.1], [0.5, 2.85], [0.8, 2.2], [1, 2.05]], 0.5, 0.4);
+export const SHIN = limb(14.4, [[0, 2.38], [0.3, 2.22], [0.7, 1.94], [1, 1.84]], [[0, 2.32], [0.22, 2.82], [0.5, 2.58], [0.8, 1.98], [1, 1.84]], 0.5, 0.4);
 
 // --- gloves -----------------------------------------------------------------
 // A bigger, squarer hand along +y from the wrist; thumb on the front (+x).
@@ -37,6 +38,7 @@ const CUFF = blob([[-2.0, -1.4], [1.95, -1.4], [2.1, 0.9], [-2.15, 0.9]]);
 // o: { cuff: tone, knuckle: tone, fingerless: skin tone }
 export function glove(g, ctx, mat, o = {}) {
   const t = ctx.t;
+  g.save(); g.scale(0.88, 0.9);
   if (ctx.far) cel(g, THUMB, t(mat), { sh: 0.6, hl: 0.25 });
   cel(g, PALM, t(mat), { sh: 0.9, hl: 0.35 });
   clip(g, PALM, () => {
@@ -46,6 +48,7 @@ export function glove(g, ctx, mat, o = {}) {
   if (o.knuckle) cel(g, KNUCKLE, t(o.knuckle), { sh: 0.35, hl: 0.2, lw: 0.26 });
   if (!ctx.far) cel(g, THUMB, t(mat), { sh: 0.6, hl: 0.25 });
   if (o.cuff) cel(g, CUFF, t(o.cuff), { sh: 0.4, hl: 0.25, lw: 0.28 });
+  g.restore();
 }
 
 // --- boots ------------------------------------------------------------------
@@ -145,6 +148,49 @@ export function belt(g, o) {
 export function fold(g, pts, t, w = 0.3) {
   stroke(g, curve(pts), t.d, w);
   stroke(g, curve(pts.map(([x, y]) => [x + 0.35, y - 0.2])), t.l, w * 0.6, 0.55);
+}
+
+// The cells' mark: a band of dark cloth round the left upper arm with an ember
+// sewn on it, the same place and size on everyone (upper-arm frame). `band`
+// is the cloth tone, already darkened for the far side if need be.
+const BAND = 'M -3.4 3.3 C -1.2 3.75 1.2 3.7 3.4 3.2 L 3.3 5.7 C 1.2 6.2 -1.2 6.2 -3.3 5.8 Z';
+const EMBER = blob([[0.15, 4.45], [0.75, 3.8], [1.55, 3.9], [2.05, 4.55], [1.75, 5.3], [0.9, 5.55], [0.3, 5.2]], 0.8);
+export function korBand(g, band) {
+  clip(g, UPPER, () => {
+    cel(g, BAND, band, { sh: 0.5, hl: 0.2, lw: 0.26 });
+    stroke(g, 'M -3.4 3.75 C -1.2 4.2 1.2 4.15 3.4 3.65', band.l, 0.12, 0.6);
+    stroke(g, 'M -3.3 5.35 C -1.2 5.75 1.2 5.75 3.3 5.25', band.l, 0.12, 0.6);
+  });
+  fill(g, EMBER, '#a8331a');
+  fill(g, 'M 0.55 4.6 C 0.8 4.05 1.4 4.0 1.75 4.5 C 1.7 5.0 1.2 5.25 0.8 5.15 Z', '#ff7a2e');
+  fill(g, 'M 0.95 4.55 C 1.1 4.35 1.35 4.35 1.45 4.6 C 1.35 4.8 1.1 4.85 0.95 4.55 Z', '#ffd08a');
+}
+
+// --- details (docs §10.1) -----------------------------------------------------
+// A line of stitches along a path.
+export function stitch(g, d, c, w = 0.13, a = 0.85) {
+  g.save(); g.setLineDash([0.34, 0.26]); stroke(g, d, c, w, a); g.restore();
+}
+// A rivet or a screw head with its glint.
+export function rivet(g, x, y, r, t) {
+  fill(g, `M ${x - r} ${y} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0 Z`, t.d);
+  fill(g, `M ${x - r * 0.75} ${y - r * 0.1} a ${r * 0.75} ${r * 0.75} 0 1 0 ${1.5 * r} 0 a ${r * 0.75} ${r * 0.75} 0 1 0 ${-1.5 * r} 0 Z`, t.m);
+  fill(g, `M ${x - r * 0.35} ${y - r * 0.35} a ${r * 0.28} ${r * 0.28} 0 1 0 ${0.56 * r} 0 a ${r * 0.28} ${r * 0.28} 0 1 0 ${-0.56 * r} 0 Z`, t.l, 0.9);
+}
+// A roller buckle (a metal frame with its pin) at x, y, w × h.
+export function buckle(g, x, y, w, h, t) {
+  const d = `M ${x} ${y} L ${x + w} ${y} L ${x + w} ${y + h} L ${x} ${y + h} Z`;
+  stroke(g, d, t.k, 0.5); stroke(g, d, t.m, 0.3); stroke(g, `M ${x + 0.12} ${y + 0.1} L ${x + w - 0.12} ${y + 0.1}`, t.l, 0.12, 0.9);
+  stroke(g, `M ${x + w * 0.5} ${y} L ${x + w * 0.5} ${y + h}`, t.d, 0.18);
+}
+// Grime toward the bottom of what is clipped: a multiply gradient from y0 (clean) to y1 (dirty).
+export function grime(g, y0, y1, c = 'rgba(40,30,20,0.55)') {
+  const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, c);
+  g.save(); g.globalCompositeOperation = 'multiply'; g.fillStyle = gr; g.fillRect(-60, y0, 120, y1 - y0 + 40); g.restore();
+}
+// Scuffs: small pale worn marks at the given points.
+export function scuffs(g, pts, c, a = 0.5) {
+  for (const [x, y, r = 0.3, ang = 0] of pts) { g.save(); g.translate(x, y); g.rotate(ang); fill(g, `M ${-r} 0 a ${r} ${r * 0.45} 0 1 0 ${2 * r} 0 a ${r} ${r * 0.45} 0 1 0 ${-2 * r} 0 Z`, c, a); g.restore(); }
 }
 
 export { cel, fill, stroke, clip, blob, curve };

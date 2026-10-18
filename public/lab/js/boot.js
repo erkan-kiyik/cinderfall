@@ -43,7 +43,7 @@ async function main() {
   if (save) setLang(save.d.settings.lang);
   const savedQ = save && save.d.settings.quality !== 'auto' ? save.d.settings.quality : null;
   const quality = params.get('q') || savedQ || (DEV && store.get('kor-lab-q')) || autoQuality();
-  await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter'].map((f) => document.fonts.load(f)));
+  await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter', "800 20px 'Big Shoulders Stencil'", "400 12px Barlow", "400 12px 'Special Elite'"].map((f) => document.fonts.load(f)));
   // the opening plays over the bake (not for dev scenes; ?nointro skips it)
   let intro = null;
   if (!DEV && !params.has('nointro')) {

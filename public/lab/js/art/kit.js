@@ -7,7 +7,8 @@
 //   blob()      smooth closed outline through points (Catmull-Rom)
 //   limb()      tapered limb outline along +y from two width profiles
 //   outlined()  bake a drawing and wrap it in the dark outer outline
-import { LIGHT, INK, OUTLINE } from './style.js';
+import { LIGHT, INK, OUTLINE, LINE } from './style.js';
+import { texture } from './tex.js';
 
 const cache = new Map();
 export function P(d) {
@@ -43,26 +44,57 @@ function localVec(g, wx, wy) {
 }
 
 const BIG = 1e4;
-// Three-tone cel shading. The shape is filled with its shade tone, the mid
-// tone is laid over it shifted toward the light (leaving a shade band on the
-// side away from it), and a light band is cut along the lit edge.
-//   o.sh  shade band width (world units), o.hl light band width (0 = none)
-export function cel(g, d, t, o = {}) {
-  const p = P(d);
-  const sh = o.sh ?? 1.0, hl = o.hl ?? 0.45;
+const FAR = 4096;   // device px: where soft fills are drawn so only their blurred shadow lands
+
+// Pixels per unit of the current transform (blur radii are in device px).
+function ppu(g) { const m = g.getTransform(); return Math.hypot(m.a, m.b) || 1; }
+
+// Fill `p` shifted by (dx, dy) local units with its edge softened by `blur`
+// device px. inv: fill everything but the shape instead (an inner shadow of its
+// outline). Works in device space so the path stays canvas-sized.
+function soft(g, p, dx, dy, color, blur, inv = false) {
+  const M = g.getTransform(), W = g.canvas.width, H = g.canvas.height, pad = blur * 2 + 4;
+  const q = new Path2D();
+  if (inv) q.rect(-pad, -pad, W + 2 * pad, H + 2 * pad);
+  q.addPath(p, M.translate(dx, dy));
   g.save();
-  g.clip(p);
-  g.fillStyle = t.d; g.fillRect(-BIG, -BIG, 2 * BIG, 2 * BIG);
-  const [sx, sy] = localVec(g, LIGHT.x * sh, LIGHT.y * sh);
-  g.translate(sx, sy); g.fillStyle = t.m; g.fill(p); g.translate(-sx, -sy);
-  if (hl > 0) {
-    const [hx, hy] = localVec(g, -LIGHT.x * hl, -LIGHT.y * hl);
-    const q = new Path2D(); q.rect(-BIG, -BIG, 2 * BIG, 2 * BIG);
-    q.addPath(p, new DOMMatrix().translate(hx, hy));
-    g.fillStyle = t.l; g.fill(q, 'evenodd');
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = color;
+  if (blur < 0.7) g.fill(q, 'evenodd');
+  else {
+    g.shadowColor = color; g.shadowBlur = blur; g.shadowOffsetX = -FAR; g.shadowOffsetY = 0;
+    g.translate(FAR, 0); g.fill(q, 'evenodd');
   }
   g.restore();
-  if (o.line !== false) stroke(g, p, t.k, o.lw ?? 0.32);
+}
+
+// Painted shading (docs §10.1): the shape in its mid tone, then three inner
+// shadows of its own outline: a broad soft form shadow coming in from the
+// side away from the light (shade tone), a tight occlusion all round the edge
+// (line tone), and the light band along the lit edge (light tone); then the
+// material's texture if the tone has one.
+//   o.sh  form shadow reach (world units), o.hl light band width (0 = none)
+//   o.ao  edge occlusion strength (0 = none), o.tex override the texture
+export function cel(g, d, t, o = {}) {
+  const p = P(d);
+  const sh = o.sh ?? 1.0, hl = o.hl ?? 0.45, k = ppu(g);
+  g.save();
+  g.clip(p);
+  g.fillStyle = t.m; g.fillRect(-BIG, -BIG, 2 * BIG, 2 * BIG);
+  if (sh > 0) {
+    const [sx, sy] = localVec(g, LIGHT.x * sh * 1.3, LIGHT.y * sh * 1.3);
+    soft(g, p, sx, sy, t.d, Math.min(26, (0.6 + sh * 1.6) * k), true);
+  }
+  const ao = o.ao ?? 0.45;
+  if (ao > 0) { g.globalAlpha = ao; soft(g, p, 0, 0, t.k, Math.min(12, 0.9 * k), true); g.globalAlpha = 1; }
+  if (hl > 0) {
+    const [hx, hy] = localVec(g, -LIGHT.x * hl, -LIGHT.y * hl);
+    soft(g, p, hx, hy, t.l, Math.min(10, hl * 0.9 * k), true);
+  }
+  const tx = o.tex ?? t.tex;
+  if (tx) texture(g, tx, t.ta ?? 0.55);
+  g.restore();
+  if (o.line !== false) stroke(g, p, t.k, (o.lw ?? 0.32) * LINE, 0.9);
 }
 
 // Flat fill with only an inner line (small trims, straps, panels).

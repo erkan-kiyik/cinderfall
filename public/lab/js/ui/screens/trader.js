@@ -4,18 +4,18 @@
 import { h, svg, press, popIn, ui, deny, toast } from '../kit.js';
 import { t, num } from '../i18n.js';
 import { hubbar, refreshCur } from './common.js';
-import { weaponPic } from '../portraits.js';
+import { weaponPic, hawkPic, crateArt } from '../portraits.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 import { CRATES } from '../data.js';
 import { SKIN, traderStock, traderBuy, traderSold, owns, hasSkin } from '../../core/economy.js';
 
 export const trader = {
   mount(ctx) {
-    const left = h('div.card.cut', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
+    const left = h('div.card.cut.hawk-card',
+      h('div.portrait', hawkPic(240), h('div.h1', 'HAWK')),
       h('div.eyebrow.accent', h('span.dot'), t('trader.k')),
-      h('div.h1', 'HAWK'),
-      h('p.body', { style: { margin: 0, fontSize: '12px' } }, t('trader.bio')),
-      h('div.quote.cut', t('trader.line')));
+      h('p.body.typed', { style: { margin: 0, fontSize: '12px' } }, t('trader.bio')),
+      h('div.quote', t('trader.line')));
     const timer = h('div.h3.num', '—');
     const shelf = h('div.shelf');
     let tiles = [];
@@ -24,7 +24,7 @@ export const trader = {
       const sold = traderSold(d, it) || (it.kind === 'weapon' && owns(d, it.weapon)) || (it.kind === 'skin' && hasSkin(d, it.weapon, it.skin));
       const name = it.kind === 'weapon' ? WEAPONS[it.weapon].name : it.kind === 'skin' ? `${t(`skin.${it.skin}`)} · ${WEAPONS[it.weapon].name}` : t(`crate.${it.id}`);
       const pic = it.kind === 'crate'
-        ? h('div', { style: { color: CRATES.find((c) => c.id === it.id).color } }, svg('crate'))
+        ? crateArt(CRATES.find((c) => c.id === it.id).color, weekly ? 56 : 44)
         : weaponPic(it.weapon, weekly ? 220 : 120, weekly ? 44 : 30, it.kind === 'skin' ? SKIN[it.skin].tint : null);
       const buy = press(h(`button.btn.${sold ? 'secondary' : 'primary'}.cut.sm`, {
         type: 'button', 'aria-disabled': sold ? 'true' : 'false',

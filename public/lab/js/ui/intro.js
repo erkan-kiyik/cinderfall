@@ -106,7 +106,7 @@ export class Intro {
     g.save(); g.textAlign = 'center'; g.textBaseline = 'middle';
     const ta = ss(this.tagAt, this.tagAt + 0.9, t) * k;
     if (ta > 0) {
-      g.font = `400 ${Math.round(12 * dpr)}px Inter, system-ui, sans-serif`;
+      g.font = `400 ${Math.round(12 * dpr)}px Barlow, system-ui, sans-serif`;
       if ('letterSpacing' in g) g.letterSpacing = `${(1.7 * dpr).toFixed(1)}px`;
       g.fillStyle = `rgba(236,226,210,${(0.9 * ta).toFixed(3)})`; g.shadowColor = 'rgba(0,0,0,0.9)'; g.shadowBlur = 8 * dpr;
       g.fillText(TEXT.tag(), W / 2, R.y + R.h * 0.62); g.shadowBlur = 0;
@@ -117,7 +117,7 @@ export class Intro {
       const bw = Math.min(R.w * 0.22, 220 * dpr), bx = W / 2 - bw / 2, by = R.y + R.h - 26 * dpr;
       g.fillStyle = `rgba(236,226,210,${(0.12 * kl).toFixed(3)})`; g.fillRect(bx, by, bw, Math.max(1, dpr));
       g.fillStyle = `rgba(255,150,80,${(0.75 * kl).toFixed(3)})`; g.fillRect(bx, by, bw * (this.ready ? 1 : this.progress), Math.max(1, dpr));
-      g.font = `500 ${Math.round(9 * dpr)}px Inter, system-ui, sans-serif`;
+      g.font = `500 ${Math.round(9 * dpr)}px Barlow, system-ui, sans-serif`;
       if ('letterSpacing' in g) g.letterSpacing = `${(1.4 * dpr).toFixed(1)}px`;
       g.fillStyle = `rgba(236,226,210,${(0.45 * kl).toFixed(3)})`;
       g.fillText(this.ready ? TEXT.ready() : `${TEXT.loading()} %${Math.round(this.progress * 100)}`, W / 2, by + 13 * dpr);

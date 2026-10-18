@@ -5,7 +5,7 @@
 // outline and saturation held low; anything you can stand behind, shoot or
 // use is a prop with the dark outline, so the play layer always reads first.
 import { cel, fill, stroke, clip, rng, setRoot } from '../kit.js';
-import { M, tone, C } from '../style.js';
+import { M, tone, mat, C } from '../style.js';
 import { emblem } from '../enemies/syndicate.js';
 import { facadeStrip } from './city.js';
 
@@ -135,55 +135,81 @@ function ground(g) {
 }
 
 // --- props (outlined play layer) ---------------------------------------------
-const WOOD = tone('#c9935c', '#a5713f', '#7a4f29', '#3e2612');
-const CONC = tone('#b9bcc6', '#8d919d', '#666a76', '#2f323a');
+// docs §10.2: the street's things are old and used; the cells' are made by
+// hand; Vanta's are new, the same, clean.
+const WOOD = mat(tone('#b38a5e', '#8c6741', '#634629', '#2e1f11'), 'wood', 0.8);
+const CONC = mat(tone('#b7b7b0', '#8e8e87', '#676761', '#2f2f2b'), 'concrete', 0.7);
+const POLY = mat(tone('#b3c4d3', '#8499ad', '#5c7186', '#243342'), 'paint', 0.25);
+const RUST = tone('#b0663a', '#8a4a26', '#5e3118', '#2a1409');
+const EMBER = '#e2692f';
+// rust blooms and their runs
+function rust(g, pts, a = 0.75) {
+  for (const [x, y, r, run = 0] of pts) {
+    fill(g, ell(x, y, r, r * 0.7), RUST.m, a);
+    if (run) fill(g, poly([[x - r * 0.3, y], [x + r * 0.3, y], [x + r * 0.1, y + run], [x - r * 0.05, y + run]]), RUST.d, a * 0.7);
+  }
+}
+// the cells' mark sprayed on a surface: an ember, its drips
+export function korMark(g, x, y, r, a = 0.85) {
+  g.save(); g.globalAlpha = a;
+  fill(g, poly([[x - r, y], [x - r * 0.3, y - r * 0.9], [x + r * 0.6, y - r * 0.7], [x + r, y + r * 0.1], [x + r * 0.3, y + r * 0.9], [x - r * 0.7, y + r * 0.6]]), EMBER);
+  fill(g, ell(x, y, r * 0.38, r * 0.32), '#ffc07a');
+  for (const [dx, l] of [[-0.5, 1.4], [0.2, 2.0], [0.7, 1.0]]) stroke(g, `M ${x + dx * r} ${y + r * 0.6} l 0 ${l * r}`, EMBER, r * 0.12);
+  g.restore();
+}
 
+// a supply crate: rough planks, a frame, the cells' mark and a lot number stencilled on
 export function crate(g, x, w = 18, h = 16) {
   const B = rect(x, -h, x + w, 0), f = 2.2;
-  cel(g, B, WOOD, { sh: 1.4, hl: 0.6 });
+  cel(g, B, WOOD, { sh: 1.6, hl: 0.6 });
   clip(g, B, () => {
-    // the planks behind the frame, with grain
-    for (let y = -h + 3.6; y < -0.5; y += 3.6) { stroke(g, `M ${x} ${y} L ${x + w} ${y}`, WOOD.k, 0.4, 0.7); stroke(g, `M ${x} ${y + 0.5} L ${x + w} ${y + 0.5}`, WOOD.l, 0.3, 0.5); }
-    for (const [gx, gy] of [[0.3, -0.7], [0.62, -0.45], [0.45, -0.22]]) stroke(g, `M ${x + w * gx} ${h * gy} l 3.4 0.3`, WOOD.d, 0.25, 0.8);
-    // the frame boards round the edge
-    fill(g, rect(x, -h, x + w, -h + f), WOOD.m); fill(g, rect(x, -h, x + w, -h + 0.6), WOOD.l);
-    fill(g, rect(x, -f, x + w, 0), WOOD.d);
-    fill(g, rect(x, -h, x + f, 0), WOOD.m); fill(g, rect(x + w - f, -h, x + w, 0), WOOD.d);
-    // the diagonal brace
-    fill(g, poly([[x + f, -f - 1.6], [x + f + 1.6, -f], [x + w - f, -h + f + 1.6], [x + w - f - 1.6, -h + f]]), WOOD.m);
-    stroke(g, `M ${x + f + 0.8} ${-f - 0.8} L ${x + w - f - 0.8} ${-h + f + 0.8}`, WOOD.l, 0.35, 0.6);
-    // stencil
-    g.font = '700 3.4px Rajdhani'; g.fillStyle = 'rgba(40,24,12,0.7)'; g.fillText('KOR', x + w * 0.56, -f - 1.2);
+    // planks with gaps, each its own shade
+    for (let i = 0, y = -h; y < 0; y += 3.6, i++) {
+      cel(g, rect(x, y + 0.2, x + w, Math.min(0, y + 3.4)), { ...WOOD, m: i % 2 ? WOOD.m : '#916b45' }, { sh: 0.4, hl: 0.25, lw: 0.18, ao: 0.3 });
+      for (const nx of [x + f + 0.8, x + w - f - 0.8]) fill(g, ell(nx, y + 1.8, 0.22, 0.22), '#3a3a3a');
+    }
+    // the frame boards round the edge and the brace
+    cel(g, rect(x, -h, x + w, -h + f), WOOD, { sh: 0.4, hl: 0.3, lw: 0.2 });
+    cel(g, rect(x, -f, x + w, 0), WOOD, { sh: 0.4, hl: 0.2, lw: 0.2 });
+    cel(g, rect(x, -h, x + f, 0), WOOD, { sh: 0.4, hl: 0.3, lw: 0.2 });
+    cel(g, rect(x + w - f, -h, x + w, 0), WOOD, { sh: 0.4, hl: 0.2, lw: 0.2 });
+    cel(g, poly([[x + f, -f - 1.6], [x + f + 1.6, -f], [x + w - f, -h + f + 1.6], [x + w - f - 1.6, -h + f]]), WOOD, { sh: 0.4, hl: 0.3, lw: 0.2 });
+    // stencils: the lot, and the cells' ember sprayed over a Vanta seal
+    g.font = '700 2.2px sans-serif'; g.fillStyle = 'rgba(30,20,12,0.65)'; g.fillText('LOT 07', x + f + 1.2, -h + f + 3.0);
+    emblem(g, x + w * 0.62, -h * 0.5, 2.4, 'rgba(236,240,244,0.55)');
+    korMark(g, x + w * 0.66, -h * 0.46, 2.2, 0.8);
+    // grime low down, a damp line
+    g.save(); g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, -h * 0.4, 0, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(50,40,30,0.55)'); g.fillStyle = gr; g.fillRect(x, -h, w, h); g.restore();
   });
   // steel corners with a rivet each
   for (const [cx, cy, sx, sy] of [[x, -h, 1, 1], [x + w, -h, -1, 1], [x, 0, 1, -1], [x + w, 0, -1, -1]]) {
     const L = poly([[cx, cy], [cx + 3.4 * sx, cy], [cx + 3.4 * sx, cy + 1.1 * sy], [cx + 1.1 * sx, cy + 1.1 * sy], [cx + 1.1 * sx, cy + 3.4 * sy], [cx, cy + 3.4 * sy]]);
-    cel(g, L, M.gunmetal, { sh: 0.3, hl: 0.2, lw: 0.25 });
+    cel(g, L, mat(M.gunmetal, 'steel', 0.5), { sh: 0.3, hl: 0.2, lw: 0.25 });
     fill(g, ell(cx + 0.7 * sx, cy + 0.7 * sy, 0.3, 0.3), M.gunmetal.l);
+    rust(g, [[cx + 1.6 * sx, cy + 1.6 * sy, 0.5, 0.8]], 0.5);
   }
-  stroke(g, B, WOOD.k, 0.4);
 }
 
+// a Vanta jersey barrier: blue-grey polymer, filled with water, the ring-and-bar
+// mark and the number in white, a red LED strip along the top
 export function barrier(g, x, w = 34) {
   const B = poly([[x, 0], [x + 4, -6], [x + 6, -16], [x + w - 6, -16], [x + w - 4, -6], [x + w, 0]]);
-  cel(g, B, CONC, { sh: 1.6, hl: 0.7 });
+  cel(g, B, POLY, { sh: 1.8, hl: 0.7 });
   clip(g, B, () => {
-    // the sloped foot in shade, the top face lit
-    fill(g, rect(x, -6, x + w, 0), CONC.d, 0.55);
-    fill(g, rect(x, -16, x + w, -14.8), CONC.l, 0.7);
-    fill(g, rect(x, -12, x + w, -8.4), C.gold);
-    for (let k = x - 6; k < x + w; k += 5) fill(g, poly([[k, -8.4], [k + 2.5, -8.4], [k + 6.1, -12], [k + 3.6, -12]]), '#1a1c20');
-    // a chipped corner, cracks, scuffs, an amber reflector
-    fill(g, poly([[x + w - 6, -16], [x + w - 9.5, -16], [x + w - 6.4, -13.2]]), CONC.k, 0.8);
-    stroke(g, `M ${x + 9} -16 l 1.2 3 l -0.8 2.4`, CONC.k, 0.25, 0.8);
-    stroke(g, `M ${x + w * 0.66} -6 l 1.4 2.6 l 1.8 0.8`, CONC.k, 0.25, 0.7);
-    for (const sx of [x + 7, x + 15, x + 22]) fill(g, rect(sx, -4.4, sx + 3, -3.8), CONC.k, 0.35);
-    fill(g, rect(x + w / 2 - 1.4, -6, x + w / 2 + 1.4, -4.4), '#ffb030');
-    g.font = '700 2.8px Rajdhani'; g.fillStyle = 'rgba(47,50,58,0.7)'; g.fillText('B-114', x + 8, -13.4);
+    // the moulded foot, its fork-lift slots, the top face lit; the fill cap
+    fill(g, rect(x, -6, x + w, 0), POLY.d, 0.5);
+    for (const sx of [x + 7, x + w - 13]) cel(g, rect(sx, -3.6, sx + 6, -1.0), mat(tone('#2a3644', '#1c2530', '#121820', '#06080b'), 'rubber', 0.4), { sh: 0.3, hl: 0.15, lw: 0.2 });
+    stroke(g, `M ${x + 6.4} -15.2 L ${x + w - 6.4} -15.2`, '#ffffff', 0.3, 0.5);
+    emblem(g, x + w * 0.5, -10.6, 2.6, 'rgba(244,246,248,0.9)');
+    g.font = '700 2.0px sans-serif'; g.fillStyle = 'rgba(244,246,248,0.8)'; g.fillText('V-114', x + w - 13, -7.2);
+    // scuffs from boots and a tyre, the dust low down
+    for (const [sx, sy] of [[x + 8, -5.0], [x + 20, -4.2], [x + 26, -12.0]]) stroke(g, `M ${sx} ${sy} l 3 0.5`, POLY.k, 0.25, 0.4);
+    g.save(); g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, -8, 0, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(60,64,70,0.45)'); g.fillStyle = gr; g.fillRect(x, -8, w, 8); g.restore();
   });
-  stroke(g, B, CONC.k, 0.4);
-  // rebar lifting loops on top
-  for (const lx of [x + 10, x + w - 10]) stroke(g, `M ${lx - 1.6} -16 C ${lx - 1.6} -18.2 ${lx + 1.6} -18.2 ${lx + 1.6} -16`, '#6a4a3a', 0.55);
+  // the LED strip and its housing
+  fill(g, rect(x + 6.6, -17.2, x + w - 6.6, -16), '#11161c');
+  g.save(); g.shadowColor = '#ff3347'; g.shadowBlur = 6; fill(g, rect(x + 7.2, -16.95, x + w - 7.2, -16.35), '#ff3347'); g.restore();
+  fill(g, rect(x + 7.4, -16.85, x + w - 7.4, -16.65), '#ffb0b8');
 }
 
 export function lampPost(g, x, h = 82) {
@@ -213,38 +239,45 @@ function lampLight(g, x, h = 82) {
   g.restore();
 }
 
+// a skip that has stood on this street for years: green paint gone to rust
 export function dumpster(g, x) {
-  const D = tone('#5f8a6a', '#466e52', '#30503b', '#14241a');
+  const D = mat(tone('#5f7d62', '#45604a', '#2f4434', '#132018'), 'paint', 0.7);
   const B = poly([[x, -20], [x + 40, -20], [x + 38, -2], [x + 2, -2]]);
-  cel(g, B, D, { sh: 1.6, hl: 0.6 });
+  cel(g, B, D, { sh: 1.8, hl: 0.6 });
   clip(g, B, () => {
     for (let k = x + 6; k < x + 38; k += 8) { stroke(g, `M ${k} -18 L ${k} -4`, D.d, 0.8); stroke(g, `M ${k + 0.8} -18 L ${k + 0.8} -4`, D.l, 0.3, 0.5); }
-    fill(g, rect(x + 26, -16, x + 36, -11), '#d9dee5');
-    g.font = '700 2.4px Rajdhani'; g.fillStyle = '#30503b'; g.fillText('ATIK', x + 27, -12.6);
-    fill(g, ell(x + 14, -9, 3, 2), D.d, 0.6);
-    fill(g, rect(x, -7, x + 40, -2), '#000', 0.15);
+    rust(g, [[x + 4, -19.4, 1.4, 4], [x + 15, -19.6, 0.9, 6], [x + 30, -19.4, 1.2, 3], [x + 37, -6, 1.6], [x + 10, -4, 2.0], [x + 22, -12, 0.8, 2]]);
+    // the council's plate, half the letters gone; a poster torn off; the cells' mark
+    fill(g, rect(x + 26, -16, x + 35, -12), '#c9c4b6', 0.9);
+    g.font = '700 2.2px sans-serif'; g.fillStyle = '#3c4a3e'; g.fillText('AT K', x + 27, -13.2);
+    fill(g, poly([[x + 6, -15], [x + 12, -15.6], [x + 11.6, -10], [x + 8, -11.4], [x + 6.2, -9.8]]), '#d8cfb8', 0.6);
+    korMark(g, x + 18, -9.6, 2.4, 0.75);
+    fill(g, rect(x, -7, x + 40, -2), '#000', 0.18);
   });
   // the lid, a little open, its hinge and the side handles
   cel(g, poly([[x - 1, -21.6], [x + 41, -24.2], [x + 41, -22.2], [x - 1, -19.6]]), D, { sh: 0.4, hl: 0.25 });
   fill(g, rect(x - 1.6, -21.4, x + 1, -19.4), D.k);
-  for (const hx of [x + 1.2, x + 36.6]) cel(g, rect(hx, -16, hx + 2.2, -14.4), M.gunmetal, { sh: 0.2, hl: 0.2, lw: 0.25 });
-  for (const wx of [x + 6, x + 34]) cel(g, ell(wx, -1.6, 1.8, 1.8), M.rubber, { sh: 0.4, hl: 0.2 });
+  for (const hx of [x + 1.2, x + 36.6]) cel(g, rect(hx, -16, hx + 2.2, -14.4), mat(M.gunmetal, 'steel', 0.5), { sh: 0.2, hl: 0.2, lw: 0.25 });
+  for (const wx of [x + 6, x + 34]) cel(g, ell(wx, -1.6, 1.8, 1.8), mat(M.rubber, 'rubber', 0.5), { sh: 0.4, hl: 0.2 });
 }
 
+// an oil drum with holes punched round its foot, a fire of scrap wood in it
 export function burnBarrel(g, x) {
-  const T = tone('#9a6450', '#6b3f30', '#4a2a20', '#22130d');
+  const T = mat(tone('#8a5a46', '#63392b', '#44271d', '#20120c'), 'paint', 0.8);
   const B = poly([[x + 0.4, -14], [x + 9.6, -14], [x + 10, -12.6], [x + 10, -1], [x + 9.4, 0], [x + 0.6, 0], [x, -1], [x, -12.6]]);
-  cel(g, B, T, { sh: 1.2, hl: 0.5 });
+  cel(g, B, T, { sh: 1.3, hl: 0.5 });
   clip(g, B, () => {
-    // ribs, rust, a dent, and the air holes punched near the bottom, glowing
     for (const y of [-10, -4.6]) { fill(g, rect(x, y, x + 10, y + 1), T.d); fill(g, rect(x, y, x + 10, y + 0.35), T.l, 0.6); }
-    fill(g, poly([[x + 1, -9], [x + 4, -8.4], [x + 3, -6], [x + 1.2, -6.4]]), '#8a4a28', 0.6);
+    rust(g, [[x + 2.4, -8.6, 1.4, 2], [x + 7.6, -12.4, 0.8, 1.6], [x + 5, -3.4, 1.2]]);
     fill(g, ell(x + 7.4, -7.2, 1.6, 1.2), T.d, 0.6);
+    // the heat has scorched it black at the top
+    g.save(); g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, -14, 0, -8); gr.addColorStop(0, 'rgba(20,12,8,0.75)'); gr.addColorStop(1, 'rgba(20,12,8,0)'); g.fillStyle = gr; g.fillRect(x, -14, 10, 6); g.restore();
     for (const hx of [x + 2.2, x + 5, x + 7.8]) { fill(g, ell(hx, -2.4, 0.7, 0.55), '#ff8a3a'); fill(g, ell(hx, -2.2, 0.35, 0.3), '#ffd56a'); }
   });
-  // the lip at the top
   cel(g, rect(x - 0.4, -14.6, x + 10.4, -13.4), T, { sh: 0.3, hl: 0.3, lw: 0.3 });
   fill(g, rect(x + 0.6, -14.4, x + 9.4, -13.8), '#2a1008');
+  // the ends of the wood sticking out
+  for (const [dx, a] of [[2.6, -0.5], [6.4, 0.4]]) { g.save(); g.translate(x + dx, -14.2); g.rotate(a); cel(g, rect(-0.5, -2.4, 0.5, 0), WOOD, { sh: 0.2, hl: 0.15, lw: 0.16 }); fill(g, rect(-0.5, -2.4, 0.5, -1.6), '#1a0f0a'); g.restore(); }
 }
 
 // Flames and glow sit in the light pass so they never pick up the outline.
@@ -259,11 +292,17 @@ function fireLight(g, x) {
   g.restore();
 }
 
+// a traffic cone, faded by years of sun, its reflective collar dirty
 export function cone(g, x) {
-  const T = tone('#ffb070', '#ff7a35', '#c4441a', '#5e2410');
-  cel(g, poly([[x - 4, 0], [x - 1, -10], [x + 1, -10], [x + 4, 0]]), T, { sh: 0.8, hl: 0.4 });
-  fill(g, poly([[x - 2.6, -4.6], [x + 2.6, -4.6], [x + 2.1, -6.4], [x - 2.1, -6.4]]), '#f4f1ea');
-  cel(g, rect(x - 5, -1, x + 5, 0), M.black, { sh: 0.3, hl: 0.1 });
+  const T = mat(tone('#f0a26d', '#d9733c', '#a8501f', '#4e220d'), 'rubber', 0.5);
+  const B = poly([[x - 4, 0], [x - 1, -10], [x + 1, -10], [x + 4, 0]]);
+  cel(g, B, T, { sh: 0.9, hl: 0.4 });
+  clip(g, B, () => {
+    fill(g, poly([[x - 2.6, -4.6], [x + 2.6, -4.6], [x + 2.1, -6.4], [x - 2.1, -6.4]]), '#dcd8cc');
+    g.save(); g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, -6, 0, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(70,50,30,0.5)'); g.fillStyle = gr; g.fillRect(x - 5, -6, 10, 6); g.restore();
+    stroke(g, `M ${x - 1.4} -7.6 l 1.2 0.4`, T.k, 0.2, 0.6);
+  });
+  cel(g, rect(x - 5, -1, x + 5, 0), mat(M.black, 'rubber', 0.5), { sh: 0.3, hl: 0.1 });
 }
 
 export const STREET = { sky, farCity, midIndustry, facades: facadeStrip, ground, lampLight, fireLight };

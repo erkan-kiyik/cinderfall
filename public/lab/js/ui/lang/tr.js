@@ -21,6 +21,7 @@ export default {
   'story.a1.2': 'Satamazlar. Daha bizim.',
   'story.a1.cap': 'Perde 1 sonu',
   'story.tap': 'Başlamak için dokun',
+  'camp.stamp': 'GİZLİ', 'prof.card': 'Kor Hattı · Üye kartı', 'ops.file': 'Dosya',
   'camp.scene': 'Sahne',
   'set.prologue': 'Önsözü izle',
   'set.prologueHint': 'Açılış sahnesini baştan oynatır.',
@@ -36,7 +37,7 @@ export default {
   'rar.common': 'Sıradan', 'rar.rare': 'Nadir', 'rar.epic': 'Epik', 'rar.legendary': 'Efsanevi', 'rar.mythic': 'Mitik', 'rar.ultra': 'Ultra',
   'diff.normal': 'Normal', 'diff.hard': 'Zor',
 
-  'lobby.operator': 'Operatör', 'lobby.play': 'OYNA', 'lobby.campaign': 'Kampanya · Perde {act} · Kor Hattı',
+  'lobby.operator': 'Operatör', 'lobby.play': 'GÖREVE ÇIK', 'lobby.campaign': 'Kampanya · Perde {act} · Kor Hattı',
   'lobby.next': 'Görev {n} — {name}', 'lobby.record': 'rekor', 'lobby.boss5': 'Her 5 bölümde boss',
   'lobby.crow': 'HAWK’ın tezgâhı', 'lobby.crowOpen': '{n} mal', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
 

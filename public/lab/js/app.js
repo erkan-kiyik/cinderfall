@@ -6,7 +6,7 @@
 // scaled as a whole with CSS zoom so they keep their composition on every
 // screen size.
 import { Router } from './ui/router.js';
-import { configureKit, toast, ui as uiSound } from './ui/kit.js';
+import { configureKit, toast, ui as uiSound, grain } from './ui/kit.js';
 import { setLang, getLang, t } from './ui/i18n.js';
 import * as SCREENS from './ui/screens/index.js';
 import { hudLayout } from './ui/screens/hudedit.js';
@@ -27,6 +27,7 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export class App {
   constructor(eng, { save, version, controls, perf, dyn }) {
     this.e = eng; this.save = save; this.version = version; this.controls = controls; this.perf = perf; this.dyn = dyn;
+    grain();
     // the economy: the hub's coin counter, the finishes the guns are drawn with, today's tasks
     refreshCur.save = save; syncTints(save.d); ensureDaily(save);
     bindKeyboard(controls, eng.renderer.canvas);

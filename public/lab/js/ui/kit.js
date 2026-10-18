@@ -10,6 +10,33 @@ let ctx = { haptics: true, reduce: false, sfx: null };
 export function configureKit(o) { ctx = { ...ctx, ...o }; }
 export const reduced = () => ctx.reduce || (matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
+// The surfaces' materials (docs §10.3), painted once at start into CSS
+// variables: --grain (concrete and soot speckle over any colour), --fibre
+// (kraft paper's fibres) and --citymap (the map drawn on the campaign sheet).
+export function grain() {
+  const R = document.documentElement.style;
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const mk = (n, fn) => { const c = document.createElement('canvas'); c.width = c.height = n; fn(c.getContext('2d'), n); return `url(${c.toDataURL('image/png')})`; };
+  R.setProperty('--grain', mk(128, (g, n) => {
+    for (let i = 0; i < 1400; i++) { const l = rnd() < 0.5; g.fillStyle = l ? `rgba(255,240,220,${0.03 + rnd() * 0.05})` : `rgba(0,0,0,${0.06 + rnd() * 0.1})`; g.fillRect(rnd() * n, rnd() * n, 1 + (rnd() < 0.1), 1); }
+    for (let i = 0; i < 14; i++) { const x = rnd() * n, y = rnd() * n, r = 4 + rnd() * 14, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(0,0,0,${0.04 + rnd() * 0.05})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+  }));
+  R.setProperty('--fibre', mk(160, (g, n) => {
+    for (let i = 0; i < 700; i++) { const x = rnd() * n, y = rnd() * n, a = rnd() * Math.PI, l = 2 + rnd() * 6; g.strokeStyle = rnd() < 0.5 ? `rgba(255,248,230,${0.12 + rnd() * 0.14})` : `rgba(90,60,30,${0.08 + rnd() * 0.12})`; g.lineWidth = 0.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
+    for (let i = 0; i < 10; i++) { const x = rnd() * n, y = rnd() * n, r = 8 + rnd() * 26, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(120,80,40,${0.05 + rnd() * 0.06})`); gr.addColorStop(1, 'rgba(120,80,40,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+  }));
+  // the city in ink: the river, the rail line, the avenues, blocks; the harbour's basins on the right
+  const ink = 'rgba(58,44,30,', P = [];
+  P.push(`<path d="M-2 70 C 14 64 22 76 38 70 S 62 58 74 66 S 92 80 104 74" fill="none" stroke="rgba(70,96,110,0.32)" stroke-width="5"/>`);
+  P.push(`<path d="M-2 70 C 14 64 22 76 38 70 S 62 58 74 66 S 92 80 104 74" fill="none" stroke="${ink}0.45)" stroke-width="0.3"/>`);
+  P.push(`<path d="M-2 30 L 104 26" fill="none" stroke="${ink}0.5)" stroke-width="0.6" stroke-dasharray="1.6 1"/>`);
+  for (const [d, w] of [['M 0 48 L 100 44', 1.1], ['M 22 0 L 26 100', 1.0], ['M 58 0 L 54 100', 1.0], ['M 0 14 L 100 18', 0.6], ['M 0 88 L 100 92', 0.6], ['M 8 0 L 12 100', 0.4], ['M 40 0 L 40 100', 0.4], ['M 74 0 L 70 100', 0.4], ['M 88 0 L 86 60', 0.4], ['M 0 58 L 60 54', 0.35], ['M 30 36 L 100 34', 0.35]]) P.push(`<path d="${d}" fill="none" stroke="${ink}0.38)" stroke-width="${w}"/>`);
+  for (let i = 0; i < 46; i++) { const x = rnd() * 96, y = rnd() * 96, w = 2 + rnd() * 5, h = 2 + rnd() * 4; P.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="none" stroke="${ink}0.18)" stroke-width="0.25"/>`); }
+  for (const [x, y] of [[84, 70], [92, 76], [88, 84]]) P.push(`<rect x="${x}" y="${y}" width="7" height="3" fill="rgba(70,96,110,0.25)" stroke="${ink}0.35)" stroke-width="0.25"/>`);
+  P.push(`<circle cx="18" cy="40" r="4" fill="none" stroke="${ink}0.3)" stroke-width="0.3"/><path d="M 14 40 h 8 M 18 36 v 8" stroke="${ink}0.3)" stroke-width="0.2"/>`);
+  R.setProperty('--citymap', `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'>${P.join('')}</svg>`)}")`);
+}
+
 // h('div.card.cut', { onclick, style }, child, 'text', [more])
 export function h(sel, attrs, ...kids) {
   const [tag, ...cls] = sel.split('.');
@@ -77,7 +104,8 @@ export const ICONS = {
   armor: P('M5 4h4l3 2 3-2h4v8.5c0 4-3 7-7 8.5-4-1.5-7-4.5-7-8.5Z'),
   skull: P('M12 2.5c5 0 8.5 3.4 8.5 8 0 2.6-1.2 4.4-3 5.4V20h-3v-2h-1.4v2h-2.2v-2H9.5v2h-3v-4.1c-1.8-1-3-2.8-3-5.4 0-4.6 3.5-8 8.5-8Zm-3.5 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'),
   clock: S('M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17ZM12 7.5V12l3.2 2', 2.2),
-  coin: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 17.4 5.75v8.5L10 18.5 2.6 14.25v-8.5Z" fill="#ffc93c"/><path d="M10 4.6 14.7 7.3v5.4L10 15.4 5.3 12.7V7.3Z" fill="#c99512"/><circle cx="10" cy="10" r="2.3" fill="#1a1c20"/></svg>',
+  // PARÇA: salvage, a steel nut
+  coin: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.2 17.6 5.6v8.8L10 18.8 2.4 14.4V5.6Z" fill="#5e5a54"/><path d="M10 1.2 17.6 5.6v8.8L10 18.8 2.4 14.4V5.6Z" fill="none" stroke="#c9c2b6" stroke-width="1.1"/><path d="M10 3.3 15.8 6.7v6.6L10 16.7 4.2 13.3V6.7Z" fill="#9b958b"/><circle cx="10" cy="10" r="3.6" fill="#1a1612"/><path d="M6.6 9.2a3.6 3.6 0 0 1 5.2-2.4" fill="none" stroke="#e2692f" stroke-width="1"/><path d="M4.6 6.4 10 3.3" stroke="#efe8dc" stroke-width="0.8" fill="none"/></svg>',
 };
 
 // --- feel ----------------------------------------------------------------------------------

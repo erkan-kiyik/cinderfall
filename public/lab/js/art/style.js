@@ -9,11 +9,16 @@
 export const LIGHT = { x: 0.55, y: -0.84 };
 
 // Outer outline: colour and thickness in world units (character = 64 tall).
-export const INK = '#0f1218';
-export const OUTLINE = 0.85;
+// The painted look (docs §10.1) keeps it thin and warm, not a black ink line.
+export const INK = '#16110e';
+export const OUTLINE = 0.55;
+// Inner line width factor for cel() lines.
+export const LINE = 0.72;
 
-// tone(light, mid, shade, line)
+// tone(light, mid, shade, line); mat(tone, texture, strength) gives it a
+// material texture (art/tex.js) that cel() lays over the paint.
 export const tone = (l, m, d, k) => ({ l, m, d, k });
+export const mat = (t, tex, ta = 0.55) => ({ ...t, tex, ta });
 
 // Neutral slate ramp, n0 (darkest) … n8 (warm white).
 export const N = ['#0d1015', '#151a21', '#1e252e', '#2a323d', '#3c4654', '#5d6878', '#939dab', '#d9dee5', '#f4f1ea'];

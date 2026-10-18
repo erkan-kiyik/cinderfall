@@ -33,9 +33,9 @@ export const profile = {
       if (tab === 'summary') {
         const nameBtn = press(h('button.btn.ghost.sm.cut', { type: 'button', onclick: rename }, t('prof.rename')));
         body.replaceChildren(
-          h('div.card.cut.wide-row', { style: { gap: '14px' } },
-            h('div', { style: { width: '64px', height: '64px', background: 'var(--n2)' } }, avatar(d.roster.op, 64)),
-            h('div', h('div.eyebrow', t('prof.callsign')), h('div.h1', { style: { fontSize: '30px' } }, p.name), h('div.eyebrow.accent', t('hub.level', { n: p.level }), ' · ', `${num(p.xp)} / ${num(xpFor(p.level))} XP`)),
+          h('div.card.paper.unioncard.wide-row', { style: { gap: '14px' } },
+            h('div.photo', avatar(d.roster.op, 64)),
+            h('div', h('div.eyebrow.accent', t('prof.card')), h('div.eyebrow', t('prof.callsign')), h('div.h1', { style: { fontSize: '30px' } }, p.name), h('div.eyebrow.accent', t('hub.level', { n: p.level }), ' · ', `${num(p.xp)} / ${num(xpFor(p.level))} XP`)),
             h('div.tag', nameBtn)),
           h('div.kv', { style: { marginTop: '10px' } }, [
             [S.missions, t('prof.missions')], [S.kills, t('prof.kills')], [`%${acc}`, t('prof.acc')], [S.heads, t('prof.heads')],
