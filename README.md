@@ -21,6 +21,11 @@ The game itself is a self-contained web build (`public/game`) that the
 Capacitor shell in `mobile/` packages into the native apps — it is not
 published as a browser game.
 
+The official website lives in `website/` and is published to GitHub Pages
+together with the privacy notice and terms — see
+[`website/README.md`](website/README.md). Build it with
+`node scripts/build-website.mjs`.
+
 ---
 
 # Vision
