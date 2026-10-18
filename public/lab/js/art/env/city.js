@@ -1451,6 +1451,107 @@ function valFence(g) {
   }
 }
 
+// --- the port side of the gate (mission 1) -------------------------------------------------
+// Docs §10.8: outside the gate the road runs along the port: warehouses,
+// the old customs house, containers stacked three high; at the gate Vanta's
+// wall of containers shuts the city.
+
+// a container seen from the side, flat: ribs, rails, corner castings, the
+// door end, an owner code, rust
+function boxSide(g, x0, y0, x1, y1, c, code = '', seed = 1, doorRight = true) {
+  const B = rect(x0, y0, x1, y1), r = rng(seed), h = y1 - y0;
+  fill(g, B, c);
+  clip(g, B, () => {
+    for (let x = x0 + 2; x < x1 - 1; x += 2.4) { fill(g, rect(x, y0 + 1.6, x + 0.9, y1 - 1.6), '#000', 0.22); fill(g, rect(x + 0.9, y0 + 1.6, x + 1.3, y1 - 1.6), '#fff', 0.08); }
+    fill(g, rect(x0, y0, x1, y0 + 1.6), '#000', 0.25); fill(g, rect(x0, y1 - 1.6, x1, y1), '#000', 0.3);
+    const dx = doorRight ? x1 - 14 : x0;
+    fill(g, rect(dx, y0 + 1.6, dx + 14, y1 - 1.6), c);
+    fill(g, rect(dx + 6.8, y0 + 1.6, dx + 7.2, y1 - 1.6), '#000', 0.4);
+    for (const lx of [dx + 2.6, dx + 4.8, dx + 9.2, dx + 11.4]) fill(g, rect(lx, y0 + 2, lx + 0.4, y1 - 2), '#000', 0.35);
+    for (const [cx, cy] of [[x0, y0], [x1 - 2, y0], [x0, y1 - 2], [x1 - 2, y1 - 2]]) fill(g, rect(cx, cy, cx + 2, cy + 2), '#1a1a1a', 0.7);
+    for (let i = 0; i < 4; i++) { const x = x0 + 4 + r() * (x1 - x0 - 20); fill(g, rect(x, y0 + 1.6, x + 0.8, y0 + 3 + r() * h * 0.5), '#5a3018', 0.35); }
+    if (code) letters(g, code, doorRight ? x0 + 4 : x0 + 18, y0 + 5.6, 3, '#e8e4dc', { kind: 'print', jit: 0, a: 0.65 });
+    texture(g, 'paint', 0.4, 2.4);
+  });
+}
+
+// a long, low bonded warehouse: numbered loading doors on a dock, the port
+// authority's name faded on the band, Vanta's seizure plate on one door
+function antrepo(g) {
+  const w = 180, h = 78;
+  fill(g, poly([[0, -h], [w / 2, -h - 12], [w, -h], [w, 0], [0, 0]]), '#4a4842');
+  clip(g, poly([[0, -h], [w / 2, -h - 12], [w, -h], [w, 0], [0, 0]]), () => { for (let y = -h - 12; y < 0; y += 10) fill(g, rect(0, y, w, y + 0.4), '#2e2c28', 0.5); texture(g, 'concrete', 0.55, 3); });
+  stroke(g, `M -1 ${-h} L ${w / 2} ${-h - 12} L ${w + 1} ${-h}`, '#2a2622', 1.6);
+  fill(g, rect(6, -h + 4, w - 6, -h + 14), '#56534c');
+  letters(g, 'LİMAN İŞLETMESİ', w / 2, -h + 12, 7, P.cream, { kind: 'sten', align: 'center', jit: 0, track: 0.14, a: 0.4 });
+  // the dock and the doors
+  fill(g, rect(0, -10, w, 0), '#3c3a36'); fill(g, rect(0, -10, w, -9), '#5e5a52');
+  for (let x = 6; x < w; x += 14) fill(g, rect(x, -9, x + 1, 0), '#000', 0.3);
+  for (const [k, x] of [[1, 10], [2, 66], [3, 122]]) {
+    fill(g, rect(x - 1.4, -56, x + 49.4, -10), P.trim);
+    shutter(g, x, x + 48, -54, -10);
+    letters(g, String(k), x + 6, -46, 6, P.cream, { kind: 'sten', align: 'center', jit: 0, a: 0.5 });
+    fill(g, rect(x + 20, -66.6, x + 28, -64.6), '#2a2622'); fill(g, rect(x + 21, -64.6, x + 27, -63.8), k === 2 ? '#2a2622' : '#ffc27a');
+  }
+  letters(g, 'ANTREPO 3', 146, -30, 5, P.cream, { kind: 'sten', align: 'center', jit: 0, a: 0.5 });
+  fill(g, rect(72, -46, 108, -36), '#e4e3df'); fill(g, rect(72, -46, 108, -43.6), '#a8232d');
+  emblem(g, 76, -39.4, 2.2, '#1d2129');
+  letters(g, 'EL KONULMUŞTUR', 91, -38.2, 3.4, '#1d2129', { kind: 'print', align: 'center', jit: 0 });
+  for (const x of [3, w - 3]) pipe(g, x, -h, -10);
+  spray(g, 'KOR', 50, -16, 5, C.ember, { rot: -0.06, seed: 171 });
+  weather(g, 0, w, -h, 171, 0.8);
+}
+
+// the old customs house: stone, a hipped roof, the name carved, shut
+function gumruk(g) {
+  const w = 140, h = 92;
+  stoneWall(g, 0, w, -h, 181, '#524d44');
+  fill(g, poly([[-3, -h], [20, -h - 22], [w - 20, -h - 22], [w + 3, -h]]), '#3a3632');
+  fill(g, poly([[w / 2, -h - 22], [w - 20, -h - 22], [w + 3, -h], [w / 2 + 6, -h]]), '#000', 0.15);
+  cornice(g, 0, w, -h - 3, 3);
+  cornice(g, 0, w, -46, 2);
+  fill(g, rect(30, -h + 2, 110, -h + 14), '#5c574c');
+  letters(g, 'GÜMRÜK', 70.4, -h + 12.4, 9, '#000', { align: 'center', jit: 0, track: 0.3, a: 0.45 });
+  letters(g, 'GÜMRÜK', 70, -h + 12, 9, '#5c574c', { align: 'center', jit: 0, track: 0.3 });
+  for (const [x, k] of [[12, 'boarded'], [44, 'dark'], [82, 'dark'], [114, 'boarded']]) win(g, x, -76, 14, 22, k);
+  for (const [x, k] of [[12, 'dark'], [114, 'broken']]) win(g, x, -36, 14, 20, k);
+  fill(g, `M 56 0 L 56 -34 A 14 14 0 0 1 84 -34 L 84 0 Z`, '#6a645a');
+  fill(g, `M 59 0 L 59 -34 A 11 11 0 0 1 81 -34 L 81 0 Z`, '#2a1e16');
+  for (let t = 0; t <= 1; t += 0.1) { const x = 62 + 16 * t, y = -14 + Math.sin(t * Math.PI) * 2.4; stroke(g, ell(x, y, 0.5, 0.32), '#8a8780', 0.2); }
+  notice(g, 63, -30, 14, 11, 'vanta', 'KAPATILMIŞTIR', 183);
+  stroke(g, `M 70 ${-h - 22} L 70 ${-h - 40}`, '#6a6a66', 0.6);
+  vposter(g, 96, -30, 10, 14, 185); korSpray(g, 101, -23, 1);
+  weather(g, 0, w, -h, 181, 1);
+}
+
+// containers stacked three high in the yard behind the fence
+const BOXC = ['#3f6a66', '#7a3e2e', '#3e5068', '#6a6a66', '#8a6a2e', '#4a5a3a'];
+function stack(g) {
+  const w = 120, rows = 3, H = 30;
+  let k = 0;
+  for (let j = 0; j < rows; j++) for (const [x0, x1] of j === 2 ? [[4, 62]] : [[0, 58], [60, 118]]) {
+    boxSide(g, x0, -(j + 1) * H, x1, -j * H, BOXC[(k * 7 + j * 3) % BOXC.length], k % 2 ? 'VNTU 48' + (2113 + k) : 'MSKU 70' + (4410 + k), 191 + k, k % 2 === 0);
+    k++;
+  }
+  fill(g, rect(-3, -92, w + 3, 0.5), '#1a2030', 0.12);
+  weather(g, 0, w, -90, 191, 0.4);
+}
+
+// Vanta's wall of containers that shuts the city, painted over grey, the zone
+// stencilled on, wire and a light on top
+function wallC(g) {
+  const w = 160, H = 32;
+  for (let j = 0; j < 3; j++) for (const [x0, x1] of [[0, 78], [80, 158]]) boxSide(g, x0 + (j % 2) * 2, -(j + 1) * H, x1 + (j % 2) * 2, -j * H, '#5a616c', '', 201 + j * 2 + x0, x0 === 0);
+  fill(g, rect(0, -36, w, -34), '#b3232e');
+  letters(g, 'KONTROLLÜ BÖLGE', 40, -46, 5.4, '#e8ecf0', { kind: 'sten', align: 'center', jit: 0, track: 0.1, a: 0.8 });
+  emblem(g, 120, -50, 7, '#e8ecf0');
+  razor(g, 0, w, -98);
+  fill(g, rect(79, -112, 81, -96), '#2a2f36'); fill(g, poly([[74, -114], [86, -114], [84, -110], [76, -110]]), '#3a3f47'); fill(g, rect(76, -110.4, 84, -109.6), '#f2f6ff');
+  g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[76, -109.6], [84, -109.6], [104, -20], [56, -20]]), '#dfe9ff', 0.035); g.restore();
+  vposter(g, 100, -28, 10, 14, 205);
+  weather(g, 0, w, -96, 207, 0.4);
+}
+
 // --- old exports kept for the set pieces ----------------------------------------------
 // a neon tube along a path: a coloured halo, then the pale hot core
 export function tube(g, d, c, w = 0.9) {
@@ -1516,6 +1617,14 @@ export const BUILDINGS = {
   hal: { w: 200, top: -136, paint: hal,
     lights: [[31, -28, 38, 0.55, WARM, 'bulb'], [169, -28, 38, 0.55, WARM, 'bulb']],
     glows: [[31, -30.1, 2.4, 2.4, BULB, 0.8, 'bulb'], [169, -30.1, 2.4, 2.4, BULB, 0.8, 'bulb']] },
+  antrepo: { w: 180, top: -94, paint: antrepo,
+    lights: [[34, -60, 30, 0.4, [1, 0.66, 0.36]], [146, -60, 30, 0.4, [1, 0.66, 0.36]]],
+    glows: [[34, -64.2, 4, 1.4, '#ffc27a', 0.6], [146, -64.2, 4, 1.4, '#ffc27a', 0.6]] },
+  gumruk: { w: 140, top: -118, paint: gumruk, lights: [], glows: [] },
+  stack: { w: 120, top: -94, paint: stack, lights: [], glows: [] },
+  wallC: { w: 160, top: -118, paint: wallC,
+    lights: [[80, -104, 70, 0.5, [0.9, 0.95, 1]]],
+    glows: [[80, -110, 5, 2, '#f2f6ff', 0.6]] },
   belediye: { w: 240, top: -214, paint: belediye, lights: [], glows: [] },
   valFence: { w: 160, top: -134, paint: valFence,
     lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [80, -48, 40, 0.4, [0.85, 0.92, 1]]],

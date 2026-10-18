@@ -23,7 +23,9 @@ export const CONT = {
   rust: tone('#c8664a', '#a04a33', '#723323', '#36150d'),
   navy: tone('#5d7896', '#425a76', '#2d4057', '#131d2a'),
 };
-export function container(g, x0, y0, x1, y1, t) {
+// o: { code: the owner's code stencilled on, kor: the cells' mark sprayed low }
+export function container(g, x0, y0, x1, y1, t, o = {}) {
+  const { code = 'VNTU 482113 4', kor = false } = o;
   const B = rect(x0, y0, x1, y1);
   cel(g, B, t, { sh: 2.2, hl: 0.8 });
   clip(g, B, () => {
@@ -41,7 +43,9 @@ export function container(g, x0, y0, x1, y1, t) {
     for (const [cx, cy] of [[x0, y0], [x1 - 3, y0], [x0, y1 - 3], [x1 - 3, y1 - 3]]) { fill(g, rect(cx, cy, cx + 3, cy + 3), t.k); fill(g, rect(cx + 0.9, cy + 0.9, cx + 2.1, cy + 2.1), '#0b0d10'); }
     fill(g, rect(dx - 9, y0 + 5, dx - 3, y0 + 9), '#c9ccd2', 0.8);
     for (const [x, h] of [[x0 + 9, 9], [x0 + 21, 14], [x0 + 33, 7]]) fill(g, rect(x, y0 + 2, x + 1.4, y0 + 2 + h), '#6a3a28', 0.35);
-    g.font = '700 5px Rajdhani'; g.fillStyle = 'rgba(244,241,234,0.75)'; g.fillText('KOR', x0 + 5, y1 - 5);
+    letters(g, code, x0 + 5, y0 + 13, 3.6, 'rgba(244,241,234,0.75)', { kind: 'print', jit: 0 });
+    letters(g, '45G1', x0 + 5, y0 + 17.4, 2.6, 'rgba(244,241,234,0.6)', { kind: 'print', jit: 0 });
+    if (kor) korMark(g, x0 + 12, y1 - 7, 3, 0.8);
   });
   stroke(g, B, t.k, 0.5);
 }

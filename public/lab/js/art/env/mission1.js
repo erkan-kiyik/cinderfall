@@ -14,7 +14,8 @@ import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
 import { CONT, container, catwalk, ladder, pit, duct, barricade, barricadeFx, scrapBarricade } from './course.js';
 import { emblem } from '../enemies/syndicate.js';
-import { facadeLayout, letters, lightbox, razor } from './city.js';
+import { letters, lightbox, razor } from './city.js';
+import { texture } from '../tex.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -80,7 +81,14 @@ export function booth(g, x0, w = 44, h = 58) {
   cel(g, rect(x0 - 5, -h + 42, x0, -h + 50), STEEL, { sh: 0.3, hl: 0.2, lw: 0.3 });
   stroke(g, B, SYN.k, 0.5);
   emblem(g, x0 + w * 0.36, -h + 47, 4, M.white.m);
+  // the two of them in there with the television on (its light is live), the
+  // heater's flue on the roof breathing
+  fill(g, rect(x0 + 24, -h + 23, x0 + 33, -h + 30), '#1a1c20'); fill(g, rect(x0 + 25, -h + 24, x0 + 32, -h + 28.6), '#b8d4ee');
+  fill(g, rect(x0 + 27, -h + 30, x0 + 30, -h + 31), '#1a1c20');
+  cel(g, rect(x1 - 12, -h - 14, x1 - 10, -h - 5), STEEL, { sh: 0.2, hl: 0.2, lw: 0.25 });
+  for (let k = 0; k < 4; k++) fill(g, ell(x1 - 11 + k * k * 0.6, -h - 17 - k * 3.4, 1.2 + k * 0.8, 0.9 + k * 0.5), '#c9ccd2', 0.22 - k * 0.04);
 }
+export const BOOTH_TV = [28.5, -58 + 26.3];
 
 // the gate leaf (moves up when it opens), drawn from its bottom-left corner
 export function gateLeaf(g, w, h) {
@@ -129,6 +137,122 @@ export function gateFrame(g, x0, x1, h, sign = ['KONTROL NOKTASI', 'DUR · KİML
   }
   const cx = (x0 + x1) / 2;
   fill(g, rect(cx - 0.6, -h - 32, cx + 0.6, -h - 26), '#2a2f36'); fill(g, poly([[cx - 4, -h - 34], [cx + 5, -h - 34.6], [cx + 5, -h - 30.6], [cx - 4, -h - 31]]), '#c9ced6'); fill(g, ell(cx - 3.4, -h - 32.4, 0.6, 0.6), '#14181d'); fill(g, ell(cx + 4, -h - 33.6, 0.4, 0.4), '#ff2a35');
+}
+
+// Docs §10.8: the gate itself, in Vanta's wall of containers: the steel posts
+// round the opening (x0..x1, height h), containers stacked three high either
+// side under razor wire, the lit sign across, one floodlight mast. No camera:
+// "only eyes".
+export function cityGate(g, x0, x1, h) {
+  const S = mat(tone('#9aa3ad', '#6e7781', '#4d545d', '#1a1e23'), 'steel', 0.4);
+  const BOX = mat(tone('#8a929e', '#5e6670', '#444a53', '#181b20'), 'paint', 0.5);
+  for (const [a, b] of [[x0 - 76, x0 - 6], [x1 + 6, x1 + 76]]) {
+    for (let j = 0; j < 3; j++) {
+      const y1 = -j * 32, y0 = y1 - 32, B = rect(a, y0, b, y1);
+      cel(g, B, BOX, { sh: 1.2, hl: 0.4, lw: 0.4 });
+      clip(g, B, () => {
+        for (let x = a + 2; x < b - 1; x += 2.6) { fill(g, rect(x, y0 + 1.6, x + 1, y1 - 1.6), BOX.d, 0.6); fill(g, rect(x + 1, y0 + 1.6, x + 1.4, y1 - 1.6), BOX.l, 0.3); }
+        fill(g, rect(a, y0, b, y0 + 1.6), BOX.k, 0.6); fill(g, rect(a, y1 - 1.6, b, y1), BOX.k, 0.6);
+        for (let i = 0; i < 3; i++) fill(g, rect(a + 8 + i * 21, y0 + 2, a + 8.8 + i * 21, y0 + 10 + i * 4), '#5a3018', 0.35);
+      });
+    }
+    fill(g, rect(a, -40, b, -38), '#b3232e');
+    letters(g, 'KONTROLLÜ BÖLGE', (a + b) / 2, -50, 4.2, '#e8ecf0', { kind: 'sten', align: 'center', jit: 0, a: 0.8 });
+    emblem(g, (a + b) / 2, -78, 6, '#e8ecf0');
+    razor(g, a, b, -98);
+  }
+  for (const x of [x0 - 6, x1]) {
+    const P = rect(x, -h - 14, x + 6, 0);
+    cel(g, P, S, { sh: 1.2, hl: 0.5 });
+    clip(g, P, () => { for (let y = -18; y < 0; y += 6) fill(g, poly([[x, y + 6], [x + 6, y], [x + 6, y + 3], [x + 3, y + 6]]), '#1a1c20'); fill(g, rect(x, -18, x + 6, 0), C.gold, 0.55); fill(g, rect(x + 4.6, -h - 14, x + 6, 0), '#000', 0.2); });
+  }
+  const Bm = rect(x0 - 44, -h - 26, x1 + 44, -h - 14);
+  cel(g, Bm, S, { sh: 0.8, hl: 0.4 });
+  lightbox(g, x0 - 36, -h - 24.4, x1 + 36, -h - 15.4, 'KONTROL NOKTASI');
+  fill(g, rect(x0 - 26, -h - 14, x1 + 26, -h - 9), '#a8232d');
+  letters(g, 'DUR · KİMLİK HAZIRLAYIN', (x0 + x1) / 2, -h - 10.3, 3.3, '#f4ecec', { kind: 'print', align: 'center', jit: 0, track: 0.06 });
+  // the floodlight mast on the near side, its head over the road
+  const mx = x0 - 56;
+  cel(g, rect(mx - 0.9, -h - 44, mx + 0.9, -98), S, { sh: 0.2, hl: 0.2, lw: 0.25 });
+  cel(g, poly([[mx - 6, -h - 48], [mx + 6, -h - 48], [mx + 4.6, -h - 44], [mx - 4.6, -h - 44]]), S, { sh: 0.3, hl: 0.3, lw: 0.3 });
+  fill(g, rect(mx - 4.4, -h - 44.4, mx + 4.4, -h - 43.6), '#f2f6ff');
+  cel(g, rect(x1 + 60, -h - 30, x1 + 61.2, -98), POLE3, { sh: 0.2, hl: 0.2, lw: 0.25 });
+  fill(g, poly([[x1 + 61.2, -h - 29], [x1 + 74, -h - 27.6], [x1 + 73, -h - 20], [x1 + 61.2, -h - 21]]), '#8e2330');
+  emblem(g, x1 + 67, -h - 24.6, 2.2, '#f0dede');
+}
+export const GATE_LIGHT = (x0) => [x0 - 56, -96 - 44];
+const POLE3 = tone('#c9ccd2', '#9aa0a8', '#6c727a', '#22262c');
+
+// the red-and-white boom across the road by the hut, down; the post with its
+// counterweight, the rest at the far end
+export function boom(g, x, len = 44) {
+  const S = mat(tone('#c9ccd2', '#9aa0a8', '#6c727a', '#22262c'), 'paint', 0.4);
+  cel(g, rect(x - 3, -22, x + 3, 0), S, { sh: 0.6, hl: 0.3 });
+  cel(g, rect(x - 4, -2, x + 4, 0), S, { sh: 0.3, hl: 0.2 });
+  cel(g, rect(x + 2, -21, x + 9, -16), mat(tone('#6c727a', '#4c525a', '#363b42', '#14171a'), 'steel', 0.4), { sh: 0.3, hl: 0.2, lw: 0.3 });
+  const A = rect(x - len, -20, x, -17.6);
+  cel(g, A, tone('#f4f2ee', '#dcd8d0', '#b0aaa0', '#2a2826'), { sh: 0.3, hl: 0.3, lw: 0.3 });
+  clip(g, A, () => { for (let k = x - len; k < x; k += 6) fill(g, poly([[k, -17.6], [k + 3, -17.6], [k + 5, -20], [k + 2, -20]]), '#b3232e'); });
+  fill(g, ell(x - 2, -18.8, 0.7, 0.7), '#ff2a35');
+  cel(g, poly([[x - len - 1, -17.6], [x - len + 1, -17.6], [x - len + 2.4, 0], [x - len - 2.4, 0]]), S, { sh: 0.2, hl: 0.2, lw: 0.25 });
+  fill(g, rect(x - len - 2.4, -18.6, x - len + 2.4, -17.2), S.d);
+}
+
+// the rubber-tyred gantry crane in the container yard: yellow legs and
+// tyres, the girder with the owner's name, the trolley and its cab; the deck
+// you climb to is its sill walkway (drawn by catwalk)
+export function rtg(g, x0, x1) {
+  const Y = mat(tone('#e2c062', '#c09a38', '#8a6a1e', '#2e220a'), 'paint', 0.7);
+  for (const lx of [x0 - 6, x1 + 2]) {
+    cel(g, rect(lx, -140, lx + 4, -8), Y, { sh: 0.8, hl: 0.4 });
+    for (let y = -132; y < -14; y += 14) stroke(g, `M ${lx + 4} ${y} L ${lx + (lx < x0 ? 10 : -6)} ${y + 12}`, Y.d, 0.8);
+    cel(g, rect(lx - 4, -12, lx + 8, -6), Y, { sh: 0.4, hl: 0.3 });
+    for (const wx of [lx - 1, lx + 5]) { cel(g, ell(wx, -3.4, 3.4, 3.4), mat(M.rubber, 'rubber', 0.5), { sh: 0.5, hl: 0.2 }); fill(g, ell(wx, -3.4, 1.4, 1.4), '#4a4e54'); }
+  }
+  const GB = rect(x0 - 12, -148, x1 + 12, -138);
+  cel(g, GB, Y, { sh: 0.8, hl: 0.4 });
+  clip(g, GB, () => { for (let x = x0 - 10; x < x1 + 12; x += 8) stroke(g, `M ${x} -147 L ${x + 4} -139 L ${x + 8} -147`, Y.d, 0.5); });
+  letters(g, 'VNTU · LİMAN', (x0 + x1) / 2, -140.6, 5, '#2a2010', { kind: 'sten', align: 'center', jit: 0, a: 0.8 });
+  const tx = x0 + (x1 - x0) * 0.62;
+  cel(g, rect(tx - 10, -138, tx + 10, -130), Y, { sh: 0.4, hl: 0.3 });
+  cel(g, rect(tx - 7, -130, tx + 5, -118), Y, { sh: 0.6, hl: 0.3 });
+  fill(g, rect(tx - 6, -128, tx + 4, -122), '#1a2028'); fill(g, rect(tx - 6, -128, tx - 2, -122), '#ffc27a', 0.5);
+  for (const sx of [tx - 4, tx + 4]) stroke(g, `M ${sx} -130 L ${sx} -112`, '#1a1c20', 0.3);
+  cel(g, rect(tx - 12, -112, tx + 12, -109), Y, { sh: 0.3, hl: 0.2 });
+}
+
+// an industrial lamp on the port road: galvanised, an outreach arm, a sodium
+// floodlight head (no loudspeaker out here); the head where the city lamp's is
+export function portLamp(g, x, h = 82) {
+  const G = mat(tone('#b8bec4', '#8c9298', '#666c72', '#22262a'), 'steel', 0.5);
+  cel(g, poly([[x - 1.6, 0], [x - 1, -h - 2], [x + 1, -h - 2], [x + 1.6, 0]]), G, { sh: 0.8, hl: 0.3 });
+  cel(g, rect(x - 3, -6, x + 3, 0), G, { sh: 0.4, hl: 0.3 });
+  cel(g, poly([[x, -h - 1], [x + 14, -h - 1], [x + 14, -h + 0.6], [x, -h + 0.6]]), G, { sh: 0.3, hl: 0.2, lw: 0.3 });
+  stroke(g, `M ${x} ${-h + 8} L ${x + 9} ${-h + 0.6}`, G.d, 0.5);
+  cel(g, poly([[x + 8, -h - 1.6], [x + 22, -h - 1.6], [x + 21, -h + 2.8], [x + 9, -h + 2.8]]), G, { sh: 0.5, hl: 0.3 });
+  fill(g, rect(x + 9.6, -h + 2.2, x + 20.4, -h + 3.2), '#ffc27a');
+  fill(g, rect(x - 1.2, -40, x + 1.2, -38), '#e8c43a'); fill(g, rect(x - 1.2, -38, x + 1.2, -36), '#1a1810');
+}
+
+// the port's apron, laid over the street outside the gate: big concrete
+// panels, a faded yellow lane line, tyre tracks (flat, under everything)
+export const APRON_W = 96;
+export function apron(g) {
+  let sd = 11; const r = () => ((sd = (sd * 9301 + 49297) % 233280) / 233280);
+  fill(g, rect(-0.5, -0.5, APRON_W + 0.5, 42), '#3e4048');
+  const rows = [0, 4, 10, 18, 28, 42];
+  for (let i = 0; i < rows.length - 1; i++) {
+    const y0 = rows[i], y1 = rows[i + 1], sw = 32;
+    for (let x = (i % 2) * 16 - 16; x < APRON_W; x += sw) {
+      fill(g, rect(x + 0.3, y0 + 0.25, x + sw - 0.3, y1 - 0.25), r() < 0.5 ? '#474952' : '#43454d');
+      if (r() < 0.25) stroke(g, `M ${x + sw * 0.2} ${y0 + 0.4} l ${sw * 0.2} ${(y1 - y0) * 0.6}`, '#2a2c32', 0.3);
+    }
+  }
+  fill(g, rect(-0.5, 13.4, APRON_W + 0.5, 14.8), '#a8903a', 0.5);
+  for (const y of [22.4, 26.6]) { fill(g, rect(-0.5, y, APRON_W + 0.5, y + 1.4), '#2a2c32', 0.45); for (let x = 0; x < APRON_W; x += 2.2) fill(g, rect(x, y + 0.2, x + 0.8, y + 1.2), '#22242a', 0.5); }
+  clip(g, rect(-0.5, -0.5, APRON_W + 0.5, 42), () => texture(g, 'concrete', 0.5, 1.6));
+  fill(g, rect(-0.5, 0, APRON_W + 0.5, 0.6), '#7a7c86', 0.5);
+  fill(g, rect(-0.5, 36, APRON_W + 0.5, 42), '#000', 0.2);
 }
 
 // The old council sign on the way in, HOŞ GELDİNİZ; the name of the city
@@ -220,19 +344,24 @@ export function buildMission1() {
   P('m.roadSign', [X(66) - 12, -46, X(66) + 12, 1], (g) => roadSign(g, X(66), ['KONTROL', 'NOKTASI', 'YAVAŞLA']), deco);
   bar('m.barB1', 72, 75, 4, '#3ee8e0');
   block(86, 89, 1, 2); P('m.barB', [X(86) - 4, -18, X(90) + 4, 1], (g) => barrier(g, X(86) + 1, 30), front);
-  P('m.booth', [X(104) - 4, -66, X(104) + 48, 1], (g) => booth(g, X(104)), deco);
+  P('m.booth', [X(104) - 4, -84, X(104) + 48, 1], (g) => booth(g, X(104)), deco);
+  glows.push([X(104) + BOOTH_TV[0], BOOTH_TV[1], 5, 4, '#b8d4ff', 0.5, 'tv']);
+  lights.push([X(104) + BOOTH_TV[0], BOOTH_TV[1] + 4, 30, 0.45, [0.6, 0.75, 1], 'tv']);
+  P('m.boom', [X(103) - 50, -24, X(103) + 12, 1], (g) => boom(g, X(103), 46), deco);
   block(100, 101, 1, 5); P('m.concB', [X(100) - 1, -42, X(102) + 1, 1], (g) => concrete(g, X(100), X(102), 40));
   bar('m.barB2', 116, 119, 4, '#ff3347');
   P('m.barrelB', [X(124) - 2, -16, X(124) + 14, 1], (g) => burnBarrel(g, X(124)), deco);
   // C — container yard -----------------------------------------------------------------
-  block(140, 149, 1, 5); P('m.contA', [X(140) - 2, -42, X(150) + 2, 1], (g) => container(g, X(140), -40, X(150), 0, CONT.teal));
+  block(140, 149, 1, 5); P('m.contA', [X(140) - 2, -42, X(150) + 2, 1], (g) => container(g, X(140), -40, X(150), 0, CONT.teal, { code: 'MSKU 704410 2', kor: true }));
   block(160, 180, 12, 12, '='); block(159, 159, 1, 12, 'H');
+  P('m.rtg', [X(160) - 18, -150, X(181) + 16, 1], (g) => rtg(g, X(160), X(181)), deco);
+  lights.push([X(160) + 120, -124, 30, 0.3, [1, 0.7, 0.4]]);
   P('m.deck', [X(160) - 2, -114, X(181) + 2, -78], (g) => catwalk(g, X(160), X(181), -96));
   P('m.ladder', [X(159) - 1, -112, X(160) + 1, 1], (g) => ladder(g, X(159), -96, 0));
   block(190, 191, 1, 2); P('m.crateC', [X(190) - 2, -18, X(192) + 2, 1], (g) => crate(g, X(190), 16, 16));
   block(205, 214, 1, 5); block(209, 214, 6, 10);
-  P('m.contB', [X(205) - 2, -42, X(215) + 2, 1], (g) => container(g, X(205), -40, X(215), 0, CONT.navy));
-  P('m.contC', [X(209) - 2, -82, X(215) + 2, -39], (g) => container(g, X(209), -80, X(215), -40, CONT.rust));
+  P('m.contB', [X(205) - 2, -42, X(215) + 2, 1], (g) => container(g, X(205), -40, X(215), 0, CONT.navy, { code: 'VNTU 482116 1' }));
+  P('m.contC', [X(209) - 2, -82, X(215) + 2, -39], (g) => container(g, X(209), -80, X(215), -40, CONT.rust, { code: 'TGHU 30129' }));
   P('m.dumpC', [X(220) - 4, -24, X(220) + 48, 1], (g) => dumpster(g, X(220)), deco);
   // D — gate court ----------------------------------------------------------------------
   block(246, 247, 1, 5); P('m.concD1', [X(246) - 1, -42, X(248) + 1, 1], (g) => concrete(g, X(246), X(248), 40));
@@ -240,9 +369,10 @@ export function buildMission1() {
   bar('m.barD', 294, 297, 4, '#ff3fa4');
   P('m.term', [X(312) - 9, -28, X(312) + 18, 1], (g) => terminal(g, X(312)));
   block(322, 323, 1, 12);
-  P('m.gateFrame', [X(322) - 76, -150, X(324) + 76, 1], (g) => gateFrame(g, X(322), X(324), 96), deco);
-  lights.push([X(323), -118, 110, 0.6, [0.9, 0.95, 1]]);
-  glows.push([X(323), -113, 36, 5, '#e8f0ff', 0.3], [X(323) - 30, -125, 4, 2, '#f2f6ff', 0.6], [X(323) + 30, -125, 4, 2, '#f2f6ff', 0.6], [X(323), -103.4, 44, 1.6, '#ff3347', 0.3]);
+  P('m.gateFrame', [X(322) - 78, -150, X(324) + 78, 1], (g) => cityGate(g, X(322), X(324), 96), deco);
+  const [gx, gy] = GATE_LIGHT(X(322));
+  lights.push([gx + 10, gy + 30, 120, 0.75, [0.9, 0.95, 1]], [X(323), -116, 60, 0.4, [0.9, 0.95, 1]]);
+  glows.push([gx, gy + 0.2, 6, 2.4, '#f2f6ff', 0.7], [X(323), -113, 36, 5, '#e8f0ff', 0.3]);
   P('m.coneD', [X(286) - 6, -12, X(286) + 8, 1], (g) => cone(g, X(286)), deco);
   // E — extraction -----------------------------------------------------------------------
   block(350, 351, 1, 2); P('m.crateE', [X(350) - 2, -18, X(352) + 2, 1], (g) => crate(g, X(350), 16, 16));
@@ -252,15 +382,26 @@ export function buildMission1() {
   // checkpoint posts
   const checkpoints = [{ x: X(60) }, { x: X(228) }, { x: X(316) }];
   checkpoints.forEach((c, i) => P(`m.cp${i}`, [c.x - 5, -24, c.x + 5, 1], (g) => cpPost(g, c.x), deco));
-  for (const x of [130, 520, 1000, 1260, 1600, 2100, 2450, 2750, 3050]) lamps.push(x);
-  deco.push({ name: 'c.lamp', box: [-8, -86, 24, 1], paint: (g) => lampPost(g, 0), at: lamps });
+  // outside the gate the port's lamps, inside the city's
+  const outside = [130, 520, 1000, 1600, 2100, 2450], inside = [2750, 3050];
+  lamps.push(...outside, ...inside);
+  deco.push({ name: 'm.portLamp', box: [-8, -88, 24, 1], paint: (g) => portLamp(g, 0), at: outside });
+  deco.push({ name: 'c.lamp', box: [-8, -86, 24, 1], paint: (g) => lampPost(g, 0), at: inside });
+  // the port's apron up to the gate; the city's street after it
+  const floor = [{ name: 'm.apron', box: [-0.5, -0.5, APRON_W + 0.5, 42], paint: apron, at: Array.from({ length: Math.ceil(X(322) / APRON_W) }, (_, k) => k * APRON_W) }];
 
   const level = new Level(g.map((r) => r.join('')), TOPY);
   const E = (id, x, y, zone, o = {}) => ({ id, kind: id, x, y, zone, facing: -1, ...o });
   return {
-    id: 'm1', level, props, front, deco, lamps, glows, lights, width: COLS * T, par: 300,
-    // HAWK's shop once, near the start; then the street, never twice the same in a row
-    facade: facadeLayout(-10, COLS * T + 10, 9, ['walkup', 'crow', 'alley', 'teahouse', 'warehouse', 'synBlock', 'walkupB', 'union', 'hotel', 'ruin', 'garage']),
+    id: 'm1', level, props, front, deco, lamps, glows, lights, floor, width: COLS * T, par: 300,
+    // docs §10.8: the port road outside (warehouses, the customs house,
+    // containers), Vanta's container wall to the gate; inside, the city
+    facade: [
+      ['antrepo', -10], ['gumruk', 170], ['warehouse', 310], ['stack', 474], ['synBlock', 594], ['antrepo', 744], ['stack', 924],
+      ['stack', 1044], ['antrepo', 1164], ['stack', 1344], ['warehouse', 1464], ['stack', 1628],
+      ...[0, 1, 2, 3, 4].map((k) => ['wallC', 1748 + k * 160]),
+      ['walkupB', 2620], ['crow', 2748], ['alley', 2908], ['teahouse', 2942], ['walkup', 3038], ['walkupB', 3188],
+    ].map(([type, x]) => ({ type, x })),
     fires: [X(124) + 5],
     spawn: [64, 0],
     checkpoints,

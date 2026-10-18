@@ -157,7 +157,9 @@ if (what === 'places') {
     wrap.append(c, name); return wrap;
   };
   const r1 = row();
-  r1.append(pane('gate', -80, 100, -152, 6, (g) => m1.gateFrame(g, 0, 16, 96)), pane('duct', -20, 100, -52, 6, (g) => co.duct(g, 0, 80, -48, -32)), pane('pit', -12, 60, -12, 34, (g) => co.pit(g, 0, 48, 32)));
+  r1.append(pane('gate', -80, 100, -152, 6, (g) => m1.cityGate(g, 0, 16, 96)), pane('rtg', -24, 196, -152, 6, (g) => { m1.rtg(g, 0, 168); co.catwalk(g, 0, 168, -96); }));
+  const r1b = row();
+  r1b.append(pane('duct', -20, 100, -52, 6, (g) => co.duct(g, 0, 80, -48, -32)), pane('pit', -12, 60, -12, 34, (g) => co.pit(g, 0, 48, 32)), pane('boom', -50, 14, -26, 4, (g) => m1.boom(g, 0, 46)), pane('portLamp', -10, 26, -90, 4, (g) => m1.portLamp(g, 0)), pane('container', -4, 84, -44, 4, (g) => co.container(g, 0, -40, 80, 0, co.CONT.teal, { code: 'MSKU 704410 2', kor: true })));
   const r2 = row();
   r2.append(pane('welcome', -24, 24, -52, 4, (g) => m1.welcomeSign(g, 0)), pane('roadSign', -14, 14, -48, 4, (g) => m1.roadSign(g, 0, ['KONTROL', 'NOKTASI', 'YAVAŞLA'])), pane('booth', -6, 52, -70, 4, (g) => m1.booth(g, 0)), pane('lamp', -10, 26, -88, 4, (g) => env.lampPost(g, 0)), pane('column', -10, 66, -118, 4, (g) => m3.column(g)), pane('planter', -4, 28, -24, 4, (g) => m3.planter(g)));
 }

@@ -17,7 +17,7 @@ import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-12';
+export const BAKE_VERSION = 'm2-13';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -131,11 +131,13 @@ export class M2Scene {
   }
 
   // light flicker by kind (docs §10.4): bulbs on a generator wobble and now
-  // and then dip, the hotel's last neon catches and drops out, fires breathe;
+  // and then dip, the hotel's last neon catches and drops out, a television
+  // jumps from scene to scene, fires breathe;
   // Vanta's LEDs (no kind) hold steady. Each building on its own phase.
   flicker(kind, seed = 0) {
     const t = this.t + seed * 0.013;
     if (kind === 'bulb') return (t % 9.7) > 9.45 ? 0.62 : 0.93 + Math.sin(t * 2.3 + seed) * 0.04 + Math.sin(t * 7.1 + seed * 0.7) * 0.03;
+    if (kind === 'tv') { const v = Math.abs(Math.sin(t * 3.1 + seed) * Math.sin(t * 7.7 + seed * 0.7)); return 0.45 + 0.4 * v + ((((t * 6) | 0) * 7919) % 5 === 0 ? 0.25 : 0); }
     if (kind === 'dying') { const p = t % 5.3; return p > 4.2 ? (((t * 17) | 0) % 3 ? 0.08 : 0.9) : 0.78 + Math.sin(t * 50) * 0.04; }
     if (kind === 'neon') return (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
     if (kind === 'neon2') return (t % 8.3) > 8.0 && ((t * 24) | 0) % 2 ? 0.3 : 1;

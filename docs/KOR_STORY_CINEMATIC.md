@@ -573,3 +573,35 @@ yapılmıştır. Gall düşünce masasında *Kül Planı* bulunur.
   ana kapının üstünde balkon ve Gall'ın odası: binadaki tek sıcak ışık, masa
   lambası (perde sonundaki *Kül Planı* sahnesinin lambası). Saat kulesi
   belediyededir.
+
+### 10.8 Kapı (görev 1 · Sızma)
+§10.5'teki kapı maddesinin yerine geçer. *Limanı, elektriği, kapıları Vanta
+tutar.* Kapı, liman yolunun şehre girdiği yerde Vanta'nın kurduğu kontrol
+noktasıdır: şehir buradan konteyner duvarıyla kapatılmıştır. Ekip dışarıdan,
+limanın yanından gelir; görev kapıdan şehre girmektir. Sinematikteki satır
+bağlayıcıdır: *Kulübede iki nöbetçi. Kamera yok, sadece göz.* Kapıda kamera
+yoktur.
+
+- **Dışarısı (A–D): liman yolu.** Zemin limanın beton plakaları; soluk sarı
+  şerit çizgileri, lastik izleri, su birikintisi. Lambalar şehrinkiler değil:
+  galvaniz sanayi direği, çift başlık, hoparlör yok. Arka plan:
+  - *Antrepo:* uzun, alçak liman ambarı; numaralı kapılar (*ANTREPO 3*),
+    soluk *LİMAN İŞLETMESİ* boyası, Vanta'nın *EL KONULMUŞTUR* levhası.
+  - *Gümrük:* eski taş gümrük binası, kabartma *GÜMRÜK*, kapalı.
+  - *Konteyner yığınları:* üç kat, renk renk, sahip kodları (*VNTU*).
+  - Çelikhane deposu ve Vanta karakolu yolun üstünde.
+- **Yaklaşma (A):** belediyenin *HOŞ GELDİNİZ* levhası (şehrin adı Vanta
+  etiketinin altında), çelikhanenin boru köprüsü, çökmüş yol.
+- **Kontrol noktası (B):** nöbetçi kulübesi: camında televizyonun titreyen
+  mavi ışığı, çatıdaki sobanın buharı; kırmızı-beyaz bariyer kolu yolun
+  üstüne inmiş; Vanta bariyerleri ve T-duvar; *KONTROL NOKTASI · YAVAŞLA*.
+- **Konteyner sahası (C):** konteynerlerde sahip kodu (kor işareti yalnız
+  birinde, alçakta); üst geçit lastik tekerlekli bir saha vincinin (RTG)
+  yürüme yolu: sarı ayaklar, tekerlekler, kabin, *VNTU* yazılı kiriş.
+- **Avlu ve kapı (D):** konteyner duvarı (üst üste konteynerler, tepesinde
+  jiletli tel), aradaki çelik kapı; üstünde beyaz ışıklı *KONTROL NOKTASI ·
+  DUR · KİMLİK HAZIRLAYIN*; bir projektör direği, yağmurda ışık konisi;
+  kamera yok. Terminal avluda.
+- **İçerisi (E):** kapı açılınca şehrin ilk sokağı: lojmanlar, çay ocağı ve
+  HAWK'ın dükkânı (şehre giren tek mal bu kapıdan geçer); hücrenin elde
+  yapılmış barikatı, işaret fişeği.
