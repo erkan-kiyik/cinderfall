@@ -5,6 +5,10 @@ import { t, clock } from '../i18n.js';
 import { shead, stars } from './common.js';
 import { MISSIONS } from '../data.js';
 
+// the missions that have a photograph of their place (the cinematics' plates)
+const plate = (n) => new URL(`../../../assets/plates/${n}.webp`, import.meta.url).href;
+const PHOTO = { m1: plate('gate'), m2: plate('market'), m3: plate('governor') };
+
 export const campaign = {
   mount(ctx, params) {
     const d = ctx.save.d;
@@ -59,6 +63,8 @@ export const campaign = {
         h('div.eyebrow.accent', t('camp.act', { n: m.act }), ' · ', t('camp.mission', { n: m.id.slice(1) })),
         h('div.h1', { style: { fontSize: '28px' } }, t(`mission.${m.id}`)),
         h('div.eyebrow', t(`mission.${m.id}.where`)),
+        // the place, photographed, taped to the brief
+        PHOTO[m.id] && h('div.photo', { style: { backgroundImage: `url(${PHOTO[m.id]})` } }),
         h('div.grow.scroll.fade',
           m.ready
             ? [h('p.body', { style: { margin: '6px 0', fontSize: '12.5px' } }, t(`mission.${m.id}.brief`)),
@@ -66,8 +72,9 @@ export const campaign = {
             : h('div.empty.cut', { style: { marginTop: '8px' } }, svg('lock'), h('b', t('camp.locked')), h('span', t('camp.lockedHint')))),
         m.ready && !ok && h('div.empty.cut', { style: { marginTop: '4px' } }, svg('lock'), h('span', t('camp.needPrev'))),
         c && h('div.wide-row', stars(c.stars, 18), h('div.tag', h('div.eyebrow', t('camp.best')), h('div.h3', c.best !== null ? clock(c.best) : '—'))),
-        ok && h('div.diff-row', h('div.eyebrow', t('camp.diff')), seg),
-        ok && ctx.hasStory?.(m.id) && press(h('button.btn.ghost.sm.cut', { type: 'button', onclick: () => ctx.playStory(m.id) }, svg('play'), t('camp.scene')), { sound: 'tap' }),
+        // the difficulty and, beside it, the mission's scene to watch again
+        ok && h('div.diff-row', h('div.eyebrow', t('camp.diff')), seg,
+          ctx.hasStory?.(m.id) && press(h('button.btn.ghost.sm.cut.scene-btn', { type: 'button', onclick: () => ctx.playStory(m.id) }, svg('play'), t('camp.scene')), { sound: 'tap' })),
         go].filter(Boolean));
     }
     render();

@@ -40,6 +40,11 @@ if (what === 'op') {
   const real = figureCanvas(op, 2.6 * 2.5);
   const r3 = row(); r3.appendChild(toCanvasEl(real, '#1e252e'));
 }
+if (what === 'crate') {
+  const { paintCrate } = await import('../js/art/crate.js');
+  const r = row();
+  for (const [band, label] of [['#a39b8f', 'VANTA · ERZAK'], ['#6aa6d6', 'VANTA · MÜHİMMAT'], ['#e6a93c', 'VANTA · KOMUTA']]) { const c = document.createElement('canvas'); c.width = c.height = 420; c.style.background = '#1a1612'; paintCrate(c.getContext('2d'), 420, { band, label }); r.appendChild(c); }
+}
 if (what === 'hawk') {
   const { paintHawk } = await import('../js/art/hawk.js');
   const r = row();

@@ -1,15 +1,18 @@
-// Play: pick a mode — the campaign, today's tasks, or the endless waves.
+// Play: pick a mode — the campaign, today's tasks, or the endless waves —
+// each card a photograph of its place: the cold furnace, the market, the city
+// from a roof.
 import { h, svg, press, popIn, ui, deny } from '../kit.js';
 import { t } from '../i18n.js';
 import { shead } from './common.js';
 
 export const play = {
   mount(ctx) {
-    const mode = (id, icon, open, onclick) => press(h(`button.mode.cut${open ? '' : '.locked'}`, {
+    const mode = (id, icon, open, onclick) => press(h(`button.mode.cut.m-${id}${open ? '' : '.locked'}`, {
       type: 'button', 'aria-disabled': open ? 'false' : 'true',
       onclick: (e) => { if (open) { ui('confirm'); onclick(); } else deny(e.currentTarget); },
     },
-    h('div.art', { style: { background: open ? 'linear-gradient(160deg, rgba(226,105,47,0.24), rgba(226,105,47,0) 60%)' : 'none' } }),
+    // a photograph of the place behind each door (the traced plates of the cinematics)
+    h('div.art'),
     svg(icon, 'ic big-ic'),
     !open && h('span.lockbadge', svg('lock'), t('ui.soon')),
     h('div.eyebrow.accent', t(`mode.${id}.kicker`)),

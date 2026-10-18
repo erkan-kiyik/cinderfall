@@ -246,7 +246,13 @@
 .modes-body { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 14px; }
 .mode { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 16px; min-height: 0; --cut: 12px; overflow: hidden; text-align: left; color: inherit;
   background: var(--grain), linear-gradient(180deg, rgba(40,36,33,0.9), rgba(16,14,13,0.94)); box-shadow: inset 0 0 0 1px var(--line), inset 0 1px 0 rgba(255,255,255,0.06); }
-.mode .art { position: absolute; inset: 0; opacity: 0.9; }
+.mode .art { position: absolute; inset: 0; opacity: 0.9; background-size: cover; background-position: center; filter: saturate(0.9); transition: transform var(--d-slow, 600ms) ease, filter 300ms; }
+.mode:hover .art { transform: scale(1.03); }
+/* each door shows its place: the traced plates of the cinematics, darkened under the words */
+.mode.m-campaign .art { background-image: linear-gradient(180deg, rgba(12,10,9,0.05) 0%, rgba(12,10,9,0.5) 46%, rgba(12,10,9,0.94) 78%), url('../assets/plates/open_furnace.webp'); }
+.mode.m-daily .art { background-image: linear-gradient(180deg, rgba(12,10,9,0.05) 0%, rgba(12,10,9,0.5) 46%, rgba(12,10,9,0.94) 78%), url('../assets/plates/market.webp'); }
+.mode.m-endless .art { background-image: linear-gradient(180deg, rgba(12,10,9,0.05) 0%, rgba(12,10,9,0.5) 46%, rgba(12,10,9,0.94) 78%), url('../assets/plates/open_roof.webp'); }
+.mode.locked .art { filter: grayscale(1) brightness(0.6); }
 .mode > *:not(.art) { position: relative; }
 .mode .ic.big-ic { width: 40px; height: 40px; color: var(--ember); margin-bottom: auto; }
 .mode .h1 { font-size: 36px; }
@@ -286,14 +292,18 @@
 .node .stars .ic { width: 11px; height: 11px; }
 .act-label { position: absolute; font: 400 12px/1 var(--f-type); letter-spacing: 0.06em; color: #5e4a34; text-transform: uppercase; }
 /* the brief, typed on a sheet */
-.mdetail { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 18px 16px 14px; min-height: 0; color: var(--ink);
+.mdetail { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 12px; min-height: 0; color: var(--ink);
   background: var(--fibre), linear-gradient(172deg, #f2ead6, #ddd0b0 75%); box-shadow: 0 10px 20px rgba(0,0,0,0.5); transform: rotate(0.4deg); }
 .mdetail::before { content: ''; position: absolute; left: 50%; top: -6px; width: 70px; height: 16px; margin-left: -35px; background: var(--tape); transform: rotate(2deg); }
 .mdetail .eyebrow { color: #6b5840; } .mdetail .eyebrow.accent { color: var(--union); }
 .mdetail .h1 { color: var(--ink); font-size: 30px; }
 .mdetail .body { color: #33281d; font-family: var(--f-type); }
 .mdetail .obj { margin: 0; padding-left: 18px; font: 400 12.5px/1.6 var(--f-type); color: #33281d; }
-.mdetail .grow { flex: 1; min-height: 0; }
+.mdetail .grow { flex: 1; min-height: 48px; }
+.mdetail .diff-row .scene-btn { margin-left: auto; padding: 0 12px; min-height: 36px; }
+/* the place's photograph, a print taped to the brief */
+.mdetail .photo { position: relative; flex: none; height: 52px; margin: 2px 2px 0; background: #1a1410 center/cover no-repeat; box-shadow: 0 0 0 3px #f2ead8, 0 4px 10px rgba(0,0,0,0.45); transform: rotate(-1.2deg); }
+.mdetail .photo::after { content: ''; position: absolute; right: 18px; top: -8px; width: 46px; height: 14px; background: var(--tape); transform: rotate(-4deg); }
 .mdetail .empty { color: #6b5840; box-shadow: inset 0 0 0 1px rgba(42,32,24,0.3); background: none; }
 .mdetail .empty b { color: var(--ink); }
 .mdetail .seg { background: rgba(42,32,24,0.1); box-shadow: inset 0 0 0 1px rgba(42,32,24,0.35); }
@@ -319,7 +329,7 @@
 .slotrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .wtile { min-height: 66px; padding: 8px 8px 10px; gap: 5px; justify-content: center; }
 .wtile canvas { max-width: 100%; height: 26px; object-fit: contain; align-self: center; }
-.wtile b { font: 700 12px/1.05 var(--f-display); letter-spacing: 0.04em; color: var(--n8); text-transform: uppercase; text-align: center; }
+.wtile b { font: 700 12px/1.05 var(--f-display); letter-spacing: 0.04em; color: var(--n8); text-transform: uppercase; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .wtile.mini { flex-direction: row; align-items: center; min-height: var(--hit); padding: 4px 10px; gap: 10px; }
 .wtile.mini canvas { width: 64px; height: 22px; flex: none; }
 .diff-row { display: flex; align-items: center; gap: 10px; }
@@ -374,7 +384,9 @@
 .wgrid-ui .eyebrow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wgrid-ui .tile { min-height: 68px; padding: 8px; }
 .wgrid-ui canvas { width: 100%; height: 28px; object-fit: contain; }
-.wgrid-ui b { font: 700 11px/1.1 var(--f-display); letter-spacing: 0.05em; color: var(--n8); text-transform: uppercase; }
+.wgrid-ui b { font: 700 11px/1.1 var(--f-display); letter-spacing: 0.05em; color: var(--n8); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+/* the price badge sits over the picture, so the name keeps its line */
+.wgrid-ui .tile .lockbadge.price { top: 6px; bottom: auto; }
 .wdetail { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .wdetail > * { flex: none; }
 .wdetail .gun { flex: 1 1 auto; min-height: 40px; display: grid; place-items: center; position: relative;
@@ -519,6 +531,7 @@ button.skin { flex: none; padding: 0; cursor: pointer; }
 /* the price of a weapon you do not own sits by its name */
 .tile .lockbadge.price { top: auto; bottom: 8px; right: 8px; color: var(--ember-hi); font: 800 13px/1 var(--f-num); }
 .tile.locked > b { padding-right: 52px; }
+.wgrid-ui .tile.locked > b { padding-right: 0; }
 button.skin { width: 36px; height: 36px; }
 .op-card .stamp { position: absolute; right: 14px; top: 16px; }
 /* the member card: paper, the photo clipped on, a stamp */
