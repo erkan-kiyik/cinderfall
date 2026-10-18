@@ -5,6 +5,7 @@
 // built from tiles, rendered with the runtime rig and live outline. Syndicate
 // troopers at the far end track the player with their aim.
 import { STREET } from '../art/env/street.js';
+import { weathered } from '../art/kit.js';
 import { BUILDINGS, buildingBakeList, facadeLayout } from '../art/env/city.js';
 import { buildCourse } from '../art/env/course.js';
 import { FX, DENS } from './m1scene.js';
@@ -17,7 +18,7 @@ import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-14';
+export const BAKE_VERSION = 'm2-15';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -30,7 +31,8 @@ export function bakeList(quality, course = COURSE) {
   layer('mid', [-10, -168, 610, -38], STREET.midIndustry, bg * 0.75);
   E.push(...buildingBakeList(bg));
   layer('ground', [-10, -0.5, 610, 42], STREET.ground, bg);
-  for (const p of [...course.props, ...course.front, ...course.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
+  // props weathered the same way as the buildings (docs §11)
+  for (const p of [...course.props, ...course.front, ...course.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: weathered(p), outline: 0.85 });
   // the floor: paving laid over the street in some places, flat (no outline)
   for (const p of course.floor || []) E.push({ name: p.name, box: p.box, scale: bg, paint: p.paint });
   // every weapon the player can carry, in the factory finish
@@ -267,6 +269,10 @@ export class M2Scene {
     const glow = A.get('fx.glow'), flame = A.get('fx.flame');
     B.begin(w); B.setBlend(1);
     for (const lx of this.C.lamps) B.draw(glow, lx + 15, -79, 9, 5, 0, rgba('#ffd9a0', 0.6));
+    // the damp air the lamps light (docs §11): a soft cone under each, a pool where it lands,
+    // and a low mist lying over the street
+    for (const lx of this.C.lamps) if (lx > x0 - 40 && lx < x1 + 40) { B.draw(glow, lx + 15, -46, 20, 38, 0, rgba('#ffc88a', 0.075)); B.draw(glow, lx + 15, -6, 30, 9, 0, rgba('#ffc88a', 0.07)); }
+    if (out) B.draw(glow, (x0 + x1) / 2, -3, (x1 - x0) * 0.75, 16, 0, rgba('#7f8da3', 0.06));
     // neon: the buildings', the barricades', each smeared down the wet road
     for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) {
       const k = this.flicker(fl, f.x);

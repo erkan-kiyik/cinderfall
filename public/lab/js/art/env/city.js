@@ -15,7 +15,7 @@
 // render, corrugated sheet and Vanta's clean cladding, each with its grain,
 // soot from the roof down, rain streaks, dirt from the pavement up. Lights
 // and glows each building throws are listed with it and placed by the scene.
-import { fill, stroke, clip, rng } from '../kit.js';
+import { fill, stroke, clip, rng, weatherOver } from '../kit.js';
 import { C } from '../style.js';
 import { texture } from '../tex.js';
 import { emblem } from '../enemies/syndicate.js';
@@ -1665,8 +1665,15 @@ export function facadeLayout(x0, x1, seed = 1, first = ['walkup', 'crow', 'alley
 }
 
 // bake entries for every building type (background density, no outline)
+// Weather over every painted facade (docs §11, kit.weatherOver): night falls
+// from the top, since the street lamps never reach the upper floors; damp and
+// soot in soft blotches; rain run down from sills and ledges; the splash zone
+// darker at the foot. The same pass on every building, so the street reads as
+// one place.
+const nightWeather = (g, b, seed) => weatherOver(g, [0, b.top, b.w, 0], seed, { night: 0.55, foot: 0.35, stain: 0.7, rain: 3.8, speck: 0.12 });
+
 export function buildingBakeList(scale) {
-  return Object.entries(BUILDINGS).map(([t, b]) => ({ name: `b.${t}`, box: [-3, b.top, b.w + 3, 0.5], scale, paint: b.paint }));
+  return Object.entries(BUILDINGS).map(([t, b], i) => ({ name: `b.${t}`, box: [-3, b.top, b.w + 3, 0.5], scale, paint: (g) => { b.paint(g); nightWeather(g, b, 101 + i * 17); } }));
 }
 
 // the old single-strip facade (dev scenes): four buildings in a row

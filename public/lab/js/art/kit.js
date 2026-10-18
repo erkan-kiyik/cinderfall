@@ -194,6 +194,57 @@ export function outlined(w, h, scale, ox, oy, paint, r = OUTLINE, ink = INK) {
   return out;
 }
 
+// Weather laid over what is already painted inside box [x0, y0, x1, y1]
+// (source-atop: only on painted pixels), from a small overlay drawn once and
+// stretched, so it costs one draw (docs §11). o.night darkens the top (tall
+// things the street lamps never reach), o.sky lights the top edge a little
+// (small things under the night sky), o.foot the contact dark at the ground,
+// o.stain blotches per 100 square units, o.rain streaks per 10 units, o.speck
+// fine grain.
+export function weatherOver(g, box, seed, o = {}) {
+  const [x0, y0, x1, y1] = box, W = x1 - x0, H = y1 - y0, r = rng(seed);
+  const d = o.res ?? (W * H > 4000 ? 1.3 : 4);
+  const c = canvas(Math.max(2, Math.ceil(W * d)), Math.max(2, Math.ceil(H * d))), q = c.getContext('2d');
+  q.scale(d, d); q.translate(-x0, -y0);
+  const gr = q.createLinearGradient(0, y0, 0, y1);
+  const night = o.night ?? 0, sky = o.sky ?? 0, foot = o.foot ?? 0.3;
+  gr.addColorStop(0, sky ? `rgba(170,184,204,${sky})` : `rgba(5,7,11,${night})`);
+  gr.addColorStop(0.5, `rgba(5,7,11,${night * 0.4})`);
+  gr.addColorStop(0.86, 'rgba(5,7,11,0)');
+  gr.addColorStop(1, `rgba(12,9,6,${foot})`);
+  q.fillStyle = gr; q.fillRect(x0, y0, W, H);
+  const n = Math.round((W * H) / 100 * (o.stain ?? 0.7));
+  for (let i = 0; i < n; i++) {
+    const x = x0 + r() * W, y = y0 + r() * H, rx = (1 + r() * 5) * (o.big ?? 1), ry = (0.8 + r() * 4) * (o.big ?? 1), light = r() < 0.25;
+    q.save(); q.translate(x, y); q.scale(rx, ry);
+    const gg = q.createRadialGradient(0, 0, 0, 0, 0, 1);
+    gg.addColorStop(0, light ? `rgba(200,190,170,${0.03 + r() * 0.05})` : `rgba(22,17,12,${0.05 + r() * 0.09})`); gg.addColorStop(1, 'rgba(0,0,0,0)');
+    q.fillStyle = gg; q.beginPath(); q.arc(0, 0, 1, 0, Math.PI * 2); q.fill(); q.restore();
+  }
+  q.lineCap = 'round';
+  for (let i = 0; i < (W / 10) * (o.rain ?? 3); i++) {
+    const x = x0 + r() * W, ya = y0 + r() * H * 0.85, L = Math.min(y1 - ya, 3 + r() * H * 0.25);
+    q.strokeStyle = `rgba(14,11,9,${0.06 + r() * 0.12})`; q.lineWidth = 0.15 + r() * 0.6;
+    q.beginPath(); q.moveTo(x, ya); q.bezierCurveTo(x + (r() - 0.5) * 0.6, ya + L * 0.4, x + (r() - 0.5) * 0.6, ya + L * 0.7, x + (r() - 0.5) * 0.4, ya + L); q.stroke();
+  }
+  for (let i = 0; i < W * H * (o.speck ?? 0.4); i++) {
+    q.fillStyle = r() < 0.5 ? `rgba(0,0,0,${0.08 + r() * 0.1})` : `rgba(255,248,236,${0.04 + r() * 0.06})`;
+    q.fillRect(x0 + r() * W, y0 + r() * H, 0.18, 0.18);
+  }
+  g.save();
+  g.globalCompositeOperation = 'source-atop'; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.drawImage(c, x0, y0, W, H);
+  g.restore();
+}
+
+// A prop's painter with the weather laid over it: a little night sky on its
+// top, the contact dark at its foot, stains, a few runs, grain.
+export function weathered(p) {
+  let seed = 7; for (const ch of p.name) seed = (seed * 31 + ch.charCodeAt(0)) | 0;
+  const b = p.box;
+  return (g) => { p.paint(g); if (Array.isArray(b)) weatherOver(g, b, seed, { sky: 0.07, foot: 0.4, stain: 1.4, rain: 2.2, speck: 0.5, big: 0.6 }); };
+}
+
 // Silhouette of a baked canvas in one colour (for the readability check).
 export function silhouette(src, color = '#000') {
   const c = canvas(src.width, src.height), g = c.getContext('2d');

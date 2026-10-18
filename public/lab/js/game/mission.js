@@ -12,6 +12,7 @@ import * as M3 from '../test/m3scene.js';
 import * as M2 from '../test/m2scene.js';
 import { DENS } from '../test/m1scene.js';
 import { hideoutBakeList } from '../art/env/hideout.js';
+import { weathered } from '../art/kit.js';
 import { buildMission1, gateLeaf } from '../art/env/mission1.js';
 import { buildMission2 } from '../art/env/mission2.js';
 import { concrete } from '../art/env/mission1.js';
@@ -31,7 +32,7 @@ import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'd4-1';
+export const BAKE_VERSION = 'd4-2';
 // Endless: the market from mission 2, walled off at both ends; squads come in
 // waves, every fifth one with Gall.
 function buildEndless() {
@@ -55,7 +56,7 @@ export function bakeList(quality) {
     for (const p of [...M.props, ...M.front, ...M.deco]) {
       if (names.has(p.name)) continue;
       names.add(p.name);
-      E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
+      E.push({ name: p.name, box: p.box, scale: ch, paint: weathered(p), outline: 0.85 });
     }
     for (const p of M.floor || []) {
       if (names.has(p.name)) continue;
