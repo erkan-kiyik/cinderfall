@@ -7,6 +7,7 @@
 // the Secretary, is no soldier at all: a long belted coat, a peaked cap, an
 // open, cold face.
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
+import { Brush } from '../paint.js';
 import { M, tone, mat } from '../style.js';
 import { WEAPONS, MAT } from '../weapons/index.js';
 import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, stitch, rivet, buckle, grime, scuffs } from '../ops/body.js';
@@ -39,6 +40,7 @@ export function emblem(g, x, y, r, c) {
 // --- the helmet: full face, one red slit ------------------------------------------------------
 const SHELL = 'M -4.8 -3.6 C -5.6 -7.0 -5.0 -11.0 -2.0 -12.4 C 0.8 -13.4 3.8 -12.8 5.2 -10.6 C 5.9 -9.4 6.0 -8.0 5.9 -6.6 L 5.9 -3.8 C 5.8 -2.6 5.0 -1.7 3.8 -1.4 L 1.0 -1.2 C -0.8 -1.4 -2.4 -2.2 -3.4 -3.0 Z';
 const SLIT = 'M 1.2 -7.85 L 6.0 -8.0 L 6.05 -7.15 L 1.2 -7.1 Z';
+const brush = (g) => { const M0 = g.getTransform(); return new Brush(g, Math.hypot(M0.a, M0.b)); };
 function neck(g, t) {
   cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', t, { sh: 1.2, hl: 0.25 });
 }
@@ -47,23 +49,32 @@ function helmet(g) {
   neck(g, PAL.suit);
   cel(g, SHELL, A, { sh: 1.5, hl: 0.6 });
   clip(g, SHELL, () => {
-    // the dark lower face with its vent grille; the seam where the chin guard meets the shell
-    cel(g, 'M 0.6 -6.6 L 7 -6.6 L 7 0 L 0.6 0 Z', PAL.black, { sh: 0.6, hl: 0.3, line: false });
-    for (const y of [-5.2, -4.5, -3.8, -3.1]) { stroke(g, `M 3.0 ${y} L 5.6 ${y}`, PAL.black.k, 0.22); stroke(g, `M 3.0 ${y + 0.12} L 5.6 ${y + 0.12}`, PAL.black.l, 0.08, 0.6); }
-    stroke(g, 'M -4.8 -6.6 C -2.4 -6.4 -0.4 -6.6 0.6 -6.6', A.k, 0.2, 0.7);
+    // the moulded chin guard over the respirator, following the jaw; its vents are
+    // grooves pressed into it, soft-edged, not ruled lines
+    const JAW = 'M 0.2 -6.9 C 2.6 -7.3 5.2 -7.1 6.3 -6.5 C 6.5 -4.8 6.1 -2.6 4.7 -1.6 C 3.3 -1.0 1.5 -1.1 0.4 -1.6 C -0.2 -3.2 -0.2 -5.2 0.2 -6.9 Z';
+    cel(g, JAW, PAL.black, { sh: 0.7, hl: 0.4, gloss: 0.35 });
+    const Bj = brush(g);
+    Bj.inside(JAW, () => {
+      for (const [y, c] of [[-5.3, 0.02], [-4.5, 0.06], [-3.7, 0.1]]) { Bj.line(`M 2.8 ${y} C 3.8 ${y - 0.15 + c} 4.8 ${y - 0.1 + c} 5.7 ${y + 0.2}`, 'rgba(0,0,0,0.85)', 0.28, 0.08); Bj.line(`M 2.8 ${y + 0.22} C 3.8 ${y + 0.07 + c} 4.8 ${y + 0.12 + c} 5.7 ${y + 0.42}`, 'rgba(150,164,180,0.25)', 0.1, 0.05); }
+      Bj.dab(4.2, -6.4, 2.4, 0.6, 'rgba(160,176,196,0.25)');
+    });
+    Bj.line('M -4.8 -6.6 C -2.4 -6.4 -0.6 -6.7 0.3 -6.85', 'rgba(10,12,16,0.6)', 0.18, 0.08);
     // the crown ridge, the rail, the gloss
     cel(g, 'M -3.4 -12.0 C -1.0 -13.4 2.6 -13.2 4.2 -11.6 L 3.8 -10.8 C 2.2 -12.0 -0.6 -12.2 -3.0 -11.2 Z', A, { sh: 0.3, hl: 0.3, lw: 0.18, ao: 0.2 });
     cel(g, 'M -4.4 -9.2 L -1.2 -9.6 L -1.2 -9.0 L -4.4 -8.6 Z', A, { sh: 0.2, hl: 0.15, lw: 0.16, ao: 0.3 });
     for (let x = -4.0; x < -1.4; x += 0.6) fill(g, `M ${x} -9.3 l 0.25 0 l 0 0.5 l -0.25 0 Z`, A.d, 0.7);
     stroke(g, curve([[-3.8, -10.6], [-0.6, -12.6], [3.6, -12.2]]), '#ffffff', 0.18, 0.75);
     // the serial stencilled on the back, the same on every one
-    g.save(); g.fillStyle = 'rgba(240,244,248,0.7)'; g.font = '700 0.75px sans-serif'; g.fillText('V-0417', -4.4, -5.2); g.restore();
+    g.save(); g.fillStyle = 'rgba(240,244,248,0.6)'; g.translate(-4.4, -5.2); g.scale(1 / 40, 1 / 40); g.font = "700 30px 'Barlow Condensed', sans-serif"; g.fillText('V-0417', 0, 0); g.restore();
     grime(g, -6, -1, DUST);
   });
-  // the slit, lit red
-  fill(g, 'M 1.0 -8.15 L 6.1 -8.3 L 6.15 -6.85 L 1.0 -6.8 Z', PAL.black.k);
-  g.save(); g.shadowColor = PAL.visor.m; g.shadowBlur = 7; fill(g, SLIT, PAL.visor.m); g.restore();
-  fill(g, 'M 1.4 -7.75 L 5.8 -7.9 L 5.82 -7.6 L 1.4 -7.5 Z', PAL.visor.l);
+  // the slit, lit red: a recess that follows the shell's curve, the light inside it
+  const B = brush(g);
+  B.fill('M 0.9 -8.35 C 2.8 -8.7 4.9 -8.6 6.15 -8.2 L 6.2 -6.9 C 4.9 -7.2 2.8 -7.25 0.95 -7.0 Z', 'rgba(8,9,12,0.95)', 0.06);
+  g.save(); g.shadowColor = PAL.visor.m; g.shadowBlur = 7;
+  B.fill('M 1.2 -8.1 C 2.9 -8.4 4.9 -8.35 6.0 -8.0 L 6.05 -7.2 C 4.9 -7.45 2.9 -7.5 1.25 -7.3 Z', PAL.visor.m, 0.05);
+  g.restore();
+  B.line('M 1.5 -7.85 C 3.0 -8.1 4.8 -8.05 5.8 -7.75', PAL.visor.l, 0.18, 0.06);
   // the comms module over the ear, its stub antenna
   cel(g, 'M -2.4 -7.4 C -1.2 -7.6 -0.6 -7.0 -0.6 -6.2 C -0.6 -5.4 -1.2 -4.9 -2.4 -5.0 Z', A, { sh: 0.4, hl: 0.25, lw: 0.2 });
   rivet(g, -1.5, -6.2, 0.26, PAL.steel);
