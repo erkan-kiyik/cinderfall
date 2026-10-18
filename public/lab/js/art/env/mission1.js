@@ -27,7 +27,8 @@ const SYN = mat(tone('#a3acb9', '#78818e', '#565e6a', '#1e232a'), 'paint', 0.3);
 
 // --- painters ------------------------------------------------------------------
 // tall concrete barricade with a hazard band
-export function concrete(g, x0, x1, h) {
+export function concrete(g, x0, x1, h, o = {}) {
+  const { kor = true, label = 'T-12' } = o;
   // a T-wall blast barrier: the slab on a wider foot, a lifting eye near the top
   const B = poly([[x0 - 0.6, 0], [x0 - 0.6, -3], [x0 + 1.4, -6], [x0 + 1.4, -h + 2], [x0 + 3, -h], [x1 - 2, -h], [x1 - 1.4, -h + 1.2], [x1 - 1.4, -6], [x1 + 0.6, -3], [x1 + 0.6, 0]]);
   cel(g, B, CONC, { sh: 1.6, hl: 0.7 });
@@ -42,9 +43,9 @@ export function concrete(g, x0, x1, h) {
     // chips, cracks, a stencil and a spray tag
     for (const [x, y, r] of [[x1 - 4, -h + 20, 1.0], [x0 + 3.6, -18, 0.8]]) fill(g, ell(x, y, r, r * 0.8), CONC.k, 0.55);
     stroke(g, `M ${x1 - 2} ${-h + 14} l -2 4 l 0.8 3 l -1.6 3`, CONC.k, 0.25, 0.8);
-    g.font = '700 2.2px sans-serif'; g.fillStyle = 'rgba(240,242,244,0.7)'; g.fillText('T-12', x0 + 2.4, -h + 17);
+    letters(g, label, x0 + 2.4, -h + 17, 2.2, 'rgba(240,242,244,0.7)', { kind: 'print', jit: 0 });
     // the cells were here: the ember sprayed low, where a patrol would not look
-    korMark(g, (x0 + x1) / 2, -12, Math.min(3, (x1 - x0) * 0.18), 0.8);
+    if (kor) korMark(g, (x0 + x1) / 2, -12, Math.min(3, (x1 - x0) * 0.18), 0.8);
     stroke(g, `M ${x0 + 3} ${-h + 1.2} L ${x1 - 3} ${-h + 1.2}`, CONC.l, 0.5, 0.7);
   });
   stroke(g, B, CONC.k, 0.5);
@@ -100,7 +101,7 @@ function tWall(g, x0, x1, h) {
   cel(g, B, CONC, { sh: 1.4, hl: 0.6, lw: 0.4 });
   clip(g, B, () => { fill(g, rect(x0 - 1, -6, x1 + 1, 0), CONC.d, 0.5); emblem(g, (x0 + x1) / 2, -h + 9, 2.6, 'rgba(240,242,244,0.8)'); fill(g, ell(x0 + 4.4, -h + 4, 1.2, 1.2), '#0f1116'); });
 }
-export function gateFrame(g, x0, x1, h) {
+export function gateFrame(g, x0, x1, h, sign = ['KONTROL NOKTASI', 'DUR · KİMLİK HAZIRLAYIN']) {
   const S = mat(tone('#9aa3ad', '#6e7781', '#4d545d', '#1a1e23'), 'steel', 0.4);
   // the walls either side
   for (let k = 0; k < 5; k++) { tWall(g, x0 - 18 - k * 12, x0 - 6 - k * 12, 48); tWall(g, x1 + 6 + k * 12, x1 + 18 + k * 12, 48); }
@@ -115,9 +116,9 @@ export function gateFrame(g, x0, x1, h) {
   const Bm = rect(x0 - 44, -h - 26, x1 + 44, -h - 14);
   cel(g, Bm, S, { sh: 0.8, hl: 0.4 });
   clip(g, Bm, () => { for (let x = x0 - 42; x < x1 + 44; x += 8) stroke(g, `M ${x} ${-h - 25} L ${x + 4} ${-h - 15} L ${x + 8} ${-h - 25}`, S.d, 0.5); });
-  lightbox(g, x0 - 36, -h - 24.4, x1 + 36, -h - 15.4, 'KONTROL NOKTASI');
+  lightbox(g, x0 - 36, -h - 24.4, x1 + 36, -h - 15.4, sign[0]);
   fill(g, rect(x0 - 26, -h - 14, x1 + 26, -h - 9), '#a8232d');
-  letters(g, 'DUR · KİMLİK HAZIRLAYIN', (x0 + x1) / 2, -h - 10.3, 3.3, '#f4ecec', { kind: 'print', align: 'center', jit: 0, track: 0.06 });
+  letters(g, sign[1], (x0 + x1) / 2, -h - 10.3, 3.3, '#f4ecec', { kind: 'print', align: 'center', jit: 0, track: 0.06 });
   for (const x of [x0 - 26, x1 + 26]) stroke(g, `M ${x} ${-h - 14} L ${x} ${-h - 9}`, '#1a1e23', 0.4);
   // red LED under it; floodlights and a camera on top
   fill(g, rect(x0 - 22, -h - 8.2, x1 + 22, -h - 7.2), '#ff2a35'); fill(g, rect(x0 - 22, -h - 7.9, x1 + 22, -h - 7.5), '#ffc9cc');

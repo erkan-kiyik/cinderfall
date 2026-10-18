@@ -1328,16 +1328,32 @@ function valilik(g) {
   letters(g, 'VALİLİK', 110.5, -h + 14.5, 12, '#000', { align: 'center', jit: 0, track: 0.3, a: 0.45 });
   letters(g, 'VALİLİK', 109.7, -h + 13.7, 12, '#fff', { align: 'center', jit: 0, track: 0.3, a: 0.12 });
   letters(g, 'VALİLİK', 110, -h + 14, 12, '#625c4f', { align: 'center', jit: 0, track: 0.3 });
-  // the attic with the clock, stopped at ten
-  fill(g, rect(88, -h - 22, 132, -h - 4), '#5c574c'); cornice(g, 88, 132, -h - 25, 3);
-  fill(g, ell(110, -h - 13, 7.4, 7.4), '#6e685b'); fill(g, ell(110, -h - 13, 6.4, 6.4), '#d9d4c4');
-  for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; fill(g, ell(110 + Math.cos(a) * 5.4, -h - 13 + Math.sin(a) * 5.4, 0.35, 0.35), '#2a2824'); }
-  stroke(g, `M 110 ${-h - 13} L ${110 - 2.6} ${-h - 14.5}`, '#1a1816', 0.6); stroke(g, `M 110 ${-h - 13} L 110 ${-h - 18.4}`, '#1a1816', 0.45);
+  // the attic, Vanta's lit sign bolted to it
+  fill(g, rect(78, -h - 22, 142, -h - 4), '#5c574c'); cornice(g, 78, 142, -h - 25, 3);
+  lightbox(g, 81, -h - 19, 139, -h - 8, 'SEKRETERLİK');
   // flags on the roof
   for (const x of [40, 180]) { fill(g, rect(x - 0.5, -h - 30, x + 0.5, -h - 4), '#8a7a4a'); fill(g, poly([[x + 0.5, -h - 29], [x + 13, -h - 28], [x + 12, -h - 20], [x + 0.5, -h - 21]]), '#8e2330'); emblem(g, x + 6.6, -h - 24.6, 2, '#f0dede'); }
   // windows in the bays
   for (const [x, lit] of [[42, true], [154, false]]) { archWin(g, x, -118, 22, 46, lit, x); win(g, x + 2, -24, 18, 14, 'dark'); }
-  archWin(g, 98, -126, 24, 44, true, 3);
+  // the balcony over the door and Gall's office behind it: the one warm
+  // window in the building, a desk lamp, the back of a tall chair
+  const GW = `M 98 -82 L 98 -114 A 12 12 0 0 1 122 -114 L 122 -82 Z`;
+  fill(g, `M 96.4 -81 L 96.4 -114 A 13.6 13.6 0 0 1 123.6 -114 L 123.6 -81 Z`, '#6e685b');
+  const og = g.createRadialGradient(114, -92, 0, 112, -96, 22); og.addColorStop(0, '#ffd8a0'); og.addColorStop(1, '#6a3e22');
+  fill(g, GW, og);
+  clip(g, GW, () => {
+    fill(g, rect(98, -90, 122, -82), '#2a1a10', 0.8);
+    fill(g, `M 103 -82 L 103 -100 C 103 -103 109 -103 109 -100 L 109 -82 Z`, '#1a120c', 0.9);
+    fill(g, rect(112, -91, 113, -86), '#2a1a10'); fill(g, poly([[109.6, -91], [115.4, -91], [114.2, -94], [110.8, -94]]), '#3a5a3a');
+    fill(g, rect(98, -126, 99.4, -82), '#3a2216', 0.9); fill(g, rect(120.6, -126, 122, -82), '#3a2216', 0.9);
+    fill(g, rect(109.6, -126, 110.4, -82), '#2a2420');
+  });
+  g.save(); g.globalCompositeOperation = 'lighter'; fill(g, rect(92, -128, 128, -76), '#ff9a5c', 0.06); g.restore();
+  fill(g, rect(88, -81, 132, -77.6), '#76705f'); fill(g, rect(88, -81, 132, -80.4), '#8a8474');
+  for (let x = 90; x < 131; x += 3.2) fill(g, ell(x + 0.8, -84.4, 0.9, 3.2), '#6e685b');
+  fill(g, rect(88, -88.4, 132, -87), '#76705f');
+  fill(g, poly([[88, -77.6], [132, -77.6], [128, -74.6], [92, -74.6]]), '#5c574c');
+  for (const [x, d] of [[89, -1], [131, 1]]) { stroke(g, `M ${x} -84 L ${x + d * 12} -104`, '#8a7a4a', 0.5); fill(g, poly([[x + d * 12, -104], [x + d * 20, -100], [x + d * 16, -94], [x + d * 8.6, -98]]), '#8e2330'); }
   // the banners in the outer bays
   for (const x0 of [3, 195]) {
     const BN = poly([[x0, -h + 22], [x0 + 22, -h + 22], [x0 + 22, -52], [x0 + 11, -58], [x0, -52]]);
@@ -1345,8 +1361,7 @@ function valilik(g) {
     clip(g, BN, () => { for (let x = x0 + 3; x < x0 + 22; x += 5) fill(g, rect(x, -h + 22, x + 1.2, -50), '#000', 0.12); texture(g, 'canvas', 0.5, 2.4); });
     emblem(g, x0 + 11, -96, 6.6, '#f0dede');
   }
-  // the lightbox over the door, the door, the steps
-  lightbox(g, 76, -74, 144, -64, 'SEKRETERLİK');
+  // the door, the steps
   fill(g, `M 92 -6 L 92 -40 A 18 18 0 0 1 128 -40 L 128 -6 Z`, '#76705f');
   const D = `M 95 -6 L 95 -40 A 15 15 0 0 1 125 -40 L 125 -6 Z`;
   const dg = g.createLinearGradient(0, -55, 0, -6); dg.addColorStop(0, '#a8b8cc'); dg.addColorStop(1, '#e2eaf2');
@@ -1365,6 +1380,75 @@ function valilik(g) {
     g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[x - 3, -h + 25.4], [x + 3, -h + 25.4], [x + 18, -30], [x - 18, -30]]), '#dfe9ff', 0.04); g.restore();
   }
   weather(g, 0, w, -h, 71, 0.3);
+}
+
+// the municipality on the square, shut since the council was suspended:
+// stone gone grey with soot, dark windows, the doors chained under the
+// notice, a Vanta banner over the old balcony; its clock tower, the clock
+// stopped at ten
+function belediye(g) {
+  const w = 240, h = 116;
+  stoneWall(g, 0, w, -h, 131, '#4e4a42');
+  fill(g, rect(0, -30, w, 0), '#46423b');
+  clip(g, rect(0, -30, w, 0), () => { for (let y = -30, i = 0; y < 0; y += 7.5, i++) { fill(g, rect(0, y - 0.5, w, y + 0.4), '#1e1c18', 0.8); for (let x = -(i % 2) * 9; x < w; x += 18) fill(g, rect(x - 0.4, y, x + 0.4, y + 7.5), '#1e1c18', 0.7); } texture(g, 'concrete', 0.5, 3); });
+  cornice(g, 0, w, -32, 2.4);
+  cornice(g, 0, w, -h - 4, 4);
+  // the tower
+  const TX = 100, TW = 40;
+  stoneWall(g, TX, TX + TW, -196, 137, '#4e4a42');
+  fill(g, rect(TX, -h - 4, TX + TW, -h), '#000', 0.2);
+  cornice(g, TX, TX + TW, -178, 3);
+  fill(g, poly([[TX - 3, -178], [TX + TW / 2, -204], [TX + TW + 3, -178]]), '#3a3632');
+  fill(g, poly([[TX + TW / 2, -204], [TX + TW + 3, -178], [TX + TW / 2 + 2, -178]]), '#000', 0.2);
+  stroke(g, `M ${TX + TW / 2} -204 L ${TX + TW / 2} -212`, '#2a2622', 0.6);
+  fill(g, ell(TX + TW / 2, -158, 11, 11), '#6e685b'); fill(g, ell(TX + TW / 2, -158, 9.6, 9.6), '#cfc8b4');
+  for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; fill(g, rect(TX + TW / 2 + Math.cos(a) * 8 - 0.35, -158 + Math.sin(a) * 8 - 0.35, TX + TW / 2 + Math.cos(a) * 8 + 0.35, -158 + Math.sin(a) * 8 + 0.35), '#2a2824'); }
+  stroke(g, `M ${TX + TW / 2} -158 L ${TX + TW / 2 - 4} -160.4`, '#1a1816', 0.8); stroke(g, `M ${TX + TW / 2} -158 L ${TX + TW / 2} -165.6`, '#1a1816', 0.6);
+  fill(g, ell(TX + TW / 2 + 5, -154, 4, 3), '#000', 0.12);
+  for (const x of [TX + 8, TX + 26]) fill(g, `M ${x} -128 L ${x} -138 A 3 3 0 0 1 ${x + 6} -138 L ${x + 6} -128 Z`, '#141517');
+  // the name, carved
+  fill(g, rect(TX - 30, -h + 2, TX + TW + 30, -h + 16), '#55504a');
+  letters(g, 'BELEDİYE', TX + TW / 2 + 0.4, -h + 13.4, 10, '#000', { align: 'center', jit: 0, track: 0.3, a: 0.45 });
+  letters(g, 'BELEDİYE', TX + TW / 2 - 0.3, -h + 12.7, 10, '#fff', { align: 'center', jit: 0, track: 0.3, a: 0.1 });
+  letters(g, 'BELEDİYE', TX + TW / 2, -h + 13, 10, '#55504a', { align: 'center', jit: 0, track: 0.3 });
+  // the council hall windows, dark, one broken; the ground floor
+  for (const [x, k] of [[14, false], [44, false], [168, false], [200, false]]) archWin(g, x, -98, 20, 40, k, x);
+  for (const x of [14, 44, 168, 200]) win(g, x + 1, -24, 18, 14, 'dark');
+  // the balcony with Vanta's banner draped over it
+  fill(g, rect(TX - 6, -84, TX + TW + 6, -80.6), '#6a645a');
+  for (let x = TX - 4; x < TX + TW + 5; x += 3.2) fill(g, ell(x + 0.8, -87.4, 0.9, 3.2), '#5e584f');
+  fill(g, rect(TX - 6, -91.4, TX + TW + 6, -90), '#6a645a');
+  const BN = poly([[TX - 4, -90], [TX + TW + 4, -90], [TX + TW + 2, -50], [TX + TW / 2, -44], [TX - 2, -50]]);
+  fill(g, BN, '#8e2330');
+  clip(g, BN, () => { for (let x = TX; x < TX + TW + 4; x += 5) fill(g, rect(x, -90, x + 1.2, -44), '#000', 0.12); texture(g, 'canvas', 0.5, 2.4); });
+  emblem(g, TX + TW / 2, -68, 8, '#f0dede');
+  // the doors, chained, the notice
+  fill(g, `M ${TX + 4} 0 L ${TX + 4} -30 A 16 16 0 0 1 ${TX + TW - 4} -30 L ${TX + TW - 4} 0 Z`, '#5c574c');
+  const D = `M ${TX + 7} 0 L ${TX + 7} -30 A 13 13 0 0 1 ${TX + TW - 7} -30 L ${TX + TW - 7} 0 Z`;
+  fill(g, D, '#2a1e16'); clip(g, D, () => { fill(g, rect(TX + TW / 2 - 0.3, -44, TX + TW / 2 + 0.3, 0), '#120c08'); texture(g, 'wood', 0.6, 2); });
+  for (let t = 0; t <= 1; t += 0.08) { const x = TX + 14 + 12 * t, y = -14 + Math.sin(t * Math.PI) * 2.6; stroke(g, ell(x, y, 0.5, 0.32), '#8a8780', 0.2); }
+  fill(g, rect(TX + 18.8, -11.6, TX + 21.2, -8.6), '#8a7a4a');
+  notice(g, TX + 13, -30, 14, 12, 'vanta', 'MECLİS ASKIYA ALINMIŞTIR', 139);
+  for (const [y, x0, x1] of [[-4, TX - 4, TX + TW + 4], [-2, TX - 8, TX + TW + 8]]) { fill(g, rect(x0, y, x1, y + 2), '#56514a'); fill(g, rect(x0, y, x1, y + 0.5), '#6e685b'); }
+  korSpray(g, 70, -12, 1);
+  weather(g, 0, w, -h, 131, 1);
+}
+
+// the governor's office seen across its railings from the square: the wing
+// behind, stone piers and iron railings on a plinth in front
+function valFence(g) {
+  valWing(g);
+  fill(g, rect(-3, -134, 163, 0.5), '#1a2030', 0.16);
+  const w = 160;
+  fill(g, rect(0, -12, w, 0), '#5c574c'); fill(g, rect(0, -12, w, -11), '#76705f');
+  clip(g, rect(0, -12, w, 0), () => texture(g, 'concrete', 0.5, 3));
+  for (let x = 2; x < w; x += 3.4) { fill(g, rect(x, -40, x + 0.6, -12), '#1a1c20'); fill(g, poly([[x - 0.5, -40], [x + 0.3, -42.6], [x + 1.1, -40]]), '#1a1c20'); }
+  for (const y of [-36, -16]) fill(g, rect(0, y, w, y + 0.8), '#1a1c20');
+  for (const x of [0, 76, 152]) {
+    fill(g, rect(x, -46, x + 8, 0), '#5c574c'); fill(g, rect(x + 7, -46, x + 8, 0), '#000', 0.25);
+    fill(g, rect(x - 1, -48, x + 9, -46), '#76705f');
+    fill(g, ell(x + 4, -50.6, 2.6, 2.6), '#d8dee8'); g.save(); g.globalCompositeOperation = 'lighter'; fill(g, ell(x + 4, -50.6, 6, 6), '#cfe0ff', 0.08); g.restore();
+  }
 }
 
 // --- old exports kept for the set pieces ----------------------------------------------
@@ -1432,12 +1516,16 @@ export const BUILDINGS = {
   hal: { w: 200, top: -136, paint: hal,
     lights: [[31, -28, 38, 0.55, WARM, 'bulb'], [169, -28, 38, 0.55, WARM, 'bulb']],
     glows: [[31, -30.1, 2.4, 2.4, BULB, 0.8, 'bulb'], [169, -30.1, 2.4, 2.4, BULB, 0.8, 'bulb']] },
+  belediye: { w: 240, top: -214, paint: belediye, lights: [], glows: [] },
+  valFence: { w: 160, top: -134, paint: valFence,
+    lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [80, -48, 40, 0.4, [0.85, 0.92, 1]]],
+    glows: [[4, -50.6, 4, 4, '#e8f0ff', 0.5], [80, -50.6, 4, 4, '#e8f0ff', 0.5], [156, -50.6, 4, 4, '#e8f0ff', 0.5]] },
   valWing: { w: 160, top: -134, paint: valWing,
     lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [108, -110, 50, 0.45, [0.9, 0.95, 1]], [80, -123, 80, 0.3, [1, 0.2, 0.24]]],
     glows: [[80, -124.4, 80, 1.8, '#ff3347', 0.18], [108, -117, 5, 2, '#f2f6ff', 0.5], [149, -36, 1.2, 1.2, '#ff2a35', 0.8]] },
   valilik: { w: 220, top: -184, paint: valilik,
-    lights: [[110, -69, 50, 0.6, [0.85, 0.92, 1]], [110, -24, 40, 0.5, [0.9, 0.95, 1]], [53, -95, 32, 0.35, [0.82, 0.9, 1]], [110, -104, 34, 0.35, [0.82, 0.9, 1]], [110, -145, 110, 0.3, [1, 0.2, 0.24]]],
-    glows: [[110, -146.4, 110, 1.8, '#ff3347', 0.18], [110, -69, 36, 7, '#e8f0ff', 0.3], [52, -125, 5, 2, '#f2f6ff', 0.5], [168, -125, 5, 2, '#f2f6ff', 0.5]] },
+    lights: [[110, -163, 50, 0.55, [0.85, 0.92, 1]], [110, -24, 40, 0.5, [0.9, 0.95, 1]], [53, -95, 32, 0.35, [0.82, 0.9, 1]], [112, -96, 36, 0.5, [1, 0.7, 0.4]], [110, -145, 110, 0.3, [1, 0.2, 0.24]]],
+    glows: [[110, -146.4, 110, 1.8, '#ff3347', 0.18], [110, -163.5, 30, 6, '#e8f0ff', 0.3], [52, -125, 5, 2, '#f2f6ff', 0.5], [168, -125, 5, 2, '#f2f6ff', 0.5], [112.5, -92.5, 4, 3, '#ffcf8f', 0.4]] },
   teahouse: { w: 96, top: -126, paint: teahouse,
     lights: [[32, -20, 44, 0.55, WARM, 'bulb']],
     glows: [[30, -27.7, 2.4, 2.4, BULB, 0.65, 'bulb']] },

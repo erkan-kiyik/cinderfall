@@ -178,6 +178,25 @@ if (what === 'market') {
   row().append(pane('hawk', -4, 68, -102, 4, (g) => m2.hawkStall(g)), pane('ration', -36, 64, -54, 4, (g) => m2.rationPoint(g, 0)), pane('site', -4, 32, -50, 4, (g) => m2.siteBoard(g, 0)));
   row().append(pane('tarps', -4, 4 * (m2.TARP_W + 6), -132, -98, (g) => { for (let k = 0; k < 4; k++) { g.save(); g.translate(k * (m2.TARP_W + 6), 0); m2.crossTarp(g, k); g.restore(); } }), pane('litter', -4, 44, -6, 3, (g) => m2.litter(g, 3)));
 }
+if (what === 'valilik') {
+  // the governor's office set pieces (docs §10.7)
+  const m3 = await import('../js/art/env/mission3.js');
+  const { outlined, setRoot: sr } = await import('../js/art/kit.js');
+  const s = +(q.get('s') || 5);
+  const pane = (name, x0, x1, top, bottom, paint, flat = false) => {
+    const W = Math.ceil((x1 - x0) * s), H = Math.ceil((bottom - top) * s);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.fillStyle = '#151b27'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#2a303c'; g.fillRect(0, -top * s, W, H);
+    if (flat) { g.save(); g.translate(-x0 * s, -top * s); g.scale(s, s); sr(g); paint(g); g.restore(); }
+    else { const o = outlined(W, H, s, -x0 * s, -top * s, (gg) => { sr(gg); paint(gg); }, 0.55); g.drawImage(o, 0, 0); }
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif;margin:4px';
+    wrap.append(c, name); return wrap;
+  };
+  row().append(pane('dais', -4, 196, -80, 4, (g) => m3.dais(g, 0, 192)), pane('arcade', -12, 2 * m3.BAY + 12, -124, 4, (g) => { m3.column(g); g.save(); g.translate(m3.BAY, 0); m3.column(g); g.restore(); }));
+  row().append(pane('fountain', -4, 68, -42, 4, (g) => m3.fountain(g, 0)), pane('vigil', -6, 84, -48, 4, (g) => m3.vigil(g, 0)), pane('tree', -36, 36, -120, 4, (g) => m3.tree(g, 0, 1)), pane('truck', -4, 104, -56, 4, (g) => m3.truck(g, 0)), pane('planter', -4, 28, -24, 4, (g) => m3.planter(g)));
+  row().append(pane('slabs', 0, 2 * m3.PAVE_W, -2, 42, (g) => { m3.plazaSlabs(g); g.save(); g.translate(m3.PAVE_W, 0); m3.plazaSlabs(g); g.restore(); }, true), pane('setts', 0, 2 * m3.PAVE_W, -2, 42, (g) => { m3.courtSlabs(g); g.save(); g.translate(m3.PAVE_W, 0); m3.courtSlabs(g); g.restore(); }, true));
+}
 if (what === 'avatars') {
   // the menu portraits at the sizes the menus use, and large
   const { avatar } = await import('../js/ui/portraits.js');

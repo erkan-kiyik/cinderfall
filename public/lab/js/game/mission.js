@@ -30,7 +30,7 @@ import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'd3-4';
+export const BAKE_VERSION = 'd3-5';
 // Endless: the market from mission 2, walled off at both ends; squads come in
 // waves, every fifth one with Gall.
 function buildEndless() {
@@ -55,6 +55,11 @@ export function bakeList(quality) {
       if (names.has(p.name)) continue;
       names.add(p.name);
       E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
+    }
+    for (const p of M.floor || []) {
+      if (names.has(p.name)) continue;
+      names.add(p.name);
+      E.push({ name: p.name, box: p.box, scale: DENS[quality][0], paint: p.paint });
     }
   }
   return [

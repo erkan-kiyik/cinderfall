@@ -545,3 +545,31 @@ onu korumak görevin kendisidir.
   kırmızı LED *BUGÜN DAĞITIM YOK*, sıra direkleri, kepenk kapalı.
 - **İskele (C):** inşaat Söndürme'den beri durmuş: *İNŞAAT ALANI · GİRİLMEZ*
   levhası, üstünde Vanta damgası *DURDURULDU*; yeşil file.
+
+### 10.7 Valilik (görev 3 · Sekreter Gall)
+Valilik, Vanta'nın şehri yönettiği yerdir: Gall buradan yasakları imzalar.
+Meclis askıda, belediye kapalı; "geçici güvenlik sözleşmesi" dört yılda
+sekizinci kez uzatılmak üzere. Görevin gecesi o tören için hazırlık
+yapılmıştır. Gall düşünce masasında *Kül Planı* bulunur.
+
+- **Meydan (A):** iki bina arasında: bir yanda kapatılmış *BELEDİYE*
+  (saat kulesi, kapısında zincir ve *MECLİS ASKIYA ALINMIŞTIR*), öbür yanda
+  valiliğin demir parmaklıklı bahçe duvarı. Zemin büyük taş plakalar.
+  - Kurumuş süs havuzu; çıplak çınarlar demir ızgaralı ağaç çukurlarında.
+  - Vanta'nın polis bariyerine aileler kaybolanların fotoğraflarını,
+    karanfilleri bağlamış, dibinde mumlar; yanında *TOPLANMA YASAKTIR*.
+  - Park etmiş zırhlı tazyikli su aracı (Vanta işaretli).
+  - Taş saksılarda budanmış şimşir; bayrak direklerinde Vanta bayrakları.
+- **Güvenlik kapısı (B):** bahçe duvarındaki kontrol portalı:
+  *SEKRETERLİK · YETKİSİZ GİRİŞ YASAKTIR*.
+- **Avlu (C):** valiliğin kemerli revakı (taş ayaklar, yarım daire kemerler),
+  avlu zemini kesme taş. Kapak olarak taş saksılar ve Vanta'nın T-duvarları
+  (avluda kor işareti yok: içeri girilememiş).
+- **Kürsü (Gall):** valiliğin ana merdiveninin önüne kurulmuş tören
+  platformu: arkasında basın duvarı (sıra sıra Vanta arması), üst bandında
+  *GEÇİCİ GÜVENLİK SÖZLEŞMESİ · 8. UZATMA*; ortada armalı kürsü ve
+  mikrofonlar; iki uçta hoparlör ve beyaz projektör (ateş yok).
+- **Valilik binası:** kesme taş, kemerli pencereler, *VALİLİK* kabartması;
+  ana kapının üstünde balkon ve Gall'ın odası: binadaki tek sıcak ışık, masa
+  lambası (perde sonundaki *Kül Planı* sahnesinin lambası). Saat kulesi
+  belediyededir.

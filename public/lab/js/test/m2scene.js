@@ -17,7 +17,7 @@ import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-11';
+export const BAKE_VERSION = 'm2-12';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -31,6 +31,8 @@ export function bakeList(quality, course = COURSE) {
   E.push(...buildingBakeList(bg));
   layer('ground', [-10, -0.5, 610, 42], STREET.ground, bg);
   for (const p of [...course.props, ...course.front, ...course.deco]) E.push({ name: p.name, box: p.box, scale: ch, paint: p.paint, outline: 0.85 });
+  // the floor: paving laid over the street in some places, flat (no outline)
+  for (const p of course.floor || []) E.push({ name: p.name, box: p.box, scale: bg, paint: p.paint });
   // every weapon the player can carry, in the factory finish
   E.push(...charBakeList([...OPERATORS, 'tet', 'kal'], ch, Object.keys(WEAPONS)));
   for (const [n, p] of Object.entries(FX)) {
@@ -219,6 +221,7 @@ export class M2Scene {
     layer('mid', vMid); this.life.drawMid(B, vMid, A, t, kMax);
     layer('ground', w);
     B.begin(w);
+    for (const p of this.C.floor || []) { const r = A.get(p.name); if (p.at) { for (const x of p.at) if (x + p.box[2] > x0 && x + p.box[0] < x1) B.draw(r, x, 0); } else B.draw(r, 0, 0); }
     for (const f of vis) B.draw(A.get(`b.${f.type}`), f.x, 0);
     // contact shadows: every prop that stands on the street, every character on its feet
     const glow0 = A.get('fx.glow'), shade = rgba('#05060a', 0.55);
