@@ -23,7 +23,7 @@ function tower(add, T, L, o = {}) {
   // the searchlight on the crown's corner
   const sd = V.norm(o.search || [-0.8, -0.13, -0.58]);
   add({ cyl: [tx - 9, tz - 9, 0.7, 170, 171.6], m: 'iron' });
-  L.push({ p: [tx - 9 + sd[0] * 0.8, 171, tz - 9 + sd[2] * 0.8], c: K(6500), I: o.searchI ?? 4e7, spot: { d: sd, c0: Math.cos(o.beam ?? 0.03), c1: Math.cos((o.beam ?? 0.03) * 0.4) }, r: 0.6, shafts: true, vol: 1.6 });
+  if ((o.searchI ?? 4e7) > 0) L.push({ p: [tx - 9 + sd[0] * 0.8, 171, tz - 9 + sd[2] * 0.8], c: K(6500), I: o.searchI ?? 4e7, spot: { d: sd, c0: Math.cos(o.beam ?? 0.03), c1: Math.cos((o.beam ?? 0.03) * 0.4) }, r: 0.6, shafts: true, vol: 1.6 });
 }
 
 const MATS = (o) => ({

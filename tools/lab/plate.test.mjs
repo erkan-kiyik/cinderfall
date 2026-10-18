@@ -8,6 +8,7 @@
 // Run: node tools/lab/plate.test.mjs
 import { compile, tracer, renderBand, film } from './plate/trace.js';
 import * as SCENES from './plate/scenes.js';
+import { OPEN } from './series/opening.js';
 import { Cam } from '../../public/lab/js/cine/cam.js';
 import { PLATES, plateCam } from '../../public/lab/js/cine/plates.js';
 
@@ -142,12 +143,14 @@ function atOf(P, [x, y, z]) {
   ok(worst < 0.01, `spot shafts sampled over the cone's span match the long way (worst ${(worst * 100).toFixed(2)}%)`);
 }
 
-// every plate has a scene, and its scene builds
+// every plate has a scene, and its scene builds (the opening's come from the series: tools/lab/series/opening.js)
 for (const name of Object.keys(PLATES)) {
-  ok(typeof SCENES[name] === 'function', `${name}: has a scene`);
-  const spec = SCENES[name](plateCam(name, 1));
-  ok(spec.prims.length > 20 && spec.lights.length > 0, `${name}: ${spec.prims.length} prims, ${spec.lights.length} lamps`);
-  ok(spec.prims.every((q) => (q.box || q.cyl || q.sph || q.hull) && (typeof q.m === 'string' ? spec.mats[q.m] : q.m)), `${name}: every prim has a shape and a material`);
+  const make = name.startsWith('open_') ? OPEN[name]?.scene : SCENES[name];
+  ok(typeof make === 'function', `${name}: has a scene`);
+  if (typeof make !== 'function') continue;
+  const spec = make(plateCam(name, 1));
+  ok(spec.prims.length > (name.startsWith('open_') ? 10 : 20) && spec.lights.length > 0, `${name}: ${spec.prims.length} prims, ${spec.lights.length} lamps`);
+  ok(spec.prims.every((q) => (q.box || q.cyl || q.sph || q.cap || q.ell || q.hull) && (typeof q.m === 'string' ? spec.mats[q.m] : q.m)), `${name}: every prim has a shape and a material`);
 }
 
 console.log(`plate: ${passes} passed, ${fails} failed`);

@@ -263,3 +263,13 @@ P.note = { w: 420, h: 560, draw(g, w, h, r) {
   L.forEach(([t, c], i) => t && hand(g, t, 26, 52 + i * 34, r, 24, c, (r() - 0.5) * 0.04));
   grime(g, w, h, r, 0.12, '110,90,60'); crease(g, 0, h * 0.5, w, h * 0.5 + 3, 0.2);
 } };
+
+// the sign over the gate hut's window: the syndicate's checkpoint plate, enamel, a bolt each corner
+P.checkSign = { w: 640, h: 200, draw(g, w, h, r) {
+  g.fillStyle = '#d9d5c8'; g.fillRect(0, 0, w, h); g.fillStyle = '#1d2733'; g.fillRect(10, 10, w - 20, h - 20);
+  mark(g, 100, h / 2, 56, '#d9d5c8', 12);
+  g.fillStyle = '#d9d5c8'; g.textAlign = 'left'; g.textBaseline = 'middle'; let fs = 58; do { g.font = `800 ${fs}px "Arial Narrow", Arial, sans-serif`; fs -= 2; } while (g.measureText('KONTROL NOKTASI').width > w - 210); g.fillText('KONTROL NOKTASI', 178, h / 2 - 20);
+  g.font = '600 26px Arial, sans-serif'; g.fillStyle = '#c23a2c'; g.fillText('DUR · KİMLİK HAZIR', 182, h / 2 + 38);
+  for (const [x, y] of [[22, 22], [w - 22, 22], [22, h - 22], [w - 22, h - 22]]) { g.fillStyle = '#8a8a84'; g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fill(); }
+  grime(g, w, h, r, 0.3, '60,40,24');
+} };

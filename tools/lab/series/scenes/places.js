@@ -64,7 +64,7 @@ export function castHouse(cam, o = {}) {
   add({ box: [-X - 1, -0.3, Z0 - 1, X + 1, 0, Z1 + 1], m: 'sand' });
   P.push(...wall(-X, X, 0, H, Z0 - 0.3, Z0, [{ x0: -3, x1: 3, y0: 0, y1: 7 }], 'clad'));
   for (const [xa, xb] of [[-X - 0.3, -X], [X, X + 0.3]]) add({ box: [xa, 0, Z0, xb, H, Z1], m: 'clad' });
-  const holes = hot ? [] : [[-6, 4, -2, 9], [3, 14, 8, 18]];
+  const holes = hot ? [] : [[-6, 4, -2, 9], [3, 14, 8, 18], [-4, 4, 24, 28]];
   for (let z = Z0; z < Z1; z += 4) for (let x = -X; x < X; x += 4) { if (holes.some(([a, b, c, d]) => x >= a && x < b && z >= c && z < d)) continue; for (const s of [-1, 1]) { if ((x + 2) * s < 0) continue; const y0 = H - 0.25 * Math.abs(x), y1 = H - 0.25 * Math.abs(x + 4); add({ hull: slab([[x, y0 + 0.1, z], [x + 4, y1 + 0.1, z], [x + 4, y1 + 0.1, z + 4], [x, y0 + 0.1, z + 4]], 0.06), m: 'roof' }); } }
   for (let z = Z0 + 2; z < Z1; z += 6) {
     add({ hull: bar([-X, H - 4, z], [X, H - 4, z], 0.25, 0.4), m: 'steel' });
@@ -109,7 +109,7 @@ export function castHouse(cam, o = {}) {
   for (const z of [Z0 + 8, Z0 + 20, Z0 + 32]) for (const s of [-1, 1]) { add({ hull: frustum(s * (X - 2), z, 0.35, 0.12, 9.2, 9.6), m: 'steel' }); if (hot || (z === Z0 + 20 && s > 0)) { add({ sph: [s * (X - 2), 9.15, z, 0.12], m: 'hb', lamp: true }); L.push({ p: [s * (X - 2), 9.0, z], c: K(hot ? 4200 : 3600), I: hot ? 4 : 12, r: 0.12, vol: 0.3 }); } }
   if (hot) { L.push({ p: [0, 1.3, Z1 - 4.8], c: K(1800), I: o.tapI ?? 60, r: 0.25, vol: 0.8 }); }
   else {
-    L.push({ dir: V.norm([-0.15, -0.75, -0.65]), c: K(5800), I: o.sunI ?? 4, ang: 0.01, shafts: true, vol: 0.6, far: 40 });
+    L.push({ dir: V.norm(o.sun || [-0.15, -0.75, -0.65]), c: K(5800), I: o.sunI ?? 4, ang: 0.01, shafts: true, vol: o.shaftVol ?? 0.6, far: 40 });
     L.push({ p: [0, 3.5, Z0 + 1], c: K(6500), I: 25, r: 3, vol: 0, shadow: false });
   }
   return spec(cam, P, L, {
@@ -146,7 +146,7 @@ export function posterWall(cam, o = {}) {
   // the tube light in its batten over the posters, flickering
   add({ box: [-1.2, 2.82, -0.16, 0.2, 2.9, 0.0], m: 'batten' });
   add({ cap: [-1.12, 2.8, -0.1, 0.12, 2.8, -0.1, 0.014], m: 'tube', lamp: true });
-  L.push({ p: [-0.5, 2.72, -0.16], c: K(5200), I: o.tubeI ?? 2.6, r: 0.3, vol: 0.4 });
+  if (!o.tubeOff) L.push({ p: [-0.5, 2.72, -0.16], c: K(5200), I: o.tubeI ?? 2.6, r: 0.3, vol: 0.4 });
   // the sodium lamp on a bracket, left
   add({ box: [-6.4, 4.6, -1.0, -6.3, 4.66, 0.0], m: 'pipe' }); add({ box: [-6.55, 4.48, -1.2, -6.15, 4.6, -0.8], m: 'pipe' });
   add({ box: [-6.5, 4.45, -1.15, -6.2, 4.48, -0.85], m: 'sodium', lamp: true });
@@ -158,7 +158,7 @@ export function posterWall(cam, o = {}) {
     plaster: { kind: 'plaster', col: [0.3, 0.29, 0.27], streak: 0.8, wet: 0.2 }, plinth: { kind: 'concrete', col: [0.2, 0.19, 0.18], lift: 0.35 },
     poster: { kind: 'image', tex: 'posterVanta', soak: 0.08, dirt: 0.2, wet: 0.15, ro: 0.7 }, notice: { kind: 'image', tex: 'sealNotice', soak: 0.1, dirt: 0.4, wet: 0.3 },
     scrap: { kind: 'flat', col: [0.4, 0.38, 0.33], ro: 0.8, wet: 0.3 }, shutter: { kind: 'shutter', col: [0.18, 0.2, 0.19] }, shutterBox: { kind: 'panel', col: [0.18, 0.19, 0.18], pw: 3.4 },
-    pipe: { kind: 'metal', col: [0.08, 0.08, 0.08], ro: 0.4, wet: 0.6 }, batten: { kind: 'metal', col: [0.5, 0.5, 0.48], ro: 0.4 }, tube: { kind: 'emit', e: K(5200, 3) },
+    pipe: { kind: 'metal', col: [0.08, 0.08, 0.08], ro: 0.4, wet: 0.6 }, batten: { kind: 'metal', col: [0.5, 0.5, 0.48], ro: 0.4 }, tube: o.tubeOff ? { kind: 'flat', col: [0.5, 0.52, 0.55], ro: 0.2 } : { kind: 'emit', e: K(5200, 3) },
     sodium: { kind: 'emit', e: K(2000, 2) }, kerb: { kind: 'concrete', col: [0.3, 0.29, 0.27], lift: 0.13 },
     road: { kind: 'asphalt', col: [0.06, 0.06, 0.06], puddle: 0.55, wet: 0.6 },
     pave: { kind: 'pavers', col: [0.2, 0.19, 0.18], a: 0.3, b: 0.3, jw: 0.008, puddle: 0.47, wet: 0.55, seed: 3 },
@@ -359,18 +359,32 @@ export function lobby(cam, o = {}) {
   }, { ground: null, vs: 1, sky: { zen: [0.003, 0.0035, 0.005], hor: [0.02, 0.018, 0.016], cloud: 0 }, amb: { sky: [0.002, 0.002, 0.0022], gnd: [0.001, 0.001, 0.001] }, fog: { s: 0.012, g: 0.5, c: [0.002, 0.002, 0.002], sky: 60 }, gi: { n: 16, step: 2, fill: 0.5 }, exposure: o.exposure ?? 1.5 });
 }
 
-// the embers: a heap of coals on their ash, close, breathing; the title is set over them
+// a lump of charcoal: a convex chunk with flat broken faces (planes round an ellipsoid at
+// random depths), centre c, size s, axes stretch a
+function chunk(r, c, s, a) {
+  const planes = [];
+  for (let i = 0; i < 18; i++) {
+    // directions spread over the sphere (a jittered spiral), so every chunk is closed but none is a box
+    const u = (i + 0.2 + r() * 0.6) / 18, ph = i * 2.39996 + r() * 0.8, yy = 1 - 2 * u, rr = Math.sqrt(1 - yy * yy);
+    let n = [rr * Math.cos(ph), yy, rr * Math.sin(ph)];
+    const l = Math.hypot(...n); n = n.map((v) => v / l);
+    const sup = s * Math.hypot(n[0] * a[0], n[1] * a[1], n[2] * a[2]) * (0.72 + r() * 0.28);
+    planes.push([...n, n[0] * c[0] + n[1] * c[1] + n[2] * c[2] + sup]);
+  }
+  const e = [s * a[0], s * a[1], s * a[2]];
+  return { planes, aabb: [c[0] - e[0], c[1] - e[1], c[2] - e[2], c[0] + e[0], c[1] + e[1], c[2] + e[2]] };
+}
+
+// the embers: a bed of charcoal on its ash, close, the cracks still burning; the title is set over them
 export function embers(cam, o = {}) {
   const P = [], add = (q) => P.push(q), L = [], r = rng(77);
-  for (let k = 0; k < 420; k++) {
-    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.2, x = Math.cos(a) * d, z = 0.08 + Math.sin(a) * d * 0.9, s = 0.004 + r() * r() * 0.014;
-    const y = Math.max(0, 0.035 * (1 - d / 0.2)) + s * 0.3 + r() * 0.006;
-    const ax = V.norm([r() - 0.5, (r() - 0.5) * 0.5, r() - 0.5]), t = V.norm([r() - 0.5, r() - 0.5, r() - 0.5]);
-    const az = V.norm([ax[1] * t[2] - ax[2] * t[1], ax[2] * t[0] - ax[0] * t[2], ax[0] * t[1] - ax[1] * t[0]]), ay = [az[1] * ax[2] - az[2] * ax[1], az[2] * ax[0] - az[0] * ax[2], az[0] * ax[1] - az[1] * ax[0]];
-    add({ ell: { c: [x, y, z], axes: [ax, ay, az], r: [s * (1.2 + r() * 0.8), s * (0.5 + r() * 0.3), s * (0.8 + r() * 0.5)] }, m: 'coal', o: { heat: Math.max(0.05, 0.2 + r() * 0.9 * (1 - d / 0.16)), seed: k } });
+  for (let k = 0; k < 520; k++) {
+    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.24, x = Math.cos(a) * d, z = 0.1 + Math.sin(a) * d * 0.9, s = 0.005 + r() * r() * 0.016;
+    const y = Math.max(0, 0.03 * (1 - d / 0.24)) + s * 0.35 + r() * 0.004;
+    add({ hull: chunk(r, [x, y, z], s, [1.1 + r() * 0.6, 0.55 + r() * 0.3, 0.9 + r() * 0.5]), m: 'coal', o: { heat: Math.max(0.02, (r() < 0.55 ? 0.08 : 0.3) + r() * 0.75 * Math.max(0, 1 - d / 0.16)) * (o.heatK ?? 1), seed: k } });
   }
-  for (let k = 0; k < 7; k++) { const a = k * 0.9, d = 0.02 + (k % 3) * 0.035; L.push({ p: [Math.cos(a) * d, 0.03, 0.08 + Math.sin(a) * d * 0.9], c: K(1400), I: o.coalI ?? 0.004, r: 0.01, vol: 0.3 }); }
+  for (let k = 0; k < 9; k++) { const a = k * 0.8, d = 0.015 + (k % 3) * 0.03; L.push({ p: [Math.cos(a) * d, 0.022, 0.1 + Math.sin(a) * d * 0.9], c: K(1400), I: (o.coalI ?? 0.003) * (o.heatK ?? 1), r: 0.01, vol: 0.25 }); }
   return spec(cam, P, L, {
-    coal: { kind: 'ember', heat: 0.7, scale: 3 }, ash: { kind: 'ember', heat: 0.05, scale: 2 },
-  }, { ground: { y: 0, m: 'ash' }, vs: 1, sky: { zen: [0, 0, 0], hor: [0, 0, 0], cloud: 0 }, amb: { sky: [0.0004, 0.0004, 0.0004], gnd: [0.0004, 0.0002, 0.0001] }, fog: { s: 0.3, g: 0.5, c: [0.0015, 0.0007, 0.0003], sky: 2 }, ao: { n: 8, d: 0.02 }, gi: { n: 20, step: 2, fill: 0.3, clamp: 3 }, exposure: o.exposure ?? 1.5 });
+    coal: { kind: 'ember', heat: 0.7, scale: 3 }, ash: { kind: 'ember', heat: 0.04, scale: 2 },
+  }, { ground: { y: 0, m: 'ash' }, vs: 1, sky: { zen: [0, 0, 0], hor: [0, 0, 0], cloud: 0 }, amb: { sky: [0.0004, 0.0004, 0.0004], gnd: [0.0004, 0.0002, 0.0001] }, fog: { s: 0.25, g: 0.5, c: [0.0012, 0.0006, 0.0003], sky: 2 }, ao: { n: 8, d: 0.02 }, gi: { n: 24, step: 2, fill: 0.3, clamp: 3 }, exposure: o.exposure ?? 1.5 });
 }

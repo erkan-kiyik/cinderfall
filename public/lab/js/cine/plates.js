@@ -8,10 +8,21 @@
 // PLATES: each plate's camera. `core` is the width (px) the lens is reckoned
 // on; W×H is the image, the core plus a margin all round for the moves.
 
+const OPEN = {
+  furnace: { mm: 50, pos: [-60, 1.8, -250], yaw: 0.1974, pitch: 0.0946, core: 1280, W: 1376, H: 632 },
+  roof: { mm: 35, pos: [-1.2, 25.7, 5.2], yaw: 0.0385, pitch: -0.0448, core: 1280, W: 1376, H: 632 },
+  poster: { mm: 28, pos: [0.35, 0.45, -2.6], yaw: -0.2808, pitch: 0.3211, core: 1280, W: 1376, H: 632 },
+  alley: { mm: 32, pos: [0.35, 0.55, 0.6], yaw: -0.0051, pitch: 0.0696, core: 1280, W: 1376, H: 632 },
+  coals: { mm: 60, pos: [0, 0.1, -0.26], yaw: 0, pitch: -0.2276, core: 1280, W: 1376, H: 632 },
+};
 export const PLATES = {
   governor: { mm: 24, pos: [0, 1.0, 0], yaw: 0, pitch: 0.1, core: 1280, W: 1376, H: 632 },
   gate: { mm: 50, pos: [-0.6, 1.5, -2], yaw: 0.06, pitch: -0.015, core: 1280, W: 1376, H: 632 },
   market: { mm: 35, pos: [-0.6, 4.3, 0], yaw: -0.03, pitch: -0.15, core: 1280, W: 1500, H: 632 },
+  // the opening (cine/opening.js), from the series' cameras (tools/lab/series/opening.js);
+  // a plate and its variant (a light off, the coals cooler) share a camera
+  open_furnace: OPEN.furnace, open_roof: OPEN.roof, open_poster: OPEN.poster, open_poster_off: OPEN.poster,
+  open_alley: OPEN.alley, open_coals: OPEN.coals, open_coals_dim: OPEN.coals,
 };
 
 // the camera a plate is traced from (ss: supersampling)

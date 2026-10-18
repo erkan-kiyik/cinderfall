@@ -113,14 +113,27 @@ Toplam: 62 sn. "Geç" düğmesi 1. saniyeden sonra görünür.
 
 ---
 
-## 3. Başlık animasyonu (her açılış, 4.5 sn + yükleme)
+## 3. Açılış (her başlatmada, ~18 sn + yükleme)
 
-Çekim 10'un kısa hâli: kül, korlar, *KOR*, slogan, altta ince yükleme çizgisi
-(ilerleme). Yükleme bitmediyse korlar nefes almaya devam eder. Dokunma 0.45
-sn'den sonra atlar. Mevcut `Intro` arayüzü korunur (`run`, `setProgress`,
-`assetsDone`, `onHandoff`, `__introManual/__intro.seek`).
+Eski kömür başlığının yerine, ışın izlemeli beş plaka üstünde canlı katmanlarla
+bir açılış. Plakalar seri sahnelerinden, açılış kameralarından pişirilir
+(`node tools/lab/series/render.mjs --plates`, kameralar `js/cine/plates.js`,
+sahneler `tools/lab/series/opening.js`); hareket eden her şey canlı çizilir
+(`js/cine/opening.js`). Çekimler arası 0.32 sn siyaha iniş.
 
----
+| Zaman | Çekim | Canlı |
+|---|---|---|
+| 0.0–0.8 | Siyah | — |
+| 0.8–4.4 | Soğuk yüksek fırın, gece | yağmur; mühürlü kapının üstündeki lamba titrer; lens yavaşça yaklaşır |
+| 4.4–8.0 | Şehir, çatıdan | kulenin arama ışığı çatıların üstünde döner (yumuşak huzme), ikaz lambaları saniyede bir yanar; yağmur; yavaş pan |
+| 8.0–11.2 | Üstüne KOR yazılmış afiş | floresan arıza yapar: lambası yanan ve sönük iki plaka arasında titreme; yağmur, su halkaları |
+| 11.2–14.4 | Ara sokak | ızgaradan buhar yükselir; yağmur |
+| 14.4– | Korlar, yakın | korlar nefes alır (sıcak ve soğumuş iki plaka arasında yavaş geçiş), kıl inceliğinde kıvılcımlar; 15.2 KOR, 16.2 slogan |
+
+En erken devir 17.6 sn; yükleme bitmediyse korlar nefes almaya devam eder.
+Dokunma 0.45 sn'den sonra sona atlar. Hareket azaltma açıksa yalnız korlar.
+Arayüz aynı (`run`, `setProgress`, `assetsDone`, `onHandoff`,
+`__introManual` / `__intro.seek`). Geliştirici sayfası: `dev/opening.html?t=`.
 
 ## 4. Görev hikâye sahneleri
 

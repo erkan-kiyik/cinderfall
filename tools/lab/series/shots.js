@@ -98,7 +98,26 @@ function marketSign(cam) {
 }
 // the gate, the hut's window cooler, a television flickering in it
 function gateHut(cam) {
-  const s = gate(cam); s.mats.hutwin = { ...s.mats.hutwin, e: K(3200, 0.25) }; s.lights.push({ p: [4.3, 1.4, 24.6], c: [0.45, 0.6, 1], I: 0.9, r: 0.15, vol: 0.2 }); return s;
+  const s = gate(cam);
+  // the hut up close: a door, the checkpoint plate over the window, a gutter and downpipe, the
+  // window lit from inside by the television more than the lamp
+  s.mats.hutwin = { ...s.mats.hutwin, e: [0.3, 0.36, 0.5], blinds: 0.3, lampU: 0.3 };
+  s.prims.push({ box: [4.65, 0.15, 23.46, 5.4, 2.25, 23.5], m: 'hutdoor' });
+  s.prims.push({ cap: [4.75, 1.15, 23.43, 4.9, 1.15, 23.43, 0.012], m: 'iron' });
+  s.prims.push({ box: [3.05, 2.76, 23.28, 4.55, 3.22, 23.31], m: 'checkSign' });
+  for (const x of [3.3, 4.3]) s.prims.push({ box: [x - 0.02, 2.74, 23.31, x + 0.02, 2.8, 23.36], m: 'iron' });
+  s.prims.push({ cap: [2.85, 2.6, 23.26, 5.75, 2.6, 23.26, 0.045], m: 'iron' });
+  s.prims.push({ cap: [5.68, 2.6, 23.26, 5.68, 0.2, 23.26, 0.035], m: 'iron' });
+  s.prims.push({ box: [2.95, 0.15, 23.0, 3.6, 0.55, 23.35], m: 'concrete', o: { lift: 0.4 } });
+  s.mats.hutdoor = { kind: 'panel', col: [0.3, 0.31, 0.29], pw: 0.75, base: 0.15, wet: 0.35 };
+  s.mats.checkSign = { kind: 'image', tex: 'checkSign', ro: 0.4, wet: 0.3, dirt: 0.2 };
+  // two cups on the counter under the window: a thermos and a mug
+  s.prims.push({ cyl: [3.55, 23.42, 0.045, 1.05, 1.33], m: 'thermos' }, { cyl: [3.55, 23.42, 0.03, 1.33, 1.37], m: 'iron' });
+  s.prims.push({ cyl: [3.86, 23.4, 0.04, 1.05, 1.15], m: 'mug' });
+  s.mats.thermos = { kind: 'metal', col: [0.35, 0.36, 0.34], ro: 0.25, metal: 0.8, wet: 0.4 }; s.mats.mug = { kind: 'flat', col: [0.55, 0.53, 0.48], ro: 0.3, wet: 0.3 };
+  s.lights.push({ p: [4.3, 1.4, 24.6], c: [0.45, 0.6, 1], I: 1.4, r: 0.15, vol: 0.2 });
+  s.fog = { ...s.fog, s: 0.007 };
+  return s;
 }
 
 const LIST = [
@@ -188,16 +207,16 @@ const LIST = [
   },
   {
     id: '03', name: 'Son döküm', cap: 'Döküm holü, son döküm. Kırk yılın demiri oluklardan akıyor.',
-    cam: look([3.6, 0.9, 6.5], [-0.8, 4.6, 28], 20), tex: [],
+    cam: look([3.6, 0.9, 6.5], [-0.8, 6.2, 28], 20), tex: [],
     scene: (cam) => castHouse(cam, { state: 'hot' }),
     air: (g, cam, A) => { sparks(g, cam, A, [0, 0.5, 26.5], { n: 220, spread: 3, rise: 3.5, len: 0.12 }); plume(g, cam, A, [0, 1.5, 24], { col: '#e09060', a: 0.06, rise: 12, spread: 8, size: 5, n: 30, lean: [0, -0.2] }); },
     post: { grain: 0.11, halation: 0.8, lift: [8, 5, 4], warm: 0.05, vignette: 0.6, dirt: 0.4 },
   },
   {
     id: '05', name: 'Döküm holü, bugün', cap: 'Bugün. Oluklarda demir taş kesilmiş; çivide bir önlük.',
-    cam: look([9, 6.5, -6], [0, 0.5, 20], 24), tex: [],
-    scene: (cam) => castHouse(cam, { state: 'cold' }),
-    air: (g, cam, A) => dust(g, cam, A, [-8, 0.5, 0, 10, 14, 20], { n: 500, size: 1.5, col: '230,232,236', lit: () => 0.3 }),
+    cam: look([3.6, 0.9, 6.5], [-0.8, 6.2, 28], 20), tex: [],
+    scene: (cam) => castHouse(cam, { state: 'cold', sun: [-0.08, -0.9, -0.44], shaftVol: 1.2 }),
+    air: (g, cam, A) => dust(g, cam, A, [-5, 0.5, 14, 5, 15, 28], { n: 900, size: 1.1, col: '236,236,238', lit: (p) => { const z = 26 - (17 - p[1]) * 0.49; return Math.abs(p[2] - z) < 2.2 && Math.abs(p[0] + (17 - p[1]) * 0.09) < 4 ? 0.55 : 0.03; } }),
     post: { grain: 0.08, halation: 0.4, lift: [6, 7, 8], cool: 0.04, vignette: 0.55, dirt: 0.25 },
   },
   {
@@ -223,7 +242,7 @@ const LIST = [
   },
   {
     id: '13', name: 'Kulübe', cap: 'Kulübede iki nöbetçi. Kamera yok, sadece göz.',
-    cam: look([-1.6, 0.95, 21.3], [3.6, 1.45, 23.9], 35), tex: [],
+    cam: look([-5.2, 1.25, 10.8], [4.5, 2.4, 24.0], 70), tex: ['checkSign'], dof: { focus: 15.5, n: 2.0, max: 18 },
     scene: (cam) => gateHut(cam),
     air: (g, cam, A) => rain(g, cam, A, { n: 1.3, col: '#cdd4dc', light: 0.6, wind: 0.6, box: [6, 6, 0.4, 20] }),
     post: { grain: 0.08, halation: 0.5, lift: [5, 6, 8], cool: 0.03, vignette: 0.6, dirt: 0.3 },
@@ -307,7 +326,7 @@ const LIST = [
   },
   {
     id: '30', name: 'Kor', cap: 'Kül olmadı. Kor kaldı.',
-    cam: look([0, 0.16, -0.36], [0, 0.015, 0.08], 50), tex: [],
+    cam: look([0, 0.1, -0.26], [0, 0.012, 0.12], 60), tex: [], dof: { focus: 0.3, n: 3.5, max: 22 },
     scene: (cam) => embers(cam, {}),
     air: (g, cam, A) => { sparks(g, cam, A, [0, 0.03, 0.08], { n: 40, spread: 0.25, rise: 0.25, len: 0.004 }); title(g, A.w, A.h); },
     post: { grain: 0.1, halation: 0.7, lift: [3, 2, 1], vignette: 0.7, dirt: 0.3 },

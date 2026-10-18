@@ -732,7 +732,7 @@ export function* renderRows(sc, y0, y1) {
       px[o] = (srgb(aces(r * ex)) + dn) * 255; px[o + 1] = (srgb(aces(g * ex)) + dn) * 255; px[o + 2] = (srgb(aces(b * ex)) + dn) * 255; px[o + 3] = 255;
     }
   }
-  if (sc.hdr) return { fl: px, ref: ref.slice((y0 - ya) * W * 3, (y1 - ya) * W * 3), rr: rr.slice((y0 - ya) * W, (y1 - ya) * W) };
+  if (sc.hdr) return { fl: px, ref: ref.slice((y0 - ya) * W * 3, (y1 - ya) * W * 3), rr: rr.slice((y0 - ya) * W, (y1 - ya) * W), dep: dep.slice((y0 - ya) * W, (y1 - ya) * W) };
   return px;
 }
 

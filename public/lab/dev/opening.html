@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOR opening</title>
+<link rel="stylesheet" href="../css/tokens.css"><link rel="stylesheet" href="../css/lab.css">
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%}</style></head>
+<body><script type="module">
+// dev: the launch opening on its own. ?t=seconds (paused there) &reduce — harness: window.__intro.seek(t)
+import { Intro } from '../js/ui/intro.js';
+import { setLang } from '../js/ui/i18n.js';
+const q = new URLSearchParams(location.search);
+setLang(q.get('lang') || 'tr');
+await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter'].map((f) => document.fonts.load(f).catch(() => {})));
+if (q.has('t')) window.__introManual = true;
+const cv = document.createElement('canvas'); document.body.appendChild(cv);
+const it = new Intro(cv, { reduce: q.has('reduce') });
+window.__opening = it;
+it.setProgress(0.42);
+it.run();
+if (q.has('t')) { await it.shot?.ready; window.__intro.seek(+q.get('t')); }
+</script></body></html>
