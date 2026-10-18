@@ -2,11 +2,12 @@
 //
 // Small set of drawing primitives every painter uses:
 //   P(d)        cached Path2D from an SVG path string (Path2D passes through)
-//   cel()       automatic three-tone cel shading of any shape against the
-//               world key light, whatever rotation the current bone has
+//   cel()       painted shading of any shape against the world key light,
+//               whatever rotation the current bone has: no drawn lines, the
+//               form turns by soft light and shadow alone (docs §11)
 //   blob()      smooth closed outline through points (Catmull-Rom)
 //   limb()      tapered limb outline along +y from two width profiles
-//   outlined()  bake a drawing and wrap it in the dark outer outline
+//   outlined()  bake a drawing with a soft contact shade round it (no ink line)
 import { LIGHT, INK, OUTLINE, LINE } from './style.js';
 import { texture } from './tex.js';
 
@@ -68,13 +69,16 @@ function soft(g, p, dx, dy, color, blur, inv = false) {
   g.restore();
 }
 
-// Painted shading (docs §10.1): the shape in its mid tone, then three inner
+// Painted shading (docs §10.1, §11): the shape in its mid tone, then inner
 // shadows of its own outline: a broad soft form shadow coming in from the
 // side away from the light (shade tone), a tight occlusion all round the edge
-// (line tone), and the light band along the lit edge (light tone); then the
-// material's texture if the tone has one.
+// (line tone), the light band along the lit edge (light tone) and a faint
+// bounce light along the shadow edge, so forms read round; then the
+// material's texture if the tone has one. No line is drawn round the shape
+// unless asked for (o.line: true); parts separate by occlusion and light.
 //   o.sh  form shadow reach (world units), o.hl light band width (0 = none)
 //   o.ao  edge occlusion strength (0 = none), o.tex override the texture
+//   o.gloss  a tight specular glint on the lit edge (leather, rubber, steel)
 export function cel(g, d, t, o = {}) {
   const p = P(d);
   const sh = o.sh ?? 1.0, hl = o.hl ?? 0.45, k = ppu(g);
@@ -85,22 +89,37 @@ export function cel(g, d, t, o = {}) {
     const [sx, sy] = localVec(g, LIGHT.x * sh * 1.3, LIGHT.y * sh * 1.3);
     soft(g, p, sx, sy, t.d, Math.min(26, (0.6 + sh * 1.6) * k), true);
   }
-  const ao = o.ao ?? 0.45;
+  // bounce: a little of the mid tone thrown back into the shadow side
+  if (sh > 0 && o.bounce !== 0) {
+    const [bx, by] = localVec(g, -LIGHT.x * 0.5, -LIGHT.y * 0.5);
+    g.globalAlpha = o.bounce ?? 0.22; soft(g, p, -bx, -by, t.m, Math.min(10, 0.9 * k), true); g.globalAlpha = 1;
+  }
+  const ao = o.ao ?? 0.55;
   if (ao > 0) { g.globalAlpha = ao; soft(g, p, 0, 0, t.k, Math.min(12, 0.9 * k), true); g.globalAlpha = 1; }
   if (hl > 0) {
     const [hx, hy] = localVec(g, -LIGHT.x * hl, -LIGHT.y * hl);
     soft(g, p, hx, hy, t.l, Math.min(10, hl * 0.9 * k), true);
   }
+  if (o.gloss) {
+    const [gx, gy] = localVec(g, -LIGHT.x * 0.35, -LIGHT.y * 0.35);
+    g.globalAlpha = o.gloss; soft(g, p, gx * 0.6, gy * 0.6, '#fffaf0', Math.min(4, 0.35 * k), true);
+    g.globalAlpha = 1;
+    // and take most of it back off the inside so only the rim glints
+    g.globalAlpha = o.gloss * 0.9; soft(g, p, gx * 0.25, gy * 0.25, t.l, Math.min(5, 0.5 * k), true); g.globalAlpha = 1;
+  }
   const tx = o.tex ?? t.tex;
   if (tx) texture(g, tx, t.ta ?? 0.55);
   g.restore();
-  if (o.line !== false) stroke(g, p, t.k, (o.lw ?? 0.32) * LINE, 0.9);
+  if (o.line === true) stroke(g, p, t.k, (o.lw ?? 0.32) * LINE, 0.6);
 }
 
-// Flat fill with only an inner line (small trims, straps, panels).
+// Flat fill with its edge softly darkened toward `k` (small trims, straps,
+// panels): no line, an occlusion that reads as thickness.
 export function flat(g, d, c, k, lw = 0.28) {
   fill(g, d, c);
-  if (k) stroke(g, d, k, lw);
+  if (!k) return;
+  const p = P(d), kk = ppu(g);
+  g.save(); g.clip(p); g.globalAlpha = 0.7; soft(g, p, 0, 0, k, Math.min(8, Math.max(1, lw * 2.4 * kk)), true); g.restore();
 }
 
 // --- smooth shapes ---------------------------------------------------------
@@ -154,7 +173,10 @@ export function canvas(w, h) {
 }
 
 // Draw `paint(g)` into a w×h canvas at `scale` px per unit with the origin at
-// (ox, oy) px, then wrap the result in the outer outline (radius in units).
+// (ox, oy) px, then lay a soft contact shade round it: the silhouette blurred
+// over `r` units at low strength, darker toward the ground. It separates the
+// thing from what is behind it the way occlusion does in a photograph; it is
+// not an ink line.
 export function outlined(w, h, scale, ox, oy, paint, r = OUTLINE, ink = INK) {
   const art = canvas(w, h), ag = art.getContext('2d');
   ag.translate(ox, oy); ag.scale(scale, scale);
@@ -164,12 +186,10 @@ export function outlined(w, h, scale, ox, oy, paint, r = OUTLINE, ink = INK) {
   sg.globalCompositeOperation = 'source-in';
   sg.fillStyle = ink; sg.fillRect(0, 0, w, h);
   const out = canvas(w, h), og = out.getContext('2d');
-  const rp = r * scale, steps = 24;
-  for (let i = 0; i < steps; i++) {
-    const a = (i / steps) * Math.PI * 2;
-    og.drawImage(sil, Math.cos(a) * rp, Math.sin(a) * rp);
-  }
-  og.drawImage(sil, 0, 0);
+  const rp = Math.max(1, r * scale);
+  og.filter = `blur(${(rp * 0.7).toFixed(1)}px)`;
+  og.globalAlpha = 0.32; og.drawImage(sil, 0, rp * 0.25);
+  og.filter = 'none'; og.globalAlpha = 1;
   og.drawImage(art, 0, 0);
   return out;
 }

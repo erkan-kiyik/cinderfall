@@ -1,11 +1,12 @@
 // KOR LAB — character renderer.
 //
-// A character is a stack of overlapping part sprites. Outlining each part
-// would draw dark rings at every joint, so instead each character is first
-// drawn into its own slot of an offscreen "slot sheet" (local, facing-right
-// space), and the slot is then composited into the scene through an outline
-// shader that dilates the union's alpha: one clean outer outline around the
-// whole silhouette, exactly like the baked M0 figures — but live.
+// A character is a stack of overlapping part sprites. Each character is
+// first drawn into its own slot of an offscreen "slot sheet" (local,
+// facing-right space), and the slot is then composited into the scene through
+// a shader that works on the whole silhouette at once: a rim of the night's
+// ambient light along the edge that faces the key light, and a faint soft
+// contact shade outside it (docs §11: no ink line round anyone). With the
+// accessibility option on, enemies get a clear outline instead.
 //
 // Slots are rendered lazily in groups, so any number of characters works.
 import { program, Target } from './gl.js';
@@ -24,22 +25,32 @@ void main() {
 const FS = `#version 300 es
 precision mediump float;
 uniform sampler2D uTex;
-uniform vec2 uR;        // outline radius in uv
+uniform vec2 uR;        // contact shade reach in uv
 uniform vec4 uClamp;    // slot uv bounds
-uniform vec4 uInk;      // premultiplied outline colour
+uniform vec4 uInk;      // premultiplied shade / outline colour
+uniform float uHard;    // 1: a hard outline (accessibility), 0: soft shade
+uniform vec2 uL;        // toward the key light, in uv, rim width long
+uniform vec3 uRim;      // rim light colour × strength
 uniform vec4 uFlash;    // rgb, amount (hit flash)
 in vec2 vUV; out vec4 o;
 vec4 tap(vec2 uv) { return texture(uTex, clamp(uv, uClamp.xy, uClamp.zw)); }
 void main() {
   vec4 s = tap(vUV);
-  float a = 0.0;
+  float mx = 0.0, av = 0.0;
   for (int i = 0; i < 12; i++) {
     float t = float(i) * 0.5235988;
     vec2 d = vec2(cos(t), sin(t)) * uR;
-    a = max(a, tap(vUV + d).a);
-    a = max(a, tap(vUV + d * 0.5).a);
+    float a1 = tap(vUV + d).a, a2 = tap(vUV + d * 0.5).a;
+    mx = max(mx, max(a1, a2));
+    av += a1 * 0.35 + a2 * 0.65;
   }
+  av /= 12.0;
+  // the rim: inside, where the neighbour toward the light is empty
+  float r1 = 1.0 - tap(vUV + uL).a, r2 = 1.0 - tap(vUV + uL * 0.45).a;
+  float rim = s.a * max(r1 * 0.55, r2);
   s.rgb = mix(s.rgb, uFlash.rgb * s.a, uFlash.a);
+  s.rgb += uRim * rim;
+  float a = mix(av * 0.8, mx, uHard);
   o = s + uInk * (1.0 - s.a) * a;
 }`;
 
@@ -54,8 +65,11 @@ export class CharRenderer {
     this.prog = program(gl, VS, FS);
     this.vao = gl.createVertexArray();
     this.view = new Float32Array(9);
-    this.ink = [0.086, 0.067, 0.055, 1]; // style INK
-    this.outline = 0.55;    // style OUTLINE
+    this.ink = [0.035, 0.027, 0.022, 0.4]; // the soft contact shade (style INK, faint)
+    this.outline = 0.9;     // its reach in units
+    this.rim = [0.2, 0.23, 0.27]; // the night's ambient along the lit edge
+    this.rimW = 0.7;        // rim width in units
+    this.light = [0.55, -0.84]; // style LIGHT
     this.enemyInk = null; // accessibility: a bright outline colour for enemies
     this.ppu = 5; this.cols = 1; this.cap = 1;
     this.queue = []; this.done = new Map();
@@ -111,10 +125,15 @@ export class CharRenderer {
     gl.uniformMatrix3fv(p.u.uView, false, view);
     gl.uniform4f(p.u.uRect, x + BOX[0] * f, y + BOX[1], x + BOX[2] * f, y + BOX[3]);
     gl.uniform4f(p.u.uUV, uv[0], uv[1], uv[2], uv[3]);
-    const W = this.size, r = this.outline * (ch.team === 1 && this.enemyInk ? 1.7 : 1) * this.ppu / W;
+    const hard = ch.team === 1 && this.enemyInk;
+    const W = this.size, r = (hard ? 0.95 : this.outline) * this.ppu / W;
     gl.uniform2f(p.u.uR, r, r);
+    gl.uniform1f(p.u.uHard, hard ? 1 : 0);
+    const rw = this.rimW * this.ppu / W;
+    gl.uniform2f(p.u.uL, this.light[0] * f * rw, -this.light[1] * rw);
+    gl.uniform3f(p.u.uRim, this.rim[0], this.rim[1], this.rim[2]);
     gl.uniform4f(p.u.uClamp, uv[0] + 0.5 / W, uv[3] + 0.5 / W, uv[2] - 0.5 / W, uv[1] - 0.5 / W);
-    const ink = (ch.team === 1 && this.enemyInk) || this.ink;
+    const ink = hard || this.ink;
     gl.uniform4f(p.u.uInk, ink[0], ink[1], ink[2], ink[3]);
     const fc = ch.flashCol || [1, 1, 1];
     gl.uniform4f(p.u.uFlash, fc[0], fc[1], fc[2], (ch.flash || 0) * 0.45);

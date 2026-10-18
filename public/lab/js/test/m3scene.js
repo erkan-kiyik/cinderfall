@@ -20,7 +20,7 @@ import { CombatHud } from '../ui/combathud.js';
 import { haptic } from '../ui/kit.js';
 import { TINTS } from '../core/economy.js';
 
-export const BAKE_VERSION = 'm3-12';
+export const BAKE_VERSION = 'm3-13';
 export const OPERATORS = M2.OPERATORS;
 
 // the M2 course with troopers along the way

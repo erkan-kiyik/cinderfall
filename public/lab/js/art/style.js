@@ -1,15 +1,16 @@
 // KOR LAB — art style tokens.
 //
-// Clean stylised look: flat colour blocks, three tones per material (light,
-// mid, shade) plus a line tone, a dark outer outline, and one key light from
-// the upper right (the direction characters face). Everything that is drawn
-// takes its colours from here, so a palette change is a one-file change.
+// Painted, realistic look (docs §11): three tones per material (light, mid,
+// shade) plus an occlusion tone, soft light and shadow, no ink lines, and one
+// key light from the upper right (the direction characters face). Everything
+// that is drawn takes its colours from here, so a palette change is a
+// one-file change.
 
 // Key light, pointing from the subject toward the light (upper right, front).
 export const LIGHT = { x: 0.55, y: -0.84 };
 
-// Outer outline: colour and thickness in world units (character = 64 tall).
-// The painted look (docs §10.1) keeps it thin and warm, not a black ink line.
+// The soft contact shade round baked things (kit.outlined) and characters:
+// colour and reach in world units (character = 64 tall). Not a drawn line.
 export const INK = '#16110e';
 export const OUTLINE = 0.55;
 // Inner line width factor for cel() lines.

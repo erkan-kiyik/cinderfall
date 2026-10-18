@@ -38,7 +38,8 @@ const CUFF = blob([[-2.0, -1.4], [1.95, -1.4], [2.1, 0.9], [-2.15, 0.9]]);
 // o: { cuff: tone, knuckle: tone, fingerless: skin tone }
 export function glove(g, ctx, mat, o = {}) {
   const t = ctx.t;
-  g.save(); g.scale(0.88, 0.9);
+  // a real hand: about three quarters of the face's height (docs §11)
+  g.save(); g.scale(0.76, 0.8);
   if (ctx.far) cel(g, THUMB, t(mat), { sh: 0.6, hl: 0.25 });
   cel(g, PALM, t(mat), { sh: 0.9, hl: 0.35 });
   clip(g, PALM, () => {
@@ -83,6 +84,7 @@ export const ELBOW_PAD = blob([[-2.9, -1.4], [-0.6, -1.9], [0.6, -0.4], [0.3, 2.
 
 export function kneePad(g, ctx, mat, stripe) {
   const t = ctx.t;
+  g.save(); g.translate(0.3, 0.4); g.scale(0.84, 0.84);
   cel(g, KNEE_PAD, t(mat), { sh: 0.7, hl: 0.4 });
   clip(g, KNEE_PAD, () => {
     stroke(g, curve([[0.0, -1.2], [2.0, -0.9], [2.9, 0.8]]), t(mat).l, 0.3, 0.8);
@@ -90,6 +92,7 @@ export function kneePad(g, ctx, mat, stripe) {
   });
   // strap around the back of the knee
   stroke(g, 'M -0.7 1.0 C -1.6 1.1 -2.2 1.3 -2.5 1.6', t(mat).k, 0.55);
+  g.restore();
 }
 
 // --- torso ------------------------------------------------------------------

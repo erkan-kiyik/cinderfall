@@ -4,7 +4,10 @@
 //   light  (light scale)   ambient + additive point/cone lights, stored at ½
 //   lit    (render scale)  scene × light×2, then emissive sprites added on top
 //   bloom  (½ and ¼)       bright pass → separable blur, two levels
-//   screen                 lit + bloom, vignette, grade, dither; upscaled
+//   screen                 lit + warm halation, a soft shoulder, grade (low
+//                          saturation, cool lifted blacks, warm highlights),
+//                          vignette, 24 Hz grain; upscaled. The look of the
+//                          ray-traced stills (docs §11)
 //
 // All targets are RGBA8. Resizing a target never touches the DOM.
 import { program, Target, FS_TRI } from './gl.js';
@@ -83,19 +86,30 @@ uniform sampler2D uLit, uB1, uB2;
 uniform vec3 uBloom;      // level 1 gain, level 2 gain, enabled
 uniform vec4 uGrade;      // saturation, contrast, vignette, grain
 uniform vec3 uTint;       // shadow tint
+uniform vec3 uLift;       // blacks lifted toward this (cool)
+uniform float uWarm;      // warmth in the highlights
 uniform float uTime;
 in vec2 vUV; out vec4 o;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
   vec3 c = texture(uLit, vUV).rgb;
-  if (uBloom.z > 0.0) c += texture(uB1, vUV).rgb * uBloom.x + texture(uB2, vUV).rgb * uBloom.y;
+  // halation: the glow round bright things comes back warm, as on film
+  if (uBloom.z > 0.0) c += (texture(uB1, vUV).rgb * uBloom.x + texture(uB2, vUV).rgb * uBloom.y) * vec3(1.0, 0.8, 0.64);
+  // a soft shoulder so lamps and signs roll off instead of clipping
+  vec3 sh = 0.62 + 0.38 * (1.0 - exp(-(c - 0.62) / 0.38));
+  c = mix(c, sh, step(0.62, c));
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c = mix(vec3(l), c, uGrade.x);
   c = (c - 0.5) * uGrade.y + 0.5;
+  // split tone: cool shadows, warm highlights, blacks lifted a little
   c += uTint * (1.0 - smoothstep(0.0, 0.5, l));
+  c = mix(c, c * vec3(1.07, 1.0, 0.88), smoothstep(0.35, 1.0, l) * uWarm);
+  c = max(c, 0.0); c += uLift * (1.0 - c);
   vec2 q = vUV - 0.5;
-  c *= 1.0 - uGrade.z * smoothstep(0.25, 0.75, dot(q, q) * 2.2);
-  c += (hash(vUV * 997.0 + uTime) - 0.5) * uGrade.w;
+  c *= 1.0 - uGrade.z * smoothstep(0.2, 0.75, dot(q, q) * 2.2);
+  // grain at 24 frames a second, stronger in the shadows
+  float t = floor(uTime * 24.0);
+  c += (hash(vUV * 997.0 + t * 0.37) - 0.5) * uGrade.w * (1.4 - l);
   o = vec4(c, 1.0);
 }`;
 
@@ -112,8 +126,9 @@ export class Renderer {
   constructor(gl, canvas) {
     this.gl = gl; this.canvas = canvas;
     this.q = QUALITY.med; this.dyn = 1; // dynamic resolution multiplier
-    this.ambient = [0.72, 0.74, 0.86];
-    this.grade = { sat: 1.06, con: 1.04, vig: 0.42, grain: 0.012, tint: [0.0, 0.006, 0.02] };
+    // night: a low cool ambient so the lamps make the pools of light (docs §11)
+    this.ambient = [0.5, 0.53, 0.64];
+    this.grade = { sat: 0.84, con: 1.1, vig: 0.52, grain: 0.032, tint: [0.0, 0.008, 0.024], lift: [0.03, 0.038, 0.048], warm: 0.55 };
     this.bloomOn = true; this.lightsOn = true;
     this.scene = new Target(gl, 2, 2); this.light = new Target(gl, 2, 2); this.lit = new Target(gl, 2, 2);
     this.b1a = new Target(gl, 2, 2); this.b1b = new Target(gl, 2, 2); this.b2a = new Target(gl, 2, 2); this.b2b = new Target(gl, 2, 2);
@@ -208,7 +223,7 @@ export class Renderer {
   finish(time) {
     const gl = this.gl, lv = this.bloomOn ? this.q.bloom : 0;
     if (lv > 0) {
-      this.fsPass(this.pBright, this.b1a, [this.lit.tex], (u) => { gl.uniform1i(u.uTex, 0); gl.uniform2f(u.uTexel, 1 / this.lit.w, 1 / this.lit.h); gl.uniform1f(u.uThresh, 0.62); });
+      this.fsPass(this.pBright, this.b1a, [this.lit.tex], (u) => { gl.uniform1i(u.uTex, 0); gl.uniform2f(u.uTexel, 1 / this.lit.w, 1 / this.lit.h); gl.uniform1f(u.uThresh, 0.55); });
       this.blur(this.b1a, this.b1b);
       if (lv > 1) {
         this.fsPass(this.pBright, this.b2a, [this.b1a.tex], (u) => { gl.uniform1i(u.uTex, 0); gl.uniform2f(u.uTexel, 1 / this.b1a.w, 1 / this.b1a.h); gl.uniform1f(u.uThresh, 0.0); });
@@ -218,9 +233,11 @@ export class Renderer {
     const G = this.grade;
     this.fsPass(this.pFinal, null, [this.lit.tex, this.b1a.tex, this.b2a.tex], (u) => {
       gl.uniform1i(u.uLit, 0); gl.uniform1i(u.uB1, 1); gl.uniform1i(u.uB2, 2);
-      gl.uniform3f(u.uBloom, 0.9, lv > 1 ? 0.7 : 0, lv > 0 ? 1 : 0);
+      gl.uniform3f(u.uBloom, 1.0, lv > 1 ? 0.85 : 0, lv > 0 ? 1 : 0);
       gl.uniform4f(u.uGrade, G.sat, G.con, G.vig, G.grain);
       gl.uniform3f(u.uTint, G.tint[0], G.tint[1], G.tint[2]);
+      gl.uniform3f(u.uLift, G.lift[0], G.lift[1], G.lift[2]);
+      gl.uniform1f(u.uWarm, G.warm);
       gl.uniform1f(u.uTime, time % 100);
     });
   }

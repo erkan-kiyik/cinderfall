@@ -1,113 +1,238 @@
 // HAWK — the trader, head and shoulders for his stall (docs/KOR_STORY_
-// CINEMATIC.md §9.4, painted per §10.1). In his sixties: a flat tweed cap, a
-// short grey beard, tired eyes under heavy lids, a thick wool coat with the
-// collar up, an old wool scarf, a cigarette in his lips; lit warm from below
-// and the right by the lamp on his counter, the stall dark behind him.
-import { cel, fill, stroke, clip, blob, curve, setRoot } from './kit.js';
-import { tone, mat } from './style.js';
-import { headShape, stitch, grime } from './ops/body.js';
+// CINEMATIC.md §9.4, §11). In his sixties: a flat tweed cap pulled low, a
+// short grey beard, tired eyes deep under the brow, a heavy wool coat with the
+// collar up, an old knitted scarf, a cigarette at the corner of his mouth.
+// Painted like a photograph at night: the counter lamp below and to the right
+// throws warm light up under the nose, the brow and the cap's peak; the ember
+// lights the moustache; the rest of him goes into the dark of the stall.
+//
+// Soft-brush painting (paint.js) in a 100 × 100 frame, face to the right in a
+// three-quarter profile. No outlines: every edge is light against dark.
+import { Brush, rnd } from './paint.js';
+import { texture } from './tex.js';
+import { P } from './kit.js';
 
-const P = {
-  skin: mat(tone('#e2ab84', '#bb8460', '#8a5a3e', '#4a2c1c'), 'skin', 0.55),
-  beard: mat(tone('#d6d2ca', '#a8a39b', '#77736c', '#3a3835'), 'wool', 0.8),
-  cap: mat(tone('#8a7a62', '#655844', '#463d2f', '#1f1a13'), 'wool', 0.9),
-  coat: mat(tone('#5e5a50', '#433f37', '#2d2a25', '#12110e'), 'wool', 0.85),
-  scarf: mat(tone('#7d7a52', '#5c5a3a', '#3f3e27', '#1a1a10'), 'knit', 0.7),
-  shirt: mat(tone('#c9bfa7', '#a69c84', '#7a725f', '#3a362c'), 'canvas', 0.4),
-};
-const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
+// --- the forms (100-unit frame) -------------------------------------------------
+const HEAD = 'M 33 33 C 30 38 29.6 47 32.6 55 C 34.6 60 35.6 66 36.6 77 L 64 81 C 63.2 77 63.8 73.4 66 70.4 C 71 69.2 76 68 79 66 C 81 63 81.2 60.2 80.6 58.2 C 80.2 57.2 79.6 56.2 79.6 55.4 C 81.6 55.2 84.6 54.2 85.7 52.4 C 86.1 51.1 85.2 49.6 83.7 48.6 C 81.9 46 80 42 78.2 39.6 C 77.5 38.7 77.9 37.4 78.5 36.2 C 78.3 33 76.7 30 74 27.4 L 40 26 Z';
+const EAR = 'M 49 40 C 53 39.4 54.6 43 53.8 47 C 53.2 51 51.2 54.2 48.7 53.5 C 46.6 52.9 46.1 49 46.5 45 C 46.9 42 47.6 40.3 49 40 Z';
+const BEARD = 'M 49.4 51.6 C 51.6 51.4 53 52.4 55 51.8 C 57.4 51 59.4 51.8 61.6 51.6 C 64 51.4 66.4 52.8 68.6 53 C 71 53.2 73 54.2 75.2 54.6 C 77.2 55.1 78.8 55.6 79.6 56.2 C 81.8 57.4 83 59.6 82.8 62 C 82.8 66.2 81.2 70.6 77.8 73.2 C 73.8 75.8 68 75.6 64 73.6 C 59 71.2 54 66.8 51 61.8 C 49.3 58.8 48.7 55 49.4 51.6 Z';
+const STACHE = 'M 75 54.8 C 77.6 54.8 80.6 55.4 82.4 57.3 C 83 58.4 82.6 59.5 81.5 59.5 C 79.6 59.1 77.6 59.1 75.8 59.7 C 74.9 58.4 74.6 56.6 75 54.8 Z';
+const CAP = 'M 24 34.4 C 21.6 26 28 15 42 12.2 C 54 10 66 11.4 73.6 16 C 77.2 18.4 80.2 21.4 82.8 24.2 C 85.2 26.4 87.6 27.8 88 29.2 C 87.6 30.5 85.2 30.8 82 30.4 C 78 29.8 74 29.4 70 29.6 C 58 30 44 31.8 33 34.8 C 29.6 35.6 26 35.8 24 34.4 Z';
+const PEAK = 'M 66 29.7 C 72 28.4 78 26.6 82.8 24.2 C 85.2 26.4 87.6 27.8 88 29.2 C 87.6 30.5 85.2 30.8 82 30.4 C 78 29.8 72 29.6 66 29.7 Z';
+const COAT = 'M -5 106 L -5 86 C 4 80 16 74 30 70.6 C 36 69.2 42 69 46 70 L 64 74 C 72 75 80 77 88 82 C 96 87 102 92 106 96 L 106 106 Z';
+const COLLAR_BACK = 'M 27 73 C 28.4 65 34 59.6 40.6 60 C 44 60.4 45.4 63.6 45.6 68 L 46.4 79 L 29 81 Z';
+const LAPEL = 'M 61 78 C 66 74.6 72 73.6 76.4 75.4 C 81 77.4 85 82.6 87 89 C 82 94 76 98 70 101 C 67 94 64 86 61 78 Z';
+const SCARF = 'M 33.6 70.4 C 42 66.2 54 67 64 71 C 70 73.2 74.4 76.4 74.4 80.4 C 74.4 84.6 68 86.6 60 86.6 C 50 86.6 40 84.6 34 80.6 C 30.8 78.4 30.8 72.4 33.6 70.4 Z';
+const SCARF_END = 'M 58 84 C 62 84.4 66 85.6 68.4 88 C 70 92 69.4 98 68 104 L 58.6 104 C 59.6 98 59.4 91 58 84 Z';
 
 // Paint the portrait into g, size × size px. t: seconds (the ember breathes, the smoke drifts).
 export function paintHawk(g, size, t = 0) {
+  const k = size / 100, B = new Brush(g, k), r = rnd(11);
   g.save();
-  // the stall behind him: dark boards, the lamp's warm pool on the right
-  const bg = g.createLinearGradient(0, 0, size, size);
-  bg.addColorStop(0, '#0e0b09'); bg.addColorStop(1, '#2a1a10');
-  g.fillStyle = bg; g.fillRect(0, 0, size, size);
-  for (let i = 0; i < 7; i++) { g.fillStyle = `rgba(0,0,0,${0.12 + (i % 2) * 0.08})`; g.fillRect(0, (i / 7) * size, size, size / 70); }
-  const lamp = g.createRadialGradient(size * 1.05, size * 0.95, 0, size * 1.05, size * 0.95, size * 0.95);
-  lamp.addColorStop(0, 'rgba(255,170,90,0.55)'); lamp.addColorStop(0.5, 'rgba(200,100,40,0.18)'); lamp.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = lamp; g.fillRect(0, 0, size, size);
-  // the figure in head units: the head about a third of the frame, facing right
-  const z = size / 19.5;
-  g.translate(size * 0.42, size * 0.7); g.scale(z, z);
-  setRoot(g);
-  // the coat's shoulders and collar
-  const COAT = blob([[-10, 12], [-9.6, 4.0], [-7.4, 0.4], [-3.4, -0.8], [2.6, -0.4], [6.6, 1.2], [9.2, 4.6], [10, 12]]);
-  cel(g, COAT, P.coat, { sh: 2.6, hl: 0.7 });
-  clip(g, COAT, () => {
-    // herringbone, a lapel, a missing button's threads
-    for (let x = -10; x < 10; x += 0.9) stroke(g, `M ${x} 0 l 0.45 12`, P.coat.d, 0.12, 0.35);
-    stroke(g, curve([[3.4, 1.0], [2.6, 5.0], [3.6, 12.0]]), P.coat.k, 0.3);
-    stitch(g, curve([[3.0, 1.2], [2.2, 5.0], [3.2, 12.0]]), P.coat.l, 0.08, 0.5);
-    stroke(g, 'M 5.0 7.6 l 0.3 0.4 M 5.3 7.6 l -0.2 0.5', '#c9bfa7', 0.06, 0.8);
+  g.scale(k, k);
+  const glow = 0.65 + 0.35 * Math.sin(t * 1.7);
+
+  // --- the stall behind him: dark boards, shelves of tins out of focus, the lamp's warmth low right
+  const bg = g.createLinearGradient(0, 0, 100, 100);
+  bg.addColorStop(0, '#0b0907'); bg.addColorStop(0.6, '#171009'); bg.addColorStop(1, '#2b1a0e');
+  g.fillStyle = bg; g.fillRect(0, 0, 100, 100);
+  for (const y of [22, 48]) B.fill(`M 0 ${y} L 100 ${y - 1} L 100 ${y + 1.6} L 0 ${y + 2.6} Z`, '#2a1d12', 1.2, 0.8);
+  for (let i = 0; i < 9; i++) { const x = 2 + i * 6.4 + r() * 2, y = 15 + (i % 3) * 0.6; B.fill(`M ${x} ${y} L ${x + 4} ${y} L ${x + 4} ${y + 7} L ${x} ${y + 7} Z`, i % 2 ? '#3a2a1a' : '#2c2218', 1.6, 0.7); B.dab(x + 2.6, y + 2, 1.2, 2.6, '#a0703c', 0.25); }
+  for (let i = 0; i < 6; i++) { const x = 3 + i * 5.6, y = 40; B.fill(`M ${x} ${y} L ${x + 3.6} ${y} L ${x + 3.6} ${y + 8} L ${x} ${y + 8} Z`, '#2e2014', 1.8, 0.6); }
+  B.dab(104, 96, 46, 40, 'rgba(255,160,80,0.55)');
+  B.dab(96, 66, 10, 10, `rgba(255,120,50,${0.12 * glow})`);
+
+  // --- the coat: heavy wool, the collar turned up behind the neck
+  B.fill(COLLAR_BACK, '#24211d', 0.4);
+  B.inside(COLLAR_BACK, () => { B.dab(36, 64, 9, 7, '#3c3730', 0.7); texture(g, 'wool', 0.5, 7); });
+  B.fill(COAT, '#26231f', 0.3);
+  B.inside(COAT, () => {
+    texture(g, 'wool', 0.55, 7);
+    B.dab(88, 96, 26, 16, 'rgba(176,120,72,0.55)');           // the lamp on the near shoulder
+    B.dab(10, 92, 22, 14, 'rgba(70,80,92,0.25)');             // the cold of the street behind
+    for (const d of ['M 14 88 C 20 92 24 98 26 106', 'M 40 82 C 44 90 46 98 47 106', 'M 82 86 C 86 92 88 98 88 106']) B.line(d, '#0c0b09', 2.2, 1.6, 0.6);
+    for (const d of ['M 16 87 C 22 91 26 97 28 104', 'M 84 85 C 88 91 90 97 90 104']) B.line(d, '#5a4a38', 0.8, 0.8, 0.35);
   });
-  // the head (head frame: origin at the neck base)
-  g.save(); g.translate(0.6, -0.9);
-  cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', P.skin, { sh: 1.2, hl: 0.25 });
-  const HD = headShape({ jaw: 1 });
-  cel(g, HD, P.skin, { sh: 1.4, hl: 0.5 });
-  clip(g, HD, () => {
-    // weather: lines on the forehead, at the eye, down from the nose; a broken vein
-    for (const y of [-9.2, -8.7]) stroke(g, `M 1.6 ${y} C 2.4 ${y - 0.2} 3.2 ${y - 0.2} 3.8 ${y + 0.05}`, P.skin.d, 0.08, 0.7);
-    for (const a of [-0.3, 0, 0.3]) stroke(g, `M 1.7 ${-6.6 + a} l -0.7 ${a * 0.6}`, P.skin.d, 0.07, 0.8);
-    stroke(g, 'M 4.4 -4.8 C 3.9 -4.0 3.7 -3.4 3.8 -2.8', P.skin.d, 0.1, 0.8);
-    fill(g, ell(4.6, -4.8, 0.4, 0.25), '#c46a5a', 0.3);
-    // the ear and its shadow
-    cel(g, 'M -1.6 -7.4 C -0.7 -7.8 -0.1 -6.9 -0.2 -6.0 C -0.3 -5.2 -1.1 -4.9 -1.7 -5.5 Z', P.skin, { sh: 0.5, hl: 0.2, line: false, ao: 0.6 });
-    stroke(g, 'M -1.2 -7.0 C -0.6 -6.9 -0.6 -6.0 -1.0 -5.8', P.skin.d, 0.12, 0.7);
+
+  // --- the head and neck: one skin, then the light and the dark laid over it as glazes
+  B.fill(HEAD, '#8d5a40', 0.25);
+  B.inside(HEAD, () => {
+    // the lamp from below right: warm up the front of the face, the jaw and the throat
+    B.dab(90, 70, 40, 34, 'rgba(232,160,112,0.75)');
+    B.dab(78, 48, 12, 14, 'rgba(226,150,104,0.6)');
+    // the dark side: the back of the head, behind the ear, the nape
+    B.dab(30, 48, 20, 30, 'rgba(40,22,14,0.85)');
+    B.dab(40, 66, 12, 12, 'rgba(36,20,12,0.6)');
+    // the cap's shadow across the forehead and temple
+    B.fill('M 28 32 C 46 29 60 27.6 77 28 L 79 34.4 C 64 33.6 48 35.6 31 40.6 Z', 'rgba(26,14,8,0.85)', 2.2);
+    // a little lamp light bounced up under the peak onto the brow
+    B.dab(75.5, 33, 3.4, 1.4, 'rgba(240,170,120,0.45)');
+    // the eye socket, deep; the brow ridge catching the light under it
+    B.dab(71.5, 40.6, 5.6, 3.8, 'rgba(46,24,14,0.85)');
+    B.dab(76, 37, 3.4, 1.1, 'rgba(236,178,136,0.55)', 1, 'source-over', -0.2);
+    // the cheekbone in the light, the hollow under it
+    B.dab(69, 47.6, 6.4, 3.4, 'rgba(234,168,124,0.6)', 1, 'source-over', -0.25);
+    B.dab(63, 51, 6, 3, 'rgba(60,32,20,0.5)');
+    // the nose: the bridge's edge, the tip, the wing of the nostril, the warm underside
+    B.line('M 78.4 40 C 80.2 43.6 82.6 47.6 84.4 50.8', 'rgba(244,192,150,0.75)', 1.1, 0.7);
+    B.dab(84.3, 51.4, 1.8, 1.5, 'rgba(255,214,176,0.7)');
+    B.dab(77.6, 46, 1.8, 3.4, 'rgba(70,36,22,0.55)', 1, 'source-over', 0.5);
+    B.dab(80.6, 53.4, 1.9, 1.1, 'rgba(60,26,16,0.8)');
+    B.dab(83, 54.6, 2.6, 0.9, 'rgba(255,170,110,0.55)');
+    // age: lines across the forehead, the crow's feet, blotches on the temple, the red in the nose
+    for (const [y, a] of [[30.6, 0.5], [32.2, 0.45]]) { B.line(`M 66 ${y + 0.8} C 70 ${y} 74 ${y - 0.2} 77 ${y + 0.2}`, `rgba(40,20,12,${a})`, 0.35, 0.2); B.line(`M 66 ${y + 1.4} C 70 ${y + 0.6} 74 ${y + 0.4} 77 ${y + 0.8}`, 'rgba(230,160,120,0.25)', 0.3, 0.2); }
+    for (const a of [-0.35, 0, 0.4]) B.line(`M 69.6 ${41.6 + a} l -2.6 ${a * 1.8 - 0.2}`, 'rgba(50,24,14,0.5)', 0.22, 0.12);
+    for (let i = 0; i < 7; i++) B.dab(58 + r() * 8, 36 + r() * 8, 0.6 + r() * 0.7, 0.5 + r() * 0.5, 'rgba(90,48,30,0.18)');
+    B.dab(83, 50, 3, 2.4, 'rgba(180,70,52,0.22)');
+    // the neck: the cords under the jaw, the folds of old skin at the throat
+    for (const d of ['M 58 70 C 60 73 61 77 61.5 81', 'M 52 66 C 54 70 55 75 55 80']) B.line(d, 'rgba(40,20,12,0.45)', 0.9, 0.6);
+    B.line('M 59 70.6 C 60.8 73.4 61.8 77 62.2 81', 'rgba(220,150,110,0.35)', 0.5, 0.4);
+    texture(g, 'skin', 0.35, 6);
   });
-  // the beard: short and grey, along the jaw and up to the ear, the moustache yellowed by smoke
-  const BEARD = 'M -0.6 -5.6 C 0.2 -4.4 1.6 -4.2 2.6 -4.6 C 3.4 -4.0 4.4 -3.8 5.0 -3.9 C 5.0 -3.0 4.8 -2.0 4.2 -1.4 C 3.2 -0.8 1.6 -0.9 0.4 -1.6 C -0.6 -2.4 -1.2 -3.6 -1.2 -4.8 Z';
-  cel(g, BEARD, P.beard, { sh: 0.9, hl: 0.4, line: false, ao: 0.25 });
-  clip(g, BEARD, () => { for (let k = 0; k < 70; k++) { const x = -1 + ((k * 37) % 62) / 10, y = -5.4 + ((k * 53) % 46) / 10; stroke(g, `M ${x} ${y} l 0.12 0.3`, k % 3 ? P.beard.d : P.beard.l, 0.06, 0.8); } });
-  // the beard's edge: loose hairs instead of a line
-  for (let k = 0; k < 28; k++) { const u = k / 27, x = -1.0 + u * 6.0, y = -4.8 + Math.sin(u * Math.PI) * 3.6; stroke(g, `M ${x} ${y} l ${0.1 - u * 0.2} 0.35`, P.beard.m, 0.07, 0.8); }
-  cel(g, 'M 3.4 -4.0 C 4.0 -4.35 4.9 -4.25 5.3 -3.8 C 5.1 -3.45 4.4 -3.4 3.7 -3.5 Z', mat(tone('#d6cdb6', '#ada38b', '#7d755f', '#3a3628'), 'wool', 0.7), { sh: 0.3, hl: 0.2, line: false });
-  // the tired eye: heavy upper lid, a bag under it, the iris dark brown; a bushy grey brow
-  fill(g, 'M 2.9 -6.85 C 3.3 -7.15 3.9 -7.2 4.3 -6.95 C 4.0 -6.7 3.4 -6.65 2.9 -6.85 Z', '#ece6dc');
-  fill(g, ell(3.85, -6.92, 0.2, 0.18), '#3a2a20');
-  fill(g, 'M 2.85 -6.9 C 3.3 -7.35 3.9 -7.4 4.35 -7.0 L 4.3 -6.85 C 3.9 -7.15 3.3 -7.1 2.9 -6.8 Z', P.skin.d);
-  stroke(g, 'M 3.0 -6.45 C 3.4 -6.25 3.9 -6.25 4.25 -6.45', P.skin.d, 0.1, 0.8);
-  const BROW = 'M 2.4 -8.0 C 3.2 -8.35 4.1 -8.3 4.7 -7.85 L 4.6 -7.55 C 4.0 -7.9 3.2 -7.95 2.5 -7.65 Z';
-  cel(g, BROW, P.beard, { sh: 0.2, hl: 0.15, lw: 0.12 });
-  for (let i = 0; i < 6; i++) stroke(g, `M ${2.6 + i * 0.35} -7.8 l 0.2 -0.3`, P.beard.l, 0.05, 0.9);
-  // the cigarette, the ember breathing, smoke curling up past the cap
-  g.save(); g.translate(4.7, -3.0); g.rotate(0.18);
-  fill(g, 'M 0 -0.18 L 2.2 -0.18 L 2.2 0.18 L 0 0.18 Z', '#efe9de');
-  fill(g, 'M 0 -0.18 L 0.6 -0.18 L 0.6 0.18 L 0 0.18 Z', '#c99a5a');
-  const glow = 0.6 + 0.4 * Math.sin(t * 1.7);
-  g.shadowColor = `rgba(255,120,40,${glow})`; g.shadowBlur = 0.6 * z;
-  fill(g, 'M 2.2 -0.18 L 2.5 -0.16 L 2.5 0.16 L 2.2 0.18 Z', `rgb(255,${110 + glow * 60},40)`);
+  // the ear, half in the dark
+  B.fill(EAR, '#6e4230', 0.15);
+  B.inside(EAR, () => {
+    B.dab(52.8, 46, 3, 6, 'rgba(196,118,86,0.55)');
+    B.line('M 49.6 42 C 52.2 42 52.8 45.4 52 48.6 C 51.4 50.6 50 51.4 49.2 50.6', 'rgba(34,16,10,0.75)', 0.6, 0.35);
+    B.dab(50.2, 46.4, 1.4, 2.4, 'rgba(40,18,10,0.6)');
+    B.dab(48, 44, 2.4, 6, 'rgba(30,16,10,0.5)');
+  });
+
+  // --- the hair under the cap: cropped short and grey at the temple, over the ear and down the nape
+  const HAIR = 'M 30.4 34.6 C 36 33.6 44 33 50.4 33.6 C 54 34 56.6 35.4 57.4 38 C 56 39.4 54.6 39.6 53.4 39.2 C 51.6 38.6 49.6 38.8 48.2 39.8 C 46.6 41.4 46 44 46.2 47 C 46.4 50 47.4 52.4 48.4 54 C 46 56 42 57 37.6 57.6 C 34.6 56.6 32.2 53 31 48 C 30.2 43 30 38 30.4 34.6 Z';
+  B.fill(HAIR, '#3c3732', 1.0, 0.9);
+  B.inside(HAIR, () => { B.dab(54, 37, 5, 3, 'rgba(150,140,128,0.55)'); B.dab(34, 48, 6, 10, 'rgba(14,10,8,0.6)'); });
+  B.hairs(900, 61, (i, rr) => {
+    const x = 30 + rr() * 28, y = 33.6 + rr() * 24;
+    if (!g.isPointInPath(P(HAIR), x * k, y * k)) return null;
+    const lit = Math.min(1, Math.max(0, (x - 36) / 22 - (y - 36) / 40)), v = 60 + lit * 110 + (rr() - 0.5) * 50;
+    return [x, y, 1.2 + (rr() - 0.5) * 0.6 + (x - 44) * 0.02, 0.5 + rr() * 0.7, `rgba(${v + 4 | 0},${v | 0},${v - 6 | 0},1)`, 0.08, 0.45];
+  });
+  // stubble on the cheek where the beard thins out toward the cheekbone
+  B.hairs(700, 71, (i, rr) => {
+    const x = 50 + rr() * 26, y = 45 + rr() * 9;
+    if (!g.isPointInPath(P(HEAD), x * k, y * k)) return null;
+    const fade = Math.min(1, Math.max(0, (y - 45) / 8)), v = 90 + rr() * 90;
+    return [x, y, Math.PI / 2 + (rr() - 0.5) * 0.6, 0.25 + rr() * 0.35, `rgba(${v | 0},${v - 4 | 0},${v - 10 | 0},1)`, 0.07, 0.15 + fade * 0.35];
+  });
+
+  // --- the scarf: old knitted wool, olive gone brown, two rust stripes
+  B.fill(SCARF_END, '#3d3a26', 0.3);
+  B.fill(SCARF, '#45422b', 0.3);
+  for (const d of [SCARF, SCARF_END]) B.inside(d, () => {
+    for (const y of [74, 80]) B.fill(`M 20 ${y} C 40 ${y - 3} 60 ${y - 1} 80 ${y + 3} L 80 ${y + 1.8} C 60 ${y + 1} 40 ${y - 1} 20 ${y + 1.6} Z`, '#6a3420', 0.7, 0.6);
+    B.dab(70, 82, 14, 8, 'rgba(190,140,80,0.4)');
+    B.dab(36, 76, 10, 8, 'rgba(10,8,6,0.6)');
+    texture(g, 'knit', 0.4, 3.5);
+    B.line('M 40 75 C 48 78 58 79 68 78', 'rgba(10,8,6,0.5)', 1.6, 1.2);
+  });
+
+  // --- the beard: a soft grey mass, then hair by hair, the light catching what faces the lamp
+  // first the mass, lit like any other form (dark under the ear, pale where the lamp reaches),
+  // then fine hairs in the local tone so it reads as hair without turning to wire
+  const beard = P(BEARD);
+  B.fill(BEARD, '#5f5a54', 1.4);
+  B.inside(BEARD, () => {
+    B.dab(46, 54, 14, 12, 'rgba(26,22,18,0.65)');
+    B.fill('M 48 50 C 58 49 68 51 76 54 L 76 56.4 C 68 54 58 52.4 48 53.4 Z', 'rgba(140,96,72,0.45)', 1.2);   // skin showing through where it thins
+    B.dab(84, 72, 20, 14, 'rgba(214,204,190,0.8)');
+    B.dab(76, 62, 10, 8, 'rgba(176,168,158,0.55)');
+    B.dab(64, 74, 10, 4, 'rgba(30,24,20,0.45)');
+  });
+  const tone = (x, y) => Math.min(1, Math.max(0, (x - 54) / 28 + (y - 58) / 34));
+  const grey = (v, a) => `rgba(${v + 6 | 0},${v + 2 | 0},${v - 5 | 0},${a})`;
+  B.hairs(1900, 21, (i, rr) => {
+    const x = 47 + rr() * 37, y = 48 + rr() * 28;
+    if (!g.isPointInPath(beard, x * k, y * k)) return null;
+    const lit = tone(x, y), v = 60 + lit * 150 + (rr() - 0.5) * 46;
+    const a = Math.PI / 2 - 0.25 + (x - 66) * 0.01 + (rr() - 0.5) * 0.45;
+    return [x, y, a, 0.7 + rr() * 1.1, grey(Math.min(244, v), 1), 0.08 + rr() * 0.06, 0.3 + rr() * 0.3];
+  });
+  // a few bright strands where the lamp catches, and loose ones past the edge so it never ends in a line
+  B.hairs(140, 27, (i, rr) => {
+    const x = 66 + rr() * 17, y = 60 + rr() * 15;
+    if (!g.isPointInPath(beard, x * k, y * k)) return null;
+    return [x, y, Math.PI / 2 - 0.2 + (rr() - 0.5) * 0.4, 0.8 + rr(), '#f2ece2', 0.08, 0.55];
+  });
+  B.hairs(120, 33, (i, rr) => {
+    const u = rr(), x = 52 + u * 30, y = 53 + Math.sin(u * Math.PI) * 21 + (rr() - 0.2) * 1.6;
+    return [x, y, Math.PI / 2 + (rr() - 0.5) * 0.8, 0.6 + rr() * 0.8, grey(70 + tone(x, y) * 150, 1), 0.08, 0.45];
+  });
+  // the moustache: yellowed by forty years of smoke, thicker over the lip
+  B.fill(STACHE, '#857a64', 0.7);
+  B.inside(STACHE, () => { B.dab(81, 58.4, 3.4, 2, 'rgba(214,196,150,0.7)'); B.dab(76, 56, 2.6, 2, 'rgba(40,32,24,0.6)'); });
+  B.hairs(300, 44, (i, rr) => {
+    const x = 74.6 + rr() * 8.4, y = 54.6 + rr() * 5;
+    if (!g.isPointInPath(P(STACHE), x * k, y * k)) return null;
+    const lit = Math.min(1, (x - 75) / 7), v = 90 + lit * 120 + (rr() - 0.5) * 40;
+    return [x, y, Math.PI * 0.42 + (rr() - 0.5) * 0.4, 0.6 + rr() * 0.8, `rgba(${v + 14 | 0},${v + 4 | 0},${v - 26 | 0},1)`, 0.09, 0.55];
+  });
+  B.dab(81, 58.6, 3, 1.8, `rgba(255,140,60,${0.35 * glow})`, 1, 'screen');
+
+  // --- the eye: small and wet in the dark of the socket, the lid heavy over it
+  const EYE = 'M 70.8 41.4 C 72 40.7 73.6 40.5 74.8 41 C 73.8 41.8 72 42 70.8 41.4 Z';
+  B.fill(EYE, '#6e5e52', 0.12);
+  B.inside(EYE, () => {
+    B.dab(73.3, 41.15, 0.95, 0.95, '#22150e');
+    B.dab(73.3, 41.15, 0.42, 0.42, '#0a0605');
+    B.dab(71.4, 41.2, 1.4, 0.8, 'rgba(40,26,20,0.6)');
+    B.fill('M 70 40 L 76 40 L 76 41.1 L 70 41.3 Z', 'rgba(20,10,6,0.55)', 0.25);   // the lid's shadow on the eye
+  });
+  B.dab(73.8, 41.5, 0.26, 0.18, '#ffd9ae', 0.8);
+  B.line('M 70.2 41.2 C 71.6 39.9 73.6 39.7 75.2 40.7', 'rgba(26,12,8,0.9)', 0.6, 0.22);
+  B.line('M 70 39.9 C 71.8 38.4 74 38.4 75.8 39.6', 'rgba(220,150,110,0.35)', 0.45, 0.35);
+  B.line('M 70.6 42.5 C 72 43.5 74 43.3 75.2 42.3', 'rgba(40,20,12,0.5)', 0.35, 0.4);
+  B.line('M 70.8 43.3 C 72.2 44.1 74 44 75 43.2', 'rgba(236,170,128,0.4)', 0.35, 0.4);
+  // the brow: grey, thick, wiry, sitting low
+  B.fill('M 67.6 37.4 C 70 36 74 35.8 77.4 36.8 L 77 37.8 C 74 37.2 70.4 37.6 67.8 38.6 Z', '#4e4943', 0.6, 0.85);
+  B.hairs(110, 55, (i, rr) => {
+    const u = rr(), x = 67.8 + u * 9.4, y = 37.6 - Math.sin(u * Math.PI) * 1.2 + (rr() - 0.5) * 0.8;
+    const v = 70 + u * 110 + (rr() - 0.5) * 50;
+    return [x, y, -0.3 - rr() * 0.4, 0.6 + rr() * 0.7, `rgba(${v | 0},${v - 4 | 0},${v - 10 | 0},1)`, 0.09, 0.6];
+  });
+
+  // --- the cap: herringbone tweed, the peak low over the eyes
+  B.fill(CAP, '#463d31', 0.25);
+  B.inside(CAP, () => {
+    g.save(); g.globalAlpha = 0.22; g.strokeStyle = '#1e1912'; g.lineWidth = 0.35;
+    for (let x = 18; x < 92; x += 1.6) for (let y = 8; y < 36; y += 2.4) { g.beginPath(); const s = ((x / 1.6) | 0) % 2 ? 1 : -1; g.moveTo(x, y); g.lineTo(x + 0.8, y + s * 1.1); g.stroke(); }
+    g.restore();
+    texture(g, 'wool', 0.6, 7);
+    B.dab(46, 14, 22, 8, 'rgba(120,110,96,0.45)');               // the night sky on the crown
+    B.dab(24, 28, 6, 8, 'rgba(110,126,140,0.3)');                // a cold rim behind
+    B.line('M 30 25 C 44 19 62 18 80 25', 'rgba(16,12,8,0.6)', 0.6, 0.5);  // the panel seam
+    B.line('M 30 24.4 C 44 18.4 62 17.4 80 24.4', 'rgba(140,124,100,0.3)', 0.35, 0.3);
+  });
+  B.inside(PEAK, () => {
+    B.fill(PEAK, '#2c251c', 0.8);
+    B.line('M 66 30 C 72 30.2 80 30.6 87.6 29.6', `rgba(220,140,80,${0.5 + 0.15 * glow})`, 0.9, 0.5); // the lamp under its edge
+  });
+  B.line('M 33 34.8 C 44 31.8 58 30 70 29.6', 'rgba(10,6,4,0.7)', 1.0, 0.6);
+
+  // --- the coat's lapel over the scarf, wet-looking wool catching the lamp
+  B.fill(LAPEL, '#2a2621', 0.3);
+  B.inside(LAPEL, () => { texture(g, 'wool', 0.55, 7); B.dab(82, 90, 10, 12, 'rgba(190,130,80,0.5)'); B.line('M 63 79 C 67 87 69 94 70.6 101', 'rgba(8,6,4,0.7)', 1.4, 0.8); });
+
+  // --- the cigarette at the corner of the mouth, the ember breathing, smoke lifting off it
+  g.save(); g.translate(81.2, 59.6); g.rotate(0.19);
+  B.fill('M 0 -0.78 L 13.4 -0.78 L 13.4 0.78 L 0 0.78 Z', '#e6dfd0', 0.1);
+  B.fill('M 0 -0.78 L 3.4 -0.78 L 3.4 0.78 L 0 0.78 Z', '#b98f58', 0.1);
+  B.fill('M 0 0.2 L 13.4 0.2 L 13.4 0.78 L 0 0.78 Z', 'rgba(120,96,70,0.45)', 0.25);
+  B.fill('M 12.6 -0.8 L 13.8 -0.8 L 13.8 0.8 L 12.6 0.8 Z', '#8a8680', 0.15);
+  B.dab(13.9, 0, 1.0, 0.85, `rgb(255,${120 + 70 * glow},50)`, 1);
+  B.dab(13.9, 0, 3.2, 2.6, `rgba(255,120,40,${0.45 * glow})`, 1, 'screen');
   g.restore();
-  for (let i = 0; i < 3; i++) {
-    const u = (t * 0.25 + i / 3) % 1, x = 7.4 + Math.sin(u * 6 + i) * 0.6, y = -3.2 - u * 9;
-    stroke(g, `M ${x} ${y} q 0.6 -0.8 0 -1.6 q -0.6 -0.8 0 -1.6`, `rgba(200,190,180,${0.25 * (1 - u)})`, 0.3 + u * 0.5);
+  for (let i = 0; i < 5; i++) {
+    const u = (t * 0.12 + i / 5) % 1, x0 = 95, y0 = 62;
+    const x1 = x0 - 2 + Math.sin(u * 5 + i) * 3, y1 = y0 - 8 - u * 26, x2 = x1 + Math.sin(u * 7 + i * 2) * 4, y2 = y1 - 10;
+    B.line(`M ${x0} ${y0 - 1} C ${x0 + 1} ${y0 - 6} ${x1 - 2} ${y1 + 4} ${x1} ${y1} S ${x2 + 2} ${y2 + 4} ${x2} ${y2}`, `rgba(190,182,172,${0.16 * (1 - u)})`, 0.8 + u * 3, 0.8 + u * 2.4);
   }
-  // the flat cap, its peak pulled low
-  const CAP = 'M -4.6 -7.4 C -4.8 -9.8 -2.8 -11.6 0.6 -11.8 C 3.8 -12.0 6.0 -10.8 6.6 -9.2 C 7.2 -8.6 7.0 -8.0 6.2 -7.9 L 3.2 -8.2 C 1.0 -8.4 -1.8 -8.0 -4.6 -7.4 Z';
-  cel(g, CAP, P.cap, { sh: 1.4, hl: 0.5 });
-  clip(g, CAP, () => {
-    stroke(g, curve([[-3.6, -9.6], [0.4, -11.2], [4.6, -10.6], [6.4, -9.0]]), P.cap.d, 0.14, 0.7);
-    stitch(g, 'M 2.8 -8.6 C 4.2 -8.8 5.6 -8.6 6.6 -8.2', P.cap.l, 0.06, 0.6);
-    grime(g, -10, -7.4, 'rgba(30,20,10,0.35)');
-  });
+
+  // --- the whole: a cool edge of street light on his back, film grain, the stall's dark round the frame
+  B.dab(26, 60, 10, 30, 'rgba(110,130,150,0.12)', 1, 'screen');
+  B.grain(0, 0, 100, 100, 0.07);
+  const v = g.createRadialGradient(56, 54, 30, 56, 54, 78);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+  g.fillStyle = v; g.fillRect(0, 0, 100, 100);
   g.restore();
-  g.save(); g.translate(0, 1.5);
-  const COLLAR = blob([[-6.8, 1.4], [-6.2, -2.4], [-3.4, -3.4], [0.6, -3.0], [3.2, -1.8], [3.4, 1.0], [-1.6, 1.8]]);
-  cel(g, COLLAR, P.coat, { sh: 1.2, hl: 0.5 });
-  // the scarf wound once, its end tucked in
-  const SC = blob([[-4.8, -1.2], [-3.6, -3.4], [0.2, -3.8], [3.4, -2.8], [4.2, -0.8], [2.6, 0.8], [-1.4, 0.8], [-4.2, 0.4]]);
-  cel(g, SC, P.scarf, { sh: 1.0, hl: 0.4 });
-  clip(g, SC, () => { for (let x = -5; x < 5; x += 1.1) stroke(g, `M ${x} -4 l 0 5`, P.scarf.d, 0.16, 0.6); for (let y = -3.4; y < 1; y += 1.1) stroke(g, `M -5 ${y} l 10 0`, '#8f4a32', 0.1, 0.55); });
-  g.restore();
-  g.restore();
-  // the lamp light catching his right side, a rim on the shoulder
-  const rim = g.createLinearGradient(size * 0.55, 0, size, 0);
-  rim.addColorStop(0, 'rgba(255,150,70,0)'); rim.addColorStop(1, 'rgba(255,150,70,0.18)');
-  g.save(); g.globalCompositeOperation = 'screen'; g.fillStyle = rim; g.fillRect(0, 0, size, size); g.restore();
-  // a vignette
-  const v = g.createRadialGradient(size * 0.5, size * 0.5, size * 0.3, size * 0.5, size * 0.5, size * 0.75);
-  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)');
-  g.fillStyle = v; g.fillRect(0, 0, size, size);
 }

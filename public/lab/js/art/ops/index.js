@@ -12,8 +12,8 @@ export const OPS = { vex: VEX, hale: HALE, morrow: MORROW, kite: KITE, brick: BR
 export const VISOR = {
   // FLINT: the round welding goggles, the fire caught in the green glass
   vex: { c: [255, 168, 96],
-    glass: ['M 0.95 -6.8 a 1.2 1.15 0 1 0 2.4 0 a 1.2 1.15 0 1 0 -2.4 0 Z', 'M 3.8 -6.75 a 0.66 1.06 0 1 0 1.32 0 a 0.66 1.06 0 1 0 -1.32 0 Z'],
-    line: ['M 1.3 -7.3 C 1.8 -7.6 2.5 -7.6 3.0 -7.3', 'M 4.05 -7.3 L 4.85 -7.3'] },
+    glass: ['M 0.95 -6.8 a 1.2 1.15 0 1 0 2.4 0 a 1.2 1.15 0 1 0 -2.4 0 Z', 'M 3.72 -6.75 a 0.42 0.98 0 1 0 0.84 0 a 0.42 0.98 0 1 0 -0.84 0 Z'],
+    line: ['M 1.3 -7.3 C 1.8 -7.6 2.5 -7.6 3.0 -7.3', 'M 3.95 -7.3 L 4.35 -7.3'] },
   // WARDEN: the gold face shield
   hale: { c: [255, 206, 112],
     glass: ['M 1.4 -8.95 C 3.4 -9.25 5.4 -8.95 6.15 -7.95 C 6.65 -6.45 6.55 -4.25 5.95 -2.95 C 5.25 -1.85 3.65 -1.45 2.25 -1.85 C 1.65 -3.45 1.35 -6.05 1.4 -8.95 Z'],

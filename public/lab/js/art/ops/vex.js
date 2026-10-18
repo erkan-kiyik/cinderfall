@@ -256,7 +256,7 @@ function foot(g, ctx) {
 
 // --- head: knit cap, round welding goggles, the scarf over the nose ---------------------------
 const lensN = 'M 0.95 -6.8 a 1.2 1.15 0 1 0 2.4 0 a 1.2 1.15 0 1 0 -2.4 0 Z';
-const lensF = 'M 3.8 -6.75 a 0.66 1.06 0 1 0 1.32 0 a 0.66 1.06 0 1 0 -1.32 0 Z';
+const lensF = 'M 3.72 -6.75 a 0.42 0.98 0 1 0 0.84 0 a 0.42 0.98 0 1 0 -0.84 0 Z';
 function head(g) {
   const S = PAL.skin;
   cel(g, 'M -1.7 1.2 L 2.1 1.0 L 2.0 -2.6 L 0.6 -3.6 L -1.8 -4.4 Z', PAL.scarf, { sh: 1.2, hl: 0 });
@@ -275,7 +275,8 @@ function head(g) {
   stroke(g, 'M 1.9 -8.7 L 2.15 -7.8', S.l, 0.12, 0.9);
   // the goggles: leather cups, copper rims and screws, bottle-green glass with the fire in it
   cel(g, 'M 0.55 -6.8 a 1.6 1.55 0 1 0 3.2 0 a 1.6 1.55 0 1 0 -3.2 0 Z', PAL.strap, { sh: 0.4, hl: 0.25, lw: 0.26 });
-  cel(g, 'M 3.5 -6.75 a 0.98 1.42 0 1 0 1.96 0 a 0.98 1.42 0 1 0 -1.96 0 Z', PAL.strap, { sh: 0.3, hl: 0.2, lw: 0.26 });
+  // the far cup, turned away from us: seen nearly edge-on past the bridge of the nose
+  cel(g, 'M 3.45 -6.75 a 0.7 1.3 0 1 0 1.4 0 a 0.7 1.3 0 1 0 -1.4 0 Z', PAL.strap, { sh: 0.3, hl: 0.2 });
   for (const d of [lensN, lensF]) {
     fill(g, d, '#0f2a1d');
     clip(g, d, () => {
@@ -286,7 +287,7 @@ function head(g) {
     stroke(g, d, PAL.copper.m, 0.3); stroke(g, d, PAL.copper.l, 0.1, 0.6);
   }
   for (const a of [0.6, 2.2, 3.8, 5.4]) rivet(g, 2.15 + Math.cos(a) * 1.35, -6.8 + Math.sin(a) * 1.3, 0.11, PAL.copper);
-  stroke(g, 'M 3.35 -6.8 L 3.8 -6.75', PAL.copper.d, 0.32);
+  stroke(g, 'M 3.35 -6.8 L 3.7 -6.75', PAL.copper.d, 0.32);
   // the strap round the cap to the back
   stroke(g, 'M 0.6 -7.0 C -0.6 -7.3 -1.6 -7.3 -2.4 -7.1', PAL.strap.m, 0.55);
   stitch(g, 'M 0.6 -7.0 C -0.6 -7.3 -1.6 -7.3 -2.4 -7.1', PAL.strap.l, 0.07, 0.6);

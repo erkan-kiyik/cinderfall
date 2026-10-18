@@ -99,11 +99,14 @@ function torso(g) {
   cel(g, PLATE, PAL.blue, { sh: 1.6, hl: 0.5 });
   clip(g, PLATE, () => {
     corrugate(g, -5, 9, -23, -8);
-    g.save(); g.fillStyle = 'rgba(236,232,222,0.85)'; g.font = '700 1.55px sans-serif'; g.textBaseline = 'alphabetic';
-    g.fillText('VNTU', -0.4, -18.6); g.fillText('482113', -0.4, -16.8); g.font = '700 0.9px sans-serif'; g.fillText('22G1  MAX 30480 KG', -0.4, -15.4);
+    // the port's own code (owner LMN, serial, check digit), the size-type and gross under it;
+    // set large and scaled down so the small letters keep their shapes
+    const code = (txt, x, y, px, w = 700) => { g.save(); g.translate(x, y); g.scale(1 / 40, 1 / 40); g.font = `${w} ${px * 40}px 'Barlow Condensed', sans-serif`; g.fillText(txt, 0, 0); g.restore(); };
+    g.save(); g.fillStyle = 'rgba(236,232,222,0.82)'; g.textBaseline = 'alphabetic';
+    code('LMNU', 3.3, -18.9, 1.45); code('482113 7', 3.3, -17.4, 1.2); code('22G1', 4.1, -16.15, 0.72, 600);
     g.restore();
     // the white paint flaking off the code, the torch-cut edge burnt dark, rust round it
-    for (const [x, y] of [[-1.6, -19.4], [2.0, -18.8], [0.4, -17.0]]) fill(g, `M ${x} ${y} l 0.5 0.1 l -0.15 0.45 l -0.45 -0.1 Z`, PAL.blue.m);
+    for (const [x, y] of [[7.3, -19.4], [6.9, -16.6], [-1.2, -18.2]]) fill(g, `M ${x} ${y} l 0.5 0.1 l -0.15 0.45 l -0.45 -0.1 Z`, PAL.blue.m);
     stroke(g, curve([[-4.4, -20.6], [-4.6, -15.0], [-4.0, -10.0]]), PAL.rust.k, 0.6, 0.6);
     rust(g, [[-3.8, -19.6, 0.7, 1.6], [-4.2, -13.2, 0.6, 1.2], [7.4, -12.6, 0.5, 1.4], [3.0, -9.6, 0.8], [6.4, -20.8, 0.5, 1.0]]);
     // the lock rod's bracket still bolted to it
