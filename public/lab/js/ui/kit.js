@@ -60,6 +60,8 @@ export const svg = (name, cls = 'ic') => { const s = h('span.' + cls); s.innerHT
 // --- icons (24-unit grid, currentColor) ------------------------------------------------
 const P = (d, extra = '') => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor" ${extra}/></svg>`;
 const S = (d, w = 2.4) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="square" stroke-linejoin="miter"/></svg>`;
+// a filled shape and a stroked one in the same icon
+const PS = (fill, stroke, w = 2, rule = 'nonzero') => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${fill}" fill="currentColor" fill-rule="${rule}"/><path d="${stroke}" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 export const ICONS = {
   back: S('M15 5 8 12l7 7'),
   close: S('M6 6l12 12M18 6 6 18'),
@@ -102,6 +104,17 @@ export const ICONS = {
   radar: S('M12 12 19 5M12 3a9 9 0 1 0 9 9M12 7.5a4.5 4.5 0 1 0 4.5 4.5', 2.2),
   charge: P('M3 9h7V4l11 8-11 8v-5H3Z'),
   armor: P('M5 4h4l3 2 3-2h4v8.5c0 4-3 7-7 8.5-4-1.5-7-4.5-7-8.5Z'),
+  // the abilities, each from the operator's old trade (docs §10.10)
+  flare: PS('M10.4 11h3.2l.7 11H9.7ZM10 8.6h4V11h-4Z', 'M12 6V2.5M8.6 7.2 6.4 4.8M15.4 7.2l2.2-2.4M7.6 10.2H5M16.4 10.2H19'),
+  furnace: P('M3 21V10.5a9 7.5 0 0 1 18 0V21h-3.6v-5.4a5.4 4.4 0 0 0-10.8 0V21ZM12 21c-2 0-3.2-1.3-3.2-3 0-1.5 1-2.5 1.9-3.4.1.9.6 1.5 1.1 1.8-.2-1.5.4-2.8 1.5-3.8.1 1.8 1.9 2.7 1.9 5.2 0 1.9-1.3 3.2-3.2 3.2Z'),
+  door: P('M5 2h14v20H5Zm2.2 2.2v15.6h9.6V4.2ZM8.6 5.6h6.8v12.8H8.6Zm4.4 5.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z', 'fill-rule="evenodd"'),
+  tank: P('M7 7.4C7 6.1 9.2 5 12 5s5 1.1 5 2.4v12.2C17 20.9 14.8 22 12 22s-5-1.1-5-2.4ZM10.4 2h3.2v2.4h-3.2ZM8.6 2h6.8v1.4H8.6ZM12 10.2a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z', 'fill-rule="evenodd"'),
+  nozzle: PS('M7.6 9.6 19 4.6l1.6 3.8L9.6 13Z', 'M8.6 12.6 4 21.5M8.6 12.6l4 8.9M8.6 12.6V21.5M3 21.5h11'),
+  canister: P('M6 8h8v14H6Zm1-3.2h6V7H7ZM15.4 6.4a2.6 2.6 0 0 1 4.8-1.3 2.1 2.1 0 0 1-.9 4H17a2.3 2.3 0 0 1-1.6-2.7ZM16.6 1.8a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2Z'),
+  waves: PS('M12 8.4a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4Z', 'M12 12v9.5M8.4 21.5h7.2M8.6 6.8a4.8 4.8 0 0 1 6.8 0M5.8 4a8.8 8.8 0 0 1 12.4 0'),
+  roof: PS('M7.4 15.4c1.2-1.8 2.8-2.8 4.6-2.8s3.4 1 4.6 2.8c-1.2 1.8-2.8 2.8-4.6 2.8s-3.4-1-4.6-2.8Zm4.6-1.3a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z', 'M2.5 11.6 12 4l9.5 7.6M5.4 9.6V20.6h13.2V9.6', 2.2, 'evenodd'),
+  plate: P('M3.5 4h17v16h-17ZM6.2 6.4v11.2h1.6V6.4Zm3.6 0v11.2h1.6V6.4Zm3.6 0v11.2H15V6.4Zm3.4 0v11.2h1.6V6.4Z', 'fill-rule="evenodd"'),
+  quote: P('M3.5 6h6.6v6.6c0 3.4-1.7 5.6-4.9 6.4l-1-1.8c1.7-.7 2.5-1.8 2.6-3.6H3.5Zm10.4 0h6.6v6.6c0 3.4-1.7 5.6-4.9 6.4l-1-1.8c1.7-.7 2.5-1.8 2.6-3.6h-3.3Z'),
   skull: P('M12 2.5c5 0 8.5 3.4 8.5 8 0 2.6-1.2 4.4-3 5.4V20h-3v-2h-1.4v2h-2.2v-2H9.5v2h-3v-4.1c-1.8-1-3-2.8-3-5.4 0-4.6 3.5-8 8.5-8Zm-3.5 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'),
   clock: S('M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17ZM12 7.5V12l3.2 2', 2.2),
   // PARÇA: salvage, a steel nut

@@ -37,7 +37,7 @@ ok(used.size > 150, `found ${used.size} static keys`);
 // 2. dynamic families, expanded from the data
 const add = (k) => used.add(k);
 for (const o of OPS) {
-  add(`role.${o.role}`); add(`op.${o.id}.bio`);
+  add(`role.${o.role}`); for (const f of ["bio", "job", "night", "keep", "quote"]) add(`op.${o.id}.${f}`);
   for (const [k] of o.abil) { add(`ab.${o.id}.${k}`); add(`ab.${o.id}.${k}.d`); }
 }
 for (const w of WEAPON_LIST) { add(`cls.${w.cls}`); add(`wpn.${w.id}`); }

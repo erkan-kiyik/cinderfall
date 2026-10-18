@@ -639,3 +639,45 @@ ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
   lamba kadrajda görünür, botlar operatör fotoğraflarının üstünde kalır.
   Sahnenin sol kenarı hafifçe kararır ki operatörün adı aydınlık haritanın
   üstünde okunsun.
+
+### 10.10 Operatörler: dosya, yetenek, ayrıntı
+Beşinin giysisi §9.2'de. Bu bölüm onları oyunun geri kalanına hikâyeden
+bağlar: Operatörler ekranındaki kişi dosyası, görevdeki yetenekleri ve
+çizimdeki ayrıntılar. Önceki hâlinde dosyalar genel övgüydü ("hızlı, keskin,
+hep önde"), Vanta'ya hâlâ "Syndicate" deniyordu; yetenekler herhangi bir
+nişancı oyunundan gelmişti: enerji siperi, taret, mor yavaşlatma halkası,
+parlayan auralar. İkisi de bu şehre ait değil.
+
+**Kurallar**
+- Dosyayı ekip yazar: daktilo, üçüncü kişi, kısa; kimse kendini anlatmaz.
+- Yetenek eski işin aletinden çıkar; ışık parlaması değil, gerçek bir nesne
+  görünür (kapı, tüp, su, duman kutusu, dron, sac). Mekanik aynı kalır.
+- Her yeteneğin rengi operatörün imza renginden (§9.2): FLINT `#d9533a`,
+  WARDEN `#e6c25c`, VESPER `#4fd2c4`, SKYE `#7ec8ff`, BULWARK `#e2782f`.
+- Etrafı parlayan aura yok; etkin olduğu kor, toz, kıvılcım, su ile anlaşılır.
+
+**Dosya alanları:** yaş · eski iş · Söndürme gecesi (o gece neredeydi) ·
+yanında taşıdığı · kendi ağzından bir söz (konuşma biçimiyle, §1.4).
+
+| | Yaş | Eski iş | Söndürme gecesi | Taşıdığı | Sözü |
+|---|---|---|---|---|---|
+| FLINT | 29 | Ocakçı, üçüncü kuşak | Fırının başındaydı. Babası Halil Usta'yı o gece götürdüler. | Babasının sendika atkısı | "Sonra konuşuruz." |
+| WARDEN | 41 | İtfaiye ekip amiri, 4. istasyon | Ekip çağrıldı, kapıdan çevrildi. İstasyon bir ay sonra mühürlendi. | Halligan, istasyonun anahtarı | "Beş dakika, fazlası olmaz." |
+| VESPER | 33 | Vanta sinyal analisti | Nöbette değildi. Kayıtlar dört yıl sonra masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle. | Vanta monoklü, camgöbeğine çevrili | "Doksan saniye. Sonra yeniden tararlar." |
+| SKYE | 22 | Kurye | On sekiz yaşındaydı. Bacadan duman kesilince ilk o fark etti, bir çatıdan. | Hurdadan yaptığı dron | "Çatıdan iki dakika, sokaktan beş. Gidelim mi?" |
+| BULWARK | 47 | Liman vinç operatörü | Limanın kapandığı sabah vinçten indi. Bir daha binmedi. | Konteyner kapısından kesilmiş göğüs sacı | "Bu kadar." |
+
+**Yetenekler** (mekanik aynı, ad ve görünüş eski işten):
+
+| | Beceri 1 | Beceri 2 | Ulti |
+|---|---|---|---|
+| FLINT · ocakçı | **Kor Atılımı:** kısa hasarsız atılım, arkasında kıvılcım | **Ateşleme Fişeği:** ocak fişeği; patlayınca bakanları kör eder (magnezyum beyazı) | **Ocak Başı:** babasının yeri; 8 sn ateş hızı ve hareket +%30, atkıdan kor dökülür |
+| WARDEN · itfaiyeci | **Yangın Kapısı:** katlanır çelik kapı, 10 sn gerçek siper (kırmızı boya, şablon yazı) | **Tüp Tuzağı:** tetiğe bağlı basınçlı tüp; patlar, şok dalgası yavaşlatır | **Yangın Monitörü:** tripodda pirinç lüle ve hortum; 20 sn tazyikli su vurur ve iter |
+| VESPER · sinyalci | **Duman Kutusu:** Vanta'nın kendi kutusu, depodan; içinden görülmez (gri duman) | **Parazit:** yere bırakılan karıştırıcı; telsizler cızırdar, alandakiler %40 yavaş | **Karartma:** Vanta'nın vizör ağına eski şifresiyle girer; 4 sn herkes kör |
+| SKYE · kurye | **Hurda Dron:** gerçek dron havalanır, tarar, 8 sn işaretler | **Termal Kamera:** dronun kamerası; 5 sn duvar arkası | **Çatı Gözcüsü:** bildiği en yüksek çatıdan; 10 sn herkes işaretli, kafa vuruşu +%25 |
+| BULWARK · vinççi | **Omuz Darbesi:** sac omuzla yüklenir, devirir (toz, kıvılcım) | **Konteyner Sacı:** göğse ikinci sac; 60 puan zırh, sağlık çubuğunda mavi | **Son Söz:** 6 sn hasar %70 az, ateş hızı artar; her adımda toz |
+
+**Çizim:** FLINT'in uzaktaki gözlük camı yüzün içine alınır; BULWARK'ın
+göğüs sacındaki konteyner kodu okunur ve düzenli durur (sahip kodu, seri
+numarası, tip, ağırlık), giriş kartı kodun üstünü kapatmaz; WARDEN'ın
+kaskının önünde istasyon numarası.

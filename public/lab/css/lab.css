@@ -42,6 +42,9 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .chud .hp .bar { height: 5px; margin-top: 4px; background: rgba(255,255,255,0.1); }
 .chud .hp .bar i { display: block; height: 100%; width: 100%; background: var(--n8); transform-origin: left; transition: transform 120ms linear; }
 .chud .hp.low .bar i { background: var(--danger); }
+.chud .hp .plate { height: 3px; margin-top: 2px; background: rgba(90,130,170,0.18); opacity: 0; transition: opacity 160ms; }
+.chud .hp.plated .plate { opacity: 1; }
+.chud .hp .plate i { display: block; height: 100%; width: 100%; background: #6f9cc4; transform-origin: left; transition: transform 120ms linear; }
 .chud .wpn { text-align: right; min-width: 150px; }
 .chud .wpn .n { font: 700 12px/1 var(--f-display); letter-spacing: var(--track-wide); color: var(--n6); text-shadow: 0 1px 3px #000; }
 .chud .wpn .a { font: 800 36px/1 var(--f-num); color: var(--n8); letter-spacing: 0.01em; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }

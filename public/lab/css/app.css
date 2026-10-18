@@ -333,6 +333,12 @@
   background: var(--fibre), linear-gradient(172deg, #f2ead6, #ddd0b0 75%); box-shadow: 0 8px 16px rgba(0,0,0,0.45); }
 .op-card::before { content: ''; position: absolute; right: 18px; top: -6px; width: 26px; height: 34px; border: 3px solid #8f969d; border-bottom: 0; border-radius: 10px 10px 0 0; }
 .op-card p { margin: 0; font: 400 12.5px/1.45 var(--f-type); color: #33281d; }
+/* the typed facts: label in the margin, the line typed beside it */
+.op-facts { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 2px 0 4px; padding: 6px 0; border-top: 1px dashed rgba(60,44,28,0.35); border-bottom: 1px dashed rgba(60,44,28,0.35); }
+.op-facts dt { font: 700 10px/1.5 var(--f-display); letter-spacing: var(--track-wide); color: #7a6448; text-transform: uppercase; white-space: nowrap; }
+.op-facts dd { margin: 0; font: 400 12px/1.4 var(--f-type); color: #2a2018; }
+.op-quote { display: block; margin-top: 4px; padding-left: 10px; border-left: 3px solid var(--union); font: 400 13.5px/1.35 var(--f-type); color: #5a1d17; quotes: '“' '”'; }
+.op-quote::before { content: open-quote; } .op-quote::after { content: close-quote; }
 .op-card .h1, .op-card .h2 { color: var(--ink); }
 .op-card .eyebrow { color: #6b5840; } .op-card .eyebrow.accent { color: var(--union); }
 .op-title { display: flex; align-items: baseline; gap: 10px; }

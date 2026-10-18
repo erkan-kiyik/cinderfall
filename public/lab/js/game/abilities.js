@@ -1,21 +1,22 @@
 // KOR LAB — operator abilities: two skills on cooldowns and an ultimate that
-// charges from damage dealt and kills.
+// charges from damage dealt and kills. Each comes from the operator's old
+// trade (docs §10.10) and shows as a real thing, not a glow:
 //
-//   FLINT   (vex)     dash: a burst forward, untouchable while it lasts
-//                     flash: a grenade that blinds whoever sees it pop
-//                     overload (ult): 8 s faster fire and +30 % speed
-//   WARDEN  (hale)    wall: an energy barrier (real cover: solid tiles) for 10 s
-//                     mine: a proximity charge that blows and slows
-//                     turret (ult): an automatic gun for 20 s
-//   VESPER  (morrow)  smoke: a cloud nobody sees through
-//                     slow: a field that drags enemies to 60 % speed
-//                     blackout (ult): every enemy blind for 4 s
-//   SKYE    (kite)    drone: scans around you, marks enemies for 8 s
-//                     heat: 5 s of seeing every enemy through walls
-//                     watch (ult): 10 s everyone marked, headshots +25 %
-//   BULWARK (brick)   charge: a shoulder rush that knocks enemies down
-//                     armor: 60 points of armour on top of health
-//                     unstoppable (ult): 6 s taking 70 % less damage
+//   FLINT   (vex)     dash, Kor Atılımı: a burst forward, untouchable, sparks behind
+//                     flash, Ateşleme Fişeği: a furnace flare that blinds whoever sees it
+//                     overload (ult), Ocak Başı: 8 s faster fire and +30 % speed, embers
+//   WARDEN  (hale)    wall, Yangın Kapısı: a steel fire door (real cover: solid tiles) for 10 s
+//                     mine, Tüp Tuzağı: a pressure cylinder on a trigger, blows and slows
+//                     turret (ult), Yangın Monitörü: a water monitor on a tripod for 20 s
+//   VESPER  (morrow)  smoke, Duman Kutusu: Vanta's own canister, a cloud nobody sees through
+//                     slow, Parazit: a jammer that drags troops to 60 % speed
+//                     blackout (ult), Karartma: every trooper's visor dark for 4 s
+//   SKYE    (kite)    drone, Hurda Dron: the scrap drone goes up, marks enemies for 8 s
+//                     heat, Termal Kamera: 5 s of seeing every enemy through walls
+//                     watch (ult), Çatı Gözcüsü: 10 s everyone marked, headshots +25 %
+//   BULWARK (brick)   charge, Omuz Darbesi: a plated shoulder that knocks enemies down
+//                     armor, Konteyner Sacı: 60 points of plate on top of health
+//                     unstoppable (ult), Son Söz: 6 s taking 70 % less damage
 //
 // Effects on enemies go through the AI brains (blindT, slowK) and the world
 // (smoke blocks sight lines); effects on the player through the scene's
@@ -34,7 +35,9 @@ export const ABILITIES = {
   kite: [{ k: 'drone', cd: 16 }, { k: 'heat', cd: 15 }, { k: 'watch', ult: 1, dur: 10 }],
   brick: [{ k: 'charge', cd: 9 }, { k: 'armor', cd: 18 }, { k: 'unstop', ult: 1, dur: 6 }],
 };
-const COLOR = { vex: '#ff6b2c', hale: '#3ee8e0', morrow: '#c4a8ff', kite: '#8fd0ff', brick: '#ffc93c' };
+// each operator's signature colour (docs §9.2)
+const COLOR = { vex: '#d9533a', hale: '#e6c25c', morrow: '#4fd2c4', kite: '#7ec8ff', brick: '#e2782f' };
+const rand = (a, b) => a + Math.random() * (b - a);
 
 export class Abilities {
   constructor(scene, op) {
@@ -59,7 +62,12 @@ export class Abilities {
     if (this.on.dash > 0) return 0;
     if (this.on.charge > 0) dmg *= 0.2;
     if (this.on.unstop) dmg *= 0.3;
-    if (this.armor > 0) { const a = Math.min(this.armor, dmg); this.armor -= a; dmg -= a; }
+    if (this.armor > 0) {
+      const a = Math.min(this.armor, dmg); this.armor -= a; dmg -= a;
+      // the plate rings: sparks off the chest
+      const P = this.s.player, f = P.m.facing;
+      for (let i = 0; i < 5; i++) this.s.fx.sparks.emit(this.s.fx.t, P.m.x + f * 4, P.m.y - 44, f * rand(40, 160), rand(-160, -20), rand(0.08, 0.2), 0.7, 0.25, col('#ffe2b0', 1), col('#e2782f', 0), 900, 2.5, 0, 0);
+    }
     return dmg;
   }
   gainUlt(k) { if (!this.on[this.list[2].k]) this.ult = Math.min(1, this.ult + k); }
@@ -109,7 +117,7 @@ export class Abilities {
     this.objs.push({ type: 'grenade', x: sh[0], y: sh[1], vx: (dx / d) * v + P.m.vx * 0.5, vy: (dy / d) * v - 120, t: 5 });
     this.s.sfx.play('knife', sh[0], sh[1], { rate: 0.7 });
   }
-  overload() { this.s.sfx.play('zap', null, null, { rate: 0.8, vol: 1 }); }
+  overload() { this.s.sfx.play('hiss', null, null, { rate: 0.6, vol: 1 }); }
 
   wall(P) {
     const L = this.s.L, f = P.m.facing, x = P.m.x + f * 26;
@@ -120,7 +128,8 @@ export class Abilities {
     for (let k = 0; k < 6; k++) { const ty = base - k; if (L.get(tx, ty) === EMPTY) { L.set(tx, ty, SOLID); tiles.push([tx, ty]); } else if (k === 0) return false; else break; }
     if (!tiles.length) return false;
     this.objs.push({ type: 'wall', x: L.left(tx), y: L.top(base) + 8, w: 8, h: tiles.length * 8, tiles, t: 10 });
-    this.s.sfx.play('zap', x, P.m.y - 30, { rate: 1.2 });
+    this.s.sfx.play('shield', x, P.m.y - 30, { rate: 0.6, vol: 0.9 });
+    this.puff(x, P.m.y, 10);
   }
   mine(P) {
     const x = P.m.x + P.m.facing * 10;
@@ -130,8 +139,8 @@ export class Abilities {
   turret(P) {
     let x = P.m.x - P.m.facing * 14;
     if (Math.abs(this.floor(x, P.m.y) - P.m.y) > 2) x = P.m.x; // no floor behind: at the feet
-    this.objs.push({ type: 'turret', x, y: this.floor(x, P.m.y), t: 20, shotT: 0, face: P.m.facing });
-    this.s.sfx.play('zap', P.m.x, P.m.y, { rate: 0.7 });
+    this.objs.push({ type: 'turret', x, y: this.floor(x, P.m.y), t: 20, shotT: 0, face: P.m.facing, aim: 0 });
+    this.s.sfx.play('magIn', P.m.x, P.m.y, { rate: 0.6 });
   }
 
   smoke(P) {
@@ -142,11 +151,11 @@ export class Abilities {
   slow(P) {
     const [x, y] = this.groundAt(P.aimX, P.aimY);
     this.objs.push({ type: 'field', x, y, r: 74, t: 7 });
-    this.s.sfx.play('zap', x, y, { rate: 0.5 });
+    this.s.sfx.play('marker', x, y, { rate: 0.6, vol: 0.7 });
   }
-  blackout() { for (const b of this.s.brains) if (b.ch.alive) { b.blindT = 4; b.aw = Math.min(b.aw, 0.5); } this.flashT = 0.5; this.s.sfx.play('zap', null, null, { rate: 0.4, vol: 1 }); }
+  blackout() { for (const b of this.s.brains) if (b.ch.alive) { b.blindT = 4; b.aw = Math.min(b.aw, 0.5); } this.flashT = 0.5; this.s.sfx.play('marker', null, null, { rate: 0.35, vol: 1 }); }
 
-  drone(P) { this.objs.push({ type: 'drone', x: P.m.x, y: P.m.y - 90, t: 8 }); this.s.sfx.play('zap', P.m.x, P.m.y - 80, { rate: 1.8, vol: 0.6 }); }
+  drone(P) { this.objs.push({ type: 'drone', x: P.m.x, y: P.m.y - 40, t: 8 }); this.s.sfx.play('whoosh', P.m.x, P.m.y - 60, { rate: 1.8, vol: 0.5 }); }
   heat() { this.on.heat = 5; this.s.sfx.play('marker', null, null, { rate: 0.7, vol: 0.8 }); }
   watch() { this.s.sfx.play('marker', null, null, { rate: 0.5, vol: 1 }); }
 
@@ -163,6 +172,15 @@ export class Abilities {
     for (const k of Object.keys(this.on)) { this.on[k] -= dt; if (this.on[k] <= 0) delete this.on[k]; }
     this.flashT = Math.max(0, (this.flashT || 0) - dt);
     if (P.alive) s.mover.speedK = this.speedK * ((P.gun && P.gun.s.moveK) || 1);
+    P.armor = this.armor; P.armorMax = 60;
+    // what shows an ability is on: sparks off the rush, embers off the scarf, dust under the boots
+    const F = s.fx, px = P.m.x, py = P.m.y;
+    if (P.alive && (this.on.dash > 0 || this.on.charge > 0)) for (let i = 0; i < 3; i++) {
+      if (this.on.dash > 0) F.sparks.emit(F.t, px - this.rushDir * rand(2, 8), py - rand(10, 50), -this.rushDir * rand(30, 120), rand(-60, 20), rand(0.15, 0.35), 0.8, 0.3, col('#ffcf8a', 1), col('#d9533a', 0), 200, 2, 0, 0);
+      else this.puff(px - this.rushDir * 6, py, 1);
+    }
+    if (P.alive && this.on.overload && Math.random() < dt * 26) F.sparks.emit(F.t, px + rand(-7, 7), py - rand(30, 58), rand(-14, 14) - P.m.facing * 10, rand(-50, -20), rand(0.6, 1.2), 0.9, 0.5, col('#ffb070', 1), col('#d9533a', 0), -30, 1, 0, 0);
+    if (P.alive && this.on.unstop && (this.stepT = (this.stepT || 0) - dt) <= 0) { this.stepT = Math.abs(P.m.vx) > 20 ? 0.22 : 0.6; this.puff(px, py, Math.abs(P.m.vx) > 20 ? 3 : 1); }
     // the charge: keep the rush going, knock down whoever is in the way
     if (this.on.dash > 0 && P.alive) P.m.vx = this.rushDir * 560;
     if (this.on.charge > 0 && P.alive) {
@@ -203,13 +221,17 @@ export class Abilities {
             if (d < bd && rayTiles(L, hx, hy, dx / d, dy / d, d, this._n) >= d - 2) { best = e; bd = d; }
           }
           if (best) {
-            o.face = best.m.x < hx ? -1 : 1; o.shotT = 0.18;
+            o.face = best.m.x < hx ? -1 : 1; o.shotT = 0.12;
             const tx = best.m.x + (Math.random() - 0.5) * 6, ty = best.m.y - 34 + (Math.random() - 0.5) * 10;
-            s.fx.tracer(hx + o.face * 8, hy, tx, ty, 0.7, '#9ff5ef');
-            s.fx.muzzle(hx + o.face * 9, hy, o.face > 0 ? 0 : Math.PI, 0.6);
-            s.sfx.play('pistol', hx, hy, { rate: 1.4, vol: 0.5, cap: 3 });
-            if (best.spec.shield && best.shieldBox()) s.fx.shield(tx - o.face * 6, ty, o.face, 0);
-            else this.hurt(best, 9, o.face, 0);
+            o.aim = Math.atan2(ty - hy, (tx - hx) * o.face);
+            // a jet of water off the nozzle, mist where it lands
+            const nx = hx + o.face * 13 * Math.cos(o.aim), ny = hy + 13 * Math.sin(o.aim);
+            s.fx.tracer(nx, ny, tx, ty, 1.5, '#dff1fa');
+            for (let i = 0; i < 3; i++) s.fx.smoke.emit(s.fx.t, tx, ty, -o.face * rand(10, 50), rand(-40, 10), rand(0.3, 0.6), 1, rand(3, 6), col('#e8f3f8', 0.4), col('#e8f3f8', 0), 60, 2, rand(0, 6), 0);
+            for (let i = 0; i < 2; i++) s.fx.bits.emit(s.fx.t, tx, ty, -o.face * rand(20, 90), rand(-120, -20), rand(0.25, 0.5), 0.5, 0.3, col('#cfe6f2', 0.9), col('#cfe6f2', 0), 700, 1, 0, 0);
+            if ((o.sndT = (o.sndT || 0) - 0.12) <= 0) { o.sndT = 0.5; s.sfx.play('hiss', hx, hy, { rate: 1.5, vol: 0.5, cap: 2 }); }
+            if (best.spec.shield && best.shieldBox()) best.m.vx += o.face * 14;
+            else { this.hurt(best, 9, o.face, 0); if (best.alive) best.m.vx += o.face * 40; }
           } else o.shotT = 0.25;
         }
       } else if (o.type === 'smoke') {
@@ -218,12 +240,12 @@ export class Abilities {
         if (o.emitT <= 0 && o.t > 1) {
           o.emitT = 0.05;
           const a = Math.random() * Math.PI * 2, r = Math.random() * o.r * o.grow * 0.8;
-          s.dust.emit(s.t, o.x + Math.cos(a) * r, o.y + Math.sin(a) * r * 0.7, (Math.random() - 0.5) * 8, -4 - Math.random() * 6, 2.4, 14, 30, col('#b9b0cf', 0.5), col('#b9b0cf', 0), -1, 0.3, Math.random() * 6, 0.2);
+          s.dust.emit(s.t, o.x + Math.cos(a) * r, o.y + Math.sin(a) * r * 0.7, (Math.random() - 0.5) * 8, -4 - Math.random() * 6, 2.4, 14, 30, col('#aaa69e', 0.55), col('#aaa69e', 0), -1, 0.3, Math.random() * 6, 0.2);
         }
       } else if (o.type === 'field') {
         for (const b of s.brains) if (b.ch.alive && Math.hypot(b.ch.m.x - o.x, (b.ch.m.y - o.y) * 1.6) < o.r) b.slowT = 0.2;
       } else if (o.type === 'drone') {
-        o.x += ((P.m.x + 6) - o.x) * Math.min(1, dt * 4); o.y += ((P.m.y - 92) - o.y) * Math.min(1, dt * 4);
+        o.x += ((P.m.x + 6) - o.x) * Math.min(1, dt * 4); o.y += ((P.m.y - 92 + Math.sin(this.t * 3) * 2) - o.y) * Math.min(1, dt * 4);
         for (const e of s.enemies) if (e.alive && Math.abs(e.m.x - o.x) < 300 && Math.abs(e.m.y - P.m.y) < 140) this.marks.set(e, 8);
       } else if (o.type === 'wall' && o.t <= 0) {
         for (const [tx, ty] of o.tiles) if (L.get(tx, ty) === SOLID) L.set(tx, ty, EMPTY);
@@ -288,67 +310,98 @@ export class Abilities {
   dispose() { for (const o of this.objs) if (o.type === 'wall') for (const [tx, ty] of o.tiles) this.s.L.set(tx, ty, EMPTY); this.objs = []; }
 
   // --- drawing ---------------------------------------------------------------------------------
-  // in the world (lit): turret and mine bodies, the energy wall, the field ring
+  // in the world (lit): the things themselves, drawn small and plain
   drawWorld(B, w) {
-    const A = this.s.e.atlas, white = A.get('fx.white'), dot = A.get('fx.dot');
+    const A = this.s.e.atlas, white = A.get('fx.white'), dot = A.get('fx.dot'), t = this.t;
+    const ink = rgba('#141210');
     B.begin(w);
     for (const o of this.objs) {
-      if (o.type === 'turret') {
-        // tripod, a boxy head with a cyan sensor strip, the barrel toward the target
-        const ink = rgba('#0b0d12'), steel = rgba('#3a4354'), lite = rgba('#56627a'), f = o.face;
-        for (const lx of [-9, 9]) { B.line(white, o.x + lx, o.y, o.x, o.y - 12, 2.4, ink); B.line(white, o.x + lx, o.y, o.x, o.y - 12, 1.3, steel); }
-        B.line(white, o.x, o.y - 2, o.x, o.y - 13, 2.2, ink);
-        B.draw(white, o.x, o.y - 17, 8.2, 5.6, 0, ink);
-        B.draw(white, o.x, o.y - 17, 7, 4.4, 0, steel);
-        B.draw(white, o.x, o.y - 20, 7, 1.2, 0, lite);
-        B.line(white, o.x + f * 6, o.y - 17, o.x + f * 19, o.y - 17, 3.2, ink);
-        B.line(white, o.x + f * 6, o.y - 17, o.x + f * 19, o.y - 17, 1.8, rgba('#232831'));
-        B.draw(white, o.x - f * 1, o.y - 16, 5.2, 0.8, 0, rgba('#0f2f33'));
+      const fade = Math.min(1, o.t * 2), a = (c, k = 1) => rgba(c, k * fade);
+      if (o.type === 'wall') {
+        // the fire door: red-painted steel on a splayed foot, hinge pins, a hazard band at the base
+        const cx = o.x + o.w / 2, top = o.y - o.h;
+        B.draw(white, cx, o.y - 1, 9, 1.2, 0, a('#1c1a18'));
+        B.draw(white, cx, o.y - o.h / 2, o.w / 2 + 0.8, o.h / 2, 0, a('#1c1412'));
+        B.draw(white, cx, o.y - o.h / 2, o.w / 2, o.h / 2 - 0.6, 0, a('#8e2c22'));
+        B.draw(white, cx - o.w / 2 + 1.4, o.y - o.h / 2, 1, o.h / 2 - 0.8, 0, a('#b4463a'));
+        B.draw(white, cx + o.w / 2 - 1, o.y - o.h / 2, 0.7, o.h / 2 - 0.8, 0, a('#5e1c16'));
+        for (let k = 6; k < o.h - 4; k += 12) B.draw(white, cx, top + k, o.w / 2 - 1.2, 0.35, 0, a('#6a2018'));
+        for (let k = 0; k < 4; k++) B.draw(white, cx - o.w / 2 + 1 + k * 2, o.y - 3, 0.6, 2.2, 0.6, a(k % 2 ? '#1c1a18' : '#e6c25c'));
+        for (const hy of [top + 6, o.y - 10]) B.draw(dot, cx - o.w / 2 + 0.6, hy, 0.8, 1.4, 0, a('#9a948a'));
+        B.draw(white, cx + o.w / 2 - 2, o.y - o.h * 0.45, 0.5, 2.4, 0, a('#cfc8bc'));
+      } else if (o.type === 'turret') {
+        // the fire monitor: a tripod, the brass nozzle turned to its mark, the hose snaking off
+        const f = o.face, hx = o.x, hy = o.y - 14, ca = Math.cos(o.aim || 0), sa = Math.sin(o.aim || 0);
+        for (let k = 0; k < 6; k++) { const x0 = hx - f * (6 + k * 7), x1 = hx - f * (13 + k * 7); B.line(white, x0, o.y - 0.9 - (k % 2) * 0.6, x1, o.y - 0.9 - ((k + 1) % 2) * 0.6, 2.2, a('#7a1e18')); }
+        for (const lx of [-8, 8]) { B.line(white, o.x + lx, o.y, o.x, hy + 2, 1.8, ink); B.line(white, o.x + lx, o.y, o.x, hy + 2, 1, a('#4a4846')); }
+        B.line(white, o.x, o.y - 1, o.x, hy + 2, 1.6, a('#3a3836'));
+        B.draw(dot, hx, hy + 1, 3.4, 3, 0, ink); B.draw(dot, hx, hy + 1, 2.8, 2.4, 0, a('#7a1e18'));
+        B.line(white, hx, hy, hx + f * 13 * ca, hy + 13 * sa, 3.2, ink);
+        B.line(white, hx, hy, hx + f * 13 * ca, hy + 13 * sa, 2.2, a('#b08a3e'));
+        B.line(white, hx + f * 2 * ca, hy + 2 * sa - 0.5, hx + f * 12 * ca, hy + 12 * sa - 0.5, 0.6, a('#e8cc84'));
       } else if (o.type === 'mine') {
-        B.draw(dot, o.x, o.y - 1.6, 6.4, 2.6, 0, rgba('#0b0d12'));
-        B.draw(dot, o.x, o.y - 2, 5.4, 2, 0, rgba('#3a4354'));
-        B.draw(white, o.x, o.y - 3.6, 2, 0.9, 0, rgba('#1b1f27'));
+        // the cylinder on its side, brass valve and the trigger box
+        B.draw(white, o.x, o.y - 2.4, 6.6, 2.6, 0, ink);
+        B.draw(white, o.x, o.y - 2.4, 6, 2.1, 0, a('#8e2c22'));
+        B.draw(white, o.x, o.y - 3.6, 5.6, 0.5, 0, a('#c45244'));
+        B.draw(dot, o.x - 6.2, o.y - 2.4, 1.2, 2.2, 0, a('#5e1c16'));
+        B.draw(white, o.x + 7, o.y - 2.4, 1.2, 0.9, 0, a('#b08a3e'));
+        B.draw(white, o.x - 1, o.y - 5.2, 2, 1, 0, a('#2a2826'));
+        B.line(white, o.x + 1, o.y - 5, o.x + 8, o.y - 0.5, 0.25, a('#cfc8bc', 0.6));
       } else if (o.type === 'grenade') {
-        B.draw(dot, o.x, o.y, 1.6, 1.6, 0, rgba('#3a4250'));
+        // the flare: a paper stick, its cap
+        B.draw(white, o.x, o.y, 0.9, 2.6, (o.age || 0) * 14, a('#b8462e'));
+        B.draw(white, o.x, o.y, 0.5, 2.3, (o.age || 0) * 14, a('#d9744a'));
+      } else if (o.type === 'smoke') {
+        // the canister on the ground, grey with Vanta's band
+        const gy = o.y + 30;
+        B.draw(white, o.x, gy - 3, 2.2, 3.2, 0, ink);
+        B.draw(white, o.x, gy - 3, 1.8, 2.9, 0, a('#5e6266'));
+        B.draw(white, o.x, gy - 3.4, 1.8, 0.5, 0, a('#c9ccd0'));
+      } else if (o.type === 'field') {
+        // the jammer: a small box with its whip aerial
+        B.draw(white, o.x, o.y - 2, 3.2, 2.2, 0, ink);
+        B.draw(white, o.x, o.y - 2, 2.8, 1.8, 0, a('#3a3e44'));
+        B.line(white, o.x + 1.8, o.y - 3.8, o.x + 3 + Math.sin(t * 9) * 0.4, o.y - 14, 0.35, a('#1c1e22'));
+      } else if (o.type === 'drone') {
+        // SKYE's drone: a taped body, two arms, the rotors a blur
+        const x = o.x, y = o.y, tilt = Math.sin(t * 2.2) * 0.08;
+        B.line(white, x - 8, y - 0.4, x + 8, y + 0.4, 1, ink);
+        B.draw(white, x, y, 4.2, 2, tilt, ink); B.draw(white, x, y, 3.7, 1.6, tilt, a('#4a4e54'));
+        B.draw(white, x - 0.6, y, 1, 1.6, tilt, a('#c9c2b0'));
+        for (const sx of [-8, 8]) { B.draw(white, x + sx, y - 1.2, 0.5, 1, 0, ink); B.draw(dot, x + sx, y - 2.2, 6, 0.7, 0, a('#2a2c30', 0.35 + 0.2 * Math.sin(t * 40 + sx))); }
+        B.line(white, x - 2, y + 1.6, x - 3.4, y + 3.6, 0.4, ink); B.line(white, x + 2, y + 1.6, x + 3.4, y + 3.6, 0.4, ink);
       }
     }
     B.end();
   }
-  // emissive, over everything: lights, rings, the wall, marks, auras
+  // emissive, over everything: small real lights only (LEDs, the flare, the
+  // flashbang), the marks, the drone's lens; no auras
   drawGlow(B, w) {
-    const s = this.s, A = s.e.atlas, glow = A.get('fx.glow'), white = A.get('fx.white'), beam = A.get('fx.beam'), P = s.player, t = this.t;
+    const s = this.s, A = s.e.atlas, glow = A.get('fx.glow'), white = A.get('fx.white'), beam = A.get('fx.beam'), t = this.t;
     B.begin(w); B.setBlend(1);
     for (const o of this.objs) {
       const fade = Math.min(1, o.t * 2);
-      if (o.type === 'wall') {
-        const a = (0.22 + 0.06 * Math.sin(t * 9)) * fade;
-        B.draw(white, o.x + o.w / 2, o.y - o.h / 2, o.w / 2 + 1, o.h / 2, 0, rgba('#3ee8e0', a));
-        for (let k = 0; k <= o.h; k += 8) B.line(white, o.x - 1, o.y - k, o.x + o.w + 1, o.y - k, 0.35, rgba('#bffffb', 0.5 * fade));
-        B.line(white, o.x - 1, o.y, o.x - 1, o.y - o.h, 0.6, rgba('#bffffb', 0.8 * fade)); B.line(white, o.x + o.w + 1, o.y, o.x + o.w + 1, o.y - o.h, 0.6, rgba('#bffffb', 0.8 * fade));
-        B.draw(glow, o.x + o.w / 2, o.y - o.h / 2, 18, o.h / 2 + 8, 0, rgba('#3ee8e0', 0.18 * fade));
-      } else if (o.type === 'mine') {
+      if (o.type === 'mine') {
         const blink = o.arm > 0 ? 0.3 : (t * 3) % 1 < 0.2 ? 1 : 0.35;
-        B.draw(glow, o.x, o.y - 4, 3.6, 3.6, 0, rgba('#ff3347', blink));
-        B.draw(glow, o.x, o.y - 1, 10, 2.4, 0, rgba('#ff3347', blink * 0.25));
-      } else if (o.type === 'turret') {
-        B.draw(white, o.x - o.face * 1, o.y - 16, 4.6, 0.5, 0, rgba('#3ee8e0', 0.95));
-        B.draw(glow, o.x - o.face * 1, o.y - 16, 8, 3, 0, rgba('#3ee8e0', 0.45));
-        B.draw(glow, o.x, o.y - 2, 16, 4, 0, rgba('#3ee8e0', 0.14));
+        B.draw(glow, o.x - 1, o.y - 5.6, 1.6, 1.6, 0, rgba('#ff3a2a', blink));
       } else if (o.type === 'grenade') {
-        B.draw(glow, o.x, o.y, 2.2, 2.2, 0, rgba('#ff6b2c', 0.8));
+        // the fuse burning white at the tip
+        B.draw(glow, o.x, o.y, 3.4, 3.4, 0, rgba('#fff4dc', 0.9));
+        B.draw(glow, o.x, o.y, 9, 9, 0, rgba('#ff8a3a', 0.25));
       } else if (o.type === 'field') {
-        const r = o.r;
-        for (let k = 0; k < 24; k++) { const a0 = (k / 24) * Math.PI * 2 + t * 0.6, a1 = a0 + 0.18; B.line(white, o.x + Math.cos(a0) * r, o.y + Math.sin(a0) * r * 0.22, o.x + Math.cos(a1) * r, o.y + Math.sin(a1) * r * 0.22, 0.7, rgba('#c4a8ff', 0.7 * fade)); }
-        B.draw(glow, o.x, o.y - 2, r, r * 0.3, 0, rgba('#8a5cff', 0.18 * fade));
+        // the jammer's LED and the radio's bite on the air: thin arcs going out
+        B.draw(glow, o.x, o.y - 3, 1.2, 1.2, 0, rgba('#4fd2c4', (t * 5) % 1 < 0.5 ? 0.9 : 0.4));
+        for (let r = (t * 40) % 24; r < o.r; r += 24) {
+          const k = (1 - r / o.r) * 0.35 * fade;
+          for (let j = 0; j < 10; j++) { const a0 = -Math.PI * (0.15 + j * 0.07), a1 = a0 - 0.05; B.line(white, o.x + Math.cos(a0) * r, o.y - 3 + Math.sin(a0) * r * 0.5, o.x + Math.cos(a1) * r, o.y - 3 + Math.sin(a1) * r * 0.5, 0.35, rgba('#7fe6da', k)); B.line(white, o.x - Math.cos(a0) * r, o.y - 3 + Math.sin(a0) * r * 0.5, o.x - Math.cos(a1) * r, o.y - 3 + Math.sin(a1) * r * 0.5, 0.35, rgba('#7fe6da', k)); }
+        }
       } else if (o.type === 'drone') {
-        B.draw(glow, o.x, o.y, 6, 2.4, 0, rgba('#0a0d13', 0));
-        B.draw(glow, o.x - 4, o.y, 1.6, 1.6, 0, rgba('#8fd0ff', 0.9)); B.draw(glow, o.x + 4, o.y, 1.6, 1.6, 0, rgba('#ff3347', (t * 4) % 1 < 0.3 ? 1 : 0.3));
-        B.line(beam, o.x, o.y + 1, o.x + Math.sin(t * 2.2) * 40, o.y + 90, 70, rgba('#8fd0ff', 0.12));
-      } else if (o.type === 'smoke') {
-        B.draw(glow, o.x, o.y, o.r * o.grow, o.r * o.grow * 0.7, 0, rgba('#6a5a8a', 0.06 * fade));
+        B.draw(glow, o.x + 3.6, o.y + 0.4, 1.2, 1.2, 0, rgba('#7ec8ff', 0.9)); B.draw(glow, o.x - 3.6, o.y - 0.4, 1, 1, 0, rgba('#ff3a2a', (t * 4) % 1 < 0.3 ? 1 : 0.2));
+        B.line(beam, o.x + 3.6, o.y + 1, o.x + Math.sin(t * 2.2) * 40, o.y + 90, 60, rgba('#7ec8ff', 0.07));
       }
     }
-    for (const f of this.flashes || []) { const k = f.t / 0.4; B.draw(glow, f.x, f.y, f.boom ? 70 : 120, f.boom ? 50 : 90, 0, rgba(f.boom ? '#ffb070' : '#ffffff', 0.9 * k)); }
+    for (const f of this.flashes || []) { const k = f.t / 0.4; B.draw(glow, f.x, f.y, f.boom ? 70 : 120, f.boom ? 50 : 90, 0, rgba(f.boom ? '#ffb070' : '#fffaf0', 0.9 * k)); }
     // marked enemies: a chevron over the head, seen through walls
     for (const [e] of this.marks) {
       const x = e.rx ?? e.m.x, y = (e.ry ?? e.m.y) - 76, pulse = 0.75 + 0.25 * Math.sin(t * 8);
@@ -356,24 +409,22 @@ export class Abilities {
       B.draw(glow, x, y, 6, 6, 0, rgba('#ff3347', 0.3 * pulse));
       if (this.on.heat || this.on.watch) B.draw(glow, x, y + 40, 12, 26, 0, rgba('#ff5a3a', 0.14));
     }
-    // auras on the player
-    if (P.alive) {
-      const x = P.rx ?? P.m.x, y = (P.ry ?? P.m.y) - 34;
-      if (this.on.overload) B.draw(glow, x, y, 22, 34, 0, rgba('#ff6b2c', 0.18 + 0.06 * Math.sin(t * 12)));
-      if (this.on.unstop) B.draw(glow, x, y, 24, 36, 0, rgba('#ffc93c', 0.2 + 0.06 * Math.sin(t * 10)));
-      if (this.armor > 0) B.draw(glow, x, y, 18, 32, 0, rgba('#ffc93c', 0.08 + 0.12 * (this.armor / 60)));
-      if (this.on.dash > 0 || this.on.charge > 0) B.draw(glow, x - P.m.facing * 14, y, 20, 26, 0, rgba(this.color, 0.3));
+    // the blackout: the visors' feed tearing, a few cyan lines across the view
+    if (this.flashT > 0) {
+      const k = this.flashT * 2, c = s.cam;
+      B.draw(glow, c.x, c.y, 400, 260, 0, rgba('#4fd2c4', 0.12 * k));
+      for (let i = 0; i < 6; i++) { const y = c.y - 120 + ((i * 47 + t * 900) % 240); B.line(white, c.x - 400, y, c.x + 400, y, 0.6, rgba('#9ff0e6', 0.3 * k)); }
     }
-    if (this.flashT > 0) B.draw(glow, s.cam.x, s.cam.y, 400, 260, 0, rgba('#8a5cff', 0.25 * this.flashT * 2));
     B.setBlend(0); B.end();
   }
   lights(R) {
     for (const o of this.objs) {
-      if (o.type === 'wall') R.addLight(o.x + 4, o.y - o.h / 2, 50, 0.7, [0.25, 0.9, 0.9]);
-      else if (o.type === 'field') R.addLight(o.x, o.y - 10, o.r, 0.5, [0.6, 0.45, 1]);
-      else if (o.type === 'turret') R.addLight(o.x, o.y - 14, 26, 0.6, [0.25, 0.9, 0.9]);
+      if (o.type === 'field') R.addLight(o.x, o.y - 4, 14, 0.4, [0.3, 0.85, 0.8]);
+      else if (o.type === 'grenade') R.addLight(o.x, o.y, 36, 0.9, [1, 0.7, 0.45]);
+      else if (o.type === 'drone') R.addLight(o.x, o.y + 2, 16, 0.3, [0.5, 0.78, 1]);
     }
-    for (const f of this.flashes || []) R.addLight(f.x, f.y, f.boom ? 140 : 200, 2.4 * (f.t / 0.4), f.boom ? [1, 0.6, 0.3] : [1, 1, 1]);
+    for (const f of this.flashes || []) R.addLight(f.x, f.y, f.boom ? 140 : 200, 2.4 * (f.t / 0.4), f.boom ? [1, 0.6, 0.3] : [1, 1, 0.95]);
+    if (this.on.overload) { const P = this.s.player; R.addLight(P.m.x, P.m.y - 40, 40, 0.35, [1, 0.5, 0.25]); }
   }
   // HUD state for each slot: { p: 0..1 ready share, ready, active }
   hud() {

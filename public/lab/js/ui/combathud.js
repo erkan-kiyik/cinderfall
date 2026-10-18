@@ -1,4 +1,4 @@
-// KOR LAB — combat HUD (DOM): health, weapon and ammo, reload bar,
+// KOR LAB — combat HUD (DOM): health (and plate), weapon and ammo, reload bar,
 // hurt vignette, death banner. Writes to the DOM only when a value changes.
 import { t } from './i18n.js';
 
@@ -7,7 +7,7 @@ export class CombatHud {
     this.el = document.createElement('div');
     this.el.className = 'chud';
     this.el.innerHTML = `
-      <div class="hp"><div class="v">100</div><div class="bar"><i></i></div></div>
+      <div class="hp"><div class="v">100</div><div class="bar"><i></i></div><div class="plate"><i></i></div></div>
       <div class="wpn"><div class="n">—</div><div class="a">0<small>/ 0</small></div><div class="r"><i></i></div></div>`;
     this.hurtEl = document.createElement('div'); this.hurtEl.className = 'hurt';
     this.deadEl = document.createElement('div'); this.deadEl.className = 'dead'; this.deadEl.textContent = t('game.down');
@@ -17,7 +17,7 @@ export class CombatHud {
     root.append(this.hurtEl, this.dirL, this.dirR, this.deadEl, this.el);
     this.side = { l: 0, r: 0 };
     const q = (s) => this.el.querySelector(s);
-    this.$ = { hp: q('.hp'), hpV: q('.hp .v'), hpBar: q('.hp .bar i'), wpn: q('.wpn'), name: q('.wpn .n'), ammo: q('.wpn .a'), rl: q('.wpn .r i') };
+    this.$ = { hp: q('.hp'), hpV: q('.hp .v'), hpBar: q('.hp .bar i'), plate: q('.hp .plate i'), wpn: q('.wpn'), name: q('.wpn .n'), ammo: q('.wpn .a'), rl: q('.wpn .r i') };
     this.last = {}; this.hurt = 0;
   }
 
@@ -27,6 +27,8 @@ export class CombatHud {
     const $ = this.$, g = ch.gun;
     const hp = Math.max(0, Math.ceil(ch.hp));
     this.set('hp', hp, (v) => { $.hpV.textContent = v; $.hpBar.style.transform = `scaleX(${v / ch.hpMax})`; $.hp.classList.toggle('low', v < 35); });
+    // BULWARK's container plate, a second bar under the health while it lasts
+    this.set('plate', Math.ceil(ch.armor || 0), (v) => { $.plate.style.transform = `scaleX(${v / (ch.armorMax || 60)})`; $.hp.classList.toggle('plated', v > 0); });
     if (g) {
       this.set('name', g.s.name, (v) => { $.name.textContent = v; });
       const res = g.reserve === Infinity ? '∞' : g.reserve;

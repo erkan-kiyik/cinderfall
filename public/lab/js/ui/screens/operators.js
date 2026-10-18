@@ -1,5 +1,6 @@
-// Operators: the roster, each one's role, story line, abilities (used in
-// missions) and costumes (M7); pick who goes in.
+// Operators: the roster as personnel files (docs §10.10): each one's age,
+// old trade, where they were the night the furnace went out, what they
+// carry, a line in their own words, their abilities and costumes.
 import { h, svg, press, popIn, ui, toast } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, soon } from './common.js';
@@ -24,7 +25,14 @@ export const operators = {
           h('div.stamp', t(`role.${o.role}`)),
           h('div.eyebrow', t('ops.file'), ' · ', `K-${String(OPS.indexOf(o) + 3).padStart(2, '0')}`),
           h('div.op-title', h('div.h2', opName(o.id))),
-          h('p.body', t(`op.${o.id}.bio`))),
+          // the typed facts, then the file's note, then a line in their own words
+          h('dl.op-facts',
+            h('dt', t('ops.age')), h('dd', String(o.age)),
+            h('dt', t('ops.job')), h('dd', t(`op.${o.id}.job`)),
+            h('dt', t('ops.keep')), h('dd', t(`op.${o.id}.keep`)),
+            h('dt', t('ops.night')), h('dd', t(`op.${o.id}.night`))),
+          h('p.body', t(`op.${o.id}.bio`)),
+          h('q.op-quote', t(`op.${o.id}.quote`))),
         h('div.eyebrow', t('ops.abilities')),
         h('div.abil-list', o.abil.map(([k, icon], i) => h('div.abil.cut', h(`div.hex${i === 2 ? '.ult' : ''}`, svg(icon)), h('div', h('b', t(`ab.${o.id}.${k}`), i === 2 ? h('span.soon', t('ops.ult')) : null), h('p', t(`ab.${o.id}.${k}.d`)))))));
       const isOn = d.roster.op === o.id;
