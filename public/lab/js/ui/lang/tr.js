@@ -132,11 +132,11 @@ export default {
   'wpn.bastion': '3’lü atış, orta-uzak menzil.', 'wpn.saw': 'Otomatik pompalı, şarjörlü.', 'wpn.longbow': 'Sürgülü; tek atışta ağır hasar.',
   'wpn.anvil': 'Büyük şarjör; taşırken yavaşlatır.', 'wpn.thumper': 'Seken bomba atar; alan hasarı.',
   'skin.factory': 'Fabrika', 'skin.sand': 'Kum', 'skin.olive': 'Zeytin', 'skin.arctic': 'Kutup', 'skin.cobalt': 'Kobalt', 'skin.crimson': 'Kızıl',
-  'skin.violet': 'Menekşe', 'skin.gold': 'Altın', 'skin.ember': 'Kor', 'skin.kor': 'Neon Buz',
+  'skin.violet': 'Menekşe', 'skin.gold': 'Altın', 'skin.ember': 'Kor', 'skin.kor': 'Su Verme',
   'shop.short': 'Yeterli Parça yok', 'shop.bought': '{w} alındı', 'shop.buyFor': '{n} Parça’ya al',
 
-  'crate.std': 'Standart', 'crate.std.k': 'Her yerde', 'crate.plus': 'Takviyeli', 'crate.plus.k': 'Nadir ve üstü',
-  'crate.crow': 'Doğan', 'crate.crow.k': 'Epik ve üstü',
+  'crate.std': 'Erzak', 'crate.std.k': 'Her yerde', 'crate.plus': 'Mühimmat', 'crate.plus.k': 'Nadir ve üstü',
+  'crate.crow': 'Komuta', 'crate.crow.k': 'Epik ve üstü',
   'crate.open': 'Aç', 'crate.openFree': 'Stoktan aç', 'crate.new': 'Yeni görünüm!', 'crate.dup': 'Zaten vardı: +{n} Parça',
   'crate.rules': 'Olasılıklar her sandığın üstünde yazar. Aynı görünüm tekrar gelirse karşılığında Parça verilir; 30 sandıkta bir en az Epik garantidir.',
 

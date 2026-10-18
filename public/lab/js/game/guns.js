@@ -11,14 +11,14 @@
 
 export const GUNS = {
   wren9: {
-    name: 'WREN-9', mode: 'semi', pistol: true, mob: 92, rpm: 420, dmg: 27, pellets: 1, mag: 15, reserve: 75,
+    name: 'SERÇE-9', mode: 'semi', pistol: true, mob: 92, rpm: 420, dmg: 27, pellets: 1, mag: 15, reserve: 75,
     zone: { head: 2.2, body: 1, limb: 0.85 }, falloff: [380, 900, 0.6],
     reload: 1.35, reloadEmpty: 1.65, swap: 0.32,
     spread: 0.008, moveSpread: 0.022, airSpread: 0.05, crouchK: 0.7, bloom: 0.014, bloomMax: 0.05,
     climb: [0.042], jitter: 0.012, recover: 7, kick: [1.7, 0.2], shake: 0.1, sound: 'pistol', tracer: 0.55,
   },
   kestrel: {
-    name: 'KESTREL AR', mode: 'auto', mob: 76, rpm: 690, dmg: 24, pellets: 1, mag: 30, reserve: 150,
+    name: 'KERKENEZ AR', mode: 'auto', mob: 76, rpm: 690, dmg: 24, pellets: 1, mag: 30, reserve: 150,
     zone: { head: 2.4, body: 1, limb: 0.85 }, falloff: [520, 1200, 0.7],
     reload: 2.05, reloadEmpty: 2.5, swap: 0.4,
     spread: 0.005, moveSpread: 0.028, airSpread: 0.08, crouchK: 0.7, bloom: 0.006, bloomMax: 0.04,
@@ -26,14 +26,14 @@ export const GUNS = {
     kick: [1.4, 0.07], shake: 0.06, sound: 'rifle', tracer: 0.9,
   },
   ramrod: {
-    name: 'RAMROD-12', mode: 'pump', mob: 70, rpm: 300, dmg: 12, pellets: 9, mag: 6, reserve: 36,
+    name: 'HARBİ-12', mode: 'pump', mob: 70, rpm: 300, dmg: 12, pellets: 9, mag: 6, reserve: 36,
     zone: { head: 1.6, body: 1, limb: 0.85 }, falloff: [110, 380, 0.25],
     reloadStart: 0.3, reloadShell: 0.5, reloadEnd: 0.28, pumpTime: 0.46, swap: 0.42,
     spread: 0.075, moveSpread: 0.01, airSpread: 0.02, crouchK: 0.9, bloom: 0, bloomMax: 0,
     climb: [0.12], jitter: 0.02, recover: 4, kick: [3.4, 0.3], shake: 0.3, sound: 'shotgun', tracer: 0.5,
   },
   marksman: {
-    name: 'MARKSMAN DMR', mode: 'semi', mob: 58, rpm: 210, dmg: 58, pellets: 1, mag: 10, reserve: 50,
+    name: 'ATMACA DMR', mode: 'semi', mob: 58, rpm: 210, dmg: 58, pellets: 1, mag: 10, reserve: 50,
     zone: { head: 2.5, body: 1, limb: 0.85 }, falloff: [900, 1600, 0.85],
     reload: 2.4, reloadEmpty: 2.85, swap: 0.46,
     spread: 0.0015, moveSpread: 0.045, airSpread: 0.11, crouchK: 0.5, bloom: 0.02, bloomMax: 0.05,
@@ -41,49 +41,49 @@ export const GUNS = {
   },
   // the eight that came later (pitch: the shot sound's playback rate)
   mule: {
-    name: 'MULE .50', mode: 'semi', pistol: true, mob: 88, rpm: 240, dmg: 52, pellets: 1, mag: 7, reserve: 42,
+    name: 'KATIR .50', mode: 'semi', pistol: true, mob: 88, rpm: 240, dmg: 52, pellets: 1, mag: 7, reserve: 42,
     zone: { head: 2.6, body: 1, limb: 0.85 }, falloff: [420, 1000, 0.6],
     reload: 1.6, reloadEmpty: 1.9, swap: 0.36,
     spread: 0.009, moveSpread: 0.026, airSpread: 0.06, crouchK: 0.7, bloom: 0.03, bloomMax: 0.07,
     climb: [0.09], jitter: 0.016, recover: 5, kick: [2.6, 0.3], shake: 0.16, sound: 'pistol', pitch: 0.7, tracer: 0.75,
   },
   hornet: {
-    name: 'HORNET', mode: 'auto', mob: 86, rpm: 950, dmg: 15, pellets: 1, mag: 32, reserve: 192,
+    name: 'ARI', mode: 'auto', mob: 86, rpm: 950, dmg: 15, pellets: 1, mag: 32, reserve: 192,
     zone: { head: 2.0, body: 1, limb: 0.85 }, falloff: [260, 700, 0.5],
     reload: 1.7, reloadEmpty: 2.1, swap: 0.3,
     spread: 0.012, moveSpread: 0.016, airSpread: 0.04, crouchK: 0.75, bloom: 0.004, bloomMax: 0.05,
     climb: [0.008, 0.01, 0.012, 0.012, 0.011, 0.01], jitter: 0.014, recover: 6, kick: [1.0, 0.05], shake: 0.04, sound: 'pistol', pitch: 1.15, tracer: 0.6,
   },
   lynx: {
-    name: 'LYNX', mode: 'auto', mob: 84, suppressed: true, rpm: 780, dmg: 18, pellets: 1, mag: 30, reserve: 180,
+    name: 'VAŞAK', mode: 'auto', mob: 84, suppressed: true, rpm: 780, dmg: 18, pellets: 1, mag: 30, reserve: 180,
     zone: { head: 2.2, body: 1, limb: 0.85 }, falloff: [320, 820, 0.55],
     reload: 1.8, reloadEmpty: 2.2, swap: 0.32,
     spread: 0.008, moveSpread: 0.018, airSpread: 0.045, crouchK: 0.72, bloom: 0.004, bloomMax: 0.04,
     climb: [0.007, 0.009, 0.011, 0.011, 0.01], jitter: 0.011, recover: 6, kick: [0.9, 0.04], shake: 0.03, sound: 'dmr', pitch: 1.35, vol: 0.45, tracer: 0.5,
   },
   bastion: {
-    name: 'BASTION BR', mode: 'burst', burst: 3, burstDelay: 0.34, mob: 72, rpm: 800, dmg: 34, pellets: 1, mag: 24, reserve: 120,
+    name: 'BURÇ BR', mode: 'burst', burst: 3, burstDelay: 0.34, mob: 72, rpm: 800, dmg: 34, pellets: 1, mag: 24, reserve: 120,
     zone: { head: 2.4, body: 1, limb: 0.85 }, falloff: [600, 1300, 0.75],
     reload: 2.2, reloadEmpty: 2.7, swap: 0.42,
     spread: 0.004, moveSpread: 0.03, airSpread: 0.08, crouchK: 0.6, bloom: 0.008, bloomMax: 0.04,
     climb: [0.018, 0.022, 0.026], jitter: 0.008, recover: 6, kick: [1.8, 0.12], shake: 0.08, sound: 'rifle', pitch: 0.9, tracer: 0.95,
   },
   saw: {
-    name: 'SAW-20', mode: 'auto', mob: 68, rpm: 260, dmg: 10, pellets: 8, mag: 10, reserve: 50,
+    name: 'TESTERE-20', mode: 'auto', mob: 68, rpm: 260, dmg: 10, pellets: 8, mag: 10, reserve: 50,
     zone: { head: 1.5, body: 1, limb: 0.85 }, falloff: [100, 340, 0.25],
     reload: 2.4, reloadEmpty: 2.9, swap: 0.44,
     spread: 0.085, moveSpread: 0.012, airSpread: 0.02, crouchK: 0.9, bloom: 0.01, bloomMax: 0.03,
     climb: [0.08, 0.1, 0.11], jitter: 0.02, recover: 4.5, kick: [2.8, 0.25], shake: 0.24, sound: 'shotgun', pitch: 1.08, tracer: 0.5,
   },
   longbow: {
-    name: 'LONGBOW', mode: 'bolt', mob: 54, rpm: 60, pumpTime: 0.85, dmg: 110, pellets: 1, mag: 5, reserve: 30,
+    name: 'KARTAL', mode: 'bolt', mob: 54, rpm: 60, pumpTime: 0.85, dmg: 110, pellets: 1, mag: 5, reserve: 30,
     zone: { head: 3, body: 1, limb: 0.85 }, falloff: [1200, 2000, 0.9],
     reload: 2.8, reloadEmpty: 3.2, swap: 0.5,
     spread: 0.001, moveSpread: 0.06, airSpread: 0.14, crouchK: 0.4, bloom: 0, bloomMax: 0,
     climb: [0.11], jitter: 0.006, recover: 3.5, kick: [3.0, 0.3], shake: 0.22, sound: 'dmr', pitch: 0.72, tracer: 1.2,
   },
   anvil: {
-    name: 'ANVIL LMG', mode: 'auto', mob: 48, moveK: 0.82, rpm: 620, dmg: 26, pellets: 1, mag: 80, reserve: 240,
+    name: 'ÖRS LMG', mode: 'auto', mob: 48, moveK: 0.82, rpm: 620, dmg: 26, pellets: 1, mag: 80, reserve: 240,
     zone: { head: 2.2, body: 1, limb: 0.85 }, falloff: [560, 1300, 0.7],
     reload: 4.2, reloadEmpty: 4.8, swap: 0.6,
     spread: 0.01, moveSpread: 0.045, airSpread: 0.1, crouchK: 0.55, bloom: 0.004, bloomMax: 0.05,
@@ -91,7 +91,7 @@ export const GUNS = {
   },
   // grenades instead of bullets: the scene flies them (launcher: blast radius and damage)
   thumper: {
-    name: 'THUMPER GL', mode: 'pump', mob: 66, rpm: 75, pumpTime: 0.22, dmg: 0, pellets: 1, mag: 4, reserve: 16,
+    name: 'TOKMAK GL', mode: 'pump', mob: 66, rpm: 75, pumpTime: 0.22, dmg: 0, pellets: 1, mag: 4, reserve: 16,
     launcher: { r: 62, dmg: 125, speed: 430 },
     zone: { head: 1, body: 1, limb: 1 }, falloff: [9999, 9999, 1],
     reloadStart: 0.35, reloadShell: 0.62, reloadEnd: 0.3, swap: 0.5,

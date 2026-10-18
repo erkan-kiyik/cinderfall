@@ -681,3 +681,36 @@ yanında taşıdığı · kendi ağzından bir söz (konuşma biçimiyle, §1.4)
 göğüs sacındaki konteyner kodu okunur ve düzenli durur (sahip kodu, seri
 numarası, tip, ağırlık), giriş kartı kodun üstünü kapatmaz; WARDEN'ın
 kaskının önünde istasyon numarası.
+
+### 10.11 İsimler: gözden geçirme
+Her isim tek soruyla tartıldı: bu şehirde, bu insanların ağzından çıkar mı?
+Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
+
+**Kalanlar ve nedeni**
+- **KOR, Kor Hattı, Ocak Başı, Söndürme:** ocakçıların sözünden; hikâyenin kendisi.
+- **FLINT, WARDEN, VESPER, SKYE, BULWARK:** kod adları; telsizde kısa,
+  karışmaz, oyuncunun seçtiği hâliyle duruyor.
+- **HAWK, Gall, Vasquez, VANTA SYNDICATE:** kişi ve şirket adları.
+- **Görevler** (Sızma, HAWK'ın Tezgâhı, Sekreter Gall, Dökümhane, Metro, Dron
+  Fabrikası, Ocak, Kule Baskını, İhanet, Vasquez) ve yerleri: işlevle anılır,
+  semt adı yok.
+- **Parça** (para birimi, hurda somun), **Tetikçi / Kalkanlı / Hücumcu**,
+  başarımlar, yetenekler (§10.10), modlar: hikâyeye oturuyor.
+
+**Değişenler**
+| Ne | Eski | Yeni | Neden |
+|---|---|---|---|
+| Tabanca | WREN-9 | SERÇE-9 | Ekip silahlara Türkçe ad koyar; çalıkuşu küçük, serçe gibi |
+| Tüfek | KESTREL AR | KERKENEZ AR | Kestrel'in kendisi |
+| Pompalı | RAMROD-12 | HARBİ-12 | Ramrod = harbi; "harbi" sokakta "sahici" demek |
+| Nişancı | MARKSMAN DMR | ATMACA DMR | Bir sınıf adıydı, ad değil |
+| Ağır tabanca | MULE .50 | KATIR .50 | Aynı hayvan, aynı inat |
+| SMG | HORNET | ARI | Kısa, hızlı |
+| Susturuculu SMG | LYNX | VAŞAK | Sessiz av |
+| 3'lü tüfek | BASTION BR | BURÇ BR | Bastion = burç |
+| Otomatik pompalı | SAW-20 | TESTERE-20 | Atölyede kesen alet |
+| Sürgülü | LONGBOW | KARTAL | Uzağı gören |
+| Hafif makineli | ANVIL LMG | ÖRS LMG | Anvil = örs; ocakçının aleti |
+| Bombaatar | THUMPER GL | TOKMAK GL | Thumper = tokmak |
+| Sandık | Standart / Takviyeli / Doğan | Erzak / Mühimmat / Komuta | Bunlar el konmuş Vanta sandıkları; adları Vanta'nın lojistiğinden |
+| Görünüm | Neon Buz | Su Verme | Şehirde neon yok; ocakta çeliğe su verilir |

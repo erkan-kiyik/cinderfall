@@ -132,11 +132,11 @@ export default {
   'wpn.bastion': '3-round burst, mid to long range.', 'wpn.saw': 'Magazine-fed automatic shotgun.', 'wpn.longbow': 'Bolt action; heavy damage in one shot.',
   'wpn.anvil': 'Big magazine; slows you while carried.', 'wpn.thumper': 'Bouncing grenade launcher; area damage.',
   'skin.factory': 'Factory', 'skin.sand': 'Sand', 'skin.olive': 'Olive', 'skin.arctic': 'Arctic', 'skin.cobalt': 'Cobalt', 'skin.crimson': 'Crimson',
-  'skin.violet': 'Violet', 'skin.gold': 'Gold', 'skin.ember': 'Ember', 'skin.kor': 'Neon Ice',
+  'skin.violet': 'Violet', 'skin.gold': 'Gold', 'skin.ember': 'Ember', 'skin.kor': 'Quench',
   'shop.short': 'Not enough PARÇA', 'shop.bought': '{w} bought', 'shop.buyFor': 'Buy for {n} PARÇA',
 
-  'crate.std': 'Standard', 'crate.std.k': 'Anything', 'crate.plus': 'Reinforced', 'crate.plus.k': 'Rare and up',
-  'crate.crow': 'Falcon', 'crate.crow.k': 'Epic and up',
+  'crate.std': 'Supply', 'crate.std.k': 'Anything', 'crate.plus': 'Munitions', 'crate.plus.k': 'Rare and up',
+  'crate.crow': 'Command', 'crate.crow.k': 'Epic and up',
   'crate.open': 'Open', 'crate.openFree': 'Open from stock', 'crate.new': 'New finish!', 'crate.dup': 'Already had it: +{n} PARÇA',
   'crate.rules': 'Odds are printed on every crate. A duplicate skin pays out in Scrap; at least one Epic is guaranteed every 30 crates.',
 
