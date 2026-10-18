@@ -203,11 +203,11 @@
 .op-pick.on { transform: rotate(0) translateY(-4px); box-shadow: 0 0 0 2px var(--ember), 0 6px 12px rgba(0,0,0,0.55); }
 .lobby-side { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 12px 22px; min-height: 0; }
 /* the job: an ember-painted plate, the words stencilled through */
-.play-cta { position: relative; flex: none; min-height: 116px; padding: 14px 20px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; text-align: left; --cut: 14px; overflow: hidden; color: #1b0e07;
+.play-cta { position: relative; flex: none; min-height: 116px; padding: 14px 64px 14px 20px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; text-align: left; --cut: 14px; overflow: hidden; color: #1b0e07;
   background: var(--grain), linear-gradient(160deg, #f4823f 0%, #dc6127 55%, #b84918 100%);
   box-shadow: inset 0 2px 0 rgba(255,214,170,0.5), inset 0 -4px 0 rgba(80,24,4,0.45); }
 .play-cta .eyebrow { color: rgba(27,14,7,0.72); font-weight: 700; }
-.play-cta b { font: 800 60px/0.86 var(--f-stencil); letter-spacing: 0.04em; text-transform: uppercase; }
+.play-cta b { font: 800 54px/0.86 var(--f-stencil); letter-spacing: 0.04em; text-transform: uppercase; }
 .play-cta span { font: 700 14px/1 var(--f-display); letter-spacing: var(--track-mid); text-transform: uppercase; }
 .play-cta > .ic { position: absolute; right: 20px; top: 50%; width: 36px; height: 36px; transform: translateY(-50%); }
 /* worn paint: lighter scrapes and a run of soot at the foot */
