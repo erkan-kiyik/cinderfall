@@ -8,6 +8,7 @@
 //                   only one: hold it while three squads come at it → checkpoint 2
 //   C  scaffolding  the street is walled off: up the ladders, over the wall
 //   D  extraction   down on the far side, through the last post to the flare
+import { paintHawkStanding, HAWK_EMBER } from '../hawk.js';
 import { cel, fill, stroke, clip } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
 import { texture } from '../tex.js';
@@ -68,6 +69,8 @@ export function hawkStall(g) {
   // the frame: scaffold pipe with its couplers
   for (const x of [0.4, w - 0.4]) { cel(g, rect(x - 1, -72, x + 1, 0), PIPE, { sh: 0.3, hl: 0.3, lw: 0.25 }); for (const y of [-66, -36, -6]) fill(g, rect(x - 1.5, y, x + 1.5, y + 1.6), PIPE.k); }
   cel(g, rect(0, -67, w, -65.4), PIPE, { sh: 0.2, hl: 0.2, lw: 0.2 });
+  // HAWK himself, behind the counter in front of his shelves (art/hawk.js)
+  paintHawkStanding(g);
   // the counter: planks nailed over three crates, the middle one left out
   for (const [x0, x1, t] of [[8, 24, 'UN'], [40, 56, 'ŞEKER']]) {
     const B = rect(x0, -14, x1, 0);
@@ -253,6 +256,7 @@ export function buildMission2() {
   glows.push([X(165) + 6, -92.7, 2.6, 2.6, '#ffe6b0', 0.85, 'bulb'], [X(165) + 58, -92.7, 2.6, 2.6, '#ffe6b0', 0.85, 'bulb'], [X(165) + 32, -87, 30, 9, '#ffcf8f', 0.08, 'bulb'], [X(165) + 47, -19.4, 3, 3, '#ffcf6a', 0.6, 'fire']);
   lights.push([X(165) + 32, -84, 80, 0.8, [1, 0.74, 0.46], 'bulb'], [X(165) + 47, -22, 34, 0.5, [1, 0.62, 0.3], 'fire']);
   for (const [bx, by] of HAWK_BULBS) glows.push([X(165) + bx, by, 2.2, 2.2, '#ffe6b0', 0.8, 'bulb']);
+  glows.push([X(165) + HAWK_EMBER[0], HAWK_EMBER[1], 0.9, 0.9, '#ff8a3a', 0.9, 'fire']);
   addCrate(226);
   P('m2.dumpB', [X(229) - 4, -24, X(229) + 48, 1], (g) => dumpster(g, X(229)), deco);
   // C — scaffolding over the wall -------------------------------------------------------------

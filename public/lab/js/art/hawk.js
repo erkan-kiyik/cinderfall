@@ -25,14 +25,25 @@ const LAPEL = 'M 61 78 C 66 74.6 72 73.6 76.4 75.4 C 81 77.4 85 82.6 87 89 C 82 
 const SCARF = 'M 33.6 70.4 C 42 66.2 54 67 64 71 C 70 73.2 74.4 76.4 74.4 80.4 C 74.4 84.6 68 86.6 60 86.6 C 50 86.6 40 84.6 34 80.6 C 30.8 78.4 30.8 72.4 33.6 70.4 Z';
 const SCARF_END = 'M 58 84 C 62 84.4 66 85.6 68.4 88 C 70 92 69.4 98 68 104 L 58.6 104 C 59.6 98 59.4 91 58 84 Z';
 
+// the coat carried on down to the counter, for HAWK standing at his stall
+const COAT_BODY = 'M 4 346 C 1 300 -2 250 1 205 C 2 170 -4 130 -2 104 C -1 94 6 86 14 80 C 20 76 26 72 30 70.6 C 36 69.2 42 69 46 70 L 64 74 C 72 75 80 77 88 82 C 96 87 103 94 106 104 C 109 130 104 170 104 205 C 105 250 108 300 110 346 Z';
+// his hand on the counter, on the open book, the lamp on its knuckles
+const HAND = 'M 92 334 C 94 326 102 322 110 323 C 118 324 124 328 126 334 C 127 339 124 344 118 345 L 98 346 C 94 344 91 340 92 334 Z';
+const CUFF = 'M 88 318 C 94 312 104 312 110 316 L 112 328 C 104 326 96 328 90 332 Z';
+
 // Paint the portrait into g, size × size px. t: seconds (the ember breathes, the smoke drifts).
-export function paintHawk(g, size, t = 0) {
-  const k = size / 100, B = new Brush(g, k), r = rnd(11);
+// o.figure: only the man, no stall behind him, no grain or vignette, the coat
+// carried down to frame y 346 (the counter) — for the market scene.
+export function paintHawk(g, size, t = 0, o = {}) {
+  const M0 = g.getTransform(), k = (size / 100) * (Math.hypot(M0.a, M0.b) || 1), B = new Brush(g, k), r = rnd(11);
   g.save();
-  g.scale(k, k);
-  const glow = 0.65 + 0.35 * Math.sin(t * 1.7);
+  g.scale(size / 100, size / 100);
+  const glow = 0.65 + 0.35 * Math.sin(t * 1.7), fig = !!o.figure;
+  // is (x, y) of this frame inside the path, whatever transform the frame is under
+  const inP = (path, x, y) => { const M = g.getTransform(); return g.isPointInPath(path, M.a * x + M.c * y + M.e, M.b * x + M.d * y + M.f); };
 
   // --- the stall behind him: dark boards, shelves of tins out of focus, the lamp's warmth low right
+  if (!fig) {
   const bg = g.createLinearGradient(0, 0, 100, 100);
   bg.addColorStop(0, '#0b0907'); bg.addColorStop(0.6, '#171009'); bg.addColorStop(1, '#2b1a0e');
   g.fillStyle = bg; g.fillRect(0, 0, 100, 100);
@@ -41,18 +52,44 @@ export function paintHawk(g, size, t = 0) {
   for (let i = 0; i < 6; i++) { const x = 3 + i * 5.6, y = 40; B.fill(`M ${x} ${y} L ${x + 3.6} ${y} L ${x + 3.6} ${y + 8} L ${x} ${y + 8} Z`, '#2e2014', 1.8, 0.6); }
   B.dab(104, 96, 46, 40, 'rgba(255,160,80,0.55)');
   B.dab(96, 66, 10, 10, `rgba(255,120,50,${0.12 * glow})`);
+  }
 
   // --- the coat: heavy wool, the collar turned up behind the neck
   B.fill(COLLAR_BACK, '#24211d', 0.4);
   B.inside(COLLAR_BACK, () => { B.dab(36, 64, 9, 7, '#3c3730', 0.7); texture(g, 'wool', 0.5, 7); });
-  B.fill(COAT, '#26231f', 0.3);
-  B.inside(COAT, () => {
+  const COATP = fig ? COAT_BODY : COAT;
+  B.fill(COATP, '#26231f', 0.3);
+  B.inside(COATP, () => {
     texture(g, 'wool', 0.55, 7);
     B.dab(88, 96, 26, 16, 'rgba(176,120,72,0.55)');           // the lamp on the near shoulder
     B.dab(10, 92, 22, 14, 'rgba(70,80,92,0.25)');             // the cold of the street behind
     for (const d of ['M 14 88 C 20 92 24 98 26 106', 'M 40 82 C 44 90 46 98 47 106', 'M 82 86 C 86 92 88 98 88 106']) B.line(d, '#0c0b09', 2.2, 1.6, 0.6);
     for (const d of ['M 16 87 C 22 91 26 97 28 104', 'M 84 85 C 88 91 90 97 90 104']) B.line(d, '#5a4a38', 0.8, 0.8, 0.35);
+    if (fig) {
+      // the body under the coat: the arms down its sides, the front edge, two buttons,
+      // the lamp on the counter warming it from below and in front
+      B.dab(104, 330, 30, 90, 'rgba(190,124,70,0.5)');
+      B.dab(0, 220, 26, 120, 'rgba(6,5,4,0.6)');
+      for (const d of ['M 12 104 C 10 170 12 250 16 346', 'M 92 104 C 96 170 96 250 94 346']) { B.line(d, '#0a0908', 3, 2.4, 0.7); }
+      for (const d of ['M 15 104 C 13 170 15 250 19 346', 'M 95 104 C 99 170 99 250 97 346']) B.line(d, 'rgba(120,96,70,0.35)', 1.2, 1.2);
+      B.line('M 70 101 C 72 160 74 240 75 346', '#0a0908', 2.4, 1.2, 0.85);
+      for (const y of [150, 210]) { B.dab(66, y, 2.2, 2.2, '#1a1612'); B.dab(65.4, y - 0.6, 0.8, 0.8, 'rgba(200,170,130,0.4)'); }
+      for (const [y, a] of [[180, 0.4], [270, 0.35]]) B.line(`M 22 ${y} C 40 ${y + 10} 60 ${y + 8} 86 ${y - 4}`, `rgba(8,6,4,${a})`, 2, 2.2);
+    }
   });
+  if (fig) {
+    // the sleeve's cuff and the hand on the counter: old skin, the lamp right on it
+    B.fill(CUFF, '#211e1a', 0.4);
+    B.inside(CUFF, () => { texture(g, 'wool', 0.5, 7); B.dab(108, 326, 10, 6, 'rgba(190,124,70,0.5)'); });
+    B.fill(HAND, '#8a5a40', 0.4);
+    B.inside(HAND, () => {
+      B.dab(118, 340, 14, 10, 'rgba(236,170,120,0.75)');
+      B.dab(96, 330, 8, 8, 'rgba(40,20,12,0.55)');
+      for (let i = 0; i < 4; i++) B.line(`M ${104 + i * 5} 327 C ${106 + i * 5} 334 ${107 + i * 5} 340 ${106 + i * 5} 345`, 'rgba(50,24,14,0.45)', 0.9, 0.6);
+      for (let i = 0; i < 4; i++) B.dab(106 + i * 5, 328, 1.6, 1.2, 'rgba(255,214,176,0.45)');
+      texture(g, 'skin', 0.35, 6);
+    });
+  }
 
   // --- the head and neck: one skin, then the light and the dark laid over it as glazes
   B.fill(HEAD, '#8d5a40', 0.25);
@@ -104,14 +141,14 @@ export function paintHawk(g, size, t = 0) {
   B.inside(HAIR, () => { B.dab(54, 37, 5, 3, 'rgba(150,140,128,0.55)'); B.dab(34, 48, 6, 10, 'rgba(14,10,8,0.6)'); });
   B.hairs(900, 61, (i, rr) => {
     const x = 30 + rr() * 28, y = 33.6 + rr() * 24;
-    if (!g.isPointInPath(P(HAIR), x * k, y * k)) return null;
+    if (!inP(P(HAIR), x, y)) return null;
     const lit = Math.min(1, Math.max(0, (x - 36) / 22 - (y - 36) / 40)), v = 60 + lit * 110 + (rr() - 0.5) * 50;
     return [x, y, 1.2 + (rr() - 0.5) * 0.6 + (x - 44) * 0.02, 0.5 + rr() * 0.7, `rgba(${v + 4 | 0},${v | 0},${v - 6 | 0},1)`, 0.08, 0.45];
   });
   // stubble on the cheek where the beard thins out toward the cheekbone
   B.hairs(700, 71, (i, rr) => {
     const x = 50 + rr() * 26, y = 45 + rr() * 9;
-    if (!g.isPointInPath(P(HEAD), x * k, y * k)) return null;
+    if (!inP(P(HEAD), x, y)) return null;
     const fade = Math.min(1, Math.max(0, (y - 45) / 8)), v = 90 + rr() * 90;
     return [x, y, Math.PI / 2 + (rr() - 0.5) * 0.6, 0.25 + rr() * 0.35, `rgba(${v | 0},${v - 4 | 0},${v - 10 | 0},1)`, 0.07, 0.15 + fade * 0.35];
   });
@@ -143,7 +180,7 @@ export function paintHawk(g, size, t = 0) {
   const grey = (v, a) => `rgba(${v + 6 | 0},${v + 2 | 0},${v - 5 | 0},${a})`;
   B.hairs(1900, 21, (i, rr) => {
     const x = 47 + rr() * 37, y = 48 + rr() * 28;
-    if (!g.isPointInPath(beard, x * k, y * k)) return null;
+    if (!inP(beard, x, y)) return null;
     const lit = tone(x, y), v = 60 + lit * 150 + (rr() - 0.5) * 46;
     const a = Math.PI / 2 - 0.25 + (x - 66) * 0.01 + (rr() - 0.5) * 0.45;
     return [x, y, a, 0.7 + rr() * 1.1, grey(Math.min(244, v), 1), 0.08 + rr() * 0.06, 0.3 + rr() * 0.3];
@@ -151,7 +188,7 @@ export function paintHawk(g, size, t = 0) {
   // a few bright strands where the lamp catches, and loose ones past the edge so it never ends in a line
   B.hairs(140, 27, (i, rr) => {
     const x = 66 + rr() * 17, y = 60 + rr() * 15;
-    if (!g.isPointInPath(beard, x * k, y * k)) return null;
+    if (!inP(beard, x, y)) return null;
     return [x, y, Math.PI / 2 - 0.2 + (rr() - 0.5) * 0.4, 0.8 + rr(), '#f2ece2', 0.08, 0.55];
   });
   B.hairs(120, 33, (i, rr) => {
@@ -163,7 +200,7 @@ export function paintHawk(g, size, t = 0) {
   B.inside(STACHE, () => { B.dab(81, 58.4, 3.4, 2, 'rgba(214,196,150,0.7)'); B.dab(76, 56, 2.6, 2, 'rgba(40,32,24,0.6)'); });
   B.hairs(300, 44, (i, rr) => {
     const x = 74.6 + rr() * 8.4, y = 54.6 + rr() * 5;
-    if (!g.isPointInPath(P(STACHE), x * k, y * k)) return null;
+    if (!inP(P(STACHE), x, y)) return null;
     const lit = Math.min(1, (x - 75) / 7), v = 90 + lit * 120 + (rr() - 0.5) * 40;
     return [x, y, Math.PI * 0.42 + (rr() - 0.5) * 0.4, 0.6 + rr() * 0.8, `rgba(${v + 14 | 0},${v + 4 | 0},${v - 26 | 0},1)`, 0.09, 0.55];
   });
@@ -222,17 +259,30 @@ export function paintHawk(g, size, t = 0) {
   B.dab(13.9, 0, 1.0, 0.85, `rgb(255,${120 + 70 * glow},50)`, 1);
   B.dab(13.9, 0, 3.2, 2.6, `rgba(255,120,40,${0.45 * glow})`, 1, 'screen');
   g.restore();
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < (fig ? 0 : 5); i++) {
     const u = (t * 0.12 + i / 5) % 1, x0 = 95, y0 = 62;
     const x1 = x0 - 2 + Math.sin(u * 5 + i) * 3, y1 = y0 - 8 - u * 26, x2 = x1 + Math.sin(u * 7 + i * 2) * 4, y2 = y1 - 10;
     B.line(`M ${x0} ${y0 - 1} C ${x0 + 1} ${y0 - 6} ${x1 - 2} ${y1 + 4} ${x1} ${y1} S ${x2 + 2} ${y2 + 4} ${x2} ${y2}`, `rgba(190,182,172,${0.16 * (1 - u)})`, 0.8 + u * 3, 0.8 + u * 2.4);
   }
 
   // --- the whole: a cool edge of street light on his back, film grain, the stall's dark round the frame
-  B.dab(26, 60, 10, 30, 'rgba(110,130,150,0.12)', 1, 'screen');
-  B.grain(0, 0, 100, 100, 0.07);
-  const v = g.createRadialGradient(56, 54, 30, 56, 54, 78);
-  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
-  g.fillStyle = v; g.fillRect(0, 0, 100, 100);
+  if (!fig) {
+    B.dab(26, 60, 10, 30, 'rgba(110,130,150,0.12)', 1, 'screen');
+    B.grain(0, 0, 100, 100, 0.07);
+    const v = g.createRadialGradient(56, 54, 30, 56, 54, 78);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+    g.fillStyle = v; g.fillRect(0, 0, 100, 100);
+  }
   g.restore();
 }
+
+// HAWK standing behind his counter in the market (mission 2), world units:
+// cap at y -62, the coat down behind the counter at -16; x0 his left edge.
+export const HAWK_STAND = { x: 24.3, y: -63.54, s: 0.14 };
+export function paintHawkStanding(g) {
+  g.save(); g.translate(HAWK_STAND.x, HAWK_STAND.y); g.scale(HAWK_STAND.s, HAWK_STAND.s);
+  paintHawk(g, 100, 1, { figure: true });
+  g.restore();
+}
+// where his cigarette's ember is, in the stall's frame
+export const HAWK_EMBER = [HAWK_STAND.x + 95 * HAWK_STAND.s, HAWK_STAND.y + 62.3 * HAWK_STAND.s];
