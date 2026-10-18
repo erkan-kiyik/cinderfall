@@ -10,7 +10,7 @@
 //   head    origin at the base of the neck, up is -y
 //   foot    origin at the ankle, level with the ground, toes toward +x
 // so the same painters drive the in-game rig later.
-import { setRoot } from './kit.js';
+import { setRoot, softMarks } from './kit.js';
 
 export const SK = {
   thigh: 15.2, shin: 14.4, upper: 11.6, fore: 10.4,
@@ -95,6 +95,12 @@ function at(g, [x, y], a, fn) {
 // part is skipped. Painters receive (g, ctx) where ctx.t(tone) darkens tones
 // on the far side and ctx.far tells which side is being drawn.
 export function drawFigure(g, op, pose = op.pose, flip = false) {
+  // painted, never inked: soft marks on for the figure (docs §11)
+  const was = softMarks(true);
+  try { paintFigure(g, op, pose, flip); } finally { softMarks(was); }
+}
+
+function paintFigure(g, op, pose, flip) {
   // the light is fixed in the world, so take the root before any mirroring
   setRoot(g);
   if (flip) g.scale(-1, 1);
@@ -129,7 +135,8 @@ export function drawFigure(g, op, pose = op.pose, flip = false) {
     // weapon between the far (support) arm and the near (trigger) arm
     const g0 = p.gun;
     g.save(); g.translate(g0.at[0], g0.at[1]); g.rotate(g0.ang); g.scale(g0.k ?? 1, g0.k ?? 1);
-    g0.w.paint(g, g0.mat); g.restore();
+    // the weapon is machined: its edges stay crisp
+    const w0 = softMarks(false); g0.w.paint(g, g0.mat); softMarks(w0); g.restore();
   }
   arm('n', near);
   torso(P.front);

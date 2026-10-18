@@ -12,7 +12,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, PELVIS,
-  glove, boot, headShape, skinGlaze, korBand, stitch, rivet, buckle, grime, scuffs,
+  glove, boot, headShape, skinGlaze, neck, softHair, korBand, stitch, rivet, buckle, grime, scuffs,
 } from './body.js';
 
 const PAL = {
@@ -233,14 +233,14 @@ const LAMP = 'M 4.95 -11.15 L 5.55 -11.2 L 5.6 -10.0 L 5.0 -9.95 Z';
 const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 function head(g) {
   const S = PAL.skin, H = PAL.hat;
-  cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', S, { sh: 1.2, hl: 0.25 });
+  neck(g, S, { wide: 0.35, glaze: true });
   const HD = headShape({ jaw: 1 });
   cel(g, HD, S, { sh: 1.2, hl: 0.35 });
   skinGlaze(g, HD);
   clip(g, HD, () => {
     // grey stubble along the jaw and the back of the head, cropped grey hair
     for (let k = 0; k < 120; k++) { const x = -3.6 + ((k * 37) % 76) / 10, y = -5.8 + ((k * 53) % 46) / 10; if (x < 0.5 || y > -3.2) fill(g, `M ${x} ${y} l 0.08 0.12 l -0.06 0.02 Z`, '#8d8a84', 0.7); }
-    fill(g, 'M -4 -8.6 C -3.6 -7.0 -3.4 -6.0 -3.0 -5.2 L -2.2 -5.6 C -2.4 -6.6 -2.6 -7.6 -2.6 -8.6 Z', '#77736d', 0.8);
+    softHair(g, 'M -4.2 -8.8 C -3.8 -7.0 -3.5 -5.9 -3.0 -5.0 C -2.6 -5.2 -2.3 -5.4 -2.1 -5.7 C -2.4 -6.7 -2.5 -7.7 -2.4 -8.8 Z', '#6f6b65', 'rgba(206,200,190,0.7)', [0.15, 1], 90, 13);
     cel(g, 'M -1.7 -7.3 C -0.9 -7.6 -0.4 -6.8 -0.5 -6.0 C -0.6 -5.3 -1.3 -5.1 -1.8 -5.6 Z', S, { sh: 0.5, hl: 0.2, line: false, ao: 0.6 });
     stroke(g, 'M -1.3 -6.9 C -0.8 -6.8 -0.8 -6.0 -1.2 -5.8', S.d, 0.14, 0.7);
   });

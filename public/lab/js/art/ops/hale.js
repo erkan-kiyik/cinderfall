@@ -12,7 +12,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, boot, headShape, korBand, stitch, rivet, grime, scuffs,
+  glove, boot, headShape, neck, korBand, stitch, rivet, grime, scuffs,
 } from './body.js';
 
 const PAL = {
@@ -221,7 +221,7 @@ const SHIELD = 'M 1.4 -8.95 C 3.4 -9.25 5.4 -8.95 6.15 -7.95 C 6.65 -6.45 6.55 -
 function head(g) {
   const H = PAL.helmet, F = PAL.hood;
   // the flash hood over the neck and head; the face under it, mostly behind the shield
-  cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', F, { sh: 1.2, hl: 0.3 });
+  neck(g, F, { wide: 0.35, sh: 1.0 });
   const HD = headShape({ jaw: 1 });
   cel(g, HD, F, { sh: 1.0, hl: 0.3 });
   clip(g, HD, () => { cel(g, 'M 1.2 -8.2 C 3 -8.4 4.6 -8.0 5.4 -7.0 L 5.4 -1.4 L 1.2 -1.4 Z', PAL.skin, { sh: 0.6, hl: 0.2, line: false }); });

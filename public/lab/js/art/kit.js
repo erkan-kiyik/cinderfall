@@ -19,13 +19,47 @@ export function P(d) {
   return p;
 }
 
+// Figures are painted, never inked (docs §11): while soft marks are on (the
+// character bakes and figure drawings turn them on), every stroke is a brush
+// mark whose edge melts over part of its width, and the small dark fills
+// (vents, straps, seams, hair) lose their cut edge the same way.
+let SOFT = false;
+export function softMarks(on) { const was = SOFT; SOFT = on; return was; }
+const LUM = new Map();
+function dark(c) {
+  if (typeof c !== 'string') return false;
+  let v = LUM.get(c);
+  if (v === undefined) {
+    let r = 1, gg = 1, b = 1;
+    const h = c.match(/^#([0-9a-f]{6})$/i), m = c.match(/^rgba?\(([^)]+)\)/i);
+    if (h) { const n = parseInt(h[1], 16); r = (n >> 16) / 255; gg = ((n >> 8) & 255) / 255; b = (n & 255) / 255; }
+    else if (c.match(/^#([0-9a-f]{3})$/i)) { const n = c.slice(1); r = parseInt(n[0], 16) / 15; gg = parseInt(n[1], 16) / 15; b = parseInt(n[2], 16) / 15; }
+    else if (m) { const q = m[1].split(',').map(Number); r = q[0] / 255; gg = q[1] / 255; b = q[2] / 255; }
+    v = 0.3 * r + 0.55 * gg + 0.15 * b;
+    LUM.set(c, v);
+  }
+  return v < 0.16;
+}
+
 export function fill(g, d, c, a = 1) {
-  g.globalAlpha = a; g.fillStyle = c; g.fill(P(d)); g.globalAlpha = 1;
+  g.globalAlpha = a; g.fillStyle = c;
+  const b = SOFT && dark(c) ? 0.07 * ppu(g) : 0, f0 = b > 0.5 ? g.filter : null;
+  if (f0 !== null) g.filter = `blur(${b.toFixed(2)}px)`;
+  g.fill(P(d)); g.globalAlpha = 1;
+  if (f0 !== null) g.filter = f0;
 }
 
 export function stroke(g, d, c, w, a = 1) {
   g.globalAlpha = a; g.strokeStyle = c; g.lineWidth = w; g.lineCap = 'round'; g.lineJoin = 'round';
+  let f0 = null;
+  if (SOFT) {
+    // dark marks spread wider and lighter, as paint does, so none reads as a drawn line
+    const dk = dark(c), b = w * (dk ? 0.38 : 0.22) * ppu(g);
+    if (b > 0.5) { f0 = g.filter; g.filter = `blur(${b.toFixed(2)}px)`; }
+    if (dk) g.globalAlpha = a * 0.85;
+  }
   g.stroke(P(d)); g.globalAlpha = 1;
+  if (f0 !== null) g.filter = f0;
 }
 
 export function clip(g, d, fn) {

@@ -11,7 +11,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, kneePad, headShape, skinGlaze, korBand, stitch, rivet, buckle, grime, scuffs,
+  glove, kneePad, headShape, skinGlaze, neck, korBand, stitch, rivet, buckle, grime, scuffs,
 } from './body.js';
 
 const PAL = {
@@ -216,7 +216,7 @@ function foot(g, ctx) {
 const GLASS = 'M 1.5 -8.05 C 2.9 -8.4 4.5 -8.3 5.35 -7.7 L 5.25 -6.45 C 4.45 -5.85 2.85 -5.8 1.8 -6.2 C 1.5 -6.8 1.45 -7.4 1.5 -8.05 Z';
 function head(g) {
   const S = PAL.skin, H = PAL.helmet;
-  cel(g, 'M -1.6 1.2 L 2.0 1.0 L 1.9 -2.6 L 0.5 -3.6 L -1.7 -4.2 Z', S, { sh: 1.1, hl: 0.25 });
+  neck(g, S, { glaze: true });
   const HD = headShape({ jaw: 0.5 });
   cel(g, HD, S, { sh: 0.9, hl: 0.35 });
   skinGlaze(g, HD);
@@ -250,7 +250,13 @@ function head(g) {
   cel(g, SHELL, H, { sh: 1.1, hl: 0.5 });
   clip(g, SHELL, () => {
     for (const [x, y, a] of [[-3.6, -9.0, 0.6], [-1.4, -10.2, 0.3], [1.0, -10.6, 0.05], [3.2, -10.0, -0.3]]) {
-      g.save(); g.translate(x, y); g.rotate(a); fill(g, 'M -0.9 -0.32 L 0.9 -0.32 C 1.15 -0.32 1.15 0.32 0.9 0.32 L -0.9 0.32 C -1.15 0.32 -1.15 -0.32 -0.9 -0.32 Z', H.k); g.restore();
+      // a vent is a hole in the shell: dark inside, the foam liner in it, its lower lip lit
+      const V = 'M -0.9 -0.32 L 0.9 -0.32 C 1.15 -0.32 1.15 0.32 0.9 0.32 L -0.9 0.32 C -1.15 0.32 -1.15 -0.32 -0.9 -0.32 Z';
+      g.save(); g.translate(x, y); g.rotate(a);
+      fill(g, V, H.k);
+      clip(g, V, () => fill(g, 'M -1.2 0.02 L 1.2 0.02 L 1.2 0.4 L -1.2 0.4 Z', '#3d434b', 0.6));
+      stroke(g, 'M -0.85 0.42 L 0.85 0.42', H.l, 0.1, 0.45);
+      g.restore();
     }
     cel(g, 'M -2.6 -8.4 L -0.6 -8.9 L -0.4 -8.0 L -2.4 -7.5 Z', PAL.sky, { sh: 0.1, hl: 0.1, lw: 0.14 });
     fill(g, 'M 2.0 -9.4 a 0.5 0.5 0 1 0 1.0 0 a 0.5 0.5 0 1 0 -1.0 0 Z', PAL.cream.m);

@@ -11,7 +11,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, boot, headShape, korBand, stitch, rivet, buckle, grime, scuffs, softEye, softBrow, skinGlaze, softHair,
+  glove, boot, headShape, korBand, stitch, rivet, buckle, grime, scuffs, softEye, softBrow, skinGlaze, softHair, neck,
 } from './body.js';
 
 const PAL = {
@@ -180,7 +180,7 @@ const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 
 const MONO = ell(5.5, -6.85, 0.42, 0.72);
 function head(g) {
   const S = PAL.skin, Hr = PAL.hair;
-  cel(g, 'M -1.6 1.2 L 2.0 1.0 L 1.9 -2.6 L 0.5 -3.6 L -1.7 -4.2 Z', PAL.gaiter, { sh: 1.1, hl: 0.25 });
+  neck(g, PAL.gaiter, { sh: 1.0 });
   // the knot at the back, under the hair's line
   softHair(g, ell(-4.4, -8.6, 1.55, 1.45), Hr.m, 'rgba(150,110,80,0.7)', [-0.4, -1], 90, 11);
   const HD = headShape({ jaw: 0.2 });

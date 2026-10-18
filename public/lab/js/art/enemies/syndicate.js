@@ -7,13 +7,13 @@
 // the Secretary, is no soldier at all: a long belted coat, a peaked cap, an
 // open, cold face.
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
-import { Brush } from '../paint.js';
+import { Brush, rnd } from '../paint.js';
 import { M, tone, mat } from '../style.js';
 import { WEAPONS, MAT } from '../weapons/index.js';
 import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, stitch, rivet, buckle, grime, scuffs } from '../ops/body.js';
 
 const PAL = {
-  armor: mat(tone('#b0c2d2', '#8197ad', '#5a7087', '#233242'), 'paint', 0.22),
+  armor: mat(tone('#aab7c4', '#7b8b9b', '#546373', '#222c38'), 'paint', 0.1),
   suit: mat(tone('#414e66', '#2c364a', '#1d2434', '#0b0f17'), 'canvas', 0.45),
   webbing: mat(tone('#3a4558', '#283140', '#1a202b', '#0a0d12'), 'nylon', 0.6),
   black: mat(tone('#3e4147', '#282b30', '#191b1f', '#0a0b0d'), 'rubber', 0.45),
@@ -41,6 +41,24 @@ export function emblem(g, x, y, r, c) {
 const SHELL = 'M -4.8 -3.6 C -5.6 -7.0 -5.0 -11.0 -2.0 -12.4 C 0.8 -13.4 3.8 -12.8 5.2 -10.6 C 5.9 -9.4 6.0 -8.0 5.9 -6.6 L 5.9 -3.8 C 5.8 -2.6 5.0 -1.7 3.8 -1.4 L 1.0 -1.2 C -0.8 -1.4 -2.4 -2.2 -3.4 -3.0 Z';
 const SLIT = 'M 1.2 -7.85 L 6.0 -8.0 L 6.05 -7.15 L 1.2 -7.1 Z';
 const brush = (g) => { const M0 = g.getTransform(); return new Brush(g, Math.hypot(M0.a, M0.b)); };
+// Issued plate that has seen the street: the lamp's hard sheen on the moulding,
+// paint chipped off the edges to the grey composite, scratches, rain-dried dirt
+// low down. Box [x0, y0, x1, y1] in the part's frame.
+function worn(g, d, [x0, y0, x1, y1], seed, k = 1) {
+  const B = brush(g), r = rnd(seed), w = x1 - x0, h = y1 - y0;
+  B.inside(d, () => {
+    B.dab(x0 + w * 0.62, y0 + h * 0.22, w * 0.22, h * 0.1, 'rgba(236,244,252,0.32)');
+    B.dab(x0 + w * 0.5, y1 - h * 0.08, w * 0.6, h * 0.22, `rgba(34,30,26,${0.32 * k})`);
+    for (let i = 0; i < 9 * k; i++) {
+      const top = r() < 0.6, x = x0 + r() * w, y = top ? y0 + r() * h * 0.18 : y0 + r() * h;
+      B.dab(x, y, 0.18 + r() * 0.3, 0.1 + r() * 0.16, top ? 'rgba(196,200,204,0.55)' : 'rgba(40,46,54,0.45)', 1, 'source-over', r() * 3);
+    }
+    for (let i = 0; i < 6 * k; i++) {
+      const x = x0 + r() * w, y = y0 + h * (0.2 + r() * 0.7), a = (r() - 0.5) * 1.2, L = 0.6 + r() * 1.6;
+      B.line(`M ${x} ${y} l ${Math.cos(a) * L} ${Math.sin(a) * L}`, 'rgba(226,232,238,0.4)', 0.07, 0.03);
+    }
+  });
+}
 function neck(g, t) {
   cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', t, { sh: 1.2, hl: 0.25 });
 }
@@ -68,6 +86,7 @@ function helmet(g) {
     g.save(); g.fillStyle = 'rgba(240,244,248,0.6)'; g.translate(-4.4, -5.2); g.scale(1 / 40, 1 / 40); g.font = "700 30px 'Barlow Condensed', sans-serif"; g.fillText('V-0417', 0, 0); g.restore();
     grime(g, -6, -1, DUST);
   });
+  worn(g, SHELL, [-5.6, -13.4, 0.6, -1.2], 29, 0.8);
   // the slit, lit red: a recess that follows the shell's curve, the light inside it
   const B = brush(g);
   B.fill('M 0.9 -8.35 C 2.8 -8.7 4.9 -8.6 6.15 -8.2 L 6.2 -6.9 C 4.9 -7.2 2.8 -7.25 0.95 -7.0 Z', 'rgba(8,9,12,0.95)', 0.06);
@@ -99,6 +118,7 @@ function carrier(g, A = PAL.armor) {
     for (const [x, y] of [[-4.6, -19.6], [5.8, -19.8], [-5.0, -10.2], [6.2, -10.4]]) rivet(g, x, y, 0.26, PAL.steel);
     grime(g, -14, -7.6, DUST);
   });
+  worn(g, PLATE, [-6.6, -22.2, 7.4, -8.0], 31);
   // the magazine pouches, navy, their flaps
   for (let i = 0; i < 3; i++) {
     const x = -2.6 + i * 2.6;
@@ -128,6 +148,7 @@ function shoulderPlate(g, ctx, A = PAL.armor, big = false) {
   const P = big ? blob([[-4.6, -3.0], [0.2, -4.4], [4.6, -2.8], [4.6, 3.2], [-4.4, 3.4]]) : blob([[-4.0, -2.6], [0.2, -3.8], [4.2, -2.4], [4.2, 2.0], [-4.0, 2.2]]);
   cel(g, P, ctx.t(A), { sh: 1.0, hl: 0.5 });
   clip(g, P, () => { stroke(g, curve([[-3.6, -1.6], [0.2, -2.8], [3.8, -1.4]]), '#ffffff', 0.14, 0.6); if (!ctx.far) emblem(g, 0.4, 0.0, 1.25, PAL.white.m); });
+  worn(g, P, big ? [-4.6, -4.4, 4.6, 3.4] : [-4.0, -3.8, 4.2, 2.2], big ? 37 : 33, ctx.far ? 0.6 : 1);
 }
 function upper(g, ctx) {
   const t = ctx.t;
@@ -156,6 +177,7 @@ function kneePlate(g, ctx, A = PAL.armor) {
   const KP = blob([[-0.8, -2.6], [2.4, -2.4], [3.4, 0.4], [3.0, 3.6], [0.8, 4.4], [-0.8, 2.4], [-1.0, -0.2]]);
   cel(g, KP, ctx.t(A), { sh: 0.7, hl: 0.4 });
   clip(g, KP, () => stroke(g, curve([[0.0, -1.4], [2.0, -1.0], [2.9, 0.8]]), '#ffffff', 0.14, 0.6));
+  worn(g, KP, [-1.0, -2.6, 3.4, 4.4], 41, ctx.far ? 0.5 : 0.8);
   stroke(g, 'M -0.9 1.0 C -1.6 1.1 -2.2 1.3 -2.5 1.6', PAL.webbing.k, 0.5);
 }
 function shin(g, ctx) {
@@ -266,6 +288,7 @@ function lightTorso(g) {
   const LPLATE = blob([[-4.8, -20.8], [1.2, -21.8], [5.4, -20.8], [6.8, -16.8], [6.4, -11.4], [-0.4, -10.8], [-5.4, -11.6], [-5.8, -15.8]]);
   cel(g, LPLATE, PAL.armor, { sh: 1.6, hl: 0.55 });
   clip(g, LPLATE, () => { stroke(g, curve([[-4.0, -20.0], [1.2, -21.0], [5.0, -20.0]]), '#ffffff', 0.14, 0.6); for (const [x, y] of [[-4.2, -19.6], [5.4, -19.8]]) rivet(g, x, y, 0.24, PAL.steel); });
+  worn(g, LPLATE, [-5.8, -21.8, 6.8, -10.8], 35);
   // the shell bandolier from the far shoulder to the near hip
   const BAND = 'M -6.0 -21.2 L -4.0 -22.2 L 6.6 -7.2 L 5.0 -5.8 Z';
   cel(g, BAND, PAL.webbing, { sh: 0.5, hl: 0.25 });

@@ -244,6 +244,22 @@ export function softBrow(g, x0, y0, x1, y1, lift, col, seed = 3) {
   });
 }
 
+// The neck: a column leaning up into the skull, not a cut polygon; the jaw's
+// shade across its top, the key light down its front. `glaze` for bare skin.
+export function neck(g, t, { wide = 0, sh = 0.8, glaze = false } = {}) {
+  const l = -1.7 - wide, r = 2.0 + wide * 0.4;
+  const d = `M ${l} 1.2 C ${l - 0.2} -0.6 ${l - 0.2} -2.6 ${l - 0.1} ${-4.3 - wide * 0.3} C -0.6 -4.1 0.5 -3.8 ${1.4 + wide * 0.5} -3.1 C ${r + 0.1} -2.2 ${r + 0.1} -0.4 ${r} 1.0 C 0.8 1.3 -0.5 1.3 ${l} 1.2 Z`;
+  cel(g, d, t, { sh, hl: 0.25 });
+  if (!glaze) return;
+  const M = g.getTransform(), B = new Brush(g, Math.hypot(M.a, M.b));
+  B.inside(d, () => {
+    B.dab(0.6, -3.6, 2.8, 1.3, 'rgba(30,14,8,0.4)');
+    B.dab(1.5, -0.8, 0.9, 1.9, 'rgba(255,224,196,0.16)');
+    B.dab(-1.7, -1.2, 1.2, 2.8, 'rgba(20,10,6,0.25)');
+    B.dab(0.4, -1.4, 0.5, 1.6, 'rgba(120,60,40,0.12)');
+  });
+}
+
 // Skin glazed like a painting over the head shape (head frame, facing +x):
 // the back of the skull away from the key light, the forehead and cheekbone
 // toward it, the warmth of blood in the cheek, the temple's hollow.

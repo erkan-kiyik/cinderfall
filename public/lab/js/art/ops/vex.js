@@ -13,7 +13,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, boot, headShape, skinGlaze, korBand, stitch, rivet, buckle, grime, scuffs,
+  glove, boot, headShape, skinGlaze, neck, korBand, stitch, rivet, buckle, grime, scuffs,
 } from './body.js';
 
 const PAL = {
@@ -259,7 +259,7 @@ const lensN = 'M 0.95 -6.8 a 1.2 1.15 0 1 0 2.4 0 a 1.2 1.15 0 1 0 -2.4 0 Z';
 const lensF = 'M 3.72 -6.75 a 0.42 0.98 0 1 0 0.84 0 a 0.42 0.98 0 1 0 -0.84 0 Z';
 function head(g) {
   const S = PAL.skin;
-  cel(g, 'M -1.7 1.2 L 2.1 1.0 L 2.0 -2.6 L 0.6 -3.6 L -1.8 -4.4 Z', PAL.scarf, { sh: 1.2, hl: 0 });
+  neck(g, PAL.scarf, { wide: 0.1, sh: 1.0 });
   const H = headShape({ jaw: 1 });
   cel(g, H, S, { sh: 1.2, hl: 0.35 });
   skinGlaze(g, H);
