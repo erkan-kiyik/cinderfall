@@ -13,7 +13,7 @@ import { Level, T } from '../../phys/level.js';
 import { crate, lampPost, burnBarrel, dumpster, cone } from './street.js';
 import { catwalk, ladder, barricade, barricadeFx } from './course.js';
 import { concrete, beacon, cpPost } from './mission1.js';
-import { facadeLayout, tube, neonText } from './city.js';
+import { facadeLayout, hawkSign, bulb } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -23,11 +23,13 @@ const rgb = (hex) => [parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3,
 const COLS = 400, TOPY = -200, ROWS = 30, STREET = 25;
 const WOOD = tone('#c99a6a', '#a3764c', '#7a5434', '#3a2414');
 const POLE = tone('#8a95a3', '#5d6878', '#3c4654', '#151a21');
+// docs §10.4: faded canvas over every stall (brick red, mustard, olive), HAWK's
+// patched ochre; the tech stall mends radios and sells batteries
 const AWN = {
-  fruit: [tone('#ff8a7a', '#e04a3c', '#a8302a', '#4a1210'), '#f2dfbf'],
-  tech: [tone('#6fd6f0', '#2f9ab8', '#1f6a82', '#0b2a36'), '#d9f6ff'],
-  cloth: [tone('#c9a8ff', '#8a5cff', '#5f3cb8', '#24164a'), '#f0e6ff'],
-  hawk: [tone('#ffe08a', '#ffc93c', '#c9951a', '#4a3208'), '#2a1a08'],
+  fruit: [tone('#c98a74', '#a8543e', '#7a382a', '#2e140e'), '#e2d2b4'],
+  tech: [tone('#9a9a72', '#6e6e4a', '#4c4c32', '#1c1c10'), '#d6ceb0'],
+  cloth: [tone('#e2bc72', '#c09442', '#8a6626', '#33240a'), '#ecdcb8'],
+  hawk: [tone('#c4a676', '#9a7c4c', '#6e5432', '#2a1e0e'), '#6e5a36'],
 };
 export const STALL_W = 48;
 
@@ -75,14 +77,17 @@ function goods(g, kind, x0, x1, y, shelf) {
     }
   } else if (kind === 'tech') {
     for (let x = x0 + 1; x < x1 - 7; x += 9) {
+      // old radios: a speaker grille, a dial with its amber light; batteries in front
       cel(g, rect(x, y - 7, x + 7, y), M.charcoal, { sh: 0.3, hl: 0.2, lw: 0.25 });
-      fill(g, rect(x + 1, y - 6, x + 6, y - 2), shelf ? '#2a6a80' : '#3ee8e0', 0.85);
-      fill(g, rect(x + 1, y - 6, x + 6, y - 5.2), '#fff', 0.35);
+      for (let k = y - 6; k < y - 1.5; k += 1) fill(g, rect(x + 0.8, k, x + 3.6, k + 0.4), '#0b0d11', 0.8);
+      fill(g, rect(x + 4.2, y - 6, x + 6.2, y - 4.2), shelf ? '#8a6a3a' : '#e0a050', 0.9);
+      fill(g, ell(x + 5.2, y - 2.4, 0.8, 0.8), '#5a5a5a');
+      if (!shelf) for (let k = 0; k < 3; k++) fill(g, rect(x + 0.6 + k * 2.2, y + 0.6, x + 2 + k * 2.2, y + 3), k % 2 ? '#c9a548' : '#3a3a3a');
     }
     if (!shelf) for (let x = x0 + 2; x < x1 - 4; x += 6) stroke(g, `M ${x} ${y} C ${x + 1} ${y + 3} ${x + 3} ${y + 3} ${x + 4} ${y + 6}`, '#0b0d11', 0.35);
   } else if (kind === 'cloth') {
     for (let x = x0; x < x1 - 4; x += 6) {
-      const c = [tone('#ffd7a8', '#f2a65a', '#b86a2a', '#40200a'), tone('#c9a8ff', '#8a5cff', '#5f3cb8', '#24164a'), tone('#a8e6ff', '#4aa8ff', '#2a6ab8', '#0a2040')][Math.floor(x / 6) % 3];
+      const c = [tone('#e2c49a', '#c09a6a', '#8a6a42', '#33240e'), tone('#9a6a5a', '#7a4636', '#542c22', '#20100a'), tone('#8a96a0', '#5e6a74', '#404a52', '#161c20')][Math.floor(x / 6) % 3];
       if (shelf) cel(g, `M ${x} ${y - 26} L ${x + 5} ${y - 26} L ${x + 5.4} ${y - 4} Q ${x + 2.6} ${y - 2} ${x - 0.4} ${y - 4} Z`, c, { sh: 0.5, hl: 0.3, lw: 0.25 });
       else cel(g, rect(x, y - 3, x + 5, y), c, { sh: 0.3, hl: 0.2, lw: 0.2 });
     }
@@ -96,13 +101,13 @@ function goods(g, kind, x0, x1, y, shelf) {
   }
 }
 
-// HAWK's stall: wider, gold awning, the neon sign on a board above it
+// HAWK's stall: wider, his patched awning, the same painted board as over his
+// shop (docs §10.4) hung from the poles, a bulb either side of it
 export function hawkStall(g) {
   stall(g, 'hawk', 64);
-  cel(g, rect(10, -96, 54, -78), M.black, { sh: 0.5, hl: 0.2 });
   for (const x of [16, 48]) stroke(g, `M ${x} -78 L ${x} -73`, POLE.k, 0.6);
-  neonText(g, 'HAWK', 32, -82.4, 10.5, C.gold, 'center');
-  tube(g, 'M 12 -94 L 52 -94', '#ff3fa4', 0.5);
+  hawkSign(g, 8, -96, 56, -78, false);
+  for (const x of [6, 58]) { stroke(g, `M ${x} -98 L ${x} -96`, POLE.k, 0.5); bulb(g, x, -93, 3); }
 }
 
 // scaffolding: poles and braces down to the street under a catwalk at y
@@ -119,7 +124,7 @@ export function scaffold(g, x0, x1, y) {
     }
   }
   // a safety net on the lower part, hazard tape at the top
-  fill(g, rect(x0, y + 6, x1, Math.min(-2, y + 40)), '#3ee8e0', 0.05);
+  fill(g, rect(x0, y + 6, x1, Math.min(-2, y + 40)), '#6a7a5a', 0.08);
   catwalk(g, x0, x1, y);
 }
 
@@ -146,11 +151,11 @@ export function buildMission2() {
   };
   // stalls: counter tiles c0+1..c0+4 (2 high), awning at 9 tiles over c0..c0+5
   const stalls = { fruit: [], tech: [], cloth: [] };
-  const STALL_C = { fruit: '#ff9a5c', tech: '#3ee8e0', cloth: '#c9a8ff' };
+  const STALL_C = { fruit: '#ffb070', tech: '#ffc480', cloth: '#ffbe78' };
   const addStall = (kind, c0) => {
     block(c0 + 1, c0 + 4, 1, 2); block(c0, c0 + 5, 9, 9, '=');
     stalls[kind].push(X(c0));
-    for (const [bx, by] of STALL_BULBS) glows.push([X(c0) + bx, by, 2.2, 2.2, '#ffe6b0', 0.8, 'neon2']);
+    for (const [bx, by] of STALL_BULBS) glows.push([X(c0) + bx, by, 2.2, 2.2, '#ffe6b0', 0.8, 'bulb']);
     lights.push([X(c0) + 24, -60, 44, 0.55, rgb(STALL_C[kind])]);
   };
   const crates = [];
@@ -166,9 +171,9 @@ export function buildMission2() {
   // HAWK's stall: counter over 8 tiles, awning over 8
   block(166, 171, 1, 2); block(165, 172, 9, 9, '=');
   P('m2.hawk', [X(165) - 2, -100, X(165) + 66, 1], (g) => { g.translate(X(165), 0); hawkStall(g); });
-  glows.push([X(165) + 32, -86, 26, 8, C.gold, 0.45, 'neon'], [X(165) + 32, -94, 22, 1.6, '#ff3fa4', 0.6, 'buzz']);
-  lights.push([X(165) + 32, -80, 80, 0.9, rgb(C.gold), 'neon']);
-  for (let k = 0; k < 5; k++) glows.push([X(165) + 4 + k * 14, -63.6 + Math.sin((k / 4) * Math.PI) * 1.6, 2.2, 2.2, '#ffe6b0', 0.8, 'neon2']);
+  glows.push([X(165) + 6, -92.7, 2.6, 2.6, '#ffe6b0', 0.85, 'bulb'], [X(165) + 58, -92.7, 2.6, 2.6, '#ffe6b0', 0.85, 'bulb'], [X(165) + 32, -87, 30, 9, '#ffcf8f', 0.08, 'bulb']);
+  lights.push([X(165) + 32, -84, 80, 0.8, [1, 0.74, 0.46], 'bulb']);
+  for (let k = 0; k < 5; k++) glows.push([X(165) + 4 + k * 14, -63.6 + Math.sin((k / 4) * Math.PI) * 1.6, 2.2, 2.2, '#ffe6b0', 0.8, 'bulb']);
   addCrate(226);
   P('m2.dumpB', [X(229) - 4, -24, X(229) + 48, 1], (g) => dumpster(g, X(229)), deco);
   // C — scaffolding over the wall -------------------------------------------------------------
@@ -203,7 +208,7 @@ export function buildMission2() {
   const MZ = [X(112), X(236)]; // the market, where the squads that come for HAWK fight
   return {
     id: 'm2', level, props, front, deco, lamps, glows, lights, width: COLS * T,
-    facade: facadeLayout(-10, COLS * T + 10, 23, ['walkupB', 'alley', 'garage', 'walkup', 'crow', 'hotel', 'alley', 'warehouse', 'ruin', 'synBlock']),
+    facade: facadeLayout(-10, COLS * T + 10, 23, ['walkupB', 'teahouse', 'alley', 'garage', 'walkup', 'crow', 'hotel', 'alley', 'union', 'warehouse', 'ruin', 'synBlock']),
     fires: [X(80) + 5],
     spawn: [64, 0],
     par: 330,

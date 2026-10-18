@@ -22,8 +22,8 @@ function street() {
     props: [], front: [], lamps,
     deco: [{ name: 'c.lamp', at: lamps }],
     spawn: [520, 0], enemies: [],
-    // the Syndicate banner right behind the operator in the lobby
-    facade: facadeLayout(-10, COLS * T + 10, 2, ['walkupB', 'crow', 'walkup', 'alley', 'synBlock', 'hotel', 'garage', 'ruin', 'warehouse']),
+    // HAWK's shop right behind the operator in the lobby, the union hall up the street
+    facade: facadeLayout(-10, COLS * T + 10, 2, ['walkupB', 'union', 'walkup', 'crow', 'alley', 'teahouse', 'synBlock', 'hotel', 'garage', 'ruin', 'warehouse']),
   };
 }
 

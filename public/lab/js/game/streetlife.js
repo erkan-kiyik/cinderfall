@@ -117,10 +117,10 @@ export class StreetLife {
         const sp = 18 + j * 9, dir = j === 1 ? -1 : 1;
         const x = ox + ((((dir * t * sp + j * 211 + k * 97) % 700) + 700) % 700) - 50, y = -150 + j * 13 + Math.sin(t * 1.3 + j * 2) * 2.2;
         const on = (t * 1.4 + j * 0.33) % 1 < 0.16;
-        B.draw(glow, x + 3.2 * dir, y, on ? 3.4 : 1.4, on ? 3.4 : 1.4, 0, rgba(j === 1 ? '#3ee8e0' : '#ff3347', on ? 1 : 0.55));
+        B.draw(glow, x + 3.2 * dir, y, on ? 3.4 : 1.4, on ? 3.4 : 1.4, 0, rgba(j === 1 ? '#e8f0ff' : '#ff3347', on ? 1 : 0.55));
         if (j === 2) B.line(beam, x, y + 1, x + Math.sin(t * 0.8) * 12, y + 50, 26, rgba('#bfe8ff', 0.14));
       }
-      // searchlights from the works' stacks, closer and slower
+      // Vanta's searchlight on the works' cold stack, closer and slower
       const sa = -Math.PI / 2 + Math.sin(t * 0.27 + k * 2.3) * 1.0;
       B.line(beam, ox + 126, -134, ox + 126 + Math.cos(sa) * 170, -134 + Math.sin(sa) * 170, 60, rgba('#ffe6c8', 0.13));
       // the billboard: a scan line rolling down, the odd glitch

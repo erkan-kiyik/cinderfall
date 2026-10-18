@@ -204,7 +204,7 @@ export function buildMission1() {
   return {
     id: 'm1', level, props, front, deco, lamps, glows, lights, width: COLS * T, par: 300,
     // HAWK's shop once, near the start; then the street, never twice the same in a row
-    facade: facadeLayout(-10, COLS * T + 10, 9, ['walkup', 'crow', 'alley', 'warehouse', 'synBlock', 'walkupB', 'hotel', 'ruin', 'garage']),
+    facade: facadeLayout(-10, COLS * T + 10, 9, ['walkup', 'crow', 'alley', 'teahouse', 'warehouse', 'synBlock', 'walkupB', 'union', 'hotel', 'ruin', 'garage']),
     fires: [X(124) + 5],
     spawn: [64, 0],
     checkpoints,

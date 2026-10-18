@@ -13,7 +13,7 @@ import { crate, lampPost, cone } from './street.js';
 import { barricade, barricadeFx } from './course.js';
 import { concrete, terminal, gateFrame, beacon, cpPost } from './mission1.js';
 import { emblem } from '../enemies/syndicate.js';
-import { facadeLayout, tube } from './city.js';
+import { facadeLayout, ledStrip } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -59,7 +59,7 @@ export function dais(g, x0, x1) {
   cel(g, BN, RED, { sh: 2.2, hl: 0.6 });
   clip(g, BN, () => { for (let x = cx - 30; x < cx + 34; x += 8) stroke(g, `M ${x} -140 L ${x + 1} -40`, RED.d, 0.6, 0.6); fill(g, rect(cx - 34, -144, cx + 34, -138), '#0d0f13', 0.8); });
   emblem(g, cx, -96, 20, '#f4f1ea');
-  tube(g, `M ${cx - 48} -148 L ${cx + 48} -148`, '#ff3347', 0.7);
+  ledStrip(g, `M ${cx - 48} -148 L ${cx + 48} -148`, 0.7);
   // the steps
   const S1 = rect(x0, -8, x1, 0), S2 = rect(x0 + 6, -16, x1 - 6, -8);
   cel(g, S1, STONE, { sh: 1.2, hl: 0.5 }); cel(g, S2, STONE, { sh: 1.2, hl: 0.5 });
@@ -132,8 +132,8 @@ export function buildMission3() {
   block(358, 381, 1, 1); block(359, 380, 2, 2);
   P('m3.dais', [X(358) - 2, -152, X(382) + 2, 1], (g) => dais(g, X(358), X(382)), deco);
   for (const fx of DAIS_FIRES(X(358), X(382))) fires.push([fx, -12]);
-  glows.push([X(370), -148, 50, 2.4, '#ff3347', 0.6, 'buzz']);
-  lights.push([X(370), -120, 120, 0.9, rgb('#ff3347'), 'buzz']);
+  glows.push([X(370), -148, 50, 2.4, '#ff3347', 0.5]);
+  lights.push([X(370), -120, 120, 0.85, rgb('#ff3347')]);
   // D — extraction ------------------------------------------------------------------------------
   P('m3.beacon', [X(390) - 5, -28, X(390) + 5, 1], (g) => beacon(g, X(390)), deco);
   // shared pieces
@@ -151,7 +151,7 @@ export function buildMission3() {
   const HALL = [X(224), X(396)];
   return {
     id: 'm3', level, props, front, deco, lamps, glows, lights, width: COLS * T,
-    facade: facadeLayout(-10, COLS * T + 10, 31, ['synBlock', 'hotel', 'walkupB', 'synBlock', 'alley', 'warehouse', 'synBlock', 'hotel', 'synBlock', 'walkup']),
+    facade: facadeLayout(-10, COLS * T + 10, 31, ['synBlock', 'hotel', 'walkupB', 'synBlock', 'alley', 'union', 'warehouse', 'synBlock', 'teahouse', 'hotel', 'synBlock', 'walkup']),
     fires,
     spawn: [64, 0],
     par: 360,

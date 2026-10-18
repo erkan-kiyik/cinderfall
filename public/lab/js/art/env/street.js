@@ -18,27 +18,44 @@ const FAR = '#262e3e', FAR_WIN = '#6c6372';
 const MID = '#2e3748', MID_HI = '#38425a';
 
 function sky(g) {
-  // stepped dusk bands, warmer toward the horizon where the city burns
+  // stepped night bands, warmer toward the horizon: the old sodium lamps on
+  // the low cloud, nothing burning (docs §10.4)
   const top = -172, h = 150 / SKY.length;
   SKY.forEach((c, i) => fill(g, rect(-10, top + i * h, 610, top + (i + 1) * h + 0.5), c));
-  fill(g, rect(-10, -64, 610, -22), '#6a4250', 0.35);
-  fill(g, rect(-10, -48, 610, -22), '#8a4a40', 0.25);
+  fill(g, rect(-10, -64, 610, -22), '#5a4446', 0.35);
+  fill(g, rect(-10, -48, 610, -22), '#7a5040', 0.22);
   // a few stars where the smoke is thin
   const r = rng(5);
   for (let i = 0; i < 40; i++) { const x = r() * 610, y = -170 + r() * 46, k = 0.3 + r() * 0.4; fill(g, rect(x, y, x + k, y + k), '#c9cfe0', 0.35 + r() * 0.4); }
 }
 
 function farCity(g) {
-  // the fires on the horizon: flat glow bands behind the skyline, smoke columns
-  fill(g, rect(-10, -96, 610, -58), '#5a3040', 0.35);
-  fill(g, rect(-10, -80, 610, -58), '#8a3a2a', 0.3);
-  for (const [x, w] of [[60, 70], [250, 50], [470, 90]]) {
-    fill(g, ell(x, -62, w, 14), '#c4552a', 0.18);
-    fill(g, ell(x, -62, w * 0.5, 8), '#ff7a35', 0.16);
+  // sodium glow on the cloud over the town, white haze over the port where
+  // Vanta's floodlights are; no fires: the furnace has been cold four years
+  fill(g, rect(-10, -96, 610, -58), '#4a3a40', 0.32);
+  fill(g, rect(-10, -80, 610, -58), '#7a5238', 0.22);
+  fill(g, ell(540, -70, 110, 22), '#c9d6ec', 0.07);
+  // the works: the cold blast furnace, its four stoves, the skip bridge, a dead stack
+  const W = '#2c3343';
+  for (const x of [20, 31, 42, 53]) { fill(g, rect(x, -126, x + 8.6, -60), W); fill(g, ell(x + 4.3, -126, 4.3, 4.6), W); }
+  fill(g, poly([[64, -60], [66, -134], [70, -146], [78, -146], [82, -134], [84, -60]]), W);
+  fill(g, rect(69, -158, 79, -146), W);
+  stroke(g, 'M 71 -157 C 71 -168 60 -168 57 -150 L 57 -126 M 77 -157 C 77 -170 92 -170 94 -152 L 94 -60', W, 1.6);
+  fill(g, poly([[78, -144], [80, -146], [128, -60], [124, -60]]), W);
+  for (let k = 0; k < 9; k++) { const t = k / 9; stroke(g, `M ${80 + t * 46} ${-146 + t * 86} L ${84 + t * 46} ${-140 + t * 86}`, W, 0.4); }
+  fill(g, poly([[100, -60], [102, -164], [106, -164], [108, -60]]), W);
+  for (let y = -160; y > -166; y -= 2) fill(g, rect(101.6, y, 106.4, y + 0.6), '#232a38');
+  // the port: two gantry cranes over the quay, Vanta's floodlight masts
+  for (const cx of [492, 556]) {
+    stroke(g, `M ${cx - 10} -60 L ${cx - 6} -122 M ${cx + 10} -60 L ${cx + 6} -122 M ${cx - 9} -90 L ${cx + 9} -90`, W, 1.4);
+    fill(g, rect(cx - 8, -128, cx + 8, -120), W);
+    fill(g, rect(cx - 30, -126, cx + 44, -123.6), W);
+    stroke(g, `M ${cx} -134 L ${cx - 28} -126 M ${cx} -134 L ${cx + 42} -126`, W, 0.5);
+    fill(g, rect(cx - 1, -136, cx + 1, -128), W);
   }
-  for (const [x, w, h] of [[50, 20, 110], [262, 14, 80], [480, 26, 120]]) {
-    for (let k = 0; k < 6; k++) fill(g, ell(x + k * k * 1.2, -70 - k * (h / 6), w * (0.6 + k * 0.15), 7 + k * 1.5), '#2a2a36', 0.5 - k * 0.05);
-  }
+  for (const mx of [470, 528, 598]) { fill(g, rect(mx, -112, mx + 1, -60), W); fill(g, rect(mx - 2, -114, mx + 3, -112), W); g.save(); g.shadowColor = '#e8f0ff'; g.shadowBlur = 5; fill(g, rect(mx - 1.6, -113.6, mx + 2.6, -112.6), '#eef4ff'); g.restore(); }
+  // thin smoke from the houses' stoves, here and there
+  for (const [x, y] of [[180, -98], [262, -92], [350, -104], [612 - 210, -96]]) for (let k = 0; k < 5; k++) fill(g, ell(x + k * k * 0.9, y - k * 4.4, 2 + k * 1.4, 1.4 + k * 0.8), '#3a3c48', 0.32 - k * 0.05);
   const r = rng(91);
   let x = -6;
   while (x < 610) {
@@ -49,14 +66,15 @@ function farCity(g) {
     if (k < 0.3) { fill(g, rect(x + w * 0.5, top - 8, x + w * 0.5 + 0.8, top), FAR); fill(g, rect(x + w * 0.5 - 2, top - 5, x + w * 0.5 + 2.8, top - 4.4), FAR); }
     else if (k < 0.5) { fill(g, rect(x + 3, top - 6, x + 9, top - 1.2), FAR); fill(g, rect(x + 3.6, top - 1.2, x + 4.4, top), FAR); fill(g, rect(x + 7.6, top - 1.2, x + 8.4, top), FAR); }
     else if (k < 0.65) fill(g, rect(x + 3, top - 5, x + w - 3, top), FAR);
+    // most windows dark (the power is rationed); a few lit warm and low
     for (let wy = top + 4; wy < -64; wy += 5) for (let wx = x + 2; wx < x + w - 3; wx += 4) {
       const q = r();
-      if (q > 0.84) fill(g, rect(wx, wy, wx + 1.4, wy + 2), FAR_WIN, 0.7);
-      else if (q > 0.81) fill(g, rect(wx, wy, wx + 1.4, wy + 2), '#ff8a4a', 0.65);
+      if (q > 0.86) fill(g, rect(wx, wy, wx + 1.4, wy + 2), FAR_WIN, 0.55);
+      else if (q > 0.835) fill(g, rect(wx, wy, wx + 1.4, wy + 2), '#e8a060', 0.5);
     }
     x += w + r() * 3;
   }
-  // a construction crane over the skyline
+  // a construction crane over the skyline, stopped since the works shut
   fill(g, rect(150, -150, 152, -60), FAR); fill(g, rect(126, -150, 212, -148), FAR);
   for (let k = 128; k < 210; k += 6) stroke(g, `M ${k} -148 L ${k + 3} -150`, FAR, 0.5);
   stroke(g, 'M 151 -158 L 128 -150 M 151 -158 L 210 -150', FAR, 0.5);
@@ -70,16 +88,20 @@ function farCity(g) {
 }
 
 function midIndustry(g) {
-  // sawtooth-roof works, stacks with flat smoke, and a Syndicate billboard
+  // the shut works: sawtooth roofs with their glass gone, two cold stacks
+  // (Vanta's searchlight on one), the rolling mill's long shed, a Syndicate billboard
   const Y = -42;
   fill(g, poly([[-10, Y], [-10, Y - 52], [20, Y - 66], [20, Y - 52], [50, Y - 66], [50, Y - 52], [80, Y - 66], [80, Y - 52], [110, Y - 66], [110, Y]]), MID);
+  for (const x of [-10, 20, 50, 80]) for (let k = 0; k < 4; k++) fill(g, poly([[x + 4 + k * 6.4, Y - 52.6], [x + 9 + k * 6.4, Y - 52.6], [x + 9 + k * 6.4, Y - 56.6 - k * 2.6], [x + 4 + k * 6.4, Y - 54.4 - k * 2.6]]), '#1e2532', 0.8);
   fill(g, rect(120, Y - 92, 132, Y), MID); fill(g, rect(118, Y - 94, 134, Y - 90), MID_HI);
   fill(g, rect(146, Y - 78, 156, Y), MID); fill(g, rect(144, Y - 80, 158, Y - 76), MID_HI);
-  for (const [x, y, sc] of [[128, Y - 100, 1], [134, Y - 110, 1.3], [142, Y - 121, 1.6], [154, Y - 86, 0.9], [160, Y - 94, 1.2]]) fill(g, ell(x, y, 7 * sc, 4.4 * sc), '#4a4f63', 0.75);
+  for (const [x0, x1, y] of [[120, 132, Y - 70], [120, 132, Y - 40], [146, 156, Y - 50]]) fill(g, rect(x0, y, x1, y + 1), '#252d3c');
+  fill(g, rect(123, Y - 97, 129, Y - 94), '#3a4252'); fill(g, rect(124, Y - 96.4, 128, Y - 95.4), '#dfe8f6', 0.8);
   fill(g, rect(110, Y - 40, 300, Y), MID);
   fill(g, poly([[300, Y], [300, Y - 50], [360, Y - 50], [380, Y - 38], [380, Y]]), MID);
   fill(g, rect(500, Y - 56, 610, Y), MID);
-  for (let x = 504; x < 606; x += 8) fill(g, rect(x, Y - 52, x + 4, Y - 48), '#5b4f5e', 0.6);
+  for (let x = 504; x < 606; x += 8) fill(g, rect(x, Y - 52, x + 4, Y - 48), '#1e2532', 0.8);
+  for (const x of [520, 568]) fill(g, rect(x, Y - 52, x + 4, Y - 48), '#c88a52', 0.5);
   // billboard on stilts
   const B = Y - 52;
   fill(g, rect(334, B, 336, Y), '#1c2230'); fill(g, rect(390, B, 392, Y), '#1c2230');

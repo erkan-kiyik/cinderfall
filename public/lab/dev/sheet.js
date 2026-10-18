@@ -4,6 +4,9 @@ import { OPS, WEAPONS, figureCanvas, weaponCanvas, streetScene } from './render.
 
 await document.fonts.load('700 20px Rajdhani'); await document.fonts.load('600 20px Rajdhani');
 const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '../css/tokens.css'; document.head.appendChild(css);
+await new Promise((r) => { css.onload = r; css.onerror = r; });
+// the faces the signs are lettered in, both the latin and the latin-ext halves
+await Promise.all(["700 20px 'Barlow Condensed'", "800 20px 'Big Shoulders Stencil'", "400 20px 'Special Elite'", '700 20px Rajdhani'].map((f) => document.fonts.load(f, 'AaİŞĞÇÖÜış')));
 const q = new URLSearchParams(location.search);
 const what = q.get('what') || 'op';
 
@@ -107,8 +110,9 @@ if (what === 'env' || what === 'props') {
   };
   let r = row();
   let acc = 0;
-  for (const [t, b] of what === 'props' ? [] : Object.entries(BUILDINGS)) {
-    if (acc + b.w > 520) { r = row(); acc = 0; }
+  const only = q.get('only') ? q.get('only').split(',') : null;
+  for (const [t, b] of what === 'props' ? [] : Object.entries(BUILDINGS).filter(([t]) => !only || only.includes(t))) {
+    if (acc + b.w > +(q.get('row') || 520)) { r = row(); acc = 0; }
     const c = pane(b.w + 6, b.top - 2, 8, (g) => { g.translate(3, 0); b.paint(g); });
     const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif';
     wrap.append(c, t); r.appendChild(wrap); acc += b.w + 10;

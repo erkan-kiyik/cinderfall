@@ -107,11 +107,12 @@ function tile(name) {
   return c;
 }
 
-// Overlay `name` on whatever is clipped now. a: strength.
-export function texture(g, name, a = 0.55) {
+// Overlay `name` on whatever is clipped now. a: strength; k: texel size
+// multiplier (the buildings use a coarser grain than the figures).
+export function texture(g, name, a = 0.55, k = 1) {
   if (!MAKERS[name]) return;
   const pat = g.createPattern(tile(name), 'repeat');
-  pat.setTransform(new DOMMatrix().scale(SCALE[name] ?? UNIT));
+  pat.setTransform(new DOMMatrix().scale((SCALE[name] ?? UNIT) * k));
   g.save();
   g.globalCompositeOperation = 'overlay'; g.globalAlpha = a;
   g.fillStyle = pat; g.fillRect(-4000, -4000, 8000, 8000);

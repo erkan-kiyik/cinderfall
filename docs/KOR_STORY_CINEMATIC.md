@@ -403,3 +403,71 @@ mavi-grisi yalnızca Vanta'ya ait şeylerde görünür.
   el konmuş Vanta sandıkları; Tüccar = HAWK'ın tezgâhı ve portresi; Profil =
   sendika üye kartı; Görevler = panoya iğnelenmiş iş emirleri; Ayarlar = sade
   sac panel; HUD = şablon rakamlar, kor turuncusu, ince ve okunur.
+
+### 10.4 Şehir: binalar, tabelalar, ışık
+Önceki sokak her kapıda başka renkte neon yanan bir gece caddesiydi (pembe
+BAR, yeşil BAKKAL, camgöbeği OTEL ve "12", mavi OTO SERVİS, HAWK'ın kırmızı
+neonu). Hikâyedeki şehir bu değil: ocak dört yıldır soğuk, elektriği Vanta
+tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurulur.
+
+- **Halkın ışığı:** jeneratörden çıplak ampul (2700 K, hafif dalgalanır,
+  arada bir düşer), perde arkasında gaz lambası, varil ateşi, eski sodyum
+  sokak lambası. Pencerelerin çoğu karanlık; yananlar perdeli ve loş.
+- **Vanta'nın ışığı:** beyaz LED projektör, kırmızı LED şerit, beyaz ışıklı
+  kutu tabela (halka-şerit arması), kırmızı noktalı LED pano: *SOKAĞA ÇIKMA
+  YASAĞI 22:00–06:00*. Temiz, yeni, sabit; titremez. Şehirde temiz olan tek
+  şey Vanta'nınkidir.
+- **Neon:** eski düzenden kalma; çoğu ölü (gri cam tüp, kırık harf). Şehirde
+  tek bir yarım yanan neon var: otelin, iki harfi yanar, arada söner.
+  HAWK'ın tabelası neon değildir.
+- **Tabelalar:** boyalı sac ve tahta; fırça yazısı ya da şablon harf; solmuş
+  boya, pas akıntısı, cıvata, eğik asılmış. Geceleri tabelayı kuğu boyunlu
+  lamba aydınlatır. Esnafın dili Türkçe ve sade: BAKKAL, BERBER, OTO TAMİR,
+  ÇAY OCAĞI, OTEL, SENDİKA. Vanta'nınki tek tip ve basılı: VANTA SYNDICATE ·
+  DÜZEN · GÜVENLİK · İTAAT.
+- **Binalar:**
+  - *İşçi lojmanı:* isli tuğla, yangın merdiveni, pencereden çıkan soba
+    boruları ve üstlerindeki kurum, çamaşır ipi, saksı; altta kapalı berber
+    (boyalı sac direk tabela).
+  - *Sıvalı apartman:* dökük sıvanın altından tuğla; köşede bakkal, camında
+    elle yazılmış *EKMEK YOK*, rafların yarısı boş.
+  - *Çelikhane deposu:* paslı oluklu sac, soluk şablon *ÇELİK İŞLETMELERİ ·
+    DEPO 12*, üstünde Vanta'nın *EL KONULMUŞTUR* levhası; kapıda zincir ve
+    mühür; Vanta'nın taktığı beyaz projektör.
+  - *Vanta karakolu:* eski binaya vidalanmış yeni gri kompozit panel,
+    pankart, ışıklı kutu, LED pano, kamera, jiletli tel, sıra sıra aynı afiş.
+  - *Otel:* eski görkemden kalan korniş ve balkonlar, ölü dikey neon, kapı
+    üstünde tek ampul, kartonda *ODA VAR*.
+  - *Oto tamir:* boyalı sac *OTO TAMİR*, duvarda *LASTİK*, içeride beyaz
+    floresan iş lambası, liftte araç.
+  - *Sendika binası (yeni):* alınlıktaki kabartma *OCAK İŞÇİLERİ SENDİKASI*
+    yazısının üstü gri boyayla kapatılmış, harfler gölgeden okunur; kapıda
+    zincir ve Vanta mührü (*MÜHÜRLENMİŞTİR*); kapının önünde mumlar ve
+    Söndürme gecesi kaybolanların fotoğraflı *KAYIP* ilanları; duvarda sprey:
+    *6 KİŞİ NEREDE?*
+  - *Çay ocağı (yeni):* buğulu camın arkasında tek ampul, boyalı tabela,
+    tebeşirle *ÇAY 5*, soba borusundan duman.
+  - *Yanık bina:* is lekeli boşluklar, içeride ısınmak için yakılmış ateş;
+    duvarda ocakçıların sözü: *OCAK SÖNER KOR KALIR*.
+  - *Ara sokak:* kafesli tek ampul, yan kapı, tel örgü, kablolar.
+- **HAWK'ın dükkânı (`crow`):** yarım açık kepenk; içeride ampul ışığında
+  un çuvalları, bidonlar, kasa, cephane kutusu, radyo. Elle boyanmış tahta
+  tabela *HAWK · ALIM SATIM*, köşesinde şahin silueti; iki kuğu boyunlu
+  lamba tabelayı aydınlatır. Yamalı branda tente, altında kabloya dizili
+  çıplak ampuller; kablo yan taraftaki jeneratöre ve bidonlara iner.
+  Duvarda kara tahta: *BUGÜN · UN · YAĞ · PİL · İLAÇ · MERMİ: SOR*; kepenkte
+  boyayla *NE VARSA ALINIR*; yanında yarısı yırtılmış Vanta tebliği *KAYITSIZ
+  TİCARET YASAKTIR*. Üst katta tek sıcak, perdeli pencere: HAWK orada
+  yaşar. Çatıda tahta güvercinlik. Görev 2'deki pazar tezgâhında aynı tahta
+  tabela, aynı ampuller.
+- **Duvar yazıları ve kâğıtlar:** Vanta afişleri; üstlerine kor işareti ve
+  *KOR* spreyi; *KAYIP* ilanları; sendika bildirisinin yırtık kalıntısı.
+- **Renk ve doku:** is siyahı, pas, tuğla, kirli sıva; tuğla, beton, sac,
+  tahta ve boya dokusu bina ölçeğinde. Sıcak ışık yalnız ampul ve ateşten,
+  soğuk ışık yalnız Vanta'dan. Doygun pembe, camgöbeği, mor yok.
+- **Ufuk:** soğuk yüksek fırın (dört soba, eğik besleme köprüsü, dumansız
+  baca), liman vinçleri ve kule; ufuktaki aydınlık yangın değil, limandaki
+  Vanta projektörleri ve alçak bulutlara vuran sodyum. Duman yalnız evlerin
+  sobalarından çıkar.
+- **Pazar (görev 2):** tezgâh tenteleri solmuş branda (kiremit, hardal,
+  zeytin); teknoloji tezgâhı radyo ve pil tamircisi; ampuller jeneratörden.
