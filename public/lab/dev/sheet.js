@@ -3,6 +3,7 @@ import { silhouette, canvas } from '../js/art/kit.js';
 import { OPS, WEAPONS, figureCanvas, weaponCanvas, streetScene } from './render.js';
 
 await document.fonts.load('700 20px Rajdhani'); await document.fonts.load('600 20px Rajdhani');
+const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '../css/tokens.css'; document.head.appendChild(css);
 const q = new URLSearchParams(location.search);
 const what = q.get('what') || 'op';
 
@@ -153,8 +154,8 @@ if (what === 'weapons') {
 function board(W, H, title, sub) {
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
-  g.fillStyle = '#151a21'; g.fillRect(0, 0, W, H);
-  g.fillStyle = '#ff6b2c'; g.fillRect(48, 44, 8, 52);
+  g.fillStyle = '#1a1513'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#e2692f'; g.fillRect(48, 44, 8, 52);
   g.fillStyle = '#f4f1ea'; g.font = '700 46px Rajdhani'; g.textBaseline = 'alphabetic';
   g.fillText(title, 72, 80);
   g.fillStyle = '#939dab'; g.font = '600 22px Rajdhani'; g.fillText(sub, 74, 108);
@@ -176,7 +177,7 @@ const ABIL = {
 };
 if (what === 'board-ops') {
   const ids = ['vex', 'hale', 'morrow', 'kite', 'brick'];
-  const g = board(2400, 1090, 'OPERATÖRLER', 'KOR LAB · M0 STİL PANOSU · temiz stilize, 3 ton gölge, koyu dış çizgi');
+  const g = board(2400, 1090, 'OPERATÖRLER', 'KOR · boyanmış görünüm · gerçek oran, malzeme dokusu, ince sıcak kontur');
   const s = 7.4;
   ids.forEach((id, i) => {
     const f = figureCanvas(OPS[id], s);
@@ -194,7 +195,7 @@ if (what === 'board-ops') {
 }
 if (what === 'board-faces') {
   const ids = ['vex', 'hale', 'morrow', 'kite', 'brick'];
-  const g = board(2400, 760, 'YÜZLER', 'yakın plan · oyunda baş ~9 birim; düz renk blokları, net göz ve kaş');
+  const g = board(2400, 760, 'YÜZLER', 'yakın plan · işten gelen maskeler: kaynak gözlüğü, altın vizör, monokl, aynalı gözlük, filtreli maske');
   const z = 30;
   ids.forEach((id, i) => {
     const big = figureCanvas(OPS[id], z);
