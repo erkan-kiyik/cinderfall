@@ -90,18 +90,81 @@ export function vigil(g, x) {
   notice(g, x + 66, -34, 10, 10, 'vanta', 'TOPLANMA YASAKTIR', 159);
 }
 
-// a plane tree on the square, bare for the winter: the patched bark, the
-// limbs, an iron grate round its foot
+// a plane tree on the square, bare for the winter: the mottled bark that
+// peels in plates (grey, olive, cream), limbs that fork and fork again and
+// thin out into a haze of twigs, last year's seed balls still hanging on
+// their threads; the rain darkening the wood; an iron grate round its foot
 export function tree(g, x, seed = 1) {
-  const B = mat(tone('#a8a48e', '#7e7a66', '#5a5848', '#22201a'), 'wool', 0.5);
-  const T = `M ${x - 3.4} 0 C ${x - 2.6} -20 ${x - 3} -40 ${x - 1.6} -58 L ${x + 1.6} -58 C ${x + 2.6} -40 ${x + 3} -20 ${x + 3.4} 0 Z`;
-  cel(g, T, B, { sh: 1.2, hl: 0.4 });
-  clip(g, T, () => { for (const [py, c] of [[-8, '#c9c2a4'], [-22, '#8a8a6a'], [-34, '#c9c2a4'], [-48, '#9a9a7a']]) fill(g, ell(x + (py % 3) - 0.6, py, 2, 3.4), c, 0.55); });
-  const limbs = [[x - 1, -56, x - 18, -86, 1.8], [x + 1, -56, x + 20, -92, 1.8], [x, -58, x - 2, -104, 1.6], [x - 10, -72, x - 26, -94, 1], [x + 10, -76, x + 30, -98, 1], [x - 1, -84, x - 12, -110, 0.9], [x + 1, -90, x + 12, -112, 0.8], [x - 18, -86, x - 22, -102, 0.6], [x + 20, -92, x + 18, -108, 0.6]];
-  for (const [ax, ay, bx2, by2, wd] of limbs) { stroke(g, `M ${ax} ${ay} Q ${(ax + bx2) / 2 + (bx2 > ax ? -3 : 3)} ${(ay + by2) / 2} ${bx2} ${by2}`, B.k, wd + 0.5); stroke(g, `M ${ax} ${ay} Q ${(ax + bx2) / 2 + (bx2 > ax ? -3 : 3)} ${(ay + by2) / 2} ${bx2} ${by2}`, B.d, wd); }
-  for (const [bx2, by2] of [[-18, -86], [20, -92], [-2, -104], [-26, -94], [30, -98], [-12, -110], [12, -112]]) for (let k = 0; k < 3; k++) stroke(g, `M ${x + bx2} ${by2} l ${(k - 1) * 3 + (seed % 2)} ${-4 - k}`, B.k, 0.25);
+  const k = Math.hypot(g.getTransform().a, g.getTransform().b), Bk = new Brush(g, k), r = rnd(31 + seed * 7);
+  const TOP = -44, segs = [], tips = [];
+  // a limb from (x0, y0) heading a, length L, width w; it wanders, keeps reaching
+  // up, and forks at its end until the wood is twig-thin
+  const grow = (x0, y0, a, L, w, depth) => {
+    let px = x0, py = y0, aa = a; const n = depth < 2 ? 4 : 3;
+    for (let i = 0; i < n; i++) {
+      aa += (r() - 0.5) * 0.32 + (-Math.PI / 2 - aa) * 0.06;
+      const nx = px + Math.cos(aa) * L / n, ny = py + Math.sin(aa) * L / n;
+      segs.push([px, py, nx, ny, w * (1 - 0.32 * i / n), depth]); px = nx; py = ny;
+      // a side shoot partway along the bigger limbs
+      if (depth < 3 && i === 1 && r() < 0.6) grow(px, py, aa + (r() < 0.5 ? -1 : 1) * (0.7 + r() * 0.3), L * 0.4, w * 0.4, depth + 2);
+    }
+    const we = w * 0.66;
+    if (depth >= 4 || we < 0.3) { tips.push([px, py, aa]); return; }
+    const kids = 2 + (r() < 0.35 ? 1 : 0);
+    for (let c = 0; c < kids; c++) {
+      const sp = c / (kids - 1) - 0.5;
+      grow(px, py, aa + sp * (1.0 - depth * 0.12) + (r() - 0.5) * 0.25, L * (0.64 + r() * 0.14), we * (0.78 - 0.16 * Math.abs(sp)), depth + 1);
+    }
+  };
+  for (const [a, L, w] of [[-Math.PI / 2 - 0.74, 28, 3.6], [-Math.PI / 2 + 0.06, 30, 4.0], [-Math.PI / 2 + 0.76, 28, 3.4]]) grow(x + (a + Math.PI / 2) * 2.2, TOP + 1.5, a, L, w, 1);
+  // keep the crown inside its frame (x ± 33, up to y -116)
+  let x0 = x, x1 = x, y0 = 0;
+  for (const s of segs) { x0 = Math.min(x0, s[0], s[2]); x1 = Math.max(x1, s[0], s[2]); y0 = Math.min(y0, s[1], s[3]); }
+  for (const t of tips) { x0 = Math.min(x0, t[0] - 5); x1 = Math.max(x1, t[0] + 5); y0 = Math.min(y0, t[1] - 6); }
+  const sx = Math.min(1, 33 / Math.max(x - x0, x1 - x)), sy = Math.min(1, (116 + TOP) / (TOP - y0));
+  const fit = (px, py) => (py < TOP ? [x + (px - x) * sx, TOP + (py - TOP) * sy] : [px, py]);
+  const seg = (s, w, col, dx = 0, dy = 0) => { const [ax, ay] = fit(s[0], s[1]), [bx, by] = fit(s[2], s[3]); g.lineWidth = w; g.strokeStyle = col; g.beginPath(); g.moveTo(ax + dx, ay + dy); g.lineTo(bx + dx, by + dy); g.stroke(); };
+  g.save(); g.lineCap = 'round';
+  // the wood: dark and wet, the sky's cold on its upper side, the underside in shadow
+  for (const s of segs) seg(s, s[4], '#3e3c31');
+  for (const s of segs) if (s[4] > 0.5) seg(s, s[4] * 0.42, 'rgba(150,148,128,0.36)', -s[4] * 0.2, -s[4] * 0.16);
+  for (const s of segs) if (s[4] > 1.4) for (let j = 0; j < 2; j++) { const u = r(), [ax, ay] = fit(s[0], s[1]), [bx, by] = fit(s[2], s[3]); Bk.dab(ax + (bx - ax) * u, ay + (by - ay) * u, s[4] * 0.3, s[4] * 0.22, ['#a6a286', '#7c7a5c', '#8e8c7a'][j + (u > 0.5 ? 1 : 0)], 0.4, 'source-over', Math.atan2(by - ay, bx - ax)); }
+  for (const s of segs) if (s[4] > 0.8) seg(s, s[4] * 0.3, 'rgba(8,8,6,0.45)', s[4] * 0.26, s[4] * 0.1);
+  // the twigs: hairlines fanning off every tip, upward, a haze against the windows
+  for (const [tx, ty, ta] of tips) {
+    const [px, py] = fit(tx, ty);
+    for (let j = 0; j < 4; j++) {
+      const a = ta + (j - 1.5) * 0.4 + (r() - 0.5) * 0.3, L = 2.4 + r() * 4;
+      const mx = px + Math.cos(a) * L * 0.5, my = py + Math.sin(a) * L * 0.5 - 0.4;
+      g.lineWidth = 0.14 + r() * 0.08; g.strokeStyle = 'rgba(44,42,34,0.85)';
+      g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(mx, my, px + Math.cos(a) * L, py + Math.sin(a) * L - 0.8); g.stroke();
+    }
+    // a seed ball on its thread, now and then
+    if (r() < 0.16) { g.lineWidth = 0.08; g.strokeStyle = 'rgba(40,36,28,0.8)'; g.beginPath(); g.moveTo(px, py); g.lineTo(px + 0.3, py + 2.6); g.stroke(); fill(g, ell(px + 0.3, py + 3.2, 0.7, 0.7), '#2e2a20'); fill(g, ell(px + 0.1, py + 3, 0.25, 0.25), 'rgba(150,140,110,0.5)'); }
+  }
+  g.restore();
+  // the trunk: a little flare at the root, a lean, the plates of bark
+  const T = `M ${x - 5.8} 0 C ${x - 4.2} -1 ${x - 3.8} -3 ${x - 3.8} -6 C ${x - 3.4} -20 ${x - 3.4} -34 ${x - 3.2} ${TOP + 1} C ${x - 1.4} ${TOP - 2.6} ${x + 1.4} ${TOP - 2.6} ${x + 3.4} ${TOP + 1} C ${x + 3.6} -34 ${x + 3.6} -20 ${x + 4} -6 C ${x + 4} -3 ${x + 4.6} -1 ${x + 6.2} 0 Z`;
+  fill(g, T, '#57554a');
+  clip(g, T, () => {
+    // the plates: big soft irregular patches where the old bark has fallen away
+    for (let i = 0; i < 20; i++) {
+      const py = -3 - r() * (-TOP - 4), px = x + (r() - 0.5) * 6, c = ['#a8a488', '#7e7e5e', '#929080', '#66644f', '#b4ae92'][i % 5];
+      const rx = 1.2 + r() * 1.4, ry = 2 + r() * 2.6, a = (r() - 0.5) * 0.6;
+      Bk.fill(`M ${px - rx} ${py} C ${px - rx} ${py - ry * 0.8} ${px - rx * 0.2} ${py - ry} ${px + rx * 0.3} ${py - ry * 0.9} C ${px + rx} ${py - ry * 0.6} ${px + rx * 0.9} ${py + ry * 0.4} ${px + rx * 0.4} ${py + ry * 0.9} C ${px - rx * 0.2} ${py + ry} ${px - rx} ${py + ry * 0.6 + a} ${px - rx} ${py} Z`, c, 0.35, 0.4 + r() * 0.2);
+    }
+    const sh = g.createLinearGradient(x - 4, 0, x + 4, 0);
+    sh.addColorStop(0, 'rgba(150,160,170,0.18)'); sh.addColorStop(0.45, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(6,6,5,0.62)');
+    g.fillStyle = sh; g.fillRect(x - 7, TOP - 4, 14, -TOP + 5);
+    // rain running down it, and the wet dark at its foot
+    for (let i = 0; i < 7; i++) { const px = x - 2.6 + i * 0.9 + r() * 0.4; Bk.line(`M ${px} ${TOP + 2 + r() * 10} C ${px + 0.3} -30 ${px - 0.2} -16 ${px + 0.2} -1`, 'rgba(20,20,16,0.3)', 0.4 + r() * 0.5, 0.4); }
+    const ft = g.createLinearGradient(0, -14, 0, 0); ft.addColorStop(0, 'rgba(0,0,0,0)'); ft.addColorStop(1, 'rgba(12,12,10,0.6)');
+    g.fillStyle = ft; g.fillRect(x - 7, -14, 14, 14);
+  });
+  // where the limbs leave the trunk: the swollen collar of old cuts
+  for (const [dx, dy] of [[-1.6, TOP + 1], [1.8, TOP + 0.4]]) Bk.dab(x + dx, dy, 1.8, 1.4, 'rgba(160,156,132,0.4)');
   fill(g, rect(x - 9, -0.8, x + 9, 0.4), '#1a1c20');
-  for (let k = x - 8; k < x + 9; k += 2) fill(g, rect(k, -0.8, k + 0.8, 0.4), '#3a3e44');
+  for (let k2 = x - 8; k2 < x + 9; k2 += 2) fill(g, rect(k2, -0.8, k2 + 0.8, 0.4), '#3a3e44');
 }
 
 // Vanta's water-cannon truck, parked on the square: armoured cab, the tank
