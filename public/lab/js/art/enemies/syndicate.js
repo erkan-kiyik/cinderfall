@@ -139,6 +139,7 @@ function carrier(g, A = PAL.armor) {
 function uniform(g, T = PAL.suit) {
   cel(g, PELVIS, T, { sh: 1.1, hl: 0.4 });
   cel(g, TORSO, T, { sh: 1.8, hl: 0.5 });
+  clothFolds(g, TORSO, [[[-6.4, -16.0], [-4.8, -13.4], [-3.4, -10.6]], [[-5.6, -6.0], [-3.0, -5.4], [-0.4, -5.8]]], T);
   clip(g, TORSO, () => { fold(g, [[-6.8, -14.0], [-6.2, -10.6], [-5.4, -8.2]], T); stitch(g, curve([[-5.2, -20.6], [-5.8, -14.0], [-5.2, -6.0]]), T.l, 0.07, 0.5); });
 }
 function torso(g) { uniform(g); carrier(g); }
@@ -170,6 +171,7 @@ function shoulderPlate(g, ctx, A = PAL.armor, big = false) {
 function upper(g, ctx) {
   const t = ctx.t;
   cel(g, UPPER, t(PAL.suit), { sh: 1.5, hl: 0.45 });
+  clothFolds(g, UPPER, [[[-2.0, 6.2], [-0.4, 7.0], [1.8, 6.6]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.suit));
   clip(g, UPPER, () => { fold(g, [[-1.8, 8.8], [-0.4, 9.7], [1.2, 9.9]], t(PAL.suit)); stitch(g, curve([[-2.2, 3.0], [-2.4, 7.0], [-2.0, 11.0]]), t(PAL.suit).l, 0.07, 0.5); });
   shoulderPlate(g, ctx);
 }
@@ -189,6 +191,8 @@ function thigh(g, ctx) {
     stitch(g, curve([[2.2, 0.6], [2.0, 7.0], [1.6, 15.0]]), t(PAL.suit).l, 0.07, 0.5);
     fold(g, [[-2.0, 12.4], [0.0, 13.2], [2.0, 13.0]], t(PAL.suit));
   });
+  // the suit's cloth gathered behind the knee and pulled across the thigh
+  clothFolds(g, THIGH, [[[-3.0, 11.0], [-1.0, 11.8], [1.6, 11.4]], [[-2.8, 2.6], [-1.2, 3.2], [-0.4, 4.4]]], t(PAL.suit));
 }
 function kneePlate(g, ctx, A = PAL.armor) {
   const KP = blob([[-0.8, -2.6], [2.4, -2.4], [3.4, 0.4], [3.0, 3.6], [0.8, 4.4], [-0.8, 2.4], [-1.0, -0.2]]);
@@ -275,6 +279,7 @@ function guard(g, ctx, d, [x0, y0, x1, y1], seed, lames = 2) {
 function heavyUpper(g, ctx) {
   const t = ctx.t;
   g.save(); g.scale(1.12, 1); cel(g, UPPER, t(PAL.suit), { sh: 1.5, hl: 0.45 }); g.restore();
+  clothFolds(g, UPPER, [[[-2.0, 6.2], [-0.4, 7.0], [1.8, 6.6]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.suit));
   // the upper-arm guard under the bigger shoulder plate
   guard(g, ctx, 'M -2.9 3.0 C -1.0 2.6 1.0 2.6 2.8 2.8 C 3.0 5.0 2.9 7.4 2.6 9.2 C 0.8 9.6 -0.9 9.6 -2.6 9.4 C -2.9 7.4 -3.0 5.0 -2.9 3.0 Z', [-2.9, 2.6, 2.8, 9.6], 51, 2);
   shoulderPlate(g, ctx, PAL.armor, true);
@@ -359,6 +364,7 @@ function lightTorso(g) {
 function lightUpper(g, ctx) {
   const t = ctx.t;
   cel(g, UPPER, t(PAL.suit), { sh: 1.5, hl: 0.45 });
+  clothFolds(g, UPPER, [[[-2.0, 6.2], [-0.4, 7.0], [1.8, 6.6]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.suit));
   clip(g, UPPER, () => { fold(g, [[-1.8, 8.8], [-0.4, 9.7], [1.2, 9.9]], t(PAL.suit)); });
   // the red unit band
   clip(g, UPPER, () => { cel(g, 'M -4 4.4 L 4 4.2 L 4 6.8 L -4 7.0 Z', t(RED), { sh: 0.4, hl: 0.2, lw: 0.2 }); stitch(g, 'M -4 4.7 L 4 4.5', t(RED).l, 0.06, 0.6); stitch(g, 'M -4 6.5 L 4 6.3', t(RED).l, 0.06, 0.6); });
