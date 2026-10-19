@@ -505,6 +505,32 @@ function recess(g, x, y, w, h, glass = true) {
     fill(g, W, sk);
   }
 }
+// Heavy cloth hanging from its rod, wet, over what is already painted in B
+// (x0..x1, y0..y1): soft folds down its length (a shadowed trough beside a lit
+// ridge, swaying a little), the cloth gathered dark under the rod, its edges
+// turning away, the rain soaked into its lower half.
+export function drape(g, B, x0, x1, y0, y1, seed = 1) {
+  const r = rng(seed), M0 = g.getTransform(), k = Math.hypot(M0.a, M0.b);
+  clip(g, B, () => {
+    g.save(); g.filter = `blur(${(0.8 * k).toFixed(2)}px)`;
+    const n = Math.max(3, Math.round((x1 - x0) / 4.5));
+    for (let i = 0; i < n; i++) {
+      const x = x0 + (i + 0.3 + r() * 0.4) * (x1 - x0) / n, w = 0.7 + r() * 0.8, sw = (r() - 0.5) * 1.4;
+      g.globalAlpha = 0.36; g.fillStyle = '#000';
+      g.beginPath(); g.moveTo(x - w, y0); g.lineTo(x + w, y0); g.lineTo(x + w + sw, y1 + 2); g.lineTo(x - w + sw, y1 + 2); g.fill();
+      g.globalAlpha = 0.16; g.fillStyle = '#ffd8d8';
+      g.beginPath(); g.moveTo(x + w + 0.3, y0); g.lineTo(x + w + 1.3, y0); g.lineTo(x + w + 1.3 + sw, y1 + 2); g.lineTo(x + w + 0.3 + sw, y1 + 2); g.fill();
+    }
+    g.restore();
+    const gt = g.createLinearGradient(0, y0, 0, y0 + 4); gt.addColorStop(0, 'rgba(0,0,0,0.55)'); gt.addColorStop(1, 'rgba(0,0,0,0)');
+    fill(g, rect(x0 - 2, y0, x1 + 2, y0 + 4), gt);
+    const sk = g.createLinearGradient(x0, 0, x1, 0); sk.addColorStop(0, 'rgba(0,0,0,0.28)'); sk.addColorStop(0.2, 'rgba(0,0,0,0)'); sk.addColorStop(0.8, 'rgba(0,0,0,0)'); sk.addColorStop(1, 'rgba(0,0,0,0.32)');
+    fill(g, rect(x0 - 2, y0, x1 + 2, y1 + 8), sk);
+    const wt = g.createLinearGradient(0, y0, 0, y1); wt.addColorStop(0.5, 'rgba(0,0,0,0)'); wt.addColorStop(1, 'rgba(24,0,4,0.38)');
+    fill(g, rect(x0 - 2, y0, x1 + 2, y1 + 8), wt);
+  });
+}
+
 // under a sill or a ledge from x0 to x1 at y: its shadow on the wall, and the
 // dirt the rain has washed down off its ends
 function washDown(g, x0, x1, y) {
@@ -825,9 +851,10 @@ function synBlock(g) {
   // the banner
   const BN = poly([[46, -96], [82, -96], [82, -42], [64, -48], [46, -42]]);
   fill(g, BN, '#8e2330');
-  clip(g, BN, () => { for (let x = 49; x < 82; x += 6) fill(g, rect(x, -96, x + 1.6, -40), '#000', 0.1); texture(g, 'canvas', 0.55, 2.4); });
+  clip(g, BN, () => texture(g, 'canvas', 0.55, 2.4));
   fill(g, rect(46, -96, 82, -92), '#5a1219');
   emblem(g, 64, -72, 8, '#f0d9d9');
+  drape(g, BN, 46, 82, -92, -42, 825);
   // the red LED strip under the coping
   fill(g, rect(0, -h + 4, w, -h + 5.4), '#ff2a35');
   fill(g, rect(0, -h + 4.5, w, -h + 4.9), '#ffc9cc');
@@ -1318,8 +1345,18 @@ function archWin(g, x, y, w, h, lit = true, seed = 1) {
   } else fill(g, A, '#191b20');
   for (const fx of [x + w / 2]) fill(g, rect(fx - 0.35, y + 1, fx + 0.35, y + h), '#2a2824');
   for (let k = y + w / 2 + 4; k < y + h; k += 8) fill(g, rect(x, k - 0.35, x + w, k + 0.35), '#2a2824');
+  // set back in the stone: the arch's soffit throws its shade down the glass
+  // and along the far jamb; the sky across the dark panes
+  clip(g, A, () => {
+    const tg = g.createLinearGradient(0, y, 0, y + w * 0.7); tg.addColorStop(0, 'rgba(0,0,0,0.62)'); tg.addColorStop(1, 'rgba(0,0,0,0)');
+    fill(g, rect(x, y, x + w, y + w * 0.7), tg);
+    const sg = g.createLinearGradient(x, 0, x + 2.2, 0); sg.addColorStop(0, 'rgba(0,0,0,0.45)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+    fill(g, rect(x, y, x + 2.2, y + h), sg);
+    if (!lit) { const sk = g.createLinearGradient(x, y + h * 0.2, x + w, y + h); sk.addColorStop(0.3, 'rgba(160,180,210,0)'); sk.addColorStop(0.45, 'rgba(160,180,210,0.1)'); sk.addColorStop(0.6, 'rgba(160,180,210,0)'); fill(g, A, sk); }
+  });
   fill(g, poly([[x + w / 2 - 2, y - 1.6], [x + w / 2 + 2, y - 1.6], [x + w / 2 + 1.4, y + 2.6], [x + w / 2 - 1.4, y + 2.6]]), '#7a7466');
   fill(g, rect(x - 2.4, y + h + 1, x + w + 2.4, y + h + 2.6), '#76705f');
+  washDown(g, x - 2.4, x + w + 2.4, y + h + 2.6);
 }
 
 function valCommon(g, w, h, seed) {
@@ -1348,9 +1385,10 @@ function valWing(g) {
   // the banner between the first bays, a floodlight, a camera
   const BN = poly([[40, -122], [62, -122], [62, -58], [51, -64], [40, -58]]);
   fill(g, BN, '#8e2330');
-  clip(g, BN, () => { for (let x = 43; x < 62; x += 5) fill(g, rect(x, -122, x + 1.2, -56), '#000', 0.12); texture(g, 'canvas', 0.5, 2.4); });
-  fill(g, rect(39, -123, 63, -120.6), '#2a2f36');
+  clip(g, BN, () => texture(g, 'canvas', 0.5, 2.4));
   emblem(g, 51, -96, 6.4, '#f0dede');
+  drape(g, BN, 40, 62, -122, -58, 1348);
+  fill(g, rect(39, -123, 63, -120.6), '#2a2f36');
   fill(g, rect(107, -127, 109, -121), '#2a2f36'); fill(g, poly([[103, -121], [113, -121], [111, -117], [105, -117]]), '#3a3f47'); fill(g, rect(105, -117.4, 111, -116.6), '#f2f6ff');
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[105, -116.6], [111, -116.6], [126, -40], [90, -40]]), '#dfe9ff', 0.04); g.restore();
   fill(g, rect(150, -40, 156, -38.6), '#2a2f36'); fill(g, poly([[150, -38.6], [140, -40], [140, -35], [150, -34.4]]), '#c9ced6'); fill(g, ell(140.6, -37.4, 0.6, 0.6), '#14181d'); fill(g, ell(149, -36, 0.4, 0.4), '#ff2a35');
@@ -1400,8 +1438,9 @@ function valilik(g) {
   for (const x0 of [3, 195]) {
     const BN = poly([[x0, -h + 22], [x0 + 22, -h + 22], [x0 + 22, -52], [x0 + 11, -58], [x0, -52]]);
     fill(g, BN, '#8e2330');
-    clip(g, BN, () => { for (let x = x0 + 3; x < x0 + 22; x += 5) fill(g, rect(x, -h + 22, x + 1.2, -50), '#000', 0.12); texture(g, 'canvas', 0.5, 2.4); });
+    clip(g, BN, () => texture(g, 'canvas', 0.5, 2.4));
     emblem(g, x0 + 11, -96, 6.6, '#f0dede');
+    drape(g, BN, x0, x0 + 22, -h + 22, -52, 1399 + x0);
   }
   // the door, the steps
   fill(g, `M 92 -6 L 92 -40 A 18 18 0 0 1 128 -40 L 128 -6 Z`, '#76705f');
@@ -1462,8 +1501,9 @@ function belediye(g) {
   fill(g, rect(TX - 6, -91.4, TX + TW + 6, -90), '#6a645a');
   const BN = poly([[TX - 4, -90], [TX + TW + 4, -90], [TX + TW + 2, -50], [TX + TW / 2, -44], [TX - 2, -50]]);
   fill(g, BN, '#8e2330');
-  clip(g, BN, () => { for (let x = TX; x < TX + TW + 4; x += 5) fill(g, rect(x, -90, x + 1.2, -44), '#000', 0.12); texture(g, 'canvas', 0.5, 2.4); });
+  clip(g, BN, () => texture(g, 'canvas', 0.5, 2.4));
   emblem(g, TX + TW / 2, -68, 8, '#f0dede');
+  drape(g, BN, TX - 4, TX + TW + 4, -90, -46, 1459);
   // the doors, chained, the notice
   fill(g, `M ${TX + 4} 0 L ${TX + 4} -30 A 16 16 0 0 1 ${TX + TW - 4} -30 L ${TX + TW - 4} 0 Z`, '#5c574c');
   const D = `M ${TX + 7} 0 L ${TX + 7} -30 A 13 13 0 0 1 ${TX + TW - 7} -30 L ${TX + TW - 7} 0 Z`;

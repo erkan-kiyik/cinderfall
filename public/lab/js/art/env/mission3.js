@@ -14,7 +14,7 @@ import { crate, lampPost, cone } from './street.js';
 import { barricade, barricadeFx } from './course.js';
 import { concrete, terminal, gateFrame, beacon, cpPost } from './mission1.js';
 import { emblem } from '../enemies/syndicate.js';
-import { ledStrip, letters, notice } from './city.js';
+import { ledStrip, letters, notice, drape } from './city.js';
 import { texture } from '../tex.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
@@ -49,8 +49,9 @@ export function flag(g, h = 120) {
   cel(g, rect(-3, -2, 3, 0), M.charcoal, { sh: 0.3, hl: 0.2, lw: 0.25 });
   const B = `M 1 ${-h + 4} L 22 ${-h + 4} L 22 ${-h + 46} L 11.5 ${-h + 40} L 1 ${-h + 46} Z`;
   cel(g, B, RED, { sh: 1.6, hl: 0.5 });
-  clip(g, B, () => { fill(g, rect(1, -h + 4, 22, -h + 7), '#0d0f13', 0.7); for (const x of [6, 12, 17]) stroke(g, `M ${x} ${-h + 7} L ${x + 0.6} ${-h + 44}`, RED.d, 0.5, 0.6); });
+  clip(g, B, () => fill(g, rect(1, -h + 4, 22, -h + 7), '#0d0f13', 0.7));
   emblem(g, 11.5, -h + 22, 6, '#f4f1ea');
+  drape(g, B, 1, 22, -h + 7, -h + 43, h);
 }
 
 // the square's dry pool: a stone basin, the tiered bowl on its pedestal,
