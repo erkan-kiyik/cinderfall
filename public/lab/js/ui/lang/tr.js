@@ -38,13 +38,13 @@ export default {
   'diff.normal': 'Normal', 'diff.hard': 'Zor',
 
   'lobby.operator': 'Operatör', 'lobby.play': 'GÖREVE ÇIK', 'lobby.campaign': 'Kampanya · Perde {act} · Kor Hattı',
-  'lobby.next': 'Görev {n} — {name}', 'lobby.record': 'rekor', 'lobby.boss5': 'Her 5 bölümde boss',
+  'lobby.next': 'Görev {n} — {name}', 'lobby.record': 'rekor', 'lobby.boss5': 'Her 5 dalgada Gall gelir',
   'lobby.radio': 'Telsiz', 'lobby.crow': 'HAWK’ın tezgâhı', 'lobby.crowOpen': '{n} mal', 'lobby.crowSub': 'Günlük 4 ürün · 1 özel',
 
   'play.title': 'Mod seç', 'play.kicker': 'Oyna',
   'mode.campaign': 'Kampanya', 'mode.campaign.kicker': 'Kor Hattı · 10 görev', 'mode.campaign.desc': 'Şehre sız, Vanta’nın hattını kır. Üç perde, elle tasarlanmış görevler.',
   'mode.daily': 'Görevler', 'mode.daily.kicker': 'Günlük · haftalık', 'mode.daily.desc': 'Her gün üç yeni görev: baskın, savunma, kurtarma, sabotaj ve daha fazlası.',
-  'mode.endless': 'Sonsuz Mod', 'mode.endless.kicker': 'Rekor peşinde', 'mode.endless.desc': 'Artan zorluk, her beş bölümde bir boss, liderlik tablosu.',
+  'mode.endless': 'Sonsuz Mod', 'mode.endless.kicker': 'Rekor peşinde', 'mode.endless.desc': 'Dalga dalga artan zorluk, her beşincide Sekreter Gall; rekorun cihazında saklanır.',
   'mode.fire.semi': 'Yarı otomatik', 'mode.fire.auto': 'Tam otomatik', 'mode.fire.pump': 'Pompalı',
 
   'daily.kicker': 'Bugünün görevleri', 'daily.claimed': 'Alındı', 'daily.rules': 'Görevler her gece yarısı yenilenir. İlerleme görevlerden ve sonsuz moddan gelir.',
@@ -173,7 +173,7 @@ export default {
   'set.lights': 'Dinamik ışıklar', 'set.lightsHint': 'Lambalar, alevler ve atışların ışığı.',
   'set.fps': 'Performans paneli', 'set.fpsHint': 'Kare süresi grafiği ve çizim sayıları.',
   'set.master': 'Genel ses', 'set.sfx': 'Efektler', 'set.ui': 'Arayüz', 'set.music': 'Müzik', 'set.musicHint': 'Müzik cila aşamasında gelecek.',
-  'set.hud': 'HUD düzenleyici', 'set.hudHint': 'Dokunmatik düğmeleri taşı ve boyutlandır.', 'set.hudOpen': 'Düzenle',
+  'set.hud': 'Düğme düzeni', 'set.hudHint': 'Dokunmatik düğmeleri taşı ve boyutlandır.', 'set.hudOpen': 'Düzenle',
   'set.fireRing': 'Ateş halkası', 'set.fireRingHint': 'Sağ çubuk ne kadar itilince ateş başlasın.',
   'set.haptics': 'Titreşim', 'set.hapticsHint': 'Dokunuşta ve isabette hafif titreşim.',
   'set.keys': 'Klavye ve fare', 'set.keysHint': 'A/D yürü · Boşluk zıpla · Shift koş · C çömel · Sol tık ateş · R doldur · Q silah · F bıçak · Esc duraklat',
@@ -189,7 +189,7 @@ export default {
   'set.resetConfirm': 'Bu cihazdaki LAB ilerlemen kalıcı olarak silinecek. Devam edilsin mi?', 'set.resetDone': 'İlerleme sıfırlandı',
   'set.aboutHint': 'KOR’un sıfırdan yazılan test sürümü.', 'set.build': 'Sürüm', 'set.engine': 'Motor', 'set.engineHint': 'Kendi WebGL2 motoru · 120 Hz simülasyon',
 
-  'hud.title': 'HUD düzenleyici', 'hud.size': 'Boyut', 'hud.reset': 'Varsayılan', 'hud.resetDone': 'Varsayılan düzen',
+  'hud.title': 'Düğme düzeni', 'hud.size': 'Boyut', 'hud.reset': 'Varsayılan', 'hud.resetDone': 'Varsayılan düzen',
   'hud.moveZone': 'Hareket çubuğu', 'hud.aimZone': 'Nişan çubuğu',
   'game.paused': 'Duraklatıldı', 'game.status': 'Hedef: {o} · Süre {t}', 'game.resume': 'Devam', 'game.restart': 'Yeniden başla', 'game.quit': 'Görevden çık',
   'game.start': 'Başla', 'game.again': 'Tekrar oyna', 'game.objUpdated': 'Hedef güncellendi', 'game.checkpoint': 'Kontrol noktası', 'game.gate': 'Kapı açılıyor',

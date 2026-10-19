@@ -38,13 +38,13 @@ export default {
   'diff.normal': 'Normal', 'diff.hard': 'Hard',
 
   'lobby.operator': 'Operator', 'lobby.play': 'MOVE OUT', 'lobby.campaign': 'Campaign · Act {act} · Ember Line',
-  'lobby.next': 'Mission {n} — {name}', 'lobby.record': 'record', 'lobby.boss5': 'A boss every 5 stages',
+  'lobby.next': 'Mission {n} — {name}', 'lobby.record': 'record', 'lobby.boss5': 'Gall comes every 5 waves',
   'lobby.radio': 'Radio', 'lobby.crow': 'HAWK’s stall', 'lobby.crowOpen': '{n} goods', 'lobby.crowSub': '4 daily goods · 1 special',
 
   'play.title': 'Choose a mode', 'play.kicker': 'Play',
   'mode.campaign': 'Campaign', 'mode.campaign.kicker': 'Ember Line · 10 missions', 'mode.campaign.desc': 'Infiltrate the city and break Vanta’s line. Three acts of hand-made missions.',
   'mode.daily': 'Operations', 'mode.daily.kicker': 'Daily · weekly', 'mode.daily.desc': 'Three new operations every day: raids, defense, rescue, sabotage and more.',
-  'mode.endless': 'Endless Mode', 'mode.endless.kicker': 'Chase the record', 'mode.endless.desc': 'Rising difficulty, a boss every five stages, a leaderboard.',
+  'mode.endless': 'Endless Mode', 'mode.endless.kicker': 'Chase the record', 'mode.endless.desc': 'Wave after wave, harder each time, Secretary Gall every fifth; your record stays on this device.',
   'mode.fire.semi': 'Semi-auto', 'mode.fire.auto': 'Full auto', 'mode.fire.pump': 'Pump action',
 
   'daily.kicker': 'Today’s tasks', 'daily.claimed': 'Claimed', 'daily.rules': 'Tasks renew every midnight. Progress comes from missions and endless runs.',
@@ -173,7 +173,7 @@ export default {
   'set.lights': 'Dynamic lights', 'set.lightsHint': 'Lamps, flames and the light of gunfire.',
   'set.fps': 'Performance panel', 'set.fpsHint': 'Frame time graph and draw counts.',
   'set.master': 'Master', 'set.sfx': 'Effects', 'set.ui': 'Interface', 'set.music': 'Music', 'set.musicHint': 'Music arrives in the polish phase.',
-  'set.hud': 'HUD editor', 'set.hudHint': 'Move and resize the touch buttons.', 'set.hudOpen': 'Edit',
+  'set.hud': 'Button layout', 'set.hudHint': 'Move and resize the touch buttons.', 'set.hudOpen': 'Edit',
   'set.fireRing': 'Fire ring', 'set.fireRingHint': 'How far the right stick goes before firing starts.',
   'set.haptics': 'Vibration', 'set.hapticsHint': 'A light buzz on taps and hits.',
   'set.keys': 'Keyboard & mouse', 'set.keysHint': 'A/D walk · Space jump · Shift sprint · C crouch · Left click fire · R reload · Q weapon · F knife · Esc pause',
@@ -189,7 +189,7 @@ export default {
   'set.resetConfirm': 'Your LAB progress on this device will be deleted for good. Continue?', 'set.resetDone': 'Progress reset',
   'set.aboutHint': 'Test build of KOR, written from scratch.', 'set.build': 'Build', 'set.engine': 'Engine', 'set.engineHint': 'Own WebGL2 engine · 120 Hz simulation',
 
-  'hud.title': 'HUD editor', 'hud.size': 'Size', 'hud.reset': 'Default', 'hud.resetDone': 'Default layout',
+  'hud.title': 'Button layout', 'hud.size': 'Size', 'hud.reset': 'Default', 'hud.resetDone': 'Default layout',
   'hud.moveZone': 'Move stick', 'hud.aimZone': 'Aim stick',
   'game.paused': 'Paused', 'game.status': 'Objective: {o} · Time {t}', 'game.resume': 'Resume', 'game.restart': 'Restart', 'game.quit': 'Quit mission',
   'game.start': 'Start', 'game.again': 'Play again', 'game.objUpdated': 'Objective updated', 'game.checkpoint': 'Checkpoint', 'game.gate': 'Gate opening',
