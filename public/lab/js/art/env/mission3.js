@@ -6,6 +6,7 @@
 //   C  the hall      an open court with low cover; Gall waits on the dais and
 //                    calls squads in as the fight turns
 //   D  extraction    the flare past the dais
+import { Brush, rnd } from '../paint.js';
 import { cel, fill, stroke, clip } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
@@ -119,6 +120,29 @@ export function truck(g, x) {
     letters(g, 'SU-03', x + 76, -18.4, 2.6, '#c9ced6', { kind: 'print', align: 'center', jit: 0 });
     fill(g, rect(x, -13, x + 100, -10), '#000', 0.25);
   });
+  // a working truck: the glass with the plaza's lamps in it, wheel arches dark over
+  // the tyres, road spray thrown up behind each wheel, rust run down from the seams
+  // and the bolts, the roof dulled by the rain
+  {
+    const Bk = new Brush(g, Math.hypot(g.getTransform().a, g.getTransform().b)), r = rnd(x | 0);
+    Bk.inside(H, () => {
+      const gl = g.createLinearGradient(x + 4, -36, x + 20, -27);
+      gl.addColorStop(0, 'rgba(150,170,196,0.32)'); gl.addColorStop(0.45, 'rgba(0,0,0,0)'); gl.addColorStop(0.8, 'rgba(255,200,140,0.18)');
+      g.fillStyle = gl; g.fill(new Path2D(poly([[x + 4, -34], [x + 20, -36], [x + 20, -27], [x + 2, -27]])));
+      for (const wx of [x + 16, x + 72, x + 88]) {
+        Bk.dab(wx, -9, 8, 5, 'rgba(6,6,8,0.75)');
+        Bk.dab(wx - 9, -14, 10, 7, 'rgba(52,40,28,0.7)', 1, 'source-over', -0.4);
+        for (let i = 0; i < 26; i++) Bk.dab(wx - 4 - r() * 14, -10 - r() * 10, 0.3 + r() * 0.7, 0.2 + r() * 0.5, `rgba(${60 + r() * 20 | 0},${46 + r() * 14 | 0},32,${0.3 + r() * 0.35})`);
+      }
+      for (const sx of [x + 24, x + 60, x + 42, x + 90]) Bk.line(`M ${sx + 0.6} ${-40 + r() * 6} C ${sx + 1} -30 ${sx + 0.4} -24 ${sx + 1.2} ${-16 - r() * 2}`, 'rgba(120,66,36,0.5)', 1.0 + r() * 0.7, 0.6);
+      Bk.dab(x + 60, -44, 40, 3, 'rgba(10,12,16,0.35)');
+      // road grime up the lower body, heaviest at the sill
+      const gr2 = g.createLinearGradient(0, -24, 0, -10); gr2.addColorStop(0, 'rgba(44,36,26,0)'); gr2.addColorStop(1, 'rgba(44,36,26,0.6)');
+      g.fillStyle = gr2; g.fillRect(x - 2, -24, 104, 14);
+      Bk.dab(x + 50, -40, 30, 2, 'rgba(190,200,214,0.12)');
+      for (let i = 0; i < 18; i++) { const bx = x + 2 + r() * 96; Bk.dab(bx, -30 + r() * 18, 0.25, 0.25, 'rgba(30,26,22,0.6)'); }
+    });
+  }
   cel(g, rect(x + 62, -50, x + 80, -44), BODY, { sh: 0.6, hl: 0.3 });
   cel(g, poly([[x + 64, -48], [x + 52, -51], [x + 52, -49], [x + 64, -46.6]]), STEEL, { sh: 0.3, hl: 0.3, lw: 0.3 });
   for (const lx of [x + 8, x + 28]) { fill(g, rect(lx, -39.4, lx + 4, -38), '#ff2a35'); }
