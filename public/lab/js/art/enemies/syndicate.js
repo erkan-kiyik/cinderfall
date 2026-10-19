@@ -10,7 +10,7 @@ import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { Brush, rnd } from '../paint.js';
 import { M, tone, mat } from '../style.js';
 import { WEAPONS, MAT } from '../weapons/index.js';
-import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, stitch, rivet, buckle, grime, scuffs } from '../ops/body.js';
+import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, softBrow, softHair, neck as skinNeck, stitch, rivet, buckle, grime, scuffs } from '../ops/body.js';
 
 const PAL = {
   armor: mat(tone('#aab7c4', '#7b8b9b', '#546373', '#222c38'), 'paint', 0.1),
@@ -406,26 +406,31 @@ function gallShin(g, ctx) {
 }
 function gallFoot(g, ctx) { boot(g, ctx, G.leather, PAL.sole, { toe: G.leather }); }
 function gallHead(g) {
-  const S = G.skin;
-  cel(g, 'M -1.7 1.2 L 2.1 1.0 L 2.0 -2.6 L 0.6 -3.6 L -1.8 -4.4 Z', S, { sh: 1.1, hl: 0.25 });
+  const S = G.skin, B = brush(g);
+  skinNeck(g, S, { wide: 0.1, glaze: true });
   const HD = headShape({ jaw: 0.85 });
   cel(g, HD, S, { sh: 1.1, hl: 0.4 });
   skinGlaze(g, HD, { k: 1.1 });
   clip(g, HD, () => {
-    // short grey hair at the temple and the back, cut close
-    cel(g, 'M -4.2 -9.4 C -4.4 -7.6 -4.0 -6.0 -3.0 -4.8 L -1.8 -5.2 C -2.2 -6.4 -2.0 -7.6 -1.4 -8.6 C -0.4 -9.2 0.8 -9.4 1.6 -9.4 L 1.6 -11 L -4.2 -11 Z', G.hair, { sh: 0.5, hl: 0.3, line: false, ao: 0.2 });
-    for (let k = 0; k < 14; k++) stroke(g, `M ${-3.8 + (k % 7) * 0.5} ${-8.6 + Math.floor(k / 7) * 1.6} l 0.3 0.5`, G.hair.d, 0.06, 0.6);
-    // the ear; the hollow of the cheek; the line from the nose to the mouth
+    // fifty years in the skin: pores and fine blotches, a little grey of a close shave
+    const r = rnd(47);
+    for (let i = 0; i < 160; i++) B.dab(-1 + r() * 6, -9 + r() * 6.5, 0.05 + r() * 0.06, 0.04 + r() * 0.05, r() < 0.6 ? 'rgba(90,50,40,0.11)' : 'rgba(255,230,210,0.09)');
+    B.dab(2.4, -3.6, 2.0, 0.9, 'rgba(90,96,104,0.14)');
+    // short grey hair at the temple and the back, cut close: a soft mass combed back
+    softHair(g, 'M -4.2 -9.4 C -4.4 -7.6 -4.0 -6.0 -3.0 -4.8 L -1.8 -5.2 C -2.2 -6.4 -2.0 -7.6 -1.4 -8.6 C -0.4 -9.2 0.8 -9.4 1.6 -9.4 L 1.6 -11 L -4.2 -11 Z', '#76716b', 'rgba(214,208,198,0.6)', [-0.5, 0.8], 300, 29);
+    // the ear; the hollow of the cheek; the fold from the nose to the mouth, soft
     cel(g, 'M -1.5 -7.4 C -0.7 -7.7 -0.2 -6.9 -0.3 -6.1 C -0.4 -5.4 -1.1 -5.2 -1.6 -5.7 Z', S, { sh: 0.5, hl: 0.2, line: false, ao: 0.6 });
-    stroke(g, 'M -1.1 -7.0 C -0.6 -6.9 -0.6 -6.1 -1.0 -5.9', S.d, 0.12, 0.7);
-    fill(g, ell(2.0, -4.4, 1.4, 0.8), S.d, 0.1);
-    stroke(g, 'M 4.4 -4.8 C 4.0 -4.2 3.8 -3.6 3.9 -3.0', S.d, 0.12, 0.8);
+    B.line('M -1.1 -7.0 C -0.6 -6.9 -0.6 -6.1 -1.0 -5.9', 'rgba(110,60,46,0.6)', 0.12, 0.05);
+    B.dab(2.0, -4.4, 1.4, 0.8, 'rgba(110,62,48,0.35)');
+    B.line('M 4.4 -4.8 C 4.0 -4.2 3.8 -3.6 3.9 -3.0', 'rgba(110,60,46,0.4)', 0.14, 0.09);
+    B.line('M 4.5 -4.7 C 4.15 -4.1 3.95 -3.6 4.05 -3.05', 'rgba(255,226,206,0.25)', 0.08, 0.05);
   });
-  // the eye: narrow, pale grey iris, the lid heavy over it; a straight brow
+  // the eye: narrow, pale grey iris, the lid heavy over it; a straight grey brow
   softEye(g, 3.5, -6.95, 1.45, { iris: '#7d8a93', white: '#bdb4a9' });
-  fill(g, 'M 2.5 -7.9 C 3.2 -8.05 3.9 -8.05 4.4 -7.8 L 4.35 -7.6 C 3.9 -7.8 3.2 -7.8 2.55 -7.65 Z', G.hair.d);
-  // thin lips, pressed
-  stroke(g, 'M 3.9 -3.05 C 4.2 -3.0 4.4 -3.0 4.55 -3.1', '#8a5a4e', 0.16);
+  softBrow(g, 2.5, -7.75, 4.4, -7.72, 0.08, '#77716b', 7);
+  // thin lips, pressed: the seam, the lower lip catching a little light
+  B.line('M 3.9 -3.05 C 4.2 -3.0 4.4 -3.0 4.55 -3.1', 'rgba(96,52,44,0.85)', 0.12, 0.04);
+  B.dab(4.2, -2.85, 0.32, 0.1, 'rgba(236,180,160,0.4)');
   // the peaked cap: a high crown, the red band, the black peak, the silver mark
   const CROWN = 'M -4.4 -8.8 C -4.8 -10.4 -3.6 -11.8 -0.8 -12.4 C 2.4 -13.0 5.4 -12.4 6.2 -11.2 C 6.4 -10.6 6.0 -10.0 5.2 -9.6 L -4.0 -8.4 Z';
   cel(g, CROWN, G.coat, { sh: 1.0, hl: 0.5 });
