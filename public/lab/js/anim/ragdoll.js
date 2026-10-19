@@ -144,6 +144,12 @@ export class Ragdoll {
 
   // world root the character is drawn around
   root(out) { out[0] = this.x[PELVIS]; out[1] = this.y[PELVIS] + 31; return out; }
+  // left, right and lowest point of the body (world), for its shadow on the ground
+  extent(out) {
+    let x0 = 1e9, x1 = -1e9, yb = -1e9;
+    for (let i = 0; i < this.x.length; i++) { const x = this.x[i], y = this.y[i]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y > yb) yb = y; }
+    out[0] = x0; out[1] = x1; out[2] = yb; return out;
+  }
 
   // Write local-space joints (relative to the root (rx, ry)) for drawing.
   pose(J, rx, ry) {

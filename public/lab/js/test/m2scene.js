@@ -263,6 +263,9 @@ export class M2Scene {
       foot((bx0 + bx1) / 2, 0, (bx1 - bx0) * 0.55);
     }
     for (const c of chars) if (!c.rag && c.m.grounded) foot(c.rx, c.ry, 10);
+    // the fallen: a long shade under the whole body where it lies
+    const ext = this._ext || (this._ext = [0, 0, 0]);
+    for (const c of chars) if (c.rag) { const [a, b, yb] = c.rag.extent(ext); foot((a + b) / 2, yb + 1.5, (b - a) / 2 + 4); }
     // props behind the characters
     for (const p of this.C.deco) {
       const r = A.get(p.name);
