@@ -532,6 +532,8 @@ button.skin { flex: none; padding: 0; cursor: pointer; }
 .tile .lockbadge.price { top: auto; bottom: 8px; right: 8px; color: var(--ember-hi); font: 800 13px/1 var(--f-num); }
 .tile.locked > b { padding-right: 52px; }
 .wgrid-ui .tile.locked > b { padding-right: 0; }
+/* a weapon you do not own shows its price where its class was (the tabs already say the class) */
+.wgrid-ui .tile.locked .eyebrow { visibility: hidden; }
 button.skin { width: 36px; height: 36px; }
 .op-card .stamp { position: absolute; right: 14px; top: 16px; }
 /* the member card: paper, the photo clipped on, a stamp */
