@@ -47,6 +47,7 @@ export class Showcase extends M2Scene {
     const x = this.C.spawn[0];
     this.mover = new Mover(this.L, x, this.dropFrom ?? -26); this.mover.facing = 1; this.dropFrom = null;
     this.player = new Character(id, this.e.atlas, this.mover, loadout ? { weapon: loadout.primary, sidearm: loadout.sidearm } : {});
+    this.player.wind = 0.04; // a basement: no wind, the scarf's tails hang
     this.opId = id; this.landed = false; this.look = 0;
   }
 

@@ -168,7 +168,7 @@ export class Character {
     for (let i = 0; i < this.chains.length; i++) {
       const { t, c: ch } = this.chains[i];
       const lx = J.hip[0] + t.ax * c - t.ay * s, ly = J.hip[1] + t.ax * s + t.ay * c;
-      ch.step(dt, x + lx * f, y + ly, -f, this.t, vx, i * 1.7, t.g);
+      ch.step(dt, x + lx * f, y + ly, -f, this.t, vx, i * 1.7, t.g, this.wind ?? 1);
     }
   }
 

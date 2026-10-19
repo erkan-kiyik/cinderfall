@@ -1,7 +1,8 @@
 // KOR LAB — verlet cloth chains (scarf tails, straps).
 // Points live in world space; the first point is pinned to an anchor that the
 // owner moves every step. Gravity is light and a back-wind keeps tails
-// streaming behind the character, with a little flutter.
+// streaming behind the character, with a little flutter; indoors (windK near 0)
+// they hang and only swing with the body.
 
 export class Chain {
   constructor(n, len) {
@@ -16,16 +17,17 @@ export class Chain {
     this.init = true;
   }
 
-  // anchor (ax, ay); back = −facing; t = time for flutter; vx = body velocity
-  step(dt, ax, ay, back, t, vx, seed = 0, gravity = 260) {
+  // anchor (ax, ay); back = −facing; t = time for flutter; vx = body velocity;
+  // windK: how much of the street's wind reaches it (1 out of doors)
+  step(dt, ax, ay, back, t, vx, seed = 0, gravity = 260, windK = 1) {
     if (!this.init) this.reset(ax, ay, -back);
     const n = this.n, X = this.x, Y = this.y, PX = this.px, PY = this.py;
     // accelerations in units/s²; strong air drag (0.94 per step) keeps it light
-    const wind = back * (900 + Math.max(0, -vx * back) * 1.5);
+    const wind = back * (900 * windK + Math.max(0, -vx * back) * 1.5);
     const g = gravity;
     for (let i = 1; i < n; i++) {
       const k = i / (n - 1);
-      const fl = Math.sin(t * 8.3 - i * 1.1 + seed) * 300 * k + Math.sin(t * 3.7 + seed * 2) * 60;
+      const fl = (Math.sin(t * 8.3 - i * 1.1 + seed) * 300 * k + Math.sin(t * 3.7 + seed * 2) * 60) * (0.15 + 0.85 * windK);
       const vxp = (X[i] - PX[i]) * 0.94, vyp = (Y[i] - PY[i]) * 0.94;
       PX[i] = X[i]; PY[i] = Y[i];
       X[i] += vxp + wind * (0.4 + 0.6 * k) * dt * dt;
