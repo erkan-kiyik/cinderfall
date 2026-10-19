@@ -12,7 +12,7 @@ import { SKIN, traderStock, traderBuy, traderSold, owns, hasSkin } from '../../c
 export const trader = {
   mount(ctx) {
     const left = h('div.card.cut.hawk-card',
-      h('div.portrait', hawkPic(240), h('div.h1', 'HAWK')),
+      h('div.portrait', hawkPic(360), h('div.h1', 'HAWK')),
       h('div.eyebrow.accent', h('span.dot'), t('trader.k')),
       h('p.body.typed', { style: { margin: 0, fontSize: '12px' } }, t('trader.bio')),
       h('div.quote', t('trader.line')));
