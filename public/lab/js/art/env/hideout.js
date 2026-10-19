@@ -238,13 +238,31 @@ function room(g) {
   CR(712, -24, 40, 24, false); CR(754, -24, 36, 24, true); CR(716, -46, 34, 22, false);
   // the stove, its pipe up and out through the wall, the kettle on it
   const sx = STOVE.x;
-  fill(g, rect(sx - 14, -34, sx + 14, -4), '#2a2624'); fill(g, rect(sx - 14, -34, sx + 14, -32), '#3a3634');
-  fill(g, rect(sx - 8, -24, sx + 8, -12), '#1a1614'); fill(g, rect(sx - 7, -22, sx + 7, -13), '#a8401a', 0.8); fill(g, rect(sx - 5, -18, sx + 5, -13), '#ff8a3a', 0.8);
+  // cast iron, black-leaded, its body barrel-round so the fire's light rolls off
+  // its sides; the firebox door open a crack, the coals glowing through the grate;
+  // the top plate rubbed shiny, the enamel kettle on it
+  const BODY = `M ${sx - 13} -32 C ${sx - 14.6} -24 ${sx - 14.6} -12 ${sx - 13} -5 L ${sx + 13} -5 C ${sx + 14.6} -12 ${sx + 14.6} -24 ${sx + 13} -32 Z`;
+  fill(g, BODY, lin(sx - 14, 0, sx + 14, 0, [[0, '#121010'], [0.3, '#3a3634'], [0.45, '#4e4a46'], [0.7, '#24201e'], [1, '#0e0c0c']]));
+  clip(g, BODY, () => {
+    for (const y of [-27, -10]) { fill(g, rect(sx - 15, y, sx + 15, y + 1.2), '#0e0c0c'); fill(g, rect(sx - 15, y + 1.2, sx + 15, y + 1.6), '#5a5652', 0.6); }
+    fill(g, ell(sx, -16, 14, 10), '#ff7a2a', 0.1);
+  });
+  fill(g, rect(sx - 15, -34.4, sx + 15, -31.6), lin(0, -34.4, 0, -31.6, [[0, '#7a7672'], [0.4, '#3a3634'], [1, '#1a1614']]));
+  fill(g, rect(sx - 8.4, -24.4, sx + 8.4, -11.6), '#0e0a08');
+  fill(g, rect(sx - 7, -22, sx + 7, -13), lin(0, -22, 0, -13, [[0, '#5a1a08'], [0.5, '#c8501a'], [1, '#ffb050']]));
+  for (let i = 0; i < 9; i++) fill(g, ell(sx - 5.6 + i * 1.4, -14 - (i % 3) * 1.2, 1.2, 0.8), i % 2 ? '#ffd08a' : '#ff8a3a', 0.8);
   for (let k = sx - 6; k < sx + 7; k += 2.4) fill(g, rect(k, -22, k + 0.6, -13), '#1a1614');
-  for (const x of [sx - 12, sx + 10]) fill(g, rect(x, -4, x + 2, 0), '#1a1614');
-  fill(g, rect(sx + 4, ceil + 14, sx + 9, -34), '#2a2826'); fill(g, rect(sx + 4, ceil + 14, sx + 5, -34), '#3e3c38');
+  fill(g, poly([[sx + 8.4, -24.4], [sx + 13, -25.6], [sx + 13, -10.4], [sx + 8.4, -11.6]]), lin(sx + 8.4, 0, sx + 13, 0, [[0, '#2a2624'], [1, '#4a4642']]));
+  fill(g, ell(sx + 11.6, -18, 0.6, 0.9), '#8a8682');
+  for (const x of [sx - 12, sx + 10]) fill(g, `M ${x} -5 L ${x + 2} -5 L ${x + 2.6} 0 L ${x - 0.6} 0 Z`, '#1a1614');
+  const PIPE = rect(sx + 4, ceil + 14, sx + 9, -34);
+  fill(g, PIPE, lin(sx + 4, 0, sx + 9, 0, [[0, '#1a1816'], [0.35, '#4e4a46'], [1, '#141210']]));
   for (let y = -46; y > ceil + 14; y -= 18) fill(g, rect(sx + 3.4, y, sx + 9.6, y + 1.2), '#1a1816');
-  fill(g, `M ${sx - 10} -34 C ${sx - 10} -40 ${sx - 2} -40 ${sx - 2} -34 Z`, '#6a6e72'); fill(g, `M ${sx - 8} -40 C ${sx - 8} -44 ${sx - 4} -44 ${sx - 4} -40 Z`, '#7a7e82'); stroke(g, `M ${sx - 2} -37 L ${sx + 2} -39`, '#6a6e72', 0.6);
+  const KT = `M ${sx - 10.4} -34.2 C ${sx - 10.4} -40.4 ${sx - 1.6} -40.4 ${sx - 1.6} -34.2 Z`;
+  fill(g, KT, lin(sx - 10.4, 0, sx - 1.6, 0, [[0, '#4a4e52'], [0.35, '#c8ccd0'], [1, '#3a3e42']]));
+  fill(g, `M ${sx - 7.6} -40 C ${sx - 7.6} -42.4 ${sx - 4.4} -42.4 ${sx - 4.4} -40 Z`, '#2a2c2e');
+  stroke(g, `M ${sx - 1.8} -36.6 C ${sx} -37.4 ${sx + 1.4} -38.6 ${sx + 2.4} -39.6`, '#8a8e92', 0.7);
+  stroke(g, `M ${sx - 9} -38 C ${sx - 8} -43 ${sx - 3} -43 ${sx - 3} -38`, '#2a2c2e', 0.35);
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, ell(sx, -16, 26, 16), '#ff8a3a', 0.06); g.restore();
   // the cot and its wool blanket
   fill(g, rect(872, -16, 966, -12), '#4a4a46'); for (const x of [874, 962]) fill(g, rect(x, -12, x + 2, 0), '#3a3a36');
