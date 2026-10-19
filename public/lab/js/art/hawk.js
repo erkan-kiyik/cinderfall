@@ -30,9 +30,6 @@ const SCARF_END = 'M 58 84 C 62 84.4 66 85.6 68.4 88 C 70 92 69.4 98 68 104 L 58
 
 // the coat carried on down to the counter, for HAWK standing at his stall
 const COAT_BODY = 'M 4 346 C 1 300 -2 250 1 205 C 2 170 -4 130 -2 104 C -1 94 6 86 14 80 C 20 76 26 72 30 70.6 C 36 69.2 42 69 46 70 L 64 74 C 72 75 80 77 88 82 C 96 87 103 94 106 104 C 109 130 104 170 104 205 C 105 250 108 300 110 346 Z';
-// his hand on the counter, on the open book, the lamp on its knuckles
-const HAND = 'M 92 334 C 94 326 102 322 110 323 C 118 324 124 328 126 334 C 127 339 124 344 118 345 L 98 346 C 94 344 91 340 92 334 Z';
-const CUFF = 'M 88 318 C 94 312 104 312 110 316 L 112 328 C 104 326 96 328 90 332 Z';
 
 // Paint the portrait into g, size × size px. t: seconds (the ember breathes, the smoke drifts).
 // o.figure: only the man, no stall behind him, no grain or vignette, the coat
@@ -69,47 +66,76 @@ export function paintHawk(g, size, t = 0, o = {}) {
     for (const d of ['M 14 88 C 20 92 24 98 26 106', 'M 40 82 C 44 90 46 98 47 106', 'M 82 86 C 86 92 88 98 88 106']) B.line(d, '#0c0b09', 2.2, 1.6, 0.6);
     for (const d of ['M 16 87 C 22 91 26 97 28 104', 'M 84 85 C 88 91 90 97 90 104']) B.line(d, '#5a4a38', 0.8, 0.8, 0.35);
     if (fig) {
-      // the body under the coat: the arms down its sides, the front edge, two buttons,
-      // the lamp on the counter warming it from below and in front
+      // the body under the coat, turned as a body is: the far side in the dark, the
+      // lamp side warm; the bulb strung over the stall on the shoulders; the street's
+      // cold light along his back; the lamp on the counter warming the skirt from below
+      const turn = g.createLinearGradient(-4, 0, 112, 0);
+      turn.addColorStop(0, 'rgba(0,0,0,0.5)'); turn.addColorStop(0.4, 'rgba(0,0,0,0.12)');
+      turn.addColorStop(0.75, 'rgba(150,104,66,0.1)'); turn.addColorStop(1, 'rgba(190,124,70,0.3)');
+      g.fillStyle = turn; g.fillRect(-10, 60, 130, 300);
+      B.dab(54, 86, 44, 12, 'rgba(176,156,126,0.24)');
       B.dab(104, 330, 30, 90, 'rgba(190,124,70,0.5)');
-      B.dab(0, 220, 26, 120, 'rgba(6,5,4,0.6)');
-      for (const d of ['M 12 104 C 10 170 12 250 16 346', 'M 92 104 C 96 170 96 250 94 346']) { B.line(d, '#0a0908', 3, 2.4, 0.7); }
-      for (const d of ['M 15 104 C 13 170 15 250 19 346', 'M 95 104 C 99 170 99 250 97 346']) B.line(d, 'rgba(120,96,70,0.35)', 1.2, 1.2);
-      B.line('M 70 101 C 72 160 74 240 75 346', '#0a0908', 2.4, 1.2, 0.85);
-      for (const y of [150, 210]) { B.dab(66, y, 2.2, 2.2, '#1a1612'); B.dab(65.4, y - 0.6, 0.8, 0.8, 'rgba(200,170,130,0.4)'); }
-      for (const [y, a] of [[180, 0.4], [270, 0.35]]) B.line(`M 22 ${y} C 40 ${y + 10} 60 ${y + 8} 86 ${y - 4}`, `rgba(8,6,4,${a})`, 2, 2.2);
-      // the coat's belt drawn in at the waist, the wool bunching over it
-      B.line('M 4 206 C 30 216 66 214 104 204', '#0b0a08', 3.2, 1.4, 0.85);
-      B.line('M 4 211 C 30 221 66 219 104 209', 'rgba(150,112,76,0.3)', 1.2, 1.2);
-      for (const x of [24, 44, 70]) B.line(`M ${x} 196 C ${x + 2} 202 ${x + 1} 208 ${x - 1} 214`, 'rgba(8,6,4,0.45)', 1.4, 1.2);
+      B.line('M -1 104 C -4 150 -1 200 1 240 C 0 280 1 310 3 346', 'rgba(104,124,146,0.45)', 2, 1.8);
+      // the front edge of the coat under the arms, two buttons, the belt drawn in
+      // at the waist and the wool bunching over it, a flap pocket on the hip
+      B.line('M 76 200 C 76 250 76 300 77 346', '#0a0908', 2.4, 1.2, 0.85);
+      B.line('M 79 200 C 79 250 79 300 80 346', 'rgba(200,140,90,0.3)', 1, 1);
+      B.dab(72, 262, 2.2, 2.2, '#1a1612'); B.dab(71.4, 261.4, 0.8, 0.8, 'rgba(220,170,120,0.5)');
+      B.line('M 2 216 C 30 226 66 224 106 214', '#0b0a08', 3.4, 1.4, 0.9);
+      B.line('M 2 221 C 30 231 66 229 106 219', 'rgba(170,120,76,0.32)', 1.2, 1.2);
+      for (const x of [20, 42, 64, 92]) B.line(`M ${x} 202 C ${x + 2} 208 ${x + 1} 214 ${x - 1} 220`, 'rgba(8,6,4,0.45)', 1.4, 1.2);
+      B.line('M 82 268 C 90 266 98 265 105 266', 'rgba(6,5,4,0.75)', 2.2, 1.2);
+      B.line('M 82 265 C 90 263 98 262 105 263', 'rgba(210,140,84,0.4)', 0.9, 0.8);
+      for (const [d, a] of [['M 20 236 C 26 270 24 310 20 346', 0.5], ['M 50 232 C 54 270 56 310 54 346', 0.4], ['M 96 236 C 100 270 102 310 104 346', 0.35]]) B.line(d, `rgba(6,5,4,${a})`, 3, 3);
+      for (const d of ['M 24 238 C 30 270 28 310 24 346', 'M 100 236 C 104 270 106 310 108 346']) B.line(d, 'rgba(160,112,72,0.22)', 1.4, 1.6);
+      // the arms' shadow on the chest above them and on the belly under them
+      B.dab(60, 206, 46, 8, 'rgba(0,0,0,0.5)');
+      B.dab(66, 140, 36, 10, 'rgba(0,0,0,0.3)');
     }
   });
   if (fig) {
-    // the near arm in its sleeve, down the side and bent at the elbow toward the
-    // counter, the lamp below catching its underside
-    const SLEEVE = 'M 74 98 C 90 95 102 104 105 122 C 108 160 108 196 106 224 C 108 258 110 290 112 318 L 90 324 C 88 298 86 264 85 232 C 83 200 80 164 76 132 C 74 118 72 106 74 98 Z';
-    B.fill(SLEEVE, '#2b2723', 0.3);
-    B.inside(SLEEVE, () => {
-      texture(g, 'wool', 0.5, 7);
-      B.dab(110, 300, 12, 40, 'rgba(196,128,74,0.55)');
-      B.dab(80, 180, 8, 60, 'rgba(6,5,4,0.55)');
-      B.dab(100, 110, 8, 10, 'rgba(120,104,86,0.25)');
-      for (const y of [218, 228, 238]) B.line(`M 88 ${y} C 94 ${y + 3} 100 ${y + 2} 107 ${y - 2}`, 'rgba(8,6,4,0.5)', 1.3, 1);
-      B.line('M 105 124 C 108 170 107 210 106 226', 'rgba(150,120,90,0.3)', 1.1, 1);
+    // his arms folded across his chest — a man waiting at his own counter. The near
+    // arm (his right) down the side, its forearm across over the other; the far
+    // hand out on the near arm. Wool sleeves, the bulb on top of every form, the lamp
+    // on the counter under them, the cold of the street on the near arm's back edge.
+    const sleeve = (d, fn) => { B.fill(d, '#2b2723', 0.35); B.inside(d, () => { texture(g, 'wool', 0.5, 7); fn(); }); };
+    const NEAR_UP = 'M -1 104 C -3 128 -2 160 2 184 C 5 196 12 200 20 198 C 28 188 32 156 34 122 C 35 110 34 100 30 94 C 22 88 8 90 -1 104 Z';
+    sleeve(NEAR_UP, () => {
+      B.dab(20, 92, 16, 10, 'rgba(170,150,120,0.35)');
+      B.line('M -2 106 C -4 140 -2 170 2 186', 'rgba(110,130,152,0.5)', 1.8, 1.4);
+      B.dab(30, 150, 6, 40, 'rgba(0,0,0,0.45)');
+      for (const y of [168, 178]) B.line(`M 2 ${y} C 10 ${y + 4} 20 ${y + 3} 30 ${y - 2}`, 'rgba(6,5,4,0.45)', 1.2, 1);
     });
-    B.line('M 90 324 C 88 298 86 264 85 232 C 83 200 80 164 76 132', 'rgba(6,5,4,0.6)', 1.6, 1.4);
-  }
-  if (fig) {
-    // the sleeve's cuff and the hand on the counter: old skin, the lamp right on it
-    B.fill(CUFF, '#211e1a', 0.4);
-    B.inside(CUFF, () => { texture(g, 'wool', 0.5, 7); B.dab(108, 326, 10, 6, 'rgba(190,124,70,0.5)'); });
-    B.fill(HAND, '#8a5a40', 0.4);
+    const FAR_FORE = 'M 108 158 C 86 154 60 148 34 144 L 32 168 C 58 170 84 176 108 180 Z';
+    sleeve(FAR_FORE, () => {
+      B.dab(70, 146, 40, 5, 'rgba(176,156,126,0.3)');
+      B.dab(70, 172, 40, 6, 'rgba(0,0,0,0.5)');
+    });
+    // the far hand on the near arm: old skin, mostly in shadow, the bulb on its knuckles
+    const HAND = 'M 38 146 C 32 139 22 137 15 141 C 9 146 9 158 13 164 C 19 170 30 170 38 168 Z';
+    B.fill(HAND, '#80553e', 0.5);
     B.inside(HAND, () => {
-      B.dab(118, 340, 14, 10, 'rgba(236,170,120,0.75)');
-      B.dab(96, 330, 8, 8, 'rgba(40,20,12,0.55)');
-      for (let i = 0; i < 4; i++) B.line(`M ${104 + i * 5} 327 C ${106 + i * 5} 334 ${107 + i * 5} 340 ${106 + i * 5} 345`, 'rgba(50,24,14,0.45)', 0.9, 0.6);
-      for (let i = 0; i < 4; i++) B.dab(106 + i * 5, 328, 1.6, 1.2, 'rgba(255,214,176,0.45)');
+      B.dab(26, 142, 12, 5, 'rgba(236,182,140,0.55)');
+      B.dab(22, 166, 14, 6, 'rgba(30,14,8,0.55)');
+      for (let i = 0; i < 3; i++) B.line(`M ${31 - i * 6} 145 C ${27 - i * 6} 151 ${21 - i * 5} 158 ${16 - i * 2} 163`, 'rgba(60,28,16,0.3)', 0.7, 0.8);
+      for (let i = 0; i < 4; i++) B.dab(31 - i * 5.4, 144 + i * 0.6, 1.6, 1.1, 'rgba(255,214,176,0.4)');
+      B.dab(36, 150, 3, 6, 'rgba(236,182,140,0.35)');
       texture(g, 'skin', 0.35, 6);
+    });
+    B.fill('M 40 144 C 37 150 37 162 39 168 L 34 168 C 33 160 33 150 35 144 Z', '#211e1a', 0.4);
+    const NEAR_FORE = 'M 2 184 C 3 198 14 208 30 206 C 54 202 80 192 104 184 L 102 160 C 78 166 52 172 28 176 C 16 178 6 178 2 184 Z';
+    sleeve(NEAR_FORE, () => {
+      B.dab(60, 166, 50, 6, 'rgba(176,156,126,0.32)');
+      B.dab(84, 196, 34, 10, 'rgba(196,128,74,0.42)');
+      B.dab(12, 196, 12, 8, 'rgba(0,0,0,0.4)');
+      for (const x of [16, 24]) B.line(`M ${x} 178 C ${x + 2} 186 ${x + 1} 196 ${x - 2} 204`, 'rgba(6,5,4,0.5)', 1.2, 1);
+      B.line('M 30 205 C 54 201 80 191 104 183', 'rgba(220,150,96,0.35)', 1.2, 1.2);
+    });
+    const FAR_UP = 'M 88 96 C 98 93 106 99 108 112 C 112 136 114 160 114 182 C 113 193 106 198 99 194 C 95 172 92 140 88 112 Z';
+    sleeve(FAR_UP, () => {
+      B.dab(100, 100, 10, 8, 'rgba(170,150,120,0.3)');
+      B.dab(112, 176, 6, 24, 'rgba(206,136,80,0.45)');
+      B.dab(92, 150, 6, 40, 'rgba(0,0,0,0.4)');
     });
   }
 
