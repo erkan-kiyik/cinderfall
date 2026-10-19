@@ -183,10 +183,20 @@ export function paintHawk(g, size, t = 0, o = {}) {
     B.dab(48, 44, 2.4, 6, 'rgba(30,16,10,0.5)');
   });
 
+  // the back of the neck, turned away from the lamp into the dark of the collar;
+  // the creases of the nape; the jaw's shadow across the throat
+  B.inside(HEAD, () => {
+    B.dab(36.5, 68, 7, 15, 'rgba(18,9,5,0.6)');
+    B.dab(46, 77, 11, 5, 'rgba(18,9,5,0.42)');
+    B.dab(57, 72.5, 7, 3.2, 'rgba(34,15,8,0.4)');
+    for (const y of [60.5, 63.8]) B.line(`M 34.2 ${y} C 38 ${y + 1.4} 42 ${y + 1.4} 46 ${y}`, 'rgba(40,18,10,0.35)', 0.5, 0.4);
+    for (const y of [61.3, 64.6]) B.line(`M 35 ${y} C 38.6 ${y + 1.2} 42 ${y + 1.2} 45.4 ${y}`, 'rgba(200,130,96,0.14)', 0.35, 0.3);
+  });
+
   // --- the hair under the cap: cropped short and grey at the temple, over the ear and down the nape
   const HAIR = 'M 30.4 34.6 C 36 33.6 44 33 50.4 33.6 C 54 34 56.6 35.4 57.4 38 C 56 39.4 54.6 39.6 53.4 39.2 C 51.6 38.6 49.6 38.8 48.2 39.8 C 46.6 41.4 46 44 46.2 47 C 46.4 50 47.4 52.4 48.4 54 C 46 56 42 57 37.6 57.6 C 34.6 56.6 32.2 53 31 48 C 30.2 43 30 38 30.4 34.6 Z';
-  B.fill(HAIR, '#47423c', 0.35, 0.95);
-  B.inside(HAIR, () => { B.dab(54, 37, 5, 3, 'rgba(160,150,138,0.5)'); B.dab(34, 48, 7, 11, 'rgba(14,10,8,0.6)'); B.dab(44, 55, 8, 3, 'rgba(20,14,10,0.45)'); });
+  B.fill(HAIR, '#47423c', 0.6, 0.88);
+  B.inside(HAIR, () => { B.dab(54, 37, 5, 3, 'rgba(160,150,138,0.5)'); B.dab(34, 48, 7, 11, 'rgba(14,10,8,0.6)'); B.dab(44, 55, 8, 3, 'rgba(20,14,10,0.45)'); B.dab(40, 50, 9, 6, 'rgba(120,84,64,0.22)'); });
   // cropped short, salt and pepper, combed down and back; the hairs at the edge cross it
   B.hairs(2600, 61, (i, rr) => {
     const x = 30 + rr() * 28, y = 33.4 + rr() * 24.4;
@@ -195,6 +205,16 @@ export function paintHawk(g, size, t = 0, o = {}) {
     const v = (salt ? 150 : 52) + lit * 70 + (rr() - 0.5) * 30;
     return [x, y, Math.PI / 2 + 0.55 + (rr() - 0.5) * 0.5, 0.35 + rr() * 0.55, `rgba(${v + 4 | 0},${v | 0},${v - 6 | 0},1)`, 0.07, salt ? 0.35 + lit * 0.3 : 0.5];
   });
+  // the cropped hair does not stop at a line: short hairs thin out down the nape and
+  // round the ear; the cap's brim throws its shadow in a band over all of it
+  B.hairs(520, 67, (i, rr) => {
+    const x = 31 + rr() * 18, y = 48 + rr() * 13;
+    if (inP(P(HAIR), x, y) || !inP(P(HEAD), x, y) || inP(P(EAR), x, y)) return null;
+    const v = rr() < 0.5 ? 150 : 60;
+    return [x, y, Math.PI / 2 + 0.5 + (rr() - 0.5) * 0.5, 0.3 + rr() * 0.4, `rgba(${v + 4},${v},${v - 6},1)`, 0.06, 0.25 + rr() * 0.2];
+  });
+  B.fill('M 28 33.4 C 40 32.2 50 32.6 58.6 35.4 L 58 38.4 C 50 35.8 40 35.4 28.4 37.2 Z', 'rgba(8,6,4,0.55)', 1.1);
+
   // the skin up close: pores and fine blotches on the cheek and temple, the grey shadow
   // of shaved stubble along the cheek above the beard
   B.inside(HEAD, () => {
@@ -222,6 +242,12 @@ export function paintHawk(g, size, t = 0, o = {}) {
     B.dab(36, 76, 10, 8, 'rgba(10,8,6,0.6)');
     texture(g, 'knit', 0.4, 3.5);
     B.line('M 40 75 C 48 78 58 79 68 78', 'rgba(10,8,6,0.5)', 1.6, 1.2);
+    // wound round the neck: dark in the crevice against the skin, the roll under it
+    // turning toward the lamp, the loose folds where it is tucked into the coat
+    B.line('M 34 71 C 44 68.4 56 69.2 67 72.4', 'rgba(8,6,4,0.6)', 1.4, 1);
+    B.line('M 36 82.6 C 46 85 58 85.6 70 83.4', 'rgba(8,6,4,0.55)', 1.8, 1.4);
+    B.line('M 46 81.4 C 54 82.6 62 82.4 70 80.6', 'rgba(210,160,100,0.28)', 1.2, 1);
+    for (const x of [48, 58]) { B.line(`M ${x} 72 C ${x + 1.6} 75 ${x + 1.4} 79 ${x - 0.4} 82`, 'rgba(8,6,4,0.4)', 1.1, 0.9); B.line(`M ${x + 1.4} 72 C ${x + 3} 75 ${x + 2.8} 79 ${x + 1} 82`, 'rgba(200,150,96,0.2)', 0.7, 0.7); }
   });
 
   // --- the beard: salt and pepper, combed by years. First the mass, lit like any form
