@@ -297,19 +297,40 @@ function maskHead(g) {
   const LID = 'M -4.6 -6.4 C -5.0 -10.0 -2.6 -12.6 0.6 -12.6 C 3.6 -12.6 5.2 -10.8 5.2 -8.8 L 4.6 -8.6 C 2.4 -9.0 -1.2 -8.6 -4.0 -6.0 Z';
   cel(g, LID, A, { sh: 1.3, hl: 0.55 });
   clip(g, LID, () => { stroke(g, curve([[-3.6, -10.4], [-0.4, -12.2], [3.4, -11.8]]), '#ffffff', 0.16, 0.7); emblem(g, -1.4, -9.6, 0.9, PAL.white.m); });
-  // the mask: rubber face, two round red lenses, one filter at the front
+  worn(g, LID, [-5.0, -12.6, 5.2, -6.0], 43, 0.8);
+  // the mask: moulded rubber over the face, its seams and the cheek's swell; two
+  // small lenses of dark glass set deep in thick rims, the red light inside them;
+  // the filter canister screwed on at the front, threaded, its paint worn off
   const MASK = 'M 0.6 -9.0 C 2.8 -9.4 5.0 -8.8 5.4 -7.4 L 5.6 -5.4 C 6.4 -4.8 6.4 -3.6 5.8 -3.0 L 3.2 -1.8 C 1.6 -1.8 0.6 -2.8 0.3 -4.4 Z';
-  cel(g, MASK, PAL.black, { sh: 0.9, hl: 0.4 });
-  stroke(g, 'M 0.4 -7.6 C -1.2 -7.8 -2.6 -7.4 -3.6 -6.6', PAL.black.k, 0.4);
-  stroke(g, 'M 0.4 -4.0 C -1.2 -3.6 -2.6 -3.8 -3.4 -4.4', PAL.black.k, 0.4);
-  for (const [x, y, rx] of [[2.3, -6.9, 0.95], [4.6, -7.0, 0.6]]) {
-    cel(g, ell(x, y, rx + 0.25, rx * 0.95 + 0.25), PAL.steel, { sh: 0.2, hl: 0.2, lw: 0.18 });
-    g.save(); g.shadowColor = PAL.visor.m; g.shadowBlur = 6; fill(g, ell(x, y, rx, rx * 0.9), PAL.visor.m); g.restore();
-    fill(g, ell(x - rx * 0.3, y - rx * 0.3, rx * 0.3, rx * 0.25), PAL.visor.l);
+  const RUB = tone('#3a3f47', '#262a30', '#16191d', '#07080a');
+  cel(g, MASK, RUB, { sh: 0.9, hl: 0.45, gloss: 0.3 });
+  const B = brush(g);
+  B.inside(MASK, () => {
+    B.dab(3.0, -4.4, 1.6, 1.2, 'rgba(150,160,172,0.16)');
+    B.line('M 1.2 -8.2 C 2.6 -8.5 4.2 -8.3 5.1 -7.6', 'rgba(170,180,192,0.25)', 0.12, 0.06);
+    B.line('M 0.6 -5.6 C 1.8 -5.2 3.4 -5.0 4.6 -5.2', 'rgba(0,0,0,0.5)', 0.18, 0.08);
+  });
+  B.line('M 0.4 -7.6 C -1.2 -7.8 -2.6 -7.4 -3.6 -6.6', 'rgba(8,9,11,0.9)', 0.36, 0.08);
+  B.line('M 0.4 -4.0 C -1.2 -3.6 -2.6 -3.8 -3.4 -4.4', 'rgba(8,9,11,0.9)', 0.36, 0.08);
+  for (const [x, y, rx] of [[2.35, -6.95, 0.72], [4.55, -7.05, 0.42]]) {
+    // the rim, thick rubber round a steel ring
+    B.fill(ell(x, y, rx + 0.36, rx * 0.95 + 0.34), '#101214', 0.05);
+    B.fill(ell(x, y, rx + 0.14, rx * 0.95 + 0.12), '#5d646c', 0.03);
+    // the glass: dark, the red glow deep in it, the street's light across its face
+    B.fill(ell(x, y, rx, rx * 0.92), '#1c0608', 0.02);
+    g.save(); g.shadowColor = 'rgba(255,40,52,0.9)'; g.shadowBlur = 5;
+    B.dab(x + rx * 0.1, y + rx * 0.12, rx * 0.62, rx * 0.56, 'rgba(255,58,66,0.95)');
+    g.restore();
+    B.dab(x + rx * 0.05, y + rx * 0.1, rx * 0.28, rx * 0.25, 'rgba(255,170,160,0.8)');
+    B.line(`M ${x - rx * 0.6} ${y - rx * 0.2} C ${x - rx * 0.3} ${y - rx * 0.7} ${x + rx * 0.2} ${y - rx * 0.8} ${x + rx * 0.5} ${y - rx * 0.6}`, 'rgba(200,214,230,0.55)', rx * 0.16, 0.03);
   }
   const F = 'M 4.2 -4.6 C 5.6 -5.0 7.2 -4.6 7.4 -3.4 C 7.4 -2.2 5.8 -1.6 4.4 -2.0 Z';
-  cel(g, F, A, { sh: 0.4, hl: 0.3, lw: 0.22 });
-  clip(g, F, () => { for (const x of [5.2, 5.8, 6.4]) stroke(g, `M ${x} -4.6 L ${x} -1.8`, A.k, 0.14); });
+  cel(g, F, mat(tone('#7c8792', '#56606b', '#3a424b', '#15191d'), 'steel', 0.3), { sh: 0.5, hl: 0.35, gloss: 0.4 });
+  B.inside(F, () => {
+    for (const x of [5.1, 5.55, 6.0, 6.45, 6.9]) { B.line(`M ${x} -4.8 C ${x + 0.12} -3.8 ${x + 0.12} -2.8 ${x} -1.8`, 'rgba(10,12,14,0.65)', 0.13, 0.03); B.line(`M ${x + 0.14} -4.8 C ${x + 0.26} -3.8 ${x + 0.26} -2.8 ${x + 0.14} -1.8`, 'rgba(210,220,230,0.3)', 0.06, 0.02); }
+    B.dab(6.2, -2.4, 1.2, 0.5, 'rgba(30,26,22,0.45)');
+    B.dab(5.6, -4.3, 0.9, 0.3, 'rgba(230,236,242,0.35)');
+  });
 }
 function lightTorso(g) {
   uniform(g);
