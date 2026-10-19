@@ -1151,8 +1151,20 @@ function tarp(g, x0, x1, yTop, yEdge, c, stripe = null, seed = 1) {
     fill(g, Pt, '#6c6450', 0.9);
     g.save(); g.setLineDash([0.5, 0.45]); stroke(g, Pt, '#2a2016', 0.15, 0.8); g.restore();
     texture(g, 'canvas', 0.6, 2.4);
+    // stretched over its frame: the cloth sags between the rafters, rainwater
+    // pooling dark in each sag, the ridge of every rafter catching the sky;
+    // the hem soaked darker; the bulb under it warming the underside
+    const n = Math.max(2, Math.round((x1 - x0) / 18));
+    for (let i = 0; i <= n; i++) {
+      const rx = x0 + (x1 - x0) * i / n;
+      fill(g, rect(rx - 0.5, yTop, rx + 0.5, yEdge + 3), 'rgba(200,214,232,0.12)');
+      if (i < n) { const sx = rx + (x1 - x0) / n / 2; const sg = g.createRadialGradient(sx, yTop + (yEdge - yTop) * 0.45, 0, sx, yTop + (yEdge - yTop) * 0.45, (x1 - x0) / n * 0.5); sg.addColorStop(0, 'rgba(0,0,0,0.22)'); sg.addColorStop(1, 'rgba(0,0,0,0)'); fill(g, T, sg); }
+    }
+    const hm = g.createLinearGradient(0, yEdge - 2, 0, yEdge + 3); hm.addColorStop(0, 'rgba(0,0,0,0)'); hm.addColorStop(1, 'rgba(0,0,0,0.3)'); fill(g, T, hm);
   });
   stroke(g, `M ${x0 - 2} ${yEdge} Q ${mid} ${yEdge + 2.6} ${x1 + 2} ${yEdge}`, '#000', 0.4, 0.3);
+  // drips gathering along the hem
+  for (let i = 0; i < 6; i++) { const dx = x0 + r() * (x1 - x0), t = (dx - x0) / (x1 - x0), dy = yEdge + 2.6 * 4 * t * (1 - t); fill(g, ell(dx, dy + 0.5, 0.2, 0.32), '#c8d8ec', 0.6); }
   for (const x of [x0 - 1.4, x1 + 1.4]) { fill(g, rect(x - 0.45, yEdge - 0.4, x + 0.45, 0), '#3a3a38'); fill(g, rect(x - 0.45, yEdge - 0.4, x - 0.1, 0), '#5a5a56'); }
 }
 
