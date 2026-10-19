@@ -189,7 +189,7 @@ export function paintHawk(g, size, t = 0, o = {}) {
     B.dab(36.5, 68, 7, 15, 'rgba(18,9,5,0.6)');
     B.dab(46, 77, 11, 5, 'rgba(18,9,5,0.42)');
     B.dab(57, 72.5, 7, 3.2, 'rgba(34,15,8,0.4)');
-    for (const y of [60.5, 63.8]) B.line(`M 34.2 ${y} C 38 ${y + 1.4} 42 ${y + 1.4} 46 ${y}`, 'rgba(40,18,10,0.35)', 0.5, 0.4);
+    for (const y of [60.5, 63.8]) B.line(`M 34.2 ${y} C 38 ${y + 1.4} 42 ${y + 1.4} 46 ${y}`, 'rgba(40,18,10,0.22)', 0.5, 0.6);
     for (const y of [61.3, 64.6]) B.line(`M 35 ${y} C 38.6 ${y + 1.2} 42 ${y + 1.2} 45.4 ${y}`, 'rgba(200,130,96,0.14)', 0.35, 0.3);
   });
 
@@ -330,8 +330,14 @@ export function paintHawk(g, size, t = 0, o = {}) {
   // --- the cap: herringbone tweed, the peak low over the eyes
   B.fill(CAP, '#463d31', 0.25);
   B.inside(CAP, () => {
-    g.save(); g.globalAlpha = 0.22; g.strokeStyle = '#1e1912'; g.lineWidth = 0.35;
-    for (let x = 18; x < 92; x += 1.6) for (let y = 8; y < 36; y += 2.4) { g.beginPath(); const s = ((x / 1.6) | 0) % 2 ? 1 : -1; g.moveTo(x, y); g.lineTo(x + 0.8, y + s * 1.1); g.stroke(); }
+    // the herringbone, so fine it reads as a texture, not a pattern: soft, uneven,
+    // lost in the shadow under the crown
+    g.save(); g.strokeStyle = '#1e1912'; g.lineWidth = 0.3;
+    const M0 = g.getTransform(); g.filter = `blur(${(0.25 * Math.hypot(M0.a, M0.b)).toFixed(2)}px)`;
+    for (let x = 18; x < 92; x += 1.6) for (let y = 8; y < 36; y += 2.4) {
+      g.globalAlpha = 0.06 + r() * 0.1;
+      g.beginPath(); const s = ((x / 1.6) | 0) % 2 ? 1 : -1; g.moveTo(x + (r() - 0.5) * 0.4, y); g.lineTo(x + 0.8, y + s * 1.1); g.stroke();
+    }
     g.restore();
     texture(g, 'wool', 0.6, 7);
     B.dab(46, 14, 22, 8, 'rgba(120,110,96,0.45)');               // the night sky on the crown
