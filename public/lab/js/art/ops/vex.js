@@ -13,7 +13,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, boot, headShape, skinGlaze, neck, korBand, stitch, rivet, buckle, grime, scuffs,
+  glove, boot, headShape, skinGlaze, skinDetail, neck, korBand, stitch, rivet, buckle, grime, scuffs,
 } from './body.js';
 
 const PAL = {
@@ -262,7 +262,7 @@ function head(g) {
   neck(g, PAL.scarf, { wide: 0.1, sh: 1.0 });
   const H = headShape({ jaw: 1 });
   cel(g, H, S, { sh: 1.2, hl: 0.35 });
-  skinGlaze(g, H);
+  skinGlaze(g, H); skinDetail(g, H, { seed: 11 });
   clip(g, H, () => {
     // soot on the skin round the goggles
     const sg = g.createRadialGradient(2.6, -6.8, 1.0, 2.6, -6.8, 3.4); sg.addColorStop(0, 'rgba(0,0,0,0)'); sg.addColorStop(0.45, 'rgba(25,20,16,0.38)'); sg.addColorStop(1, 'rgba(25,20,16,0)');

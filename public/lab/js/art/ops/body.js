@@ -11,7 +11,7 @@
 // proximal joint with +x the bone's front; torso up -y from the hip centre;
 // head up -y from the neck base; foot at the ankle with the ground at +2.5.
 import { cel, fill, stroke, clip, blob, limb, curve } from '../kit.js';
-import { Brush } from '../paint.js';
+import { Brush, rnd } from '../paint.js';
 
 // Heads drawn for the old 64-unit figure are painted at this scale: with the
 // higher neck they land at ~1/7.
@@ -273,6 +273,24 @@ export function skinGlaze(g, d, o = {}) {
     B.dab(2.5, -4.9, 1.5, 1.1, `rgba(196,86,66,${0.13 * k})`);
     B.dab(1.5, -7.2, 1.0, 1.3, `rgba(70,36,22,${0.2 * k})`);
     B.dab(1.0, -2.6, 3.0, 1.2, `rgba(40,20,12,${0.3 * k})`);
+  });
+}
+// Skin up close (head frame, facing +x): pores and fine blotches, the warm
+// red where the light turns into shadow (light through skin), and the sheen
+// of skin in the rain on the forehead, the cheekbone and the nose. `dark`
+// for deep skin: the sheen reads stronger, the blotches weaker.
+export function skinDetail(g, d, { seed = 9, dark = false } = {}) {
+  const M = g.getTransform(), B = new Brush(g, Math.hypot(M.a, M.b)), r = rnd(seed);
+  B.inside(d, () => {
+    for (let i = 0; i < 220; i++) {
+      const x = -1.5 + r() * 6.2, y = -10 + r() * 7.5;
+      B.dab(x, y, 0.05 + r() * 0.07, 0.04 + r() * 0.06, r() < 0.6 ? `rgba(70,30,18,${dark ? 0.1 : 0.14})` : `rgba(255,226,200,${dark ? 0.06 : 0.1})`);
+    }
+    B.dab(-0.8, -6.6, 1.0, 3.2, 'rgba(190,60,40,0.16)');
+    const sh = dark ? 0.32 : 0.2;
+    B.dab(3.0, -9.0, 1.4, 0.5, `rgba(255,244,230,${sh})`, 1, 'source-over', -0.2);
+    B.dab(3.3, -5.4, 0.9, 0.4, `rgba(255,240,224,${sh})`, 1, 'source-over', -0.4);
+    B.dab(4.6, -5.6, 0.35, 0.3, `rgba(255,246,236,${sh * 1.3})`);
   });
 }
 // Hair as a soft mass combed in one direction: the shape filled and lit, then

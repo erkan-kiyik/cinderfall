@@ -11,7 +11,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, boot, headShape, korBand, stitch, rivet, buckle, grime, scuffs, softEye, softBrow, skinGlaze, softHair, neck,
+  glove, boot, headShape, korBand, stitch, rivet, buckle, grime, scuffs, softEye, softBrow, skinGlaze, skinDetail, softHair, neck,
 } from './body.js';
 
 const PAL = {
@@ -185,7 +185,7 @@ function head(g) {
   softHair(g, ell(-4.4, -8.6, 1.55, 1.45), Hr.m, 'rgba(150,110,80,0.7)', [-0.4, -1], 90, 11);
   const HD = headShape({ jaw: 0.2 });
   cel(g, HD, S, { sh: 0.9, hl: 0.35 });
-  skinGlaze(g, HD);
+  skinGlaze(g, HD); skinDetail(g, HD, { seed: 19 });
   // hair pulled back hard from the brow to the knot
   const HAIR = 'M 3.4 -9.0 C 2.4 -10.0 0.6 -10.6 -1.2 -10.4 C -3.2 -10.1 -4.2 -8.6 -4.0 -6.6 C -3.9 -5.6 -3.4 -4.6 -2.8 -4.0 L -1.8 -4.4 C -1.4 -5.6 -1.0 -6.6 -0.2 -7.6 C 0.8 -8.4 2.2 -8.8 3.4 -9.0 Z';
   softHair(g, HAIR, Hr.m, 'rgba(150,110,80,0.75)', [-1, 0.22], 320, 12);

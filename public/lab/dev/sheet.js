@@ -274,7 +274,7 @@ if (what === 'board-faces') {
     g.drawImage(big, x0 + w / 2 - big.width * 0.42 - 2 * z, 150 - (big.height - 6 * z - 68 * z));
     g.restore();
     g.fillStyle = '#f4f1ea'; g.font = '700 30px Rajdhani'; g.fillText(OPS[id].name, x0, 712);
-    g.fillStyle = '#ff9a5c'; g.font = '700 18px Rajdhani'; g.fillText(OPS[id].role, x0 + 120, 712);
+    g.fillStyle = '#ff9a5c'; g.font = '700 18px Rajdhani'; g.fillText(OPS[id].role, x0 + 12 + g.measureText(OPS[id].name).width * 1.7, 712);
   });
 }
 if (what === 'board-arms') {

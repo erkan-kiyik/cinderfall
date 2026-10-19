@@ -12,7 +12,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, PELVIS,
-  glove, boot, headShape, skinGlaze, neck, softHair, korBand, stitch, rivet, buckle, grime, scuffs,
+  glove, boot, headShape, skinGlaze, skinDetail, neck, softHair, korBand, stitch, rivet, buckle, grime, scuffs,
 } from './body.js';
 
 const PAL = {
@@ -236,7 +236,7 @@ function head(g) {
   neck(g, S, { wide: 0.35, glaze: true });
   const HD = headShape({ jaw: 1 });
   cel(g, HD, S, { sh: 1.2, hl: 0.35 });
-  skinGlaze(g, HD);
+  skinGlaze(g, HD); skinDetail(g, HD, { seed: 17 });
   clip(g, HD, () => {
     // grey stubble along the jaw and the back of the head, cropped grey hair
     for (let k = 0; k < 120; k++) { const x = -3.6 + ((k * 37) % 76) / 10, y = -5.8 + ((k * 53) % 46) / 10; if (x < 0.5 || y > -3.2) fill(g, `M ${x} ${y} l 0.08 0.12 l -0.06 0.02 Z`, '#8d8a84', 0.7); }
