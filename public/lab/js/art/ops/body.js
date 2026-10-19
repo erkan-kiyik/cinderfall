@@ -283,6 +283,20 @@ export function skinGlaze(g, d, o = {}) {
     B.dab(1.0, -2.6, 3.0, 1.2, `rgba(40,20,12,${0.3 * k})`);
   });
 }
+// Wool wound round a neck or a face, painted over its shape d: each fold a soft
+// trough of shade with the ridge above it catching the light; `folds` are point
+// lists running along the wrap, `c` the cloth's tone.
+export function knitFolds(g, d, folds, c) {
+  const M = g.getTransform(), B = new Brush(g, Math.hypot(M.a, M.b));
+  const path = (pts, dy = 0) => 'M ' + pts.map(([x, y], i) => (i ? 'L ' : '') + x + ' ' + (y + dy)).join(' ');
+  B.inside(d, () => {
+    for (const f of folds) {
+      B.line(path(f), c.k, 0.46, 0.32, 0.68);
+      B.line(path(f, -0.36), c.l, 0.26, 0.24, 0.38);
+    }
+  });
+}
+
 // Skin up close (head frame, facing +x): pores and fine blotches, the warm
 // red where the light turns into shadow (light through skin), and the sheen
 // of skin in the rain on the forehead, the cheekbone and the nose. `dark`

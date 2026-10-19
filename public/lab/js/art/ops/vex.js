@@ -14,6 +14,7 @@ import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
   glove, boot, headShape, skinGlaze, skinDetail, neck, korBand, stitch, rivet, buckle, grime, scuffs,
+  knitFolds,
 } from './body.js';
 
 const PAL = {
@@ -148,6 +149,7 @@ function chest(g) {
   const WRAP = blob([[-3.6, -24.2], [0.4, -25.0], [4.2, -24.4], [4.9, -22.6], [3.6, -21.2], [0.2, -20.8], [-3.4, -21.2], [-4.4, -22.6]]);
   cel(g, WRAP, PAL.scarf, { sh: 0.9, hl: 0.35 });
   clip(g, WRAP, () => { stroke(g, curve([[-3.8, -22.4], [-0.4, -23.4], [3.0, -23.2], [4.6, -22.4]]), PAL.scarf.d, 0.3); stroke(g, curve([[-3.0, -24.0], [0.6, -24.5], [3.8, -24.0]]), PAL.scarf.l, 0.2, 0.6); });
+  knitFolds(g, WRAP, [[[-3.8, -23.4], [-0.8, -24.1], [2.4, -24.0], [4.4, -23.3]], [[-3.6, -21.8], [-0.4, -21.6], [2.8, -21.8], [4.6, -22.0]], [[1.0, -23.0], [2.6, -22.7], [4.2, -22.8]]], PAL.scarf);
   const END = 'M 2.0 -22.0 L 4.0 -22.1 C 4.8 -20.2 5.2 -18.2 5.3 -16.0 L 2.9 -16.0 C 2.7 -18.0 2.4 -20.0 2.0 -22.0 Z';
   cel(g, END, PAL.scarf, { sh: 0.5, hl: 0.3, lw: 0.28 });
   clip(g, END, () => fill(g, 'M 2 -17.4 L 6 -17.4 L 6 -16.9 L 2 -16.9 Z', '#d9cdb4', 0.7));
@@ -308,6 +310,8 @@ function head(g) {
     const br = g.createRadialGradient(4.6, -2.8, 0.1, 4.6, -2.8, 1.6); br.addColorStop(0, 'rgba(40,6,6,0.35)'); br.addColorStop(1, 'rgba(40,6,6,0)');
     g.fillStyle = br; g.fillRect(2, -5, 4, 4);
   });
+  // pulled up tight over the nose: the wool bunches in folds round the jaw
+  knitFolds(g, MUFF, [[[-3.2, -4.1], [-0.8, -4.5], [2.0, -4.6], [4.2, -4.2]], [[-3.0, -2.4], [-0.6, -2.1], [2.2, -2.2], [4.6, -2.6]], [[2.6, -3.9], [3.8, -3.6], [5.0, -3.4]], [[-1.6, -1.6], [0.8, -1.4], [3.0, -1.6]]], PAL.scarf);
 }
 
 // Runtime scarf: tails simulated as verlet chains and drawn with this segment

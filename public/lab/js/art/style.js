@@ -43,7 +43,7 @@ export const RARITY = {
 // Shared materials.
 export const M = {
   skinA: tone('#f3c3a0', '#dca07c', '#b37355', '#7c4634'),
-  skinB: tone('#c98a5e', '#a86a44', '#7e4a2f', '#4f2c1c'),
+  skinB: tone('#c48e6c', '#a26e51', '#7a4d36', '#4c2e20'),
   skinC: tone('#8a5a3c', '#6d4430', '#4e2f21', '#2e1a12'),
   skinD: tone('#f0d0b4', '#d9b293', '#ad836a', '#6f4d3d'),
   black: tone('#3a3f4a', '#262a33', '#181b21', '#0b0d11'),
