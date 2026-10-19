@@ -44,8 +44,16 @@ export function glove(g, ctx, mat, o = {}) {
   if (ctx.far) cel(g, THUMB, t(mat), { sh: 0.6, hl: 0.25 });
   cel(g, PALM, t(mat), { sh: 0.9, hl: 0.35 });
   clip(g, PALM, () => {
-    if (o.fingerless) cel(g, 'M -3 3.9 L 3 3.7 L 3 7 L -3 7 Z', t(o.fingerless), { sh: 0.6, hl: 0.25, line: false });
-    for (const x of [-0.95, 0.15, 1.15]) stroke(g, `M ${x} 4.0 L ${x + 0.06} 5.3`, t(mat).k, 0.26);
+    // four fingers curled round the grip, each its own rounded form with the dark
+    // between them; the knuckles' ridge catching the light across the back
+    for (let i = 0; i < 4; i++) {
+      const x = -2.05 + i * 1.03, y0 = 2.55 + (i === 0 ? 0.15 : 0), y1 = 5.6 - Math.abs(i - 1.5) * 0.18;
+      const F = `M ${x + 0.52} ${y0} C ${x + 1.1} ${y0} ${x + 1.12} ${y0 + 0.6} ${x + 1.12} ${y0 + 1} L ${x + 1.08} ${y1 - 0.5} C ${x + 1.06} ${y1 + 0.05} ${x - 0.02} ${y1 + 0.05} ${x - 0.04} ${y1 - 0.5} L ${x - 0.08} ${y0 + 1} C ${x - 0.08} ${y0 + 0.6} ${x - 0.06} ${y0} ${x + 0.52} ${y0} Z`;
+      cel(g, F, t(mat), { sh: 0.35, hl: 0.28, ao: 0.75, bounce: 0.15 });
+      if (o.fingerless) clip(g, `M -3 3.9 L 3 3.7 L 3 7 L -3 7 Z`, () => cel(g, F, t(o.fingerless), { sh: 0.35, hl: 0.25, ao: 0.6 }));
+    }
+    stroke(g, 'M -1.9 2.7 C -0.6 2.45 0.8 2.4 2.0 2.55', t(mat).l, 0.22, 0.45);
+    stroke(g, 'M -1.9 2.95 C -0.6 2.7 0.8 2.65 2.0 2.8', t(mat).k, 0.14, 0.35);
   });
   if (o.knuckle) cel(g, KNUCKLE, t(o.knuckle), { sh: 0.35, hl: 0.2, lw: 0.26 });
   if (!ctx.far) cel(g, THUMB, t(mat), { sh: 0.6, hl: 0.25 });
