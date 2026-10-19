@@ -246,7 +246,7 @@ const ABIL = {
 };
 if (what === 'board-ops') {
   const ids = ['vex', 'hale', 'morrow', 'kite', 'brick'];
-  const g = board(2400, 1090, 'OPERATÖRLER', 'KOR · boyanmış görünüm · gerçek oran, malzeme dokusu, ince sıcak kontur');
+  const g = board(2400, 1090, 'OPERATÖRLER', 'KOR · boyanmış görünüm · gerçek oran, malzeme dokusu, çizgisiz: yalnız ışık ve gölge');
   const s = 7.4;
   ids.forEach((id, i) => {
     const f = figureCanvas(OPS[id], s);
