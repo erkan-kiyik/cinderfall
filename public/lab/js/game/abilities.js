@@ -36,7 +36,7 @@ export const ABILITIES = {
   brick: [{ k: 'charge', cd: 9 }, { k: 'armor', cd: 18 }, { k: 'unstop', ult: 1, dur: 6 }],
 };
 // each operator's signature colour (docs §9.2)
-const COLOR = { vex: '#d9533a', hale: '#e6c25c', morrow: '#4fd2c4', kite: '#7ec8ff', brick: '#e2782f' };
+const COLOR = { vex: '#d9533a', hale: '#e6c25c', morrow: '#a3ad7f', kite: '#7ec8ff', brick: '#e2782f' };
 const rand = (a, b) => a + Math.random() * (b - a);
 
 export class Abilities {

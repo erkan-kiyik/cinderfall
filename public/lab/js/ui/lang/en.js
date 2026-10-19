@@ -89,7 +89,7 @@ export default {
   'op.hale.quote': 'Five minutes. Not a second more.',
   'op.morrow.job': 'Vanta signals analyst',
   'op.morrow.night': 'Off shift. The records reached the desk last winter: thirty-seven detained, six missing, every one timed.',
-  'op.morrow.keep': 'A Vanta monocle, retuned to cyan',
+  'op.morrow.keep': 'The roll neck from the listening room',
   'op.morrow.quote': 'Ninety seconds. Then they sweep again.',
   'op.kite.job': 'Courier',
   'op.kite.night': 'Eighteen, on a roof. First to see the chimney stop smoking.',

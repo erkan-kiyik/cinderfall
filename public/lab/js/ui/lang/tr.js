@@ -89,7 +89,7 @@ export default {
   'op.hale.quote': 'Beş dakika, fazlası olmaz.',
   'op.morrow.job': 'Vanta sinyal analisti',
   'op.morrow.night': 'Nöbette değildi. Kayıtlar geçen kış masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle.',
-  'op.morrow.keep': 'Vanta monoklü, camgöbeğine çevrili',
+  'op.morrow.keep': 'Dinleme odasından kalma balıkçı yaka kazak',
   'op.morrow.quote': 'Doksan saniye. Sonra yeniden tararlar.',
   'op.kite.job': 'Kurye',
   'op.kite.night': 'On sekiz yaşındaydı, bir çatıda. Bacadan dumanın kesildiğini ilk o fark etti.',

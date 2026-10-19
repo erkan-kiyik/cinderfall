@@ -320,7 +320,7 @@ Bu bölüm çizimden önce yazıldı; kodlar (`public/lab/js/art/ops/*.js`,
   kanvas, deri, yün, yansıtıcı bant, solmuş güvenlik turuncusu, konteyner
   sacı. Neon, uzay giysisi, mor cüppe, robot zırhı yok.
 - **Renkler soluk ve kirli.** Her birinin tek imza rengi geçmişinden gelir
-  (FLINT'in atkısı, WARDEN'in kaskı, VESPER'in sinyal ışığı, SKYE'ın gözlüğü,
+  (FLINT'in atkısı, WARDEN'in kaskı, VESPER'in sırt telsizi, SKYE'ın gözlüğü,
   BULWARK'ın turuncusu); gerisi is, pas, kömür, lacivert.
 - **Takım işareti:** sol üst kolda aynı yerde, aynı boyda kor bandı: koyu
   kumaş üstünde turuncu bir kor lekesi. Vanta'dan ayıran ortak öğe.
@@ -336,12 +336,12 @@ Bu bölüm çizimden önce yazıldı; kodlar (`public/lab/js/art/ops/*.js`,
 |---|---|---|---|---|---|---|
 | **FLINT** (saldırı) | 29, üçüncü kuşak ocakçı | yuvarlak kaynak gözlüğü, örgü bere, uçuşan uzun kırmızı atkı, kalın deri ceket | siyah örgü bere; deri çerçeveli yuvarlak yeşil kaynak gözlüğü; babasının atkısı burnun üstüne çekili | yanık kahve deri ocakçı ceketi (yamalı, kıvılcım lekeli); önünde ocak çeliğinden kesilmiş paslı plaka, "3" şablonu, iki deri kayış | uzun deri kaynak eldiveni; is grisi kanvas pantolon, dizde deri yama; çelik burunlu ocakçı botu | is siyahı, yanık kahve, kül grisi, pas; **sendika kırmızısı** atkı |
 | **WARDEN** (savunma) | 41, kapatılan itfaiyenin son ekip amiri | yuvarlak itfaiye kaskı, inik altın vizör, dizüstü itfaiye ceketi, sırtta halligan | **beyaz amir kaskı** (isli, siyah şerit), altın vizör, gri yanmaz başlık | kömür grisi itfaiye ceketi, göğüste ve etekte sarı-gümüş-sarı yansıtıcı bant, göğüs cebinde telsiz | sarı-kahve itfaiye eldiveni; aynı kumaştan pantolon, dizde bant; siyah itfaiye çizmesi | kömür, kum, yansıtıcı gümüş/sarı; **kask beyazı** |
-| **VESPER** (kontrol) | 33, eski Vanta sinyal analisti | uzun ince; diz altı lacivert kaban; sırtta telsiz çantası ve tek esnek anten | topuzlu koyu saç; burnun üstüne boyunluk; tek kulaklık ve mikrofon; sağ gözde eski Vanta monoklü, ışığı **camgöbeğine** çevrilmiş | lacivert yün kaban, yaka kalkık; altında Vanta gri-mavi kazak, göğsünde **sökülmüş armanın izi** | sol önkolda bileğe bağlı küçük terminal; dar koyu pantolon, uzun bağcıklı bot | lacivert-siyah, Vanta gri-mavisi (sökülmüş), kemik rengi kulaklık; **camgöbeği** |
+| **VESPER** (kontrol) | 33, eski Vanta sinyal analisti | orta boy, ince; kalçaya kadar saha ceketi; sırtta eski bir **sırt telsizi**, şerit anteni ağırlığıyla geriye eğik | **açık yüz**, gözaltları yorgun; koyu kahve saç ensede **at kuyruğu** (yürürken sallanır); tek kulaklı kulaklık, mikrofonu ağız köşesinde | soluk zeytin pamuklu saha ceketi (göğüs ve kalça cepleri, çıtçıtlı fermuar kapağı, sırtta yama), yakasından dinleme odasından kalma **gri-mavi balıkçı yaka kazak**; omuzlarda telsizin kayışları, göğüs kayışında spiral kablolu **ahize**; ceketin üstünden kemer | parmakları kesik yün eldiven (kadranlar için), sade çelik kol saati; antrasit iş pantolonu (yan cepli), baldır ortası kahverengi bağcıklı bot | soluk zeytin, antrasit, Vanta gri-mavisi, kahverengi deri; **üstünde ışık saçan hiçbir şey yok** |
 | **SKYE** (keşif) | 22, eski kurye; dron yapar | kısa, hafif; bisiklet kaskı, bol rüzgârlık, çapraz postacı çantası, dizlik; yanında hurda dron | çıkartmalı mat siyah bisiklet kaskı; aynalı **gök mavisi** spor gözlük; desenli bandana | soluk hardal rüzgârlık (sırtta yansıtıcı şerit), altında koyu sweatshirt; yamalı kanvas postacı çantası | sıvanmış kollar, parmaksız bisiklet eldiveni; siyah tayt üstüne kısa kargo şort, siyah dizlik, yıpranmış koşu ayakkabısı | hardal, kömür, krem; **gök mavisi** |
 | **BULWARK** (ağır) | 47, liman vinç operatörü | en iri; baret, iki filtreli yarım maske, kalın turuncu iş ceketi, konteyner sacından göğüs ve omuz plakaları | soluk sarı baret, kafa lambası; koyu güvenlik gözlüğü; iki **magenta filtreli** yarım yüz maske | soluk **güvenlik turuncusu** iş ceketi, iki yansıtıcı bant, yağ lekeleri; üstünde konteyner kapısından kesilmiş oluklu mavi plaka, beyaz şablon kod | omuzlarda oluklu sac; kalın deri iş eldiveni; lacivert iş tulumu, dizde yansıtıcı; büyük çelik burunlu bot | güvenlik turuncusu, konteyner mavisi, gri; magenta filtre |
 
 Arayüz renkleri (yetenek HUD'u, listeler) imza renginden: FLINT `#d9533a`,
-WARDEN `#e6c25c`, VESPER `#4fd2c4`, SKYE `#7ec8ff`, BULWARK `#e2782f`.
+WARDEN `#e6c25c`, VESPER `#a3ad7f`, SKYE `#7ec8ff`, BULWARK `#e2782f`.
 
 ### 9.3 Vanta
 | | Ne | Ayırt edici |
@@ -653,7 +653,7 @@ parlayan auralar. İkisi de bu şehre ait değil.
 - Yetenek eski işin aletinden çıkar; ışık parlaması değil, gerçek bir nesne
   görünür (kapı, tüp, su, duman kutusu, dron, sac). Mekanik aynı kalır.
 - Her yeteneğin rengi operatörün imza renginden (§9.2): FLINT `#d9533a`,
-  WARDEN `#e6c25c`, VESPER `#4fd2c4`, SKYE `#7ec8ff`, BULWARK `#e2782f`.
+  WARDEN `#e6c25c`, VESPER `#a3ad7f`, SKYE `#7ec8ff`, BULWARK `#e2782f`.
 - Etrafı parlayan aura yok; etkin olduğu kor, toz, kıvılcım, su ile anlaşılır.
 
 **Dosya alanları:** yaş · eski iş · Söndürme gecesi (o gece neredeydi) ·
@@ -663,7 +663,7 @@ yanında taşıdığı · kendi ağzından bir söz (konuşma biçimiyle, §1.4)
 |---|---|---|---|---|---|
 | FLINT | 29 | Ocakçı, üçüncü kuşak | Fırının başındaydı. Babası Halil Usta'yı o gece götürdüler. | Babasının sendika atkısı | "Sonra konuşuruz." |
 | WARDEN | 41 | İtfaiye ekip amiri, 4. istasyon | Ekip çağrıldı, kapıdan çevrildi. İstasyon bir ay sonra mühürlendi. | Halligan, istasyonun anahtarı | "Beş dakika, fazlası olmaz." |
-| VESPER | 33 | Vanta sinyal analisti | Nöbette değildi. Kayıtlar dört yıl sonra masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle. | Vanta monoklü, camgöbeğine çevrili | "Doksan saniye. Sonra yeniden tararlar." |
+| VESPER | 33 | Vanta sinyal analisti | Nöbette değildi. Kayıtlar dört yıl sonra masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle. | Dinleme odasından kalma balıkçı yaka kazak | "Doksan saniye. Sonra yeniden tararlar." |
 | SKYE | 22 | Kurye | On sekiz yaşındaydı. Bacadan duman kesilince ilk o fark etti, bir çatıdan. | Hurdadan yaptığı dron | "Çatıdan iki dakika, sokaktan beş. Gidelim mi?" |
 | BULWARK | 47 | Liman vinç operatörü | Limanın kapandığı sabah vinçten indi. Bir daha binmedi. | Konteyner kapısından kesilmiş göğüs sacı | "Bu kadar." |
 

@@ -6,7 +6,7 @@ import { GUNS } from '../game/guns.js';
 export const OPS = [
   { id: 'vex', name: 'FLINT', role: 'assault', age: 29, color: '#d9533a', abil: [['dash', 'dash'], ['flash', 'flare'], ['overload', 'furnace']] },
   { id: 'hale', name: 'WARDEN', role: 'defense', age: 41, color: '#e6c25c', abil: [['wall', 'door'], ['mine', 'tank'], ['turret', 'nozzle']] },
-  { id: 'morrow', name: 'VESPER', role: 'control', age: 33, color: '#4fd2c4', abil: [['smoke', 'canister'], ['slow', 'waves'], ['blackout', 'blind']] },
+  { id: 'morrow', name: 'VESPER', role: 'control', age: 33, color: '#a3ad7f', abil: [['smoke', 'canister'], ['slow', 'waves'], ['blackout', 'blind']] },
   { id: 'kite', name: 'SKYE', role: 'recon', age: 22, color: '#7ec8ff', abil: [['drone', 'drone'], ['heat', 'heat'], ['watch', 'roof']] },
   { id: 'brick', name: 'BULWARK', role: 'heavy', age: 47, color: '#e2782f', abil: [['charge', 'charge'], ['armor', 'plate'], ['unstop', 'quote']] },
 ];
