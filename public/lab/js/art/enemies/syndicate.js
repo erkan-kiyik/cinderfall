@@ -147,7 +147,15 @@ function chest(g) {
 function shoulderPlate(g, ctx, A = PAL.armor, big = false) {
   const P = big ? blob([[-4.6, -3.0], [0.2, -4.4], [4.6, -2.8], [4.6, 3.2], [-4.4, 3.4]]) : blob([[-4.0, -2.6], [0.2, -3.8], [4.2, -2.4], [4.2, 2.0], [-4.0, 2.2]]);
   cel(g, P, ctx.t(A), { sh: 1.0, hl: 0.5 });
-  clip(g, P, () => { stroke(g, curve([[-3.6, -1.6], [0.2, -2.8], [3.8, -1.4]]), '#ffffff', 0.14, 0.6); if (!ctx.far) emblem(g, 0.4, 0.0, 1.25, PAL.white.m); });
+  clip(g, P, () => {
+    stroke(g, curve([[-3.6, -1.6], [0.2, -2.8], [3.8, -1.4]]), '#ffffff', 0.14, 0.6);
+    if (!ctx.far) emblem(g, 0.4, 0.0, 1.25, PAL.white.m);
+    // a moulded plate: the lower lame riding under it, its edge in shadow
+    const B = brush(g), y = big ? 1.6 : 1.0;
+    B.fill(`M -5 ${y} L 5 ${y - 0.2} L 5 4 L -5 4 Z`, 'rgba(10,14,20,0.28)', 0.25);
+    B.line(`M -5 ${y} L 5 ${y - 0.2}`, 'rgba(8,10,14,0.7)', 0.16, 0.05);
+    B.line(`M -5 ${y - 0.22} L 5 ${y - 0.42}`, 'rgba(226,234,242,0.45)', 0.1, 0.04);
+  });
   worn(g, P, big ? [-4.6, -4.4, 4.6, 3.4] : [-4.0, -3.8, 4.2, 2.2], big ? 37 : 33, ctx.far ? 0.6 : 1);
 }
 function upper(g, ctx) {
@@ -232,23 +240,43 @@ export function shield(g) {
   });
 }
 function heavyTorso(g) { g.save(); g.scale(1.12, 1); uniform(g); carrier(g); g.restore(); }
+// A riot guard: a hard moulded plate, not a cushion. Its edges are bevelled (a
+// lit lip on top, a shadow under), it is split into lames that ride over each
+// other, a webbing strap holds it on, and the street has worn it (worn()).
+function guard(g, ctx, d, [x0, y0, x1, y1], seed, lames = 2) {
+  const A = ctx.t(PAL.armor), B = brush(g), h = y1 - y0;
+  cel(g, d, A, { sh: 0.9, hl: 0.5, gloss: 0.3 });
+  clip(g, d, () => {
+    for (let i = 1; i < lames; i++) {
+      const y = y0 + (h * i) / lames;
+      B.fill(`M ${x0 - 1} ${y - 0.15} L ${x1 + 1} ${y - 0.35} L ${x1 + 1} ${y + 0.9} L ${x0 - 1} ${y + 1.1} Z`, 'rgba(10,14,20,0.3)', 0.25);
+      B.line(`M ${x0 - 1} ${y} L ${x1 + 1} ${y - 0.2}`, 'rgba(8,10,14,0.7)', 0.16, 0.05);
+      B.line(`M ${x0 - 1} ${y - 0.22} L ${x1 + 1} ${y - 0.42}`, 'rgba(226,234,242,0.45)', 0.1, 0.04);
+    }
+    B.line(`M ${x0} ${y0 + 0.35} L ${x1} ${y0 + 0.15}`, 'rgba(236,242,248,0.55)', 0.16, 0.05);
+    B.line(`M ${x0} ${y1 - 0.3} L ${x1} ${y1 - 0.5}`, 'rgba(8,10,14,0.55)', 0.3, 0.12);
+  });
+  // the strap round the limb, its buckle on the outside
+  const sy = y0 + h * 0.62;
+  B.fill(`M ${x0 - 0.3} ${sy} L ${x1 + 0.3} ${sy - 0.2} L ${x1 + 0.3} ${sy + 0.75} L ${x0 - 0.3} ${sy + 0.95} Z`, ctx.far ? '#151a21' : '#1d232c', 0.04);
+  B.fill(`M ${x1 - 1.4} ${sy - 0.25} L ${x1 - 0.4} ${sy - 0.3} L ${x1 - 0.4} ${sy + 0.95} L ${x1 - 1.4} ${sy + 1.0} Z`, '#6d7680', 0.03);
+  B.line(`M ${x1 - 1.3} ${sy - 0.1} L ${x1 - 0.5} ${sy - 0.15}`, 'rgba(220,228,236,0.6)', 0.08, 0.02);
+  worn(g, d, [x0, y0, x1, y1], seed, ctx.far ? 0.5 : 0.9);
+}
 function heavyUpper(g, ctx) {
   const t = ctx.t;
   g.save(); g.scale(1.12, 1); cel(g, UPPER, t(PAL.suit), { sh: 1.5, hl: 0.45 }); g.restore();
   // the upper-arm guard under the bigger shoulder plate
-  cel(g, blob([[-2.9, 3.0], [2.8, 2.8], [2.6, 9.4], [-2.6, 9.6]]), t(PAL.armor), { sh: 0.8, hl: 0.4 });
+  guard(g, ctx, 'M -2.9 3.0 C -1.0 2.6 1.0 2.6 2.8 2.8 C 3.0 5.0 2.9 7.4 2.6 9.2 C 0.8 9.6 -0.9 9.6 -2.6 9.4 C -2.9 7.4 -3.0 5.0 -2.9 3.0 Z', [-2.9, 2.6, 2.8, 9.6], 51, 2);
   shoulderPlate(g, ctx, PAL.armor, true);
 }
 function heavyFore(g, ctx) {
   fore(g, ctx);
-  const VB = blob([[-2.5, 1.4], [2.4, 1.2], [2.3, 7.6], [-2.2, 7.8]]);
-  cel(g, VB, ctx.t(PAL.armor), { sh: 0.8, hl: 0.4 });
-  clip(g, VB, () => stroke(g, curve([[-1.8, 2.0], [0.4, 1.8], [1.8, 2.4]]), '#ffffff', 0.12, 0.6));
+  guard(g, ctx, 'M -2.5 1.4 C -0.8 1.0 0.8 1.0 2.4 1.2 C 2.5 3.4 2.5 5.6 2.3 7.6 C 0.7 7.9 -0.8 7.9 -2.2 7.8 C -2.5 5.6 -2.6 3.4 -2.5 1.4 Z', [-2.5, 1.0, 2.4, 7.9], 53, 2);
 }
 function heavyThigh(g, ctx) {
   thigh(g, ctx);
-  const TP = blob([[-3.2, 1.6], [3.4, 1.2], [3.8, 6.0], [3.2, 9.6], [-2.8, 10.0], [-3.6, 6.0]]);
-  cel(g, TP, ctx.t(PAL.armor), { sh: 1.0, hl: 0.45 });
+  guard(g, ctx, 'M -3.2 1.6 C -1.0 1.1 1.6 1.0 3.4 1.2 C 3.9 4.0 3.8 7.0 3.2 9.6 C 1.2 10.1 -0.8 10.2 -2.8 10.0 C -3.5 7.4 -3.6 4.4 -3.2 1.6 Z', [-3.6, 1.0, 3.8, 10.2], 55, 3);
 }
 
 export const KALKANLI = {
