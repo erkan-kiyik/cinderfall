@@ -746,8 +746,27 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 - **Kenar ışığı:** figürün kenarındaki ışık en yakın lambaya döner ve
   yakınlıkla ısınır; lambadan uzakta gecenin soğuk kenarına döner.
 
+- **Yağmur ve kişiler:** dışarıda her yukarı bakan yüzey (omuz, kask, kol,
+  silahın üstü) ince soğuk bir ıslaklıkla parlar; yağmur damlaları en çok
+  lambanın konisinde görünür.
+- **Hava ve objektif:** uzak şehir alttan kendi lambalarıyla aydınlanan bir
+  pusa, orta mesafe ince bir sise gömülür; ikisi de sokağa odaklı bir
+  objektifte olduğu gibi hafif flu. Köşelerde renk saçağı (bloom açıkken).
+- **Namlu alevi:** sert yıldız değil, öne fırlayan yumuşak bir gaz patlaması,
+  frenden yanlara iki dil, sıcak bir çekirdek.
+
 **Mekân ve arayüz**
 - Sığınak duvarlarında nem izleri, lekeler, duvarın zemine değdiği yerde
   biriken karanlık; zemin ve masada kir.
+- Silahlar: üstten yuvarlanan ışık, üst yüzeyde lamba çizgisi, boyuna
+  fırçalanmış metal, el değen kenarlarda aşınma.
+- Eller dört ayrı parmakla kabzayı sarar; boğumların sırtı ışığı yakalar.
+- Vanta'nın tazyikli su aracı ve kapı kulübesi: camda ışık, tekerlek arkasında
+  çamur, eklerden pas akıntısı. Hücumcu'nun maskesi kalıplanmış kauçuk,
+  derindeki koyu camlarda kırmızı ışık, dişli filtre; Tetikçi'nin yarığında
+  füme camın ardında yanan sensör.
+- Düşenlerin bedeninin altında zemine temas gölgesi.
+- Operatör dosyasında kişinin fotoğrafı ataşla tutturulmuş, rol damgası
+  köşesinde.
 - Cephanelikte sahip olunmayan silahın fiyatı sınıf etiketinin yerini alır
   (üstüne binmez).
