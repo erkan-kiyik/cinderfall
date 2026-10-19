@@ -277,9 +277,11 @@ export class M2Scene {
     // the nearest lamp to each figure: it throws their shadow on the wall behind
     // (magnified about the lamp, fainter the further off it is) and warms the
     // rim of light along the side that faces it
-    const lit = this.e.fxLevel !== 0, bulbs = this.shadowLamps(out);
+    // (off with the dynamic lights setting: they are light the lamps throw)
+    const lit = this.e.fxLevel !== 0 && R.lightsOn, bulbs = this.shadowLamps(out);
     const near = chars.map((c) => {
       let b = null;
+      if (!lit) return null;
       for (const q of bulbs) if (!b || Math.abs(c.rx - q[0]) < Math.abs(c.rx - b[0])) b = q;
       return b && Math.abs(c.rx - b[0]) < 120 ? b : null;
     });
