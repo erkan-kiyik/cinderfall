@@ -283,10 +283,10 @@ export function skinGlaze(g, d, o = {}) {
     B.dab(1.0, -2.6, 3.0, 1.2, `rgba(40,20,12,${0.3 * k})`);
   });
 }
-// Wool wound round a neck or a face, painted over its shape d: each fold a soft
+// Cloth folds (wool wound round a neck, a jacket's creases) over its shape d: each fold a soft
 // trough of shade with the ridge above it catching the light; `folds` are point
 // lists running along the wrap, `c` the cloth's tone.
-export function knitFolds(g, d, folds, c) {
+export function clothFolds(g, d, folds, c) {
   const M = g.getTransform(), B = new Brush(g, Math.hypot(M.a, M.b));
   const path = (pts, dy = 0) => 'M ' + pts.map(([x, y], i) => (i ? 'L ' : '') + x + ' ' + (y + dy)).join(' ');
   B.inside(d, () => {

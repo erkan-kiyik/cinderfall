@@ -12,6 +12,7 @@ import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
   glove, kneePad, headShape, skinGlaze, skinDetail, neck, korBand, stitch, rivet, buckle, grime, scuffs,
+  clothFolds,
 } from './body.js';
 
 const PAL = {
@@ -56,6 +57,8 @@ function torso(g) {
     fold(g, [[-6.4, -14.6], [-4.8, -11.0], [-5.4, -6.0]], PAL.wind, 0.34);
     fold(g, [[-2.8, -9.6], [0.0, -8.6], [3.0, -9.2]], PAL.wind);
     fold(g, [[-1.8, -6.6], [0.6, -5.8], [3.6, -6.4]], PAL.wind, 0.26);
+    // nylon crumples: many small creases, sharper than wool, a sheen on the shoulder
+    clothFolds(g, WIND, [[[-7.6, -19.6], [-5.6, -18.2], [-3.4, -18.6]], [[-8.2, -12.6], [-6.6, -11.8], [-4.8, -12.4]], [[0.4, -21.6], [2.2, -20.4], [4.2, -20.8]], [[-4.6, -13.6], [-2.4, -12.8], [0.2, -13.4], [2.8, -12.6]], [[1.8, -11.2], [3.6, -10.4], [5.8, -10.8]], [[-6.2, -8.2], [-4.2, -7.4], [-2.6, -8.0]]], PAL.wind);
     // a tear, taped over
     cel(g, 'M -2.2 -18.6 L 0.6 -19.4 L 0.9 -18.4 L -1.9 -17.6 Z', PAL.tape, { sh: 0.2, hl: 0.2, lw: 0.2 });
     // the courier company's patch, cut off: its outline and loose threads
@@ -147,6 +150,7 @@ function upper(g, ctx) {
   const t = ctx.t;
   cel(g, UPPER, t(PAL.wind), { sh: 1.6, hl: 0.5 });
   clip(g, UPPER, () => { fold(g, [[-2.0, 2.0], [-0.4, 3.0], [1.6, 2.6]], t(PAL.wind), 0.28); fold(g, [[-1.8, 7.6], [0.0, 8.6], [1.8, 8.2]], t(PAL.wind), 0.3); });
+  clothFolds(g, UPPER, [[[-2.2, 4.6], [-0.6, 5.4], [1.8, 5.0]], [[-2.0, 6.4], [0.2, 6.9], [2.0, 6.5]]], t(PAL.wind));
   if (!ctx.far) korBand(g, t(PAL.sweat));
   // the sleeve shoved up and bunched over the elbow
   const BUNCH = blob([[-2.8, 9.0], [2.6, 8.8], [3.1, 10.4], [2.5, 12.6], [-2.4, 12.8], [-3.2, 11.0]]);
@@ -238,6 +242,8 @@ function head(g) {
     }
     stroke(g, curve([[-2.2, -3.6], [0.8, -4.0], [4.8, -3.8]]), PAL.bandana.d, 0.28);
   });
+  // tied tight behind the head: the cotton drawn into folds toward the knot and the point
+  clothFolds(g, BAND, [[[-2.2, -4.6], [0.4, -4.9], [3.2, -5.0]], [[-1.8, -2.6], [0.4, -2.6], [2.6, -2.4], [4.4, -2.8]], [[1.0, -1.6], [2.0, -0.8]], [[3.6, -3.2], [4.6, -2.4]]], PAL.bandana);
   // the glasses: a wrap of mirrored sky blue, the arm back to the ear
   stroke(g, 'M 1.6 -7.4 C 0.6 -7.4 -0.6 -7.2 -1.4 -6.8', H.k, 0.28);
   const gr = g.createLinearGradient(1.6, -8.4, 3.2, -5.8);
