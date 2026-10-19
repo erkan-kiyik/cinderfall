@@ -9,6 +9,7 @@
 //   D  gate court    shield trooper, riflemen, a rusher; hack the gate terminal
 //   E  extraction    the gate opens, a last squad arrives, reach the flare
 import { cel, fill, stroke, clip } from '../kit.js';
+import { Brush, rnd } from '../paint.js';
 import { M, tone, mat, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
@@ -87,6 +88,22 @@ export function booth(g, x0, w = 44, h = 58) {
   fill(g, rect(x0 + 27, -h + 30, x0 + 30, -h + 31), '#1a1c20');
   cel(g, rect(x1 - 12, -h - 14, x1 - 10, -h - 5), STEEL, { sh: 0.2, hl: 0.2, lw: 0.25 });
   for (let k = 0; k < 4; k++) fill(g, ell(x1 - 11 + k * k * 0.6, -h - 17 - k * 3.4, 1.2 + k * 0.8, 0.9 + k * 0.5), '#c9ccd2', 0.22 - k * 0.04);
+  // a booth that has stood on the quay through the winters: the glass carries the
+  // yard's floodlights and is fogged at its foot, rust bleeds from every seam and
+  // rivet, the panels are dented, the plinth stained by the spray off the apron
+  const Bk = new Brush(g, Math.hypot(g.getTransform().a, g.getTransform().b)), r = rnd((x0 * 7) | 0);
+  Bk.inside(B, () => {
+    Bk.inside(rect(x0 + 5, -h + 12, x1 - 5, -h + 30), () => {
+      const gl = g.createLinearGradient(x0 + 5, -h + 12, x1 - 5, -h + 30);
+      gl.addColorStop(0, 'rgba(230,240,255,0.22)'); gl.addColorStop(0.3, 'rgba(0,0,0,0)'); gl.addColorStop(0.62, 'rgba(230,240,255,0.12)'); gl.addColorStop(0.7, 'rgba(0,0,0,0)');
+      g.fillStyle = gl; g.fillRect(x0 + 5, -h + 12, w - 10, 18);
+      Bk.dab((x0 + x1) / 2, -h + 30, w * 0.5, 3, 'rgba(200,210,220,0.3)');
+    });
+    for (const x of [x0 + w * 0.34, x0 + w * 0.68, x1 - 13, x1 - 3]) Bk.line(`M ${x + 0.4} ${-h + 4 + r() * 8} C ${x + 0.8} ${-h * 0.6} ${x + 0.3} ${-h * 0.3} ${x + 0.9} ${-2 - r() * 4}`, 'rgba(118,64,34,0.42)', 0.8 + r() * 0.8, 0.5);
+    for (let i = 0; i < 4; i++) Bk.dab(x0 + 3 + r() * (w - 6), -h * (0.2 + r() * 0.6), 2 + r() * 2, 1.4 + r() * 1.4, 'rgba(0,0,0,0.18)');
+    Bk.dab((x0 + x1) / 2, -2, w * 0.6, 6, 'rgba(48,40,30,0.55)');
+    for (let i = 0; i < 40; i++) Bk.dab(x0 + r() * w, -1 - r() * 9, 0.3 + r() * 0.6, 0.2 + r() * 0.5, `rgba(${50 + r() * 30 | 0},${42 + r() * 20 | 0},30,${0.3 + r() * 0.3})`);
+  });
 }
 export const BOOTH_TV = [28.5, -58 + 26.3];
 
