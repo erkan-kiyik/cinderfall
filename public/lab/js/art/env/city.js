@@ -1294,8 +1294,20 @@ function hal(g) {
   // the clerestory: small arched windows, most of the glass gone
   for (let x = 12; x < w - 10; x += 16) {
     if (x > 50 && x < 140) continue;
-    fill(g, `M ${x} -58 L ${x} -66 A 4 4 0 0 1 ${x + 8} -66 L ${x + 8} -58 Z`, (x / 16) % 3 === 1 ? '#2a2d33' : '#121315');
+    // a ring of brick voussoirs round the arch, the opening set back into the wall
+    stroke(g, `M ${x - 0.6} -66 A 4.6 4.6 0 0 1 ${x + 8.6} -66`, '#7a4a36', 1.2);
+    for (let a = 0.15; a < 3.1; a += 0.42) stroke(g, `M ${x + 4 + Math.cos(Math.PI + a) * 4} ${-66 + Math.sin(Math.PI + a) * 4} L ${x + 4 + Math.cos(Math.PI + a) * 5.2} ${-66 + Math.sin(Math.PI + a) * 5.2}`, '#3a2218', 0.14);
+    const AW = `M ${x} -58 L ${x} -66 A 4 4 0 0 1 ${x + 8} -66 L ${x + 8} -58 Z`;
+    fill(g, AW, (x / 16) % 3 === 1 ? '#2a2d33' : '#121315');
+    clip(g, AW, () => {
+      // what is left of the glass: a shard or two holding the sky
+      if ((x / 16) % 2 === 0) fill(g, `M ${x} -58 L ${x} -62.6 L ${x + 2.6} -58 Z`, '#3a4250', 0.9);
+      fill(g, `M ${x + 8} -66 L ${x + 8} -61 L ${x + 5.6} -66.4 Z`, '#30363f', 0.8);
+      const tg = g.createLinearGradient(0, -70, 0, -63); tg.addColorStop(0, 'rgba(0,0,0,0.6)'); tg.addColorStop(1, 'rgba(0,0,0,0)');
+      fill(g, rect(x, -70, x + 8, -63), tg);
+    });
     fill(g, rect(x - 1, -58, x + 9, -57), P.sill);
+    washDown(g, x - 1, x + 9, -57);
   }
   // the great door: shutter down, sealed
   fill(g, `M 62 0 L 62 -42 A 38 38 0 0 1 138 -42 L 138 0 Z`, '#3a3632');
