@@ -796,3 +796,19 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
   gerçek ağaç: çatallanıp incelen dallar, alacalı kabuk, tohum topları.
 - **Hasar:** vurulunca görüşün kenarı koyu kan kırmızısına kararır; atışın
   geldiği yan yumuşakça parlar.
+- **Giysiler:** bütün operatörlerin, Vanta'nın ve Gall'ın kumaşı kıvrımlı:
+  koltuk altından bele çekilen kıvrımlar, kemer üstünde toplanan kumaş,
+  kollarda dirsek kıvrımları, diz arkasında toplanan pantolon. FLINT'in eski
+  deri ceketi belde ve kolda buruşuk.
+- **Kalkanlı'nın kalkanı:** bir şeylerin çarptığı yerler beyaz çatlak yıldızı,
+  dibi sürtünmekten çizik, yüzünde yağmur damlaları.
+- **Gökyüzü:** yağmurlu gece kapalıdır: yıldız yok; tepeden bulut tabanının
+  sodyum kahvesine tek bir yumuşak geçiş, alttan aydınlanan yumuşak bulut
+  kümeleri.
+- **Pazar hâli ve liman:** hâlin kemerli pencereleri tuğla kemerli ve duvarın
+  içinde; limandaki Vanta panosu panel panel basılı, alttan projektörle
+  aydınlanır, üst kenarından kir akar, ayağında bakım iskelesi var.
+- **Sığınak:** kilim dokuma ve eskimiş: ortası yürünmekten solmuş, sandalye
+  izleri, kenarlarında kir, yarısı dökülmüş saçak.
+- **HAWK:** kasketinin balıksırtı dokusu tüccar ekranının boyunda bile kumaş
+  gibi okunur (ızgara değil); atkısı oval değil, düzensiz bir sarım.
