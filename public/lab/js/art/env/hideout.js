@@ -284,10 +284,25 @@ function room(g) {
   stroke(g, `M ${sx - 9} -38 C ${sx - 8} -43 ${sx - 3} -43 ${sx - 3} -38`, '#2a2c2e', 0.35);
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, ell(sx, -16, 26, 16), '#ff8a3a', 0.06); g.restore();
   // the cot and its wool blanket
-  fill(g, rect(872, -16, 966, -12), '#4a4a46'); for (const x of [874, 962]) fill(g, rect(x, -12, x + 2, 0), '#3a3a36');
-  fill(g, `M 872 -16 C 890 -21 930 -20 966 -17 L 966 -12 L 872 -12 Z`, '#5a3a30');
-  clip(g, `M 872 -16 C 890 -21 930 -20 966 -17 L 966 -12 L 872 -12 Z`, () => { for (let x = 872; x < 966; x += 6) fill(g, rect(x, -22, x + 2, -12), '#3a2620', 0.5); texture(g, 'wool', 0.6, 2); });
-  fill(g, ell(950, -19, 10, 3.6), '#b8b0a0');
+  {
+    const lg = (ax, ay, bx, by, st) => { const q = g.createLinearGradient(ax, ay, bx, by); st.forEach(([o, c]) => q.addColorStop(o, c)); return q; };
+    // an army cot: canvas on a wooden frame, X legs; the wool blanket thrown over
+    // it and hanging off the near side in folds, its striped hem; a pillow dented
+    fill(g, rect(872, -14, 966, -12), lg(0, -14, 0, -12, [[0, '#7a6448'], [1, '#3a2c1c']]));
+    for (const x of [876, 960]) { stroke(g, `M ${x} -12 L ${x + 6} 0 M ${x + 6} -12 L ${x} 0`, '#3a2c1c', 0.9); }
+    fill(g, rect(872, -12, 966, -11), '#000', 0.4);
+    const BL = 'M 872 -16 C 884 -20.4 904 -21 924 -20 C 940 -19.4 954 -18.6 966 -17 L 966 -12 C 960 -8 954 -6 950 -7 C 944 -9 938 -6 932 -7.4 C 924 -9 916 -5.6 908 -7 C 898 -8.6 890 -6 882 -8 C 878 -9 874 -10.6 872 -12 Z';
+    fill(g, BL, lg(0, -21, 0, -6, [[0, '#7a4a3c'], [0.35, '#5a3a30'], [1, '#2e1c16']]));
+    clip(g, BL, () => {
+      texture(g, 'wool', 0.6, 2);
+      for (const [x, a] of [[884, 0.4], [906, 0.35], [930, 0.4], [948, 0.3]]) { fill(g, `M ${x - 1.4} -16 C ${x - 1} -12 ${x - 2} -9 ${x - 1} -6 L ${x + 1.6} -6 C ${x + 1} -9 ${x + 2} -12 ${x + 1.2} -16 Z`, '#1a100c', a); fill(g, `M ${x + 1.6} -16 C ${x + 2} -12 ${x + 1.2} -9 ${x + 2.2} -6 L ${x + 3} -6 C ${x + 2.2} -9 ${x + 3} -12 ${x + 2.4} -16 Z`, '#b8806a', 0.12); }
+      for (const y of [-10.4, -9.2]) stroke(g, `M 872 ${y} C 890 ${y + 2} 920 ${y + 2.6} 966 ${y - 0.4}`, '#c8b080', 0.35, 0.5);
+      fill(g, rect(872, -22, 966, -17), '#d8b090', 0.08);
+    });
+    const PL = 'M 940 -17.6 C 940 -21.6 944 -23 950 -23 C 956 -23 960 -21.6 960.4 -18 C 958 -16.6 944 -16.4 940 -17.6 Z';
+    fill(g, PL, lg(0, -23, 0, -16.6, [[0, '#d8d0c0'], [0.6, '#b0a898'], [1, '#7a7468']]));
+    fill(g, ell(951, -19.4, 4, 1.4), '#7a7468', 0.4);
+  }
   // shadows where the floor meets the wall and in the corners
   const gr = g.createLinearGradient(0, -20, 0, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.35)');
   fill(g, rect(x0, -20, x1, 0), gr);
