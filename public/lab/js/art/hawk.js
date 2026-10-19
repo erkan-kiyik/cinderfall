@@ -140,13 +140,25 @@ export function paintHawk(g, size, t = 0, o = {}) {
 
   // --- the hair under the cap: cropped short and grey at the temple, over the ear and down the nape
   const HAIR = 'M 30.4 34.6 C 36 33.6 44 33 50.4 33.6 C 54 34 56.6 35.4 57.4 38 C 56 39.4 54.6 39.6 53.4 39.2 C 51.6 38.6 49.6 38.8 48.2 39.8 C 46.6 41.4 46 44 46.2 47 C 46.4 50 47.4 52.4 48.4 54 C 46 56 42 57 37.6 57.6 C 34.6 56.6 32.2 53 31 48 C 30.2 43 30 38 30.4 34.6 Z';
-  B.fill(HAIR, '#3c3732', 1.0, 0.9);
-  B.inside(HAIR, () => { B.dab(54, 37, 5, 3, 'rgba(150,140,128,0.55)'); B.dab(34, 48, 6, 10, 'rgba(14,10,8,0.6)'); });
-  B.hairs(900, 61, (i, rr) => {
-    const x = 30 + rr() * 28, y = 33.6 + rr() * 24;
+  B.fill(HAIR, '#47423c', 0.35, 0.95);
+  B.inside(HAIR, () => { B.dab(54, 37, 5, 3, 'rgba(160,150,138,0.5)'); B.dab(34, 48, 7, 11, 'rgba(14,10,8,0.6)'); B.dab(44, 55, 8, 3, 'rgba(20,14,10,0.45)'); });
+  // cropped short, salt and pepper, combed down and back; the hairs at the edge cross it
+  B.hairs(2600, 61, (i, rr) => {
+    const x = 30 + rr() * 28, y = 33.4 + rr() * 24.4;
     if (!inP(P(HAIR), x, y)) return null;
-    const lit = Math.min(1, Math.max(0, (x - 36) / 22 - (y - 36) / 40)), v = 60 + lit * 110 + (rr() - 0.5) * 50;
-    return [x, y, 1.2 + (rr() - 0.5) * 0.6 + (x - 44) * 0.02, 0.5 + rr() * 0.7, `rgba(${v + 4 | 0},${v | 0},${v - 6 | 0},1)`, 0.08, 0.45];
+    const lit = Math.min(1, Math.max(0, (x - 38) / 18 - (y - 36) / 36)), salt = rr() < 0.45;
+    const v = (salt ? 150 : 52) + lit * 70 + (rr() - 0.5) * 30;
+    return [x, y, Math.PI / 2 + 0.55 + (rr() - 0.5) * 0.5, 0.35 + rr() * 0.55, `rgba(${v + 4 | 0},${v | 0},${v - 6 | 0},1)`, 0.07, salt ? 0.35 + lit * 0.3 : 0.5];
+  });
+  // the skin up close: pores and fine blotches on the cheek and temple, the grey shadow
+  // of shaved stubble along the cheek above the beard
+  B.inside(HEAD, () => {
+    const rp = rnd(83);
+    for (let i = 0; i < 700; i++) {
+      const x = 52 + rp() * 32, y = 30 + rp() * 22;
+      B.dab(x, y, 0.1 + rp() * 0.14, 0.08 + rp() * 0.1, rp() < 0.6 ? 'rgba(70,34,22,0.15)' : 'rgba(255,214,180,0.11)');
+    }
+    B.dab(64, 49.5, 9, 3.2, 'rgba(70,78,88,0.16)', 1, 'source-over', 0.32);
   });
   // stubble on the cheek where the beard thins out toward the cheekbone
   B.hairs(700, 71, (i, rr) => {
