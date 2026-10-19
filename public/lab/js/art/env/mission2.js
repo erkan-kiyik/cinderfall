@@ -124,14 +124,36 @@ export const TARP_W = 80;
 export function crossTarp(g, k = 0) {
   const cols = [['#4e6a82', '#c6ccd0'], ['#7a6240', null], ['#8a4a3a', '#d8cdb8'], ['#5a6448', null]][k % 4];
   stroke(g, `M -2 -126 Q ${TARP_W / 2} -121 ${TARP_W + 2} -126`, '#141210', 0.4);
-  const T = `M 4 -125 Q ${TARP_W / 2} -120.4 ${TARP_W - 4} -125 L ${TARP_W - 6} -114 Q ${TARP_W / 2} -108 6 -114 Z`;
+  // the canvas hangs off the rope at its two ties and sags between them; its
+  // hem falls in loose scallops where the weight of the wet cloth gathers
+  const hem = [[TARP_W - 6, -114], [TARP_W - 16, -111.4], [TARP_W - 27, -109.8], [TARP_W / 2, -108.6], [27, -109.6], [16, -111.2], [6, -114]];
+  let H = '';
+  for (let i = 1; i < hem.length; i++) { const [ax, ay] = hem[i - 1], [bx, by] = hem[i]; H += ` Q ${(ax + bx) / 2} ${(ay + by) / 2 + 1.6} ${bx} ${by}`; }
+  const T = `M 4 -125 Q ${TARP_W / 2} -120.4 ${TARP_W - 4} -125 L ${TARP_W - 6} -114${H} Z`;
   fill(g, T, cols[0]);
   clip(g, T, () => {
     if (cols[1]) for (let x = 2; x < TARP_W; x += 7) fill(g, rect(x, -128, x + 3.4, -100), cols[1], 0.55);
     const gr = g.createLinearGradient(0, -126, 0, -108); gr.addColorStop(0, 'rgba(0,0,0,0.35)'); gr.addColorStop(1, 'rgba(255,240,220,0.06)'); fill(g, T, gr);
     texture(g, 'canvas', 0.6, 2.4);
+    // the drape: folds pulled from each tie toward the low middle, the cloth between
+    // them bellied; the wet top catching the sky
+    g.save(); g.lineCap = 'round';
+    const M0 = g.getTransform(); g.filter = `blur(${(1.1 * Math.hypot(M0.a, M0.b)).toFixed(2)}px)`;
+    for (const [x0, x1, a] of [[7, 16, 0.32], [9, 27, 0.26], [TARP_W - 7, TARP_W - 16, 0.32], [TARP_W - 9, TARP_W - 27, 0.26], [TARP_W / 2 - 4, TARP_W / 2 - 2, 0.16]]) {
+      const mx = (x0 + x1) / 2 + (x1 > x0 ? -2 : 2);
+      g.globalAlpha = a; g.strokeStyle = '#000'; g.lineWidth = 2.4;
+      g.beginPath(); g.moveTo(x0, -124); g.quadraticCurveTo(mx, -117, x1, -110); g.stroke();
+      g.globalAlpha = a * 0.45; g.strokeStyle = '#fff'; g.lineWidth = 1.4;
+      g.beginPath(); g.moveTo(x0 + 1.8, -124); g.quadraticCurveTo(mx + 1.8, -117, x1 + 1.8, -110); g.stroke();
+    }
+    g.restore();
+    const sk = g.createLinearGradient(0, -126, 0, -119); sk.addColorStop(0, 'rgba(170,186,206,0.18)'); sk.addColorStop(1, 'rgba(170,186,206,0)'); fill(g, rect(0, -127, TARP_W, -119), sk);
+    // the two bulbs under it warm the cloth from below
+    for (const bx of [18, 62]) { const w = g.createRadialGradient(bx, -106, 0, bx, -106, 13); w.addColorStop(0, 'rgba(255,196,128,0.38)'); w.addColorStop(1, 'rgba(255,196,128,0)'); fill(g, rect(bx - 14, -126, bx + 14, -100), w); }
+    // one of them patched
+    if (k % 4 === 2) { fill(g, rect(24, -121, 31, -116), '#6a6a52', 0.8); stroke(g, rect(24, -121, 31, -116), '#2a261e', 0.15, 0.6); }
   });
-  stroke(g, `M 6 -114 Q ${TARP_W / 2} -108 ${TARP_W - 6} -114`, '#000', 0.5, 0.35);
+  stroke(g, `M 6 -114${H}`, '#000', 0.5, 0.35);
   for (const x of [4, TARP_W - 4]) stroke(g, `M ${x} -125 L ${x + (x < 40 ? 2 : -2)} -114`, '#3a3228', 0.25);
   stroke(g, `M -2 -119 Q ${TARP_W / 2} -104 ${TARP_W + 2} -119`, '#0f0e0c', 0.25);
   for (const x of [18, 62]) bulb(g, x, -107.4 + Math.abs(x - TARP_W / 2) * 0.12, 2.4, false);
