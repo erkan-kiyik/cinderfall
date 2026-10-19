@@ -714,6 +714,8 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 | Bombaatar | THUMPER GL | TOKMAK GL | Thumper = tokmak |
 | Sandık | Standart / Takviyeli / Doğan | Erzak / Mühimmat / Komuta | Bunlar el konmuş Vanta sandıkları; adları Vanta'nın lojistiğinden |
 | Görünüm | Neon Buz | Su Verme | Şehirde neon yok; ocakta çeliğe su verilir |
+| Sonsuz mod | Her 5 bölümde boss | Her 5 dalgada Gall gelir | Gelen bir "boss" değil, Sekreter Gall |
+| Ayar | HUD düzenleyici | Düğme düzeni | Oyuncu düğmeleri taşır; kısaltma yok |
 
 ### 10.12 Gerçekçilik geçişi: ışın izlenmiş karelerin yanına
 Ölçü, seri karelerdi (§8): ışığın nereden geldiği, neyin neyi gölgelediği,
