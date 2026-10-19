@@ -286,6 +286,7 @@ export class M2Scene {
     });
     // characters (each composited through the outline shader)
     const L0 = this.cr.light, R0 = this.cr.rim;
+    this.cr.wet = out && lit ? 0.6 : 0;
     chars.forEach((c, i) => {
       const b = near[i];
       if (b) {
@@ -295,7 +296,7 @@ export class M2Scene {
       } else { this.cr.light = L0; this.cr.rim = R0; }
       this.cr.composite(c, w, restore);
     });
-    this.cr.light = L0; this.cr.rim = R0;
+    this.cr.light = L0; this.cr.rim = R0; this.cr.wet = 0;
     // cover in front
     B.begin(w);
     for (const p of this.C.front) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }

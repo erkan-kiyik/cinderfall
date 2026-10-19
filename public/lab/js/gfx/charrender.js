@@ -37,6 +37,7 @@ uniform float uHard;    // 1: a hard outline (accessibility), 0: soft shade
 uniform vec2 uL;        // toward the key light, in uv, rim width long
 uniform vec3 uRim;      // rim light colour × strength
 uniform vec4 uFlash;    // rgb, amount (hit flash)
+uniform vec3 uWet;      // rain on them: strength, then "up" in uv (one rim width)
 in vec2 vUV; out vec4 o;
 vec4 tap(vec2 uv) { return texture(uTex, clamp(uv, uClamp.xy, uClamp.zw)); }
 void main() {
@@ -55,6 +56,13 @@ void main() {
   float rim = s.a * max(r1 * 0.55, r2);
   s.rgb = mix(s.rgb, uFlash.rgb * s.a, uFlash.a);
   s.rgb += uRim * rim;
+  // out in the rain every upward face is wet: a thin cool sheen along the tops of
+  // the shoulders, the helmet, the arms, broken up a little as water runs
+  if (uWet.x > 0.0) {
+    float up = s.a * (1.0 - tap(vUV + uWet.yz).a) * (1.0 - tap(vUV + uWet.yz * 2.2).a * 0.5);
+    float run = 0.6 + 0.4 * fract(sin(dot(floor(vUV * 900.0), vec2(12.9898, 78.233))) * 43758.5453);
+    s.rgb += vec3(0.5, 0.58, 0.68) * up * run * uWet.x * s.a;
+  }
   float a = mix(av * 0.8, mx, uHard);
   o = s + uInk * (1.0 - s.a) * a;
 }`;
@@ -106,6 +114,7 @@ export class CharRenderer {
     this.rimW = 0.7;        // rim width in units
     this.light = [0.55, -0.84]; // style LIGHT
     this.enemyInk = null; // accessibility: a bright outline colour for enemies
+    this.wet = 0;           // rain on the figures (scenes set it outdoors)
     this.ppu = 5; this.cols = 1; this.cap = 1;
     this.queue = []; this.done = new Map();
   }
@@ -190,6 +199,7 @@ export class CharRenderer {
     const rw = this.rimW * this.ppu / W;
     gl.uniform2f(p.u.uL, this.light[0] * f * rw, -this.light[1] * rw);
     gl.uniform3f(p.u.uRim, this.rim[0], this.rim[1], this.rim[2]);
+    gl.uniform3f(p.u.uWet, this.wet, 0, this.rimW * 0.8 * this.ppu / W);
     gl.uniform4f(p.u.uClamp, uv[0] + 0.5 / W, uv[3] + 0.5 / W, uv[2] - 0.5 / W, uv[1] - 0.5 / W);
     const ink = hard || this.ink;
     gl.uniform4f(p.u.uInk, ink[0], ink[1], ink[2], ink[3]);
