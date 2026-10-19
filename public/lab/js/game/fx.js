@@ -172,7 +172,8 @@ export class Effects {
       B.draw(R.glow, f.x, f.y, 9 * s, 9 * s, 0, rgba('#ffb36b', 0.55 * k));
       if (!f.sup) {
         B.draw(R.muzzle, f.x, f.y, 9 * s, 5 * s, f.a + f.spin * 0.2, rgba('#fff1c8', k));
-        B.draw(R.muzzle, f.x, f.y, 5 * s, 3.4 * s, f.a + 0.4 + f.spin, rgba('#ffb15c', 0.8 * k));
+        // the hotter, shorter inner blast along the same axis (a soft blast is not a star to spin)
+        B.draw(R.muzzle, f.x, f.y, 5.5 * s, 3.2 * s, f.a + f.spin * 0.1, rgba('#ffb15c', 0.8 * k));
       } else B.draw(R.muzzle, f.x, f.y, 4 * s, 2 * s, f.a, rgba('#ffd7a0', 0.6 * k));
     }
     for (const s of this.slashes) {

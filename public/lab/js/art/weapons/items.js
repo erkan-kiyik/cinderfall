@@ -110,12 +110,29 @@ export const FX_SHAPES = {
     },
   },
   // crisp four-point muzzle star, long axis +x
+  // a muzzle blast as a camera catches it: no hard star, a soft cone of burning gas
+  // thrown forward, two soft tongues out of the brake to the sides, a hot core at
+  // the muzzle; all soft-edged, white so the game tints it
   muzzle: {
     box: [-0.4, -1.05, 1.05, 1.05],
     paint: (g) => {
-      g.fillStyle = '#fff';
-      g.beginPath(); g.moveTo(-0.3, 0); g.lineTo(0.15, -0.3); g.lineTo(1, 0); g.lineTo(0.15, 0.3); g.closePath(); g.fill();
-      g.beginPath(); g.moveTo(0.05, -1); g.lineTo(0.22, -0.12); g.lineTo(0.62, -0.46); g.lineTo(0.32, 0); g.lineTo(0.62, 0.46); g.lineTo(0.22, 0.12); g.lineTo(0.05, 1); g.lineTo(-0.08, 0); g.closePath(); g.fill();
+      const blob = (x, y, rx, ry, rot, a) => {
+        g.save(); g.translate(x, y); g.rotate(rot); g.scale(rx, ry);
+        const gr = g.createRadialGradient(0, 0, 0, 0, 0, 1);
+        gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(0.45, `rgba(255,255,255,${a * 0.55})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 1, 0, Math.PI * 2); g.fill(); g.restore();
+      };
+      // the forward cone: a few overlapping lobes, longer and thinner toward its tip
+      blob(0.3, 0, 0.62, 0.3, 0, 0.9);
+      blob(0.62, 0.02, 0.4, 0.17, 0.03, 0.7);
+      blob(0.86, -0.01, 0.2, 0.08, -0.04, 0.5);
+      // the side tongues out of the brake
+      blob(0.2, -0.4, 0.13, 0.46, 0.5, 0.6);
+      blob(0.2, 0.4, 0.13, 0.46, -0.5, 0.6);
+      // the gas tearing at the plume's edges
+      for (const [x, y, r] of [[0.46, -0.14, 0.09], [0.54, 0.13, 0.08], [0.72, -0.08, 0.06], [0.36, 0.17, 0.07]]) blob(x, y, r * 1.6, r, 0.2, 0.45);
+      // the core
+      blob(0.02, 0, 0.18, 0.16, 0, 1);
     },
   },
   // flat white pixel block for UI lines and bars
