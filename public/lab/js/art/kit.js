@@ -201,8 +201,15 @@ export function limb(L, front, back, capA = 0.55, capB = 0.55) {
 }
 
 // --- baking ----------------------------------------------------------------
+// Every canvas the art is painted on is rasterised on the CPU: the soft
+// shading lays hundreds of blurred shadows and filters per figure, and GPU
+// canvases drop or misplace some of them once a canvas holds that many
+// (a far hand gone, slivers of an inner shadow left floating). The bake is
+// done once and cached, so the CPU path costs little and paints the same
+// picture on every device.
 export function canvas(w, h) {
   const c = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(w, h) : Object.assign(document.createElement('canvas'), { width: w, height: h });
+  c.getContext('2d', { willReadFrequently: true });
   return c;
 }
 
