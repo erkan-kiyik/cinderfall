@@ -336,6 +336,10 @@ function face(g, HD) {
     B.dab(3.5, -3.6, 0.12, 0.1, 'rgba(60,26,20,0.5)');
     B.dab(4.0, -3.0, 0.4, 0.14, 'rgba(90,46,32,0.3)');
     B.dab(4.1, -2.5, 0.35, 0.25, 'rgba(255,226,204,0.2)');
+    // warm blood under the skin of the lower cheek and the chin, so the shade there is never grey
+    B.dab(2.9, -3.4, 1.5, 1.0, 'rgba(226,150,120,0.2)');
+    B.dab(3.7, -2.6, 0.7, 0.45, 'rgba(232,168,136,0.18)');
+    B.dab(3.9, -4.15, 0.6, 0.35, 'rgba(232,164,134,0.2)');
   });
 }
 function head(g) {
