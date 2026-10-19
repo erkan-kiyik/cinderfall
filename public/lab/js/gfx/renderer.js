@@ -10,7 +10,8 @@
 //                          ray-traced stills (docs §11). Outdoors the wet
 //                          road below the walking line mirrors the street:
 //                          a screen-space reflection, smeared down the way
-//                          rain-wet asphalt smears it, fading with distance
+//                          rain-wet asphalt smears it, fading with distance;
+//                          and the lens fringes colour a hair toward the corners
 //
 // All targets are RGBA8. Resizing a target never touches the DOM.
 import { program, Target, FS_TRI } from './gl.js';
@@ -93,10 +94,16 @@ uniform vec3 uLift;       // blacks lifted toward this (cool)
 uniform float uWarm;      // warmth in the highlights
 uniform float uTime;
 uniform vec4 uWet;        // walking line (v), wetness, fade length (v), ripple time
+uniform float uCA;        // lens: colour fringing toward the frame's edges
 in vec2 vUV; out vec4 o;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
   vec3 c = texture(uLit, vUV).rgb;
+  // the lens: red and blue land a hair apart toward the corners, as a real lens does
+  if (uCA > 0.0) {
+    vec2 q0 = vUV - 0.5, off = q0 * dot(q0, q0) * uCA;
+    c.r = texture(uLit, vUV + off).r; c.b = texture(uLit, vUV - off).b;
+  }
   // the wet road: the street above the line mirrored below it, smeared down
   // in streaks and broken by the rain, gone a few metres out
   if (uWet.y > 0.0 && vUV.y < uWet.x) {
@@ -257,6 +264,7 @@ export class Renderer {
       gl.uniform3f(u.uTint, G.tint[0], G.tint[1], G.tint[2]);
       gl.uniform3f(u.uLift, G.lift[0], G.lift[1], G.lift[2]);
       gl.uniform1f(u.uWarm, G.warm);
+      gl.uniform1f(u.uCA, lv > 0 ? 0.008 : 0);
       gl.uniform1f(u.uTime, time % 100);
       // world y = 0 (where everyone stands) in v; the reflection fades over 40 units
       if (wet > 0) gl.uniform4f(u.uWet, V[7] * 0.5 + 0.5, wet, Math.abs(V[4]) * 40 * 0.5, time % 100);
