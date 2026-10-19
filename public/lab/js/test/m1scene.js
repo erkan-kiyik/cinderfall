@@ -13,7 +13,7 @@ import { fill, defocus } from '../art/kit.js';
 import { rgba } from '../gfx/batch.js';
 import { ParticleSystem, col } from '../gfx/particles.js';
 
-export const BAKE_VERSION = 'm1-37';
+export const BAKE_VERSION = 'm1-38';
 
 // Pixel density per quality: background layers, characters, effects.
 const DENS = { low: [3, 3.6, 24], med: [4.5, 5.2, 32], high: [6, 7, 48] };

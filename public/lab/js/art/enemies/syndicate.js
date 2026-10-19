@@ -10,7 +10,7 @@ import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
 import { Brush, rnd } from '../paint.js';
 import { M, tone, mat } from '../style.js';
 import { WEAPONS, MAT } from '../weapons/index.js';
-import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, softBrow, softHair, neck as skinNeck, stitch, rivet, buckle, grime, scuffs } from '../ops/body.js';
+import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, softBrow, softHair, neck as skinNeck, stitch, rivet, buckle, grime, scuffs, clothFolds } from '../ops/body.js';
 
 const PAL = {
   armor: mat(tone('#aab7c4', '#7b8b9b', '#546373', '#222c38'), 'paint', 0.1),
@@ -412,6 +412,9 @@ function gallTorso(g) {
     stroke(g, curve([[-5.0, -20.6], [-5.4, -15.0], [-5.0, -9.0], [-5.2, -1.0]]), G.coat.d, 0.3);
     fold(g, [[-4.2, -10.0], [-2.0, -9.2], [0.4, -9.4]], G.coat, 0.24);
   });
+  // heavy wool: drag folds from under the arm toward the belt, the cloth bunched
+  // above the belt and flaring below it, a crease down the skirt
+  clothFolds(g, GCOAT, [[[-7.0, -17.4], [-5.2, -14.6], [-3.6, -11.2]], [[-6.4, -12.6], [-4.4, -10.4], [-2.0, -8.0]], [[-6.4, -7.6], [-3.4, -7.2], [0.2, -7.4]], [[-5.6, -3.6], [-6.0, -0.6]], [[0.4, -3.8], [0.8, -0.6]], [[5.4, -14.6], [4.4, -11.6], [4.2, -8.4]]], G.coat);
   // the shoulder board on the near side, silver piping
   cel(g, 'M -5.6 -22.6 L -1.0 -23.4 L -0.6 -22.2 L -5.2 -21.4 Z', G.coat, { sh: 0.2, hl: 0.2, lw: 0.2 });
   stroke(g, 'M -5.6 -22.6 L -1.0 -23.4', G.silver.m, 0.14);
@@ -430,6 +433,7 @@ function gallUpper(g, ctx) {
   g.save(); g.scale(1.06, 1); cel(g, UPPER, t(G.coat), { sh: 1.5, hl: 0.45 }); g.restore();
   clip(g, UPPER, () => { fold(g, [[-1.6, 8.6], [-0.2, 9.6], [1.4, 9.8]], t(G.coat)); stitch(g, curve([[-2.2, 1.0], [-2.4, 6.0], [-2.0, 11.0]]), t(G.coat).l, 0.06, 0.5); });
   if (!ctx.far) clip(g, UPPER, () => emblem(g, 0.2, 3.2, 1.0, G.silver.m));
+  clothFolds(g, UPPER, [[[-2.0, 6.4], [-0.4, 7.2], [1.8, 6.8]], [[-1.8, 10.6], [0.0, 11.2], [1.8, 10.8]]], t(G.coat));
 }
 function gallFore(g, ctx) {
   const t = ctx.t;
