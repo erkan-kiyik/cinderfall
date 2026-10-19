@@ -217,10 +217,22 @@ function room(g) {
   letters(g, 'KOR KALIR', 760, -70, 8, '#e2692f', { align: 'center', jit: 0.08, seed: 42, a: 0.9 });
   // Vanta's crates, taken: stacked, one prised open, straw spilling
   const CR = (x, y, w, h, open) => {
-    fill(g, rect(x, y, x + w, y + h), '#4a4e3e'); fill(g, rect(x, y, x + w, y + 1.4), '#5e624e');
-    for (let k = x + 3; k < x + w; k += 6) fill(g, rect(k, y + 1.4, k + 0.4, y + h), '#2e3226', 0.6);
-    fill(g, rect(x, y + h - 2, x + w, y + h), '#000', 0.25);
-    emblem(g, x + w / 2, y + h / 2, Math.min(w, h) * 0.18, '#d8dcd0');
+    // painted planks over a frame: the lid's edge catching the lamp, each plank
+    // its own shade, the paint worn to the wood on the corners, rope handles,
+    // the stencilled mark half rubbed off, dark under it where it sits
+    const B = rect(x, y, x + w, y + h);
+    const bg = g.createLinearGradient(0, y, 0, y + h); bg.addColorStop(0, '#565a48'); bg.addColorStop(1, '#3a3e30');
+    fill(g, B, bg);
+    clip(g, B, () => {
+      for (let k = y + 1.4, i = 0; k < y + h; k += 3.2, i++) { fill(g, rect(x, k, x + w, k + 3), i % 2 ? '#fff' : '#000', 0.04); fill(g, rect(x, k + 3, x + w, k + 3.2), '#1e2218', 0.7); }
+      for (const cx of [x, x + w - 2.4]) { fill(g, rect(cx, y, cx + 2.4, y + h), '#3e4234'); fill(g, rect(cx, y, cx + 0.6, y + h), '#6a6e5a', 0.6); }
+      for (const [cx, cy] of [[x + 1.2, y + 1.6], [x + w - 1.2, y + 1.6], [x + 1.2, y + h - 1.4], [x + w - 1.2, y + h - 1.4]]) fill(g, ell(cx, cy, 1.4, 1), '#7a5a3a', 0.6);
+      texture(g, 'wood', 0.5, 2);
+    });
+    fill(g, rect(x, y, x + w, y + 1.4), '#7a7e66'); fill(g, rect(x, y, x + w, y + 0.4), '#a8ac90', 0.7);
+    for (const hx of [x + 3.4, x + w - 5.4]) stroke(g, `M ${hx} ${y + h * 0.42} C ${hx + 0.4} ${y + h * 0.42 + 1.6} ${hx + 1.6} ${y + h * 0.42 + 1.6} ${hx + 2} ${y + h * 0.42}`, '#8a7a5a', 0.45);
+    fill(g, rect(x, y + h - 2, x + w, y + h), '#000', 0.3);
+    g.save(); g.globalAlpha = 0.7; emblem(g, x + w / 2, y + h / 2, Math.min(w, h) * 0.18, '#d8dcd0'); g.restore();
     if (open) { fill(g, poly([[x - 2, y - 4], [x + w + 2, y - 7], [x + w + 2, y - 5], [x - 2, y - 2]]), '#5e624e'); for (let i = 0; i < 14; i++) stroke(g, `M ${x + 2 + r() * (w - 4)} ${y + 0.4} l ${r() * 6 - 3} ${-1 - r() * 3}`, '#c9b070', 0.3); }
   };
   CR(712, -24, 40, 24, false); CR(754, -24, 36, 24, true); CR(716, -46, 34, 22, false);
