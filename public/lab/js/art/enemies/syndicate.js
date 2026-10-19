@@ -87,13 +87,22 @@ function helmet(g) {
     grime(g, -6, -1, DUST);
   });
   worn(g, SHELL, [-5.6, -13.4, 0.6, -1.2], 29, 0.8);
-  // the slit, lit red: a recess that follows the shell's curve, the light inside it
+  // the slit: a recess that follows the shell's curve, smoked glass set in it with the
+  // red sensor light glowing behind the glass, brightest at the core and falling off
+  // to the ends, the street's light across the glass's top edge
   const B = brush(g);
-  B.fill('M 0.9 -8.35 C 2.8 -8.7 4.9 -8.6 6.15 -8.2 L 6.2 -6.9 C 4.9 -7.2 2.8 -7.25 0.95 -7.0 Z', 'rgba(8,9,12,0.95)', 0.06);
-  g.save(); g.shadowColor = PAL.visor.m; g.shadowBlur = 7;
-  B.fill('M 1.2 -8.1 C 2.9 -8.4 4.9 -8.35 6.0 -8.0 L 6.05 -7.2 C 4.9 -7.45 2.9 -7.5 1.25 -7.3 Z', PAL.visor.m, 0.05);
-  g.restore();
-  B.line('M 1.5 -7.85 C 3.0 -8.1 4.8 -8.05 5.8 -7.75', PAL.visor.l, 0.18, 0.06);
+  const REC = 'M 0.9 -8.35 C 2.8 -8.75 4.9 -8.65 6.15 -8.25 C 6.3 -7.8 6.3 -7.3 6.2 -6.9 C 4.9 -7.2 2.8 -7.3 0.95 -7.0 C 0.8 -7.45 0.8 -7.9 0.9 -8.35 Z';
+  B.fill(REC, 'rgba(6,7,10,0.92)', 0.12);
+  const GL = 'M 1.2 -8.1 C 2.9 -8.42 4.9 -8.38 6.0 -8.02 C 6.08 -7.7 6.08 -7.45 6.02 -7.18 C 4.9 -7.46 2.9 -7.52 1.25 -7.28 C 1.14 -7.55 1.14 -7.82 1.2 -8.1 Z';
+  B.fill(GL, '#2a080b', 0.03);
+  B.inside(GL, () => {
+    g.save(); g.shadowColor = 'rgba(255,40,52,0.9)'; g.shadowBlur = 6;
+    B.dab(3.6, -7.72, 2.6, 0.34, 'rgba(255,52,62,0.95)');
+    g.restore();
+    B.dab(3.6, -7.72, 1.3, 0.16, 'rgba(255,190,180,0.9)');
+    B.dab(1.6, -7.7, 0.6, 0.4, 'rgba(10,2,3,0.6)');
+    B.line('M 1.4 -8.02 C 2.9 -8.32 4.8 -8.3 5.9 -7.96', 'rgba(220,226,236,0.45)', 0.08, 0.02);
+  });
   // the comms module over the ear, its stub antenna
   cel(g, 'M -2.4 -7.4 C -1.2 -7.6 -0.6 -7.0 -0.6 -6.2 C -0.6 -5.4 -1.2 -4.9 -2.4 -5.0 Z', A, { sh: 0.4, hl: 0.25, lw: 0.2 });
   rivet(g, -1.5, -6.2, 0.26, PAL.steel);
