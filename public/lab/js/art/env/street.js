@@ -113,6 +113,20 @@ function midIndustry(g) {
   g.font = '700 10px Rajdhani'; g.fillStyle = '#e8d9d9'; g.textBaseline = 'alphabetic';
   g.fillText('VANTA SYNDICATE', 354, B - 20);
   g.font = '600 6px Rajdhani'; g.fillStyle = '#c9a9ae'; g.fillText('DÜZEN · GÜVENLİK · İTAAT', 354, B - 12);
+  // a real hoarding: printed in panels, the seams showing; two floodlights on
+  // arms under it washing the face from below, brightest at the bottom; the
+  // rain's grime run down from the top edge; a service catwalk along its foot
+  clip(g, rect(320, B - 34, 408, B - 2), () => {
+    for (let x = 338; x < 408; x += 18) fill(g, rect(x, B - 34, x + 0.4, B - 2), '#000', 0.35);
+    const fl = g.createLinearGradient(0, B - 2, 0, B - 34); fl.addColorStop(0, 'rgba(255,236,210,0.22)'); fl.addColorStop(0.5, 'rgba(255,236,210,0.06)'); fl.addColorStop(1, 'rgba(0,0,0,0.25)');
+    fill(g, rect(320, B - 34, 408, B - 2), fl);
+    for (const cx of [336, 392]) { const c = g.createRadialGradient(cx, B, 0, cx, B, 26); c.addColorStop(0, 'rgba(255,236,210,0.28)'); c.addColorStop(1, 'rgba(255,236,210,0)'); fill(g, rect(cx - 28, B - 34, cx + 28, B - 2), c); }
+    const r = rng(331);
+    for (let i = 0; i < 12; i++) { const x = 321 + r() * 86, L = 4 + r() * 14, st = g.createLinearGradient(0, B - 34, 0, B - 34 + L); st.addColorStop(0, 'rgba(10,8,10,0.4)'); st.addColorStop(1, 'rgba(10,8,10,0)'); fill(g, rect(x, B - 34, x + 0.4 + r() * 0.8, B - 34 + L), st); }
+  });
+  fill(g, rect(316, B + 1, 412, B + 1.6), '#1c2230'); for (let x = 318; x < 412; x += 4) fill(g, rect(x, B + 1.6, x + 0.3, B + 4), '#1c2230');
+  fill(g, rect(316, B + 3.8, 412, B + 4.3), '#1c2230');
+  for (const cx of [336, 392]) { stroke(g, `M ${cx} ${B + 4} L ${cx} ${B + 1.6}`, '#1c2230', 0.5); fill(g, poly([[cx - 2, B + 1.4], [cx + 2, B + 1.4], [cx + 1.4, B - 0.2], [cx - 1.4, B - 0.2]]), '#2a3140'); fill(g, rect(cx - 1.3, B - 0.4, cx + 1.3, B - 0.1), '#fff1dc', 0.9); }
   // haze between the layers
   fill(g, rect(-10, -64, 610, -40), '#5a5168', 0.16);
   fill(g, rect(-10, -52, 610, -40), '#5a5168', 0.14);
