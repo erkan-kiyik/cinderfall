@@ -42,7 +42,21 @@ export function container(g, x0, y0, x1, y1, t, o = {}) {
     // corner castings, a data plate, rust streaks and a stencil code
     for (const [cx, cy] of [[x0, y0], [x1 - 3, y0], [x0, y1 - 3], [x1 - 3, y1 - 3]]) { fill(g, rect(cx, cy, cx + 3, cy + 3), t.k); fill(g, rect(cx + 0.9, cy + 0.9, cx + 2.1, cy + 2.1), '#0b0d10'); }
     fill(g, rect(dx - 9, y0 + 5, dx - 3, y0 + 9), '#c9ccd2', 0.8);
-    for (const [x, h] of [[x0 + 9, 9], [x0 + 21, 14], [x0 + 33, 7]]) fill(g, rect(x, y0 + 2, x + 1.4, y0 + 2 + h), '#6a3a28', 0.35);
+    // rust run down from the rail and the castings in tapering streaks, bloomed along
+    // the bottom rail where water stands; a dent or two; one panel repainted off-shade
+    const r = rng((x0 * 13 + y0 * 7) | 0), H = y1 - y0;
+    fill(g, rect(x0 + 14 + r() * 20, y0 + 2, x0 + 30 + r() * 24, y1 - 2), r() < 0.5 ? '#fff' : '#000', 0.06);
+    for (let i = 0; i < 7; i++) {
+      const x = i < 2 ? (i ? dx - 2 : x0 + 1) : x0 + 5 + r() * (dx - x0 - 12), L = 4 + r() * H * 0.55, wd = 0.6 + r() * 0.8;
+      const st = g.createLinearGradient(0, y0 + 2, 0, y0 + 2 + L);
+      st.addColorStop(0, 'rgba(112,54,24,0.55)'); st.addColorStop(1, 'rgba(112,54,24,0)');
+      fill(g, `M ${x} ${y0 + 2} L ${x + wd} ${y0 + 2} L ${x + wd * 0.6} ${y0 + 2 + L} L ${x + wd * 0.3} ${y0 + 2 + L} Z`, st);
+    }
+    for (let i = 0; i < 5; i++) fill(g, ell(x0 + 4 + r() * (x1 - x0 - 8), y1 - 2.4, 2 + r() * 5, 1 + r()), '#6a3418', 0.38);
+    for (let i = 0; i < 2; i++) { const ex = x0 + 8 + r() * (dx - x0 - 16), ey = y0 + H * (0.35 + r() * 0.4); fill(g, ell(ex, ey, 3, 2), '#000', 0.16); fill(g, ell(ex - 0.5, ey - 1.4, 2.2, 0.6), '#fff', 0.08); }
+    const wt = g.createLinearGradient(0, y0, 0, y1);
+    wt.addColorStop(0, 'rgba(170,185,205,0.12)'); wt.addColorStop(0.35, 'rgba(170,185,205,0)'); wt.addColorStop(0.8, 'rgba(0,0,0,0)'); wt.addColorStop(1, 'rgba(0,0,0,0.25)');
+    fill(g, B, wt);
     letters(g, code, x0 + 5, y0 + 13, 3.6, 'rgba(244,241,234,0.75)', { kind: 'print', jit: 0 });
     letters(g, '45G1', x0 + 5, y0 + 17.4, 2.6, 'rgba(244,241,234,0.6)', { kind: 'print', jit: 0 });
     if (kor) korMark(g, x0 + 12, y1 - 7, 3, 0.8);

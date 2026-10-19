@@ -1504,16 +1504,36 @@ function boxSide(g, x0, y0, x1, y1, c, code = '', seed = 1, doorRight = true) {
   const B = rect(x0, y0, x1, y1), r = rng(seed), h = y1 - y0;
   fill(g, B, c);
   clip(g, B, () => {
-    for (let x = x0 + 2; x < x1 - 1; x += 2.4) { fill(g, rect(x, y0 + 1.6, x + 0.9, y1 - 1.6), '#000', 0.22); fill(g, rect(x + 0.9, y0 + 1.6, x + 1.3, y1 - 1.6), '#fff', 0.08); }
+    // a patch repainted in a shade that never quite matched
+    if (r() < 0.6) { const px = x0 + 6 + r() * (x1 - x0 - 30); fill(g, rect(px, y0 + 1.6, px + 8 + r() * 10, y1 - 1.6), r() < 0.5 ? '#fff' : '#000', 0.07); }
+    // the corrugation: each rib's flank in shade, its face, the other flank catching the sky
+    for (let x = x0 + 2; x < x1 - 1; x += 2.4) {
+      fill(g, rect(x - 0.3, y0 + 1.6, x + 0.2, y1 - 1.6), '#000', 0.12);
+      fill(g, rect(x + 0.2, y0 + 1.6, x + 0.8, y1 - 1.6), '#000', 0.26);
+      fill(g, rect(x + 0.8, y0 + 1.6, x + 1.3, y1 - 1.6), '#fff', 0.1);
+    }
     fill(g, rect(x0, y0, x1, y0 + 1.6), '#000', 0.25); fill(g, rect(x0, y1 - 1.6, x1, y1), '#000', 0.3);
     const dx = doorRight ? x1 - 14 : x0;
     fill(g, rect(dx, y0 + 1.6, dx + 14, y1 - 1.6), c);
     fill(g, rect(dx + 6.8, y0 + 1.6, dx + 7.2, y1 - 1.6), '#000', 0.4);
     for (const lx of [dx + 2.6, dx + 4.8, dx + 9.2, dx + 11.4]) fill(g, rect(lx, y0 + 2, lx + 0.4, y1 - 2), '#000', 0.35);
     for (const [cx, cy] of [[x0, y0], [x1 - 2, y0], [x0, y1 - 2], [x1 - 2, y1 - 2]]) fill(g, rect(cx, cy, cx + 2, cy + 2), '#1a1a1a', 0.7);
-    for (let i = 0; i < 4; i++) { const x = x0 + 4 + r() * (x1 - x0 - 20); fill(g, rect(x, y0 + 1.6, x + 0.8, y0 + 3 + r() * h * 0.5), '#5a3018', 0.35); }
+    // rust: run down in streaks from the top rail and the corner castings, bloomed
+    // along the bottom rail where the water stands; a couple of dents
+    for (let i = 0; i < 6; i++) {
+      const x = i < 2 ? (i ? x1 - 2.4 : x0 + 0.6) : x0 + 4 + r() * (x1 - x0 - 20), L = 3 + r() * h * 0.55, wd = 0.5 + r() * 0.6;
+      const st = g.createLinearGradient(0, y0 + 1.6, 0, y0 + 1.6 + L);
+      st.addColorStop(0, 'rgba(110,52,22,0.55)'); st.addColorStop(1, 'rgba(110,52,22,0)');
+      fill(g, `M ${x} ${y0 + 1.6} L ${x + wd} ${y0 + 1.6} L ${x + wd * 0.6} ${y0 + 1.6 + L} L ${x + wd * 0.3} ${y0 + 1.6 + L} Z`, st);
+    }
+    for (let i = 0; i < 4; i++) fill(g, ell(x0 + 3 + r() * (x1 - x0 - 6), y1 - 1.8, 2 + r() * 4, 0.9 + r() * 0.8), '#6a3418', 0.4);
+    for (let i = 0; i < 2; i++) { const dx2 = x0 + 6 + r() * (x1 - x0 - 26), dy2 = y0 + h * (0.35 + r() * 0.4); fill(g, ell(dx2, dy2, 2.4, 1.6), '#000', 0.16); fill(g, ell(dx2 - 0.4, dy2 - 1.1, 1.8, 0.5), '#fff', 0.08); }
     if (code) letters(g, code, doorRight ? x0 + 4 : x0 + 18, y0 + 5.6, 3, '#e8e4dc', { kind: 'print', jit: 0, a: 0.65 });
     texture(g, 'paint', 0.4, 2.4);
+    // wet: the top rail and the upper ribs catch the sky, the bottom goes dark
+    const wt = g.createLinearGradient(0, y0, 0, y1);
+    wt.addColorStop(0, 'rgba(170,185,205,0.12)'); wt.addColorStop(0.35, 'rgba(170,185,205,0)'); wt.addColorStop(0.8, 'rgba(0,0,0,0)'); wt.addColorStop(1, 'rgba(0,0,0,0.25)');
+    fill(g, B, wt);
   });
 }
 
