@@ -91,13 +91,32 @@ function room(g) {
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[298, -128], [342, -128], [424, 0], [356, 0]]), '#ff9a40', 0.05); fill(g, poly([[306, -128], [334, -128], [404, 0], [372, 0]]), '#ff9a40', 0.035); g.restore();
 
   // the radio corner: shelf, set, headphones, the aerial lead to the window
-  fill(g, rect(262, -70, 352, -67), '#4a3624'); for (const x of [268, 344]) fill(g, poly([[x, -67], [x + 2, -67], [x + 2, -60], [x, -64]]), '#2a1e14');
-  fill(g, rect(278, -84, 322, -70), '#2a2c2a'); fill(g, rect(278, -84, 322, -82), '#3a3c3a');
-  for (const [x, rr] of [[286, 3.2], [298, 2.2], [308, 2.2]]) { fill(g, ell(x, -77, rr, rr), '#4a4c4a'); fill(g, ell(x, -77, rr * 0.4, rr * 0.4), '#1a1a1a'); }
-  fill(g, rect(313, -81, 320, -74), '#1a1a18'); fill(g, rect(314, -80, 319, -76), '#7ac090', 0.5);
+  {
+    const lg = (ax, ay, bx, by, st) => { const q = g.createLinearGradient(ax, ay, bx, by); st.forEach(([o, c]) => q.addColorStop(o, c)); return q; };
+    // the shelf, a plank on iron brackets, its front edge lit
+    fill(g, rect(262, -70, 352, -67), lg(0, -70, 0, -67, [[0, '#8a6a48'], [0.3, '#4a3624'], [1, '#241a10']]));
+    fill(g, rect(262, -67, 352, -66), '#000', 0.35);
+    for (const x of [268, 344]) fill(g, poly([[x, -67], [x + 2, -67], [x + 2, -60], [x, -64]]), '#2a1e14');
+    // the set: an army transceiver in its olive steel case, rounded corners, the
+    // knobs knurled, a lit dial window, the switch guard
+    const SET = 'M 278 -70 L 278 -83 C 278 -83.6 278.4 -84 279 -84 L 321 -84 C 321.6 -84 322 -83.6 322 -83 L 322 -70 Z';
+    fill(g, SET, lg(0, -84, 0, -70, [[0, '#4e5446'], [0.15, '#3a4034'], [1, '#1e221a']]));
+    fill(g, rect(278.6, -83.6, 321.4, -83), '#7a806a', 0.6);
+    for (const [x, rr] of [[286, 3.2], [298, 2.2], [308, 2.2]]) {
+      fill(g, ell(x + 0.4, -76.4, rr, rr), '#000', 0.4);
+      fill(g, ell(x, -77, rr, rr), lg(x - rr, -77 - rr, x + rr, -77 + rr, [[0, '#8a8c86'], [0.5, '#3a3c38'], [1, '#1a1a18']]));
+      fill(g, ell(x, -77, rr * 0.55, rr * 0.55), '#222420'); fill(g, ell(x - rr * 0.3, -77 - rr * 0.35, rr * 0.25, rr * 0.18), '#c8cac4', 0.6);
+    }
+    fill(g, rect(313, -81, 320, -74), '#0e0e0c');
+    fill(g, rect(314, -80, 319, -76), lg(0, -80, 0, -76, [[0, '#b8f0c8'], [1, '#3a7a50']]), 0.7);
+    for (let k = 0; k < 5; k++) fill(g, rect(314.6 + k * 0.9, -79.6, 314.8 + k * 0.9, -78.6), '#1a3a22', 0.8);
+    g.save(); g.globalCompositeOperation = 'lighter'; fill(g, ell(316.5, -78, 8, 6), '#5cff8a', 0.04); g.restore();
+  }
   fill(g, ell(RADIO[0], RADIO[1], 0.8, 0.8), '#5cff7a');
   stroke(g, 'M 322 -82 C 330 -100 334 -118 330 -128', '#151515', 0.4);
-  stroke(g, 'M 332 -70 C 330 -62 336 -58 340 -62', '#151515', 0.5); fill(g, ell(331, -61, 2.2, 3), '#1e1e1e'); fill(g, ell(341, -61, 2.2, 3), '#1e1e1e');
+  // the headphones hung off the shelf by their band, leather cups catching the window
+  stroke(g, 'M 331 -61 C 330 -66 333 -70 336 -70 C 339 -70 342 -66 341 -61', '#151515', 0.6);
+  for (const x of [331, 341]) { fill(g, ell(x, -61, 2.4, 3.1), '#141414'); fill(g, ell(x - 0.6, -62, 1.2, 1.8), '#4a4844', 0.6); fill(g, ell(x, -61, 1.2, 1.8), '#0a0a0a', 0.7); }
   fill(g, rect(262, -76, 276, -70), '#8a7a5a'); fill(g, rect(262, -76, 276, -75), '#a8946a');
   // the stool
   fill(g, rect(282, -22, 302, -19), '#4a3624'); for (const x of [284, 298]) stroke(g, `M ${x} -19 L ${x - 2} 0 M ${x + 2} -19 L ${x + 4} 0`, '#2a1e14', 0.8);
