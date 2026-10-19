@@ -351,7 +351,12 @@ export function metalOver(g, [x0, y0, x1, y1], seed = 3) {
 export function weathered(p) {
   let seed = 7; for (const ch of p.name) seed = (seed * 31 + ch.charCodeAt(0)) | 0;
   const b = p.box;
-  return (g) => { p.paint(g); if (Array.isArray(b)) weatherOver(g, b, seed, { sky: 0.07, foot: 0.4, stain: 1.4, rain: 2.2, speck: 0.5, big: 0.6 }); };
+  // and rounded like the figures (volume): every prop is baked on a canvas of its
+  // own, so its edges can turn into shade
+  return (g) => {
+    p.paint(g); if (Array.isArray(b)) weatherOver(g, b, seed, { sky: 0.07, foot: 0.4, stain: 1.4, rain: 2.2, speck: 0.5, big: 0.6 });
+    const k = ppu(g); volume(g.canvas, Math.min(3 * k, Math.max(1, 1.2 * k)));
+  };
 }
 
 // Silhouette of a baked canvas in one colour (for the readability check).
