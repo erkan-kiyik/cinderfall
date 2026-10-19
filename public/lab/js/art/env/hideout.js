@@ -96,10 +96,22 @@ function room(g) {
     for (const x of [461, 502]) fill(g, rect(x, -114, x + 0.4, -52), '#000', 0.12);
     fill(g, rect(420, -84, 544, -83.6), '#000', 0.1);
     stroke(g, 'M 420 -70 C 450 -78 470 -66 500 -74 C 520 -80 530 -76 544 -82', '#7a8aa0', 1.6, 0.6);
-    for (let i = 0; i < 40; i++) { const x = 422 + r() * 120, y = -112 + r() * 58; fill(g, rect(x, y, x + 2 + r() * 6, y + 1 + r() * 4), '#9a8e74', 0.4); }
+    // the town as a survey sheet draws it: the blocks in faint hatched outline
+    // along the streets that cross them, never solid
+    for (let i = 0; i < 40; i++) { const x = 422 + r() * 120, y = -112 + r() * 58, w = 2 + r() * 6, h = 1 + r() * 4; stroke(g, rect(x, y, x + w, y + h), '#8a7e64', 0.14, 0.55); fill(g, rect(x, y, x + w, y + h), '#9a8e74', 0.12); }
     for (let i = 0; i < 12; i++) stroke(g, `M ${422 + r() * 120} ${-112 + r() * 58} l ${r() * 20 - 10} ${r() * 10 - 5}`, '#8a7e64', 0.25, 0.6);
     texture(g, 'canvas', 0.35, 2);
+    // old paper: yellowed toward the edges, a coffee ring, damp from the wall
+    // coming through at the foot, the creases where the sheets were folded,
+    // the lamp's warm pool across it and the dark round its edges
+    const yl = g.createRadialGradient(482, -84, 20, 482, -84, 80); yl.addColorStop(0, 'rgba(0,0,0,0)'); yl.addColorStop(1, 'rgba(120,90,40,0.28)'); fill(g, M, yl);
+    stroke(g, ell(470, -74, 4.2, 4), '#8a6a3a', 0.5, 0.3); stroke(g, ell(470.4, -73.6, 4, 3.8), '#8a6a3a', 0.2, 0.25);
+    const dp = g.createLinearGradient(0, -62, 0, -52); dp.addColorStop(0, 'rgba(70,60,40,0)'); dp.addColorStop(1, 'rgba(70,60,40,0.35)'); fill(g, rect(420, -62, 544, -52), dp);
+    for (const x of [440.5, 481.5, 522.5]) { fill(g, rect(x - 0.3, -114, x, -52), '#000', 0.1); fill(g, rect(x, -114, x + 0.3, -52), '#fff', 0.12); }
+    for (const y of [-98.5, -67.5]) { fill(g, rect(420, y - 0.3, 544, y), '#000', 0.08); fill(g, rect(420, y, 544, y + 0.3), '#fff', 0.1); }
   });
+  // the sheets lift a little off the damp wall: a shadow along their lower edge
+  fill(g, rect(421, -52, 545, -51), '#000', 0.25);
   for (const [x, y] of [[420, -114], [544, -114], [420, -52], [544, -52], [482, -114]]) fill(g, rect(x - 2.4, y - 1, x + 2.4, y + 1), '#d8ccaa', 0.9);
   const PLACES = [['KAPI', 432, -102], ['PAZAR', 462, -90], ['VALİLİK', 490, -104], ['DÖKÜMHANE', 448, -64], ['LİMAN', 508, -62], ['KULE', 532, -94]];
   stroke(g, `M 432 -102 L 462 -90 L 490 -104 L 532 -94 M 462 -90 L 448 -64 L 508 -62 L 532 -94`, '#a8232d', 0.35);
