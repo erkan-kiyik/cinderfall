@@ -483,8 +483,39 @@ function win(g, x, y, w, h, kind, bars = true) {
     fill(g, rect(x + w / 2 - 0.35, y, x + w / 2 + 0.35, y + h), P.trim);
     fill(g, rect(x, y + h * 0.42 - 0.35, x + w, y + h * 0.42 + 0.35), P.trim);
   }
+  if (kind !== 'boarded') recess(g, x, y, w, h, kind !== 'broken' && kind !== 'ember');
   fill(g, rect(x - 1.8, y + h + 0.9, x + w + 1.8, y + h + 2.2), P.sill);
   fill(g, rect(x - 1.8, y + h + 0.9, x + w + 1.8, y + h + 1.3), P.sillHi);
+  washDown(g, x - 1.8, x + w + 1.8, y + h + 2.2);
+}
+
+// a window set back in its wall: the reveal's shadow along the top and the far
+// side; on glass, the cold of the sky sliding across it
+function recess(g, x, y, w, h, glass = true) {
+  const W = rect(x, y, x + w, y + h);
+  const tg = g.createLinearGradient(0, y, 0, y + Math.min(h * 0.3, 3.2));
+  tg.addColorStop(0, 'rgba(0,0,0,0.6)'); tg.addColorStop(1, 'rgba(0,0,0,0)');
+  fill(g, W, tg);
+  const sg = g.createLinearGradient(x, 0, x + Math.min(w * 0.25, 1.8), 0);
+  sg.addColorStop(0, 'rgba(0,0,0,0.45)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+  fill(g, W, sg);
+  if (glass) {
+    const sk = g.createLinearGradient(x, y, x + w, y + h);
+    sk.addColorStop(0.3, 'rgba(160,180,210,0)'); sk.addColorStop(0.45, 'rgba(160,180,210,0.1)'); sk.addColorStop(0.6, 'rgba(160,180,210,0)');
+    fill(g, W, sk);
+  }
+}
+// under a sill or a ledge from x0 to x1 at y: its shadow on the wall, and the
+// dirt the rain has washed down off its ends
+function washDown(g, x0, x1, y) {
+  const dg = g.createLinearGradient(0, y, 0, y + 1.8);
+  dg.addColorStop(0, 'rgba(0,0,0,0.45)'); dg.addColorStop(1, 'rgba(0,0,0,0)');
+  fill(g, rect(x0, y, x1, y + 1.8), dg);
+  for (const sx of [x0 + 0.4, x1 - 1.3]) {
+    const L = 6 + ((sx * 7.3) % 5), st = g.createLinearGradient(0, y, 0, y + L);
+    st.addColorStop(0, 'rgba(14,12,10,0.32)'); st.addColorStop(1, 'rgba(14,12,10,0)');
+    fill(g, `M ${sx} ${y} L ${sx + 0.9} ${y} L ${sx + 0.65} ${y + L} L ${sx + 0.25} ${y + L} Z`, st);
+  }
 }
 
 // a flower box on a sill: geraniums someone still waters
@@ -774,11 +805,22 @@ function synBlock(g) {
   fill(g, rect(-0.6, -41, w + 0.6, -39.4), '#30353d'); fill(g, rect(-0.6, -41, w + 0.6, -40.6), '#7a8390');
   fill(g, rect(-1, -h - 3, w + 1, -h), '#30353d'); fill(g, rect(-1, -h - 3, w + 1, -h - 2.4), '#7a8390');
   // tinted slit windows in steel frames, bars
-  for (const [x, y] of [[12, -92], [104, -92], [104, -66], [12, -66]]) {
+  // one of them lit: the duty room's tube light behind half-closed blinds
+  for (const [x, y, lit] of [[12, -92], [104, -92, true], [104, -66], [12, -66]]) {
     fill(g, rect(x - 1, y - 1, x + 19, y + 19), '#2a2f36');
-    fill(g, rect(x, y, x + 18, y + 18), '#14181d');
-    fill(g, poly([[x, y], [x + 7, y], [x, y + 9]]), '#232a33');
+    if (lit) {
+      const gr = g.createLinearGradient(0, y, 0, y + 18);
+      gr.addColorStop(0, '#b9cbd8'); gr.addColorStop(1, '#46586a');
+      fill(g, rect(x, y, x + 18, y + 18), gr);
+      for (let k = y + 1; k < y + 11; k += 1.6) fill(g, rect(x, k, x + 18, k + 0.9), '#5a6876', 0.85);
+      g.save(); g.globalCompositeOperation = 'lighter'; fill(g, rect(x - 3, y - 3, x + 21, y + 21), '#9fc4e0', 0.05); g.restore();
+    } else {
+      fill(g, rect(x, y, x + 18, y + 18), '#14181d');
+      fill(g, poly([[x, y], [x + 7, y], [x, y + 9]]), '#232a33');
+    }
     for (let k = x + 2; k < x + 18; k += 3) fill(g, rect(k, y, k + 0.7, y + 18), '#0d0f12');
+    recess(g, x, y, 18, 18);
+    washDown(g, x - 1, x + 19, y + 19);
   }
   // the banner
   const BN = poly([[46, -96], [82, -96], [82, -42], [64, -48], [46, -42]]);
@@ -1506,8 +1548,25 @@ function antrepo(g) {
 function gumruk(g) {
   const w = 140, h = 92;
   stoneWall(g, 0, w, -h, 181, '#524d44');
-  fill(g, poly([[-3, -h], [20, -h - 22], [w - 20, -h - 22], [w + 3, -h]]), '#3a3632');
+  // the hipped roof in slate: courses of tiles, a few slipped, wet and catching
+  // the sky toward the ridge, the hips' lead flashing
+  const ROOF = poly([[-3, -h], [20, -h - 22], [w - 20, -h - 22], [w + 3, -h]]);
+  fill(g, ROOF, '#3a3632');
+  clip(g, ROOF, () => {
+    const r = rng(187);
+    for (let y = -h - 22, i = 0; y < -h; y += 2.2, i++) {
+      fill(g, rect(-4, y + 1.8, w + 4, y + 2.2), '#1e1c1a', 0.7);
+      for (let x = -4 + (i % 2) * 2.4; x < w + 4; x += 4.8) {
+        fill(g, rect(x, y, x + 0.25, y + 2.2), '#1e1c1a', 0.5);
+        if (r() < 0.06) fill(g, rect(x + 0.3, y + 0.2, x + 4.5, y + 1.8), r() < 0.5 ? '#4e4a44' : '#26231f');
+      }
+    }
+    const sh = g.createLinearGradient(0, -h - 22, 0, -h);
+    sh.addColorStop(0, 'rgba(150,160,175,0.22)'); sh.addColorStop(0.5, 'rgba(150,160,175,0.05)'); sh.addColorStop(1, 'rgba(0,0,0,0.2)');
+    fill(g, ROOF, sh);
+  });
   fill(g, poly([[w / 2, -h - 22], [w - 20, -h - 22], [w + 3, -h], [w / 2 + 6, -h]]), '#000', 0.15);
+  for (const d of [`M -3 ${-h} L 20 ${-h - 22}`, `M ${w + 3} ${-h} L ${w - 20} ${-h - 22}`, `M 20 ${-h - 22} L ${w - 20} ${-h - 22}`]) stroke(g, d, '#5e5a52', 0.6, 0.8);
   cornice(g, 0, w, -h - 3, 3);
   cornice(g, 0, w, -46, 2);
   fill(g, rect(30, -h + 2, 110, -h + 14), '#5c574c');
