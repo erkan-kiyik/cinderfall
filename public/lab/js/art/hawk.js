@@ -25,7 +25,7 @@ const PEAK = 'M 66 29.7 C 72 28.4 78 26.6 82.8 24.2 C 85.2 26.4 87.6 27.8 88 29.
 const COAT = 'M -5 106 L -5 86 C 4 80 16 74 30 70.6 C 36 69.2 42 69 46 70 L 64 74 C 72 75 80 77 88 82 C 96 87 102 92 106 96 L 106 106 Z';
 const COLLAR_BACK = 'M 27 73 C 28.4 65 34 59.6 40.6 60 C 44 60.4 45.4 63.6 45.6 68 L 46.4 79 L 29 81 Z';
 const LAPEL = 'M 61 78 C 66 74.6 72 73.6 76.4 75.4 C 81 77.4 85 82.6 87 89 C 82 94 76 98 70 101 C 67 94 64 86 61 78 Z';
-const SCARF = 'M 33.6 70.4 C 42 66.2 54 67 64 71 C 70 73.2 74.4 76.4 74.4 80.4 C 74.4 84.6 68 86.6 60 86.6 C 50 86.6 40 84.6 34 80.6 C 30.8 78.4 30.8 72.4 33.6 70.4 Z';
+const SCARF = 'M 33.2 70.8 C 37 68.2 42 67.2 47 67.6 C 52 67.8 56 68.8 60 70 C 64 70.6 68 72.2 71.4 74.8 C 74.2 77 75.2 79.6 74.2 82 C 73 84.2 70.4 85.2 67.4 85.6 C 64.6 86.6 61.6 87.4 58.2 87 C 54.6 86.6 51.4 85.6 48 85.8 C 44.2 86 40.4 85 37.2 83 C 34.2 81 32.2 78.4 31.8 75.6 C 31.6 73.6 32.2 72 33.2 70.8 Z';
 const SCARF_END = 'M 58 84 C 62 84.4 66 85.6 68.4 88 C 70 92 69.4 98 68 104 L 58.6 104 C 59.6 98 59.4 91 58 84 Z';
 
 // the coat carried on down to the counter, for HAWK standing at his stall
@@ -240,7 +240,7 @@ export function paintHawk(g, size, t = 0, o = {}) {
     for (const y of [74, 80]) B.fill(`M 20 ${y} C 40 ${y - 3} 60 ${y - 1} 80 ${y + 3} L 80 ${y + 1.8} C 60 ${y + 1} 40 ${y - 1} 20 ${y + 1.6} Z`, '#6a3420', 0.7, 0.6);
     B.dab(70, 82, 14, 8, 'rgba(190,140,80,0.4)');
     B.dab(36, 76, 10, 8, 'rgba(10,8,6,0.6)');
-    texture(g, 'knit', 0.4, 3.5);
+    texture(g, 'knit', 0.2, 2.6);
     B.line('M 40 75 C 48 78 58 79 68 78', 'rgba(10,8,6,0.5)', 1.6, 1.2);
     // wound round the neck: dark in the crevice against the skin, the roll under it
     // turning toward the lamp, the loose folds where it is tucked into the coat
