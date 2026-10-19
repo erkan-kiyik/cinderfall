@@ -4,18 +4,20 @@
 // bone frame, so the anchor of each sprite is its joint. Limbs come in a near
 // and a far variant (the far side one tone darker, as on the M0 board). Part
 // bounds are measured automatically by painting once at low resolution.
-import { canvas, setRoot, softMarks } from '../art/kit.js';
+import { canvas, setRoot, softMarks, volume, ppu } from '../art/kit.js';
 
 const darker = (t) => ({ ...t, l: t.m, m: t.d, d: t.k, k: t.k });
 const NEAR = { far: false, t: (t) => t, J: null, rt: true };
 const FAR = { far: true, t: darker, J: null, rt: true };
 
 // Bounds of what `paint` draws around the origin, in units (padded), or null.
+let measuring = false;
 export function measure(paint, R = 48, s = 2) {
   const n = Math.ceil(R * 2 * s);
   const c = canvas(n, n), g = c.getContext('2d');
   g.translate(n / 2, n / 2); g.scale(s, s); setRoot(g);
-  try { paint(g); } catch { return null; }
+  measuring = true;
+  try { paint(g); } catch { return null; } finally { measuring = false; }
   const d = g.getImageData(0, 0, n, n).data;
   let x0 = n, y0 = n, x1 = -1, y1 = -1;
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (d[(y * n + x) * 4 + 3] > 4) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
@@ -27,8 +29,9 @@ export function measure(paint, R = 48, s = 2) {
 const LIMBS = ['upper', 'fore', 'hand', 'thigh', 'shin', 'foot'];
 const TORSO = ['backFar', 'torso', 'chest', 'front'];
 
-// a painter run with soft marks on: a figure has no drawn lines (docs §11)
-const soft = (paint) => (g, ...a) => { const was = softMarks(true); try { return paint(g, ...a); } finally { softMarks(was); } };
+// a painter run with soft marks on: a figure has no drawn lines (docs §11);
+// every part is baked on a canvas of its own, so it is rounded there (kit.volume)
+const soft = (paint) => (g, ...a) => { const was = softMarks(true); try { paint(g, ...a); } finally { softMarks(was); } if (measuring) return; const k = ppu(g), c = g.canvas; volume(c, Math.min(2.6 * k, Math.max(1.2 * k, 0.16 * Math.min(c.width, c.height)))); };
 
 // Bake entries for character `id` from its spec ({ op, skip, extras }).
 export function charEntries(id, spec, scale) {

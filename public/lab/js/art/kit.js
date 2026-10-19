@@ -82,7 +82,7 @@ const BIG = 1e4;
 const FAR = 4096;   // device px: where soft fills are drawn so only their blurred shadow lands
 
 // Pixels per unit of the current transform (blur radii are in device px).
-function ppu(g) { const m = g.getTransform(); return Math.hypot(m.a, m.b) || 1; }
+export function ppu(g) { const m = g.getTransform(); return Math.hypot(m.a, m.b) || 1; }
 
 // Fill `p` shifted by (dx, dy) local units with its edge softened by `blur`
 // device px. inv: fill everything but the shape instead (an inner shadow of its
@@ -292,6 +292,29 @@ export function defocus(paint, u) {
     g.filter = `blur(${px.toFixed(2)}px)`; g.drawImage(tmp, 0, 0);
     g.restore();
   };
+}
+
+// Round a part painted alone on canvas c (transparent round it), the way a
+// form turns from the light: its edges fall into shade, more on the side away
+// from the light (down and away), and the edge toward the light catches a
+// little of it. `px`: how deep the turn goes, in device pixels. Only the part's
+// own pixels change (source-atop), so its silhouette stays where it was.
+export function volume(c, px) {
+  if (px < 0.8) return;
+  const w = c.width, h = c.height, g = c.getContext('2d');
+  // the part's alpha blurred once, at half size (it is only ever a soft edge)
+  const bw = Math.max(1, Math.ceil(w / 2)), bh = Math.max(1, Math.ceil(h / 2));
+  const b = canvas(bw, bh), gb = b.getContext('2d');
+  gb.filter = `blur(${(px / 2).toFixed(2)}px)`; gb.drawImage(c, 0, 0, bw, bh);
+  const m = canvas(w, h), gm = m.getContext('2d');
+  const rim = (col, dx, dy, a) => {
+    gm.globalCompositeOperation = 'source-over'; gm.fillStyle = col; gm.fillRect(0, 0, w, h);
+    gm.globalCompositeOperation = 'destination-out'; gm.drawImage(b, dx, dy, w, h);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = a;
+    g.drawImage(m, 0, 0); g.restore();
+  };
+  rim('rgb(6,7,10)', -px * 0.35, -px * 0.55, 0.5);
+  rim('rgb(196,204,218)', px * 0.5, px * 0.7, 0.07);
 }
 
 // A machined finish laid over a weapon already painted in box [x0, y0, x1, y1]

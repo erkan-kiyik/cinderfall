@@ -10,7 +10,7 @@
 //   head    origin at the base of the neck, up is -y
 //   foot    origin at the ankle, level with the ground, toes toward +x
 // so the same painters drive the in-game rig later.
-import { setRoot, softMarks } from './kit.js';
+import { setRoot, softMarks, canvas, volume, ppu } from './kit.js';
 
 export const SK = {
   thigh: 15.2, shin: 14.4, upper: 11.6, fore: 10.4,
@@ -90,6 +90,14 @@ const darker = (t) => ({ l: t.m, m: t.d, d: t.k, k: t.k });
 function at(g, [x, y], a, fn) {
   g.save(); g.translate(x, y); g.rotate(a); fn(); g.restore();
 }
+// paint one part on its own canvas, round it (kit.volume), then lay it on the figure
+function part(g, paint, ctx) {
+  const c = g.canvas, M = g.getTransform();
+  const pc = canvas(c.width, c.height), pg = pc.getContext('2d');
+  pg.setTransform(M); paint(pg, ctx);
+  volume(pc, 1.8 * ppu(g));
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(pc, 0, 0); g.restore();
+}
 
 // Draw an operator spec in its pose. `op.parts` holds painters; any missing
 // part is skipped. Painters receive (g, ctx) where ctx.t(tone) darkens tones
@@ -107,29 +115,29 @@ function paintFigure(g, op, pose, flip) {
   const J = solve(pose), p = J.p, P = op.parts;
   const near = { far: false, t: (t) => t, J };
   const far = { far: true, t: darker, J };
-  const torso = (fn, ctx = near) => fn && at(g, J.hip, -p.lean, () => fn(g, ctx));
+  const torso = (fn, ctx = near) => fn && at(g, J.hip, -p.lean, () => part(g, fn, ctx));
   const arm = (side, ctx) => {
     const s = side === 'n';
     const sh = s ? J.nSh : J.fSh, el = s ? J.nElb : J.fElb, wr = s ? J.nWr : J.fWr;
     const u = s ? p.nUpper : p.fUpper, f = s ? p.nFore : p.fFore, h = s ? p.nHand : p.fHand;
-    if (P.upper) at(g, sh, u, () => P.upper(g, ctx));
-    if (P.fore) at(g, el, f, () => P.fore(g, ctx));
-    if (P.hand) at(g, wr, f + h, () => P.hand(g, ctx));
+    if (P.upper) at(g, sh, u, () => part(g, P.upper, ctx));
+    if (P.fore) at(g, el, f, () => part(g, P.fore, ctx));
+    if (P.hand) at(g, wr, f + h, () => part(g, P.hand, ctx));
   };
   const leg = (side, ctx) => {
     const s = side === 'n';
     const hp = s ? J.nHip : J.fHip, kn = s ? J.nKnee : J.fKnee, an = s ? J.nAnkle : J.fAnkle;
     const th = s ? p.nThigh : p.fThigh, sn = s ? p.nShin : p.fShin;
-    if (P.thigh) at(g, hp, th, () => P.thigh(g, ctx));
-    if (P.shin) at(g, kn, sn, () => P.shin(g, ctx));
-    if (P.foot) at(g, an, 0, () => P.foot(g, ctx));
+    if (P.thigh) at(g, hp, th, () => part(g, P.thigh, ctx));
+    if (P.shin) at(g, kn, sn, () => part(g, P.shin, ctx));
+    if (P.foot) at(g, an, 0, () => part(g, P.foot, ctx));
   };
   torso(P.backFar, far);
   arm('f', far);
   leg('f', far);
   leg('n', near);
   torso(P.torso);
-  if (P.head) at(g, J.neck, -p.lean - p.head, () => P.head(g, near));
+  if (P.head) at(g, J.neck, -p.lean - p.head, () => part(g, P.head, near));
   torso(P.chest);
   if (p.gun) {
     // weapon between the far (support) arm and the near (trigger) arm
