@@ -67,7 +67,13 @@ export class Animator {
     const sv = m.vx * m.facing; // signed speed along facing
     const spd = Math.abs(sv);
     const C = this.cycle();
-    if (m.grounded && m.state !== 'slide') this.phase = (this.phase + (sv * dt) / C + 4) % 1;
+    if (m.grounded && m.state !== 'slide') {
+      // a foot comes down where its stance begins (near at 0, far at ½): `plant`
+      // tells the scene, which splashes it on a wet street and clears it
+      const p0 = this.phase, p1 = p0 + (sv * dt) / C;
+      if (spd > 40) { if (Math.floor(p1) !== Math.floor(p0)) this.plant = 1; else if (Math.floor(p1 - 0.5) !== Math.floor(p0 - 0.5)) this.plant = 2; }
+      this.phase = (p1 + 4) % 1;
+    }
     const grounded = m.grounded && m.state !== 'mantle' && m.state !== 'ladder';
     this.run = approach(this.run, clamp((spd - 70) / 90, 0, 1), 10, dt);
     this.sprint = approach(this.sprint, spd > 200 && grounded && m.state !== 'slide' ? 1 : 0, 9, dt);

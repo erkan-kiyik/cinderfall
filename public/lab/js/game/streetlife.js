@@ -20,7 +20,7 @@ export class StreetLife {
     this.s = scene;
     this.cap = RAIN.high;
     this.drops = new Float32Array(this.cap * 3); // x, y, speed
-    this.seeded = false; this.splash = []; this.last = null; this.steamAt = 0;
+    this.seeded = false; this.splash = []; this.steps = []; this.last = null; this.steamAt = 0;
   }
   get reduce() { return !!this.s.e.reduceMotion; }
   // set by the frame-time guard in boot.js: 2 full, 1 lighter, 0 bare
@@ -53,6 +53,10 @@ export class StreetLife {
       }
       if (d[o] > R) d[o] -= W; else if (d[o] < L) d[o] += W;
     }
+    // a boot's splash lasts a third of a second
+    let j = 0;
+    for (let i = 0; i < this.steps.length; i += 3) if (t - this.steps[i + 2] < 0.32) { this.steps[j++] = this.steps[i]; this.steps[j++] = this.steps[i + 1]; this.steps[j++] = this.steps[i + 2]; }
+    this.steps.length = j;
     // splashes live a fifth of a second
     let k = 0;
     for (let i = 0; i < this.splash.length; i += 3) if (t - this.splash[i + 2] < 0.2) { this.splash[k++] = this.splash[i]; this.splash[k++] = this.splash[i + 1]; this.splash[k++] = this.splash[i + 2]; }
@@ -132,6 +136,9 @@ export class StreetLife {
     B.setBlend(0); B.end();
   }
 
+  // a boot coming down on the wet street at (x, y)
+  kick(x, y) { if (this.level > 0 && this.steps.length < 36 && this.last !== null) this.steps.push(x, y, this.last); }
+
   // in the world, over the props and characters: the rain and its splashes
   drawRain(B, view, A) {
     const tr = A.get('fx.tracer'), dot = A.get('fx.dot');
@@ -145,6 +152,19 @@ export class StreetLife {
     for (let i = 0; i < sp.length; i += 3) {
       const k = (t - sp[i + 2]) / 0.2;
       B.draw(dot, sp[i], sp[i + 1], 0.6 + k * 1.8, 0.25 + k * 0.4, 0, rgba('#d6e4ff', 0.45 * (1 - k)));
+    }
+    // boots in the water: a flat ring spreading and a spray of drops thrown up and out
+    const st = this.steps;
+    for (let i = 0; i < st.length; i += 3) {
+      const a = t - st[i + 2], k = a / 0.32, x = st[i], y = st[i + 1];
+      B.draw(dot, x, y + 0.3, 2 + k * 6, 0.6 + k * 0.8, 0, rgba('#c8d8f0', 0.75 * (1 - k)));
+      B.draw(dot, x, y + 0.2, 1.2 + k * 2, 0.5, 0, rgba('#eef4ff', 0.6 * (1 - k) * (1 - k)));
+      for (let q = 0; q < 8; q++) {
+        const dir = (q - 3.5) / 3.5, vx = dir * (24 + (q * 37 % 13)), vy = 36 + (q * 53 % 19);
+        const px = x + vx * a, py = y - (vy * a - 170 * a * a);
+        if (py > y) continue;
+        B.draw(dot, px, py, 0.5, 0.5, 0, rgba('#e2ecff', 0.85 * (1 - k)));
+      }
     }
     B.setBlend(0); B.end();
   }
