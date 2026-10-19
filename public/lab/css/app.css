@@ -332,6 +332,9 @@
 .wtile b { font: 700 12px/1.05 var(--f-display); letter-spacing: 0.04em; color: var(--n8); text-transform: uppercase; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .wtile.mini { flex-direction: row; align-items: center; min-height: var(--hit); padding: 4px 10px; gap: 10px; }
 .wtile.mini canvas { width: 64px; height: 22px; flex: none; }
+/* sidearms sit two to a row so a name like SERÇE-9 is never cut to "S…" */
+.prep-pair .slotrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wtile.mini > b { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .diff-row { display: flex; align-items: center; gap: 10px; }
 
 /* operators: the files */
