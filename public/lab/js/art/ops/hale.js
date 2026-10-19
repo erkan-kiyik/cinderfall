@@ -13,6 +13,7 @@ import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
   glove, boot, headShape, neck, korBand, stitch, rivet, grime, scuffs,
+  clothFolds,
 } from './body.js';
 
 const PAL = {
@@ -83,6 +84,7 @@ function torso(g) {
   cel(g, PELVIS, PAL.coat, { sh: 1.1, hl: 0.4 });
   cel(g, TORSO, PAL.hood, { sh: 1.0, hl: 0.3, line: false });
   cel(g, COAT, PAL.coat, { sh: 2.3, hl: 0.6 });
+  clothFolds(g, COAT, [[[-8.0, -17.0], [-6.2, -14.4], [-4.6, -11.2]], [[-7.0, -11.6], [-5.0, -9.4], [-2.6, -7.4]], [[-6.8, -4.0], [-4.0, -3.4], [-1.0, -3.8]], [[4.0, -15.0], [3.4, -11.6], [3.6, -8.2]]], PAL.coat);
   clip(g, COAT, () => {
     // the drag-rescue strap's loop showing under the collar at the back
     cel(g, 'M -6.4 -22.6 L -4.4 -23.0 L -4.0 -19.4 L -6.0 -19.0 Z', PAL.band, { sh: 0.3, hl: 0.2, lw: 0.22 });
@@ -139,6 +141,7 @@ function chest(g) {
 function upper(g, ctx) {
   const t = ctx.t;
   g.save(); g.scale(1.14, 1); cel(g, UPPER, t(PAL.coat), { sh: 1.7, hl: 0.5 }); g.restore();
+  clothFolds(g, UPPER, [[[-2.0, 6.0], [-0.4, 6.8], [1.8, 6.4]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.coat));
   clip(g, UPPER, () => {
     stroke(g, curve([[-2.6, -1.0], [-2.8, 4.0], [-2.4, 10.0]]), t(PAL.coat).d, 0.3);
     stitch(g, curve([[-2.2, -1.0], [-2.4, 4.0], [-2.0, 10.0]]), t(PAL.coat).l, 0.08, 0.55);

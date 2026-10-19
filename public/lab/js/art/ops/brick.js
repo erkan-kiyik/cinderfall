@@ -13,6 +13,7 @@ import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, PELVIS,
   glove, boot, headShape, skinGlaze, skinDetail, neck, softHair, korBand, stitch, rivet, buckle, grime, scuffs,
+  clothFolds,
 } from './body.js';
 
 const PAL = {
@@ -71,6 +72,7 @@ const PLATE = blob([[-4.2, -21.4], [1.4, -22.2], [6.6, -21.2], [8.2, -17.0], [8.
 function torso(g) {
   cel(g, blob([[-6.8, -4.8], [6.8, -4.9], [7.0, -1.0], [4.6, 1.8], [0.4, 2.4], [-4.4, 1.8], [-7.0, -1.0]]), PAL.suit, { sh: 1.0, hl: 0.4 });
   cel(g, SUIT, PAL.jacket, { sh: 2.4, hl: 0.6 });
+  clothFolds(g, SUIT, [[[-8.0, -17.0], [-6.2, -14.4], [-4.6, -11.2]], [[-7.0, -11.6], [-5.0, -9.4], [-2.6, -7.4]], [[-6.8, -4.0], [-4.0, -3.4], [-1.0, -3.8]]], PAL.jacket);
   clip(g, SUIT, () => {
     // the two bands, the zip, oil from twenty years of cranes
     for (const y of [-16.6, -9.6]) {
@@ -147,6 +149,7 @@ function upper(g, ctx) {
   const t = ctx.t;
   g.save(); g.scale(1.3, 1);
   cel(g, UPPER, t(PAL.jacket), { sh: 1.6, hl: 0.5 });
+  clothFolds(g, UPPER, [[[-2.0, 6.0], [-0.4, 6.8], [1.8, 6.4]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.jacket));
   clip(g, UPPER, () => { fold(g, [[-1.8, 8.8], [-0.4, 9.7], [1.3, 9.9]], t(PAL.jacket)); grime(g, 4, 12, OIL); });
   if (!ctx.far) korBand(g, t(PAL.black));
   g.restore();

@@ -12,6 +12,7 @@ import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
   glove, boot, headShape, korBand, stitch, rivet, buckle, grime, scuffs, softEye, softBrow, skinGlaze, skinDetail, softHair, neck,
+  clothFolds,
 } from './body.js';
 
 const PAL = {
@@ -86,6 +87,7 @@ function torso(g) {
     g.globalAlpha = 1; g.restore();
   });
   cel(g, COAT, PAL.coat, { sh: 2.0, hl: 0.55 });
+  clothFolds(g, COAT, [[[-8.0, -17.0], [-6.2, -14.4], [-4.6, -11.2]], [[-7.0, -11.6], [-5.0, -9.4], [-2.6, -7.4]], [[-6.8, -4.0], [-4.0, -3.4], [-1.0, -3.8]], [[0.8, -16.0], [0.4, -12.0], [0.6, -8.0]]], PAL.coat);
   clip(g, COAT, () => {
     stroke(g, curve([[-5.2, -20.6], [-5.6, -15.0], [-5.2, -9.0], [-5.4, -1.0]]), PAL.coat.d, 0.34);
     fold(g, [[-4.2, -8.4], [-2.0, -7.6], [0.4, -7.8]], PAL.coat);
@@ -117,6 +119,7 @@ function chest(g) {
 function upper(g, ctx) {
   const t = ctx.t;
   cel(g, UPPER, t(PAL.coat), { sh: 1.5, hl: 0.45 });
+  clothFolds(g, UPPER, [[[-2.0, 6.0], [-0.4, 6.8], [1.8, 6.4]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.coat));
   clip(g, UPPER, () => { stroke(g, curve([[-2.6, -1.0], [-2.8, 4.0], [-2.4, 10.0]]), t(PAL.coat).d, 0.28); fold(g, [[-1.4, 8.8], [0.2, 9.8], [1.6, 9.8]], t(PAL.coat), 0.26); });
   if (!ctx.far) korBand(g, t(PAL.gaiter));
 }
