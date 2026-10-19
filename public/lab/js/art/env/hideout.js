@@ -200,8 +200,21 @@ function floor(g) {
     fill(g, poly([[410, 3], [560, 3], [570, 13], [400, 13]]), '#8a5a2e');
     for (let x = 414; x < 560; x += 12) fill(g, poly([[x, 8], [x + 5, 4.4], [x + 10, 8], [x + 5, 11.6]]), '#2a3a4a');
     for (let x = 392; x < 584; x += 3) fill(g, rect(x, 1.4, x + 1.4, 2.4), '#c9b48a', 0.6);
+    // the weave: fine weft lines, each motif stepped as a woven one is
+    for (let y = 2; y < 15; y += 0.7) fill(g, rect(388, y, 584, y + 0.18), '#000', 0.12);
+    for (let x = 414; x < 560; x += 12) for (const [dx, dy] of [[2.2, 6.2], [7.8, 6.2], [2.2, 9.8], [7.8, 9.8]]) fill(g, rect(x + dx - 0.6, dy - 0.5, x + dx + 0.6, dy + 0.5), '#2a3a4a', 0.8);
     texture(g, 'wool', 0.6, 1.6);
+    // years of boots: the middle walked pale and flat, the colour gone grey where
+    // the chairs scrape, dirt at the edges, the table's shadow
+    const wr = g.createRadialGradient(486, 8, 4, 486, 8, 70); wr.addColorStop(0, 'rgba(196,176,150,0.28)'); wr.addColorStop(1, 'rgba(196,176,150,0)');
+    fill(g, K, wr);
+    for (const cx of [430, 540]) { const sc = g.createRadialGradient(cx, 9, 0, cx, 9, 16); sc.addColorStop(0, 'rgba(120,110,100,0.3)'); sc.addColorStop(1, 'rgba(120,110,100,0)'); fill(g, rect(cx - 18, 1, cx + 18, 15), sc); }
+    for (let i = 0; i < 26; i++) fill(g, ell(390 + r() * 194, 1.6 + r() * 13, 1 + r() * 4, 0.3 + r() * 0.8), r() < 0.6 ? '#1e1814' : '#5a4a3a', 0.25);
+    const ed = g.createLinearGradient(0, 1.4, 0, 15); ed.addColorStop(0, 'rgba(0,0,0,0.3)'); ed.addColorStop(0.2, 'rgba(0,0,0,0)'); ed.addColorStop(0.85, 'rgba(0,0,0,0)'); ed.addColorStop(1, 'rgba(0,0,0,0.3)');
+    fill(g, K, ed);
   });
+  // the fringe at the near edge, knotted, some of it worn away
+  for (let x = 389; x < 583; x += 1.6) if (r() > 0.18) stroke(g, `M ${x} 15 l ${(r() - 0.5) * 0.8} ${1 + r() * 1.4}`, '#b8a27a', 0.22, 0.7);
   fill(g, rect(380, 14.4, 590, 15.6), '#000', 0.25);
   // the bucket under the drip, the cables across
   fill(g, poly([[612, 0], [626, 0], [624.6, -10], [613.4, -10]]), '#6a6e72'); fill(g, ell(619, -10, 5.6, 1.2), '#4a4e52'); fill(g, ell(619, -10, 4.8, 0.8), '#2a3038');
