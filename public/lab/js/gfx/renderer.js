@@ -7,7 +7,10 @@
 //   screen                 lit + warm halation, a soft shoulder, grade (low
 //                          saturation, cool lifted blacks, warm highlights),
 //                          vignette, 24 Hz grain; upscaled. The look of the
-//                          ray-traced stills (docs §11)
+//                          ray-traced stills (docs §11). Outdoors the wet
+//                          road below the walking line mirrors the street:
+//                          a screen-space reflection, smeared down the way
+//                          rain-wet asphalt smears it, fading with distance
 //
 // All targets are RGBA8. Resizing a target never touches the DOM.
 import { program, Target, FS_TRI } from './gl.js';
@@ -89,10 +92,22 @@ uniform vec3 uTint;       // shadow tint
 uniform vec3 uLift;       // blacks lifted toward this (cool)
 uniform float uWarm;      // warmth in the highlights
 uniform float uTime;
+uniform vec4 uWet;        // walking line (v), wetness, fade length (v), ripple time
 in vec2 vUV; out vec4 o;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
   vec3 c = texture(uLit, vUV).rgb;
+  // the wet road: the street above the line mirrored below it, smeared down
+  // in streaks and broken by the rain, gone a few metres out
+  if (uWet.y > 0.0 && vUV.y < uWet.x) {
+    float dv = uWet.x - vUV.y, f = 1.0 - smoothstep(0.0, uWet.z, dv);
+    vec2 r = vec2(vUV.x + sin(vUV.y * 900.0 + uWet.w * 2.3) * 0.0011 * (0.4 + dv * 18.0), uWet.x + dv);
+    vec3 m = texture(uLit, r).rgb * 0.4 + texture(uLit, r + vec2(0.0, 0.006)).rgb * 0.3
+           + texture(uLit, r + vec2(0.0, 0.014)).rgb * 0.2 + texture(uLit, r + vec2(0.0, 0.026)).rgb * 0.1;
+    // wet asphalt is darker where it is not mirroring, and the mirror sits on that dark
+    float k = uWet.y * f;
+    c = c * (1.0 - 0.45 * k) + m * k * 1.15;
+  }
   // halation: the glow round bright things comes back warm, as on film
   if (uBloom.z > 0.0) c += (texture(uB1, vUV).rgb * uBloom.x + texture(uB2, vUV).rgb * uBloom.y) * vec3(1.0, 0.8, 0.64);
   // a soft shoulder so lamps and signs roll off instead of clipping
@@ -148,6 +163,8 @@ export class Renderer {
     gl.bindVertexArray(null);
     this.passes = 0; this.lastLights = 0;
     this.time = 0;
+    // wetness of the road this frame (a scene sets it before finish; 0 = dry)
+    this.wet = 0; this.view = null;
   }
 
   setQuality(name) { this.q = QUALITY[name]; this.qName = name; this.resize(true); }
@@ -183,6 +200,7 @@ export class Renderer {
 
   lightPass(view) {
     const gl = this.gl;
+    this.view = view;
     this.light.bind();
     const a = this.lightsOn ? this.ambient : [1, 1, 1];
     gl.clearColor(a[0] * 0.5, a[1] * 0.5, a[2] * 0.5, 1); gl.clear(gl.COLOR_BUFFER_BIT);
@@ -230,7 +248,8 @@ export class Renderer {
         this.blur(this.b2a, this.b2b);
       }
     }
-    const G = this.grade;
+    const G = this.grade, V = this.view, wet = V ? this.wet : 0;
+    this.wet = 0;
     this.fsPass(this.pFinal, null, [this.lit.tex, this.b1a.tex, this.b2a.tex], (u) => {
       gl.uniform1i(u.uLit, 0); gl.uniform1i(u.uB1, 1); gl.uniform1i(u.uB2, 2);
       gl.uniform3f(u.uBloom, 1.0, lv > 1 ? 0.85 : 0, lv > 0 ? 1 : 0);
@@ -239,6 +258,9 @@ export class Renderer {
       gl.uniform3f(u.uLift, G.lift[0], G.lift[1], G.lift[2]);
       gl.uniform1f(u.uWarm, G.warm);
       gl.uniform1f(u.uTime, time % 100);
+      // world y = 0 (where everyone stands) in v; the reflection fades over 40 units
+      if (wet > 0) gl.uniform4f(u.uWet, V[7] * 0.5 + 0.5, wet, Math.abs(V[4]) * 40 * 0.5, time % 100);
+      else gl.uniform4f(u.uWet, 0, 0, 1, 0);
     });
   }
 

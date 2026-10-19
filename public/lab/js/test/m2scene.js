@@ -294,6 +294,8 @@ export class M2Scene {
     }
     B.end();
     this.drawGlow(B, w);
+    // outdoors, the road is wet: it mirrors the street (renderer FINAL_FS)
+    if (out && this.e.fxLevel !== 0) R.wet = this.e.fxLevel === 1 ? 0.3 : 0.45;
     R.finish(t);
   }
 }
