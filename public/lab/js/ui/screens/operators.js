@@ -22,6 +22,8 @@ export const operators = {
       ctx.showcase.setOperator(o.id, d.roster.loadout[o.id]);
       mid.replaceChildren(
         h('div.card.op-card',
+          // the file's photo, clipped on, the trade stamped across its corner
+          h('div.op-photo', avatar(o.id, 72)),
           h('div.stamp', t(`role.${o.role}`)),
           h('div.eyebrow', t('ops.file'), ' · ', `K-${String(OPS.indexOf(o) + 3).padStart(2, '0')}`),
           h('div.op-title', h('div.h2', opName(o.id))),

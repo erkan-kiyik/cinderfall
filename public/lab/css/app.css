@@ -538,7 +538,14 @@ button.skin { flex: none; padding: 0; cursor: pointer; }
 /* a weapon you do not own shows its price where its class was (the tabs already say the class) */
 .wgrid-ui .tile.locked .eyebrow { visibility: hidden; }
 button.skin { width: 36px; height: 36px; }
-.op-card .stamp { position: absolute; right: 14px; top: 16px; }
+.op-card .stamp { position: absolute; right: 30px; top: 92px; z-index: 2; }
+/* the file's photo: a print with a white border, clipped on under the paperclip, a little crooked */
+.op-photo { position: absolute; right: 20px; top: 14px; padding: 5px 5px 14px; background: #ece6d8; box-shadow: 0 2px 6px rgba(20,12,4,0.35); transform: rotate(3deg); z-index: 1; }
+.op-photo canvas { display: block; filter: sepia(0.18) contrast(1.04); }
+.op-card::before { z-index: 3; }
+.op-card .op-title { margin-right: 104px; }
+/* the first rows sit beside the photo; the rest of the file runs full width under it */
+.op-card .op-facts dd:nth-of-type(-n+2) { margin-right: 100px; }
 /* the member card: paper, the photo clipped on, a stamp */
 .unioncard { padding: 14px 16px !important; }
 .unioncard .photo { width: 68px; height: 72px; padding: 3px 3px 5px; background: #f2ead6; box-shadow: 0 2px 4px rgba(0,0,0,0.35); transform: rotate(-3deg); }
