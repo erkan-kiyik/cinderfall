@@ -123,19 +123,75 @@ function room(g) {
   fill(g, PB, '#6a5a44');
   clip(g, PB, () => { for (let y = -116; y < -50; y += 4) for (let x = 572; x < 690; x += 4) fill(g, ell(x, y, 0.45, 0.45), '#2a221a', 0.8); texture(g, 'wood', 0.5, 2); });
   stroke(g, PB, '#2a221a', 0.6);
-  stroke(g, 'M 580 -110 L 580 -84 M 577 -110 L 583 -110', '#8a8e94', 1);
-  stroke(g, 'M 592 -112 L 600 -84', '#8a8e94', 0.9); fill(g, poly([[589, -114], [596, -113], [594, -110]]), '#8a8e94');
-  fill(g, rect(606, -112, 610, -90), '#5a3a24'); fill(g, rect(603, -114, 613, -110), '#8a8e94');
-  stroke(g, 'M 620 -114 L 624 -80', '#9aa0a6', 1.6); fill(g, poly([[618, -116], [626, -116], [627, -112], [619, -112]]), '#9aa0a6'); stroke(g, 'M 624 -80 L 628 -76', '#9aa0a6', 1.2);
-  for (let k = 0; k < 3; k++) stroke(g, ell(648, -100, 6 - k * 1.2, 6 - k * 1.2), '#8a7a5a', 0.6);
-  fill(g, `M 666 -82 C 666 -90 680 -90 680 -82 L 682 -81 L 664 -81 Z`, '#d8b84a'); fill(g, rect(670, -86, 676, -84), '#f4f0d8', 0.9);
-  stroke(g, 'M 673 -90 L 673 -94', '#2a221a', 0.4);
-  fill(g, rect(566, -34, 700, -30), '#5a4430'); fill(g, rect(566, -34, 700, -33), '#7a5e40');
-  for (const x of [570, 694]) fill(g, rect(x, -30, x + 3, 0), '#3a2a1c');
-  fill(g, rect(580, -40, 592, -34), '#4a4c50'); fill(g, rect(584, -44, 588, -40), '#4a4c50');
-  for (const [x, a] of [[612, 0.3], [632, -0.4]]) { stroke(g, `M ${x - 7 * Math.cos(a)} ${-37 - 7 * Math.sin(a)} L ${x + 7 * Math.cos(a)} ${-37 + 7 * Math.sin(a)}`, '#2a2c30', 0.8); fill(g, ell(x, -37, 1.2, 1.2), '#3a3c40'); }
-  fill(g, rect(644, -40, 660, -34), '#3a3c40'); fill(g, rect(646, -39, 658, -36), '#5a6a5a', 0.6); stroke(g, 'M 660 -37 C 668 -37 670 -42 676 -40', '#151515', 0.4);
-  fill(g, rect(676, -38, 690, -34), '#8a3a24');
+  // the tools on their hooks, each a solid thing: steel rounded by a highlight
+  // down its length and dark on its underside, wood with its grain, rust where
+  // hands never reach; each hangs a little off the board, so it throws a shadow
+  const lin = (x0, y0, x1, y1, stops) => { const gr = g.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => gr.addColorStop(o, c)); return gr; };
+  const STEEL = (x0, x1) => lin(x0, 0, x1, 0, [[0, '#4a4e54'], [0.35, '#c4c9ce'], [0.55, '#8a9096'], [1, '#2e3238']]);
+  const drop = (d) => { g.save(); g.translate(1.2, 1.4); fill(g, d, '#000', 0.35); g.restore(); };
+  for (const [hx, hy] of [[580, -112], [593, -114], [608, -114], [621, -116], [648, -107], [673, -95]]) { fill(g, ell(hx, hy, 0.7, 0.7), '#1a1612'); stroke(g, `M ${hx} ${hy} l 0 1.6`, '#9aa0a6', 0.35); }
+  // a wrench
+  const WR = 'M 579 -110 C 577.4 -111 577 -113 578 -114 L 579.2 -112.8 L 580.8 -112.8 L 582 -114 C 583 -113 582.6 -111 581 -110 L 581 -86 C 582 -85.4 582.4 -84 581.6 -83 L 578.4 -83 C 577.6 -84 578 -85.4 579 -86 Z';
+  drop(WR); fill(g, WR, STEEL(578, 582));
+  // a screwdriver: amber handle, the shaft
+  const SD = 'M 591.6 -112.6 L 594.6 -112.4 L 595 -102 C 594.2 -101.4 592.4 -101.4 591.6 -102 Z';
+  drop(SD); fill(g, SD, lin(591.6, 0, 595, 0, [[0, '#7a3a10'], [0.4, '#e08a3a'], [1, '#5a2808']]));
+  fill(g, rect(592.8, -101.6, 593.6, -88), STEEL(592.8, 593.6));
+  // the hammer: ash handle, a forged head
+  const HH = rect(606.4, -110, 609.6, -88);
+  drop(HH); fill(g, HH, lin(606.4, 0, 609.6, 0, [[0, '#5a3a20'], [0.4, '#a87848'], [1, '#3a2412']]));
+  clip(g, HH, () => { for (let k = 0; k < 4; k++) stroke(g, `M ${607 + k * 0.7} -110 C ${607.4 + k * 0.7} -102 ${606.8 + k * 0.7} -96 ${607.2 + k * 0.7} -88`, '#3a2412', 0.12, 0.5); });
+  const HD = 'M 602.6 -114.6 L 613.6 -114.2 C 614.4 -113.4 614.4 -110.8 613.6 -110 L 602.6 -110 C 601.8 -110.8 601.8 -113.8 602.6 -114.6 Z';
+  drop(HD); fill(g, HD, lin(0, -114.6, 0, -110, [[0, '#c8ccd0'], [0.4, '#7a8086'], [1, '#2a2e32']]));
+  // the halligan: forged bar, the adze and pick at the top, the fork below
+  const HB = 'M 621 -114 L 623 -114 L 625.6 -80 L 623.6 -80 Z';
+  drop(HB); fill(g, HB, STEEL(621, 625.6));
+  const HT = 'M 617.4 -117 L 627 -117.2 C 627.8 -116 627.4 -114.6 626.6 -114 L 618 -113.6 C 617 -114.4 616.8 -116 617.4 -117 Z';
+  drop(HT); fill(g, HT, lin(0, -117.2, 0, -113.6, [[0, '#d4d8dc'], [0.5, '#8a9096'], [1, '#32363a']]));
+  const HF = 'M 623.4 -80.4 L 626 -80.4 L 629.6 -75.6 L 628.4 -75 L 625.6 -78 L 624.4 -74.6 L 623.2 -75 Z';
+  drop(HF); fill(g, HF, STEEL(623, 630));
+  fill(g, ell(624, -96, 1.2, 3), '#7a3a1a', 0.5);
+  // a coil of hose, rubber, hung on its peg
+  for (let k = 0; k < 4; k++) {
+    const R = 6.2 - k * 0.5;
+    stroke(g, ell(648 + k * 0.3, -99 + k * 0.25, R, R * 0.92), '#141414', 1.4);
+    stroke(g, ell(648 + k * 0.3 - 0.3, -99 + k * 0.25 - 0.4, R, R * 0.92), '#5a5a58', 0.45, 0.6);
+  }
+  // the hard hat: a dome of yellow plastic, lit from the room, a lamp clip
+  const HAT = 'M 664.4 -82 C 664.4 -88.4 668.2 -91 673 -91 C 677.8 -91 681.6 -88.4 681.6 -82 L 683.6 -81.2 C 683.6 -80.6 683 -80.2 682.2 -80.2 L 663.8 -80.2 C 663 -80.2 662.4 -80.6 662.4 -81.2 Z';
+  drop(HAT);
+  fill(g, HAT, lin(0, -91, 0, -80.2, [[0, '#f2d66a'], [0.45, '#d8b84a'], [1, '#7a6020']]));
+  clip(g, HAT, () => {
+    fill(g, ell(669.6, -87.6, 3.4, 1.6), '#fff8d8', 0.45);
+    fill(g, rect(669.4, -86.6, 676.6, -84.2), '#f4f0d8', 0.85);
+    stroke(g, 'M 666 -82 C 670 -82.8 676 -82.8 680 -82', '#5a4810', 0.25, 0.6);
+    fill(g, ell(678, -85, 2.4, 1.6), '#5a4a20', 0.25);
+  });
+  // the bench: a thick top, worn pale at its edge, oil stains
+  fill(g, rect(566, -34, 700, -30), '#5a4430'); fill(g, rect(566, -34, 700, -33.2), '#9a7a54');
+  clip(g, rect(566, -34, 700, -30), () => { texture(g, 'wood', 0.6, 2); fill(g, ell(624, -32, 8, 1.4), '#1a120a', 0.35); fill(g, ell(662, -32.4, 5, 1), '#1a120a', 0.3); });
+  for (const x of [570, 694]) { fill(g, rect(x, -30, x + 3, 0), '#3a2a1c'); fill(g, rect(x, -30, x + 0.8, 0), '#5a4430'); }
+  fill(g, rect(566, -30, 700, -28.6), '#000', 0.35);
+  // on it: the drone's motor on its stand, two props, a battery on charge
+  const MB = 'M 579.6 -40 C 579.6 -41.4 580.4 -42 582 -42 L 590 -42 C 591.6 -42 592.4 -41.4 592.4 -40 L 592.4 -34 L 579.6 -34 Z';
+  fill(g, MB, lin(579.6, 0, 592.4, 0, [[0, '#2a2c30'], [0.35, '#6a6e74'], [1, '#1e2024']]));
+  fill(g, rect(583.6, -45.6, 588.4, -42), lin(583.6, 0, 588.4, 0, [[0, '#3a3c40'], [0.4, '#9aa0a6'], [1, '#2a2c30']]));
+  fill(g, ell(586, -45.6, 2.4, 0.6), '#c8ccd0');
+  for (const [x, a] of [[612, 0.3], [632, -0.4]]) {
+    g.save(); g.translate(x, -36.6); g.rotate(a);
+    fill(g, 'M -7.4 0 C -5 -1.2 -2 -1 0 -0.4 C 2 -1 5 -1.2 7.4 0 C 5 0.8 2 0.8 0 0.4 C -2 0.8 -5 0.8 -7.4 0 Z', lin(0, -1, 0, 1, [[0, '#4a4c52'], [0.5, '#1a1c20'], [1, '#2a2c30']]));
+    fill(g, ell(0, 0, 1.2, 1.2), '#5a5c62'); fill(g, ell(-0.3, -0.3, 0.4, 0.4), '#c8ccd0', 0.8);
+    g.restore();
+  }
+  const BT = 'M 644 -40 C 644 -40.6 644.4 -41 645 -41 L 659 -41 C 659.6 -41 660 -40.6 660 -40 L 660 -34 L 644 -34 Z';
+  fill(g, BT, lin(0, -41, 0, -34, [[0, '#4a4c50'], [0.3, '#2e3034'], [1, '#1a1c1e']]));
+  fill(g, rect(646, -39, 658, -36.4), '#4a5a4a', 0.6); fill(g, rect(646, -39, 650, -36.4), '#7aff9a', 0.5);
+  stroke(g, 'M 660 -37 C 668 -37 670 -42 676 -40', '#151515', 0.45);
+  // a red toolbox at the end, its paint chipped
+  const TB = 'M 676 -39 C 676 -39.8 676.6 -40.2 677.4 -40.2 L 688.6 -40.2 C 689.4 -40.2 690 -39.8 690 -39 L 690 -34 L 676 -34 Z';
+  fill(g, TB, lin(0, -40.2, 0, -34, [[0, '#c2523a'], [0.35, '#8a3a24'], [1, '#4a1c10']]));
+  fill(g, rect(681, -41.6, 685, -40.2), '#2a2a2a');
+  for (const [x, y] of [[678, -38], [687, -36.4], [683, -35]]) fill(g, ell(x, y, 0.6, 0.4), '#2a2a2a', 0.8);
 
   // the mark and the saying, painted by hand
   korMark(g, 760, -112, 15, 0.85);
