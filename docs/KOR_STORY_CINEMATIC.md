@@ -812,3 +812,12 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
   izleri, kenarlarında kir, yarısı dökülmüş saçak.
 - **HAWK:** kasketinin balıksırtı dokusu tüccar ekranının boyunda bile kumaş
   gibi okunur (ızgara değil); atkısı oval değil, düzensiz bir sarım.
+- **Sığınak eşyaları:** emaye çan lamba başlığı; askı panosundaki aletler
+  (anahtar, tornavida, çekiç, halligan, hortum, baret) hacimli, her biri
+  panoya gölge düşürür; tezgâhta motor, pervaneler, şarjdaki pil, boyası
+  dökük alet çantası; harita masası, saha telsizi, emaye kupalar, pirinç
+  mermiler, bükme sandalyeler; beton merdiven ve yuvarlak tırabzan;
+  boyalı tahta Vanta sandıkları; döküm soba ve çaydanlık; zeytin yeşili
+  telsiz ve kulaklık; askeri ranza ve battaniye. Duvardaki harita kurşun
+  kalemle çizilmiş bir pafta gibi: soluk sokak blokları, kahve halkası,
+  katlama izleri, nem.
