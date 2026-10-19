@@ -23,7 +23,7 @@ const PAL = {
   suit: mat(tone('#435069', '#2f394d', '#202737', '#0d1018'), 'canvas', 0.6),
   hat: mat(tone('#f2de96', '#d6ba60', '#a1873a', '#52421a'), 'paint', 0.5),
   mask: mat(tone('#505357', '#36393d', '#25272a', '#0e0f10'), 'rubber', 0.6),
-  filter: mat(tone('#f290ce', '#d2489e', '#983272', '#4a1336'), 'rubber', 0.45),
+  filter: mat(tone('#d888b2', '#b14f86', '#7a3260', '#3a1430'), 'rubber', 0.6),
   glove: mat(tone('#d8ba8d', '#b08e62', '#806541', '#3e301e'), 'leather', 0.85),
   boot: mat(tone('#735944', '#503d2e', '#35281e', '#16100b'), 'leather', 0.65),
   toe: mat(tone('#b0aca5', '#85817b', '#5c5954', '#24221f'), 'steel', 0.5),
@@ -263,7 +263,7 @@ function head(g) {
   cel(g, ell(5.6, -3.4, 0.7, 1.15), PAL.filter, { sh: 0.4, hl: 0.25, lw: 0.2 });
   cel(g, ell(2.4, -3.5, 1.15, 1.55), PAL.mask, { sh: 0.4, hl: 0.25, lw: 0.22 });
   cel(g, ell(2.45, -3.5, 0.95, 1.35), PAL.filter, { sh: 0.5, hl: 0.35, lw: 0.2 });
-  clip(g, ell(2.45, -3.5, 0.95, 1.35), () => { for (let i = -1.2; i < 1.3; i += 0.4) stroke(g, `M 1.4 ${-3.5 + i} L 3.5 ${-3.5 + i}`, PAL.filter.d, 0.08, 0.7); fill(g, ell(2.2, -4.1, 0.25, 0.3), '#ffffff', 0.35); });
+  clip(g, ell(2.45, -3.5, 0.95, 1.35), () => { for (let i = -1.2; i < 1.3; i += 0.4) stroke(g, `M 1.4 ${-3.5 + i} L 3.5 ${-3.5 + i}`, PAL.filter.d, 0.08, 0.7); fill(g, ell(2.2, -4.1, 0.25, 0.3), '#ffffff', 0.16); fill(g, ell(2.6, -2.7, 0.8, 0.5), '#3a3026', 0.3); });
   // the hard hat: a cap with its peak, the ridge, scuffs, the headlamp on its band
   const SHELL = 'M -4.9 -7.4 C -5.3 -10.4 -3.0 -12.8 0.4 -12.9 C 3.4 -13.0 5.2 -11.6 5.4 -9.6 L 7.4 -9.0 C 7.5 -8.6 7.2 -8.3 6.6 -8.3 L 4.8 -8.5 C 2.6 -8.8 -1.4 -8.6 -4.9 -7.4 Z';
   cel(g, SHELL, H, { sh: 1.5, hl: 0.55 });
