@@ -58,12 +58,30 @@ function room(g) {
   fill(g, rect(84, -153, 116, -151.6), '#ffc27a', 0.9);
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[84, -151.6], [116, -151.6], [134, -120], [70, -120]]), '#ffb060', 0.06); g.restore();
   fill(g, rect(80, -152, 140, -148), '#4a4842');
+  // the flight: cast concrete, each tread's nose worn round and pale where boots
+  // land, its riser in shadow under it; the light from the door falling down it
+  // and dying by the foot; the soffit dark under the whole flight
+  fill(g, poly([[140, -148], [245.6, -0.6], [245.6, 0], [140, 0]]), '#23221f');
   for (let k = 0; k < 11; k++) {
-    const sx = 140 + k * 9.6, sy = -148 + k * 13.4;
-    fill(g, rect(sx, sy, sx + 9.6, sy + 13.4 + 2), '#4c4a44'); fill(g, rect(sx, sy, sx + 9.6, sy + 1), '#625e56');
+    const sx = 140 + k * 9.6, sy = -148 + k * 13.4, lit = 1 - k / 12;
+    const RS = rect(sx, sy, sx + 9.6, sy + 13.4 + 2);
+    const rg = g.createLinearGradient(0, sy, 0, sy + 15.4); rg.addColorStop(0, '#2e2c28'); rg.addColorStop(0.15, '#4c4a44'); rg.addColorStop(1, '#3a3834');
+    fill(g, RS, rg);
+    clip(g, RS, () => texture(g, 'concrete', 0.5, 2));
+    fill(g, rect(sx, sy, sx + 9.6, sy + 1.2), `rgba(${150 + lit * 60 | 0},${140 + lit * 40 | 0},${120 + lit * 10 | 0},${0.35 + lit * 0.35})`);
+    fill(g, ell(sx + 4.8, sy + 0.5, 3, 0.45), '#d8c8a8', 0.12 + lit * 0.18);
+    fill(g, rect(sx, sy + 1.2, sx + 9.6, sy + 2.6), '#000', 0.3);
+    if (k % 3 === 1) fill(g, ell(sx + 2 + (k % 2) * 4, sy + 6, 1.4, 0.6), '#5a4a3a', 0.25);
   }
-  fill(g, poly([[140, -148], [245.6, -0.6], [245.6, 0], [140, 0]]), '#000', 0.25);
-  stroke(g, 'M 146 -170 L 252 -24', '#5a5a56', 0.8); for (const [x, y] of [[150, -164], [196, -100], [242, -36]]) stroke(g, `M ${x} ${y} L ${x} ${y + 22}`, '#4a4a46', 0.6);
+  const fall = g.createLinearGradient(140, -148, 240, 0); fall.addColorStop(0, 'rgba(255,190,110,0.08)'); fall.addColorStop(0.5, 'rgba(255,190,110,0)'); fall.addColorStop(1, 'rgba(0,0,0,0.25)');
+  fill(g, poly([[140, -148], [245.6, -0.6], [245.6, 0], [140, 0]]), fall);
+  // the handrail: a round steel tube on its posts, the light along its top
+  const RAIL = 'M 145.4 -170.4 L 251.4 -24.4 L 252.6 -23.6 L 146.6 -169.6 Z';
+  fill(g, RAIL, '#2a2c2e'); stroke(g, 'M 145.6 -170.6 L 251.6 -24.6', '#8a8e90', 0.3, 0.7);
+  for (const [x, y] of [[150, -164], [196, -100], [242, -36]]) {
+    fill(g, rect(x - 0.5, y, x + 0.5, y + 22), '#2a2c2e'); fill(g, rect(x - 0.5, y, x - 0.15, y + 22), '#6a6e70', 0.7);
+    fill(g, rect(x - 1.4, y + 21.4, x + 1.4, y + 22.4), '#1a1c1e');
+  }
   // the high window at the street, barred, the sodium coming through it
   fill(g, rect(296, -146, 344, -126), '#2a2a28');
   const W = rect(298, -144, 342, -128);
