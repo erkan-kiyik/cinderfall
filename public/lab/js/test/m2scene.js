@@ -318,6 +318,22 @@ export class M2Scene {
     // and a low mist lying over the street
     for (const lx of this.C.lamps) if (lx > x0 - 40 && lx < x1 + 40) { B.draw(glow, lx + 15, -46, 20, 38, 0, rgba('#ffc88a', 0.075)); B.draw(glow, lx + 15, -6, 30, 9, 0, rgba('#ffc88a', 0.07)); }
     if (out) B.draw(glow, (x0 + x1) / 2, -3, (x1 - x0) * 0.75, 16, 0, rgba('#7f8da3', 0.06));
+    // rain shows where a lamp lights it: the drops inside each cone catch the sodium
+    if (out && this.e.fxLevel !== 0) {
+      const tr = A.get('fx.tracer'), d = this.life.drops, n = this.life.count;
+      for (const lx of this.C.lamps) {
+        const cx = lx + 15;
+        if (cx < x0 - 60 || cx > x1 + 60) continue;
+        for (let i = 0; i < n; i++) {
+          const o = i * 3, x = d[o], y = d[o + 1];
+          if (y < -76 || y > 0) continue;
+          const r = 6 + (y + 78) * 0.42, dx = Math.abs(x - cx);
+          if (dx > r) continue;
+          const sz = d[o + 2] * 0.03, k = (1 - dx / r) * (1 - (y + 76) / 110);
+          B.line(tr, x - sz * 0.16, y - sz, x, y, 0.36, rgba('#ffd9a8', 0.8 * k));
+        }
+      }
+    }
     // neon: the buildings', the barricades', each smeared down the wet road
     for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) {
       const k = this.flicker(fl, f.x);
