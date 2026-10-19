@@ -232,21 +232,51 @@ function room(g) {
 // the radio, two mugs, a magazine and rounds, the ashtray; the two chairs
 function table(g) {
   const { x0, x1, y } = TABLE;
-  fill(g, rect(x0, y, x1, y + 3), '#5a4028'); fill(g, rect(x0, y, x1, y + 0.8), '#7a5a3a');
-  for (const x of [x0 + 3, x1 - 6]) fill(g, rect(x, y + 3, x + 3, 0), '#3a2818');
-  fill(g, rect(x0 + 3, y + 8, x1 - 3, y + 10), '#3a2818');
-  fill(g, poly([[x0 + 14, y - 0.2], [x0 + 62, y - 1], [x0 + 64, y], [x0 + 12, y]]), '#d8ceb4');
+  const lin = (ax, ay, bx, by, stops) => { const gr = g.createLinearGradient(ax, ay, bx, by); stops.forEach(([o, c]) => gr.addColorStop(o, c)); return gr; };
+  // the top: thick planks, the lamp's light along its near edge, rings and
+  // scorch marks from years of mugs and cigarettes; legs and stretcher
+  const TOP = rect(x0, y, x1, y + 3);
+  fill(g, TOP, lin(0, y, 0, y + 3, [[0, '#8a6844'], [0.3, '#5a4028'], [1, '#2e2014']]));
+  clip(g, TOP, () => texture(g, 'wood', 0.55, 2));
+  fill(g, rect(x0, y + 3, x1, y + 4), '#000', 0.3);
+  for (const x of [x0 + 3, x1 - 6]) { fill(g, rect(x, y + 3, x + 3, 0), lin(x, 0, x + 3, 0, [[0, '#4a3420'], [0.4, '#6a4c30'], [1, '#2a1c10']])); }
+  fill(g, rect(x0 + 3, y + 8, x1 - 3, y + 10), lin(0, y + 8, 0, y + 10, [[0, '#5a4028'], [1, '#2a1c10']]));
+  // the street map spread on it, its corners curling, the route in red
+  fill(g, poly([[x0 + 14, y - 0.2], [x0 + 62, y - 1], [x0 + 64, y], [x0 + 12, y]]), lin(x0 + 12, 0, x0 + 64, 0, [[0, '#b8ae94'], [0.5, '#e8dec4'], [1, '#c8bea4']]));
+  fill(g, poly([[x0 + 62, y - 1], [x0 + 64.6, y - 2.2], [x0 + 64, y]]), '#a89e84');
   stroke(g, `M ${x0 + 20} ${y - 0.5} L ${x0 + 40} ${y - 0.8} L ${x0 + 52} ${y - 0.4}`, '#a8232d', 0.3);
-  fill(g, rect(x0 + 68, y - 8, x0 + 82, y), '#2a2c2a'); fill(g, ell(x0 + 72, y - 4, 2, 2), '#4a4c4a'); stroke(g, `M ${x0 + 80} ${y - 8} L ${x0 + 84} ${y - 20}`, '#151515', 0.4);
-  for (const x of [x0 + 4, x0 + 88]) { fill(g, rect(x, y - 5, x + 4.4, y), '#d8d4c8'); stroke(g, `M ${x + 4.4} ${y - 4} C ${x + 6.4} ${y - 4} ${x + 6.4} ${y - 1.4} ${x + 4.4} ${y - 1.4}`, '#d8d4c8', 0.5); fill(g, rect(x, y - 5, x + 4.4, y - 4.4), '#3a2416'); }
-  fill(g, poly([[x0 + 92, y], [x0 + 96, y - 7], [x0 + 99, y - 6.4], [x0 + 95, y]]), '#2a2c30');
-  for (let k = 0; k < 4; k++) fill(g, rect(x0 + 50 + k * 1.6, y - 2.4, x0 + 50.8 + k * 1.6, y), '#c9a548');
-  fill(g, ell(ASHTRAY[0], y - 0.8, 3, 0.9), '#6a6e72'); stroke(g, `M ${ASHTRAY[0] - 1} ${y - 1.2} L ${ASHTRAY[0] + 3} ${y - 2.4}`, '#e8e2d4', 0.5); fill(g, ell(ASHTRAY[0] + 3.1, y - 2.45, 0.3, 0.3), '#ff8a3a');
-  // the chairs pulled out
+  // the field radio: a steel case, dials, its aerial
+  const RD = `M ${x0 + 68} ${y} L ${x0 + 68} ${y - 7.4} C ${x0 + 68} ${y - 8} ${x0 + 68.4} ${y - 8.2} ${x0 + 69} ${y - 8.2} L ${x0 + 81} ${y - 8.2} C ${x0 + 81.6} ${y - 8.2} ${x0 + 82} ${y - 8} ${x0 + 82} ${y - 7.4} L ${x0 + 82} ${y} Z`;
+  fill(g, RD, lin(x0 + 68, 0, x0 + 82, 0, [[0, '#2a2e2a'], [0.3, '#4a524a'], [1, '#1a1e1a']]));
+  fill(g, ell(x0 + 72, y - 4, 2.1, 2.1), '#151815'); fill(g, ell(x0 + 72, y - 4, 1.6, 1.6), lin(0, y - 5.6, 0, y - 2.4, [[0, '#6a706a'], [1, '#2a2e2a']]));
+  for (const dx of [77, 80]) { fill(g, ell(x0 + dx, y - 5, 0.9, 0.9), '#0e100e'); fill(g, ell(x0 + dx - 0.2, y - 5.2, 0.35, 0.35), '#9aa09a', 0.8); }
+  fill(g, rect(x0 + 75.6, y - 2.6, x0 + 80.6, y - 1.4), '#c8d8a0', 0.55);
+  stroke(g, `M ${x0 + 80} ${y - 8} L ${x0 + 84} ${y - 20}`, '#151515', 0.4); fill(g, ell(x0 + 84, y - 20, 0.4, 0.4), '#2a2a2a');
+  // two enamel mugs, chipped, tea gone cold in them
+  for (const x of [x0 + 4, x0 + 88]) {
+    const MG = rect(x, y - 5, x + 4.4, y);
+    fill(g, MG, lin(x, 0, x + 4.4, 0, [[0, '#9a968a'], [0.35, '#eeeadc'], [1, '#8a867a']]));
+    stroke(g, `M ${x + 4.4} ${y - 4} C ${x + 6.4} ${y - 4} ${x + 6.4} ${y - 1.4} ${x + 4.4} ${y - 1.4}`, '#c8c4b8', 0.55);
+    fill(g, ell(x + 2.2, y - 5, 2.2, 0.5), '#3a2416'); fill(g, rect(x, y - 5.2, x + 4.4, y - 4.8), '#1a2a3a', 0.6);
+    fill(g, ell(x + 3.4, y - 1.6, 0.5, 0.4), '#1a1a1a', 0.8);
+  }
+  // a magazine stood on end, rounds loose beside it, brass catching the lamp
+  fill(g, poly([[x0 + 92, y], [x0 + 96, y - 7], [x0 + 99, y - 6.4], [x0 + 95, y]]), lin(x0 + 92, 0, x0 + 99, 0, [[0, '#1a1c20'], [0.5, '#4a4c52'], [1, '#2a2c30']]));
+  for (let k = 0; k < 4; k++) { const rx = x0 + 50 + k * 1.6; fill(g, rect(rx, y - 2.4, rx + 0.8, y), lin(rx, 0, rx + 0.8, 0, [[0, '#8a6a28'], [0.4, '#f0d070'], [1, '#6a4a18']])); fill(g, ell(rx + 0.4, y - 2.4, 0.4, 0.3), '#b87a3a'); }
+  // the ashtray with its cigarette burning
+  fill(g, ell(ASHTRAY[0], y - 0.8, 3, 0.9), lin(ASHTRAY[0] - 3, 0, ASHTRAY[0] + 3, 0, [[0, '#4a4e52'], [0.4, '#9a9ea2'], [1, '#3a3e42']])); fill(g, ell(ASHTRAY[0], y - 1, 2.2, 0.5), '#2a2a2a');
+  stroke(g, `M ${ASHTRAY[0] - 1} ${y - 1.2} L ${ASHTRAY[0] + 3} ${y - 2.4}`, '#e8e2d4', 0.5); fill(g, ell(ASHTRAY[0] + 3.1, y - 2.45, 0.3, 0.3), '#ff8a3a');
+  // the chairs pulled out: bentwood, the seat worn, the back rail and its spindles
   for (const [x, d] of [[x0 - 14, -1], [x1 + 4, 1]]) {
-    fill(g, rect(x, -15, x + 10, -13), '#4a3624');
-    stroke(g, `M ${x + (d < 0 ? 0 : 10)} -13 L ${x + (d < 0 ? 0 : 10)} -34 M ${x + (d < 0 ? 10 : 0)} -13 L ${x + (d < 0 ? 10 : 0)} 0 M ${x + (d < 0 ? 0 : 10)} -13 L ${x + (d < 0 ? 0 : 10)} 0`, '#3a2818', 1);
-    fill(g, rect(x + (d < 0 ? -1 : 8), -34, x + (d < 0 ? 2 : 11), -24), '#4a3624');
+    const back = d < 0 ? x : x + 10, front = d < 0 ? x + 10 : x;
+    const WD = (ax, bx) => lin(ax, 0, bx, 0, [[0, '#2a1c10'], [0.45, '#6a4c30'], [1, '#2a1c10']]);
+    fill(g, rect(back - 0.6, -34, back + 0.8, 0), WD(back - 0.6, back + 0.8));
+    fill(g, rect(front - 0.6, -13, front + 0.8, 0), WD(front - 0.6, front + 0.8));
+    fill(g, rect(x - 0.6, -15.2, x + 10.6, -13), lin(0, -15.2, 0, -13, [[0, '#8a6844'], [0.4, '#5a4028'], [1, '#2a1c10']]));
+    fill(g, rect(x, -6, x + 10, -5.2), '#2a1c10', 0.9);
+    const bx = d < 0 ? -1 : 8;
+    fill(g, rect(x + bx, -34, x + bx + 3, -31.6), lin(0, -34, 0, -31.6, [[0, '#7a5a3a'], [1, '#3a2818']]));
+    for (const k of [0.8, 1.8]) fill(g, rect(x + bx + k, -31.6, x + bx + k + 0.4, -24), '#4a3624');
   }
 }
 
