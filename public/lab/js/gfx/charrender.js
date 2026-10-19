@@ -8,6 +8,11 @@
 // contact shade outside it (docs §11: no ink line round anyone). With the
 // accessibility option on, enemies get a clear outline instead.
 //
+// A street lamp near someone also throws their shadow on the wall behind
+// them: the same slot drawn as a soft dark shape, projected from the lamp
+// (a copy magnified about it, so it falls away from the lamp and sinks
+// below the line where the wall meets the street), cut at that line (shadow()).
+//
 // Slots are rendered lazily in groups, so any number of characters works.
 import { program, Target } from './gl.js';
 
@@ -54,6 +59,35 @@ void main() {
   o = s + uInk * (1.0 - s.a) * a;
 }`;
 
+const SVS = `#version 300 es
+uniform mat3 uView;
+uniform vec4 uRect;
+uniform vec4 uUV;
+uniform vec3 uCast;   // lamp x, y, magnification (wall depth over lamp depth, plus one)
+out vec2 vUV; out float vY;
+void main() {
+  vec2 c = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1));
+  vec2 p = uCast.xy + (mix(uRect.xy, uRect.zw, c) - uCast.xy) * uCast.z;
+  gl_Position = vec4((uView * vec3(p, 1.0)).xy, 0.0, 1.0);
+  vUV = mix(uUV.xy, uUV.zw, c); vY = p.y;
+}`;
+const SFS = `#version 300 es
+precision mediump float;
+uniform sampler2D uTex;
+uniform vec4 uClamp;
+uniform vec2 uR;        // penumbra reach in uv
+uniform float uA;       // darkness
+uniform float uGround;  // world y where the wall meets the street
+in vec2 vUV; in float vY; out vec4 o;
+float tap(vec2 uv) { return texture(uTex, clamp(uv, uClamp.xy, uClamp.zw)).a; }
+void main() {
+  if (vY > uGround) discard;
+  float a = tap(vUV) * 0.2;
+  for (int i = 0; i < 8; i++) { float t = float(i) * 0.7853982; a += tap(vUV + vec2(cos(t), sin(t)) * uR) * 0.1; }
+  a *= uA;
+  o = vec4(vec3(0.012, 0.014, 0.02) * a, a);
+}`;
+
 // Local slot box (units): wide enough for long rifles aimed up or down.
 export const BOX = [-46, -98, 62, 10];
 
@@ -63,6 +97,7 @@ export class CharRenderer {
     this.size = Math.min(size, gl.getParameter(gl.MAX_TEXTURE_SIZE));
     this.sheet = new Target(gl, this.size, this.size);
     this.prog = program(gl, VS, FS);
+    this.sprog = program(gl, SVS, SFS);
     this.vao = gl.createVertexArray();
     this.view = new Float32Array(9);
     this.ink = [0.035, 0.027, 0.022, 0.4]; // the soft contact shade (style INK, faint)
@@ -117,6 +152,29 @@ export class CharRenderer {
 
   // Composite character `ch` into the bound scene target. `restore` rebinds
   // the scene target after any slot rendering this call needs.
+  // The shadow the lamp at (lx, ly) throws of `ch` on the wall behind, `k` the
+  // magnification about the lamp, `a` its darkness.
+  shadow(ch, view, restore, lx, ly, k, a) {
+    if (!this.done.has(ch)) this.renderGroup(this.queue.indexOf(ch), restore);
+    const uv = this.done.get(ch);
+    const gl = this.gl, p = this.sprog, f = ch.facing, x = ch.rx, y = ch.ry, W = this.size;
+    gl.useProgram(p.p);
+    gl.uniformMatrix3fv(p.u.uView, false, view);
+    gl.uniform4f(p.u.uRect, x + BOX[0] * f, y + BOX[1], x + BOX[2] * f, y + BOX[3]);
+    gl.uniform4f(p.u.uUV, uv[0], uv[1], uv[2], uv[3]);
+    gl.uniform3f(p.u.uCast, lx, ly, k);
+    gl.uniform1f(p.u.uGround, y);
+    gl.uniform4f(p.u.uClamp, uv[0] + 0.5 / W, uv[3] + 0.5 / W, uv[2] - 0.5 / W, uv[1] - 0.5 / W);
+    const r = (1.0 + (k - 1) * 6) * this.ppu / W;
+    gl.uniform2f(p.u.uR, r, r);
+    gl.uniform1f(p.u.uA, a);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.sheet.tex); gl.uniform1i(p.u.uTex, 0);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(this.vao);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindVertexArray(null);
+  }
+
   composite(ch, view, restore) {
     if (!this.done.has(ch)) this.renderGroup(this.queue.indexOf(ch), restore);
     const uv = this.done.get(ch);

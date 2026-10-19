@@ -253,6 +253,14 @@ export class M2Scene {
     for (const p of this.C.props) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }
     B.end();
     this.drawWorldExtras(B, w, x0, x1);
+    // the nearest street lamp throws each standing figure's shadow on the wall
+    // behind: magnified about the lamp, fainter the further off the lamp is
+    if (out && this.e.fxLevel !== 0) for (const c of chars) {
+      if (c.rag || !c.alive) continue;
+      let d = 1e9;
+      for (const lx of this.C.lamps) { const k = c.rx - (lx + 15); if (Math.abs(k) < Math.abs(d)) d = k; }
+      if (Math.abs(d) < 120) this.cr.shadow(c, w, restore, c.rx - d, -78, 1.5, 0.8 * Math.pow(1 - Math.abs(d) / 120, 0.8));
+    }
     // characters (each composited through the outline shader)
     for (const c of chars) this.cr.composite(c, w, restore);
     // cover in front
