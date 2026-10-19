@@ -231,8 +231,19 @@ export class M2Scene {
       layer('sky', this.viewFor('sky', PLX.sky, cam.x));
       const vFar = this.viewFor('far', PLX.far, 300);
       layer('far', vFar); this.life.drawFar(B, vFar, A, t, kMax);
+      // air between the layers (docs §10.12): the far city sinks into a low
+      // haze lit from below by its own sodium lamps, the middle distance into
+      // a thinner cool mist, so depth reads as it does in the traced stills
+      const haze = A.get('fx.glow'), vw = cam.viewW;
+      B.begin(vFar);
+      B.draw(haze, 300 + (cam.x - 300) * PLX.far, -100, vw * 0.9, 70, 0, rgba('#8a7a86', 0.26));
+      B.draw(haze, 300 + (cam.x - 300) * PLX.far, -78, vw * 0.8, 30, 0, rgba('#b08868', 0.2));
+      B.end();
       const vMid = this.viewFor('mid', PLX.mid, 300);
       layer('mid', vMid); this.life.drawMid(B, vMid, A, t, kMax);
+      B.begin(vMid);
+      B.draw(haze, 300 + (cam.x - 300) * PLX.mid, -70, vw * 0.85, 50, 0, rgba('#6a7586', 0.16));
+      B.end();
       layer('ground', w);
     }
     B.begin(w);
