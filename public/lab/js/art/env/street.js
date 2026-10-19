@@ -265,6 +265,19 @@ export function barrier(g, x, w = 34) {
     g.font = '700 2.0px sans-serif'; g.fillStyle = 'rgba(244,246,248,0.8)'; g.fillText('V-114', x + w - 13, -7.2);
     // scuffs from boots and a tyre, the dust low down
     for (const [sx, sy] of [[x + 8, -5.0], [x + 20, -4.2], [x + 26, -12.0]]) stroke(g, `M ${sx} ${sy} l 3 0.5`, POLY.k, 0.25, 0.4);
+    // the slope turning away from the sky toward the foot, the rain's grey streaks
+    // down it, the street's grime splashed up the foot, the paint chipped off the arrises
+    const sl = g.createLinearGradient(0, -16, 0, -6);
+    sl.addColorStop(0, 'rgba(255,255,255,0.1)'); sl.addColorStop(1, 'rgba(0,0,0,0.18)');
+    g.fillStyle = sl; g.fillRect(x, -16, w, 10);
+    const r = rng((x * 31) | 0);
+    for (let i = 0; i < 7; i++) {
+      const sx = x + 6 + r() * (w - 12), L = 4 + r() * 8, st = g.createLinearGradient(0, -15.6, 0, -15.6 + L);
+      st.addColorStop(0, 'rgba(40,44,50,0.28)'); st.addColorStop(1, 'rgba(40,44,50,0)');
+      g.fillStyle = st; g.fillRect(sx, -15.6, 0.4 + r() * 0.5, L);
+    }
+    for (let i = 0; i < 70; i++) { const sx = x + r() * w, sy = -r() * r() * 7; fill(g, ell(sx, sy, 0.12 + r() * 0.22, 0.1 + r() * 0.16), r() < 0.7 ? 'rgba(34,30,26,0.5)' : 'rgba(90,80,66,0.4)'); }
+    for (let i = 0; i < 5; i++) { const t = r(), sx = x + 6.2 + t * (w - 12.4); fill(g, ell(sx, -15.7 + r() * 0.6, 0.5 + r() * 0.9, 0.3 + r() * 0.3), '#8e9094', 0.8); }
     g.save(); g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, -8, 0, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(60,64,70,0.45)'); g.fillStyle = gr; g.fillRect(x, -8, w, 8); g.restore();
   });
   // the LED strip and its housing

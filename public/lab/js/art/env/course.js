@@ -182,6 +182,19 @@ export function barricade(g, x0, x1, h) {
         g.font = '700 1.7px sans-serif'; g.fillStyle = 'rgba(244,246,248,0.75)'; g.fillText(`V-${(212 + i * 7 + Math.round(x0)) % 900}`, px + 2.4, -h + 5.2);
         stroke(g, `M ${px + pw * 0.3} ${-h * 0.18} l 2.4 0.6`, VPOLY.k, 0.25, 0.5);
         g.save(); g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, -h * 0.3, 0, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(60,64,70,0.4)'); g.fillStyle = gr; g.fillRect(px, -h, pw, h); g.restore();
+        // a hard life at a checkpoint: bullet strikes (a dent, its rim bright, the
+        // paint gone round it), scratches, the rain's streaks down from the rib
+        const r = rng((px * 17 + h * 5) | 0);
+        const sl = g.createLinearGradient(0, -h, 0, -3.4); sl.addColorStop(0, 'rgba(255,255,255,0.08)'); sl.addColorStop(1, 'rgba(0,0,0,0.12)');
+        g.fillStyle = sl; g.fillRect(px, -h, pw, h);
+        for (let k = 0; k < 4; k++) { const sx = px + 1.6 + r() * (pw - 3.2), L = 3 + r() * h * 0.4, st = g.createLinearGradient(0, -h * 0.72, 0, -h * 0.72 + L); st.addColorStop(0, 'rgba(40,46,54,0.3)'); st.addColorStop(1, 'rgba(40,46,54,0)'); g.fillStyle = st; g.fillRect(sx, -h * 0.72, 0.3 + r() * 0.4, L); }
+        for (let k = 0; k < 2 + (r() * 2 | 0); k++) {
+          const bx = px + 2 + r() * (pw - 4), by = -h + 4 + r() * (h - 9);
+          fill(g, ell(bx, by, 0.95, 0.95), 'rgba(120,128,138,0.5)');
+          fill(g, ell(bx, by, 0.5, 0.5), '#2a2f36');
+          fill(g, ell(bx - 0.18, by - 0.2, 0.62, 0.28), 'rgba(230,236,242,0.55)');
+        }
+        for (let k = 0; k < 3; k++) { const sx = px + 1 + r() * (pw - 4), sy = -h + 3 + r() * (h - 6); stroke(g, `M ${sx} ${sy} l ${1.4 + r() * 2.4} ${(r() - 0.5) * 1.2}`, 'rgba(230,236,242,0.35)', 0.12); }
       });
       for (const [bx, by] of [[px + 2.4, -h + 3.2], [px + pw - 2.4, -h + 3.2], [px + 2.4, -4.4], [px + pw - 2.4, -4.4]]) { fill(g, ell(bx, by, 0.42, 0.42), VSTEEL.d); fill(g, ell(bx - 0.1, by - 0.1, 0.2, 0.2), VSTEEL.l); }
     }
