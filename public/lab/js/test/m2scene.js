@@ -253,16 +253,31 @@ export class M2Scene {
     for (const p of this.C.props) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }
     B.end();
     this.drawWorldExtras(B, w, x0, x1);
-    // the nearest street lamp throws each standing figure's shadow on the wall
-    // behind: magnified about the lamp, fainter the further off the lamp is
-    if (out && this.e.fxLevel !== 0) for (const c of chars) {
-      if (c.rag || !c.alive) continue;
+    // the nearest street lamp to each figure: it throws their shadow on the wall
+    // behind (magnified about the lamp, fainter the further off it is) and
+    // warms the rim of light along the side that faces it
+    const lit = this.e.fxLevel !== 0;
+    const near = chars.map((c) => {
       let d = 1e9;
-      for (const lx of this.C.lamps) { const k = c.rx - (lx + 15); if (Math.abs(k) < Math.abs(d)) d = k; }
-      if (Math.abs(d) < 120) this.cr.shadow(c, w, restore, c.rx - d, -78, 1.5, 0.8 * Math.pow(1 - Math.abs(d) / 120, 0.8));
-    }
+      if (out) for (const lx of this.C.lamps) { const k = c.rx - (lx + 15); if (Math.abs(k) < Math.abs(d)) d = k; }
+      return d;
+    });
+    if (lit) chars.forEach((c, i) => {
+      const d = near[i];
+      if (!c.rag && c.alive && Math.abs(d) < 120) this.cr.shadow(c, w, restore, c.rx - d, -78, 1.5, 0.8 * Math.pow(1 - Math.abs(d) / 120, 0.8));
+    });
     // characters (each composited through the outline shader)
-    for (const c of chars) this.cr.composite(c, w, restore);
+    const L0 = this.cr.light, R0 = this.cr.rim;
+    chars.forEach((c, i) => {
+      const d = near[i];
+      if (Math.abs(d) < 120) {
+        const k = 1 - Math.abs(d) / 120, n = Math.hypot(d, 36);
+        this.cr.light = [-d / n, -36 / n];
+        this.cr.rim = [R0[0] + 0.36 * k, R0[1] + 0.22 * k, R0[2] + 0.06 * k];
+      } else { this.cr.light = L0; this.cr.rim = R0; }
+      this.cr.composite(c, w, restore);
+    });
+    this.cr.light = L0; this.cr.rim = R0;
     // cover in front
     B.begin(w);
     for (const p of this.C.front) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }
