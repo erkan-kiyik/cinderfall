@@ -79,6 +79,8 @@ export function boot(g, ctx, upper, sole, o = {}) {
     // heel counter
     fill(g, 'M -3.2 -0.4 C -2.2 -0.2 -1.0 0.2 -0.4 1.6 L -3.2 1.6 Z', t(upper).d, 0.85);
   });
+  // the leather creased where the ankle bends, worn pale on the toe
+  clothFolds(g, BOOT, [[[-2.6, -1.6], [-1.4, -1.2], [0.2, -1.5]], [[-2.4, -2.6], [-1.0, -2.3], [0.4, -2.6]], [[2.6, 0.4], [3.4, 0.9]]], t(upper));
   cel(g, TOE, t(o.toe || upper), { sh: 0.45, hl: 0.3, lw: 0.26 });
   cel(g, SOLE, t(sole), { sh: 0.3, hl: 0.18 });
   clip(g, SOLE, () => { for (let x = -2.2; x < 7; x += 1.25) fill(g, `M ${x} 2.15 L ${x + 0.6} 2.15 L ${x + 0.6} 2.6 L ${x} 2.6 Z`, t(sole).k, 0.55); });
