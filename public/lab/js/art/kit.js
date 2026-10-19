@@ -296,25 +296,22 @@ export function defocus(paint, u) {
 
 // Round a part painted alone on canvas c (transparent round it), the way a
 // form turns from the light: its edges fall into shade, more on the side away
-// from the light (down and away), and the edge toward the light catches a
-// little of it. `px`: how deep the turn goes, in device pixels. Only the part's
-// own pixels change (source-atop), so its silhouette stays where it was.
+// from the light (down and away). `px`: how deep the turn goes, in device
+// pixels. Only the part's own pixels change (source-atop), so its silhouette
+// stays where it was.
 export function volume(c, px) {
   if (px < 0.8) return;
   const w = c.width, h = c.height, g = c.getContext('2d');
-  // the part's alpha blurred once, at half size (it is only ever a soft edge)
+  // the part's alpha blurred at half size (it is only ever a soft edge), nudged
+  // toward the light, cut out of a dark sheet: what is left is the turned edge
   const bw = Math.max(1, Math.ceil(w / 2)), bh = Math.max(1, Math.ceil(h / 2));
   const b = canvas(bw, bh), gb = b.getContext('2d');
   gb.filter = `blur(${(px / 2).toFixed(2)}px)`; gb.drawImage(c, 0, 0, bw, bh);
   const m = canvas(w, h), gm = m.getContext('2d');
-  const rim = (col, dx, dy, a) => {
-    gm.globalCompositeOperation = 'source-over'; gm.fillStyle = col; gm.fillRect(0, 0, w, h);
-    gm.globalCompositeOperation = 'destination-out'; gm.drawImage(b, dx, dy, w, h);
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = a;
-    g.drawImage(m, 0, 0); g.restore();
-  };
-  rim('rgb(6,7,10)', -px * 0.35, -px * 0.55, 0.5);
-  rim('rgb(196,204,218)', px * 0.5, px * 0.7, 0.07);
+  gm.fillStyle = 'rgb(6,7,10)'; gm.fillRect(0, 0, w, h);
+  gm.globalCompositeOperation = 'destination-out'; gm.drawImage(b, -px * 0.35, -px * 0.55, w, h);
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = 0.5;
+  g.drawImage(m, 0, 0); g.restore();
 }
 
 // A machined finish laid over a weapon already painted in box [x0, y0, x1, y1]
