@@ -147,6 +147,8 @@ const TAIL = blob([[-5.4, -1.4], [2.8, -1.6], [3.6, 4.0], [4.2, 11.0], [4.8, 18.
 function thigh(g, ctx) {
   const t = ctx.t;
   cel(g, THIGH, t(PAL.pants), { sh: 1.6, hl: 0.45 });
+  // trousers bunched behind the knee, pulled across the thigh from the hip
+  clothFolds(g, THIGH, [[[-3.0, 11.0], [-1.0, 11.8], [1.6, 11.4]], [[-2.8, 2.8], [-1.2, 3.4], [-0.2, 4.6]], [[1.4, 7.0], [2.4, 8.2]]], t(PAL.pants));
   cel(g, TAIL, t(PAL.coat), { sh: 1.6, hl: 0.5 });
   clip(g, TAIL, () => {
     // the vent at the back, the front edge, the hem

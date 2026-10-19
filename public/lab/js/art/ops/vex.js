@@ -214,6 +214,8 @@ function hand(g, ctx) { glove(g, ctx, PAL.glove, { cuff: PAL.glove }); }
 function thigh(g, ctx) {
   const t = ctx.t;
   g.save(); g.scale(1.06, 1); cel(g, THIGH, t(PAL.pants), { sh: 1.7, hl: 0.45 }); g.restore();
+  // trousers bunched behind the knee, pulled across the thigh from the hip
+  clothFolds(g, THIGH, [[[-3.0, 11.0], [-1.0, 11.8], [1.6, 11.4]], [[-2.8, 2.8], [-1.2, 3.4], [-0.2, 4.6]], [[1.4, 7.0], [2.4, 8.2]]], t(PAL.pants));
   clip(g, THIGH, () => {
     // the out-seam, triple stitched; a rule pocket
     stroke(g, curve([[2.6, 0.6], [2.4, 7.0], [2.0, 15.0]]), t(PAL.pants).k, 0.24, 0.7);

@@ -189,6 +189,8 @@ function thigh(g, ctx) {
   const t = ctx.t;
   g.save(); g.scale(1.2, 1);
   cel(g, THIGH, t(PAL.suit), { sh: 1.7, hl: 0.45 });
+  // trousers bunched behind the knee, pulled across the thigh from the hip
+  clothFolds(g, THIGH, [[[-3.0, 11.0], [-1.0, 11.8], [1.6, 11.4]], [[-2.8, 2.8], [-1.2, 3.4], [-0.2, 4.6]], [[1.4, 7.0], [2.4, 8.2]]], t(PAL.suit));
   clip(g, THIGH, () => {
     stroke(g, curve([[2.6, 0.6], [2.4, 7.0], [2.0, 15.0]]), t(PAL.suit).k, 0.22, 0.7);
     stitch(g, curve([[2.2, 0.6], [2.0, 7.0], [1.6, 15.0]]), t(PAL.suit).l, 0.07, 0.6);
