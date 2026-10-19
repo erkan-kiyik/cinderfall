@@ -133,16 +133,12 @@ export class M2Scene {
   }
 
   // light flicker by kind (docs §10.4): bulbs on a generator wobble and now
-  // and then dip, the hotel's last neon catches and drops out, a television
-  // jumps from scene to scene, fires breathe;
-  // Vanta's LEDs (no kind) hold steady. Each building on its own phase.
+  // and then dip, a television jumps from scene to scene, fires breathe;
+  // Vanta's lamps (no kind) hold steady. Each building on its own phase.
   flicker(kind, seed = 0) {
     const t = this.t + seed * 0.013;
     if (kind === 'bulb') return (t % 9.7) > 9.45 ? 0.62 : 0.93 + Math.sin(t * 2.3 + seed) * 0.04 + Math.sin(t * 7.1 + seed * 0.7) * 0.03;
     if (kind === 'tv') { const v = Math.abs(Math.sin(t * 3.1 + seed) * Math.sin(t * 7.7 + seed * 0.7)); return 0.45 + 0.4 * v + ((((t * 6) | 0) * 7919) % 5 === 0 ? 0.25 : 0); }
-    if (kind === 'dying') { const p = t % 5.3; return p > 4.2 ? (((t * 17) | 0) % 3 ? 0.08 : 0.9) : 0.78 + Math.sin(t * 50) * 0.04; }
-    if (kind === 'neon') return (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
-    if (kind === 'neon2') return (t % 8.3) > 8.0 && ((t * 24) | 0) % 2 ? 0.3 : 1;
     if (kind === 'fire') return 0.8 + Math.sin(t * 11) * 0.1 + Math.sin(t * 4.7) * 0.1;
     if (kind === 'buzz') { const v = Math.sin(t * 37 + seed) * Math.sin(t * 13.7 + seed * 1.3); return v > 0.9 ? 0.35 : 0.92 + 0.08 * Math.sin(t * 61 + seed); }
     return 1;
@@ -202,14 +198,13 @@ export class M2Scene {
     // lights
     const vw = cam.viewW, x0 = cam.x - vw / 2 - 120, x1 = cam.x + vw / 2 + 120;
     for (const lx of this.C.lamps) if (lx > x0 && lx < x1) { R.addLight(lx + 15, -78, 100, 1.2, [1, 0.7, 0.4], Math.PI / 2, Math.cos(0.44), 0.18); R.addLight(lx + 15, -80, 22, 0.8, [1, 0.8, 0.55]); }
-    // the buildings in view: their windows, neon and fires
+    // the buildings in view: their windows, bulbs and fires
     const vis = this.C.facade.filter((f) => f.x + BUILDINGS[f.type].w > x0 && f.x < x1);
     for (const f of vis) for (const [lx, ly, rad, k, c, fl] of BUILDINGS[f.type].lights || []) R.addLight(f.x + lx, ly, rad, k * this.flicker(fl, f.x), c);
     for (const [lx, ly, rad, k, c, fl] of this.C.lights || []) if (lx > x0 && lx < x1) R.addLight(lx, ly, rad, k * this.flicker(fl, lx), c);
     const fire = 0.86 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06;
     // a fire is an x on the street, or [x, y] (a brazier up on something)
     for (const f of this.C.fires || []) { const [fx, fy] = f.length ? f : [f, 0]; if (fx > x0 && fx < x1) R.addLight(fx, fy - 20, 80, 1.2 * fire, [1, 0.55, 0.24]); }
-    for (const en of this.enemies) if (en.alive) R.addLight(en.rx + en.facing * 4, en.ry - 55, 12, 0.6, [1, 0.2, 0.25]);
     // background: parallax layers repeated along the street
     R.beginScene();
     B.resetStats();
@@ -232,7 +227,7 @@ export class M2Scene {
       for (const c of [...this.enemies, this.player]) if (c && c.anim.plant) { this.life.kick(c.rx + c.facing * (c.anim.plant === 1 ? -1.5 : 2.5), c.ry); c.anim.plant = 0; }
       layer('sky', this.viewFor('sky', PLX.sky, cam.x));
       const vFar = this.viewFor('far', PLX.far, 300);
-      layer('far', vFar); this.life.drawFar(B, vFar, A, t, kMax);
+      layer('far', vFar);
       // air between the layers (docs §10.12): the far city sinks into a low
       // haze lit from below by its own sodium lamps, the middle distance into
       // a thinner cool mist, so depth reads as it does in the traced stills
@@ -242,7 +237,7 @@ export class M2Scene {
       B.draw(haze, 300 + (cam.x - 300) * PLX.far, -78, vw * 0.8, 30, 0, rgba('#b08868', 0.2));
       B.end();
       const vMid = this.viewFor('mid', PLX.mid, 300);
-      layer('mid', vMid); this.life.drawMid(B, vMid, A, t, kMax);
+      layer('mid', vMid);
       B.begin(vMid);
       B.draw(haze, 300 + (cam.x - 300) * PLX.mid, -70, vw * 0.85, 50, 0, rgba('#6a7586', 0.16));
       B.end();
@@ -338,7 +333,7 @@ export class M2Scene {
         }
       }
     }
-    // neon: the buildings', the barricades', each smeared down the wet road
+    // the buildings' bulbs and lamps and the set pieces' lights, each mirrored in the wet road
     for (const f of vis) for (const [gx, gy, sx, sy, c, a, fl] of BUILDINGS[f.type].glows || []) {
       const k = this.flicker(fl, f.x);
       B.draw(glow, f.x + gx, gy, sx, sy, 0, rgba(c, a * k));
@@ -352,7 +347,6 @@ export class M2Scene {
     }
     for (const lx of this.C.lamps) if (lx > x0 && lx < x1) this.life.reflect(B, glow, t, lx + 15, 8, '#ffb868', 0.5);
     for (const f of this.C.fires || []) { const fx = f.length ? f[0] : f; if (fx > x0 && fx < x1) this.life.reflect(B, glow, t, fx, 6, '#ff8a3a', 0.6); }
-    for (const en of this.enemies) if (en.alive) B.draw(glow, en.rx + en.facing * 3.5, en.ry - 56.4, 6, 3, 0, rgba('#ff3347', 0.7));
     for (const f of this.C.fires || []) for (let k = 0; k < 3; k++) {
       const [fx, fy] = f.length ? f : [f, 0], ph = t * (9 + k * 3) + k * 2.1;
       B.draw(flame, fx + (k - 1) * 2.4, fy - 14, 3.6 + Math.sin(ph) * 0.6, 6 + Math.sin(ph * 1.3) * 1.6 - k * 0.8, Math.sin(ph * 0.7) * 0.15, rgba(k === 1 ? '#ffd56a' : '#ff8a3a', 0.9));

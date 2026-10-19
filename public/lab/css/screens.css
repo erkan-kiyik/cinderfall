@@ -37,7 +37,7 @@
 .big-num small { font-size: var(--t-sm); color: var(--n6); letter-spacing: var(--track-mid); margin-left: 4px; }
 .wide { display: flex; align-items: center; gap: var(--s3); height: 62px; }
 .wide .tag { margin-left: auto; text-align: right; }
-.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--interact); margin-right: 6px; box-shadow: 0 0 6px var(--interact); }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--interact); margin-right: 6px; }
 
 /* arsenal ------------------------------------------------------------------ */
 .arsenal > section:first-child { display: flex; flex-direction: column; min-height: 0; }

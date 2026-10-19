@@ -162,9 +162,8 @@ export function duct(g, x0, x1, yTop, yBot) {
 
 // A Vanta checkpoint barricade (docs §10.2): steel-framed panels of
 // blue-grey polymer, each with the white ring-and-bar mark, the number, a
-// rubber kick strip and splayed feet; a red LED strip along the top whose glow
-// and light are drawn live (barricadeFx). The `neon` argument is kept for the
-// level files and ignored: Vanta's lights are all the same red.
+// rubber kick strip and splayed feet, a steel capping rail along the top. No
+// light of its own: it is lit by the street.
 const VPOLY = mat(tone('#b3c4d3', '#8499ad', '#5c7186', '#243342'), 'paint', 0.25);
 const VSTEEL = mat(tone('#6f7b88', '#4b5663', '#323b45', '#12171c'), 'steel', 0.5);
 export function barricade(g, x0, x1, h) {
@@ -202,22 +201,10 @@ export function barricade(g, x0, x1, h) {
   });
   // splayed feet
   for (const fx of [x0 - 1, x1 + 1]) cel(g, poly([[fx - 3, 0], [fx - 1, -3], [fx + 1, -3], [fx + 3, 0]]), VSTEEL, { sh: 0.3, hl: 0.2, lw: 0.3 });
-  // the LED strip in its housing
-  fill(g, rect(x0 - 0.6, -h - 1.6, x1 + 0.6, -h), '#11161c');
-  g.save(); g.shadowColor = '#ff3347'; g.shadowBlur = 8;
-  stroke(g, `M ${x0} ${-h - 0.8} L ${x1} ${-h - 0.8}`, '#ff3347', 0.7);
-  g.restore();
-  stroke(g, `M ${x0 + 0.4} ${-h - 0.8} L ${x1 - 0.4} ${-h - 0.8}`, '#ffc2c8', 0.22);
-}
-
-const rgb = (hex) => [parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255];
-// the live glow sprite and the light of a barricade's LED strip (always Vanta red, steady)
-export function barricadeFx(x0, x1, h) {
-  const cx = (x0 + x1) / 2, red = '#ff3347';
-  return {
-    glow: [cx, -h - 0.8, (x1 - x0) / 2 + 3, 1.8, red, 0.42, 'led'],
-    light: [cx, -h - 3, 40, 0.55, rgb(red), 'led'],
-  };
+  // the capping rail: a steel channel, its top edge worn bright, rust in the bolt holes
+  cel(g, rect(x0 - 0.6, -h - 1.6, x1 + 0.6, -h), VSTEEL, { sh: 0.3, hl: 0.4, lw: 0.2 });
+  stroke(g, `M ${x0 - 0.4} ${-h - 1.45} L ${x1 + 0.4} ${-h - 1.45}`, VSTEEL.l, 0.2, 0.8);
+  for (let x = x0 + 3; x < x1 - 1; x += 6) fill(g, ell(x, -h - 0.8, 0.28, 0.28), '#6b4a32', 0.8);
 }
 
 // The cells' barricade (docs §10.2): plates cut from the furnace's shell and

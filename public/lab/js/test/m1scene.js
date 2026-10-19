@@ -1,7 +1,7 @@
 // KOR LAB — M1 engine test scene.
 //
 // The M0 street, rebuilt for the GPU: parallax layers, the five operators and
-// two Syndicate troopers as baked sprites, real lights (lamp cone, neon,
+// two Syndicate troopers as baked sprites, real lights (lamp cone, a bulb,
 // windows, fire, muzzle flashes, explosions), GPU particles, bloom, camera
 // shake, and a stress mode that throws thousands of extra sprites on screen.
 import { STREET, crate, barrier, lampPost, dumpster, burnBarrel, cone } from '../art/env/street.js';
@@ -247,13 +247,10 @@ export class M1Scene {
     const flick = 0.85 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06;
     R.addLight(143, -78, 100, 1.25, [1, 0.84, 0.6], Math.PI / 2, Math.cos(0.44), 0.18);
     R.addLight(143, -80, 22, 0.9, [1, 0.9, 0.7]);
-    const neon = (t % 6.1) > 5.8 && ((t * 30) | 0) % 2 ? 0.25 : 1;
-    R.addLight(232, -72, 70, 0.95 * neon, [1, 0.4, 0.3]);
+    R.addLight(232, -72, 40, 0.5, [1, 0.72, 0.42]);
     R.addLight(221, -6, 64, 0.6, [1, 0.56, 0.32]);
     for (const [x, y] of WINDOWS) R.addLight(x, y, 26, 0.35, [1, 0.72, 0.42]);
     R.addLight(579, -20, 80, 1.3 * flick, [1, 0.55, 0.24]);
-    R.addLight(364, -100, 54, 0.5, [1, 0.22, 0.26]);
-    R.addLight(444 + 4, -55, 12, 0.6, [1, 0.2, 0.25]); R.addLight(486 + 4, -55, 12, 0.6, [1, 0.2, 0.25]);
     for (const f of this.flashes) {
       const k = 1 - (t - f[2]) / f[3];
       R.addLight(f[0], f[1], f[4], f[5] * k * k, [f[6], f[7], f[8]]);
@@ -285,14 +282,11 @@ export class M1Scene {
     R.lightPass(w);
     R.compose();
     // emissive: glows, flames, tracers, flashes, sparks, embers (unlit, feed bloom)
-    const glow0 = A.get('fx.glow');
-    B.begin(far); B.setBlend(1); B.draw(glow0, 436, -176, 5, 5, 0, rgba('#ff3347', 0.5 + 0.4 * Math.sin(t * 3))); B.end();
     B.begin(w); B.setBlend(1);
     const glow = A.get('fx.glow'), flame = A.get('fx.flame'), flash = A.get('fx.flash'), tr = A.get('fx.tracer');
     B.draw(glow, 143, -79, 9, 5, 0, rgba('#fff1d0', 0.6));
-    B.draw(glow, 232, -74, 34, 14, 0, rgba('#ff6b52', 0.22 * neon));
+    B.draw(glow, 232, -74, 2.4, 2.4, 0, rgba('#ffe2b0', 0.7));
     for (const [x, y] of WINDOWS) B.draw(glow, x, y, 14, 12, 0, rgba('#ffb070', 0.14));
-    for (const x of [444, 486]) B.draw(glow, x + 3.5, -56.4, 6, 3, 0, rgba('#ff3347', 0.7));
     for (let k = 0; k < 3; k++) {
       const ph = t * (9 + k * 3) + k * 2.1;
       B.draw(flame, 579 + (k - 1) * 2.4, -14, 3.6 + Math.sin(ph) * 0.6, 6 + Math.sin(ph * 1.3) * 1.6 - k * 0.8, Math.sin(ph * 0.7) * 0.15, rgba(k === 1 ? '#ffd56a' : '#ff8a3a', 0.9));

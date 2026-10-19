@@ -30,14 +30,14 @@ export const C = {
   cream: '#f2dfbf',
   steel: '#48627e', steelHi: '#6f8ba8', steelLo: '#2b3b4f',
   danger: '#ff3347',
-  interact: '#3ee8e0',
+  interact: '#e2b65c',
   gold: '#ffc93c',
 };
 
 // Rarity frame colours (UI and skin tiers).
 export const RARITY = {
   common: '#9aa4b1', rare: '#4aa8ff', epic: '#b26bff',
-  legendary: '#ffb22e', mythic: '#ff4f6d', ultra: '#3ee8e0',
+  legendary: '#ffb22e', mythic: '#ff4f6d', ultra: '#8fb8b4',
 };
 
 // Shared materials.
@@ -53,6 +53,8 @@ export const M = {
   leather: tone('#8c5a3a', '#6b4129', '#4a2b1b', '#26150c'),
   brass: tone('#ffe39a', '#e8b65a', '#a9792f', '#5e3f14'),
   white: tone('#ffffff', '#e6ebf0', '#b9c3ce', '#6e7987'),
-  lens: tone('#c8fbff', '#3ee8e0', '#1a8c95', '#0b3c42'),
-  visor: tone('#ff8a95', '#ff3347', '#b0172a', '#5a0a14'),
+  // coated optics: dark glass with a cold sheen, no light of their own
+  lens: tone('#9fb4c4', '#3c5566', '#1d2a35', '#0a1016'),
+  // Vanta's red, as paint: a band, a stripe, a stencil
+  visor: tone('#c8505a', '#a8232d', '#7a1820', '#3a0a10'),
 };

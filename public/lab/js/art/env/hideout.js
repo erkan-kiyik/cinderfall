@@ -112,7 +112,7 @@ function room(g) {
     for (let k = 0; k < 5; k++) fill(g, rect(314.6 + k * 0.9, -79.6, 314.8 + k * 0.9, -78.6), '#1a3a22', 0.8);
     g.save(); g.globalCompositeOperation = 'lighter'; fill(g, ell(316.5, -78, 8, 6), '#5cff8a', 0.04); g.restore();
   }
-  fill(g, ell(RADIO[0], RADIO[1], 0.8, 0.8), '#5cff7a');
+  fill(g, ell(RADIO[0], RADIO[1], 0.8, 0.8), '#86b070');
   stroke(g, 'M 322 -82 C 330 -100 334 -118 330 -128', '#151515', 0.4);
   // the headphones hung off the shelf by their band, leather cups catching the window
   stroke(g, 'M 331 -61 C 330 -66 333 -70 336 -70 C 339 -70 342 -66 341 -61', '#151515', 0.6);

@@ -4,9 +4,10 @@
 // docs §10.4: the furnace has been cold for four years and Vanta rations the
 // power, so the street is lit the way such a street is lit: bare bulbs off a
 // generator, a gas lamp behind a curtain, a fire in a ruin, the old sodium
-// lamps; and Vanta's own light, white and red, clean and steady. The neon is
-// from before and nearly all of it is dead. Signs are painted tin and wood,
-// faded, bolted on a little crooked, lit at night by a lamp on an arm.
+// lamps; and Vanta's own lamps, white, clean and steady. The neon is from
+// before and all of it is dead: glass and tin and nothing in it. Signs are
+// painted tin and wood, faded, bolted on a little crooked, lit at night by a
+// lamp on an arm; nothing on the street glows by itself.
 //
 // Each building is painted in its own frame: x 0..w along the street, the
 // pavement at y = 0, the roofline at y = -h, roof clutter above it. They sit
@@ -150,48 +151,49 @@ function wear(g, x0, y0, x1, y1, under, seed = 7, n = 8) {
   });
 }
 
-// old neon: glass tubes bent into letters on a black box. lit: indices of
-// letters that still catch (weak, warm), the rest dead grey glass
-function oldNeon(g, chars, pos, size, lit = [], c = '#ff6a3d') {
+// old neon, long dead: glass tubes bent into letters on a black box, grey,
+// dusty, one of them broken off at its holder
+function oldNeon(g, chars, pos, size, broken = -1) {
   g.save(); g.font = FONT.print(size); g.textBaseline = 'alphabetic'; g.textAlign = 'center'; g.lineJoin = 'round';
   chars.forEach((ch, i) => {
     const [x, y] = pos[i];
-    if (lit.includes(i)) {
-      g.shadowColor = c; g.shadowBlur = size * 0.35 * ppu(g); g.strokeStyle = c; g.lineWidth = size * 0.1; g.strokeText(ch, x, y);
-      g.shadowBlur = 0; g.strokeStyle = '#ffd6c4'; g.lineWidth = size * 0.035; g.strokeText(ch, x, y);
-    } else {
-      g.strokeStyle = '#41434a'; g.lineWidth = size * 0.09; g.strokeText(ch, x, y);
-      g.strokeStyle = '#6a6d74'; g.lineWidth = size * 0.025; g.strokeText(ch, x - size * 0.02, y - size * 0.02);
-    }
+    if (i === broken) { g.save(); g.beginPath(); g.rect(x - size, y - size * 0.45, size * 2, size); g.clip(); }
+    g.strokeStyle = '#3c3e44'; g.lineWidth = size * 0.09; g.strokeText(ch, x, y);
+    g.strokeStyle = '#686b72'; g.lineWidth = size * 0.025; g.strokeText(ch, x - size * 0.02, y - size * 0.02);
+    if (i === broken) g.restore();
   });
   g.restore();
 }
 
-// Vanta's lightbox: a white face lit from inside, the ring-and-bar mark, the name
+// Vanta's sign: an enamelled steel plate in a steel frame, the ring-and-bar
+// mark, the name, a red band; not lit from inside, only by the lamps round it
 export function lightbox(g, x0, y0, x1, y1, text) {
   const h = y1 - y0;
   fill(g, rect(x0 - 1, y0 - 1, x1 + 1, y1 + 1), '#2b2f36');
-  const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, '#f5f8fb'); gr.addColorStop(1, '#d6dde6');
+  const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, '#c9ccc9'); gr.addColorStop(1, '#a9aeb0');
   fill(g, rect(x0, y0, x1, y1), gr);
-  fill(g, rect(x0, y1 - h * 0.22, x1, y1), '#b3232e');
+  fill(g, rect(x0, y1 - h * 0.22, x1, y1), '#7e1c25');
   emblem(g, x0 + h * 0.5, y0 + h * 0.4, h * 0.27, '#1d2129');
   letters(g, text, x0 + h * 1.0, y0 + h * 0.6, h * 0.42, '#1d2129', { kind: 'print', jit: 0, track: 0.08 });
-  g.save(); g.globalCompositeOperation = 'lighter'; fill(g, rect(x0 - 3, y0 - 3, x1 + 3, y1 + 3), '#dfe9ff', 0.06); g.restore();
+  // the screws, the rain run down from them, the enamel chipped at a corner
+  for (const x of [x0 + 0.9, x1 - 0.9]) { fill(g, ell(x, y0 + 0.9, 0.35, 0.35), '#55595e'); fill(g, rect(x - 0.15, y0 + 1.2, x + 0.15, y1), '#6b5a48', 0.25); }
+  fill(g, poly([[x1 - 2.4, y1], [x1, y1 - 1.8], [x1, y1]]), '#3a3632', 0.8);
+  clip(g, rect(x0, y0, x1, y1), () => weatherOver(g, [x0, y0, x1, y1], (x0 * 7) | 0, { foot: 0.2, stain: 1.4, rain: 3, big: 0.4 }));
 }
 
-// Vanta's LED board: red dot-matrix lettering on black. lines: [text, y, size]
+// Vanta's notice board: a white steel plate, stencilled in black under a red
+// band, bolted to the wall; rust weeps from the bolts. lines: [text, y, size]
 export function ledBoard(g, x0, y0, x1, y1, lines) {
   fill(g, rect(x0 - 0.9, y0 - 0.9, x1 + 0.9, y1 + 0.9), '#262a30');
-  fill(g, rect(x0, y0, x1, y1), '#0a0a0b');
+  const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, '#cfd0cb'); gr.addColorStop(1, '#a8aaa5');
+  fill(g, rect(x0, y0, x1, y1), gr);
   clip(g, rect(x0, y0, x1, y1), () => {
-    g.save(); g.shadowColor = '#ff2633'; g.shadowBlur = 0.6 * ppu(g);
-    for (const [t, y, s] of lines) letters(g, t, (x0 + x1) / 2, y, s, '#ff3a44', { kind: 'print', align: 'center', jit: 0, track: 0.06 });
-    g.restore();
-    // the black between the diodes
-    for (let x = x0; x < x1; x += 0.55) fill(g, rect(x, y0, x + 0.2, y1), '#0a0a0b');
-    for (let y = y0; y < y1; y += 0.55) fill(g, rect(x0, y, x1, y + 0.2), '#0a0a0b');
+    fill(g, rect(x0, y0, x1, y0 + (y1 - y0) * 0.14), '#7e1c25');
+    for (const [t, y, s] of lines) letters(g, t, (x0 + x1) / 2, y, s, '#1d2024', { kind: 'print', align: 'center', jit: 0.02, track: 0.06, a: 0.9 });
+    for (const x of [x0 + 1, x1 - 1]) fill(g, rect(x - 0.2, y0 + 1.2, x + 0.25, y1), '#6b4a32', 0.3);
+    weatherOver(g, [x0, y0, x1, y1], (x0 * 5) | 0, { foot: 0.3, stain: 1.6, rain: 4, big: 0.4 });
   });
-  fill(g, ell(x1 - 1, y0 + 1, 0.3, 0.3), '#5cff7a', 0.8);
+  for (const [x, y] of [[x0 + 1, y0 + 1], [x1 - 1, y0 + 1], [x0 + 1, y1 - 1], [x1 - 1, y1 - 1]]) fill(g, ell(x, y, 0.32, 0.32), '#4a4e54');
 }
 
 // a pasted notice: Vanta's (white, red band, a stamp) or a paper (kind 'kayip':
@@ -855,19 +857,23 @@ function synBlock(g) {
   fill(g, rect(46, -96, 82, -92), '#5a1219');
   emblem(g, 64, -72, 8, '#f0d9d9');
   drape(g, BN, 46, 82, -92, -42, 825);
-  // the red LED strip under the coping
-  fill(g, rect(0, -h + 4, w, -h + 5.4), '#ff2a35');
-  fill(g, rect(0, -h + 4.5, w, -h + 4.9), '#ffc9cc');
+  // the steel flashing under the coping, streaked below
+  fill(g, rect(0, -h + 4, w, -h + 5.4), '#3a3f47');
+  fill(g, rect(0, -h + 4, w, -h + 4.4), '#6b727c');
   // reinforced door, intercom, the lightbox over it, the curfew board beside it
   fill(g, rect(92, -32, 118, 0), '#2a2f36'); fill(g, rect(94, -30, 116, 0), '#3e4550');
   for (let x = 96; x < 116; x += 3) fill(g, rect(x, -30, x + 0.6, 0), '#2e343d');
   fill(g, rect(112, -16, 114, -14), '#9aa2ae');
-  fill(g, rect(119, -19, 122, -13), '#2a2f36'); fill(g, ell(120.5, -17.4, 0.6, 0.6), '#14181d'); fill(g, rect(119.8, -15, 121.2, -14.2), '#5cff7a', 0.6);
+  fill(g, rect(119, -19, 122, -13), '#2a2f36'); fill(g, ell(120.5, -17.4, 0.6, 0.6), '#14181d'); fill(g, rect(119.8, -15, 121.2, -14.2), '#4b5a4e', 0.8);
   lightbox(g, 86, -46, 124, -36.4, 'KARAKOL 7');
+  // the plain lamp over it on a bracket: a steel shade and a bulb
+  fill(g, rect(104.5, -53, 105.5, -48.6), '#2a2f36');
+  fill(g, poly([[101.6, -48.2], [108.4, -48.2], [107, -50], [103, -50]]), '#3a3f47');
+  fill(g, ell(105, -48.1, 2.4, 0.4), '#f4ecd8');
   ledBoard(g, 124, -32, 148, -14, [['SOKAĞA ÇIKMA', -27, 3.1], ['YASAĞI', -22.6, 3.1], ['22:00–06:00', -17.2, 3.3]]);
   // camera on a bracket
   fill(g, rect(128, -54, 138, -52.6), '#2a2f36'); fill(g, poly([[128, -52.6], [140, -54], [140, -49], [128, -48.4]]), '#c9ced6');
-  fill(g, poly([[128, -52.6], [140, -54], [140, -52.8], [128, -51.6]]), '#e8ecf0'); fill(g, ell(128.6, -50.6, 0.7, 0.7), '#14181d'); fill(g, ell(139, -50, 0.4, 0.4), '#ff2a35');
+  fill(g, poly([[128, -52.6], [140, -54], [140, -52.8], [128, -51.6]]), '#e8ecf0'); fill(g, ell(128.6, -50.6, 0.7, 0.7), '#14181d'); fill(g, ell(139, -50, 0.4, 0.4), '#4a2226');
   // their posters, three alike in a row; one sprayed over
   for (const [i, x] of [[0, 12], [1, 25], [2, 38]]) vposter(g, x, -32, 11, 15, 20 + i);
   korSpray(g, 30.5, -24.5, 1.1);
@@ -877,11 +883,11 @@ function synBlock(g) {
   for (let x = 1; x < w; x += 2.6) stroke(g, ell(x, -h - 5.6, 1.6, 2.2), '#7a7e84', 0.2, 0.9);
   fill(g, rect(16, -h - 26, 17, -h - 3), '#3a3f47'); for (let y = -h - 24; y < -h - 4; y += 4) stroke(g, `M 14 ${y} L 19 ${y + 3}`, '#3a3f47', 0.3);
   fill(g, ell(22, -h - 18, 3.4, 4), '#9aa2ae'); fill(g, ell(22.6, -h - 18, 2.6, 3.2), '#c9ced6'); stroke(g, `M 22 -${h + 18} L 26 -${h + 18}`, '#3a3f47', 0.4);
-  fill(g, ell(16.5, -h - 26.6, 0.5, 0.5), '#ff2a35');
+  fill(g, ell(16.5, -h - 26.6, 0.5, 0.5), '#5a2226');
 }
 
-// the old hotel: cornice and balconies from better days, its neon dead but
-// for two letters that still catch, one bulb over the door, ODA VAR
+// the old hotel: cornice and balconies from better days, its neon long dead,
+// one bulb over the door, ODA VAR
 function hotel(g) {
   const w = 96, h = 134;
   renderWall(g, 0, w, -h, '#544a3e', 17, 4);
@@ -906,7 +912,7 @@ function hotel(g) {
   // the vertical sign: old glass on a black box
   fill(g, rect(78, -118, 92, -50), '#1a1a1c'); fill(g, rect(78, -118, 92, -117), '#3a3a3e');
   fill(g, rect(76, -116, 78, -114), P.deep); fill(g, rect(76, -54, 78, -52), P.deep);
-  oldNeon(g, ['O', 'T', 'E', 'L'], [[85, -104], [85, -89], [85, -74], [85, -59]], 13, [0, 2]);
+  oldNeon(g, ['O', 'T', 'E', 'L'], [[85, -104], [85, -89], [85, -74], [85, -59]], 13, 2);
   fill(g, rect(78, -118, 92, -50), '#000', 0.12);
   // the canopy with the name painted on its fascia, one bulb under it
   fill(g, poly([[28, -32], [64, -32], [66, -27], [26, -27]]), '#3a3632');
@@ -1394,8 +1400,8 @@ function valCommon(g, w, h, seed) {
   cornice(g, 0, w, -32, 2.4);
   cornice(g, 0, w, -h - 4, 4);
   for (let x = 1; x < w; x += 3.2) fill(g, rect(x, -h, x + 1.6, -h + 2), '#3a362f');
-  // Vanta's red line under the cornice
-  fill(g, rect(0, -h + 3, w, -h + 4.2), '#ff2a35'); fill(g, rect(0, -h + 3.4, w, -h + 3.8), '#ffc9cc');
+  // Vanta's steel trim bolted under the cornice
+  fill(g, rect(0, -h + 3, w, -h + 4.2), '#3a3f47'); fill(g, rect(0, -h + 3, w, -h + 3.35), '#6b727c');
 }
 
 function valWing(g) {
@@ -1415,7 +1421,7 @@ function valWing(g) {
   fill(g, rect(39, -123, 63, -120.6), '#2a2f36');
   fill(g, rect(107, -127, 109, -121), '#2a2f36'); fill(g, poly([[103, -121], [113, -121], [111, -117], [105, -117]]), '#3a3f47'); fill(g, rect(105, -117.4, 111, -116.6), '#f2f6ff');
   g.save(); g.globalCompositeOperation = 'lighter'; fill(g, poly([[105, -116.6], [111, -116.6], [126, -40], [90, -40]]), '#dfe9ff', 0.04); g.restore();
-  fill(g, rect(150, -40, 156, -38.6), '#2a2f36'); fill(g, poly([[150, -38.6], [140, -40], [140, -35], [150, -34.4]]), '#c9ced6'); fill(g, ell(140.6, -37.4, 0.6, 0.6), '#14181d'); fill(g, ell(149, -36, 0.4, 0.4), '#ff2a35');
+  fill(g, rect(150, -40, 156, -38.6), '#2a2f36'); fill(g, poly([[150, -38.6], [140, -40], [140, -35], [150, -34.4]]), '#c9ced6'); fill(g, ell(140.6, -37.4, 0.6, 0.6), '#14181d'); fill(g, ell(149, -36, 0.4, 0.4), '#4a2226');
   weather(g, 0, w, -h, 61, 0.35);
 }
 
@@ -1696,30 +1702,20 @@ function wallC(g) {
 }
 
 // --- old exports kept for the set pieces ----------------------------------------------
-// a neon tube along a path: a coloured halo, then the pale hot core
-export function tube(g, d, c, w = 0.9) {
-  g.save(); g.shadowColor = c; g.shadowBlur = 9; stroke(g, d, c, w); g.restore();
-  stroke(g, d, '#fff3fa', w * 0.36);
-}
-export function neonText(g, text, x, y, size, c, align = 'left') {
-  g.save(); g.font = `700 ${size}px Rajdhani`; g.textBaseline = 'alphabetic'; g.textAlign = align;
-  g.shadowColor = c; g.shadowBlur = 10; g.fillStyle = c; g.fillText(text, x, y);
-  g.shadowBlur = 0; g.strokeStyle = '#fff3fa'; g.lineWidth = Math.max(0.16, size * 0.05); g.strokeText(text, x, y);
-  g.restore();
-}
-// Vanta's red LED strip along a path: a row of diodes in a dark channel
+// a steel trim along a path (where Vanta once ran its LED strips): a dark
+// channel with its lit top edge
 export function ledStrip(g, d, w = 0.9) {
   stroke(g, d, '#1a1c20', w * 1.6);
-  g.save(); g.shadowColor = '#ff2a35'; g.shadowBlur = 1.2 * ppu(g); stroke(g, d, '#ff2a35', w * 0.8); g.restore();
-  stroke(g, d, '#ffd0d3', w * 0.25);
+  stroke(g, d, '#3a3f47', w * 1.1);
+  stroke(g, d, '#6b727c', w * 0.3, 0.8);
 }
 
 // --- catalogue and layout ----------------------------------------------------------------
 // w: width, top: highest point (for the bake box); lights: [x, y, radius,
 // intensity, [r,g,b], flicker?]; glows: emissive sprites [x, y, sx, sy,
 // colour, alpha, flicker?]. Flicker: 'bulb' (a generator's bulbs, a slow
-// wobble and now and then a dip), 'dying' (the last of the old neon), 'fire';
-// none for Vanta's LEDs, which never flicker.
+// wobble and now and then a dip), 'fire'; none for Vanta's lamps, which never
+// flicker.
 const WARM = [1, 0.72, 0.42], BULB = '#ffe2b0';
 export const BUILDINGS = {
   walkup: { w: 150, top: -146, paint: walkup,
@@ -1736,11 +1732,11 @@ export const BUILDINGS = {
     lights: [[70, -76, 54, 0.7, [0.9, 0.95, 1]]],
     glows: [[70.5, -78, 6, 2.4, '#f2f6ff', 0.55]] },
   synBlock: { w: 150, top: -136, paint: synBlock,
-    lights: [[75, -98, 60, 0.4, [1, 0.2, 0.24]], [105, -41, 38, 0.55, [0.85, 0.92, 1]], [136, -23, 28, 0.5, [1, 0.16, 0.2]]],
-    glows: [[75, -99.3, 76, 2.2, '#ff3347', 0.22], [105, -41.2, 21, 6, '#e8f0ff', 0.32], [136, -23, 13, 9, '#ff2a3a', 0.32], [139, -50, 1.4, 1.4, '#ff2a35', 0.8]] },
+    lights: [[105, -40, 42, 0.55, [0.95, 0.93, 0.86]]],
+    glows: [[105, -47.9, 2.6, 0.9, '#fff4dc', 0.6]] },
   hotel: { w: 96, top: -162, paint: hotel,
-    lights: [[85, -88, 40, 0.45, [1, 0.38, 0.22], 'dying'], [46, -21, 30, 0.45, WARM, 'bulb']],
-    glows: [[85, -108.6, 7, 7, '#ff6a3d', 0.28, 'dying'], [85, -78.6, 7, 7, '#ff6a3d', 0.28, 'dying'], [46, -21.1, 2.2, 2.2, BULB, 0.75, 'bulb']] },
+    lights: [[46, -21, 30, 0.45, WARM, 'bulb']],
+    glows: [[46, -21.1, 2.2, 2.2, BULB, 0.75, 'bulb']] },
   garage: { w: 132, top: -86, paint: garage,
     lights: [[55, -30, 64, 0.75, [0.92, 0.95, 1]]],
     glows: [[55, -42, 30, 1.6, '#eef4ff', 0.45]] },
@@ -1773,11 +1769,11 @@ export const BUILDINGS = {
     lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [80, -48, 40, 0.4, [0.85, 0.92, 1]]],
     glows: [[4, -50.6, 4, 4, '#e8f0ff', 0.5], [80, -50.6, 4, 4, '#e8f0ff', 0.5], [156, -50.6, 4, 4, '#e8f0ff', 0.5]] },
   valWing: { w: 160, top: -134, paint: valWing,
-    lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [108, -110, 50, 0.45, [0.9, 0.95, 1]], [80, -123, 80, 0.3, [1, 0.2, 0.24]]],
-    glows: [[80, -124.4, 80, 1.8, '#ff3347', 0.18], [108, -117, 5, 2, '#f2f6ff', 0.5], [149, -36, 1.2, 1.2, '#ff2a35', 0.8]] },
+    lights: [[23, -85, 30, 0.35, [0.82, 0.9, 1]], [137, -85, 30, 0.35, [0.82, 0.9, 1]], [108, -110, 50, 0.45, [0.9, 0.95, 1]]],
+    glows: [[108, -117, 5, 2, '#f2f6ff', 0.5]] },
   valilik: { w: 220, top: -184, paint: valilik,
-    lights: [[110, -163, 50, 0.55, [0.85, 0.92, 1]], [110, -24, 40, 0.5, [0.9, 0.95, 1]], [53, -95, 32, 0.35, [0.82, 0.9, 1]], [112, -96, 36, 0.5, [1, 0.7, 0.4]], [110, -145, 110, 0.3, [1, 0.2, 0.24]]],
-    glows: [[110, -146.4, 110, 1.8, '#ff3347', 0.18], [110, -163.5, 30, 6, '#e8f0ff', 0.3], [52, -125, 5, 2, '#f2f6ff', 0.5], [168, -125, 5, 2, '#f2f6ff', 0.5], [112.5, -92.5, 4, 3, '#ffcf8f', 0.4]] },
+    lights: [[110, -24, 40, 0.5, [0.9, 0.95, 1]], [53, -95, 32, 0.35, [0.82, 0.9, 1]], [112, -96, 36, 0.5, [1, 0.7, 0.4]]],
+    glows: [[52, -125, 5, 2, '#f2f6ff', 0.5], [168, -125, 5, 2, '#f2f6ff', 0.5], [112.5, -92.5, 4, 3, '#ffcf8f', 0.4]] },
   teahouse: { w: 96, top: -126, paint: teahouse,
     lights: [[32, -20, 44, 0.55, WARM, 'bulb']],
     glows: [[30, -27.7, 2.4, 2.4, BULB, 0.65, 'bulb']] },

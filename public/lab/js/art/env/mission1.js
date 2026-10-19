@@ -13,7 +13,7 @@ import { Brush, rnd } from '../paint.js';
 import { M, tone, mat, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
-import { CONT, container, catwalk, ladder, pit, duct, barricade, barricadeFx, scrapBarricade } from './course.js';
+import { CONT, container, catwalk, ladder, pit, duct, barricade, scrapBarricade } from './course.js';
 import { emblem } from '../enemies/syndicate.js';
 import { letters, lightbox, razor } from './city.js';
 import { texture } from '../tex.js';
@@ -145,15 +145,15 @@ export function gateFrame(g, x0, x1, h, sign = ['KONTROL NOKTASI', 'DUR · KİML
   fill(g, rect(x0 - 26, -h - 14, x1 + 26, -h - 9), '#a8232d');
   letters(g, sign[1], (x0 + x1) / 2, -h - 10.3, 3.3, '#f4ecec', { kind: 'print', align: 'center', jit: 0, track: 0.06 });
   for (const x of [x0 - 26, x1 + 26]) stroke(g, `M ${x} ${-h - 14} L ${x} ${-h - 9}`, '#1a1e23', 0.4);
-  // red LED under it; floodlights and a camera on top
-  fill(g, rect(x0 - 22, -h - 8.2, x1 + 22, -h - 7.2), '#ff2a35'); fill(g, rect(x0 - 22, -h - 7.9, x1 + 22, -h - 7.5), '#ffc9cc');
+  // a steel rail under it; floodlights and a camera on top
+  fill(g, rect(x0 - 22, -h - 8.2, x1 + 22, -h - 7.2), '#3a3f47'); fill(g, rect(x0 - 22, -h - 8.2, x1 + 22, -h - 7.9), '#6b727c');
   for (const x of [(x0 + x1) / 2 - 30, (x0 + x1) / 2 + 30]) {
     fill(g, rect(x - 0.8, -h - 30, x + 0.8, -h - 26), '#2a2f36');
     fill(g, poly([[x - 4, -h - 30], [x + 4, -h - 30], [x + 3, -h - 27.4], [x - 3, -h - 27.4]]), '#3a3f47');
     fill(g, rect(x - 3, -h - 27.8, x + 3, -h - 27.2), '#f2f6ff');
   }
   const cx = (x0 + x1) / 2;
-  fill(g, rect(cx - 0.6, -h - 32, cx + 0.6, -h - 26), '#2a2f36'); fill(g, poly([[cx - 4, -h - 34], [cx + 5, -h - 34.6], [cx + 5, -h - 30.6], [cx - 4, -h - 31]]), '#c9ced6'); fill(g, ell(cx - 3.4, -h - 32.4, 0.6, 0.6), '#14181d'); fill(g, ell(cx + 4, -h - 33.6, 0.4, 0.4), '#ff2a35');
+  fill(g, rect(cx - 0.6, -h - 32, cx + 0.6, -h - 26), '#2a2f36'); fill(g, poly([[cx - 4, -h - 34], [cx + 5, -h - 34.6], [cx + 5, -h - 30.6], [cx - 4, -h - 31]]), '#c9ced6'); fill(g, ell(cx - 3.4, -h - 32.4, 0.6, 0.6), '#14181d'); fill(g, ell(cx + 4, -h - 33.6, 0.4, 0.4), '#4a2226');
 }
 
 // Docs §10.8: the gate itself, in Vanta's wall of containers: the steel posts
@@ -342,11 +342,10 @@ export function buildMission1() {
   const X = (c) => c * T;
   block(0, 1, 1, 25); block(COLS - 2, COLS - 1, 1, 25);
   const props = [], front = [], deco = [], lamps = [], glows = [], lights = [];
-  // a steel barricade over tiles c0..c1 (height in tiles), with its neon tube
-  const bar = (name, c0, c1, n, neon) => {
+  // a steel barricade over tiles c0..c1 (height in tiles)
+  const bar = (name, c0, c1, n) => {
     block(c0, c1 - 1, 1, n);
-    P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (g) => barricade(g, X(c0), X(c1), n * T, neon), front);
-    const f = barricadeFx(X(c0), X(c1), n * T, neon); glows.push(f.glow); lights.push(f.light);
+    P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (g) => barricade(g, X(c0), X(c1), n * T), front);
   };
   const P = (name, box, paint, list = props) => list.push({ name, box, paint });
 
@@ -359,14 +358,14 @@ export function buildMission1() {
   P('m.cone1', [X(46) - 6, -12, X(46) + 8, 1], (g) => cone(g, X(46)), deco);
   // B — checkpoint post -------------------------------------------------------------
   P('m.roadSign', [X(66) - 12, -46, X(66) + 12, 1], (g) => roadSign(g, X(66), ['KONTROL', 'NOKTASI', 'YAVAŞLA']), deco);
-  bar('m.barB1', 72, 75, 4, '#3ee8e0');
+  bar('m.barB1', 72, 75, 4);
   block(86, 89, 1, 2); P('m.barB', [X(86) - 4, -18, X(90) + 4, 1], (g) => barrier(g, X(86) + 1, 30), front);
   P('m.booth', [X(104) - 4, -84, X(104) + 48, 1], (g) => booth(g, X(104)), deco);
   glows.push([X(104) + BOOTH_TV[0], BOOTH_TV[1], 5, 4, '#b8d4ff', 0.5, 'tv']);
   lights.push([X(104) + BOOTH_TV[0], BOOTH_TV[1] + 4, 30, 0.45, [0.6, 0.75, 1], 'tv']);
   P('m.boom', [X(103) - 50, -24, X(103) + 12, 1], (g) => boom(g, X(103), 46), deco);
   block(100, 101, 1, 5); P('m.concB', [X(100) - 1, -42, X(102) + 1, 1], (g) => concrete(g, X(100), X(102), 40));
-  bar('m.barB2', 116, 119, 4, '#ff3347');
+  bar('m.barB2', 116, 119, 4);
   P('m.barrelB', [X(124) - 2, -16, X(124) + 14, 1], (g) => burnBarrel(g, X(124)), deco);
   // C — container yard -----------------------------------------------------------------
   block(140, 149, 1, 5); P('m.contA', [X(140) - 2, -42, X(150) + 2, 1], (g) => container(g, X(140), -40, X(150), 0, CONT.teal, { code: 'MSKU 704410 2', kor: true }));
@@ -383,13 +382,13 @@ export function buildMission1() {
   // D — gate court ----------------------------------------------------------------------
   block(246, 247, 1, 5); P('m.concD1', [X(246) - 1, -42, X(248) + 1, 1], (g) => concrete(g, X(246), X(248), 40));
   block(274, 275, 1, 5); P('m.concD2', [X(274) - 1, -42, X(276) + 1, 1], (g) => concrete(g, X(274), X(276), 40));
-  bar('m.barD', 294, 297, 4, '#ff3fa4');
+  bar('m.barD', 294, 297, 4);
   P('m.term', [X(312) - 9, -28, X(312) + 18, 1], (g) => terminal(g, X(312)));
   block(322, 323, 1, 12);
   P('m.gateFrame', [X(322) - 78, -150, X(324) + 78, 1], (g) => cityGate(g, X(322), X(324), 96), deco);
   const [gx, gy] = GATE_LIGHT(X(322));
-  lights.push([gx + 10, gy + 30, 120, 0.75, [0.9, 0.95, 1]], [X(323), -116, 60, 0.4, [0.9, 0.95, 1]]);
-  glows.push([gx, gy + 0.2, 6, 2.4, '#f2f6ff', 0.7], [X(323), -113, 36, 5, '#e8f0ff', 0.3]);
+  lights.push([gx + 10, gy + 30, 120, 0.75, [0.9, 0.95, 1]], [X(323), -116, 60, 0.3, [0.9, 0.95, 1]]);
+  glows.push([gx, gy + 0.2, 6, 2.4, '#f2f6ff', 0.7]);
   P('m.coneD', [X(286) - 6, -12, X(286) + 8, 1], (g) => cone(g, X(286)), deco);
   // E — extraction -----------------------------------------------------------------------
   block(350, 351, 1, 2); P('m.crateE', [X(350) - 2, -18, X(352) + 2, 1], (g) => crate(g, X(350), 16, 16));

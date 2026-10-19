@@ -378,7 +378,7 @@ export class Abilities {
   // emissive, over everything: small real lights only (LEDs, the flare, the
   // flashbang), the marks, the drone's lens; no auras
   drawGlow(B, w) {
-    const s = this.s, A = s.e.atlas, glow = A.get('fx.glow'), white = A.get('fx.white'), beam = A.get('fx.beam'), t = this.t;
+    const s = this.s, A = s.e.atlas, glow = A.get('fx.glow'), white = A.get('fx.white'), t = this.t;
     B.begin(w); B.setBlend(1);
     for (const o of this.objs) {
       const fade = Math.min(1, o.t * 2);
@@ -390,15 +390,15 @@ export class Abilities {
         B.draw(glow, o.x, o.y, 3.4, 3.4, 0, rgba('#fff4dc', 0.9));
         B.draw(glow, o.x, o.y, 9, 9, 0, rgba('#ff8a3a', 0.25));
       } else if (o.type === 'field') {
-        // the jammer's LED and the radio's bite on the air: thin arcs going out
-        B.draw(glow, o.x, o.y - 3, 1.2, 1.2, 0, rgba('#4fd2c4', (t * 5) % 1 < 0.5 ? 0.9 : 0.4));
+        // the jammer's little amber lamp, and the air over it trembling: faint pale arcs going out
+        B.draw(glow, o.x, o.y - 3, 0.7, 0.7, 0, rgba('#ffb45c', (t * 5) % 1 < 0.5 ? 0.7 : 0.25));
         for (let r = (t * 40) % 24; r < o.r; r += 24) {
-          const k = (1 - r / o.r) * 0.35 * fade;
-          for (let j = 0; j < 10; j++) { const a0 = -Math.PI * (0.15 + j * 0.07), a1 = a0 - 0.05; B.line(white, o.x + Math.cos(a0) * r, o.y - 3 + Math.sin(a0) * r * 0.5, o.x + Math.cos(a1) * r, o.y - 3 + Math.sin(a1) * r * 0.5, 0.35, rgba('#7fe6da', k)); B.line(white, o.x - Math.cos(a0) * r, o.y - 3 + Math.sin(a0) * r * 0.5, o.x - Math.cos(a1) * r, o.y - 3 + Math.sin(a1) * r * 0.5, 0.35, rgba('#7fe6da', k)); }
+          const k = (1 - r / o.r) * 0.16 * fade;
+          for (let j = 0; j < 10; j++) { const a0 = -Math.PI * (0.15 + j * 0.07), a1 = a0 - 0.05; B.line(white, o.x + Math.cos(a0) * r, o.y - 3 + Math.sin(a0) * r * 0.5, o.x + Math.cos(a1) * r, o.y - 3 + Math.sin(a1) * r * 0.5, 0.3, rgba('#dcd8cc', k)); B.line(white, o.x - Math.cos(a0) * r, o.y - 3 + Math.sin(a0) * r * 0.5, o.x - Math.cos(a1) * r, o.y - 3 + Math.sin(a1) * r * 0.5, 0.3, rgba('#dcd8cc', k)); }
         }
       } else if (o.type === 'drone') {
-        B.draw(glow, o.x + 3.6, o.y + 0.4, 1.2, 1.2, 0, rgba('#7ec8ff', 0.9)); B.draw(glow, o.x - 3.6, o.y - 0.4, 1, 1, 0, rgba('#ff3a2a', (t * 4) % 1 < 0.3 ? 1 : 0.2));
-        B.line(beam, o.x + 3.6, o.y + 1, o.x + Math.sin(t * 2.2) * 40, o.y + 90, 60, rgba('#7ec8ff', 0.07));
+        // the phone's little status light under the nose, nothing more
+        B.draw(glow, o.x - 3.6, o.y - 0.4, 0.6, 0.6, 0, rgba('#ff6a4a', (t * 4) % 1 < 0.3 ? 0.6 : 0.15));
       }
     }
     for (const f of this.flashes || []) { const k = f.t / 0.4; B.draw(glow, f.x, f.y, f.boom ? 70 : 120, f.boom ? 50 : 90, 0, rgba(f.boom ? '#ffb070' : '#fffaf0', 0.9 * k)); }
@@ -409,19 +409,17 @@ export class Abilities {
       B.draw(glow, x, y, 6, 6, 0, rgba('#ff3347', 0.3 * pulse));
       if (this.on.heat || this.on.watch) B.draw(glow, x, y + 40, 12, 26, 0, rgba('#ff5a3a', 0.14));
     }
-    // the blackout: the visors' feed tearing, a few cyan lines across the view
+    // the blackout: the street's lamps dip as the grid is pulled, a grey shudder across the view
     if (this.flashT > 0) {
       const k = this.flashT * 2, c = s.cam;
-      B.draw(glow, c.x, c.y, 400, 260, 0, rgba('#4fd2c4', 0.12 * k));
-      for (let i = 0; i < 6; i++) { const y = c.y - 120 + ((i * 47 + t * 900) % 240); B.line(white, c.x - 400, y, c.x + 400, y, 0.6, rgba('#9ff0e6', 0.3 * k)); }
+      for (let i = 0; i < 4; i++) { const y = c.y - 120 + ((i * 61 + t * 700) % 240); B.line(white, c.x - 400, y, c.x + 400, y, 0.4, rgba('#c8c6c0', 0.08 * k)); }
     }
     B.setBlend(0); B.end();
   }
   lights(R) {
     for (const o of this.objs) {
-      if (o.type === 'field') R.addLight(o.x, o.y - 4, 14, 0.4, [0.3, 0.85, 0.8]);
+      if (o.type === 'field') R.addLight(o.x, o.y - 4, 8, 0.2, [1, 0.7, 0.36]);
       else if (o.type === 'grenade') R.addLight(o.x, o.y, 36, 0.9, [1, 0.7, 0.45]);
-      else if (o.type === 'drone') R.addLight(o.x, o.y + 2, 16, 0.3, [0.5, 0.78, 1]);
     }
     for (const f of this.flashes || []) R.addLight(f.x, f.y, f.boom ? 140 : 200, 2.4 * (f.t / 0.4), f.boom ? [1, 0.6, 0.3] : [1, 1, 0.95]);
     if (this.on.overload) { const P = this.s.player; R.addLight(P.m.x, P.m.y - 40, 40, 0.35, [1, 0.5, 0.25]); }

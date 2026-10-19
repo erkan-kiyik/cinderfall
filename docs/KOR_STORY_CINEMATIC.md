@@ -234,7 +234,7 @@ Verlet zinciri: 9 düğüm, 2.6 cm; yerçekimi 9.8, rüzgâr gürültü 0.4–1.
   süper örneklemeyle, WebP olarak `public/lab/assets/plates/`'e yazılır
   (`node tools/lab/plate/bake.mjs governor`). Sahne kamerası plakanınkiyle
   aynı yerde durur (`js/cine/plates.js`), el titremesi ve yavaş zum plakayı
-  kaydırıp büyütür; yağmur, tabela neonları, TV ışığı, buhar canlı çizilir.
+  kaydırıp büyütür; yağmur, lambalar, TV ışığı, buhar canlı çizilir.
   Telefonda pişirme yok, yalnız resim yüklenir.
 - `m2` pazar: göz hizası yerine karşı binanın birinci katından (VESPER'in
   gözetlediği pencere) aşağı bakan çekim; tenteler, kasalar, sisli sokak.
@@ -376,8 +376,8 @@ kurar; kodlar buna uyar.
 
 ### 10.2 Engeller: üç taraf, üç malzeme
 - **Vanta (temiz, tekrarlanan):** gri-mavi polimer jersey bariyer, beyaz
-  halka-şerit arması, kırmızı LED şerit, sıra numarası; kontrol noktası çelik
-  kapısı; kalkan gibi düzgün, yeni.
+  halka-şerit arması, üstte çelik kapak rayı, sıra numarası; kontrol noktası
+  çelik kapısı; kalkan gibi düzgün, yeni. Kendi ışığı yoktur.
 - **Kor direnişi (elden yapılma):** ocak sacından kaynaklı barikat (kaynak
   dikişi, pas, turuncu sprey kor işareti), eski un çuvallarından kum
   torbaları, palet + konteyner sacı, tel ve zincir; hepsi tamirli.
@@ -413,12 +413,14 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
 - **Halkın ışığı:** jeneratörden çıplak ampul (2700 K, hafif dalgalanır,
   arada bir düşer), perde arkasında gaz lambası, varil ateşi, eski sodyum
   sokak lambası. Pencerelerin çoğu karanlık; yananlar perdeli ve loş.
-- **Vanta'nın ışığı:** beyaz LED projektör, kırmızı LED şerit, beyaz ışıklı
-  kutu tabela (halka-şerit arması), kırmızı noktalı LED pano: *SOKAĞA ÇIKMA
-  YASAĞI 22:00–06:00*. Temiz, yeni, sabit; titremez. Şehirde temiz olan tek
-  şey Vanta'nınkidir.
-- **Neon:** eski düzenden kalma; çoğu ölü (gri cam tüp, kırık harf). Şehirde
-  tek bir yarım yanan neon var: otelin, iki harfi yanar, arada söner.
+- **Vanta'nın ışığı:** beyaz projektör ve kollu lamba; tabelaları emaye çelik
+  levha (halka-şerit arması, kırmızı bant), duyuru panosu beyaz sac üstüne
+  şablon harf: *SOKAĞA ÇIKMA YASAĞI 22:00–06:00*. Temiz, yeni, sabit;
+  titremez. Hiçbiri kendinden ışımaz; LED şerit, ışıklı kutu, LED pano yok.
+  Askerlerin vizörü füme camdır, parlamaz.
+- **Neon:** eski düzenden kalma ve tamamı ölü (gri cam tüp, kırık harf).
+  Şehirde yanan tek bir neon yok. Gökyüzünde de yanıp sönen bir şey yok:
+  projektör, uçan trafik, dron ışığı, reklam taraması kaldırıldı.
   HAWK'ın tabelası neon değildir.
 - **Tabelalar:** boyalı sac ve tahta; fırça yazısı ya da şablon harf; solmuş
   boya, pas akıntısı, cıvata, eğik asılmış. Geceleri tabelayı kuğu boyunlu
@@ -435,7 +437,8 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
     DEPO 12*, üstünde Vanta'nın *EL KONULMUŞTUR* levhası; kapıda zincir ve
     mühür; Vanta'nın taktığı beyaz projektör.
   - *Vanta karakolu:* eski binaya vidalanmış yeni gri kompozit panel,
-    pankart, ışıklı kutu, LED pano, kamera, jiletli tel, sıra sıra aynı afiş.
+    pankart, emaye levha tabela ve üstünde kollu lamba, sac duyuru panosu,
+    kamera, jiletli tel, sıra sıra aynı afiş.
   - *Otel:* eski görkemden kalan korniş ve balkonlar, ölü dikey neon, kapı
     üstünde tek ampul, kartonda *ODA VAR*.
   - *Oto tamir:* boyalı sac *OTO TAMİR*, duvarda *LASTİK*, içeride beyaz
@@ -737,7 +740,7 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 
 **Işık**
 - **Islak yol:** yürüme çizgisinin altındaki asfalt sokağı yansıtır
-  (bariyerler, direkler, botlar, neon); yağmurda aşağı doğru çizgilenir, 40
+  (bariyerler, direkler, botlar, lambalar); yağmurda aşağı doğru çizgilenir, 40
   birimde söner, ıslak yer koyulaşır. İç mekân kurudur.
 - **Lamba gölgesi:** en yakın lamba, önündeki kişinin gölgesini arkadaki
   duvara düşürür: lambadan büyütülmüş bir kopya, duvarın sokağa değdiği

@@ -4,7 +4,7 @@
 import { outlined, setRoot, canvas, rng, cel, fill, stroke, clip, metalOver } from '../art/kit.js';
 import { tone, mat } from '../art/style.js';
 import { drawFigure } from '../art/figure.js';
-import { OPS, visorLight } from '../art/ops/index.js';
+import { OPS } from '../art/ops/index.js';
 import { WEAPONS } from '../art/weapons/index.js';
 import { paintHawk } from '../art/hawk.js';
 import { paintCrate } from '../art/crate.js';
@@ -34,7 +34,7 @@ export function avatar(id, px = 44) {
 
 // Lit like the opening: the burning city behind, the fires low on the right,
 // the operator dark against them with an ember rim on the edges that face
-// the fire, and the visor glowing in the operator's colour.
+// the fire; nothing on them lights up by itself.
 function paintAvatar(id, size) {
   const op = OPS[id], pose = op.pose, z = size / 17.5;
   // the figure's feet origin in the portrait: x 0 left of centre, the crown
@@ -80,11 +80,9 @@ function paintAvatar(id, size) {
   const r = Math.max(1, size * 0.028);
   const rim = canvas(size, size), rg = rim.getContext('2d');
   rg.drawImage(fig, dx + r, dy + r * 0.25);
-  rg.globalCompositeOperation = 'source-in'; rg.fillStyle = 'rgba(255,132,66,0.95)'; rg.fillRect(0, 0, size, size);
+  rg.globalCompositeOperation = 'source-in'; rg.fillStyle = 'rgba(232,128,72,0.6)'; rg.fillRect(0, 0, size, size);
   rg.globalCompositeOperation = 'destination-out'; rg.drawImage(fig, dx, dy);
   g.drawImage(rim, 0, 0);
-  // the visor light, fitted to the glass
-  g.save(); g.translate(fx, fy); g.scale(z, z); visorLight(g, id, pose, z); g.restore();
   // vignette
   const vg = g.createRadialGradient(size * 0.55, size * 0.45, size * 0.3, size * 0.5, size * 0.5, size * 0.78);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)');

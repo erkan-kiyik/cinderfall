@@ -90,12 +90,12 @@ function farCity(g) {
   for (let k = 128; k < 210; k += 6) stroke(g, `M ${k} -148 L ${k + 3} -150`, FAR, 0.5);
   stroke(g, 'M 151 -158 L 128 -150 M 151 -158 L 210 -150', FAR, 0.5);
   fill(g, rect(150.4, -160, 151.6, -150), FAR); fill(g, rect(190, -148, 190.6, -126), '#1d2330'); fill(g, rect(187, -126, 193.6, -123), FAR);
-  g.save(); g.shadowColor = C.danger; g.shadowBlur = 6; fill(g, ell(151, -160, 0.9, 0.9), C.danger); g.restore();
+  fill(g, ell(151, -160, 0.9, 0.9), '#3a2226');
   // the Tower: the campaign's final objective on the horizon
   fill(g, poly([[420, -60], [424, -154], [436, -162], [448, -154], [452, -60]]), '#222a39');
   fill(g, rect(434.5, -176, 437.5, -160), '#222a39');
-  g.save(); g.shadowColor = C.danger; g.shadowBlur = 10; fill(g, ell(436, -176, 1.6, 1.6), C.danger); g.restore();
-  for (let y = -150; y < -66; y += 7) fill(g, rect(428, y, 444, y + 1.2), '#3a3550', 0.8);
+  fill(g, ell(436, -176, 1.1, 1.1), '#8a3236');
+  for (let y = -150; y < -66; y += 7) fill(g, rect(428, y, 444, y + 1.2), '#2c3140', 0.8);
 }
 
 function midIndustry(g) {
@@ -118,7 +118,7 @@ function midIndustry(g) {
   fill(g, rect(334, B, 336, Y), '#1c2230'); fill(g, rect(390, B, 392, Y), '#1c2230');
   fill(g, rect(318, B - 36, 410, B), '#252c3b');
   fill(g, rect(320, B - 34, 408, B - 2), '#3c2730');
-  fill(g, rect(320, B - 10, 408, B - 6), C.danger, 0.8);
+  fill(g, rect(320, B - 10, 408, B - 6), '#8e2330', 0.9);
   emblem(g, 340, B - 22, 8, '#e8d9d9');
   g.font = '700 10px Rajdhani'; g.fillStyle = '#e8d9d9'; g.textBaseline = 'alphabetic';
   g.fillText('VANTA SYNDICATE', 354, B - 20);
@@ -276,7 +276,7 @@ export function crate(g, x, w = 18, h = 16) {
 }
 
 // a Vanta jersey barrier: blue-grey polymer, filled with water, the ring-and-bar
-// mark and the number in white, a red LED strip along the top
+// mark and the number in white, a steel capping rail along the top
 export function barrier(g, x, w = 34) {
   const B = poly([[x, 0], [x + 4, -6], [x + 6, -16], [x + w - 6, -16], [x + w - 4, -6], [x + w, 0]]);
   cel(g, B, POLY, { sh: 1.8, hl: 0.7 });
@@ -304,10 +304,9 @@ export function barrier(g, x, w = 34) {
     for (let i = 0; i < 5; i++) { const t = r(), sx = x + 6.2 + t * (w - 12.4); fill(g, ell(sx, -15.7 + r() * 0.6, 0.5 + r() * 0.9, 0.3 + r() * 0.3), '#8e9094', 0.8); }
     g.save(); g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, -8, 0, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(60,64,70,0.45)'); g.fillStyle = gr; g.fillRect(x, -8, w, 8); g.restore();
   });
-  // the LED strip and its housing
-  fill(g, rect(x + 6.6, -17.2, x + w - 6.6, -16), '#11161c');
-  g.save(); g.shadowColor = '#ff3347'; g.shadowBlur = 6; fill(g, rect(x + 7.2, -16.95, x + w - 7.2, -16.35), '#ff3347'); g.restore();
-  fill(g, rect(x + 7.4, -16.85, x + w - 7.4, -16.65), '#ffb0b8');
+  // the steel capping rail along the top, its edge worn bright
+  fill(g, rect(x + 6.6, -17.2, x + w - 6.6, -16), '#3a3f47');
+  fill(g, rect(x + 6.6, -17.2, x + w - 6.6, -16.85), '#6b727c');
 }
 
 // an old council lamp: a tapered steel pole, a swan-neck arm, a sodium head;

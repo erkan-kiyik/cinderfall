@@ -14,7 +14,7 @@ import { M, tone, mat, C } from '../style.js';
 import { texture } from '../tex.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, lampPost, burnBarrel, dumpster, cone } from './street.js';
-import { catwalk, ladder, barricade, barricadeFx } from './course.js';
+import { catwalk, ladder, barricade } from './course.js';
 import { concrete, beacon, cpPost } from './mission1.js';
 import { facadeLayout, hawkSign, bulb, letters, lightbox, ledBoard, notice } from './city.js';
 
@@ -243,10 +243,9 @@ export function buildMission2() {
   block(0, 1, 1, 25); block(COLS - 2, COLS - 1, 1, 25);
   const props = [], front = [], deco = [], lamps = [], glows = [], lights = [];
   const P = (name, box, paint, list = props) => list.push({ name, box, paint });
-  const bar = (name, c0, c1, n, neon) => {
+  const bar = (name, c0, c1, n) => {
     block(c0, c1 - 1, 1, n);
-    P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (g) => barricade(g, X(c0), X(c1), n * T, neon), front);
-    const f = barricadeFx(X(c0), X(c1), n * T, neon); glows.push(f.glow); lights.push(f.light);
+    P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (g) => barricade(g, X(c0), X(c1), n * T), front);
   };
   const crates = [];
   const addCrate = (c) => { block(c, c + 1, 1, 2); crates.push(X(c)); };
@@ -256,9 +255,8 @@ export function buildMission2() {
   P('m2.coneA', [X(40) - 6, -12, X(40) + 8, 1], (g) => cone(g, X(40)), deco);
   // Vanta's ration point, nothing today
   P('m2.ration', [X(46) - 34, -52, X(46) + 60, 1], (g) => rationPoint(g, X(46) + 2), deco);
-  lights.push([X(46) + 30, -40, 44, 0.45, [0.85, 0.92, 1]], [X(46) + 47, -27, 22, 0.4, [1, 0.16, 0.2]]);
-  glows.push([X(46) + 30, -42, 26, 4, '#e8f0ff', 0.3], [X(46) + 47.5, -27, 8, 7, '#ff2a3a', 0.3]);
-  bar('m2.barA', 70, 73, 4, '#ff3347');
+  lights.push([X(46) + 30, -40, 44, 0.35, [0.9, 0.93, 0.95]]);
+  bar('m2.barA', 70, 73, 4);
   P('m2.barrelA', [X(80) - 2, -16, X(80) + 14, 1], (g) => burnBarrel(g, X(80)), deco);
   addCrate(96);
   // B — the market (docs §10.6): along the pavement in front of the shops,
@@ -297,7 +295,7 @@ export function buildMission2() {
   block(296, 297, 1, 12);
   P('m2.wall', [X(296) - 2, -106, X(298) + 2, 1], (g) => { concrete(g, X(296), X(298), 96); wire(g, X(296) - 1, X(298) + 1, -96); }, front);
   // D — the far side and the flare -----------------------------------------------------------
-  bar('m2.barD', 336, 339, 4, '#3ee8e0');
+  bar('m2.barD', 336, 339, 4);
   addCrate(352);
   P('m2.coneD', [X(366) - 6, -12, X(366) + 8, 1], (g) => cone(g, X(366)), deco);
   P('m2.beacon', [X(388) - 5, -28, X(388) + 5, 1], (g) => beacon(g, X(388)), deco);

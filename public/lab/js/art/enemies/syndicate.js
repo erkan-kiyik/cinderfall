@@ -1,9 +1,9 @@
 // VANTA — the security firm that holds the city (docs/KOR_STORY_CINEMATIC.md
 // §9.3, painted per §10.1). Everything the cells are not: one issue, clean,
 // new, repeated. Blue-grey polymer armour over a navy uniform, a full-face
-// helmet with one thin red visor slit, the white ring-and-bar mark on the
-// left shoulder. The shield man carries more plate and a smoked riot shield;
-// the rusher a gas mask with two red lenses and a red unit band; and Gall,
+// helmet with one thin slit of smoked glass, the white ring-and-bar mark on
+// the left shoulder. The shield man carries more plate and a smoked riot
+// shield; the rusher a gas mask with two dark lenses and a red unit band; and Gall,
 // the Secretary, is no soldier at all: a long belted coat, a peaked cap, an
 // open, cold face.
 import { cel, fill, stroke, clip, blob, curve } from '../kit.js';
@@ -87,20 +87,17 @@ function helmet(g) {
     grime(g, -6, -1, DUST);
   });
   worn(g, SHELL, [-5.6, -13.4, 0.6, -1.2], 29, 0.8);
-  // the slit: a recess that follows the shell's curve, smoked glass set in it with the
-  // red sensor light glowing behind the glass, brightest at the core and falling off
-  // to the ends, the street's light across the glass's top edge
+  // the slit: a recess that follows the shell's curve, smoked glass set in it, the
+  // eyes a darker shape behind it, the street's light across the glass's top edge
   const B = brush(g);
   const REC = 'M 0.9 -8.35 C 2.8 -8.75 4.9 -8.65 6.15 -8.25 C 6.3 -7.8 6.3 -7.3 6.2 -6.9 C 4.9 -7.2 2.8 -7.3 0.95 -7.0 C 0.8 -7.45 0.8 -7.9 0.9 -8.35 Z';
   B.fill(REC, 'rgba(6,7,10,0.92)', 0.12);
   const GL = 'M 1.2 -8.1 C 2.9 -8.42 4.9 -8.38 6.0 -8.02 C 6.08 -7.7 6.08 -7.45 6.02 -7.18 C 4.9 -7.46 2.9 -7.52 1.25 -7.28 C 1.14 -7.55 1.14 -7.82 1.2 -8.1 Z';
-  B.fill(GL, '#2a080b', 0.03);
+  B.fill(GL, '#15171c', 0.03);
   B.inside(GL, () => {
-    g.save(); g.shadowColor = 'rgba(255,40,52,0.9)'; g.shadowBlur = 6;
-    B.dab(3.6, -7.72, 2.6, 0.34, 'rgba(255,52,62,0.95)');
-    g.restore();
-    B.dab(3.6, -7.72, 1.3, 0.16, 'rgba(255,190,180,0.9)');
-    B.dab(1.6, -7.7, 0.6, 0.4, 'rgba(10,2,3,0.6)');
+    B.dab(3.8, -7.7, 2.4, 0.32, 'rgba(70,58,60,0.55)');
+    B.dab(4.6, -7.68, 0.5, 0.18, 'rgba(4,4,6,0.8)');
+    B.dab(1.6, -7.7, 0.6, 0.4, 'rgba(4,4,6,0.6)');
     B.line('M 1.4 -8.02 C 2.9 -8.32 4.8 -8.3 5.9 -7.96', 'rgba(220,226,236,0.45)', 0.08, 0.02);
   });
   // the comms module over the ear, its stub antenna
@@ -324,7 +321,7 @@ function maskHead(g) {
   clip(g, LID, () => { stroke(g, curve([[-3.6, -10.4], [-0.4, -12.2], [3.4, -11.8]]), '#ffffff', 0.16, 0.7); emblem(g, -1.4, -9.6, 0.9, PAL.white.m); });
   worn(g, LID, [-5.0, -12.6, 5.2, -6.0], 43, 0.8);
   // the mask: moulded rubber over the face, its seams and the cheek's swell; two
-  // small lenses of dark glass set deep in thick rims, the red light inside them;
+  // small lenses of dark glass set deep in thick rims;
   // the filter canister screwed on at the front, threaded, its paint worn off
   const MASK = 'M 0.6 -9.0 C 2.8 -9.4 5.0 -8.8 5.4 -7.4 L 5.6 -5.4 C 6.4 -4.8 6.4 -3.6 5.8 -3.0 L 3.2 -1.8 C 1.6 -1.8 0.6 -2.8 0.3 -4.4 Z';
   const RUB = tone('#3a3f47', '#262a30', '#16191d', '#07080a');
@@ -341,12 +338,10 @@ function maskHead(g) {
     // the rim, thick rubber round a steel ring
     B.fill(ell(x, y, rx + 0.36, rx * 0.95 + 0.34), '#101214', 0.05);
     B.fill(ell(x, y, rx + 0.14, rx * 0.95 + 0.12), '#5d646c', 0.03);
-    // the glass: dark, the red glow deep in it, the street's light across its face
-    B.fill(ell(x, y, rx, rx * 0.92), '#1c0608', 0.02);
-    g.save(); g.shadowColor = 'rgba(255,40,52,0.9)'; g.shadowBlur = 5;
-    B.dab(x + rx * 0.1, y + rx * 0.12, rx * 0.62, rx * 0.56, 'rgba(255,58,66,0.95)');
-    g.restore();
-    B.dab(x + rx * 0.05, y + rx * 0.1, rx * 0.28, rx * 0.25, 'rgba(255,170,160,0.8)');
+    // the glass: dark, tinted, the eye a shade deeper behind it, the street's light across its face
+    B.fill(ell(x, y, rx, rx * 0.92), '#17191e', 0.02);
+    B.dab(x + rx * 0.1, y + rx * 0.12, rx * 0.62, rx * 0.56, 'rgba(60,46,44,0.6)');
+    B.dab(x + rx * 0.12, y + rx * 0.14, rx * 0.26, rx * 0.22, 'rgba(4,4,6,0.85)');
     B.line(`M ${x - rx * 0.6} ${y - rx * 0.2} C ${x - rx * 0.3} ${y - rx * 0.7} ${x + rx * 0.2} ${y - rx * 0.8} ${x + rx * 0.5} ${y - rx * 0.6}`, 'rgba(200,214,230,0.55)', rx * 0.16, 0.03);
   }
   const F = 'M 4.2 -4.6 C 5.6 -5.0 7.2 -4.6 7.4 -3.4 C 7.4 -2.2 5.8 -1.6 4.4 -2.0 Z';

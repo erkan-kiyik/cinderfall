@@ -11,7 +11,7 @@ import { cel, fill, stroke, clip } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, lampPost, cone } from './street.js';
-import { barricade, barricadeFx } from './course.js';
+import { barricade } from './course.js';
 import { concrete, terminal, gateFrame, beacon, cpPost } from './mission1.js';
 import { emblem } from '../enemies/syndicate.js';
 import { ledStrip, letters, notice, drape } from './city.js';
@@ -209,7 +209,7 @@ export function truck(g, x) {
   }
   cel(g, rect(x + 62, -50, x + 80, -44), BODY, { sh: 0.6, hl: 0.3 });
   cel(g, poly([[x + 64, -48], [x + 52, -51], [x + 52, -49], [x + 64, -46.6]]), STEEL, { sh: 0.3, hl: 0.3, lw: 0.3 });
-  for (const lx of [x + 8, x + 28]) { fill(g, rect(lx, -39.4, lx + 4, -38), '#ff2a35'); }
+  for (const lx of [x + 8, x + 28]) { fill(g, rect(lx, -39.4, lx + 4, -38), '#5e1d22'); fill(g, rect(lx, -39.4, lx + 4, -39), '#8a3a3e', 0.6); }
   fill(g, rect(x + 86, -45.6, x + 90, -44), '#e8f0ff');
   for (const wx of [x + 16, x + 72, x + 88]) { cel(g, ell(wx, -6, 6, 6), mat(M.rubber, 'rubber', 0.5), { sh: 0.6, hl: 0.3 }); fill(g, ell(wx, -6, 2.6, 2.6), '#4a4e54'); }
   cel(g, rect(x - 2, -12, x + 4, -9), STEEL, { sh: 0.2, hl: 0.2, lw: 0.25 });
@@ -322,10 +322,9 @@ export function buildMission3() {
   block(0, 1, 1, 25); block(COLS - 2, COLS - 1, 1, 25);
   const props = [], front = [], deco = [], lamps = [], glows = [], lights = [], fires = [];
   const P = (name, box, paint, list = props) => list.push({ name, box, paint });
-  const bar = (name, c0, c1, n, neon) => {
+  const bar = (name, c0, c1, n) => {
     block(c0, c1 - 1, 1, n);
-    P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (g) => barricade(g, X(c0), X(c1), n * T, neon), front);
-    const f = barricadeFx(X(c0), X(c1), n * T, neon); glows.push(f.glow); lights.push(f.light);
+    P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (g) => barricade(g, X(c0), X(c1), n * T), front);
   };
   const planters = [], flags = [];
   const addPlanter = (c) => { block(c, c + 2, 1, 2); planters.push(X(c)); };
@@ -337,7 +336,7 @@ export function buildMission3() {
   for (const c of [30, 70, 110, 150]) flags.push(X(c));
   P('m3.coneA', [X(20) - 6, -12, X(20) + 8, 1], (g) => cone(g, X(20)), deco);
   addPlanter(44); conc('m3.concA', 76); addPlanter(96);
-  bar('m3.barA', 124, 127, 4, '#ff3347');
+  bar('m3.barA', 124, 127, 4);
   addPlanter(150);
   block(166, 167, 1, 2); P('m3.crateA', [X(166) - 2, -18, X(168) + 2, 1], (g) => crate(g, X(166), 16, 16));
   P('m3.fountain', [398, -40, 466, 1], (g) => fountain(g, 400), deco);
@@ -346,14 +345,13 @@ export function buildMission3() {
   lights.push([694, -6, 30, 0.35, [1, 0.6, 0.3], 'fire']);
   deco.push({ name: 'm3.tree', box: [-34, -118, 36, 1], paint: (g) => tree(g, 0, 1), at: [300, 930, 1120], foot: [0, 6] });
   P('m3.truck', [1234, -54, 1338, 1], (g) => truck(g, 1236), deco);
-  glows.push([1246, -38.7, 2.4, 1, '#ff2a35', 0.6], [1266, -38.7, 2.4, 1, '#ff2a35', 0.6]);
   // B — the security gate in the compound wall ------------------------------------------------
   conc('m3.concB', 184);
   P('m3.term', [X(204) - 9, -28, X(204) + 18, 1], (g) => terminal(g, X(204)));
   block(214, 215, 1, 12);
   P('m3.gateFrame', [X(214) - 76, -150, X(216) + 76, 1], (g) => gateFrame(g, X(214), X(216), 96, ['SEKRETERLİK', 'YETKİSİZ GİRİŞ YASAKTIR']), deco);
   lights.push([X(215), -118, 110, 0.6, [0.9, 0.95, 1]]);
-  glows.push([X(215), -113, 36, 5, '#e8f0ff', 0.3], [X(215) - 30, -125, 4, 2, '#f2f6ff', 0.6], [X(215) + 30, -125, 4, 2, '#f2f6ff', 0.6], [X(215), -103.4, 44, 1.6, '#ff3347', 0.3]);
+  glows.push([X(215) - 30, -125, 4, 2, '#f2f6ff', 0.6], [X(215) + 30, -125, 4, 2, '#f2f6ff', 0.6]);
   // C — the courtyard under the arcade; Vanta's walls here carry no mark of the cells ----------
   const cols = bays(X(226), X(346));
   for (const x of cols.slice(0, -1)) { const [lx, ly] = ARCH_LAMP(); glows.push([x + lx, ly + 0.6, 4, 2, '#e8f0ff', 0.45]); lights.push([x + lx, ly + 4, 40, 0.35, [0.88, 0.94, 1]]); }
@@ -362,8 +360,6 @@ export function buildMission3() {
   block(358, 381, 1, 1); block(359, 380, 2, 2);
   P('m3.dais', [X(358) - 2, -78, X(382) + 2, 1], (g) => dais(g, X(358), X(382)), deco);
   for (const [lx, ly] of DAIS_LAMPS(X(358), X(382))) { glows.push([lx, ly, 5, 2.4, '#f2f6ff', 0.7]); lights.push([lx, ly + 6, 90, 0.7, [0.9, 0.95, 1]]); }
-  glows.push([X(370), -73.4, 72, 1.6, '#ff3347', 0.4]);
-  lights.push([X(370), -60, 90, 0.45, [1, 0.2, 0.24]]);
   // D — extraction ------------------------------------------------------------------------------
   P('m3.beacon', [X(390) - 5, -28, X(390) + 5, 1], (g) => beacon(g, X(390)), deco);
   // shared pieces

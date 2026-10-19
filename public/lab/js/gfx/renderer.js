@@ -248,7 +248,7 @@ export class Renderer {
   finish(time) {
     const gl = this.gl, lv = this.bloomOn ? this.q.bloom : 0;
     if (lv > 0) {
-      this.fsPass(this.pBright, this.b1a, [this.lit.tex], (u) => { gl.uniform1i(u.uTex, 0); gl.uniform2f(u.uTexel, 1 / this.lit.w, 1 / this.lit.h); gl.uniform1f(u.uThresh, 0.55); });
+      this.fsPass(this.pBright, this.b1a, [this.lit.tex], (u) => { gl.uniform1i(u.uTex, 0); gl.uniform2f(u.uTexel, 1 / this.lit.w, 1 / this.lit.h); gl.uniform1f(u.uThresh, 0.62); });
       this.blur(this.b1a, this.b1b);
       if (lv > 1) {
         this.fsPass(this.pBright, this.b2a, [this.b1a.tex], (u) => { gl.uniform1i(u.uTex, 0); gl.uniform2f(u.uTexel, 1 / this.b1a.w, 1 / this.b1a.h); gl.uniform1f(u.uThresh, 0.0); });
@@ -259,7 +259,8 @@ export class Renderer {
     this.wet = 0;
     this.fsPass(this.pFinal, null, [this.lit.tex, this.b1a.tex, this.b2a.tex], (u) => {
       gl.uniform1i(u.uLit, 0); gl.uniform1i(u.uB1, 1); gl.uniform1i(u.uB2, 2);
-      gl.uniform3f(u.uBloom, 1.0, lv > 1 ? 0.85 : 0, lv > 0 ? 1 : 0);
+      // a lens's halation, not a glow: lamps keep a soft edge, nothing blooms into neon
+      gl.uniform3f(u.uBloom, 0.62, lv > 1 ? 0.48 : 0, lv > 0 ? 1 : 0);
       gl.uniform4f(u.uGrade, G.sat, G.con, G.vig, G.grain);
       gl.uniform3f(u.uTint, G.tint[0], G.tint[1], G.tint[2]);
       gl.uniform3f(u.uLift, G.lift[0], G.lift[1], G.lift[2]);

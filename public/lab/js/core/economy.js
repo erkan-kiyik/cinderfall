@@ -17,8 +17,8 @@ export const SKINS = [
   { id: 'crimson', rar: 'epic', tint: '#ff8c8c' },
   { id: 'violet', rar: 'epic', tint: '#c8a2ff' },
   { id: 'gold', rar: 'legendary', tint: '#ffd36a' },
-  { id: 'ember', rar: 'mythic', tint: '#ff9a5c', glow: '#ff6b2c' },
-  { id: 'kor', rar: 'ultra', tint: '#90fcff', glow: '#3ee8e0' },
+  { id: 'ember', rar: 'mythic', tint: '#ff9a5c' },
+  { id: 'kor', rar: 'ultra', tint: '#d2b08a' },
 ];
 export const SKIN = Object.fromEntries(SKINS.map((s) => [s.id, s]));
 export const RARITIES = ['common', 'rare', 'epic', 'legendary', 'mythic', 'ultra'];

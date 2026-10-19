@@ -545,14 +545,13 @@ export class MissionScene extends M3.M3Scene {
     this.ab.lights(R);
     const MS = this.M, T = MS.terminal, t = this.t;
     if (T) {
-      const tc = this.gateOpen ? [0.3, 1, 0.6] : this.hack > 0 ? [1, 0.75, 0.3] : [1, 0.25, 0.25];
-      R.addLight(T.x, -19, 26, 0.9, tc);
+      const tc = this.gateOpen ? [0.6, 0.9, 0.65] : this.hack > 0 ? [1, 0.78, 0.45] : [0.9, 0.45, 0.38];
+      R.addLight(T.x, -19, 22, 0.6, tc);
     }
-    MS.checkpoints.forEach((c, i) => R.addLight(c.x, -20, 16, 0.6, i <= this.cp ? [0.3, 1, 0.8] : [1, 0.3, 0.25]));
+    // a checkpoint reached is a bulb switched on; the rest stay dark
+    MS.checkpoints.forEach((c, i) => { if (i <= this.cp) R.addLight(c.x, -20, 18, 0.5, [1, 0.8, 0.55]); });
     const o = this.objective;
-    if (o && o.type === 'hold') for (const x of [o.x0, o.x1]) R.addLight(x, -6, 40, 0.8, [0.25, 0.9, 0.9]);
-    if (this.boss && this.boss.ch.alive) R.addLight(this.boss.ch.rx, this.boss.ch.ry - 40, 70, 0.6 + 0.2 * Math.sin(t * 4), [1, 0.2, 0.25]);
-    for (const n of this.nades) R.addLight(n.x, n.y, 26, (n.t * 6) % 1 < 0.5 ? 1 : 0.3, [1, 0.25, 0.2]);
+    for (const n of this.nades) R.addLight(n.x, n.y, 16, (n.t * 6) % 1 < 0.5 ? 0.5 : 0.15, [1, 0.6, 0.3]);
     if (o === MS.objectives[MS.objectives.length - 1] && MS.extract) {
       const f = 0.8 + Math.sin(t * 17) * 0.1 + Math.sin(t * 6.1) * 0.1;
       R.addLight(MS.extract.x, -28, 90, 1.5 * f, [1, 0.35, 0.25]);
@@ -564,36 +563,29 @@ export class MissionScene extends M3.M3Scene {
     const A = this.e.atlas, glow = A.get('fx.glow'), white = A.get('fx.white'), t = this.t, MS = this.M, T = MS.terminal;
     B.begin(w); B.setBlend(1);
     if (T) {
-      // terminal screen
-      const sc = this.gateOpen ? '#4dffa0' : this.hack > 0 ? '#ffc060' : '#ff4a5a';
-      B.draw(white, T.x, -19, 5, 4, 0, rgba(sc, 0.55 + Math.sin(t * 9) * 0.1));
-      B.draw(glow, T.x, -19, 12, 9, 0, rgba(sc, 0.35));
+      // terminal screen: an old monitor's dull phosphor, no halo round it
+      const sc = this.gateOpen ? '#9fd8a8' : this.hack > 0 ? '#e8c088' : '#d08070';
+      B.draw(white, T.x, -19, 5, 4, 0, rgba(sc, 0.4 + Math.sin(t * 9) * 0.05));
+      B.draw(glow, T.x, -19, 7, 5, 0, rgba(sc, 0.12));
       // hack ring around the terminal
       if (this.objective && this.objective.type === 'hack') this.ring(B, white, T.x, -36, 16, this.hack / T.time);
     }
-    // the hold zone: brackets at both ends, a ring that fills over the stall
+    // the hold zone: chalk marks at both ends, as the cells mark a place on a wall
     const o = this.objective;
     if (o && o.type === 'hold') {
-      const a = 0.6 + 0.25 * Math.sin(t * 5);
+      const a = 0.42 + 0.08 * Math.sin(t * 3);
       for (const [x, s] of [[o.x0, 1], [o.x1, -1]]) {
-        B.line(white, x, 0, x, -26, 0.8, rgba('#3ee8e0', a)); B.line(white, x, -26, x + s * 6, -26, 0.8, rgba('#3ee8e0', a)); B.line(white, x, 0, x + s * 6, 0, 0.8, rgba('#3ee8e0', a));
-        B.draw(glow, x, -12, 6, 16, 0, rgba('#3ee8e0', 0.18));
+        B.line(white, x, 0, x, -26, 0.6, rgba('#e6dcc6', a)); B.line(white, x, -26, x + s * 6, -26, 0.6, rgba('#e6dcc6', a)); B.line(white, x, 0, x + s * 6, 0, 0.6, rgba('#e6dcc6', a));
       }
-      B.draw(glow, (o.x0 + o.x1) / 2, 1, (o.x1 - o.x0) / 2, 3, 0, rgba('#3ee8e0', 0.12));
     }
-    // checkpoint lamps
-    MS.checkpoints.forEach((c, i) => B.draw(glow, c.x, -20, 5, 5, 0, rgba(i <= this.cp ? '#4dffc8' : '#ff4a4a', 0.75)));
-    // the boss: a red aura that breathes; grenades blink, their landing spot is marked
-    if (this.boss && this.boss.ch.alive) {
-      const c = this.boss.ch, k = 0.14 + 0.06 * Math.sin(t * 4);
-      B.draw(glow, c.rx, c.ry - 34, 22, 42, 0, rgba('#ff3347', k));
-      B.draw(glow, c.rx + c.facing * 3.5, c.ry - 57, 9, 4, 0, rgba('#ff3347', 0.9));
-    }
+    // checkpoints reached: the bulb on
+    MS.checkpoints.forEach((c, i) => { if (i <= this.cp) B.draw(glow, c.x, -20, 3, 3, 0, rgba('#ffe6b8', 0.6)); });
+    // grenades: the fuse spitting at the tip, and a faint mark where it will land
     for (const n of this.nades) {
       const on = (n.t * 8) % 1 < 0.5;
-      B.draw(glow, n.x, n.y, on ? 4 : 2, on ? 4 : 2, 0, rgba('#ff3347', on ? 1 : 0.5));
+      B.draw(glow, n.x, n.y, on ? 1.8 : 1.2, on ? 1.8 : 1.2, 0, rgba('#ffc890', on ? 0.8 : 0.4));
       const k = Math.min(1, n.t / n.life);
-      B.draw(glow, n.tx, n.ty + 3, 30 * k + 8, 3, 0, rgba('#ff3347', 0.2 + 0.25 * k));
+      B.draw(glow, n.tx, n.ty + 3, 24 * k + 8, 2.4, 0, rgba('#c24a3a', 0.1 + 0.18 * k));
     }
     // extraction flare
     if (o === MS.objectives[MS.objectives.length - 1] && MS.extract && !this.endless) {
@@ -605,7 +597,7 @@ export class MissionScene extends M3.M3Scene {
     const p = this.objectivePoint();
     if (p && !this.paused && !(o && o.type === 'boss')) {
       const y = p[1] - 46 + Math.sin(t * 3) * 2, s = 3.2;
-      const c = rgba('#3ee8e0', 0.9);
+      const c = rgba('#efe6d2', 0.8);
       B.line(white, p[0], y - s, p[0] + s, y, 0.7, c); B.line(white, p[0] + s, y, p[0], y + s, 0.7, c);
       B.line(white, p[0], y + s, p[0] - s, y, 0.7, c); B.line(white, p[0] - s, y, p[0], y - s, 0.7, c);
     }
@@ -619,7 +611,7 @@ export class MissionScene extends M3.M3Scene {
     for (let i = 0; i < n; i++) {
       const a0 = -Math.PI / 2 + (i / n) * Math.PI * 2, a1 = a0 + (Math.PI * 2) / n * 0.7;
       const on = i / n < k;
-      B.line(white, x + Math.cos(a0) * r, y + Math.sin(a0) * r, x + Math.cos(a1) * r, y + Math.sin(a1) * r, 0.9, rgba(on ? '#3ee8e0' : '#ffffff', on ? 0.9 : 0.18));
+      B.line(white, x + Math.cos(a0) * r, y + Math.sin(a0) * r, x + Math.cos(a1) * r, y + Math.sin(a1) * r, 0.9, rgba(on ? '#efe6d2' : '#ffffff', on ? 0.85 : 0.16));
     }
   }
 }
