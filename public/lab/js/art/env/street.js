@@ -7,6 +7,7 @@
 import { cel, fill, stroke, clip, rng, setRoot } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
 import { texture } from '../tex.js';
+import { Brush } from '../paint.js';
 import { emblem } from '../enemies/syndicate.js';
 import { facadeStrip } from './city.js';
 
@@ -14,20 +15,29 @@ const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
 const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 
-const SKY = ['#151b27', '#1a2130', '#202839', '#283043', '#33384d', '#433f54', '#57475a'];
 const FAR = '#262e3e', FAR_WIN = '#6c6372';
 const MID = '#2e3748', MID_HI = '#38425a';
 
 function sky(g) {
-  // stepped night bands, warmer toward the horizon: the old sodium lamps on
-  // the low cloud, nothing burning (docs §10.4)
-  const top = -172, h = 150 / SKY.length;
-  SKY.forEach((c, i) => fill(g, rect(-10, top + i * h, 610, top + (i + 1) * h + 0.5), c));
-  fill(g, rect(-10, -64, 610, -22), '#5a4446', 0.35);
-  fill(g, rect(-10, -48, 610, -22), '#7a5040', 0.22);
-  // a few stars where the smoke is thin
-  const r = rng(5);
-  for (let i = 0; i < 40; i++) { const x = r() * 610, y = -170 + r() * 46, k = 0.3 + r() * 0.4; fill(g, rect(x, y, x + k, y + k), '#c9cfe0', 0.35 + r() * 0.4); }
+  // a rain night is overcast: the sky one smooth fall from black overhead to the
+  // brown of the old sodium lamps on the low cloud (docs §10.4), no stars;
+  // the cloud in soft masses, their undersides catching the city's light, their
+  // tops lost in the dark. It tiles every 600 units, so every mass wraps.
+  const gr = g.createLinearGradient(0, -176, 0, -20);
+  gr.addColorStop(0, '#0d111a'); gr.addColorStop(0.4, '#171c29'); gr.addColorStop(0.72, '#2b2834'); gr.addColorStop(1, '#4e3e40');
+  fill(g, rect(-10, -176, 610, -20), gr);
+  const M0 = g.getTransform(), B = new Brush(g, Math.hypot(M0.a, M0.b)), r = rng(5);
+  for (let i = 0; i < 64; i++) {
+    const x = r() * 600, y = -156 + r() * 112, rx = 20 + r() * 54, ry = 4 + r() * 9, a = 0.22 + r() * 0.2;
+    const warm = Math.max(0, Math.min(1, (y + 156) / 112));
+    for (const dx of [0, -600, 600]) {
+      B.dab(x + dx, y, rx, ry, `rgba(${38 + warm * 62 | 0},${40 + warm * 40 | 0},${54 + warm * 24 | 0},${a})`);
+      B.dab(x + dx, y + ry * 0.55, rx * 0.8, ry * 0.4, `rgba(156,108,72,${0.05 + warm * 0.11})`);
+      B.dab(x + dx, y - ry * 0.5, rx * 0.7, ry * 0.4, 'rgba(8,10,16,0.18)');
+    }
+  }
+  fill(g, rect(-10, -64, 610, -22), '#5a4446', 0.3);
+  fill(g, rect(-10, -48, 610, -22), '#7a5040', 0.2);
 }
 
 function farCity(g) {
