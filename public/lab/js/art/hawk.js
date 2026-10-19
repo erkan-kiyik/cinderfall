@@ -15,8 +15,11 @@ import { P } from './kit.js';
 // --- the forms (100-unit frame) -------------------------------------------------
 const HEAD = 'M 33 33 C 30 38 29.6 47 32.6 55 C 34.6 60 35.6 66 36.6 77 L 64 81 C 63.2 77 63.8 73.4 66 70.4 C 71 69.2 76 68 79 66 C 81 63 81.2 60.2 80.6 58.2 C 80.2 57.2 79.6 56.2 79.6 55.4 C 81.6 55.2 84.6 54.2 85.7 52.4 C 86.1 51.1 85.2 49.6 83.7 48.6 C 81.9 46 80 42 78.2 39.6 C 77.5 38.7 77.9 37.4 78.5 36.2 C 78.3 33 76.7 30 74 27.4 L 40 26 Z';
 const EAR = 'M 49 40 C 53 39.4 54.6 43 53.8 47 C 53.2 51 51.2 54.2 48.7 53.5 C 46.6 52.9 46.1 49 46.5 45 C 46.9 42 47.6 40.3 49 40 Z';
-const BEARD = 'M 49.4 51.6 C 51.6 51.4 53 52.4 55 51.8 C 57.4 51 59.4 51.8 61.6 51.6 C 64 51.4 66.4 52.8 68.6 53 C 71 53.2 73 54.2 75.2 54.6 C 77.2 55.1 78.8 55.6 79.6 56.2 C 81.8 57.4 83 59.6 82.8 62 C 82.8 66.2 81.2 70.6 77.8 73.2 C 73.8 75.8 68 75.6 64 73.6 C 59 71.2 54 66.8 51 61.8 C 49.3 58.8 48.7 55 49.4 51.6 Z';
-const STACHE = 'M 75 54.8 C 77.6 54.8 80.6 55.4 82.4 57.3 C 83 58.4 82.6 59.5 81.5 59.5 C 79.6 59.1 77.6 59.1 75.8 59.7 C 74.9 58.4 74.6 56.6 75 54.8 Z';
+// the beard follows the jaw: from the sideburn down the cheek to the corner of the mouth,
+// round the chin and back under the jaw to the throat; the cheek above it stays bare
+const BEARD = 'M 53.6 44.5 C 52.6 47 52 49.6 52.2 52 C 51.6 54.4 51.6 56.4 52 58 C 52.8 61.6 54 64 55.6 66 C 57.6 69 60 71.2 62 72.6 C 64.6 74.2 67.2 75 70 75.2 C 72.8 75.4 75.4 75 77.6 73.6 C 79.6 72.4 81 71 81.6 69.4 C 82.6 67.6 83 66.2 82.8 64.6 C 82.8 63.2 82.4 62 81.8 61.2 C 80.6 60.6 79.2 60.4 78 60.2 C 77.2 59.8 76.6 59.2 76 58.6 C 74.6 57.2 73.4 56.2 72 55.4 C 70 54.4 68 53.8 66 53.2 C 64 52.6 62 51.6 60 50.2 C 58.4 49 57 47.8 56 46.4 C 55.2 45.4 54.4 44.8 53.6 44.5 Z';
+const LIP = 'M 78.4 59.8 C 79.6 59.5 81 59.6 81.9 60.2 C 81.2 61.1 79.8 61.3 78.6 60.8 Z';
+const STACHE = 'M 74.6 56.6 C 76.2 55 79.2 54.5 81.8 54.9 C 83.3 55.2 84 56.3 83.5 57.5 C 82.9 58.8 81.8 59.6 80.6 59.8 C 79.2 59.9 77.6 59.7 76.2 59.9 C 75.2 59.3 74.6 58 74.6 56.6 Z';
 const CAP = 'M 24 34.4 C 21.6 26 28 15 42 12.2 C 54 10 66 11.4 73.6 16 C 77.2 18.4 80.2 21.4 82.8 24.2 C 85.2 26.4 87.6 27.8 88 29.2 C 87.6 30.5 85.2 30.8 82 30.4 C 78 29.8 74 29.4 70 29.6 C 58 30 44 31.8 33 34.8 C 29.6 35.6 26 35.8 24 34.4 Z';
 const PEAK = 'M 66 29.7 C 72 28.4 78 26.6 82.8 24.2 C 85.2 26.4 87.6 27.8 88 29.2 C 87.6 30.5 85.2 30.8 82 30.4 C 78 29.8 72 29.6 66 29.7 Z';
 const COAT = 'M -5 106 L -5 86 C 4 80 16 74 30 70.6 C 36 69.2 42 69 46 70 L 64 74 C 72 75 80 77 88 82 C 96 87 102 92 106 96 L 106 106 Z';
@@ -164,45 +167,58 @@ export function paintHawk(g, size, t = 0, o = {}) {
     B.line('M 40 75 C 48 78 58 79 68 78', 'rgba(10,8,6,0.5)', 1.6, 1.2);
   });
 
-  // --- the beard: a soft grey mass, then hair by hair, the light catching what faces the lamp
-  // first the mass, lit like any other form (dark under the ear, pale where the lamp reaches),
-  // then fine hairs in the local tone so it reads as hair without turning to wire
+  // --- the beard: salt and pepper, combed by years. First the mass, lit like any form
+  // (dark under the ear and the jaw, pale where the lamp below reaches the chin), then
+  // hair by hair along the way it grows: down and forward on the cheek, down off the chin.
+  // Its top edge on the cheek is never cut: the hairs thin out toward it.
   const beard = P(BEARD);
-  B.fill(BEARD, '#5f5a54', 1.4);
+  B.fill(BEARD, '#4f4a44', 0.6);
   B.inside(BEARD, () => {
-    B.dab(46, 54, 14, 12, 'rgba(26,22,18,0.65)');
-    B.fill('M 48 50 C 58 49 68 51 76 54 L 76 56.4 C 68 54 58 52.4 48 53.4 Z', 'rgba(140,96,72,0.45)', 1.2);   // skin showing through where it thins
-    B.dab(84, 72, 20, 14, 'rgba(214,204,190,0.8)');
-    B.dab(76, 62, 10, 8, 'rgba(176,168,158,0.55)');
-    B.dab(64, 74, 10, 4, 'rgba(30,24,20,0.45)');
+    B.dab(50, 56, 9, 12, 'rgba(18,14,12,0.7)');
+    B.dab(62, 71, 10, 5, 'rgba(22,18,14,0.55)');
+    B.dab(80, 68, 9, 8, 'rgba(206,192,172,0.6)');
+    B.dab(73, 63, 8, 6, 'rgba(160,150,136,0.45)');
+    B.dab(64, 54, 8, 3, 'rgba(126,84,62,0.4)');
   });
-  const tone = (x, y) => Math.min(1, Math.max(0, (x - 54) / 28 + (y - 58) / 34));
+  const lit = (x, y) => Math.min(1, Math.max(0, (x - 56) / 26 + (y - 60) / 30));
+  const grow = (x, y) => Math.PI / 2 - 0.35 + (x - 52) * 0.008 + (y - 55) * 0.01;
+  const top = (x) => (x < 76 ? 44.5 + (x - 53.6) * 0.63 : 60);
   const grey = (v, a) => `rgba(${v + 6 | 0},${v + 2 | 0},${v - 5 | 0},${a})`;
-  B.hairs(1900, 21, (i, rr) => {
-    const x = 47 + rr() * 37, y = 48 + rr() * 28;
+  B.hairs(2400, 21, (i, rr) => {
+    const x = 51 + rr() * 33, y = 44 + rr() * 32;
+    if (!inP(beard, x, y) || rr() > Math.min(1, Math.max(0.12, (y - top(x)) / 3.2))) return null;
+    const l = lit(x, y), v = 38 + l * 120 + (rr() - 0.5) * 40;
+    return [x, y, grow(x, y) + (rr() - 0.5) * 0.35, 1.0 + rr() * 1.3, grey(Math.min(220, v), 1), 0.1 + rr() * 0.06, 0.35 + rr() * 0.25];
+  });
+  // the grey in it: silver hairs, more of them where the lamp catches
+  B.hairs(1100, 23, (i, rr) => {
+    const x = 51 + rr() * 33, y = 44 + rr() * 32;
     if (!inP(beard, x, y)) return null;
-    const lit = tone(x, y), v = 60 + lit * 150 + (rr() - 0.5) * 46;
-    const a = Math.PI / 2 - 0.25 + (x - 66) * 0.01 + (rr() - 0.5) * 0.45;
-    return [x, y, a, 0.7 + rr() * 1.1, grey(Math.min(244, v), 1), 0.08 + rr() * 0.06, 0.3 + rr() * 0.3];
+    const l = lit(x, y);
+    if (rr() > 0.25 + l * 0.75 || rr() > Math.min(1, Math.max(0.1, (y - top(x)) / 3))) return null;
+    const v = 118 + l * 120 + (rr() - 0.5) * 30;
+    return [x, y, grow(x, y) + (rr() - 0.5) * 0.3, 0.8 + rr() * 1.1, grey(Math.min(246, v), 1), 0.08, 0.18 + l * 0.4];
   });
-  // a few bright strands where the lamp catches, and loose ones past the edge so it never ends in a line
-  B.hairs(140, 27, (i, rr) => {
-    const x = 66 + rr() * 17, y = 60 + rr() * 15;
-    if (!inP(beard, x, y)) return null;
-    return [x, y, Math.PI / 2 - 0.2 + (rr() - 0.5) * 0.4, 0.8 + rr(), '#f2ece2', 0.08, 0.55];
+  // loose hairs past the lower edge, so the beard ends in hair and not in a line
+  const EDGE = [[52.4, 58], [55.6, 66], [62, 72.6], [70, 75.2], [77.6, 73.6], [81.6, 69.4], [82.8, 64.6]];
+  B.hairs(220, 33, (i, rr) => {
+    const u = rr() * (EDGE.length - 1), k = u | 0, f = u - k, [x0, y0] = EDGE[k], [x1, y1] = EDGE[k + 1];
+    const x = x0 + (x1 - x0) * f + (rr() - 0.5) * 0.8, y = y0 + (y1 - y0) * f - rr() * 1.4;
+    return [x, y, grow(x, y) + (rr() - 0.5) * 0.7, 0.6 + rr() * 1.0, grey(60 + lit(x, y) * 160, 1), 0.08, 0.45];
   });
-  B.hairs(120, 33, (i, rr) => {
-    const u = rr(), x = 52 + u * 30, y = 53 + Math.sin(u * Math.PI) * 21 + (rr() - 0.2) * 1.6;
-    return [x, y, Math.PI / 2 + (rr() - 0.5) * 0.8, 0.6 + rr() * 0.8, grey(70 + tone(x, y) * 150, 1), 0.08, 0.45];
-  });
-  // the moustache: yellowed by forty years of smoke, thicker over the lip
-  B.fill(STACHE, '#857a64', 0.7);
-  B.inside(STACHE, () => { B.dab(81, 58.4, 3.4, 2, 'rgba(214,196,150,0.7)'); B.dab(76, 56, 2.6, 2, 'rgba(40,32,24,0.6)'); });
-  B.hairs(300, 44, (i, rr) => {
-    const x = 74.6 + rr() * 8.4, y = 54.6 + rr() * 5;
+  // the lower lip under the moustache, where the cigarette sits
+  B.fill(LIP, '#6e3528', 0.2);
+  B.inside(LIP, () => { B.dab(80.6, 60.2, 1.4, 0.5, 'rgba(236,150,120,0.6)'); B.dab(78.8, 60.6, 0.9, 0.6, 'rgba(30,12,8,0.6)'); });
+  // the moustache: the same salt and pepper as the beard, heavy over the lip, yellowed
+  // only where forty years of smoke have passed through it at the cigarette
+  B.fill(STACHE, '#4d4741', 0.35);
+  B.inside(STACHE, () => { B.dab(82, 58.4, 3, 1.8, 'rgba(196,182,156,0.45)'); B.dab(76, 56.4, 2.6, 2, 'rgba(20,16,12,0.6)'); });
+  B.hairs(460, 44, (i, rr) => {
+    const x = 74.4 + rr() * 9.6, y = 54.4 + rr() * 5.6;
     if (!inP(P(STACHE), x, y)) return null;
-    const lit = Math.min(1, (x - 75) / 7), v = 90 + lit * 120 + (rr() - 0.5) * 40;
-    return [x, y, Math.PI * 0.42 + (rr() - 0.5) * 0.4, 0.6 + rr() * 0.8, `rgba(${v + 14 | 0},${v + 4 | 0},${v - 26 | 0},1)`, 0.09, 0.55];
+    const l = Math.min(1, Math.max(0, (x - 75) / 8)), v = 56 + l * 140 + (rr() - 0.5) * 40;
+    const nic = y > 58.2 && x > 79 && rr() < 0.45;
+    return [x, y, Math.PI * 0.4 + (rr() - 0.5) * 0.35, 0.7 + rr() * 0.9, nic ? `rgba(${v + 18 | 0},${v + 4 | 0},${v - 40 | 0},1)` : grey(Math.min(236, v), 1), 0.09, 0.5];
   });
   B.dab(81, 58.6, 3, 1.8, `rgba(255,140,60,${0.35 * glow})`, 1, 'screen');
 
