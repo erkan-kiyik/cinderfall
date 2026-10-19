@@ -239,12 +239,26 @@ function floor(g) {
 // flex, the green enamel shade white inside, the bulb
 function lamp(g) {
   const L = LAMP.len;
+  // the twisted flex, the bakelite holder
   stroke(g, `M 0 0 L 0 ${L - 4}`, '#151515', 0.4);
-  fill(g, rect(-1, L - 5, 1, L - 3), '#3a3632');
-  fill(g, poly([[-2.4, L - 3], [2.4, L - 3], [9, L + 3.4], [-9, L + 3.4]]), '#2f4a3a');
-  fill(g, poly([[-2.4, L - 3], [0, L - 3], [-2, L + 3.4], [-9, L + 3.4]]), '#3e5e4a');
-  fill(g, ell(0, L + 3.4, 9, 1.2), '#e8e2d0');
+  stroke(g, `M 0.1 0 L 0.1 ${L - 4}`, '#3a3632', 0.12, 0.6);
+  fill(g, rect(-1, L - 5.4, 1, L - 2.8), '#2a2622'); fill(g, rect(-1, L - 5.4, -0.4, L - 2.8), '#4a4440', 0.8);
+  // the enamel shade: a shallow bell, rolled at the rim; green outside, its curve
+  // catching the room's light on one shoulder, chipped to black iron here and there
+  const SH = `M -2.2 ${L - 3.4} C -3.2 ${L - 3.2} -4.4 ${L - 2} -5.6 ${L - 0.4} C -6.8 ${L + 1} -8 ${L + 2.4} -9.2 ${L + 3.2} L 9.2 ${L + 3.2} C 8 ${L + 2.4} 6.8 ${L + 1} 5.6 ${L - 0.4} C 4.4 ${L - 2} 3.2 ${L - 3.2} 2.2 ${L - 3.4} Z`;
+  const gr = g.createLinearGradient(-9, 0, 9, 0);
+  gr.addColorStop(0, '#1e3226'); gr.addColorStop(0.28, '#35553f'); gr.addColorStop(0.38, '#4f7759'); gr.addColorStop(0.55, '#2a4232'); gr.addColorStop(1, '#152219');
+  fill(g, SH, gr);
+  clip(g, SH, () => {
+    stroke(g, `M -2.8 ${L - 2.8} C -4 ${L - 1.6} -5.4 ${L + 0.4} -6.6 ${L + 2.2}`, '#c8e8d4', 0.6, 0.3);
+    const tp = g.createLinearGradient(0, L - 3.4, 0, L + 3.2); tp.addColorStop(0, 'rgba(0,0,0,0.35)'); tp.addColorStop(0.5, 'rgba(0,0,0,0)'); fill(g, SH, tp);
+    fill(g, ell(6.2, L + 1.8, 0.6, 0.35), '#101410', 0.6);
+  });
+  // the rolled rim, the white enamel inside, the bulb
+  fill(g, ell(0, L + 3.3, 9.4, 1.2), '#1a2a20');
+  fill(g, ell(0, L + 3.5, 8.6, 0.8), '#f4eedc');
   fill(g, ell(0, L + 3.4, 2.4, 2.2), '#fff4dc');
+  fill(g, ell(-0.6, L + 2.8, 0.8, 0.7), '#ffffff', 0.9);
 }
 export const LAMP_BULB = LAMP.len + 3.6;
 
