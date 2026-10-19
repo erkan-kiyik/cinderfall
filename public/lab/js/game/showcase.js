@@ -60,6 +60,9 @@ export class Showcase extends M2Scene {
     return [LAMP.x + Math.sin(a) * LAMP_BULB, LAMP.y + Math.cos(a) * LAMP_BULB, a];
   }
 
+  // the swinging bulb throws the operator's shadow on the back wall, swaying with it
+  shadowLamps() { const [x, y] = this.lampAt(); return [[x, y, 1.3]]; }
+
   // where the operator stands on screen (0 left … 1 right), how tall the view
   // is, and how far above the bottom edge the floor sits (to clear the menus)
   frame(focus, zoom = 112, lift = 8) { this.focus = focus; this.zoom = zoom; this.lift = lift; }

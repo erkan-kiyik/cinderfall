@@ -714,3 +714,38 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 | Bombaatar | THUMPER GL | TOKMAK GL | Thumper = tokmak |
 | Sandık | Standart / Takviyeli / Doğan | Erzak / Mühimmat / Komuta | Bunlar el konmuş Vanta sandıkları; adları Vanta'nın lojistiğinden |
 | Görünüm | Neon Buz | Su Verme | Şehirde neon yok; ocakta çeliğe su verilir |
+
+### 10.12 Gerçekçilik geçişi: ışın izlenmiş karelerin yanına
+Ölçü, seri karelerdi (§8): ışığın nereden geldiği, neyin neyi gölgelediği,
+ıslak yerin neyi yansıttığı belli. Çizgi yok, geometrik şekil yok.
+
+**Karakterler**
+- **Çizgi yok:** figür boyanırken her fırça izi kenarında erir (`softMarks`);
+  koyu izler daha geniş ve açık yayılır, küçük koyu dolgular (havalandırma,
+  kayış, dikiş, saç) kesik kenar bırakmaz. Ellerdeki silah tornadan çıkmış
+  gibi keskin kalır.
+- **Boyun:** kafaya doğru eğilen bir sütun; çenenin gölgesi üstünde, ışık
+  önünde. SKYE'ın kask delikleri içinde köpüğü görünen delikler; BULWARK'ın
+  kır saçı yumuşak bir kütle.
+- **Vanta zırhı:** daha gri bir çelik mavisi; lambanın parlaklığı, kenarlarda
+  boyası kalkmış yerler, çizikler, aşağıda kuru yağmur kiri.
+- **HAWK:** sakal çene hattını izler (favoriden ağız köşesine, çenenin
+  altından boğaza), yanak açık kalır, üst kenar kıl kıl incelir; bıyık aynı
+  kırçıllıkta, yalnız sigaranın olduğu yerde sararmış; altında dudak.
+
+**Işık**
+- **Islak yol:** yürüme çizgisinin altındaki asfalt sokağı yansıtır
+  (bariyerler, direkler, botlar, neon); yağmurda aşağı doğru çizgilenir, 40
+  birimde söner, ıslak yer koyulaşır. İç mekân kurudur.
+- **Lamba gölgesi:** en yakın lamba, önündeki kişinin gölgesini arkadaki
+  duvara düşürür: lambadan büyütülmüş bir kopya, duvarın sokağa değdiği
+  çizgide kesilir, uzaklaştıkça kenarı yumuşar ve solar. Lobideki sallanan
+  ampul operatörün gölgesini arka duvarda sallar.
+- **Kenar ışığı:** figürün kenarındaki ışık en yakın lambaya döner ve
+  yakınlıkla ısınır; lambadan uzakta gecenin soğuk kenarına döner.
+
+**Mekân ve arayüz**
+- Sığınak duvarlarında nem izleri, lekeler, duvarın zemine değdiği yerde
+  biriken karanlık; zemin ve masada kir.
+- Cephanelikte sahip olunmayan silahın fiyatı sınıf etiketinin yerini alır
+  (üstüne binmez).

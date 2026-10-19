@@ -156,6 +156,13 @@ export class M2Scene {
   drawFrontExtras() {}
   addLights() {}
   drawGlow() {}
+  // the lamps that throw figures' shadows on the wall and warm their rims:
+  // [x, y of the bulb, magnification of the shadow about it]
+  shadowLamps(out) {
+    if (!out) return [];
+    if (!this._bulbs) this._bulbs = this.C.lamps.map((lx) => [lx + 15, -78, 1.5]);
+    return this._bulbs;
+  }
   // troopers track the player's chest
   updateEnemies(dt) {
     const m = this.mover;
@@ -253,26 +260,26 @@ export class M2Scene {
     for (const p of this.C.props) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }
     B.end();
     this.drawWorldExtras(B, w, x0, x1);
-    // the nearest street lamp to each figure: it throws their shadow on the wall
-    // behind (magnified about the lamp, fainter the further off it is) and
-    // warms the rim of light along the side that faces it
-    const lit = this.e.fxLevel !== 0;
+    // the nearest lamp to each figure: it throws their shadow on the wall behind
+    // (magnified about the lamp, fainter the further off it is) and warms the
+    // rim of light along the side that faces it
+    const lit = this.e.fxLevel !== 0, bulbs = this.shadowLamps(out);
     const near = chars.map((c) => {
-      let d = 1e9;
-      if (out) for (const lx of this.C.lamps) { const k = c.rx - (lx + 15); if (Math.abs(k) < Math.abs(d)) d = k; }
-      return d;
+      let b = null;
+      for (const q of bulbs) if (!b || Math.abs(c.rx - q[0]) < Math.abs(c.rx - b[0])) b = q;
+      return b && Math.abs(c.rx - b[0]) < 120 ? b : null;
     });
     if (lit) chars.forEach((c, i) => {
-      const d = near[i];
-      if (!c.rag && c.alive && Math.abs(d) < 120) this.cr.shadow(c, w, restore, c.rx - d, -78, 1.5, 0.8 * Math.pow(1 - Math.abs(d) / 120, 0.8));
+      const b = near[i];
+      if (b && !c.rag && c.alive) this.cr.shadow(c, w, restore, b[0], b[1], b[2], 0.8 * Math.pow(1 - Math.abs(c.rx - b[0]) / 120, 0.8));
     });
     // characters (each composited through the outline shader)
     const L0 = this.cr.light, R0 = this.cr.rim;
     chars.forEach((c, i) => {
-      const d = near[i];
-      if (Math.abs(d) < 120) {
-        const k = 1 - Math.abs(d) / 120, n = Math.hypot(d, 36);
-        this.cr.light = [-d / n, -36 / n];
+      const b = near[i];
+      if (b) {
+        const dx = b[0] - c.rx, dy = b[1] + 42 - c.ry, k = 1 - Math.abs(dx) / 120, n = Math.hypot(dx, dy) || 1;
+        this.cr.light = [dx / n, dy / n];
         this.cr.rim = [R0[0] + 0.36 * k, R0[1] + 0.22 * k, R0[2] + 0.06 * k];
       } else { this.cr.light = L0; this.cr.rim = R0; }
       this.cr.composite(c, w, restore);
