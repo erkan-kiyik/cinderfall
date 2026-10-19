@@ -249,6 +249,17 @@ export function shield(g) {
     // the red band across, the rim
     fill(g, 'M 5 -32.6 L 17 -32.0 L 17 -31.0 L 5 -31.6 Z', PAL.visor.m, 0.85);
     for (const [x, y] of [[8.0, -45], [14.0, -44.4], [8.0, -20], [14.0, -19.4]]) rivet(g, x, y, 0.3, PAL.steel);
+    // a shield that has been used: the polycarbonate crazed white where things
+    // hit it (a bottle, a stone, the odd round), scuffed bare along its foot,
+    // rain beading down its face
+    const B = brush(g), r = rnd(733);
+    for (const [cx, cy] of [[12.6, -44.6], [9.4, -30.8], [13.4, -21.4]]) {
+      B.dab(cx, cy, 0.9, 0.9, 'rgba(226,232,238,0.32)');
+      for (let k = 0; k < 6; k++) { const a = r() * Math.PI * 2, L = 0.6 + r() * 1.4; B.line(`M ${cx} ${cy} l ${Math.cos(a) * L} ${Math.sin(a) * L}`, 'rgba(232,238,244,0.5)', 0.06, 0.03); }
+      B.dab(cx, cy, 0.25, 0.25, 'rgba(255,255,255,0.7)');
+    }
+    for (let k = 0; k < 14; k++) { const x = 6.8 + r() * 8.4, y = -19 + r() * 4.6; B.line(`M ${x} ${y} l ${0.6 + r() * 1.6} ${(r() - 0.5) * 0.6}`, 'rgba(200,206,212,0.35)', 0.07, 0.03); }
+    for (let k = 0; k < 8; k++) { const x = 7 + r() * 8, y = -56 + r() * 36; B.line(`M ${x} ${y} l 0.1 ${1 + r() * 3}`, 'rgba(210,222,236,0.18)', 0.12, 0.08); B.dab(x + 0.1, y + 0.2, 0.18, 0.22, 'rgba(236,244,252,0.4)'); }
     stroke(g, S, PAL.black.m, 0.6);
   });
 }
