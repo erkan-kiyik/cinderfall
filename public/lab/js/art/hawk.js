@@ -78,8 +78,27 @@ export function paintHawk(g, size, t = 0, o = {}) {
       B.line('M 70 101 C 72 160 74 240 75 346', '#0a0908', 2.4, 1.2, 0.85);
       for (const y of [150, 210]) { B.dab(66, y, 2.2, 2.2, '#1a1612'); B.dab(65.4, y - 0.6, 0.8, 0.8, 'rgba(200,170,130,0.4)'); }
       for (const [y, a] of [[180, 0.4], [270, 0.35]]) B.line(`M 22 ${y} C 40 ${y + 10} 60 ${y + 8} 86 ${y - 4}`, `rgba(8,6,4,${a})`, 2, 2.2);
+      // the coat's belt drawn in at the waist, the wool bunching over it
+      B.line('M 4 206 C 30 216 66 214 104 204', '#0b0a08', 3.2, 1.4, 0.85);
+      B.line('M 4 211 C 30 221 66 219 104 209', 'rgba(150,112,76,0.3)', 1.2, 1.2);
+      for (const x of [24, 44, 70]) B.line(`M ${x} 196 C ${x + 2} 202 ${x + 1} 208 ${x - 1} 214`, 'rgba(8,6,4,0.45)', 1.4, 1.2);
     }
   });
+  if (fig) {
+    // the near arm in its sleeve, down the side and bent at the elbow toward the
+    // counter, the lamp below catching its underside
+    const SLEEVE = 'M 74 98 C 90 95 102 104 105 122 C 108 160 108 196 106 224 C 108 258 110 290 112 318 L 90 324 C 88 298 86 264 85 232 C 83 200 80 164 76 132 C 74 118 72 106 74 98 Z';
+    B.fill(SLEEVE, '#2b2723', 0.3);
+    B.inside(SLEEVE, () => {
+      texture(g, 'wool', 0.5, 7);
+      B.dab(110, 300, 12, 40, 'rgba(196,128,74,0.55)');
+      B.dab(80, 180, 8, 60, 'rgba(6,5,4,0.55)');
+      B.dab(100, 110, 8, 10, 'rgba(120,104,86,0.25)');
+      for (const y of [218, 228, 238]) B.line(`M 88 ${y} C 94 ${y + 3} 100 ${y + 2} 107 ${y - 2}`, 'rgba(8,6,4,0.5)', 1.3, 1);
+      B.line('M 105 124 C 108 170 107 210 106 226', 'rgba(150,120,90,0.3)', 1.1, 1);
+    });
+    B.line('M 90 324 C 88 298 86 264 85 232 C 83 200 80 164 76 132', 'rgba(6,5,4,0.6)', 1.6, 1.4);
+  }
   if (fig) {
     // the sleeve's cuff and the hand on the counter: old skin, the lamp right on it
     B.fill(CUFF, '#211e1a', 0.4);
