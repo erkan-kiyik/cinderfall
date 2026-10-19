@@ -278,6 +278,22 @@ export function weatherOver(g, box, seed, o = {}) {
   g.restore();
 }
 
+// A painter whose result is defocused by `u` units afterwards: the background
+// layers, out of the focus the camera keeps on the street (docs §10.12). Capped
+// at 1.5 px so the overlapping margins of chunked layers hide every seam.
+export function defocus(paint, u) {
+  return (g) => {
+    paint(g);
+    const c = g.canvas, px = Math.min(1.5, u * ppu(g));
+    if (px < 0.3) return;
+    const tmp = canvas(c.width, c.height); tmp.getContext('2d').drawImage(c, 0, 0);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, c.width, c.height);
+    g.filter = `blur(${px.toFixed(2)}px)`; g.drawImage(tmp, 0, 0);
+    g.restore();
+  };
+}
+
 // A machined finish laid over a weapon already painted in box [x0, y0, x1, y1]
 // (source-atop: only on its own pixels): the light from above rolling off the
 // receiver toward the grip, a specular streak along the top flats, brushed

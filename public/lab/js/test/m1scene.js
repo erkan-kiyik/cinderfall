@@ -9,11 +9,11 @@ import { drawFigure, gunPoint } from '../art/figure.js';
 import { OPS } from '../art/ops/index.js';
 import { TETIKCI, KALKANLI } from '../art/enemies/syndicate.js';
 import { WEAPONS } from '../art/weapons/index.js';
-import { fill } from '../art/kit.js';
+import { fill, defocus } from '../art/kit.js';
 import { rgba } from '../gfx/batch.js';
 import { ParticleSystem, col } from '../gfx/particles.js';
 
-export const BAKE_VERSION = 'm1-24';
+export const BAKE_VERSION = 'm1-25';
 
 // Pixel density per quality: background layers, characters, effects.
 const DENS = { low: [3, 3.6, 24], med: [4.5, 5.2, 32], high: [6, 7, 48] };
@@ -68,8 +68,8 @@ export function bakeList(quality) {
   const E = [];
   const layer = (name, box, paint, scale, chunk = 300) => E.push({ name, box, scale, paint, chunk });
   layer('sky', [-10, -176, 610, -20], STREET.sky, Math.min(2, bg));
-  layer('far', [-10, -182, 610, -58], STREET.farCity, bg * 0.6);
-  layer('mid', [-10, -168, 610, -38], STREET.midIndustry, bg * 0.75);
+  layer('far', [-10, -182, 610, -58], defocus(STREET.farCity, 0.45), bg * 0.6);
+  layer('mid', [-10, -168, 610, -38], defocus(STREET.midIndustry, 0.22), bg * 0.75);
   layer('fac', [-10, -118, 610, 0.5], STREET.facades, bg);
   layer('ground', [-10, -0.5, 610, 42], STREET.ground, bg);
   const fg = (g) => {

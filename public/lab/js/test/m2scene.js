@@ -5,7 +5,7 @@
 // built from tiles, rendered with the runtime rig and live outline. Syndicate
 // troopers at the far end track the player with their aim.
 import { STREET } from '../art/env/street.js';
-import { weathered } from '../art/kit.js';
+import { weathered, defocus } from '../art/kit.js';
 import { BUILDINGS, buildingBakeList, facadeLayout } from '../art/env/city.js';
 import { buildCourse } from '../art/env/course.js';
 import { FX, DENS } from './m1scene.js';
@@ -18,7 +18,7 @@ import { ParticleSystem, col } from '../gfx/particles.js';
 import { rgba } from '../gfx/batch.js';
 import { StreetLife } from '../game/streetlife.js';
 
-export const BAKE_VERSION = 'm2-27';
+export const BAKE_VERSION = 'm2-28';
 export const OPERATORS = ['vex', 'hale', 'morrow', 'kite', 'brick'];
 export const COURSE = buildCourse();
 
@@ -27,8 +27,8 @@ export function bakeList(quality, course = COURSE) {
   const E = [];
   const layer = (name, box, paint, scale) => E.push({ name, box, scale, paint, chunk: 300 });
   layer('sky', [-10, -176, 610, -20], STREET.sky, Math.min(2, bg));
-  layer('far', [-10, -182, 610, -58], STREET.farCity, bg * 0.6);
-  layer('mid', [-10, -168, 610, -38], STREET.midIndustry, bg * 0.75);
+  layer('far', [-10, -182, 610, -58], defocus(STREET.farCity, 0.45), bg * 0.6);
+  layer('mid', [-10, -168, 610, -38], defocus(STREET.midIndustry, 0.22), bg * 0.75);
   E.push(...buildingBakeList(bg));
   layer('ground', [-10, -0.5, 610, 42], STREET.ground, bg);
   // props weathered the same way as the buildings (docs §11)
