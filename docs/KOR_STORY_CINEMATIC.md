@@ -821,3 +821,6 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
   telsiz ve kulaklık; askeri ranza ve battaniye. Duvardaki harita kurşun
   kalemle çizilmiş bir pafta gibi: soluk sokak blokları, kahve halkası,
   katlama izleri, nem.
+- **Sokak eşyaları:** her engel ve eşya da kişiler gibi yuvarlanır: kenarı
+  ışıktan uzakta gölgeye döner. Pazar tezgâhlarının brandaları kirişlerine
+  gerili: aralarında su toplayan çukurlar, ıslak etek ve damlalar.
