@@ -770,3 +770,29 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
   köşesinde.
 - Cephanelikte sahip olunmayan silahın fiyatı sınıf etiketinin yerini alır
   (üstüne binmez).
+
+**Telafi geçişi (ikinci bölüm)**
+- **HAWK tezgâhında:** kolları göğsünde kavuşturulmuş bekler (diz hizasındaki
+  tezgâha uzanan imkânsız kol kalktı); paltosu bir beden gibi döner: uzak yanı
+  karanlıkta, lamba yanı sıcak, omuzlarında tezgâh ampulü. Portrede ensesi
+  karanlığa döner, kısa saç enseye doğru seyrelir, atkı kıvrımlarla sarılı.
+- **Kişiler:** her parça bir biçim gibi yuvarlanır (kenarları ışıktan uzakta
+  gölgeye döner, ışık yanında biraz ışık tutar). FLINT'in teni daha az
+  turuncu, atkısı burnunun üstünde ve boynunda kıvrım kıvrım; SKYE'nin
+  rüzgârlığında naylon kırışıkları, bandanası düğüme doğru çekilmiş;
+  BULWARK'ın filtreleri gerçek filtrelerin mat macentası.
+- **Kumaş ve rüzgâr:** rüzgâr yerin özelliği: bodrum sığınakta atkının uçları
+  sarkar, yalnız bedenle sallanır.
+- **Islak sokak:** koşan her botun altında halka halka yayılan su ve
+  sıçrayan damlalar.
+- **Şehir:** pencereler duvarın içine gömülü (girinti gölgesi, camda gökyüzü,
+  denizlik altında gölge ve yağmurun aşağı taşıdığı kir); kemerli pencereler
+  de taşın içinde. Vanta karakolunun nöbet odası panjur ardında yanar;
+  gümrük binası arduvaz çatılı. Konteynerler limanda olduğu gibi yıpranmış:
+  oluk oluk gölge, raylardan ve köşe dökümlerinden pas akıntısı, ezikler,
+  tutmayan bir rötuş. Vanta bariyerlerinde mermi izleri, çizikler, dipte kir.
+  Vanta bayrakları ağır, ıslak kumaş gibi asılı; pazarın brandaları iki bağ
+  arasında sarkar, altından ampulle ısınır. Valilik meydanındaki çınarlar
+  gerçek ağaç: çatallanıp incelen dallar, alacalı kabuk, tohum topları.
+- **Hasar:** vurulunca görüşün kenarı koyu kan kırmızısına kararır; atışın
+  geldiği yan yumuşakça parlar.
