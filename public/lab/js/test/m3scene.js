@@ -15,6 +15,7 @@ import { WEAPONS } from '../art/weapons/index.js';
 import { Effects } from '../game/fx.js';
 import { rayTiles, rayCapsule, rayBox, falloff } from '../game/ballistics.js';
 import { rgba } from '../gfx/batch.js';
+import { col } from '../gfx/particles.js';
 import { Sfx } from '../audio/sfx.js';
 import { CombatHud } from '../ui/combathud.js';
 import { haptic } from '../ui/kit.js';
@@ -362,6 +363,11 @@ export class M3Scene extends M2.M2Scene {
     this.booms.push({ x, y, t: 0.45 });
     for (let k = 0; k < 7; k++) this.fx.impact(x, y, (Math.random() - 0.5) * 2, -1, (Math.random() - 0.5) * 2, -1, 1);
     this.puff(x, y + 4, 14, 1.2);
+    // the blast as it looks: a ball of burning gas that rolls up and goes out, then a
+    // column of dark smoke that climbs, spreads and hangs over the street
+    const F = this.fx, rr = (a, b) => a + Math.random() * (b - a);
+    for (let k = 0; k < 7; k++) F.smoke.emit(F.t, x + rr(-5, 5), y - rr(0, 6), rr(-24, 24), -rr(10, 40), rr(0.35, 0.6), 5, rr(12, 18), col('#ffb066', 0.7), col('#7a3a1e', 0), -20, 2, rr(0, 6), rr(-1, 1));
+    for (let k = 0; k < 12; k++) F.smoke.emit(F.t, x + rr(-8, 8), y - rr(2, 12), rr(-12, 12), -rr(18, 46), rr(1.8, 3.2), 7, rr(20, 34), col('#2b2724', 0.6), col('#45403b', 0), -4, 0.9, rr(0, 6), rr(-0.5, 0.5));
     this.sfx.play('boom', x, y, { vol: 1 }); this.e.camera.addShake(0.35);
   }
 
