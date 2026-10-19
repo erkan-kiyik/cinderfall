@@ -79,6 +79,8 @@ function torso(g) {
   cel(g, PELVIS, PAL.pants, { sh: 1.1, hl: 0.4 });
   cel(g, TORSO, PAL.shirt, { sh: 1.0, hl: 0.3, line: false });
   cel(g, JACKET, PAL.jacket, { sh: 2.2, hl: 0.6 });
+  // old leather: creased across the waist and under the arm, the creases worn pale on their ridges
+  clothFolds(g, JACKET, [[[-7.4, -17.0], [-5.8, -14.4], [-4.4, -11.4]], [[-6.8, -8.0], [-4.2, -7.2], [-1.4, -7.6]], [[-6.4, -4.6], [-3.6, -4.0], [-0.6, -4.4]]], PAL.jacket);
   clip(g, JACKET, () => {
     // the shoulder yoke: a second layer of leather, stitched twice
     const YOKE = 'M -10 -18.2 C -6 -19.4 -2 -20.0 1.4 -20.0 C 3.6 -20.0 5.4 -19.6 8 -18.8 L 8 -26 L -10 -26 Z';
@@ -178,6 +180,7 @@ function chest(g) {
 function upper(g, ctx) {
   const t = ctx.t;
   g.save(); g.scale(1.1, 1); cel(g, UPPER, t(PAL.jacket), { sh: 1.6, hl: 0.5 }); g.restore();
+  clothFolds(g, UPPER, [[[-2.0, 6.2], [-0.4, 7.0], [1.8, 6.6]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.jacket));
   clip(g, UPPER, () => {
     cel(g, 'M -4 -4 L 4 -4 L 4 2.4 C 1.5 3.2 -1.5 3.2 -4 2.2 Z', t(PAL.patch), { sh: 0.4, hl: 0.25, ao: 0.2, line: false });
     stitch(g, 'M -4 1.8 C -1.5 2.8 1.5 2.8 4 2.0', t(PAL.patch).l, 0.1, 0.7);
