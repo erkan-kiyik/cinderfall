@@ -1,7 +1,7 @@
 // KOR LAB — small painted pictures for the menus: operator avatars
 // (head and shoulders, lit like the opening) and weapon side views, painted
 // once and cached.
-import { outlined, setRoot, canvas, rng, cel, fill, stroke, clip } from '../art/kit.js';
+import { outlined, setRoot, canvas, rng, cel, fill, stroke, clip, metalOver } from '../art/kit.js';
 import { tone, mat } from '../art/style.js';
 import { drawFigure } from '../art/figure.js';
 import { OPS, visorLight } from '../art/ops/index.js';
@@ -124,7 +124,7 @@ export function weaponPic(id, w = 120, h = 40, tint = null) {
   const s = Math.min(w / (x1 - x0 + 3), h / (y1 - y0 + 3)) * dpr();
   if (!cache.has(key)) {
     const cw = Math.round((x1 - x0 + 3) * s), ch = Math.round((y1 - y0 + 3) * s);
-    let src = outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g); }, 0.55);
+    let src = outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g); metalOver(g, W0.box, id.length * 7 + id.charCodeAt(0)); }, 0.55);
     if (tint && tint !== '#ffffff') {
       const c = canvas(src.width, src.height), g = c.getContext('2d');
       g.drawImage(src, 0, 0);

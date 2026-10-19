@@ -1,5 +1,5 @@
 // Dev render helpers shared by the review sheets and the UI mocks.
-import { outlined, setRoot } from '../js/art/kit.js';
+import { outlined, setRoot, metalOver } from '../js/art/kit.js';
 import { drawFigure, gunPoint } from '../js/art/figure.js';
 import { OPS as OPS0 } from '../js/art/ops/index.js';
 import { TETIKCI, KALKANLI, HUCUMCU, GALL } from '../js/art/enemies/syndicate.js';
@@ -17,7 +17,7 @@ export function figureCanvas(op, s, pose) {
 export function weaponCanvas(w, s, r = 0.55) {
   const [x0, y0, x1, y1] = w.box;
   const W = Math.round((x1 - x0 + 3) * s), H = Math.round((y1 - y0 + 3) * s);
-  return outlined(W, H, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); w.paint(g); }, r);
+  return outlined(W, H, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); w.paint(g); metalOver(g, w.box, (w.id || 'w').length * 7 + (w.id || 'w').charCodeAt(0)); }, r);
 }
 
 export function streetScene(s = 4) {

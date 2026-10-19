@@ -278,6 +278,38 @@ export function weatherOver(g, box, seed, o = {}) {
   g.restore();
 }
 
+// A machined finish laid over a weapon already painted in box [x0, y0, x1, y1]
+// (source-atop: only on its own pixels): the light from above rolling off the
+// receiver toward the grip, a specular streak along the top flats, brushed
+// grain along the length, the edges and controls worn bright by hands, dust.
+// Only for a weapon on a canvas of its own.
+export function metalOver(g, [x0, y0, x1, y1], seed = 3) {
+  const W = x1 - x0, H = y1 - y0, r = rng(seed);
+  g.save();
+  g.globalCompositeOperation = 'source-atop';
+  const gr = g.createLinearGradient(0, y0, 0, y1);
+  gr.addColorStop(0, 'rgba(236,242,250,0.16)'); gr.addColorStop(0.3, 'rgba(236,242,250,0.04)');
+  gr.addColorStop(0.55, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(4,6,10,0.3)');
+  g.fillStyle = gr; g.fillRect(x0, y0, W, H);
+  // the streak: a narrow band of the lamp along the upper flats
+  const ys = y0 + H * 0.34, sb = g.createLinearGradient(0, ys - H * 0.05, 0, ys + H * 0.05);
+  sb.addColorStop(0, 'rgba(255,250,240,0)'); sb.addColorStop(0.5, 'rgba(255,250,240,0.14)'); sb.addColorStop(1, 'rgba(255,250,240,0)');
+  g.fillStyle = sb; g.fillRect(x0, ys - H * 0.05, W, H * 0.1);
+  // brushed grain along the length
+  for (let i = 0; i < W * 1.6; i++) {
+    const y = y0 + r() * H, xa = x0 + r() * W, L = 1 + r() * W * 0.25;
+    g.fillStyle = r() < 0.5 ? `rgba(255,255,255,${0.025 + r() * 0.04})` : `rgba(0,0,0,${0.03 + r() * 0.05})`;
+    g.fillRect(xa, y, L, 0.06);
+  }
+  // wear and dust
+  for (let i = 0; i < W * H * 0.05; i++) {
+    const x = x0 + r() * W, y = y0 + r() * H;
+    g.fillStyle = r() < 0.4 ? `rgba(220,228,236,${0.12 + r() * 0.18})` : `rgba(150,138,118,${0.08 + r() * 0.1})`;
+    g.fillRect(x, y, 0.12 + r() * 0.25, 0.08 + r() * 0.15);
+  }
+  g.restore();
+}
+
 // A prop's painter with the weather laid over it: a little night sky on its
 // top, the contact dark at its foot, stains, a few runs, grain.
 export function weathered(p) {
