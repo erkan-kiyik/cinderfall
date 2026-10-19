@@ -187,10 +187,11 @@ export function buckle(g, x, y, w, h, t) {
   stroke(g, d, t.k, 0.5); stroke(g, d, t.m, 0.3); stroke(g, `M ${x + 0.12} ${y + 0.1} L ${x + w - 0.12} ${y + 0.1}`, t.l, 0.12, 0.9);
   stroke(g, `M ${x + w * 0.5} ${y} L ${x + w * 0.5} ${y + h}`, t.d, 0.18);
 }
-// Grime toward the bottom of what is clipped: a multiply gradient from y0 (clean) to y1 (dirty).
+// Grime toward the bottom of what is clipped: a dark glaze from y0 (clean) to y1 (dirty).
 export function grime(g, y0, y1, c = 'rgba(40,30,20,0.55)') {
   const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, c);
-  g.save(); g.globalCompositeOperation = 'multiply'; g.fillStyle = gr; g.fillRect(-60, y0, 120, y1 - y0 + 40); g.restore();
+  // only over what is already painted: on bare canvas a multiply would print the rectangle itself
+  g.save(); g.globalCompositeOperation = 'source-atop'; g.fillStyle = gr; g.fillRect(-60, y0, 120, y1 - y0 + 40); g.restore();
 }
 // Scuffs: small pale worn marks at the given points.
 export function scuffs(g, pts, c, a = 0.5) {
