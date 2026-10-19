@@ -218,9 +218,10 @@ export class Animator {
       let aimDown = lerp(aim, 0.62, sp); // sprint carry: muzzle down-forward
       aimDown = lerp(aimDown, H.style === 'rifle' ? -0.2 : -0.32, tilt);
       aimDown = lerp(aimDown, 1.3, low);
-      // aim leans the torso and lifts the chin a little
+      // aim leans the torso and turns the head with the gun: on a rifle the cheek stays
+      // on the stock so the eye stays behind the sight, a pistol is looked along less
       P.lean += -aimDown * 0.12 * (1 - sl * 0.5);
-      P.head += -aimDown * 0.45 * (1 - low);
+      P.head += -aimDown * (H.style === 'rifle' ? 0.62 : 0.48) * (1 - low);
       const c = Math.cos(-P.lean), s = Math.sin(-P.lean);
       const bob = (moving ? Math.sin(2 * TAU * ph) * lerp(0.35, 0.9, r) : Math.sin(t * 2.1) * 0.25);
       P.ga = aimDown + Math.sin(t * 1.3) * 0.008 * (1 - mv) - this.kr;
