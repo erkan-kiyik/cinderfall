@@ -142,7 +142,7 @@ export class Renderer {
     this.gl = gl; this.canvas = canvas;
     this.q = QUALITY.med; this.dyn = 1; // dynamic resolution multiplier
     // night: a low cool ambient so the lamps make the pools of light (docs §11)
-    this.ambient = [0.5, 0.53, 0.64];
+    this.ambient = [0.55, 0.58, 0.69];
     this.grade = { sat: 0.84, con: 1.1, vig: 0.52, grain: 0.032, tint: [0.0, 0.008, 0.024], lift: [0.03, 0.038, 0.048], warm: 0.55 };
     this.bloomOn = true; this.lightsOn = true;
     this.scene = new Target(gl, 2, 2); this.light = new Target(gl, 2, 2); this.lit = new Target(gl, 2, 2);
