@@ -26,8 +26,10 @@ const PAL = {
 };
 const DUST = 'rgba(40,46,56,0.3)';
 
-// The Vanta rifles: same frame, cold finish, red accent.
-export const SYN_MAT = { ...MAT, poly: tone('#4a5566', '#323b48', '#222831', '#0e1116'), accent: M.visor };
+// Vanta's guns: new from the depot, blue-black polymer furniture (the pump gun
+// too, no walnut), clean steel, no crew tape, a white stencilled number.
+const SYN_POLY = mat(tone('#4a525e', '#2c323b', '#1d2128', '#0a0c0f'), 'rubber', 0.25);
+export const SYN_MAT = { ...MAT, poly: SYN_POLY, wood: SYN_POLY, tan: SYN_POLY, olive: SYN_POLY, tape: null, serial: '#dfe3e6', accent: M.visor };
 
 // Vanta's mark: a ring crossed by a bar that runs past it.
 export function emblem(g, x, y, r, c) {

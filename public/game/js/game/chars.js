@@ -4,6 +4,7 @@ import { OPS } from '../art/ops/index.js';
 import { TETIKCI, KALKANLI, HUCUMCU, GALL, SYN_MAT, shield } from '../art/enemies/syndicate.js';
 import { drone } from '../art/ops/kite.js';
 import { scarfSeg, SCARF } from '../art/ops/vex.js';
+import { PRIMER } from '../art/weapons/index.js';
 
 export const CHARS = {
   vex: { op: OPS.vex, weapon: 'kestrel', sidearm: 'wren9', skip: ['backFar'], cloth: SCARF, extras: { scarf: { paint: scarfSeg, box: [-1, -1, 5, 1] } } },
@@ -19,4 +20,5 @@ export const CHARS = {
   kal: { op: KALKANLI, weapon: null, skip: ['front'], extras: { shield }, enemy: true, hp: 150, freeArms: KALKANLI.pose,
     shield: { x0: 6.4, x1: 15.6, y0: -58.4, y1: -13.6 } },
 };
-export const WEAPON_MATS = { syn: SYN_MAT };
+// syn: Vanta's issue; p: the primer the player's finishes are laid over
+export const WEAPON_MATS = { syn: SYN_MAT, p: PRIMER };

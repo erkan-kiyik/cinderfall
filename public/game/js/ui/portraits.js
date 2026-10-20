@@ -5,7 +5,7 @@ import { outlined, setRoot, canvas, rng, cel, fill, stroke, clip, metalOver } fr
 import { tone, mat } from '../art/style.js';
 import { drawFigure } from '../art/figure.js';
 import { OPS } from '../art/ops/index.js';
-import { WEAPONS } from '../art/weapons/index.js';
+import { WEAPONS, PRIMER } from '../art/weapons/index.js';
 import { paintHawk } from '../art/hawk.js';
 import { paintCrate } from '../art/crate.js';
 
@@ -113,7 +113,7 @@ export function hawkPic(px = 64) {
 }
 
 // a weapon in profile, scaled to `h` CSS pixels tall at most (and `w` wide)
-// tint: a finish's colour multiplied over the paint (as the game draws it)
+// tint: a finish, its colour multiplied over the primer (as the game draws it)
 export function weaponPic(id, w = 120, h = 40, tint = null) {
   const W0 = WEAPONS[id];
   if (!W0) return null;
@@ -122,8 +122,9 @@ export function weaponPic(id, w = 120, h = 40, tint = null) {
   const s = Math.min(w / (x1 - x0 + 3), h / (y1 - y0 + 3)) * dpr();
   if (!cache.has(key)) {
     const cw = Math.round((x1 - x0 + 3) * s), ch = Math.round((y1 - y0 + 3) * s);
-    let src = outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g); metalOver(g, W0.box, id.length * 7 + id.charCodeAt(0)); }, 0.55);
-    if (tint && tint !== '#ffffff') {
+    const fin = tint && tint !== '#ffffff';
+    let src = outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g, fin ? PRIMER : undefined); metalOver(g, W0.box, id.length * 7 + id.charCodeAt(0)); }, 0.55);
+    if (fin) {
       const c = canvas(src.width, src.height), g = c.getContext('2d');
       g.drawImage(src, 0, 0);
       g.globalCompositeOperation = 'multiply'; g.fillStyle = tint; g.fillRect(0, 0, c.width, c.height);

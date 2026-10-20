@@ -219,6 +219,18 @@ if (what === 'weapons') {
     const sil = toCanvasEl(silhouette(c), '#d9dee5'); sil.style.width = (c.width / 2) + 'px'; r.appendChild(sil);
   }
 }
+if (what === 'skins') {
+  // every finish on the starter guns, as the arsenal shows them
+  const { weaponPic } = await import('../js/ui/portraits.js');
+  const { SKINS } = await import('../js/core/economy.js');
+  for (const id of (q.get('ids') || 'wren9,kestrel,ramrod,marksman').split(',')) {
+    const r = row(); r.style.background = '#1a1513';
+    for (const sk of SKINS) {
+      const w = document.createElement('div'); w.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 13px sans-serif;align-items:center';
+      w.append(weaponPic(id, 220, 60, sk.tint), sk.id); r.appendChild(w);
+    }
+  }
+}
 // --- delivery boards ---------------------------------------------------------
 function board(W, H, title, sub) {
   const c = document.createElement('canvas'); c.width = W; c.height = H;

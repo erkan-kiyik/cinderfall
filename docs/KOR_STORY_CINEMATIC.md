@@ -827,3 +827,63 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 - **Sokak eşyaları:** her engel ve eşya da kişiler gibi yuvarlanır: kenarı
   ışıktan uzakta gölgeye döner. Pazar tezgâhlarının brandaları kirişlerine
   gerili: aralarında su toplayan çukurlar, ıslak etek ve damlalar.
+
+### 10.13 Silahlar: gözden geçirme ve yeni standart
+Karakterler, şehir ve sokaklar boyanmış gerçekçiliğe geçti; silahlar ilk
+günkü "fabrika" çiziminde kaldı. Elde en parlak, en oyuncak görünen şey
+silahtı.
+
+**Bulgular (12 silahın hepsi)**
+- **Renk:** metal açık mavi-gri; gece sokağında her şeyden açık. Gerçek
+  silah koyudur: fosfatlı çelik, eloksallı alüminyum, kara polimer, ceviz.
+- **Turuncu:** her silahta parlak turuncu bant, turuncu tetik, turuncu
+  arpacık noktası. Neon kalktıktan sonra parlayan son şey; Nerf görüntüsü.
+- **Biçim:** düz kutular. Pim, vida, emniyet mandalı, şarjör yuvası, kayış
+  halkası, nişangâh yok; namlu ağızlıkları düz silindir.
+- **Yapı hataları:** KERKENEZ ve ATMACA'da şarjör tetik korkuluğunun içine
+  giriyor (gerçekte korkuluğun önünde, şarjör yuvasında). ARI'nın tel
+  dipçiği menteşesiz havada duruyor. KARTAL'ın şarjörü dipçiğin altında
+  yüzüyor, sürgü kolu bir çubukla bir top. TOKMAK'ın tamburu üç siyah
+  çizgili bir kutu, namlunun altında anlamsız bir kutu var. ÖRS'ün fişek
+  şeridi dört pirinç kutucuk.
+- **Kimlik:** on iki silah aynı renk, aynı yapı. KERKENEZ, BURÇ ve ATMACA
+  uzaktan birbirinin büyütülmüşü.
+- **Vanta ile Kor Hattı aynı:** Vanta'nın depodan yeni çıkmış silahı ile
+  ekibin eski, onarılmış silahı ayrışmıyor.
+
+**Standart**
+- **Malzeme:** çelik (fosfat, koyu gri; el değen kenarda açık aşınma),
+  alüminyum gövde (eloksal, biraz daha ılık), kara polimer, ceviz (eski av
+  silahları), ganimet silahlarda kum ve zeytin rengi polimer. Işık §10.12
+  gibi: üstten yuvarlanır, üst yüzeyde lamba çizgisi, boyuna fırça izi.
+- **Turuncu yok.** Ekibin işareti sargı: solmuş pas rengi bez bant ve
+  paraşüt ipi, mat; her silahta değil.
+- **Vanta'nın silahları:** yeni, temiz, mavimsi kara polimer; dipçikte beyaz
+  şablon seri numarası. Vanta'nın pompalısı sentetik dipçikli.
+- **Parçalar:** pim, vida, emniyet ve şarjör bırakma mandalı, kayış halkası,
+  gez ve arpacık; şarjör yuvası korkuluğun önünde; namlu ağızlığı gerçek
+  biçiminde (kafes, fren, susturucu).
+- **Oran:** gerçek silahın profili; el (kabza), dipçik ucu ve destek eli
+  noktaları yerinde kalır, animasyonlar bozulmaz.
+- **Görünümler:** bir görünüm boyanın üstüne çarpılan bir renk değil,
+  kaplamadır. Ekibin her silahı bir kez de açık gri astarla pişirilir:
+  gövde, sürgü, kundak, dipçik astarda; namlu, sürgü kolu, pim, nişangâh ve
+  cam kendi çeliğinde. Görünümün rengi astarla çarpılır: Kum, Zeytin, Kutup
+  birer Cerakote, Kobalt, Kızıl, Menekşe eloksal, Altın kaplama, Kor bakır,
+  Su Verme tavlanmış çeliğin saman rengi. Ahşap dipçik de boyanır, damarı
+  görünür kalır. Görünümlü silahta bez bant olmaz.
+
+| Silah | Benzediği | Malzeme | Kimliği |
+|---|---|---|---|
+| SERÇE-9 | çizgili sürgülü 9 mm | kara polimer gövde, fosfat sürgü | kare korkuluk, kabza dokusu |
+| KATIR .50 | ağır tabanca | paslanmaz sürgü, kara kabza | üçgen namlu, uzun sürgü |
+| ARI | sac gövdeli makineli | sac çelik, kara polimer | şarjör kabzadan girer, katlanır dipçik |
+| VAŞAK | susturuculu makineli | kara | kalın susturucu, eğri şarjör, tambur gez |
+| KERKENEZ AR | karabina | eloksal gövde, kara polimer | el kundağında bez sargı, kırmızı nokta |
+| BURÇ BR | savaş tüfeği | sac gövde, zeytin el kundağı | düz şarjör, tambur gez, uzun namlu |
+| HARBİ-12 | eski pompalı | ceviz dipçik ve pompa, mavi çelik | yan fişeklikte kırmızı fişekler |
+| TESTERE-20 | şarjörlü otomatik pompalı | perçinli sac gövde | davul şarjör, toz kapağı |
+| ATMACA DMR | nişancı tüfeği | kum rengi polimer | dürbün, susturucu, katlı çatal ayak |
+| KARTAL | sürgülü av tüfeği | ceviz | yanak desteği, topuzlu sürgü kolu, uzun dürbün |
+| ÖRS LMG | hafif makineli | kara, zeytin kutu | taşıma kolu, fişek kutusu ve şerit |
+| TOKMAK GL | toplu bombaatar | kara, zeytin | oluklu tambur, kalın namlu, ön kabza |

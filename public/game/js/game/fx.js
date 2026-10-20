@@ -88,10 +88,10 @@ export class Effects {
 
   // loose objects: region (outlined sprite), centre position, velocity, spin;
   // flip −1 mirrors; c: the object's centre relative to the sprite anchor
-  drop(r, x, y, vx, vy, a, va, { scale = 1, flip = 1, sound = null, rest = 9, bounce = 0.35, size = 2, c = null } = {}) {
+  drop(r, x, y, vx, vy, a, va, { scale = 1, flip = 1, sound = null, rest = 9, bounce = 0.35, size = 2, c = null, tint = 0xffffffff } = {}) {
     if (!r) return;
     if (this.debris.length >= MAX_DEBRIS) this.debris.shift();
-    this.debris.push({ r, x, y, vx, vy, a, va, s: scale, f: flip, sound, life: rest, t: 0, bounce, size, hits: 0, still: false, cx: c ? c[0] : 0, cy: c ? c[1] : 0 });
+    this.debris.push({ r, x, y, vx, vy, a, va, s: scale, f: flip, sound, life: rest, t: 0, bounce, size, hits: 0, still: false, cx: c ? c[0] : 0, cy: c ? c[1] : 0, tint });
   }
 
   addLights(R) {
@@ -147,7 +147,7 @@ export class Effects {
         if (d.x < x0 || d.x > x1) continue;
         const fade = Math.min(1, (d.life - d.t) / 0.6);
         const c = Math.cos(d.a), s = Math.sin(d.a), ox = d.cx * d.s * d.f, oy = d.cy * d.s;
-        B.draw(d.r, d.x - (ox * c - oy * s), d.y - (ox * s + oy * c), d.s * d.f, d.s, d.a, 0xffffffff, fade);
+        B.draw(d.r, d.x - (ox * c - oy * s), d.y - (ox * s + oy * c), d.s * d.f, d.s, d.a, d.tint, fade);
       }
       B.end();
     }

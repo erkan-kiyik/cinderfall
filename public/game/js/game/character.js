@@ -40,10 +40,12 @@ export class Character {
     this.loadout = [prim, side !== prim ? side : null].filter(Boolean);
     if (prim !== this.spec.weapon) this.anim.setWeapon(prim);
     this.guns = this.loadout.map((w) => new Gun(w, { infinite: !!this.spec.enemy || !!opts.infinite }));
-    this.WR = {};
+    // sprites per gun; the crew's also in primer, which a finish tints
+    const regions = (k) => ({ body: atlas.get(k), bodyO: atlas.get(k + '.o'), mag: atlas.get(k + '/mag') || null, magO: atlas.get(k + '/mag.o') || null, slide: atlas.get(k + '/slide') || null, pump: atlas.get(k + '/pump') || null });
+    this.WR = {}; this.WRp = {};
     for (const w of this.loadout) {
-      const k = `w.${w}${mat}`;
-      this.WR[w] = { body: atlas.get(k), bodyO: atlas.get(k + '.o'), mag: atlas.get(k + '/mag') || null, magO: atlas.get(k + '/mag.o') || null, slide: atlas.get(k + '/slide') || null, pump: atlas.get(k + '/pump') || null };
+      this.WR[w] = regions(`w.${w}${mat}`);
+      if (!mat) { const p = regions(`w.${w}.p`); if (p.body) this.WRp[w] = p; }
     }
     this.slot = 0; this.gun = this.guns[0] || null; this.anim.gun = this.gun;
     this.swapT = -1; this.swapTo = 0;
@@ -262,12 +264,17 @@ export class Character {
     return a;
   }
 
+  // the sprites a gun is drawn with and their tint: the player's guns wear
+  // their finish, the finish's colour over the primer
+  gunSet(id) {
+    const sk = this.team === 0 ? TINTS[id] : null, p = sk && this.WRp[id];
+    return p ? { WR: p, tint: sk.rgba ??= rgba(sk.tint) } : { WR: this.WR[id], tint: 0xffffffff };
+  }
+
   // draw a gun (body + moving parts) at weapon transform (x, y, k, a)
   drawGun(B, id, x, y, k, a, parts = true) {
-    const WR = this.WR[id], W = WEAPONS[id], V = this.anim.vis, live = parts && id === this.weaponId;
+    const { WR, tint } = this.gunSet(id), W = WEAPONS[id], V = this.anim.vis, live = parts && id === this.weaponId;
     const c = Math.cos(a), s = Math.sin(a);
-    // the player's guns wear their finish (a tint over the factory paint)
-    const sk = this.team === 0 ? TINTS[id] : null, tint = sk ? (sk.rgba ??= rgba(sk.tint)) : 0xffffffff;
     const at = (r, ox, oy) => { if (r) B.draw(r, x + (ox * c - oy * s) * k, y + (ox * s + oy * c) * k, k, k, a, tint); };
     if (WR.mag && (!live || V.mag === 'in')) { const d = live ? V.magOff : 0; at(WR.mag, W.magAxis[0] * d, W.magAxis[1] * d); }
     at(WR.body, 0, 0);
@@ -307,9 +314,9 @@ export class Character {
       const pal = this._w, ha = this.farPalm(pal);
       if (V.knife && R.knife) B.draw(R.knife, pal[0], pal[1], 1, 1, ha + Math.PI / 2 - 0.25);
       if (V.mag === 'hand' && P.gun) {
-        const W = this.W, WR = this.WR[this.weaponId], k = P.gk, a = P.ga + 0.25, c = Math.cos(a), s = Math.sin(a);
+        const W = this.W, { WR, tint } = this.gunSet(this.weaponId), k = P.gk, a = P.ga + 0.25, c = Math.cos(a), s = Math.sin(a);
         const gx = W.magGrab[0], gy = W.magGrab[1];
-        if (WR.mag) B.draw(WR.mag, pal[0] - (gx * c - gy * s) * k, pal[1] - (gx * s + gy * c) * k, k, k, a);
+        if (WR.mag) B.draw(WR.mag, pal[0] - (gx * c - gy * s) * k, pal[1] - (gx * s + gy * c) * k, k, k, a, tint);
       }
       if (V.shell && R.shell) B.draw(R.shell, pal[0], pal[1], 0.75, 0.75, ha + Math.PI / 2);
     }

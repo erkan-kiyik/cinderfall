@@ -33,6 +33,8 @@ export function charBakeList(ids, scale, extra = []) {
     E.push(...charEntries(id, s, scale));
     for (const w of [s.weapon, s.sidearm]) if (w) weapons.add(s.mat ? `${w}.${s.mat}` : w);
   }
+  // the crew's guns once more in primer, for the finishes (docs §10.13)
+  for (const key of [...weapons]) if (!key.includes('.')) weapons.add(`${key}.p`);
   for (const key of weapons) E.push(...weaponEntries(key, scale));
   return E;
 }

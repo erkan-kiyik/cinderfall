@@ -1,4 +1,4 @@
-// Dev-only: runtime rig review. ?mode=lineup | strip&id=vex&state=run
+// Dev-only: runtime rig review. ?mode=lineup | states&id= | guns&id=&t= | strip&id=vex&state=run
 import { createGL } from '../js/gfx/gl.js';
 import { Atlas } from '../js/gfx/atlas.js';
 import { SpriteBatch } from '../js/gfx/batch.js';
@@ -6,6 +6,7 @@ import { CharRenderer } from '../js/gfx/charrender.js';
 import { bakeAll } from '../js/gfx/baker.js';
 import { charBakeList } from '../js/game/bakechars.js';
 import { Character } from '../js/game/character.js';
+import { WEAPONS } from '../js/art/weapons/index.js';
 
 const q = new URLSearchParams(location.search);
 const mode = q.get('mode') || 'lineup';
@@ -15,7 +16,7 @@ const gl = createGL(cv);
 const atlas = new Atlas(gl);
 const ids = ['vex', 'hale', 'morrow', 'kite', 'brick', 'tet', 'huc', 'kal'];
 const ppu = +(q.get('ppu') || 6);
-await bakeAll(atlas, charBakeList(ids, ppu));
+await bakeAll(atlas, charBakeList(ids, ppu, mode === 'guns' ? Object.keys(WEAPONS) : []));
 const B = new SpriteBatch(gl, atlas);
 const CR = new CharRenderer(gl, B);
 CR.configure(ppu);
@@ -31,9 +32,9 @@ const STATES = {
   mantle: { state: 'mantle', grounded: false, mantle: { t: 0.15, dur: 0.3 } },
 };
 // simulate `sec` seconds of a state so blends and the gait settle
-function makeChar(id, st, sec, aim = 0, facing = 1, phase = null) {
+function makeChar(id, st, sec, aim = 0, facing = 1, phase = null, opts = {}) {
   const m = fakeMover({ ...STATES[st], facing });
-  const c = new Character(id, atlas, m);
+  const c = new Character(id, atlas, m, opts);
   c.setAim(m.x + facing * 200, m.y - 50 + Math.tan(aim) * 200);
   const n = Math.round(sec * 120);
   for (let i = 0; i < n; i++) {
@@ -69,6 +70,21 @@ if (mode === 'lineup') {
   const sts = ['idle', 'crouch', 'crouchwalk', 'jump', 'fall', 'slide', 'ladder', 'mantle', 'back'];
   sts.forEach((st, i) => { const c = makeChar(id, st, 0.6, st === 'back' ? -0.3 : 0, 1, 0.3); c.rx = i * 62; c.ry = 0; list.push(c); });
   setView(((sts.length - 1) * 62) / 2, -40, 175);
+} else if (mode === 'guns') {
+  // one operator with every weapon, aiming; t > 0: that far into a reload (0..1)
+  const id = q.get('id') || 'vex', t = +(q.get('t') || 0), only = q.get('only');
+  const guns = only ? only.split(',') : Object.keys(WEAPONS);
+  guns.forEach((w, i) => {
+    const c = makeChar(id, 'idle', 1.0, +(q.get('aim') || 0), 1, null, { weapon: w, sidearm: null, infinite: true });
+    if (t > 0 && c.gun) {
+      c.gun.ammo = 0; c.gun.startReload();
+      const n = Math.round(t * c.gun.dur * 120);
+      for (let k = 0; k < n; k++) { c.preStep(); c.stepWeapons(1 / 120); c.postStep(1 / 120); }
+      c.prepare(1, null);
+    }
+    c.rx = (i % 6) * 70; c.ry = Math.floor(i / 6) * 84; list.push(c);
+  });
+  setView(5 * 70 / 2 + 6, 2, 200);
 } else {
   const id = q.get('id') || 'vex', st = q.get('state') || 'run', n = +(q.get('n') || 8);
   const aim = +(q.get('aim') || 0);

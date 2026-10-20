@@ -21,7 +21,7 @@ import { CombatHud } from '../ui/combathud.js';
 import { haptic } from '../ui/kit.js';
 import { TINTS } from '../core/economy.js';
 
-export const BAKE_VERSION = 'm3-54';
+export const BAKE_VERSION = 'm3-55';
 export const OPERATORS = M2.OPERATORS;
 
 // the M2 course with troopers along the way
@@ -289,12 +289,12 @@ export class M3Scene extends M2.M2Scene {
   onDeath(c, dx, dy) {
     // the gun leaves the hands and clatters down
     if (c.gun && c.P.gun) {
-      const W = c.W, WR = c.WR[c.gun.id], P = c.P;
+      const W = c.W, { WR, tint } = c.gunSet(c.gun.id), P = c.P;
       const cx = (W.box[0] + W.box[2]) / 2, cy = (W.box[1] + W.box[3]) / 2;
       const p = c.gunPoint(cx, cy, this._b);
       // mirrored characters: mirror the sprite and negate its angle
       const a = c.facing > 0 ? P.ga : -P.ga;
-      this.fx.drop(WR.bodyO, p[0], p[1], dx * 80 + rand(-30, 30), -120 + dy * 40, a, rand(-8, 8), { scale: P.gk, flip: c.facing, sound: 'gunDrop', rest: 14, size: 3, c: [cx, cy] });
+      this.fx.drop(WR.bodyO, p[0], p[1], dx * 80 + rand(-30, 30), -120 + dy * 40, a, rand(-8, 8), { scale: P.gk, flip: c.facing, sound: 'gunDrop', rest: 14, size: 3, c: [cx, cy], tint });
     }
     if (c === this.player) { this.deadT = 0; this.sfx.play('hurt', null, null, { vol: 1 }); }
   }
@@ -311,13 +311,13 @@ export class M3Scene extends M2.M2Scene {
   }
 
   dropMag(ch) {
-    const W = ch.W, WR = ch.WR[ch.gun.id], P = ch.P, V = ch.anim.vis;
+    const W = ch.W, { WR, tint } = ch.gunSet(ch.gun.id), P = ch.P, V = ch.anim.vis;
     if (!WR.magO) return;
     const d = V.magOff || W.magPull * 0.5;
     const cx = W.magGrab[0], cy = W.magGrab[1] - 2;
     const p = ch.gunPoint(cx + W.magAxis[0] * d, cy + W.magAxis[1] * d, this._b);
     const a = ch.facing > 0 ? P.ga : -P.ga;
-    this.fx.drop(WR.magO, p[0], p[1], ch.m.vx * 0.6 + rand(-10, 10) * ch.facing, 30, a, rand(-3, 3) * ch.facing, { scale: P.gk, flip: ch.facing, sound: 'magDrop', rest: 10, size: 3, c: [cx, cy] });
+    this.fx.drop(WR.magO, p[0], p[1], ch.m.vx * 0.6 + rand(-10, 10) * ch.facing, 30, a, rand(-3, 3) * ch.facing, { scale: P.gk, flip: ch.facing, sound: 'magDrop', rest: 10, size: 3, c: [cx, cy], tint });
   }
 
   // launcher rounds: fly, bounce once off what they hit, go off after a moment

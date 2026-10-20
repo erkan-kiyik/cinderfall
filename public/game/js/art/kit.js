@@ -324,7 +324,7 @@ export function metalOver(g, [x0, y0, x1, y1], seed = 3) {
   g.save();
   g.globalCompositeOperation = 'source-atop';
   const gr = g.createLinearGradient(0, y0, 0, y1);
-  gr.addColorStop(0, 'rgba(236,242,250,0.16)'); gr.addColorStop(0.3, 'rgba(236,242,250,0.04)');
+  gr.addColorStop(0, 'rgba(246,240,230,0.13)'); gr.addColorStop(0.3, 'rgba(246,240,230,0.03)');
   gr.addColorStop(0.55, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(4,6,10,0.3)');
   g.fillStyle = gr; g.fillRect(x0, y0, W, H);
   // the streak: a narrow band of the lamp along the upper flats
@@ -340,7 +340,7 @@ export function metalOver(g, [x0, y0, x1, y1], seed = 3) {
   // wear and dust
   for (let i = 0; i < W * H * 0.05; i++) {
     const x = x0 + r() * W, y = y0 + r() * H;
-    g.fillStyle = r() < 0.4 ? `rgba(220,228,236,${0.12 + r() * 0.18})` : `rgba(150,138,118,${0.08 + r() * 0.1})`;
+    g.fillStyle = r() < 0.4 ? `rgba(226,220,208,${0.1 + r() * 0.16})` : `rgba(150,138,118,${0.08 + r() * 0.1})`;
     g.fillRect(x, y, 0.12 + r() * 0.25, 0.08 + r() * 0.15);
   }
   g.restore();

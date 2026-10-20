@@ -2,10 +2,11 @@
 // HAWK's stall and the daily tasks. Everything here is rules over the save;
 // the screens call these and show the result.
 //
-// A finish is a tint multiplied over the factory paint, in the menus (the
-// weapon pictures) and in the game (the sprites), so it costs nothing to
-// bake. Crates roll a rarity from the odds on the crate, then a finish of
-// that rarity for one of your weapons; one you already have pays PARÇA back.
+// A finish is a colour multiplied over the gun in primer, in the menus (the
+// weapon pictures) and in the game (the sprites): one primer bake per gun
+// serves every finish (docs §10.13). Crates roll a rarity from the odds on
+// the crate, then a finish of that rarity for one of your weapons; one you
+// already have pays PARÇA back.
 import { WEAPON_LIST, CRATES } from '../ui/data.js';
 
 export const SKINS = [
@@ -13,10 +14,10 @@ export const SKINS = [
   { id: 'sand', rar: 'common', tint: '#f2dcae' },
   { id: 'olive', rar: 'common', tint: '#bccb94' },
   { id: 'arctic', rar: 'rare', tint: '#d4ecff' },
-  { id: 'cobalt', rar: 'rare', tint: '#86a8ff' },
-  { id: 'crimson', rar: 'epic', tint: '#ff8c8c' },
-  { id: 'violet', rar: 'epic', tint: '#c8a2ff' },
-  { id: 'gold', rar: 'legendary', tint: '#ffd36a' },
+  { id: 'cobalt', rar: 'rare', tint: '#7c9ef0' },
+  { id: 'crimson', rar: 'epic', tint: '#e8726a' },
+  { id: 'violet', rar: 'epic', tint: '#ae8ce6' },
+  { id: 'gold', rar: 'legendary', tint: '#f0c65e' },
   { id: 'ember', rar: 'mythic', tint: '#ff9a5c' },
   { id: 'kor', rar: 'ultra', tint: '#d2b08a' },
 ];

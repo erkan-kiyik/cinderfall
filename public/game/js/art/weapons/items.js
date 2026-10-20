@@ -53,7 +53,7 @@ export const ITEMS = {
       const H = rr(-4.0, -0.75, 0.9, 0.75, 0.45);
       cel(g, H, MAT.poly, { sh: 0.5, hl: 0.3 });
       clip(g, H, () => { for (let x = -3.2; x < 0.6; x += 0.8) stroke(g, `M ${x} -0.8 L ${x} 0.8`, MAT.poly.d, 0.22); });
-      fill(g, rr(-4.3, -0.55, -3.6, 0.55, 0.2), MAT.accent.m);
+      cel(g, rr(-4.35, -0.6, -3.6, 0.6, 0.2), MAT.steel, { sh: 0.2, hl: 0.15, gloss: 0.3 });
     },
   },
   // ammo box dropped by enemies (sits on its bottom edge)
@@ -64,7 +64,7 @@ export const ITEMS = {
       cel(g, B, tone('#7a8a5a', '#5c6b40', '#434f2e', '#1d2412'), { sh: 0.6, hl: 0.3 });
       clip(g, B, () => {
         fill(g, rr(-4.6, -5.0, 4.6, -3.8, 0.2), '#2d3520');
-        fill(g, rr(-2.6, -3.0, 2.6, -1.0, 0.3), MAT.accent.m);
+        fill(g, rr(-2.6, -3.0, 2.6, -1.0, 0.3), '#d8d0b8', 0.85);
         g.font = '700 1.6px Rajdhani'; g.fillStyle = '#1a1c20'; g.fillText('AMMO', -2.2, -1.5);
       });
       cel(g, rr(-1.6, -6.0, 1.6, -5.0, 0.3), MAT.dark, { sh: 0.3, hl: 0.2 });
@@ -80,7 +80,7 @@ export const ITEMS = {
         stroke(g, 'M -3.2 -5.2 L 6.6 -5.2', M.charcoal.l, 0.2, 0.7);
         fill(g, rr(1.0, -4.8, 3.4, -2.6, 0.3), M.charcoal.d);
       });
-      fill(g, rr(1.4, -6.3, 2.6, -5.5, 0.2), MAT.accent.m);
+      cel(g, rr(1.4, -6.3, 2.6, -5.5, 0.2), MAT.steel, { sh: 0.15, hl: 0.15, gloss: 0.3 });
     },
   },
 };
