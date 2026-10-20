@@ -96,8 +96,9 @@ docs/
 - `listing.md`, `play/short-*.txt`, `play/full-*.txt`: KOR'un metinleri
   (TR, EN): hikâye (Vanta'nın tuttuğu şehir, ocak, beş hücre), görevler,
   operatörler ve yetenekler, silahlar, sandıklar, gerçekçi çizim, çevrimdışı.
-- `screenshots/`: KOR'dan 2400×1080 görüntüler (lobi, kapı, pazar, valilik,
-  operatörler, sandıklar). Eski Cinderfall görüntüleri silinir.
+- `screenshots/`: KOR'dan 1920×1080 görüntüler (Play en-boy oranını 2:1 ile
+  sınırlar): lobi, kapı, pazar, valilik, operatörler, kampanya, sandıklar,
+  cephanelik. Eski Cinderfall görüntüleri silinir.
 - `feature-graphic.png` (1024×500) ve `icon-512.png`: KOR.
 - Play Console'da yalnız hesap sahibinin yapabileceği işler: yeni metin ve
   görselleri yüklemek; "Reklam içerir" ve Veri güvenliği beyanını gözden
@@ -130,8 +131,8 @@ docs/
 - [x] Bütün ekranlar ve üç görev sayfa hatası olmadan açılır
 - [x] `node mobile/scripts/sync-www.mjs` KOR'u kopyalar, `dev/` yok
 - [x] `node --experimental-default-type=module scripts/build-legal-site.mjs` çalışır
-- [ ] APK: adı KOR, simgesi KOR, `assets/public/index.html` KOR'un girişi
-- [ ] Depoda `public/lab`, `public/game2` ve LAB iş akışı yok;
+- [x] APK: adı KOR, simgesi KOR, `assets/public/index.html` KOR'un girişi (`kor-build-1`)
+- [x] Depoda `public/lab`, `public/game2` ve LAB iş akışı yok;
       "KOR LAB" görünen bir yerde geçmiyor
 
 ## 10. Geri dönüş
