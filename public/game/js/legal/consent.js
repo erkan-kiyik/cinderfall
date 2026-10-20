@@ -3,7 +3,7 @@
 import { LEGAL_VERSION } from './controller.js';
 import { profileOf } from './jurisdictions.js';
 
-const KEY = 'cinderfall.legal.v1';
+const KEY = 'kor.legal.v1';
 const listeners = new Set();
 
 function load() {
@@ -68,7 +68,7 @@ export function deleteAllData() {
     const keys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith('cinderfall')) keys.push(k);
+      if (k && k.startsWith('kor.')) keys.push(k);
     }
     for (const k of keys) localStorage.removeItem(k);
     sessionStorage.clear();

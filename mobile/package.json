@@ -1,15 +1,15 @@
 {
-  "name": "cinderfall-mobile",
+  "name": "kor-mobile",
   "version": "1.0.0",
   "private": true,
-  "description": "Capacitor wrapper that packages the CINDERFALL web game as native Android (.aab/.apk) and iOS (.ipa) apps. The game itself lives in ../public/game and is copied into ./www at build time \u2014 this project adds no game code, only the native shell.",
+  "description": "Capacitor wrapper that packages the KOR web game as native Android (.aab/.apk) and iOS (.ipa) apps. The game itself lives in ../public/game and is copied into ./www at build time \u2014 this project adds no game code, only the native shell.",
   "scripts": {
     "sync:www": "node ./scripts/sync-www.mjs",
     "postinstall": "npm run sync:www",
     "add:android": "npm run sync:www && npx cap add android",
     "add:ios": "npm run sync:www && npx cap add ios",
     "sync": "npm run sync:www && npx cap sync",
-    "assets": "npx @capacitor/assets generate --iconBackgroundColor \"#07090c\" --iconBackgroundColorDark \"#07090c\" --splashBackgroundColor \"#07090c\" --splashBackgroundColorDark \"#07090c\"",
+    "assets": "npx @capacitor/assets generate --iconBackgroundColor \"#0c0a09\" --iconBackgroundColorDark \"#0c0a09\" --splashBackgroundColor \"#0c0a09\" --splashBackgroundColorDark \"#0c0a09\"",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",
     "build:android": "npm run sync && npx cap build android",

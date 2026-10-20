@@ -1,4 +1,4 @@
-// Copies the CINDERFALL web game (../public/game) into ./www, which Capacitor
+// Copies the KOR web game (../public/game) into ./www, which Capacitor
 // uses as its webDir. The game uses only relative asset paths, so it runs
 // unchanged from the wrapper's root origin. Run automatically on install and
 // before every `cap add` / `cap sync`.
@@ -10,9 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-// GAME_DIR picks which copy under public/ is packaged: 'game' (the shipping
-// game, the default) or 'game2' (the LAB testbed, built by its own workflow
-// into a separately installable app).
+// GAME_DIR picks which folder under public/ is packaged; 'game' (KOR) is the
+// only one.
 const SRC = resolve(here, '..', '..', 'public', process.env.GAME_DIR || 'game');
 const DEST = resolve(here, '..', 'www');
 
@@ -23,10 +22,9 @@ try {
   process.exit(1);
 }
 
-// The service worker and PWA manifest are harmless inside the wrapper but
-// unnecessary (Capacitor serves locally), so they are skipped to keep the
-// bundle lean and avoid a second caching layer over the native WebView.
-const SKIP = new Set(['sw.js']);
+// Not shipped: a service worker (Capacitor serves locally; it would only add
+// a second cache over the WebView) and dev/, the review pages.
+const SKIP = new Set(['sw.js', 'dev']);
 
 await rm(DEST, { recursive: true, force: true });
 await mkdir(DEST, { recursive: true });

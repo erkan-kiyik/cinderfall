@@ -1,6 +1,6 @@
-# CINDERFALL — Mobile packaging (Capacitor)
+# KOR — Mobile packaging (Capacitor)
 
-This folder wraps the CINDERFALL web game as native **Android** and **iOS**
+This folder wraps the KOR web game as native **Android** and **iOS**
 apps using [Capacitor](https://capacitorjs.com). It contains **no game code** —
 the game lives in `../public/game` and is copied into `./www` at build time by
 `scripts/sync-www.mjs`. That keeps the codebase modular: gameplay is edited in
@@ -51,14 +51,13 @@ npm run open:ios           # opens Xcode
 ```
 
 ## App identity (already configured in `capacitor.config.json`)
-- **App ID / bundle:** `com.cinderfall.sector9`  *(change to your own reverse-domain before shipping)*
-- **App name:** `CINDERFALL`
+- **App ID / bundle:** `com.cinderfall.sector9` — kept from Cinderfall, whose place KOR took on the stores, so installed copies update (docs/KOR_YAPI.md)
+- **App name:** `KOR`
 - **Orientation:** landscape (set per-platform after `cap add`; see docs/RELEASE.md)
-- **Background / splash colour:** `#07090c`
+- **Background / splash colour:** `#0c0a09`
 
 ## Notes
-- The web build already ships a PWA manifest + service worker; those are for the
-  browser/TWA path and are intentionally skipped inside the Capacitor bundle
-  (see `scripts/sync-www.mjs`).
+- `scripts/sync-www.mjs` leaves out `dev/` (review pages) and any service
+  worker; everything else in `public/game` ships.
 - The full submission checklist — signing, store metadata, screenshots, ratings —
   is in [`../docs/RELEASE.md`](../docs/RELEASE.md).

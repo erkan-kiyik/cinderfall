@@ -1,6 +1,6 @@
 name: Build Android release AAB
 
-# Separate from build-cinderfall-android.yml on purpose: that one runs on
+# Separate from build-android.yml on purpose: that one runs on
 # every push and produces a debug-signed APK for quick device testing. This
 # one produces a release .aab — the format Play Console requires.
 #
@@ -61,7 +61,7 @@ jobs:
       - name: Scaffold Android shell from web assets
         run: npm run add:android
 
-      # Same three regenerate-every-run patches build-cinderfall-android.yml
+      # Same three regenerate-every-run patches build-android.yml
       # applies — see that workflow's comment for why they're needed at all
       # (dark theme, real app icon, AdMob manifest entry). A release build
       # with the debug theme or a missing manifest entry would be a broken
@@ -90,7 +90,7 @@ jobs:
         working-directory: mobile/android/app
         run: |
           CODE=$(( ${{ github.run_number }} + 1 ))
-          sed -i -E "s/versionCode [0-9]+/versionCode ${CODE}/; s/versionName \"[^\"]*\"/versionName \"1.0.${CODE}\"/" build.gradle
+          sed -i -E "s/versionCode [0-9]+/versionCode ${CODE}/; s/versionName \"[^\"]*\"/versionName \"2.0.${CODE}\"/" build.gradle
           grep -E "versionCode|versionName" build.gradle
 
       # Both of the next two steps are conditional on the signing secrets
@@ -160,7 +160,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cinderfall-release-aab
+          name: kor-release-aab
           path: mobile/android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
@@ -168,7 +168,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: release-aab-${{ github.run_number }}
-          name: "Cinderfall release AAB #${{ github.run_number }}"
+          name: "KOR release AAB #${{ github.run_number }}"
           body: |
             Android App Bundle, built from commit ${{ github.sha }} — versionCode ${{ github.run_number }} + 1.
 

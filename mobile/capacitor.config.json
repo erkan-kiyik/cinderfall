@@ -1,15 +1,15 @@
 {
   "appId": "com.cinderfall.sector9",
-  "appName": "CINDERFALL",
+  "appName": "KOR",
   "webDir": "www",
-  "backgroundColor": "#07090c",
+  "backgroundColor": "#0c0a09",
   "loggingBehavior": "none",
   "android": {
-    "backgroundColor": "#07090c",
+    "backgroundColor": "#0c0a09",
     "allowMixedContent": false
   },
   "ios": {
-    "backgroundColor": "#07090c",
+    "backgroundColor": "#0c0a09",
     "contentInset": "always",
     "limitsNavigationsToAppBoundDomains": true
   },
@@ -17,7 +17,7 @@
     "SplashScreen": {
       "launchShowDuration": 900,
       "launchAutoHide": true,
-      "backgroundColor": "#07090c",
+      "backgroundColor": "#0c0a09",
       "androidScaleType": "CENTER_CROP",
       "showSpinner": false,
       "splashFullScreen": true,

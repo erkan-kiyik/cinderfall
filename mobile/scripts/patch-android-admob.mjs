@@ -6,9 +6,9 @@
 // regenerated each run).
 //
 // The App ID below is Google's PUBLIC TEST App ID — safe to ship, but it
-// only ever serves test ads. Swap it (and the ad unit ID in
-// public/game/js/engine/ads.js) for the real IDs from your own AdMob
-// account before a Play Store release.
+// only ever serves test ads. KOR shows no ads yet; the SDK and the consent
+// flow are kept for rewarded ads later — swap in the real IDs from your own
+// AdMob account when the game starts to serve them.
 //
 // Run from the `mobile/` directory AFTER `npx cap add android`, BEFORE the build.
 

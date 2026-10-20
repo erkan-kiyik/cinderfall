@@ -16,7 +16,7 @@ güncellenir.
 | Telefondaki ad | `KOR` | Görünen ad |
 | İmza | Cinderfall'ın yükleme anahtarı (aynı) | Play yalnız aynı anahtarla imzalı güncellemeyi kabul eder; anahtar depoya hiçbir zaman girmez |
 | Sürüm | `versionCode` artmaya devam eder; `versionName` 2.0.x | Yeni oyun, büyük sürüm |
-| Cinderfall kodu | Ağaçtan çıkar, `cinderfall-son` etiketiyle arşivlenir | Depo sade kalır; geri dönüş tek komut |
+| Cinderfall kodu | Ağaçtan çıkar; son hâli `main` geçmişinde **`821c36c`** commit'inde durur | Depo sade kalır; geri dönüş tek komut |
 | `public/game2` | Silinir | Eski deneme kopyası, hiçbir derleme kullanmıyor |
 | Ayrı LAB uygulaması (`com.kor.lab`) | Kaldırılır | Ana derleme artık KOR |
 | Depo adı | `cinderfall` aynı kalır | Gizlilik sayfasının adresi (GitHub Pages) depo adına bağlı; Play'deki bağlantı kırılmasın |
@@ -72,7 +72,7 @@ docs/
 
 | İş akışı | Önce | Sonra |
 | --- | --- | --- |
-| `build-android.yml` | `build-cinderfall-android.yml`: Cinderfall'ın hata ayıklama APK'sı | **KOR**'un hata ayıklama APK'sı; `public/game/**` ve `mobile/**` değişince çalışır; `dev-build-N` sürümünü yayınlar |
+| `build-android.yml` | `build-cinderfall-android.yml`: Cinderfall'ın hata ayıklama APK'sı | **KOR**'un hata ayıklama APK'sı; `public/game/**` ve `mobile/**` değişince çalışır; `kor-build-N` sürümünü yayınlar |
 | `build-lab-android.yml` | LAB APK'sı (`com.kor.lab`) | **Silinir** |
 | `release-android-aab.yml` | Cinderfall AAB | **KOR** AAB; `versionName` `2.0.N`; imzalama aynı (sırlar varsa CI'da, yoksa yerelde jarsigner) |
 | `pages.yml` | Yasal sayfalar `public/game/js/legal`'den | Aynı yol, artık KOR'un yasal modülü |
@@ -112,7 +112,7 @@ docs/
 
 ## 8. Geçiş adımları (sırayla)
 
-1. Son Cinderfall commit'ine `cinderfall-son` etiketi; etiketi push et.
+1. Cinderfall'ın son hâlinin commit'i: `821c36c` (bu belgenin eklendiği commit).
 2. `git rm -r public/game public/game2`; `git mv public/lab public/game`;
    `git mv tools/lab tools/game`; her yolu düzelt (testler, araçlar,
    belgeler).
@@ -126,18 +126,18 @@ docs/
 
 ## 9. Doğrulama listesi
 
-- [ ] `for f in tools/game/*.test.mjs; do node $f; done` hepsi geçer
-- [ ] Bütün ekranlar ve üç görev sayfa hatası olmadan açılır
-- [ ] `node mobile/scripts/sync-www.mjs` KOR'u kopyalar, `dev/` yok
-- [ ] `node --experimental-default-type=module scripts/build-legal-site.mjs` çalışır
+- [x] `for f in tools/game/*.test.mjs; do node $f; done` hepsi geçer
+- [x] Bütün ekranlar ve üç görev sayfa hatası olmadan açılır
+- [x] `node mobile/scripts/sync-www.mjs` KOR'u kopyalar, `dev/` yok
+- [x] `node --experimental-default-type=module scripts/build-legal-site.mjs` çalışır
 - [ ] APK: adı KOR, simgesi KOR, `assets/public/index.html` KOR'un girişi
 - [ ] Depoda `public/lab`, `public/game2` ve LAB iş akışı yok;
       "KOR LAB" görünen bir yerde geçmiyor
 
 ## 10. Geri dönüş
 
-Cinderfall'ın tamamı `cinderfall-son` etiketinde durur:
+Cinderfall'ın tamamı `main` geçmişinde, `821c36c` commit'inde durur:
 
 ```bash
-git checkout cinderfall-son -- public/game public/game2 .github/workflows mobile store site
+git checkout 821c36c -- public/game public/game2 .github/workflows mobile store site
 ```

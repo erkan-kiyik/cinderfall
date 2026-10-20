@@ -1,626 +1,186 @@
-// FX director: ties particles, audio, camera and decals together.
-// Owns tracers, timed dynamic lights, melee slash trails and explosions.
-
-import { K, burstSparks, puffSmoke, kickDust } from '../engine/particles.js';
-import { rand, randSpread, clamp } from '../engine/math.js';
-import { segVsBox } from './player.js';
-
-// Blade trail tuning. TRAIL_LIFE is how long a sampled point survives (the
-// ribbon's length in time), TRAIL_GAP how long without a new sample before the
-// swing is considered over, TRAIL_MAX_PTS a hard cap so a held swing can't
-// grow the buffer without bound.
-const TRAIL_LIFE = 0.16;
-const TRAIL_GAP = 0.05;
-const TRAIL_MAX_PTS = 24;
-const TRAIL_WIDTH = 7;
-
-// Impact recipes, keyed by the surface the round actually landed on (the
-// collider's `mat`, threaded through World.raycast). A hit used to look
-// identical whether it struck a steel container or a sandbag, which is the
-// single loudest "this is a cheap game" tell in a shooter — the impact is the
-// most-repeated effect on screen.
+// KOR — combat effects.
 //
-//   sparks   how many hot ricochet sparks fly, and how far
-//   chips    solid fragments knocked loose, with their colour
-//   dust     the puff left behind, and how heavy it reads
-//   light    the brief flash at the point of impact (metal strikes glow)
-const MATERIALS = {
-  metal: {
-    kick: 1.25,
-    sparks: 9, sparkSpread: 1.5, sparkSpeed: 480,
-    chips: 2, chipColor: ['#6e6a63', '#8a8279'], chipSize: [1.0, 2.0],
-    dust: 'rgba(140,138,134,0.42)', dustSize: 0.45,
-    light: [255, 214, 150], lightR: 62, lightA: 0.6,
-  },
-  wood: {
-    kick: 1.0,
-    // Splinters, not sparks: a couple of stray embers at most, and long thin
-    // fragments that tumble further than stone chips.
-    sparks: 1, sparkSpread: 0.7, sparkSpeed: 200,
-    chips: 6, chipColor: ['#6b4f30', '#8a6a42', '#4e3a22'], chipSize: [1.4, 3.4],
-    dust: 'rgba(146,116,80,0.6)', dustSize: 0.8,
-    light: null, lightR: 0, lightA: 0,
-  },
-  concrete: {
-    kick: 0.5,
-    sparks: 3, sparkSpread: 1.1, sparkSpeed: 330,
-    chips: 4, chipColor: ['#55524a', '#6a675e', '#43413b'], chipSize: [1.4, 2.8],
-    dust: 'rgba(150,146,138,0.8)', dustSize: 1.05,
-    light: [255, 200, 130], lightR: 36, lightA: 0.3,
-  },
-  sand: {
-    kick: 0.28,
-    // A sandbag swallows a round: no sparks, no fragments, just a heavy
-    // grain-coloured cloud and a spray of fill.
-    sparks: 0, sparkSpread: 0, sparkSpeed: 0,
-    chips: 5, chipColor: ['#8f7a52', '#a08a5e', '#7a6743'], chipSize: [1.0, 2.2],
-    dust: 'rgba(168,148,106,0.85)', dustSize: 1.25,
-    light: null, lightR: 0, lightA: 0,
-  },
-};
+// Everything a shot leaves behind: muzzle flashes and their light, tracers,
+// sparks and dust at impacts, hit puffs on characters, bullet holes on
+// walls, knife swooshes, and loose debris (casings, magazines, dropped guns)
+// that tumbles, bounces off the tiles and comes to rest.
+//
+// Draws in two places: `drawWorld` with the lit scene (decals, debris, dust)
+// and `drawGlow` additive after composition (flashes, tracers, sparks).
+import { ParticleSystem, col } from '../gfx/particles.js';
+import { rgba } from '../gfx/batch.js';
+import { SOLID } from '../phys/level.js';
 
-export class FX {
-  constructor(particles, audio, camera, world) {
-    this.ps = particles;
-    this.audio = audio;
-    this.cam = camera;
-    this.world = world;
-    this.tracers = [];    // {x0,y0,x1,y1,life,age,color,width}
-    this.lights = [];     // {x,y,r,c,a,life,age}
-    this.slashes = [];    // {x,y,a0,a1,r,life,age,facing}
-    this.trails = [];     // blade motion ribbons — see bladeTrail()
-    this.projectiles = []; // energy bolts: {x,y,vx,vy,color,radius,dmg,...}
-    this.beams = [];      // {x0,y0,x1,y1,color,width,life,age}
-    this.arcs = [];       // electric arcs: {pts,color,life,age}
-    this.emitter = null;  // sustained energy-weapon glow — see setEmitter()
-    this.game = null;     // bound after construction for projectile damage
+const MAX_DEBRIS = 96, MAX_DECALS = 120;
+const rand = (a, b) => a + Math.random() * (b - a);
 
-    particles.solidAt = (x, y) => world.solidAt(x, y);
-    particles.onImpact = (kind, x, y, vx, vy, bounces) => {
-      if (kind === K.CASING && bounces === 0) this.audio.casingTink();
-      if (kind === K.BLOOD) this.world.bloodDecal(x, y, 7);
-    };
+export class Effects {
+  constructor(eng, sfx = null) {
+    const { gl, atlas } = eng;
+    this.e = eng; this.A = atlas; this.sfx = sfx;
+    this.sparks = new ParticleSystem(gl, atlas, atlas.get('fx.dot'), 768, { additive: true, streak: 0.022 });
+    this.smoke = new ParticleSystem(gl, atlas, atlas.get('fx.smoke'), 384, { additive: false });
+    this.bits = new ParticleSystem(gl, atlas, atlas.get('fx.dot'), 384, { additive: false, streak: 0.012 });
+    this.R = { muzzle: atlas.get('fx.muzzle'), glow: atlas.get('fx.glow'), tracer: atlas.get('fx.tracer'), hole: atlas.get('fx.hole'), slash: atlas.get('fx.slash'), white: atlas.get('fx.white') };
+    this.flashes = []; this.tracers = []; this.slashes = []; this.lights = [];
+    this.decals = []; this.debris = [];
+    this.t = 0;
   }
 
-  addLight(x, y, r, c, a, life = 0.08) {
-    this.lights.push({ x, y, r, c, a, life, age: 0 });
+  // --- spawners ----------------------------------------------------------------------
+  // muzzle flash at (x, y) pointing along angle a (world); size by weapon
+  muzzle(x, y, a, size = 1, suppressed = false) {
+    this.flashes.push({ x, y, a, s: size * rand(0.85, 1.15), life: suppressed ? 0.035 : 0.05, t: 0, sup: suppressed, spin: rand(-0.4, 0.4) });
+    this.lights.push({ x, y, r: (suppressed ? 34 : 70) * size, i: suppressed ? 0.6 : 1.6, c: [1, 0.72, 0.4], life: 0.06, t: 0 });
+    // a puff of gun smoke drifting off the muzzle
+    const n = suppressed ? 1 : 2;
+    for (let i = 0; i < n; i++) this.smoke.emit(this.t, x + Math.cos(a) * 2, y + Math.sin(a) * 2, Math.cos(a) * rand(14, 40) + rand(-6, 6), Math.sin(a) * rand(14, 40) - rand(4, 12), rand(0.5, 0.9), 1.4 * size, rand(5, 8) * size, col('#c8c2bc', 0.16), col('#c8c2bc', 0), -14, 2.4, rand(0, 6), rand(-1, 1));
   }
 
-  // Sustained emitter glow for energy weapons.
-  //
-  // A muzzle flash is an event light — it fires and dies in 60ms. A charged
-  // plasma emitter or a hot particle-beam aperture is *always* radiating, and
-  // without that the weapon reads as an inert prop between shots. This is a
-  // single slot rather than a queue: the player overwrites it every frame with
-  // the current barrel position and intensity, and it decays on its own if the
-  // weapon is stowed or swapped, so it can never leak a stale light into the
-  // scene.
-  setEmitter(x, y, c, a, r) {
-    this.emitter = { x, y, c, a, r, hold: 0.12 };
+  tracer(x0, y0, x1, y1, w = 0.9, color = '#ffd9a0') {
+    const L = Math.hypot(x1 - x0, y1 - y0);
+    if (L < 6) return;
+    this.tracers.push({ x0, y0, x1, y1, L, d: 0, w, c: rgba(color, 1), sp: 2600, seg: Math.min(70, L * 0.5) });
   }
 
-  // ---- weapon fire ----
-  muzzle(x, y, ang, big = 1) {
-    // Two lights: a wide warm throw that briefly lifts the whole surrounding
-    // wall, and a tight white-hot core at the barrel. Sized up from the
-    // original single light because the scene now sits at a lower base value
-    // (see DEPTH_GRADE / BG_SCRIM) — the flash has to earn its punch against
-    // a darker frame, and this is the main "the gun just went off" cue.
-    this.addLight(x, y, 240 * big, [255, 186, 104], 0.95, 0.07);
-    this.addLight(x, y, 92 * big, [255, 238, 200], 0.9, 0.045);
-    puffSmoke(this.ps, x + Math.cos(ang) * 8, y + Math.sin(ang) * 8, 2, 'rgba(150,148,145,0.7)', {
-      vx: Math.cos(ang) * 40, vy: Math.sin(ang) * 40 - 14, sizeMul: 0.8, lifeMul: 0.8,
-    });
-    if (Math.random() < 0.6) burstSparks(this.ps, x, y, ang, 2, 0.35, 300);
-  }
-
-  tracer(x0, y0, x1, y1, color = null, width = 1.4) {
-    this.tracers.push({ x0, y0, x1, y1, life: 0.09, age: 0, color, width });
-  }
-
-  casing(x, y, facing, size) {
-    this.ps.spawn(K.CASING, {
-      x, y,
-      vx: -facing * rand(60, 130) + randSpread(30),
-      vy: -rand(150, 240),
-      vrot: randSpread(22),
-      life: rand(2.5, 4), size,
-      grav: 1900, bounce: 0.4,
-    });
-  }
-
-  magDrop(x, y, facing) {
-    this.ps.spawn(K.DEBRIS, {
-      x, y, vx: -facing * rand(10, 40), vy: rand(30, 80),
-      vrot: randSpread(9), life: 3.2, size: 7, color: '#2c2e31',
-      grav: 1800, bounce: 0.2,
-    });
-  }
-
-  // ---- impacts ----
-  // `mat` names the surface struck — see MATERIALS. Callers pass the hit's
-  // material straight through from the raycast; anything unrecognised falls
-  // back to concrete, which is what the old single recipe approximated.
-  impactWall(x, y, nx, ny, mat = 'concrete') {
-    const m = MATERIALS[mat] || MATERIALS.concrete;
-    const ang = Math.atan2(ny, nx);
-    // sparks fly back along the surface normal, away from the impact
-    if (m.sparks) burstSparks(this.ps, x + nx * 2, y + ny * 2, ang, m.sparks, m.sparkSpread, m.sparkSpeed);
-    puffSmoke(this.ps, x + nx * 3, y + ny * 3, 2, m.dust, { sizeMul: m.dustSize });
-    for (let i = 0; i < m.chips; i++) {
-      this.ps.spawn(K.DEBRIS, {
-        x, y, vx: nx * rand(40, 160) + randSpread(70), vy: ny * rand(40, 140) - rand(30, 110),
-        vrot: randSpread(14), life: rand(0.5, 1.1),
-        size: rand(m.chipSize[0], m.chipSize[1]),
-        color: m.chipColor[(Math.random() * m.chipColor.length) | 0],
-        grav: 1500, bounce: 0.3,
-      });
+  // bullet stops on a wall/floor: sparks along the normal, dust, a hole
+  impact(x, y, nx, ny, dx, dy, strong = 1) {
+    const rx = dx - 2 * (dx * nx + dy * ny) * nx, ry = dy - 2 * (dx * nx + dy * ny) * ny;
+    const n = Math.round(4 + 4 * strong);
+    for (let i = 0; i < n; i++) {
+      const sp = rand(120, 420), jx = rx + nx * 0.6 + rand(-0.7, 0.7), jy = ry + ny * 0.6 + rand(-0.7, 0.7), L = Math.hypot(jx, jy) || 1;
+      this.sparks.emit(this.t, x, y, (jx / L) * sp, (jy / L) * sp, rand(0.08, 0.22), 0.7, 0.25, col('#ffd28a', 1), col('#ff6b2c', 0), 900, 3, 0, 0);
     }
-    if (m.light) this.addLight(x + nx * 3, y + ny * 3, m.lightR, m.light, m.lightA, 0.05);
-    // The thing that was hit registers the hit. `kick` scales with how much
-    // the material gives: a sandbag swallows the round and barely moves, sheet
-    // metal rings and jumps, wood is in between.
-    this.world.nudgeProp(x, y, -nx, -ny, m.kick);
-    this.world.bulletHole(x, y);
-    this.audio.impact();
+    for (let i = 0; i < 2; i++) this.smoke.emit(this.t, x + nx * 2, y + ny * 2, nx * rand(10, 30) + rand(-8, 8), ny * rand(10, 30) - rand(2, 8), rand(0.4, 0.8), 1.5, rand(5, 9), col('#9b938b', 0.35), col('#9b938b', 0), -6, 3, rand(0, 6), rand(-1, 1));
+    // chips of concrete
+    for (let i = 0; i < 3; i++) this.bits.emit(this.t, x, y, nx * rand(40, 120) + rand(-60, 60), ny * rand(40, 120) - rand(20, 80), rand(0.3, 0.6), 0.55, 0.4, col('#59524c', 1), col('#59524c', 0), 900, 1, 0, 0);
+    this.lights.push({ x: x + nx * 3, y: y + ny * 3, r: 18, i: 0.7, c: [1, 0.7, 0.4], life: 0.06, t: 0 });
+    this.decal(x - nx * 0.4, y - ny * 0.4);
   }
 
-  blood(x, y, dirX) {
+  decal(x, y) {
+    if (this.decals.length >= MAX_DECALS) this.decals.shift();
+    this.decals.push({ x, y, s: rand(0.75, 1.0), a: rand(0, 6.28) });
+  }
+
+  // bullet hits a character: a puff away from the shooter, darker bits
+  flesh(x, y, dx, dy, head = false) {
+    for (let i = 0; i < (head ? 10 : 6); i++) {
+      const sp = rand(60, 220), jx = dx + rand(-0.6, 0.6), jy = dy + rand(-0.8, 0.3), L = Math.hypot(jx, jy) || 1;
+      this.bits.emit(this.t, x, y, (jx / L) * sp, (jy / L) * sp, rand(0.25, 0.5), rand(0.6, 1.1), 0.3, col(i % 2 ? '#8a1c22' : '#5e1218', 1), col('#3a0b0e', 0), 700, 2, 0, 0);
+    }
+    this.smoke.emit(this.t, x, y, dx * 30, dy * 30 - 6, 0.35, 1.5, 6, col('#a03a3a', 0.25), col('#a03a3a', 0), 0, 4, rand(0, 6), 0);
+    if (head) for (let i = 0; i < 6; i++) this.sparks.emit(this.t, x, y, rand(-120, 120), rand(-200, -40), rand(0.1, 0.25), 0.6, 0.2, col('#ffffff', 1), col('#ffd28a', 0), 700, 2, 0, 0);
+  }
+
+  // bullet stopped by a riot shield: bright sparks, no damage
+  shield(x, y, dx, dy) {
     for (let i = 0; i < 9; i++) {
-      this.ps.spawn(K.BLOOD, {
-        x: x + randSpread(3), y: y + randSpread(5),
-        vx: dirX * rand(30, 210) + randSpread(60), vy: -rand(20, 170),
-        life: rand(0.5, 1.3), size: rand(1.2, 2.6),
-        color: `rgb(${110 + rand(0, 40) | 0},${16 + rand(0, 10) | 0},14)`,
-        grav: 1500, bounce: 1,      // bounce flag routes impact → decal
-      });
+      const sp = rand(140, 380), jx = -dx + rand(-0.9, 0.9), jy = -Math.abs(dy) - rand(0.1, 0.9), L = Math.hypot(jx, jy) || 1;
+      this.sparks.emit(this.t, x, y, (jx / L) * sp, (jy / L) * sp, rand(0.12, 0.3), 0.8, 0.25, col('#ffffff', 1), col('#9ad7ff', 0), 900, 2.5, 0, 0);
     }
-    puffSmoke(this.ps, x, y, 2, 'rgba(120,26,22,0.5)', { sizeMul: 0.65, lifeMul: 0.5, vy: -8 });
+    this.lights.push({ x: x - dx * 3, y, r: 26, i: 0.9, c: [0.75, 0.88, 1], life: 0.07, t: 0 });
   }
 
-  footstep(x, y, dir, runNorm) {
-    kickDust(this.ps, x, y, -dir, 2 + (runNorm > 0.7 ? 2 : 0));
-    this.audio.footstep(runNorm);
+  slash(x, y, a, f) {
+    this.slashes.push({ x, y, a, f, t: 0, life: 0.14 });
   }
 
-  landDust(x, y, hard) {
-    kickDust(this.ps, x - 6, y, -1, hard ? 7 : 3);
-    kickDust(this.ps, x + 6, y, 1, hard ? 7 : 3);
-    this.audio.land(hard);
+  // loose objects: region (outlined sprite), centre position, velocity, spin;
+  // flip −1 mirrors; c: the object's centre relative to the sprite anchor
+  drop(r, x, y, vx, vy, a, va, { scale = 1, flip = 1, sound = null, rest = 9, bounce = 0.35, size = 2, c = null } = {}) {
+    if (!r) return;
+    if (this.debris.length >= MAX_DEBRIS) this.debris.shift();
+    this.debris.push({ r, x, y, vx, vy, a, va, s: scale, f: flip, sound, life: rest, t: 0, bounce, size, hits: 0, still: false, cx: c ? c[0] : 0, cy: c ? c[1] : 0 });
   }
 
-  // Grit thrown up behind a slide. Emitted continuously while the operator is
-  // down, kicked *backwards* along the direction of travel so the trail reads
-  // as something he is leaving behind rather than running into, and scaled by
-  // how much speed is left — the plume thins out as the slide bleeds off,
-  // which is the cue that tells the player the move is about to end.
-  slideDust(x, y, dir, k) {
-    kickDust(this.ps, x - dir * 8, y, -dir, 1 + Math.round(k * 3));
+  addLights(R) {
+    for (const l of this.lights) { const k = 1 - l.t / l.life; R.addLight(l.x, l.y, l.r, l.i * k * k, l.c); }
   }
 
-  slash(x, y, a0, a1, r, facing) {
-    this.slashes.push({ x, y, a0, a1, r, life: 0.16, age: 0, facing });
-  }
-
-  // ---- blade trail ----
-  // The single-frame arc wedge above is the *impact* flourish. This is the
-  // motion trail: the blade tip is sampled every frame of the swing and the
-  // samples are drawn as one tapering ribbon, so the attack traces the arc it
-  // actually travelled rather than stamping a fixed shape.
-  //
-  // Points age out individually, which is what gives the ribbon its comet
-  // taper — the newest end is wide and bright, the tail thin and gone.
-  bladeTrail(x, y, color) {
-    let tr = this.trails[this.trails.length - 1];
-    // Start a fresh ribbon if there isn't a live one, or if the last sample
-    // is old enough that this is clearly a new swing rather than a continuation.
-    if (!tr || tr.closed || tr.sinceSample > TRAIL_GAP) {
-      tr = { pts: [], color, sinceSample: 0, closed: false };
-      this.trails.push(tr);
-      if (this.trails.length > 3) this.trails.shift();
-    }
-    tr.sinceSample = 0;
-    tr.color = color;
-    const last = tr.pts[tr.pts.length - 1];
-    // Skip samples that barely moved — they'd bunch up and thicken the head.
-    if (last && Math.hypot(x - last.x, y - last.y) < 2) return;
-    tr.pts.push({ x, y, age: 0 });
-    if (tr.pts.length > TRAIL_MAX_PTS) tr.pts.shift();
-  }
-
-  explosion(x, y) {
-    this.audio.explosion();
-    this.cam.addTrauma(0.75);
-    this.cam.landBounce(6);
-    this.addLight(x, y - 10, 420, [255, 180, 90], 1, 0.34);
-    this.world.scorch(x, y - 2, 34);
-    // fireball core
-    for (let i = 0; i < 14; i++) {
-      const a = rand(0, Math.PI * 2), v = rand(20, 260);
-      this.ps.spawn(K.EMBER, {
-        x: x + randSpread(8), y: y - 8 + randSpread(8),
-        vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120,
-        life: rand(0.3, 0.8), size: rand(2.5, 5.5),
-        grav: 600, drag: 2.2,
-      });
-    }
-    burstSparks(this.ps, x, y - 10, -Math.PI / 2, 18, 2.6, 520);
-    for (let i = 0; i < 10; i++) {
-      this.ps.spawn(K.DEBRIS, {
-        x, y: y - 6, vx: randSpread(320), vy: -rand(80, 380),
-        vrot: randSpread(16), life: rand(0.8, 2), size: rand(2, 5),
-        color: i % 3 ? '#4a4239' : '#6b3226', grav: 1600, bounce: 0.35,
-      });
-    }
-    for (let i = 0; i < 12; i++) {
-      this.ps.spawn(K.SMOKE, {
-        x: x + randSpread(14), y: y - 10 - rand(0, 16),
-        vx: randSpread(70), vy: -rand(30, 120),
-        life: rand(1.2, 2.6), size: rand(9, 18), grow: rand(26, 46),
-        drag: 1.4, color: 'rgba(64,58,52,0.9)', alpha: 0.85,
-      });
-    }
-  }
-
-  // ---- energy weapons ----
-  bindGame(game) { this.game = game; }
-
-  // Muzzle burst tuned for energy weapons: coloured core light + spark spray.
-  energyMuzzle(x, y, ang, color, big = 1) {
-    this.addLight(x, y, 150 * big, color, 0.95, 0.06);
-    this.addLight(x, y, 60 * big, [255, 255, 255], 0.8, 0.05);
-    for (let i = 0; i < 3; i++) {
-      this.ps.spawn(K.EMBER, {
-        x, y, vx: Math.cos(ang) * rand(80, 260) + randSpread(60),
-        vy: Math.sin(ang) * rand(80, 260) + randSpread(60),
-        life: rand(0.12, 0.34), size: rand(1.2, 2.6),
-        color: `rgb(${color[0]},${color[1]},${color[2]})`, drag: 3, grav: 0,
-      });
-    }
-  }
-
-  // Persistent-looking beam for one frame (laser/particle/lightning tick).
-  beam(x0, y0, x1, y1, color, width = 3, life = 0.06) {
-    this.beams.push({ x0, y0, x1, y1, color, width, life, age: 0 });
-    this.addLight(x1, y1, 90, color, 0.7, life);
-  }
-
-  // Rolling fire particles along the flamethrower stream.
-  flameSpit(x0, y0, x1, y1, ang) {
-    for (let i = 0; i < 4; i++) {
-      const t = Math.random();
-      this.ps.spawn(K.EMBER, {
-        x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t,
-        vx: Math.cos(ang) * 70 + randSpread(60), vy: Math.sin(ang) * 70 + randSpread(60) - 40,
-        life: rand(0.2, 0.55), size: rand(2.2, 4.4),
-        color: `rgb(255,${120 + (Math.random() * 80 | 0)},50)`, drag: 2.4, grav: -80,
-      });
-    }
-  }
-
-  // Jagged electric arc between two points.
-  arc(x0, y0, x1, y1, color) {
-    const pts = [[x0, y0]];
-    const segs = 6;
-    for (let i = 1; i < segs; i++) {
-      const t = i / segs;
-      pts.push([x0 + (x1 - x0) * t + randSpread(14), y0 + (y1 - y0) * t + randSpread(14)]);
-    }
-    pts.push([x1, y1]);
-    this.arcs.push({ pts, color, life: 0.09, age: 0 });
-  }
-
-  // Energy hit burst — coloured sparks, ring flash, light. `blast` adds an AoE.
-  energyImpact(x, y, color, blast = 0) {
-    const [r, g, b] = color;
-    this.addLight(x, y, 120 + blast * 2, color, 0.9, 0.14);
-    for (let i = 0; i < 10 + blast / 6; i++) {
-      const a = rand(0, Math.PI * 2), v = rand(40, 220 + blast);
-      this.ps.spawn(K.EMBER, {
-        x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30,
-        life: rand(0.2, 0.6), size: rand(1.4, 3.2),
-        color: `rgb(${r},${g},${b})`, drag: 2.6, grav: 200,
-      });
-    }
-    puffSmoke(this.ps, x, y, 2, `rgba(${r},${g},${b},0.4)`, { sizeMul: 0.8, lifeMul: 0.7, vy: -18 });
-    if (blast > 0) {
-      this.cam.addTrauma(clamp(blast / 260, 0.08, 0.5));
-      this.world.scorch(x, y, blast * 0.18);
-    }
-  }
-
-  // Spawns a travelling energy bolt. cfg: {color,radius,speed,dmg,headMul,
-  // blast,pierce,trailEvery,owner}. Damage resolves through the bound game.
-  spawnProjectile(x, y, ang, cfg) {
-    this.projectiles.push({
-      x, y, px: x, py: y,
-      vx: Math.cos(ang) * cfg.speed, vy: Math.sin(ang) * cfg.speed,
-      color: cfg.color, radius: cfg.radius || 4,
-      dmg: cfg.dmg, headMul: cfg.headMul || 1.6, blast: cfg.blast || 0,
-      pierce: cfg.pierce || 0, hitSet: new Set(),
-      life: cfg.life || 1.4, age: 0, trail: 0,
-    });
-  }
-
-  _dealDamage(hitEnemy, dmg, dirX, hx, hy, headshot) {
-    const g = this.game;
-    if (!g) return;
-    const p = g.player;
-    const killed = hitEnemy.hp <= dmg;
-    p.hits++;
-    if (headshot) p.headshots++;
-    hitEnemy.damage(dmg, dirX, p, false, hy);
-    this.blood(hx, hy, dirX);
-    p.hud.hitmark(killed ? 'kill' : headshot ? 'headshot' : 'hit');
-    if (killed) p.hud.notify(headshot ? 'HOSTILE ELIMINATED — HEADSHOT' : 'HOSTILE ELIMINATED');
-    if (g.onPlayerHit) g.onPlayerHit(headshot, killed, hitEnemy);
-  }
-
-  updateProjectiles(dt) {
-    const g = this.game;
-    const enemies = g ? g.enemies : [];
-    for (let i = this.projectiles.length - 1; i >= 0; i--) {
-      const pr = this.projectiles[i];
-      pr.px = pr.x; pr.py = pr.y;
-      pr.x += pr.vx * dt; pr.y += pr.vy * dt;
-      pr.age += dt;
-      const dx = pr.x - pr.px, dy = pr.y - pr.py;
-
-      // trail
-      pr.trail -= dt;
-      if (pr.trail <= 0) {
-        pr.trail = 0.012;
-        this.ps.spawn(K.EMBER, {
-          x: pr.px, y: pr.py, vx: randSpread(20), vy: randSpread(20),
-          life: rand(0.12, 0.3), size: pr.radius * rand(0.5, 0.9),
-          color: `rgb(${pr.color[0]},${pr.color[1]},${pr.color[2]})`, drag: 3,
-        });
-      }
-
-      // world hit
-      const wHit = this.world.raycast(pr.px, pr.py, pr.x, pr.y);
-      let bestT = wHit ? wHit.t : 1;
-      let hitEnemy = null;
-      for (const e of enemies) {
-        if (e.deadT > 0 || pr.hitSet.has(e)) continue;
-        const hs = e.hitboxScale || 1;
-        const t = segVsBox(pr.px, pr.py, dx, dy, e.x - 14 * hs, e.y - 134 * hs, 28 * hs, 134 * hs);
-        if (t !== null && t < bestT) { bestT = t; hitEnemy = e; }
-      }
-
-      if (hitEnemy) {
-        const hx = pr.px + dx * bestT, hy = pr.py + dy * bestT;
-        const headshot = hy < hitEnemy.y - 108 * (hitEnemy.hitboxScale || 1);
-        this._dealDamage(hitEnemy, pr.dmg * (headshot ? pr.headMul : 1), Math.sign(pr.vx) || 1, hx, hy, headshot);
-        this.energyImpact(hx, hy, pr.color, pr.blast);
-        if (pr.blast > 0 && g) this._splash(pr, hx, hy);
-        if (pr.pierce > 0) { pr.pierce--; pr.hitSet.add(hitEnemy); }
-        else { this.projectiles.splice(i, 1); }
-        continue;
-      }
-      if (wHit) {
-        const hx = pr.px + dx * bestT, hy = pr.py + dy * bestT;
-        if (wHit.tag === 'barrel' && g) g.damageBarrel(wHit.ref, pr.dmg);
-        this.energyImpact(hx, hy, pr.color, pr.blast);
-        if (pr.blast > 0 && g) this._splash(pr, hx, hy);
-        this.projectiles.splice(i, 1);
-        continue;
-      }
-      if (pr.age >= pr.life) this.projectiles.splice(i, 1);
-    }
-  }
-
-  // AoE for explosive bolts (ion cannon, plasma): radial energy damage.
-  _splash(pr, x, y) {
-    const g = this.game;
-    for (const e of g.enemies) {
-      if (e.deadT > 0 || pr.hitSet.has(e)) continue;
-      const d = Math.hypot(e.x - x, (e.y - 70) - y);
-      if (d < pr.blast) {
-        const dmg = pr.dmg * 0.6 * (1 - d / pr.blast);
-        this._dealDamage(e, dmg, Math.sign(e.x - x) || 1, e.x, e.y - 70, false);
-      }
-    }
-  }
-
-  update(dt) {
-    this.updateProjectiles(dt);
-    // The emitter is refreshed every frame while an energy weapon is held; the
-    // hold countdown is what clears it when one is put away.
-    if (this.emitter && (this.emitter.hold -= dt) <= 0) this.emitter = null;
-    for (let i = this.beams.length - 1; i >= 0; i--) {
-      if ((this.beams[i].age += dt) >= this.beams[i].life) this.beams.splice(i, 1);
-    }
-    for (let i = this.arcs.length - 1; i >= 0; i--) {
-      if ((this.arcs[i].age += dt) >= this.arcs[i].life) this.arcs.splice(i, 1);
-    }
-    for (let i = this.tracers.length - 1; i >= 0; i--) {
-      const t = this.tracers[i];
-      if ((t.age += dt) >= t.life) this.tracers.splice(i, 1);
-    }
-    for (let i = this.lights.length - 1; i >= 0; i--) {
-      const l = this.lights[i];
-      if ((l.age += dt) >= l.life) this.lights.splice(i, 1);
-    }
-    for (let i = this.trails.length - 1; i >= 0; i--) {
-      const tr = this.trails[i];
-      tr.sinceSample += dt;
-      if (tr.sinceSample > TRAIL_GAP) tr.closed = true;   // swing ended
-      for (let j = tr.pts.length - 1; j >= 0; j--) {
-        if ((tr.pts[j].age += dt) >= TRAIL_LIFE) tr.pts.splice(j, 1);
-      }
-      if (!tr.pts.length) this.trails.splice(i, 1);
-    }
-    for (let i = this.slashes.length - 1; i >= 0; i--) {
-      const s = this.slashes[i];
-      if ((s.age += dt) >= s.life) this.slashes.splice(i, 1);
-    }
-  }
-
-  // additive world-space effects, drawn after characters
-  draw(g) {
-    if (this.tracers.length) {
-      g.save();
-      g.globalCompositeOperation = 'lighter';
-      for (const t of this.tracers) {
-        const a = clamp(1 - t.age / t.life, 0, 1);
-        const c = t.color;
-        const gr = g.createLinearGradient(t.x0, t.y0, t.x1, t.y1);
-        if (c) {
-          gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0)`);
-          gr.addColorStop(0.7, `rgba(${c[0]},${c[1]},${c[2]},${0.55 * a})`);
-          gr.addColorStop(1, `rgba(255,255,255,${0.9 * a})`);
+  // --- simulation ------------------------------------------------------------------------
+  update(dt, level) {
+    this.t += dt;
+    const age = (list) => { for (let i = list.length - 1; i >= 0; i--) { const o = list[i]; o.t += dt; if (o.t >= o.life) list.splice(i, 1); } };
+    age(this.flashes); age(this.lights); age(this.slashes);
+    for (let i = this.tracers.length - 1; i >= 0; i--) { const tr = this.tracers[i]; tr.d += tr.sp * dt; if (tr.d - tr.seg > tr.L) this.tracers.splice(i, 1); }
+    for (let i = this.debris.length - 1; i >= 0; i--) {
+      const d = this.debris[i];
+      d.t += dt;
+      if (d.t > d.life) { this.debris.splice(i, 1); continue; }
+      if (d.still) continue;
+      d.vy += 1500 * dt; d.vx *= 1 - 0.4 * dt;
+      const nx = d.x + d.vx * dt, ny = d.y + d.vy * dt;
+      // floor: the highest surface under the object
+      const s = level.surface(nx - 0.5, nx + 0.5, nx, d.y - 2, ny + d.size * 0.5);
+      if (s !== null && d.vy > 0 && ny + d.size * 0.5 >= s) {
+        d.y = s - d.size * 0.5;
+        if (d.vy > 70) {
+          if (d.sound && this.sfx && d.hits < 3) this.sfx.play(d.sound, d.x, d.y, { vol: Math.min(1, d.vy / 400), rate: rand(0.9, 1.15), cap: 6 });
+          d.hits++;
+          d.vy = -d.vy * d.bounce; d.vx *= 0.6; d.va = -d.va * 0.5 + rand(-4, 4);
         } else {
-          gr.addColorStop(0, `rgba(255,220,160,0)`);
-          gr.addColorStop(0.7, `rgba(255,214,150,${0.5 * a})`);
-          gr.addColorStop(1, `rgba(255,240,200,${0.85 * a})`);
+          d.vy = 0; d.vx *= 0.8; d.va *= 0.7;
+          // settle flat (long axis horizontal)
+          const flat = Math.round(d.a / Math.PI) * Math.PI;
+          d.a += (flat - d.a) * Math.min(1, dt * 12);
+          if (Math.abs(d.vx) < 3 && Math.abs(d.va) < 0.3) d.still = true;
         }
-        g.strokeStyle = gr;
-        g.lineWidth = t.width || 1.4;
-        g.beginPath(); g.moveTo(t.x0, t.y0); g.lineTo(t.x1, t.y1); g.stroke();
-      }
-      g.restore();
-    }
-    // energy beams: bright white core + coloured glow
-    if (this.beams.length) {
-      g.save();
-      g.globalCompositeOperation = 'lighter';
-      g.lineCap = 'round';
-      for (const b of this.beams) {
-        const a = clamp(1 - b.age / b.life, 0, 1);
-        const [r, gg, bb] = b.color;
-        g.strokeStyle = `rgba(${r},${gg},${bb},${0.4 * a})`;
-        g.lineWidth = b.width * 3;
-        g.beginPath(); g.moveTo(b.x0, b.y0); g.lineTo(b.x1, b.y1); g.stroke();
-        g.strokeStyle = `rgba(255,255,255,${0.9 * a})`;
-        g.lineWidth = b.width;
-        g.beginPath(); g.moveTo(b.x0, b.y0); g.lineTo(b.x1, b.y1); g.stroke();
-      }
-      g.restore();
-    }
-    // electric arcs
-    if (this.arcs.length) {
-      g.save();
-      g.globalCompositeOperation = 'lighter';
-      g.lineCap = 'round'; g.lineJoin = 'round';
-      for (const arc of this.arcs) {
-        const a = clamp(1 - arc.age / arc.life, 0, 1);
-        const [r, gg, bb] = arc.color;
-        g.strokeStyle = `rgba(${r},${gg},${bb},${0.5 * a})`;
-        g.lineWidth = 3.4;
-        g.beginPath(); g.moveTo(arc.pts[0][0], arc.pts[0][1]);
-        for (const p of arc.pts) g.lineTo(p[0], p[1]);
-        g.stroke();
-        g.strokeStyle = `rgba(255,255,255,${0.85 * a})`;
-        g.lineWidth = 1.2;
-        g.beginPath(); g.moveTo(arc.pts[0][0], arc.pts[0][1]);
-        for (const p of arc.pts) g.lineTo(p[0], p[1]);
-        g.stroke();
-      }
-      g.restore();
-    }
-    // energy projectiles: glow halo + hot core + comet trail
-    if (this.projectiles.length) {
-      g.save();
-      g.globalCompositeOperation = 'lighter';
-      for (const pr of this.projectiles) {
-        const [r, gg, bb] = pr.color;
-        const rad = pr.radius;
-        const glow = g.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, rad * 4);
-        glow.addColorStop(0, `rgba(${r},${gg},${bb},0.9)`);
-        glow.addColorStop(0.4, `rgba(${r},${gg},${bb},0.4)`);
-        glow.addColorStop(1, `rgba(${r},${gg},${bb},0)`);
-        g.fillStyle = glow;
-        g.beginPath(); g.arc(pr.x, pr.y, rad * 4, 0, Math.PI * 2); g.fill();
-        g.fillStyle = 'rgba(255,255,255,0.95)';
-        g.beginPath(); g.arc(pr.x, pr.y, rad * 0.6, 0, Math.PI * 2); g.fill();
-      }
-      g.restore();
-    }
-    // blade ribbons, under the impact wedge
-    if (this.trails.length) {
-      g.save();
-      g.globalCompositeOperation = 'lighter';
-      for (const tr of this.trails) {
-        const n = tr.pts.length;
-        if (n < 2) continue;
-        // Build the ribbon as one polygon: walk the sampled path offsetting
-        // perpendicular by a half-width that tapers with each point's age,
-        // then walk back down the other side.
-        const half = (i) => {
-          const a = tr.pts[i].age / TRAIL_LIFE;
-          // newest points are widest; the head also thins slightly so the
-          // ribbon reads as a blade edge rather than a slab
-          const headTaper = i === n - 1 ? 0.55 : 1;
-          return TRAIL_WIDTH * (1 - a) * headTaper;
-        };
-        const norm = (i) => {
-          const p = tr.pts[Math.max(0, i - 1)], q = tr.pts[Math.min(n - 1, i + 1)];
-          const dx = q.x - p.x, dy = q.y - p.y;
-          const d = Math.hypot(dx, dy) || 1;
-          return { x: -dy / d, y: dx / d };
-        };
-        g.beginPath();
-        for (let i = 0; i < n; i++) {
-          const p = tr.pts[i], nv = norm(i), h = half(i);
-          const x = p.x + nv.x * h, y = p.y + nv.y * h;
-          if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
-        }
-        for (let i = n - 1; i >= 0; i--) {
-          const p = tr.pts[i], nv = norm(i), h = half(i);
-          g.lineTo(p.x - nv.x * h, p.y - nv.y * h);
-        }
-        g.closePath();
-        const head = tr.pts[n - 1], tail = tr.pts[0];
-        const grad = g.createLinearGradient(tail.x, tail.y, head.x, head.y);
-        grad.addColorStop(0, 'rgba(255,255,255,0)');
-        grad.addColorStop(1, tr.color || 'rgba(226,240,255,0.55)');
-        g.fillStyle = grad;
-        g.fill();
-      }
-      g.restore();
-    }
-    if (this.slashes.length) {
-      g.save();
-      g.globalCompositeOperation = 'lighter';
-      for (const s of this.slashes) {
-        const k = s.age / s.life;
-        const a = (1 - k) * 0.7;
-        g.fillStyle = `rgba(220,230,245,${a})`;
-        g.beginPath();
-        const sweep = s.a1 - s.a0;
-        const a0 = s.a0 + sweep * k * 0.5;
-        g.save();
-        g.translate(s.x, s.y);
-        g.scale(s.facing, 1);
-        g.arc(0, 0, s.r, a0, s.a0 + sweep, false);
-        g.arc(0, 0, s.r * 0.55, s.a0 + sweep, a0, true);
-        g.closePath();
-        g.fill();
-        g.restore();
-      }
-      g.restore();
+        d.x = nx;
+      } else if (level.get(level.tx(nx), level.ty(ny)) === SOLID) {
+        d.vx = -d.vx * 0.4; d.va *= -0.6;
+      } else { d.x = nx; d.y = ny; }
+      d.a += d.va * dt;
     }
   }
 
-  // Called every drawn frame. The output array and its light records are
-  // pooled — a fresh object per light per frame was steady garbage at 120Hz.
-  getLights() {
-    const out = this._lightOut || (this._lightOut = []);
-    const pool = this._lightPool || (this._lightPool = []);
-    let n = 0;
-    const put = (x, y, r, c, a, flicker, seed) => {
-      const o = pool[n] || (pool[n] = { x: 0, y: 0, r: 0, c: null, a: 0, flicker: 0, seed: 0 });
-      o.x = x; o.y = y; o.r = r; o.c = c; o.a = a; o.flicker = flicker; o.seed = seed;
-      out[n++] = o;
-    };
-    for (const l of this.lights) put(l.x, l.y, l.r, l.c, l.a * clamp(1 - l.age / l.life, 0, 1), 0, 0);
-    // every energy bolt emits its own dynamic light
-    for (const pr of this.projectiles) put(pr.x, pr.y, pr.radius * 12, pr.color, 0.7, 0.3, pr.age * 30);
-    // the held weapon's own emitter — flickers so it reads as live plasma
-    const em = this.emitter;
-    if (em) put(em.x, em.y, em.r, em.c, em.a, 0.35, this.emitterSeed = (this.emitterSeed || 0) + 0.7);
-    out.length = n;
-    return out;
+  // --- drawing ---------------------------------------------------------------------------
+  drawWorld(B, view, x0, x1) {
+    if (this.decals.length) {
+      B.begin(view);
+      for (const d of this.decals) if (d.x > x0 && d.x < x1) B.draw(this.R.hole, d.x, d.y, d.s, d.s, d.a, 0xffffffff, 1);
+      B.end();
+    }
+    if (this.debris.length) {
+      B.begin(view);
+      for (const d of this.debris) {
+        if (d.x < x0 || d.x > x1) continue;
+        const fade = Math.min(1, (d.life - d.t) / 0.6);
+        const c = Math.cos(d.a), s = Math.sin(d.a), ox = d.cx * d.s * d.f, oy = d.cy * d.s;
+        B.draw(d.r, d.x - (ox * c - oy * s), d.y - (ox * s + oy * c), d.s * d.f, d.s, d.a, 0xffffffff, fade);
+      }
+      B.end();
+    }
+  }
+
+  drawSmoke(view) {
+    this.smoke.draw(view, this.t);
+    this.bits.draw(view, this.t);
+  }
+
+  drawGlow(B, view) {
+    const R = this.R;
+    B.begin(view); B.setBlend(1);
+    for (const tr of this.tracers) {
+      const u0 = Math.max(0, tr.d - tr.seg) / tr.L, u1 = Math.min(tr.L, tr.d) / tr.L;
+      if (u1 <= u0) continue;
+      const ax = tr.x0 + (tr.x1 - tr.x0) * u0, ay = tr.y0 + (tr.y1 - tr.y0) * u0, bx = tr.x0 + (tr.x1 - tr.x0) * u1, by = tr.y0 + (tr.y1 - tr.y0) * u1;
+      B.line(R.tracer, ax, ay, bx, by, tr.w, tr.c, 0.9);
+    }
+    for (const f of this.flashes) {
+      const k = 1 - f.t / f.life, s = f.s * (0.7 + 0.5 * k);
+      B.draw(R.glow, f.x, f.y, 9 * s, 9 * s, 0, rgba('#ffb36b', 0.55 * k));
+      if (!f.sup) {
+        B.draw(R.muzzle, f.x, f.y, 9 * s, 5 * s, f.a + f.spin * 0.2, rgba('#fff1c8', k));
+        // the hotter, shorter inner blast along the same axis (a soft blast is not a star to spin)
+        B.draw(R.muzzle, f.x, f.y, 5.5 * s, 3.2 * s, f.a + f.spin * 0.1, rgba('#ffb15c', 0.8 * k));
+      } else B.draw(R.muzzle, f.x, f.y, 4 * s, 2 * s, f.a, rgba('#ffd7a0', 0.6 * k));
+    }
+    for (const s of this.slashes) {
+      const k = s.t / s.life, a = 1 - k;
+      B.draw(R.slash, s.x, s.y, 13 * s.f, 13, s.a + k * 0.9 * s.f, rgba('#ffffff', 0.75 * a));
+    }
+    B.end();
+    this.sparks.draw(view, this.t);
   }
 }

@@ -31,8 +31,8 @@ s = s.replaceAll('Theme.AppCompat.DayNight.NoActionBar', 'Theme.AppCompat.NoActi
 const anchor = '<item name="android:background">@null</item>';
 const inject =
   '<item name="android:background">@null</item>\n' +
-  '        <item name="android:windowBackground">@color/cinderDark</item>\n' +
-  '        <item name="android:navigationBarColor">@color/cinderDark</item>\n' +
+  '        <item name="android:windowBackground">@color/korDark</item>\n' +
+  '        <item name="android:navigationBarColor">@color/korDark</item>\n' +
   '        <item name="android:statusBarColor">@android:color/transparent</item>\n' +
   '        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>';
 
@@ -48,8 +48,8 @@ writeFileSync(stylesPath, s);
 
 // 3. Define the dark colour in its own file so we never clobber generated colours.
 writeFileSync(
-  resolve(resDir, 'values', 'cinder_colors.xml'),
-  '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="cinderDark">#FF07090C</color>\n</resources>\n'
+  resolve(resDir, 'values', 'kor_colors.xml'),
+  '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="korDark">#FF0C0A09</color>\n</resources>\n'
 );
 
 console.log('[patch-android-theme] applied dark edge-to-edge theme');

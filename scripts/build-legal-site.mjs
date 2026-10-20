@@ -81,19 +81,19 @@ const CSS = `
 `;
 
 function page(kind, otherKind, doc) {
-  const title = `CINDERFALL — ${doc.title}`;
+  const title = `KOR — ${doc.title}`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(title)}</title>
-<meta name="description" content="${esc(doc.title)} for CINDERFALL: Sector 9 by echosk studios.">
+<meta name="description" content="${esc(doc.title)} for KOR by echosk studios.">
 <style>${CSS}</style>
 </head>
 <body>
 <div class="wrap">
-  <div class="sub">CINDERFALL // Sector 9</div>
+  <div class="sub">KOR</div>
   <div class="pickers" id="pickers" hidden>
     <label><span id="l-country">Country / region</span><select id="country"></select></label>
     <label><span id="l-lang">Language</span><select id="lang"></select></label>
@@ -104,7 +104,7 @@ ${docHtml(doc)}
   <div class="nav">
     <a href="../privacy/" id="to-privacy">PRIVACY</a>
     <a href="../terms/" id="to-terms">TERMS</a>
-    <a href="../">&larr; CINDERFALL</a>
+    <a href="../">&larr; KOR</a>
   </div>
 </div>
 <script type="module">
@@ -129,7 +129,7 @@ ${docHtml(doc)}
     lSel.textContent = '';
     docLangsFor(country).forEach((l) => lSel.add(new Option(LANG_NAMES[l], l, false, l === lang)));
     const doc = buildDoc(KIND, lang, country);
-    document.title = 'CINDERFALL — ' + doc.title;
+    document.title = 'KOR — ' + doc.title;
     document.documentElement.lang = lang;
     renderDoc(document.getElementById('doc'), doc);
     document.getElementById('to-privacy').textContent = U.privacyTitle.toUpperCase();
@@ -159,13 +159,13 @@ writeFileSync(resolve(out, 'index.html'), `<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CINDERFALL — Sector 9</title>
+<title>KOR</title>
 <style>${CSS}</style>
 </head>
 <body>
 <div class="wrap">
   <div class="sub">echosk studios</div>
-  <h1>CINDERFALL: Sector 9</h1>
+  <h1>KOR</h1>
   <p>A 2D tactical shooter for Android.</p>
   <div class="nav">
     <a href="privacy/">PRIVACY NOTICE</a>

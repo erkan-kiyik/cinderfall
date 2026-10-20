@@ -1,340 +1,51 @@
-# Sector 9: Cinderfall
+# KOR
 
-**Original Premium 2D Tactical Shooter**
+**A 2D tactical shooter for phones.** The city is held by Vanta, a private
+security firm whose "temporary" contract never ends; the Kor line is five
+people working against it from a basement under the market. Painted, not
+drawn: every character, building and prop is painted in code, lit at night
+by street lamps, bulbs and fires.
 
----
+KOR took the place of *Sector 9: Cinderfall* in this repository and on the
+stores (same application id). The structure of that change is in
+[`docs/KOR_YAPI.md`](docs/KOR_YAPI.md); Cinderfall's last state is commit
+`821c36c`.
 
-## Overview
+## Layout
 
-**Sector 9: Cinderfall** is an original 2D side-view tactical shooter built with a strong focus on premium artwork, responsive gameplay, intelligent AI, and long-term replayability.
+| Path | What it is |
+| --- | --- |
+| `public/game/` | The game: a self-contained web build (`index.html`, `css/`, `js/`, `assets/`). `dev/` holds review pages that are not shipped |
+| `mobile/` | Capacitor shell that packages `public/game` as the Android / iOS app (`KOR`, `com.cinderfall.sector9`) |
+| `tools/game/` | Tests (`*.test.mjs`), the plate ray tracer (`plate/`), the still series (`series/`) |
+| `docs/` | `KOR_STORY_CINEMATIC.md` (story, world, art direction), `KOR_YAPI.md` (structure), `RELEASE.md` (release guide), `LAB_REWRITE_PLAN.md` (history of the rewrite) |
+| `store/` | Store texts, icon, feature graphic, screenshots |
+| `scripts/` | `build-legal-site.mjs`: the privacy notice and terms as public pages |
+| `.github/workflows/` | `build-android.yml` (debug APK on every change, released as `kor-build-N`), `release-android-aab.yml` (store bundle), `pages.yml` (legal pages) |
 
-The project is designed from the beginning as a **commercial-quality game**, not a prototype or technical demonstration.
+## Run it
 
-Every system is developed with scalability, optimization, maintainability, and visual polish in mind.
+```bash
+# serve public/ with any static server, then open /game/index.html
+npx http-server public -p 8080   # http://localhost:8080/game/index.html
+```
 
-The game is built for:
+Useful query flags: `?nointro` (skip the opening), `?nostory`, `?q=high|med|low`.
 
-* 🤖 Android
-* 🍎 iPhone & iPad
+## Test
 
-The game itself is a self-contained web build (`public/game`) that the
-Capacitor shell in `mobile/` packages into the native apps — it is not
-published as a browser game.
+```bash
+for f in tools/game/*.test.mjs; do node $f; done
+```
 
----
+## Build
 
-# Vision
+- Debug APK: push to `main` (changes under `public/game/` or `mobile/`); the
+  APK is attached to the `kor-build-N` release.
+- Store bundle: run `release-android-aab.yml`; see `docs/RELEASE.md` for
+  signing (the upload key never enters the repository).
 
-Create one of the highest-quality mobile tactical shooters with:
+## License
 
-* Beautiful illustrated graphics
-* Smooth gameplay
-* Intelligent enemy AI
-* Fluid animations
-* Excellent optimization
-* Original world design
-* Endless replayability
-
-Every visual element should look handcrafted.
-
-Every mechanic should feel polished.
-
-Every update should improve quality.
-
----
-
-# Art Direction
-
-The game follows a premium illustrated art style.
-
-### Never use
-
-* Pixel art
-* Placeholder assets
-* Flat vector graphics
-* Generic free assets
-* Inconsistent artwork
-* Blurry textures
-* Low-resolution sprites
-
-### Every asset must look professionally created.
-
-The visual language should remain consistent across:
-
-* Characters
-* Weapons
-* Buildings
-* Props
-* User Interface
-* Effects
-* Environments
-
----
-
-# Asset Quality
-
-Source assets should be created at high resolution (typically at least **2048×2048** where appropriate), then optimized into suitable runtime assets for each target platform.
-
-Assets include:
-
-* Characters
-* Weapons
-* Tactical knife
-* Buildings
-* Props
-* Vegetation
-* Background layers
-* UI
-* Effects
-
-No blurry assets.
-
-No stretched graphics.
-
-No missing textures.
-
----
-
-# Gameplay
-
-Sector 9: Cinderfall focuses on tactical combat.
-
-Features include:
-
-* Walking
-* Running
-* Sprinting
-* Jumping
-* Crouching
-* Tactical movement
-* Reloading
-* Weapon inspection
-* Melee combat
-* Smooth aiming
-* Responsive controls
-
-Combat should feel satisfying, readable and responsive.
-
----
-
-# Enemy AI
-
-Enemy soldiers should:
-
-* Patrol
-* Detect the player using vision
-* Search after losing sight
-* Take cover
-* Fire accurately
-* Reload intelligently
-* Flank when possible
-* React to damage
-* Coordinate with nearby enemies
-
-Combat should feel dynamic.
-
-Enemies should never appear lifeless.
-
----
-
-# Weapons
-
-Create original military-inspired weapon designs.
-
-Every weapon includes:
-
-* Idle animation
-* Walk animation
-* Sprint animation
-* Fire animation
-* Reload animation
-* Empty reload
-* Inspect animation
-* Equip animation
-* Unequip animation
-
-Weapons should feel premium.
-
----
-
-# Tactical Knife
-
-Original combat knife.
-
-Animations:
-
-* Equip
-* Idle
-* Sprint
-* Inspect
-* Quick Slash
-* Heavy Slash
-
-Knife combat should feel responsive.
-
----
-
-# World
-
-The world should feel alive.
-
-Include:
-
-* Streets
-* Warehouses
-* Factories
-* Rooftops
-* Offices
-* Interior rooms
-* Hallways
-* Storage rooms
-* Side streets
-* Industrial zones
-* Military checkpoints
-
-Every major building should be enterable.
-
-No empty maps.
-
-No repetitive layouts.
-
----
-
-# Graphics
-
-Visual quality is one of the highest priorities.
-
-Features include:
-
-* High-quality illustrated artwork
-* Multi-layer parallax backgrounds
-* Atmospheric lighting
-* Soft shadows
-* Fog
-* Particle systems
-* Dynamic effects
-* Environmental storytelling
-
-Every screenshot should look polished.
-
----
-
-# Mobile Experience
-
-Designed for:
-
-* Android phones
-* Android tablets
-* iPhone
-* iPad
-
-Supports:
-
-* Landscape mode
-* Portrait mode
-* Customizable touch controls
-* Responsive interface
-* Adaptive graphics quality
-
-The game should feel native on mobile devices.
-
----
-
-# Progression
-
-Unlimited procedural progression.
-
-Players unlock:
-
-* Weapons
-* Cosmetics
-* Equipment
-* Achievements
-
-Every completed mission generates a new original level with increasing challenge.
-
----
-
-# Performance
-
-Optimize continuously.
-
-Goals:
-
-* Stable frame rates
-* Low memory usage
-* Fast loading
-* Efficient rendering
-* Responsive controls
-
-Quality should remain high while maintaining smooth performance.
-
----
-
-# Code Standards
-
-Maintain:
-
-* Clean architecture
-* Modular systems
-* Reusable components
-* Clear documentation
-* Scalable project structure
-
-Avoid duplicated logic.
-
----
-
-# Quality Standards
-
-This project should never feel unfinished.
-
-Every system must receive multiple polish passes.
-
-No placeholders.
-
-No broken animations.
-
-No missing assets.
-
-No inconsistent art.
-
-No unfinished mechanics.
-
-If something can be improved, improve it.
-
----
-
-# Release Goals
-
-Prepare the game for commercial distribution.
-
-Target platforms:
-
-* Web
-* Google Play
-* Apple App Store
-
-The project should be ready for packaging and submission, with only the final developer account setup, code signing, and store submission remaining.
-
----
-
-# Design Principles
-
-* Original gameplay
-* Original artwork
-* Responsive combat
-* Excellent readability
-* Fair progression
-* Intelligent AI
-* High production quality
-* Long-term maintainability
-* Cross-platform compatibility
-
----
-
-# Final Goal
-
-**Sector 9: Cinderfall** aims to deliver a polished, original 2D tactical shooter with premium visuals, satisfying gameplay, intelligent enemy behavior, optimized performance, and a consistent artistic identity across Web, Android, and iOS.
-
-Every update should move the project closer to a commercially polished release while preserving originality, quality, and player experience.
+See [`LICENSE`](LICENSE). Fonts under `public/game/assets/fonts/` carry their
+own licences (OFL / Apache 2.0, listed in `ATTRIBUTION.txt`).

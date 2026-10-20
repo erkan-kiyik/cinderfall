@@ -1,85 +1,75 @@
-# CINDERFALL // Sector 9 — Store Listing
+# KOR — Store Listing
 
 Copy-ready text and asset references for the Google Play and Apple App Store
-listings. All fields respect each store's current length limits.
+listings. KOR took Cinderfall's place under the same application id
+(docs/KOR_YAPI.md), so these replace the Cinderfall listing. All fields
+respect each store's current length limits.
 
 ---
 
 ## App name / title
-- **Google Play – Title** (max 30 chars): `CINDERFALL: Sector 9`
-- **App Store – Name** (max 30 chars): `CINDERFALL: Sector 9`
-- **App Store – Subtitle** (max 30 chars): `2D Tactical Stealth Shooter`
+- **Google Play – Title** (max 30 chars): `KOR`
+- **App Store – Name** (max 30 chars): `KOR`
+- **App Store – Subtitle** (max 30 chars): `2D Tactical Shooter`
 
 ## Short description (Google Play, max 80 chars)
-`Stealth, cover and loot crates in a 2D tactical shooter set in a burning city.`
+- TR: `Vanta'nın tuttuğu şehirde beş kişilik bir hücre. Elle çizilmiş 2D nişancı.`
+- EN: `Five people against the force that holds their city. A painted 2D shooter.`
 
 ## Promo text (App Store, max 170 chars — updatable without review)
-`New: adaptive graphics (Low→Ultra), gamepad support, silent takedowns, and an endless procedurally-generated campaign. Drop in and hold the line.`
+`The city is Vanta's. The night is ours. Five operators, a rain-soaked city and the first act of the Kor line campaign.`
 
 ## Keywords (App Store, max 100 chars, comma-separated, no spaces)
-`shooter,tactical,stealth,2d,action,gun,offline,military,arcade,survival,sniper,run,gunner,shoot`
+`shooter,tactical,2d,action,offline,story,operators,cover,campaign,squad,resistance`
 
 ## Google Play tags / category
 - Category: **Games › Action**
-- Content rating target: **Teen** (stylised, non-gory combat)
+- Content rating target: **Teen** (armed combat, no gore)
 - Tags: Action, Shooter, Offline, Single player
 
 ---
 
 ## Full description (Google Play max 4000 chars / App Store max 4000 chars)
 
-Copy-ready English and Turkish texts live in `store/play/` (`full-en.txt`, `full-tr.txt`, `short-en.txt`, `short-tr.txt`).
+Copy-ready texts live in `store/play/` (`full-tr.txt`, `full-en.txt`,
+`short-tr.txt`, `short-en.txt`). The English text:
 
-CINDERFALL: SECTOR 9 — one operator, one burning sector, no backup.
+KOR — the city is Vanta's. The night is ours.
 
-Comms went dark over Sector 9 the moment the power plant did. An unmarked force has dug into the foundries and isn't answering hails. You go in first, and you go in alone.
+The foundry's furnace has been cold for four years. Power, bread and curfew now come from Vanta: a private firm that took over the city's "temporary" security and gets its contract extended every time it runs out. The Kor line is five people: a welder, a firefighter, a signals analyst who walked out of Vanta, a former courier and a dock worker. All they have is each other.
 
-CINDERFALL is a stylized 2D tactical shooter built for touch. Every operator, weapon, muzzle flash and drifting cinder is drawn in code, so it stays sharp on any screen and runs light on cheap phones.
+KOR is a 2D tactical shooter made for phones, painted by hand in look and feel.
+
+■ FIVE OPERATORS, FIFTEEN ABILITIES
+FLINT, WARDEN, VESPER, SKYE and BULWARK, each with three abilities from the life they had before.
+
+■ A CITY THAT LIVES
+The port gate, the morning market, the governor's square: rain, street lamps mirrored in wet asphalt, bare bulbs off a generator, fires in barrels.
 
 ■ TACTICAL COMBAT
-Read the threat meter, use cover and pick your shots. Enemies patrol, investigate noise, hunt your last known position and take cover, so sloppy play gets punished and patience pays off.
+Take cover and pick your moment. Vanta troopers patrol, investigate noise and change cover; the shield man pushes forward.
 
-■ STRIKE FROM THE SHADOWS
-Slip behind an unaware hostile for a silent knife takedown. Stay unseen and the rest of the squad is none the wiser. Get spotted and the whole sector lights up.
+■ CAMPAIGN AND ENDLESS MODE
+The first act of the Kor line campaign: three missions with story scenes. Endless mode with Secretary Gall every fifth wave. New tasks every day.
 
-■ AN ENDLESS CAMPAIGN
-Clear a stage and the next one is generated fresh: new layouts, new cover, new firefights every run. Your level and loadout carry over.
+■ WEAPONS, CRATES, HAWK
+Twelve weapons; weapon finishes in crates seized from Vanta; trade with HAWK, the oldest dealer in the market.
 
-■ A BIG ARSENAL
-Rifles, pistols, SMGs, snipers, a rocket launcher, a minigun, a flamethrower, a railgun, energy weapons and a blade. Each one handles differently, with its own recoil, reload and sound.
+■ OFFLINE
+Single player; no connection needed. Turkish and English.
 
-■ SUPPLY CRATES AND SKINS
-Strip scrap from fallen hostiles and crack open supply crates for weapon skins and operator looks. Rarities run from common to legendary, and duplicates pay scrap back.
-
-■ CROW, THE SCRAP TRADER
-Prefer to choose? Visit CROW's stall. His stock changes every day, with marked-down pieces if you catch them in time. Everything is paid for in scrap you earn in play.
-
-■ LIVELY, TACTILE MENUS
-Springy buttons, sliding tabs, cards that tilt under your thumb and optional vibration on every press. Turn vibration off in Settings if you prefer.
-
-■ BUILT FOR MOBILE
-• Twin-stick touch controls with jump, reload, crouch, sprint, weapon swap, silent takedown and pause
-• Game controller support
-• Low / Medium / High / Ultra graphics with automatic tuning for smooth play on budget phones and flagships
-• Safe-area aware UI for notches and rounded corners
-• Plays fully offline, no account needed
-• Optional rewarded ads you choose to watch, shown only with your consent where the law requires it
-• Privacy notice and terms for your country shown on first launch, with consent choices you can change any time in Settings
-
-Hold the line. Take the sector back.
-
-CINDERFALL is a work of fiction. All characters, factions and locations are fictional.
+KOR is a work of fiction. All characters, companies and places are fictional.
 
 ---
 
-## What's New (release notes — v1.0)
+## What's New (release notes — 2.0)
 ```
-CINDERFALL launches out of Sector 9.
-• Endless procedurally-generated tactical campaign
-• Silent stealth takedowns + smarter enemy AI
-• Crouch, cover and responsive twin-stick touch controls
-• Gamepad support and Low→Ultra adaptive graphics
-• Plays fully offline — no account, optional rewarded ads only with your consent
+Cinderfall is now KOR: a new game in the same app.
+• A city held by Vanta, five operators of the Kor line
+• The first act of the campaign: the port gate, the market, the governor's square
+• Endless mode, daily tasks, crates, HAWK's trades
+• Plays fully offline
+Progress from Cinderfall does not carry over.
 ```
 
 ---
@@ -88,13 +78,15 @@ CINDERFALL launches out of Sector 9.
 
 | Asset | Store spec | File |
 | --- | --- | --- |
-| App icon (source) | 1024×1024, no alpha | `public/game/assets/icon-1024.png` (+ `icon.svg`) |
-| Adaptive/maskable icon | 512×512 | `public/game/assets/icon-maskable-512.png` |
+| App icon (source) | 1024×1024, no alpha | `mobile/assets/icon.png` |
+| Store icon (Play) | 512×512 | `store/icon-512.png` |
 | Feature graphic (Play) | 1024×500 | `store/feature-graphic.png` |
-| Splash / launch source | 2732×2732 | `public/game/assets/splash.svg` |
-| Screenshots (landscape) | ≥1280×720 | `store/screenshots/01-04*.png` |
+| Splash / launch source | 2732×2732 | `mobile/assets/splash.png` |
+| Screenshots (landscape, 16:9) | 1920×1080 | `store/screenshots/01-08*.png` |
 
-**Still required from the developer** (device-specific, see `docs/RELEASE.md`):
-- Final store screenshots captured on target devices / required aspect ratios.
-- App Store 1024×1024 marketing icon export (from `icon.svg`, no transparency).
-- Age-rating questionnaire responses (IARC / App Store).
+**Still required from the account holder** (see `docs/RELEASE.md`):
+- Upload the new texts, icon, feature graphic and screenshots in Play Console.
+- Review the Ads and Data safety declarations (KOR shows no ads yet; the
+  consent flow and the ads SDK stay in the app).
+- Fill in the content rating questionnaire again for KOR.
+- Upload the new AAB (versionName 2.0.x, same upload key).

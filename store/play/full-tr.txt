@@ -1,39 +1,23 @@
-CINDERFALL: SECTOR 9 — tek operatör, yanan bir sektör, destek yok.
+KOR — şehir Vanta'nın. Gece bizim.
 
-Santral çöktüğü an Sector 9'un telsizleri sustu. İşaretsiz bir güç dökümhanelere yerleşti ve çağrılara cevap vermiyor. İlk sen girersin, hem de yalnız.
+Dökümhanenin ocağı dört yıldır soğuk. Elektriği, ekmeği ve sokağa çıkma saatini artık Vanta veriyor: kentin "geçici" güvenliğini üstlenen, her sözleşmede bir kez daha uzatılan özel bir şirket. Kor Hattı beş kişiden ibaret: bir kaynakçı, bir itfaiyeci, Vanta'dan kaçmış bir sinyal analisti, eski bir kurye ve bir liman işçisi. Ellerindeki tek şey birbirleri.
 
-CINDERFALL, dokunmatik ekran için yapılmış stilize bir 2D taktik nişancı oyunu. Her operatör, silah, namlu alevi ve süzülen kor kodla çiziliyor. Bu yüzden her ekranda net görünüyor ve ucuz telefonlarda bile hafif çalışıyor.
+KOR, telefon için yapılmış, elle boyanmış gibi görünen bir 2D taktik nişancı oyunu.
+
+■ BEŞ OPERATÖR, ON BEŞ YETENEK
+FLINT, WARDEN, VESPER, SKYE ve BULWARK. Her birinin geçmişinden gelen üç yeteneği var: yangın kapısı, sis kutusu, telsiz paraziti, hurdadan dron, konteyner sacından kalkan… Ekibini seç, kadronu kur.
+
+■ YAŞAYAN BİR ŞEHİR
+Liman kapısı, sabah pazarı, valilik meydanı. Yağmur, ıslak asfaltta yansıyan sokak lambaları, jeneratörden yanan çıplak ampuller, varil ateşleri. Vanta'nın temiz beyaz ışığına karşı halkın sarı ışığı.
 
 ■ TAKTİK ÇATIŞMA
-Tehdit göstergesini oku, siper al, atışlarını seç. Düşmanlar devriye gezer, sesleri araştırır, son bilinen konumunu kollar ve siper alır. Pervasız oynayanı cezalandırır, sabırlıyı ödüllendirir.
+Siper al, kafayı kaldırma zamanını seç. Vanta askerleri devriye gezer, sesi araştırır, siper değiştirir, kalkanlı asker öne çıkar. Pervasız oynayan çabuk düşer.
 
-■ GÖLGEDEN VUR
-Habersiz bir düşmanın arkasına sessizce geç ve bıçakla öldür. Fark edilmezsen ekibin geri kalanı hiçbir şey anlamaz. Fark edilirsen tüm sektör ayağa kalkar.
+■ KAMPANYA VE SONSUZ MOD
+Kor Hattı kampanyasının ilk perdesi: üç görev, her birinin önünde ve sonunda hikâye sahneleri. Sonsuz modda dalgalar sertleşir, her beşincide Sekreter Gall çıkar. Her gün yeni görevler.
 
-■ SONSUZ KAMPANYA
-Bir bölümü bitirince sıradaki yeniden üretilir: her seferinde yeni yerleşim, yeni siperler, yeni çatışmalar. Seviyen ve ekipmanın bir sonrakine taşınır.
+■ SİLAHLAR, SANDIKLAR, HAWK
+On iki silah: tabancadan pompalıya, keskin nişancı tüfeğinden makineliye. Vanta'dan ele geçirilen sandıklarda silah kaplamaları; pazarın en eski satıcısı HAWK'tan takas.
 
-■ GENİŞ BİR CEPHANELİK
-Tüfekler, tabancalar, SMG'ler, keskin nişancı tüfekleri, bir roketatar, minigun, alev silahı, raylı top, enerji silahları ve bir bıçak. Her birinin geri tepmesi, doldurması ve sesi farklı.
-
-■ MALZEME KASALARI VE KAPLAMALAR
-Düşen düşmanlardan hurda topla, silah kaplamaları ve operatör görünümleri için malzeme kasalarını aç. Nadirlik sıradandan efsaneviye kadar gider, aynısını yeniden çıkarsa hurda geri öder.
-
-■ CROW, HURDA TÜCCARI
-Seçmeyi mi tercih edersin? CROW'un tezgâhına uğra. Stoğu her gün değişir, zamanında yakalarsan indirimli parçalar da olur. Her şey oyunda kazandığın hurdayla alınır.
-
-■ CANLI, DOKUNSAL MENÜLER
-Yaylanan butonlar, kayan sekmeler, parmağının altında eğilen kartlar ve her basışta isteğe bağlı titreşim. İstersen titreşimi Ayarlar'dan kapatabilirsin.
-
-■ MOBİL İÇİN YAPILDI
-• Zıplama, şarjör değiştirme, çömelme, koşma, silah değiştirme, sessiz öldürme ve duraklatma tuşlarıyla çift çubuklu dokunmatik kontrol
-• Oyun kumandası desteği
-• Düşük / Orta / Yüksek / Ultra grafik ve otomatik ayar: ucuz telefonlarda da akıcı
-• Çentik ve yuvarlak köşelere uyumlu arayüz
-• Tamamen çevrimdışı oynanır, hesap gerekmez
-• İsteğe bağlı, izlemeyi senin seçtiğin ödüllü reklamlar; yasanın gerektirdiği yerlerde yalnızca onayınla gösterilir
-• İlk açılışta ülkene uygun gizlilik bildirimi ve kullanım şartları, onay tercihlerini istediğin zaman Ayarlar'dan değiştirebilirsin
-
-Cepheyi tut. Sektörü geri al.
-
-CINDERFALL bir kurgu eseridir. Tüm karakterler, gruplar ve yerler hayalidir.
+■ İNTERNETSİZ
+Tek oyunculu; bağlantı gerekmez. Türkçe ve İngilizce.

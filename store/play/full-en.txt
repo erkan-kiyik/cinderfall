@@ -1,39 +1,23 @@
-CINDERFALL: SECTOR 9 — one operator, one burning sector, no backup.
+KOR — the city is Vanta's. The night is ours.
 
-Comms went dark over Sector 9 the moment the power plant did. An unmarked force has dug into the foundries and isn't answering hails. You go in first, and you go in alone.
+The foundry's furnace has been cold for four years. Power, bread and curfew now come from Vanta: a private firm that took over the city's "temporary" security and gets its contract extended every time it runs out. The Kor line is five people: a welder, a firefighter, a signals analyst who walked out of Vanta, a former courier and a dock worker. All they have is each other.
 
-CINDERFALL is a stylized 2D tactical shooter built for touch. Every operator, weapon, muzzle flash and drifting cinder is drawn in code, so it stays sharp on any screen and runs light on cheap phones.
+KOR is a 2D tactical shooter made for phones, painted by hand in look and feel.
+
+■ FIVE OPERATORS, FIFTEEN ABILITIES
+FLINT, WARDEN, VESPER, SKYE and BULWARK, each with three abilities from the life they had before: a fire door, a smoke canister, a radio jammer, a drone made from scrap, a shield cut from a container door… Pick your operator, build your loadout.
+
+■ A CITY THAT LIVES
+The port gate, the morning market, the governor's square. Rain, street lamps mirrored in wet asphalt, bare bulbs off a generator, fires in barrels. The people's yellow light against Vanta's clean white.
 
 ■ TACTICAL COMBAT
-Read the threat meter, use cover and pick your shots. Enemies patrol, investigate noise, hunt your last known position and take cover, so sloppy play gets punished and patience pays off.
+Take cover and pick your moment. Vanta troopers patrol, investigate noise and change cover; the shield man pushes forward. Play reckless and you fall fast.
 
-■ STRIKE FROM THE SHADOWS
-Slip behind an unaware hostile for a silent knife takedown. Stay unseen and the rest of the squad is none the wiser. Get spotted and the whole sector lights up.
+■ CAMPAIGN AND ENDLESS MODE
+The first act of the Kor line campaign: three missions, each with story scenes before and after. In endless mode the waves get harder and every fifth brings Secretary Gall. New tasks every day.
 
-■ AN ENDLESS CAMPAIGN
-Clear a stage and the next one is generated fresh: new layouts, new cover, new firefights every run. Your level and loadout carry over.
+■ WEAPONS, CRATES, HAWK
+Twelve weapons, from pistols and shotguns to marksman rifles and machine guns. Weapon finishes in crates seized from Vanta; trade with HAWK, the oldest dealer in the market.
 
-■ A BIG ARSENAL
-Rifles, pistols, SMGs, snipers, a rocket launcher, a minigun, a flamethrower, a railgun, energy weapons and a blade. Each one handles differently, with its own recoil, reload and sound.
-
-■ SUPPLY CRATES AND SKINS
-Strip scrap from fallen hostiles and crack open supply crates for weapon skins and operator looks. Rarities run from common to legendary, and duplicates pay scrap back.
-
-■ CROW, THE SCRAP TRADER
-Prefer to choose? Visit CROW's stall. His stock changes every day, with marked-down pieces if you catch them in time. Everything is paid for in scrap you earn in play.
-
-■ LIVELY, TACTILE MENUS
-Springy buttons, sliding tabs, cards that tilt under your thumb and optional vibration on every press. Turn vibration off in Settings if you prefer.
-
-■ BUILT FOR MOBILE
-• Twin-stick touch controls with jump, reload, crouch, sprint, weapon swap, silent takedown and pause
-• Game controller support
-• Low / Medium / High / Ultra graphics with automatic tuning for smooth play on budget phones and flagships
-• Safe-area aware UI for notches and rounded corners
-• Plays fully offline, no account needed
-• Optional rewarded ads you choose to watch, shown only with your consent where the law requires it
-• Privacy notice and terms for your country shown on first launch, with consent choices you can change any time in Settings
-
-Hold the line. Take the sector back.
-
-CINDERFALL is a work of fiction. All characters, factions and locations are fictional.
+■ OFFLINE
+Single player; no connection needed. Turkish and English.

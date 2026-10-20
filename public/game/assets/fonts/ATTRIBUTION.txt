@@ -1,9 +1,18 @@
-Bundled web fonts — all licensed under the SIL Open Font License 1.1
-(full license text in OFL.txt in this folder).
+Bundled web fonts — licensed under the SIL Open Font License 1.1 (full text in
+OFL.txt), except Special Elite, licensed under the Apache License 2.0 (full
+text in APACHE-2.0.txt).
 
 - Rajdhani — Copyright (c) 2014, Indian Type Foundry (info@indiantypefoundry.com)
-- Orbitron — Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron)
 - Inter — Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
 
 Subset to woff2 from the canonical Google Fonts distribution. No glyphs,
 metrics or names were modified beyond format conversion.
+- Big Shoulders Stencil Display, Big Shoulders Display — Copyright 2019 The
+  Big Shoulders Project Authors (https://github.com/xotypeco/big_shoulders)
+- Barlow, Barlow Condensed — Copyright 2017 The Barlow Project Authors
+  (https://github.com/jpt/barlow)
+- Special Elite (Apache License 2.0) — Copyright (c) 2010 Brian J.
+  Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com)
+
+The KOR fonts above are the Fontsource (latin + latin-ext) woff2 cuts of the
+Google Fonts releases, loaded with matching unicode-range declarations.

@@ -1,9 +1,10 @@
-# CINDERFALL — Release Guide
+# KOR — Release Guide
 
-Everything needed to take CINDERFALL from this repository to a live listing on
-**Google Play** and the **Apple App Store**. The game is production-ready and
-technically prepared for packaging; what remains is developer-account setup,
-code signing, and the store uploads — the steps only an account holder can do.
+Everything needed to take KOR from this repository to the stores. KOR took
+Cinderfall's place under the same application id (`com.cinderfall.sector9`,
+docs/KOR_YAPI.md): the next upload to the existing Play listing, signed with
+the same upload key, is KOR (versionName 2.0.x). What remains is what only the
+account holder can do: signing, the store uploads and the listing's forms.
 
 ---
 
@@ -11,37 +12,39 @@ code signing, and the store uploads — the steps only an account holder can do.
 
 | Area | Status |
 | --- | --- |
-| Playable game | ✅ Complete, procedural art (no external textures to go missing) |
+| Playable game | ✅ `public/game` — painted art baked on the device, no external textures |
 | Origin-agnostic build | ✅ Relative paths — same files serve on web (`/game`) and in the app (root) |
-| PWA (installable + offline) | ✅ `manifest.webmanifest` + `sw.js` + meta tags |
-| App icon | ✅ `public/game/assets/icon.svg` + PNGs (192 / 512 / maskable / 1024 / apple-touch / favicon) |
-| Splash / launch screen | ✅ `public/game/assets/splash.svg`, `mobile/assets/splash.png` (2732²) |
+| App icon | ✅ `mobile/assets/icon.png` (1024²), `store/icon-512.png` |
+| Splash / launch screen | ✅ `mobile/assets/splash.png` (2732²) |
 | Feature graphic | ✅ `store/feature-graphic.png` (1024×500) |
-| Store screenshots (landscape) | ✅ `store/screenshots/*.png` (placeholders from the live game) |
-| Store copy (title/desc/keywords) | ✅ `store/listing.md` |
-| Privacy Policy + Terms | ✅ `public/game/legal/privacy.html`, `terms.html` (linked in-game) |
+| Store screenshots (landscape) | ✅ `store/screenshots/*.png` (1920×1080, from the game) |
+| Store copy (title/desc/keywords) | ✅ `store/listing.md`, `store/play/*.txt` |
+| Privacy Policy + Terms | ✅ in the game (Settings) and as public pages (`scripts/build-legal-site.mjs`) |
 | Mobile wrapper (Capacitor) | ✅ `mobile/` — config, scripts, docs |
-| Adaptive graphics / performance | ✅ Low→Ultra presets, object pooling, culling, gamepad, safe-areas |
+| Quality / performance | ✅ quality tiers, a frame-time guard that thins effects, 120 Hz loop, safe areas |
 
 ## 2. What the developer must still do
 
-1. **Register developer accounts** — Google Play Console ($25 one-time) and
-   Apple Developer Program ($99/yr).
-2. **Choose a bundle id** — replace `com.cinderfall.sector9` in
-   `mobile/capacitor.config.json` with your own reverse-domain id.
-3. **Generate signing credentials** (see §5) and build the binaries.
-4. **Capture final screenshots** on the exact device sizes each store requires
-   (the ones in `store/screenshots/` are correct in content but should be
-   re-shot at each store's mandated resolutions — see §6).
-5. **Fill the store questionnaires** — content/age rating (IARC + Apple),
+1. **Keep the bundle id** `com.cinderfall.sector9` — it is the existing Play
+   listing; a new id would be a new, unrelated app.
+2. **Build and sign** the KOR bundle with the same upload key (see §5): run
+   `release-android-aab.yml`, sign if the secrets are not set.
+3. **Update the listing** — texts, icon, feature graphic and screenshots from
+   `store/` (the screenshots are 1920×1080, 16:9).
+4. **Fill the store questionnaires again for KOR** — content/age rating (IARC + Apple),
    data-safety form / App Privacy labels (see §2a — the game ships the Google
    Mobile Ads SDK, so the answer is NOT "no data collected"), and
    export-compliance (no non-standard encryption).
-6. **Upload and submit** for review.
+5. **Upload and submit** for review.
 
 ---
 
 ## 2a. Privacy, consent and store declarations
+
+> **KOR:** the game itself shows no ads yet, but the consent flow and the
+> Google Mobile Ads SDK are still in the app (kept for rewarded ads later).
+> While the SDK ships, keep the declarations below; revisit them in Play
+> Console if the SDK is removed or when ads are switched on.
 
 The game shows a legal gate on first launch (`public/game/js/legal/`): country,
 year of birth, Terms of Service (required), Privacy Notice / KVKK Aydınlatma
@@ -75,12 +78,11 @@ Store declarations that match what the app actually does:
   On iOS every ad request is non-personalised (`ads.js`), so no App Tracking
   Transparency prompt is needed. If you later want personalised ads on iOS,
   add `NSUserTrackingUsageDescription` and request ATT first.
-- **Privacy policy URL** for both stores: host `public/game/legal/privacy.html`
-  (it renders the right regime and language from `?c=XX&l=xx`).
-- **Real AdMob IDs:** replace Google's test IDs in `public/game/js/engine/ads.js`
-  and `mobile/scripts/patch-android-admob.mjs`, and configure the EU/UK
-  consent message (IAB TCF) in the AdMob console's Privacy & messaging section
-  before release.
+- **Privacy policy URL** for both stores: the GitHub Pages site (see the end
+  of this guide); it renders the right regime and language from `?c=XX&l=xx`.
+- **Real AdMob IDs** (when ads are switched on): replace Google's test App ID
+  in `mobile/scripts/patch-android-admob.mjs`, add the ad code to the game, and
+  configure the EU/UK consent message (IAB TCF) in the AdMob console.
 
 These texts are carefully drafted against the laws named in them, but they are
 not a substitute for review by a lawyer qualified in your jurisdiction.
@@ -170,27 +172,27 @@ the moment you receive them.
 | Screenshots | 2–8, min 320px, 16:9 landscape | per device class (e.g. 6.7" 2796×1290, 12.9" iPad) |
 | Splash | via adaptive generation | via adaptive generation |
 
-Sources to regenerate from: `public/game/assets/icon.svg` (icon),
-`public/game/assets/splash.svg` (splash), `store/feature-graphic.png`.
+Sources: `mobile/assets/icon.png` (icon), `mobile/assets/splash.png`
+(splash), `store/feature-graphic.png`.
 
 ## 7. Pre-submission QA checklist
 
-- [ ] Launches to the menu with no console errors (verified headless each release)
-- [ ] DEPLOY → cinematic → gameplay → pause → resume/restart/quit all work
-- [ ] Touch controls: move, aim/fire, jump, reload, swap, crouch, takedown, pause
-- [ ] Gamepad: sticks, triggers, face buttons, Start
-- [ ] Graphics presets Low→Ultra switch cleanly; auto-lower fires under load
-- [ ] Progress saves and resumes across a reload (localStorage)
-- [ ] Portrait rotate-hint appears on phones; landscape is clean
-- [ ] Safe areas respected (notch / home indicator) on menu, HUD, touch, overlays
-- [ ] Privacy Policy + Terms reachable from the menu footer
-- [ ] Offline launch works after first load (service worker)
-- [ ] Stable frame rate on a mid-range device at High
+- [ ] First launch: the legal gate, then the opening, then the lobby, no console errors
+- [ ] Lobby → campaign → preparation → mission → result → lobby
+- [ ] Story scenes before and after each mission play and can be skipped
+- [ ] Touch controls: move, aim/fire, jump, crouch, reload, swap, abilities, pause
+- [ ] Every operator in a mission (abilities, sidearm, cloth)
+- [ ] Endless mode, daily tasks, crates, HAWK's trades, arsenal, profile
+- [ ] Progress saves and resumes across a restart (localStorage)
+- [ ] Safe areas respected (notch / home indicator) on menus, HUD and overlays
+- [ ] Privacy Notice + Terms reachable from Settings
+- [ ] Plays offline
+- [ ] Stable frame rate on a mid-range device
 
 ---
 
-*CINDERFALL is a work of fiction. All characters, factions and locations are
-fictional. The app collects no personal data — see the in-app Privacy Policy.*
+*KOR is a work of fiction. All characters, companies and places are
+fictional.*
 
 ## Privacy policy URL (Play Console)
 

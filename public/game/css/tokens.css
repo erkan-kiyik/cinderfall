@@ -1,0 +1,75 @@
+/* KOR — design tokens (docs/KOR_STORY_CINEMATIC.md §10.3: "the wall of
+   the Ash Line"). The menus are the cells' shelter: soot and concrete, kraft
+   paper and masking tape, painted sheet steel, chalk-white type, the ember as
+   the one accent, union red for stamps. Vanta's cold blue-grey only where
+   something is Vanta's. Colours mirror js/art/style.js where the canvas art
+   shares them. */
+@font-face { font-family: 'Big Shoulders Stencil'; font-weight: 800; font-display: swap; src: url(../assets/fonts/big-shoulders-stencil-display-latin-800-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Big Shoulders Stencil'; font-weight: 800; font-display: swap; src: url(../assets/fonts/big-shoulders-stencil-display-latin-ext-800-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Big Shoulders'; font-weight: 800; font-display: swap; src: url(../assets/fonts/big-shoulders-display-latin-800-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Big Shoulders'; font-weight: 800; font-display: swap; src: url(../assets/fonts/big-shoulders-display-latin-ext-800-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 500; font-display: swap; src: url(../assets/fonts/barlow-condensed-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 500; font-display: swap; src: url(../assets/fonts/barlow-condensed-latin-ext-500-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 600; font-display: swap; src: url(../assets/fonts/barlow-condensed-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 600; font-display: swap; src: url(../assets/fonts/barlow-condensed-latin-ext-600-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 700; font-display: swap; src: url(../assets/fonts/barlow-condensed-latin-700-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Barlow Condensed'; font-weight: 700; font-display: swap; src: url(../assets/fonts/barlow-condensed-latin-ext-700-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Barlow'; font-weight: 400; font-display: swap; src: url(../assets/fonts/barlow-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Barlow'; font-weight: 400; font-display: swap; src: url(../assets/fonts/barlow-latin-ext-400-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Barlow'; font-weight: 500; font-display: swap; src: url(../assets/fonts/barlow-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Barlow'; font-weight: 500; font-display: swap; src: url(../assets/fonts/barlow-latin-ext-500-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Special Elite'; font-weight: 400; font-display: swap; src: url(../assets/fonts/special-elite-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Special Elite'; font-weight: 400; font-display: swap; src: url(../assets/fonts/special-elite-latin-ext-400-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+/* the older faces, still used by text painted into canvases (signs, cinematics) */
+@font-face { font-family: 'Rajdhani'; font-weight: 500; font-display: swap; src: url(../assets/fonts/rajdhani-500.woff2) format('woff2'); }
+@font-face { font-family: 'Rajdhani'; font-weight: 600; font-display: swap; src: url(../assets/fonts/rajdhani-600.woff2) format('woff2'); }
+@font-face { font-family: 'Rajdhani'; font-weight: 700; font-display: swap; src: url(../assets/fonts/rajdhani-700.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-display: swap; src: url(../assets/fonts/inter-400.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-display: swap; src: url(../assets/fonts/inter-600.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 700; font-display: swap; src: url(../assets/fonts/inter-700.woff2) format('woff2'); }
+
+:root {
+  /* soot and chalk: the warm dark ramp, n0 (deepest soot) … n8 (chalk) */
+  --n0: #0c0a09; --n1: #141110; --n2: #1c1816; --n3: #27221f; --n4: #3a332e;
+  --n5: #6a6159; --n6: #a2988b; --n7: #d8cfc1; --n8: #f0e8da;
+  /* the ember (the one accent), union red for stamps, kraft paper and tape */
+  --ember: #e2692f; --ember-hi: #ff9a5c; --ember-lo: #a8441b; --cream: #f0e0c0;
+  --union: #b8352b; --union-hi: #e0574a;
+  --kraft: #c8ab7d; --kraft-hi: #e2cea4; --kraft-lo: #9c8058; --ink: #2a2018;
+  --tape: rgba(226, 212, 176, 0.86);
+  --steel: #3f4348; --steel-hi: #646a71; --steel-lo: #26292c;
+  /* Vanta's: only on Vanta's things */
+  --vanta: #8197ad; --vanta-red: #ff3347;
+  /* gameplay */
+  --danger: #ff4d3d; --interact: #e2b65c; --gold: #e6c25c;
+  /* rarity (kept readable on soot and on kraft) */
+  --r-common: #a39b8f; --r-rare: #6aa6d6; --r-epic: #a07ad8;
+  --r-legendary: #e6a93c; --r-mythic: #e0574a; --r-ultra: #8fb8b4;
+  /* type */
+  --f-stencil: 'Big Shoulders Stencil', 'Big Shoulders', 'Barlow Condensed', sans-serif;
+  --f-num: 'Big Shoulders', 'Barlow Condensed', sans-serif;
+  --f-display: 'Barlow Condensed', 'Barlow', sans-serif;
+  --f-body: 'Barlow', system-ui, sans-serif;
+  --f-type: 'Special Elite', 'Courier New', monospace;
+  --t-xs: 10px; --t-sm: 12px; --t-md: 14px; --t-lg: 18px; --t-xl: 26px; --t-xxl: 44px;
+  --track-wide: 0.16em; --track-mid: 0.08em;
+  /* space, radius, the chipped corner */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --rad: 3px; --cut: 9px;
+  /* surfaces */
+  --panel: rgba(20, 17, 16, 0.9); --panel-hi: rgba(39, 34, 31, 0.94);
+  --line: rgba(216, 207, 193, 0.12); --line-hi: rgba(216, 207, 193, 0.26);
+  /* generated at start (ui/kit.js grain()): concrete grain and paper fibre */
+  --grain: none; --fibre: none;
+  /* motion */
+  --d-fast: 140ms; --d-mid: 220ms; --d-slow: 360ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.25, 1.45, 0.45, 1);
+  /* touch */
+  --hit: 44px;
+}
+
+/* the chipped corner: cut sheet, not a clean bevel */
+.cut { clip-path: polygon(0 2px, var(--cut) 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - var(--cut)), calc(100% - var(--cut) + 2px) 100%, 3px 100%, 0 calc(100% - 2px)); }
+.cut-r { clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%); }

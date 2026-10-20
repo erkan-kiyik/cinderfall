@@ -7,7 +7,7 @@ animasyonu, görev öncesi/sonrası hikâye sahneleri, ve bunların hepsini taş
 teknik "rig": insan iskeleti, yürüyüş, kamera, ışık, yağmur, post-process, ses,
 altyazı. En sonda "yapay zekâ gibi durmasın" kuralları ve kabul ölçütleri var.
 
-Kod: `public/lab/js/cine/` (yeni). Oyunun mevcut çizgi-film stili oyun içinde
+Kod: `public/game/js/cine/` (yeni). Oyunun mevcut çizgi-film stili oyun içinde
 kalır; sinematikler ayrı, gerçekçi bir görüntü diliyle çizilir (ışık, sis,
 film greni, siluet). Ana oyun (`public/game`) değişmez.
 
@@ -117,8 +117,8 @@ Toplam: 62 sn. "Geç" düğmesi 1. saniyeden sonra görünür.
 
 Eski kömür başlığının yerine, ışın izlemeli beş plaka üstünde canlı katmanlarla
 bir açılış. Plakalar seri sahnelerinden, açılış kameralarından pişirilir
-(`node tools/lab/series/render.mjs --plates`, kameralar `js/cine/plates.js`,
-sahneler `tools/lab/series/opening.js`); hareket eden her şey canlı çizilir
+(`node tools/game/series/render.mjs --plates`, kameralar `js/cine/plates.js`,
+sahneler `tools/game/series/opening.js`); hareket eden her şey canlı çizilir
 (`js/cine/opening.js`). Çekimler arası 0.32 sn siyaha iniş.
 
 | Zaman | Çekim | Canlı |
@@ -228,11 +228,11 @@ Verlet zinciri: 9 düğüm, 2.6 cm; yerçekimi 9.8, rüzgâr gürültü 0.4–1.
 - Şehir (`city.js`): dar apartmanlardan iç avlulu adalar, karışık ışık sıcaklığında pencereler, sodyum + LED sokaklar.
 - Yürüyüşte ayak topuktan basar, parmak ucuyla iter (test: parmak ≤ 4 mm kayar).
 - Görev sahneleri (`m1`–`m3`) artık "plaka" üzerinde: binalar, zemin, lambalar
-  önceden ışın izlenir (`tools/lab/plate/`: kutu/silindir/küre/dışbükey gövde,
+  önceden ışın izlenir (`tools/game/plate/`: kutu/silindir/küre/dışbükey gövde,
   gölge ışınları, ortam perdelemesi, ıslak zeminde Fresnel yansıması ve
   GGX parıltısı, sisteki ışık hüzmeleri eşit-açılı örneklemeyle, ACES), 2×
-  süper örneklemeyle, WebP olarak `public/lab/assets/plates/`'e yazılır
-  (`node tools/lab/plate/bake.mjs governor`). Sahne kamerası plakanınkiyle
+  süper örneklemeyle, WebP olarak `public/game/assets/plates/`'e yazılır
+  (`node tools/game/plate/bake.mjs governor`). Sahne kamerası plakanınkiyle
   aynı yerde durur (`js/cine/plates.js`), el titremesi ve yavaş zum plakayı
   kaydırıp büyütür; yağmur, lambalar, TV ışığı, buhar canlı çizilir.
   Telefonda pişirme yok, yalnız resim yüklenir.
@@ -289,15 +289,15 @@ Hikâyenin otuz durağan karesi, sırasıyla; hiçbirinde insan yok. Önsöz (01
 bugün (04–11), Perde 1 (12–21), Perde 2 (22–26), Perde 3 (27–29), başlık (30).
 Her kare 2.39:1, 1920 × 803, 2×2 süper örnekleme.
 
-- Çekim listesi: `tools/lab/series/shots.js` (kamera: konum, bakılan nokta,
+- Çekim listesi: `tools/game/series/shots.js` (kamera: konum, bakılan nokta,
   mm; sahne; kullandığı resimler; üstüne çizilen yağmur/buhar/kıvılcım; film).
-- Sahneler: `tools/lab/series/scenes/` (çelikhane, liman, şehir ve kule,
+- Sahneler: `tools/game/series/scenes/` (çelikhane, liman, şehir ve kule,
   odalar, diğer yerler); kapı, pazar ve valilik plaka sahnelerinden gelir.
 - Yüzeydeki resimler (afiş, harita, Kül Planı, defter, dosya sırtları, tabela,
-  tel örgü): `tools/lab/series/textures.js`, tarayıcıda çizilir.
-- Çalıştırma: `node tools/lab/series/render.mjs 01 02 … [--quick] [--w 1920] [--ss 2]`.
+  tel örgü): `tools/game/series/textures.js`, tarayıcıda çizilir.
+- Çalıştırma: `node tools/game/series/render.mjs 01 02 … [--quick] [--w 1920] [--ss 2]`.
   Hızlı bakış ~7 sn, tam kalite ~70 sn/kare (4 çekirdek).
-- Test: `node tools/lab/series.test.mjs` (otuz çekim kurulur, her şeyin
+- Test: `node tools/game/series.test.mjs` (otuz çekim kurulur, her şeyin
   malzemesi ve resmi var, kameralar makul).
 
 İzleyiciye eklenenler: projektör huzmesi artık yalnız koninin içinde kalan ışın
@@ -311,7 +311,7 @@ düzeltildi, sinematiklerde de geçerli.
 
 ## 9. Karakter tasarımı (sıfırdan, hikâyeye göre)
 
-Bu bölüm çizimden önce yazıldı; kodlar (`public/lab/js/art/ops/*.js`,
+Bu bölüm çizimden önce yazıldı; kodlar (`public/game/js/art/ops/*.js`,
 `art/enemies/syndicate.js`, HAWK portresi) birebir buna uyar.
 
 ### 9.1 Ortak kurallar
