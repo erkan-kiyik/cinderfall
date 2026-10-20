@@ -116,7 +116,7 @@ export class CharRenderer {
     this.enemyInk = null; // accessibility: a bright outline colour for enemies
     this.wet = 0;           // rain on the figures (scenes set it outdoors)
     this.ppu = 5; this.cols = 1; this.cap = 1;
-    this.queue = []; this.done = new Map();
+    this.queue = []; this.done = new Map(); this.slots = [];
   }
 
   // Slot resolution follows the scene's pixels per unit, capped so 9 fit.
@@ -128,7 +128,7 @@ export class CharRenderer {
   }
 
   // Characters to draw this frame, in draw order.
-  begin(list) { this.queue = list; this.done.clear(); this.next = 0; }
+  begin(list) { this.queue = list; this.done.clear(); this.slots.length = 0; this.next = 0; }
 
   // Render the next group of slots (up to `cap`) starting at index i.
   renderGroup(i, restore) {
@@ -140,6 +140,11 @@ export class CharRenderer {
     const bw = BOX[2] - BOX[0], bh = BOX[3] - BOX[1];
     for (let k = 0; k < n; k++) {
       const ch = this.queue[i + k];
+      // whoever had this slot before is drawn over: they must be drawn again
+      // when they are next needed, or they would show the new one's picture
+      const prev = this.slots[k];
+      if (prev && prev !== ch) this.done.delete(prev);
+      this.slots[k] = ch;
       const cx = (k % this.cols) * this.sw, cy = Math.floor(k / this.cols) * this.sh;
       gl.viewport(cx + 1, cy + 1, this.sw - 2, this.sh - 2);
       gl.scissor(cx, cy, this.sw, this.sh);
