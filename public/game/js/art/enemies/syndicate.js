@@ -72,64 +72,34 @@ function neck(g, t) {
   cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', t, { sh: 1.2, hl: 0.25 });
 }
 function helmet(g) {
-  const A = PAL.armor, B = brush(g);
-  // the balaclava's knit at the throat under the jaw plate
+  const A = PAL.armor, K = PAL.black;
   neck(g, PAL.suit);
-  B.inside('M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', () => { for (let x = -2; x < 2.6; x += 0.22) B.line(`M ${x} -4.6 L ${x + 0.1} 1.4`, 'rgba(8,10,16,0.35)', 0.06, 0.03); B.fill('M -3 -5 L 3 -5 L 3 -2.4 L -3 -2.0 Z', 'rgba(6,8,12,0.5)', 0.3); });
-  // the shell: cut high over the ear, the light rolling over its crown
-  cel(g, SHELL, A, { sh: 1.4, hl: 0.6 });
-  B.inside(SHELL, () => {
-    B.line('M -3.8 -10.6 C -0.8 -12.9 3.0 -12.8 4.9 -10.6', 'rgba(255,255,255,0.55)', 0.22, 0.14);
-    B.dab(2.4, -11.6, 2.0, 0.7, 'rgba(236,244,252,0.35)');
-    B.fill('M -6 -6 C -4 -5.0 -2 -4.4 0 -4.6 L 0 -3 L -6 -3 Z', 'rgba(16,20,28,0.4)', 0.4);
-    // the cut's edge, trimmed in rubber
-    B.line('M 4.6 -8.7 C 3.0 -8.8 1.6 -8.6 0.6 -8.0 C -0.4 -7.4 -0.8 -6.6 -0.6 -5.6 C -0.4 -4.8 -0.8 -4.2 -1.6 -4.0 C -2.8 -3.8 -4.0 -4.0 -4.9 -4.6', '#1b1f26', 0.26, 0.02);
-    // the velcro panel at the back and the number stencilled under it
-    const VEL = 'M -3.9 -10.0 C -3.3 -10.9 -2.4 -11.5 -1.4 -11.8 L -1.1 -11.0 C -2.0 -10.7 -2.7 -10.2 -3.2 -9.5 Z';
-    B.fill(VEL, '#56616f', 0.02);
-    B.inside(VEL, () => { texture(g, 'knit', 0.5, 0.25); B.line('M -3.8 -10.0 C -3.2 -10.85 -2.3 -11.45 -1.4 -11.75', 'rgba(20,24,30,0.5)', 0.06, 0.02); });
-    // the unit's ID tape (no lettering: mirrored when he faces left)
-    for (const [x0, w] of [[-4.4, 0.5], [-3.7, 0.5], [-3.0, 1.2], [-1.6, 0.3]]) B.fill(`M ${x0} -5.4 L ${x0 + w} -5.42 L ${x0 + w} -4.9 L ${x0} -4.88 Z`, 'rgba(236,240,244,0.7)', 0.01);
-    grime(g, -6, -3.8, DUST);
+  // the shell: Vanta's grey, round over the skull and closed over the face
+  const SH = 'M -5.0 -4.0 C -5.7 -7.2 -5.2 -10.6 -2.6 -12.0 C 0.2 -13.2 3.6 -12.8 5.2 -10.8 C 6.0 -9.8 6.3 -8.6 6.3 -7.4 L 6.3 -4.0 C 6.2 -2.6 5.3 -1.6 3.9 -1.3 L 1.2 -1.1 C -0.8 -1.3 -2.6 -2.2 -3.8 -3.0 Z';
+  cel(g, SH, A, { sh: 1.5, hl: 0.65 });
+  clip(g, SH, () => {
+    stroke(g, curve([[-4.0, -10.4], [-0.8, -12.6], [3.8, -12.0]]), '#ffffff', 0.22, 0.75);
+    stroke(g, 'M -5 -6.4 C -2.6 -6.0 -0.6 -6.4 0.6 -6.9', A.d, 0.22, 0.8);
+    emblem(g, -1.8, -9.0, 1.05, PAL.white.m);
+    grime(g, -6, -1, DUST);
   });
-  worn(g, SHELL, [-5.6, -13.4, 5.9, -4.0], 29, 0.6);
-  // the rail along the side, its slots; the mount plate over the brow and its screws
-  const RAIL = 'M -4.5 -6.2 C -3.0 -7.5 -1.0 -8.5 1.4 -8.95 C 2.6 -9.12 3.6 -9.14 4.5 -9.02 L 4.5 -9.5 C 3.6 -9.62 2.6 -9.6 1.3 -9.42 C -1.2 -8.96 -3.2 -7.96 -4.8 -6.6 Z';
-  cel(g, RAIL, PAL.black, { sh: 0.3, hl: 0.3, lw: 0.1 });
-  B.inside(RAIL, () => { for (let u = 0; u < 1; u += 0.09) { const x = -4.4 + u * 8.8, y = -6.6 - Math.sin(u * 1.9) * 2.6; B.fill(`M ${x} ${y - 0.12} l 0.28 -0.04 l 0 0.18 l -0.28 0.04 Z`, '#050607', 0.01); } B.line('M -4.6 -6.5 C -3.1 -7.8 -1.1 -8.8 1.35 -9.25 C 2.6 -9.4 3.6 -9.42 4.5 -9.3', 'rgba(170,180,192,0.3)', 0.05, 0.02); });
-  const MOUNT = 'M 4.0 -11.4 L 5.3 -10.9 C 5.6 -10.4 5.7 -10.0 5.7 -9.6 L 4.3 -9.8 Z';
-  cel(g, MOUNT, PAL.black, { sh: 0.3, hl: 0.35, lw: 0.1 });
-  for (const [x, y] of [[4.5, -10.8], [5.2, -10.2], [4.6, -10.1]]) rivet(g, x, y, 0.12, PAL.steel);
-  // the face plate: grey round the slit, its seam to the jaw; the slit of smoked glass in a
-  // steel frame, the street's light across its top edge, red deep in it
-  cel(g, FACE, A, { sh: 0.8, hl: 0.5 });
-  B.inside(FACE, () => { B.line('M 0.6 -8.0 C 2.2 -8.75 4.4 -8.85 5.9 -8.45', 'rgba(255,255,255,0.45)', 0.1, 0.05); B.dab(4.6, -8.2, 1.4, 0.3, 'rgba(236,244,252,0.3)'); });
-  worn(g, FACE, [0.2, -9.0, 6.4, -6.0], 31, 0.5);
-  B.fill('M 1.5 -7.84 C 3.0 -8.1 4.8 -8.1 6.3 -7.72 L 6.34 -6.82 C 4.8 -7.06 3.0 -7.06 1.56 -6.86 Z', '#2a2f37', 0.01);
-  B.fill(SLIT, '#14161b', 0.01);
-  B.inside(SLIT, () => {
-    B.dab(4.0, -7.36, 2.2, 0.3, 'rgba(96,30,36,0.7)');
-    B.dab(5.2, -7.4, 0.5, 0.16, 'rgba(160,44,52,0.6)');
-    B.line('M 1.7 -7.66 C 3.0 -7.92 4.8 -7.92 6.18 -7.58', 'rgba(220,226,236,0.6)', 0.06, 0.02);
-    B.dab(3.0, -7.66, 0.36, 0.05, 'rgba(255,214,160,0.7)');
+  worn(g, SH, [-5.7, -13.2, 6.3, -1.1], 29, 0.5);
+  // the face: black polymer from the brow to the chin, one slit of smoked glass, three vents
+  const FACE = 'M 1.0 -8.6 C 2.8 -9.0 5.0 -8.9 6.3 -8.4 L 6.3 -4.0 C 6.2 -2.6 5.3 -1.6 3.9 -1.3 L 1.2 -1.1 C 0.6 -2.6 0.5 -4.6 0.6 -6.4 C 0.6 -7.2 0.8 -8.0 1.0 -8.6 Z';
+  cel(g, FACE, K, { sh: 0.8, hl: 0.45, gloss: 0.4 });
+  clip(g, FACE, () => {
+    stroke(g, 'M 6.15 -6.4 C 6.3 -5.0 6.1 -3.4 5.5 -2.4', K.l, 0.16, 0.6);
+    for (const y of [-5.0, -4.2, -3.4]) { stroke(g, `M 3.5 ${y} C 4.4 ${y - 0.12} 5.2 ${y - 0.08} 6.1 ${y + 0.16}`, '#050607', 0.3); stroke(g, `M 3.5 ${y + 0.22} C 4.4 ${y + 0.1} 5.2 ${y + 0.14} 6.1 ${y + 0.38}`, K.l, 0.1, 0.5); }
   });
-  B.line('M 1.62 -6.94 C 3.0 -7.16 4.8 -7.16 6.24 -6.9', 'rgba(170,180,192,0.45)', 0.04, 0.01);
-  // the jaw plate: black polymer, a sheen down its front, the vents pressed in it
-  cel(g, JAW, PAL.black, { sh: 0.8, hl: 0.4, gloss: 0.35 });
-  B.inside(JAW, () => {
-    for (const [y, c] of [[-5.1, 0.02], [-4.4, 0.06], [-3.7, 0.1]]) { B.line(`M 3.4 ${y} C 4.2 ${y - 0.15 + c} 5.0 ${y - 0.1 + c} 5.9 ${y + 0.2}`, 'rgba(0,0,0,0.85)', 0.24, 0.06); B.line(`M 3.4 ${y + 0.2} C 4.2 ${y + 0.05 + c} 5.0 ${y + 0.1 + c} 5.9 ${y + 0.4}`, 'rgba(150,164,180,0.25)', 0.08, 0.04); }
-    B.line('M 6.1 -6.0 C 6.25 -4.8 6.1 -3.4 5.5 -2.5', 'rgba(170,184,200,0.35)', 0.12, 0.08);
-    B.line('M 0.4 -6.35 C 2.4 -6.55 5.0 -6.46 6.3 -6.08', 'rgba(0,0,0,0.6)', 0.08, 0.03);
-    B.fill('M 0 -3 C 2 -2.4 4 -2.0 6.4 -2.6 L 6.4 -1 L 0 -1 Z', 'rgba(0,0,0,0.4)', 0.3);
-  });
-  // the hinge bolts at the temple, the comms cup over the ear and its stub antenna
-  rivet(g, 0.85, -6.25, 0.2, PAL.steel);
-  const CUP = 'M -0.9 -7.3 C 0.0 -7.6 0.9 -7.0 1.0 -6.0 C 1.1 -5.0 0.5 -4.3 -0.4 -4.4 C -1.1 -4.5 -1.4 -5.2 -1.4 -5.9 C -1.4 -6.6 -1.2 -7.1 -0.9 -7.3 Z';
-  cel(g, CUP, PAL.black, { sh: 0.5, hl: 0.4, lw: 0.14 });
-  B.inside(CUP, () => { B.line('M -0.6 -7.0 C 0.2 -7.2 0.7 -6.6 0.76 -6.0', 'rgba(170,180,192,0.4)', 0.08, 0.04); B.fill('M -0.9 -6.4 L 0.5 -6.5 L 0.5 -5.6 L -0.9 -5.5 Z', '#3a404a', 0.04); });
-  rivet(g, -0.2, -5.95, 0.16, PAL.steel);
-  B.line('M -1.0 -7.1 L -1.6 -9.4', '#15181d', 0.18, 0.01);
-  B.dab(-1.62, -9.46, 0.1, 0.1, '#2a2f37');
+  const SLIT = 'M 1.6 -7.75 C 3.2 -8.0 5.0 -8.0 6.32 -7.7 L 6.34 -6.85 C 5.0 -7.1 3.2 -7.1 1.66 -6.9 Z';
+  const gs = g.createLinearGradient(1.6, 0, 6.3, 0); gs.addColorStop(0, '#120c0e'); gs.addColorStop(0.6, '#4a1418'); gs.addColorStop(1, '#2a0a0e');
+  g.fillStyle = gs; g.fill(new Path2D(SLIT));
+  stroke(g, 'M 1.7 -7.62 C 3.2 -7.88 5.0 -7.88 6.25 -7.6', '#e6eaf0', 0.08, 0.6);
+  stroke(g, SLIT, PAL.steel.d, 0.12);
+  // the comms cup over the ear and its stub antenna
+  cel(g, 'M -1.5 -5.8 a 1.1 1.3 0 1 0 2.2 0 a 1.1 1.3 0 1 0 -2.2 0 Z', A, { sh: 0.5, hl: 0.4, lw: 0.2 });
+  stroke(g, 'M -1.1 -5.8 a 0.7 0.85 0 1 0 1.4 0 a 0.7 0.85 0 1 0 -1.4 0 Z', A.d, 0.12, 0.8);
+  rivet(g, -0.4, -5.8, 0.22, PAL.steel);
 }
 
 // --- torso: navy uniform, the plate carrier --------------------------------------------------
@@ -354,78 +324,35 @@ export const KALKANLI = {
 const RED = mat(tone('#e85a55', '#c4302c', '#8c1f1c', '#3e0a09'), 'canvas', 0.5);
 const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 function maskHead(g) {
-  const A = PAL.armor, B = brush(g);
+  const A = PAL.armor, RUB = mat(tone('#3c4148', '#272b31', '#181b1f', '#07080a'), 'rubber', 0.45);
   neck(g, PAL.black);
-  // the black balaclava under it all, the knit drawn tight over the skull
+  // the black hood under it all
   const HD = headShape({ jaw: 0.8 });
-  cel(g, HD, PAL.black, { sh: 1.0, hl: 0.3 });
-  B.inside(HD, () => { texture(g, 'knit', 0.35, 0.4); B.fill('M -5 -6 L 0 -6 L 0 0 L -5 0 Z', 'rgba(0,0,0,0.35)', 0.4); });
-  // the mask: moulded black rubber over the face from the brow to under the chin; the
-  // seal's softer edge round it, the brow over the lenses, the cheek's swell, the nose cup
-  // standing out in front with the speech disc on it
-  const MASK = 'M 0.4 -9.2 C 2.4 -9.7 4.6 -9.3 5.4 -8.2 C 5.7 -7.4 5.7 -6.6 5.5 -5.9 C 6.3 -5.5 6.7 -4.6 6.6 -3.7 C 6.5 -2.8 5.9 -2.0 5.0 -1.6 C 4.0 -1.2 2.6 -1.2 1.6 -1.6 C 0.8 -2.2 0.3 -3.2 0.2 -4.4 C 0.0 -6.0 0.0 -7.8 0.4 -9.2 Z';
-  const RUB = mat(tone('#4a4f57', '#2e3238', '#1d2025', '#08090b'), 'rubber', 0.4);
-  cel(g, MASK, RUB, { sh: 0.9, hl: 0.45, gloss: 0.4 });
-  B.inside(MASK, () => {
-    B.line(MASK, 'rgba(70,76,86,0.7)', 0.3, 0.1);
-    B.line('M 1.0 -9.0 C 2.6 -9.4 4.4 -9.1 5.2 -8.2', 'rgba(170,180,194,0.4)', 0.14, 0.08);
-    B.fill('M 5.0 -6.0 C 5.8 -5.7 6.3 -5.0 6.4 -4.2 L 4.8 -4.0 Z', 'rgba(150,160,174,0.25)', 0.2);
-    B.fill('M 0 -3.4 C 2 -2.6 4 -2.2 7 -2.8 L 7 -1 L 0 -1 Z', 'rgba(0,0,0,0.45)', 0.3);
-    texture(g, 'rubber', 0.35, 0.5);
-  });
-  // the harness: straps from the mask's edge back over the hood, their steel buckles
-  for (const [d, bx, by] of [['M 0.5 -8.6 C -1.2 -9.6 -2.8 -10.0 -4.2 -9.6', -0.9, -9.25], ['M 0.3 -6.4 C -1.4 -6.6 -2.8 -6.6 -4.0 -6.2', -1.1, -6.55], ['M 0.6 -2.6 C -0.8 -3.0 -2.2 -3.6 -3.4 -4.4', -0.6, -2.95]]) {
-    B.line(d, '#0c0d0f', 0.32, 0.01);
-    B.line(d, 'rgba(110,118,128,0.3)', 0.06, 0.01);
-    B.fill(`M ${bx - 0.24} ${by - 0.2} L ${bx + 0.24} ${by - 0.2} L ${bx + 0.24} ${by + 0.2} L ${bx - 0.24} ${by + 0.2} Z`, '#7b838c', 0.01);
-    B.fill(`M ${bx - 0.12} ${by - 0.1} L ${bx + 0.12} ${by - 0.1} L ${bx + 0.12} ${by + 0.1} L ${bx - 0.12} ${by + 0.1} Z`, '#0c0d0f', 0.01);
+  cel(g, HD, mat(PAL.black, 'knit', 0.5), { sh: 1.0, hl: 0.3 });
+  // the mask: moulded rubber from the brow to under the chin, the straps back over the hood
+  for (const d of ['M 0.5 -8.4 C -1.2 -9.4 -2.8 -9.6 -4.2 -9.2', 'M 0.3 -6.2 C -1.4 -6.4 -2.8 -6.4 -4.0 -6.0', 'M 0.6 -2.6 C -0.8 -3.0 -2.2 -3.6 -3.4 -4.4']) stroke(g, d, '#0a0b0d', 0.4);
+  const MASK = 'M 0.4 -9.1 C 2.4 -9.6 4.6 -9.2 5.4 -8.1 C 5.7 -7.3 5.7 -6.5 5.5 -5.8 C 6.2 -5.4 6.5 -4.6 6.4 -3.8 C 6.3 -2.8 5.7 -2.0 4.8 -1.6 C 3.8 -1.2 2.5 -1.2 1.5 -1.6 C 0.7 -2.2 0.3 -3.2 0.2 -4.4 C 0.0 -6.0 0.0 -7.8 0.4 -9.1 Z';
+  cel(g, MASK, RUB, { sh: 0.9, hl: 0.5, gloss: 0.4 });
+  clip(g, MASK, () => { stroke(g, curve([[1.0, -8.9], [3.0, -9.25], [5.1, -8.1]]), RUB.l, 0.18, 0.7); fill(g, 'M 0 -3.2 C 2 -2.6 4 -2.2 7 -2.8 L 7 -1 L 0 -1 Z', RUB.k, 0.45); });
+  // the lenses: dark glass in heavy steel rings, the far one only an edge past the nose
+  for (const [x, y, rx, ry] of [[5.15, -7.05, 0.34, 0.62], [2.7, -7.05, 0.92, 0.98]]) {
+    cel(g, `M ${x - rx - 0.28} ${y} a ${rx + 0.28} ${ry + 0.28} 0 1 0 ${2 * rx + 0.56} 0 a ${rx + 0.28} ${ry + 0.28} 0 1 0 ${-2 * rx - 0.56} 0 Z`, PAL.steel, { sh: 0.4, hl: 0.5, lw: 0.14 });
+    const L = `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
+    fill(g, L, '#140c0e');
+    clip(g, L, () => { fill(g, `M ${x - rx} ${y + ry * 0.1} L ${x + rx} ${y - ry * 0.3} L ${x + rx} ${y + ry} L ${x - rx} ${y + ry} Z`, '#3a1216', 0.7); fill(g, `M ${x - rx * 0.7} ${y - ry} L ${x - rx * 0.2} ${y - ry} L ${x - rx * 0.8} ${y + ry} L ${x - rx * 1.2} ${y + ry} Z`, '#e8eef4', 0.3); });
   }
-  // the lenses: dark glass in steel rings crimped into the rubber; the street's light across
-  // the near one, the far one only an edge past the nose
-  const lens = (x, y, rx, ry) => {
-    B.fill(ell(x, y, rx + 0.3, ry + 0.3), '#0c0d10', 0.04);
-    B.fill(ell(x, y, rx + 0.12, ry + 0.12), '#4c535b', 0.02);
-    B.line(`M ${x - rx * 0.9} ${y - ry * 0.5} A ${rx + 0.08} ${ry + 0.08} 0 0 1 ${x + rx * 0.6} ${y - ry * 0.9}`, 'rgba(200,208,218,0.4)', 0.04, 0.02);
-    B.fill(ell(x, y, rx, ry), '#121417', 0.01);
-    B.inside(ell(x, y, rx, ry), () => {
-      B.dab(x + rx * 0.15, y + ry * 0.25, rx * 0.8, ry * 0.6, 'rgba(70,22,26,0.5)');
-      // the street's light lies across the glass as a band, not a ring
-      B.fill(`M ${x - rx} ${y - ry * 0.1} L ${x - rx * 0.2} ${y - ry} L ${x + rx * 0.1} ${y - ry} L ${x - rx * 0.7} ${y + ry * 0.1} Z`, 'rgba(190,204,220,0.22)', rx * 0.08);
-      B.dab(x - rx * 0.35, y - ry * 0.5, rx * 0.12, ry * 0.08, 'rgba(240,246,252,0.8)');
-      B.dab(x + rx * 0.45, y + ry * 0.45, rx * 0.2, ry * 0.06, 'rgba(255,190,130,0.45)');
-    });
-  };
-  lens(5.25, -7.1, 0.34, 0.62);
-  lens(2.75, -7.1, 0.95, 1.0);
-  // the speech disc on the nose cup, the filter on the cheek: a steel canister in Vanta's
-  // grey screwed into its port, threaded, the intake perforated, the paint worn to the steel
-  const VM = ell(6.1, -3.7, 0.55, 0.75);
-  cel(g, VM, mat(tone('#6c747e', '#4a5059', '#30353c', '#101215'), 'steel', 0.3), { sh: 0.4, hl: 0.35, lw: 0.1 });
-  B.inside(VM, () => { for (let i = -0.5; i <= 0.5; i += 0.25) B.line(`M ${5.7} ${-3.7 + i} L ${6.6} ${-3.7 + i}`, 'rgba(0,0,0,0.6)', 0.06, 0.01); });
-  g.save(); g.translate(3.0, -3.3); g.rotate(0.55);
-  const CAN = 'M -0.6 -1.15 L 2.4 -1.15 C 2.7 -1.15 2.85 -0.9 2.85 -0.6 L 2.85 0.6 C 2.85 0.9 2.7 1.15 2.4 1.15 L -0.6 1.15 Z';
-  B.fill('M -0.9 -0.8 L -0.4 -0.8 L -0.4 0.8 L -0.9 0.8 Z', '#16181b', 0.01);
-  cel(g, CAN, A, { sh: 0.7, hl: 0.45, gloss: 0.3 });
-  B.inside(CAN, () => {
-    for (let x = -0.5; x < 0.4; x += 0.14) B.line(`M ${x} -1.2 L ${x} 1.2`, 'rgba(10,12,16,0.55)', 0.05, 0.01);
-    B.line('M -0.5 -0.9 L 2.6 -0.9', 'rgba(255,255,255,0.45)', 0.12, 0.06);
-    B.fill('M -1 0.3 L 3 0.3 L 3 1.3 L -1 1.3 Z', 'rgba(10,14,20,0.4)', 0.2);
-    B.fill('M 2.55 -1.2 L 2.9 -1.2 L 2.9 1.2 L 2.55 1.2 Z', '#2a2f36', 0.02);
-    for (let y = -0.8; y < 0.9; y += 0.32) B.dab(2.72, y, 0.05, 0.05, '#050607');
-    scuffs(g, [[1.4, -0.7, 0.3], [0.8, 0.6, 0.2, 0.4]], '#d8dde2', 0.6);
-  });
-  B.fill('M 1.6 -1.18 L 2.0 -1.18 L 2.0 1.18 L 1.6 1.18 Z', 'rgba(236,240,244,0.75)', 0.01);
+  // the filter canister screwed on at the front: Vanta's grey, threaded, the intake holes
+  g.save(); g.translate(4.6, -3.4); g.rotate(0.35);
+  const CAN = 'M -0.6 -1.0 L 2.2 -1.0 C 2.5 -1.0 2.65 -0.8 2.65 -0.5 L 2.65 0.5 C 2.65 0.8 2.5 1.0 2.2 1.0 L -0.6 1.0 Z';
+  cel(g, CAN, A, { sh: 0.6, hl: 0.5, gloss: 0.3 });
+  clip(g, CAN, () => { for (let x = -0.5; x < 0.5; x += 0.16) stroke(g, `M ${x} -1.1 L ${x} 1.1`, A.k, 0.06, 0.7); fill(g, 'M 2.35 -1.1 L 2.7 -1.1 L 2.7 1.1 L 2.35 1.1 Z', A.k, 0.8); stroke(g, 'M -0.5 -0.8 L 2.4 -0.8', '#ffffff', 0.1, 0.5); });
+  for (const y of [-0.5, 0, 0.5]) fill(g, `M 2.45 ${y - 0.08} l 0.16 0 l 0 0.16 l -0.16 0 Z`, '#050607');
   g.restore();
-  // the low helmet over it all: a riot shell in Vanta's grey, the mark on its side
-  const LID = 'M -4.8 -6.4 C -5.2 -10.0 -2.6 -12.8 0.6 -12.8 C 3.6 -12.8 5.3 -11.0 5.4 -9.0 L 4.6 -8.7 C 2.4 -9.1 -1.2 -8.8 -4.1 -6.0 Z';
-  cel(g, LID, A, { sh: 1.3, hl: 0.55 });
-  B.inside(LID, () => {
-    B.line('M -3.8 -10.4 C -1.6 -12.4 1.8 -12.6 4.4 -11.2', 'rgba(255,255,255,0.55)', 0.2, 0.12);
-    B.line('M 5.4 -9.0 L 4.6 -8.7 C 2.4 -9.1 -1.2 -8.8 -4.1 -6.0', '#1b1f26', 0.24, 0.02);
-    emblem(g, -1.4, -9.8, 0.9, PAL.white.m);
-    grime(g, -9, -6, DUST);
-  });
-  worn(g, LID, [-5.2, -12.8, 5.4, -6.0], 43, 0.7);
+  // the low helmet over it all, the mark on its side
+  const LID = 'M -4.8 -6.4 C -5.2 -10.0 -2.6 -12.6 0.6 -12.6 C 3.6 -12.6 5.3 -10.9 5.4 -8.9 L 4.6 -8.6 C 2.4 -9.0 -1.2 -8.7 -4.1 -6.0 Z';
+  cel(g, LID, A, { sh: 1.3, hl: 0.6 });
+  clip(g, LID, () => { stroke(g, curve([[-3.8, -10.4], [-0.6, -12.3], [3.6, -11.8]]), '#ffffff', 0.2, 0.75); emblem(g, -1.4, -9.6, 0.9, PAL.white.m); });
+  worn(g, LID, [-5.2, -12.6, 5.4, -6.0], 43, 0.6);
 }
 function lightTorso(g) {
   uniform(g);
@@ -573,222 +500,47 @@ function gallShin(g, ctx) {
   clip(g, SH, () => { stroke(g, curve([[1.4, 4.0], [1.7, 9.0], [1.6, 14.4]]), '#ffffff', 0.18, 0.35); stroke(g, 'M -2.8 3.8 C -1 3.5 1 3.4 2.6 3.6', t(G.leather).l, 0.12, 0.6); });
 }
 function gallFoot(g, ctx) { boot(g, ctx, G.leather, PAL.sole, { toe: G.leather }); }
-// Gall's head in profile, painted the way HAWK's is (docs §10.15): the planes
-// first, then the colour of the skin in its zones, then the features. A long,
-// narrow face; a straight nose with a slight bump, set close under a heavy brow;
-// a thin mouth pulled straight; a hard chin; the ear flat to the head. The
-// street light is above and in front: the cap's peak throws its shadow over
-// the forehead and the eye, so his eye is a dark shape with one glint in it.
-const GHEAD = 'M -2.8 -3.4 C -3.6 -4.2 -3.95 -5.4 -3.9 -6.6 C -3.85 -8.2 -3.0 -9.6 -1.5 -10.2 C 0.0 -10.7 1.9 -10.6 3.0 -9.9 C 3.8 -9.4 4.15 -8.6 4.2 -7.8 C 4.22 -7.3 4.3 -7.02 4.44 -6.84 C 4.46 -6.64 4.32 -6.52 4.22 -6.44 C 4.4 -6.12 4.56 -5.86 4.66 -5.66 C 4.86 -5.3 5.14 -4.98 5.32 -4.74 C 5.46 -4.52 5.4 -4.32 5.2 -4.28 C 4.98 -4.24 4.72 -4.24 4.5 -4.2 C 4.6 -4.02 4.66 -3.82 4.63 -3.63 C 4.55 -3.56 4.48 -3.53 4.44 -3.5 C 4.55 -3.42 4.58 -3.3 4.52 -3.18 C 4.38 -3.06 4.32 -2.96 4.36 -2.8 C 4.52 -2.58 4.62 -2.28 4.5 -2.02 C 4.3 -1.78 3.86 -1.68 3.3 -1.7 C 2.4 -1.78 1.4 -2.1 0.6 -2.6 C 0.1 -2.9 -0.3 -3.2 -0.6 -3.5 C -1.0 -3.1 -1.6 -2.9 -2.4 -2.9 C -2.6 -3.0 -2.7 -3.2 -2.8 -3.4 Z';
-// the ear, tilted back, flat to the head: helix, lobe at the front of its foot
-const GEAR = 'M 0.05 -6.62 C 0.55 -6.58 0.72 -6.1 0.62 -5.55 C 0.56 -5.1 0.42 -4.72 0.3 -4.42 C 0.18 -4.22 -0.02 -4.18 -0.18 -4.28 C -0.42 -4.5 -0.62 -5.0 -0.78 -5.5 C -0.92 -5.95 -0.88 -6.36 -0.6 -6.56 C -0.42 -6.66 -0.2 -6.66 0.05 -6.62 Z';
-// short back and sides, grey, the temples gone white: under the band, round the ear, down the nape
-const GHAIR = 'M 2.6 -7.9 C 2.0 -7.6 1.3 -7.2 1.05 -6.75 C 0.92 -6.45 0.86 -6.2 0.84 -5.9 L 0.62 -5.92 C 0.58 -6.3 0.42 -6.6 0.08 -6.7 C -0.4 -6.78 -0.8 -6.62 -0.98 -6.3 C -1.12 -5.9 -1.02 -5.3 -0.86 -4.8 C -0.78 -4.5 -0.74 -4.1 -0.9 -3.7 C -1.2 -3.2 -1.5 -2.9 -1.9 -2.6 C -2.3 -2.9 -2.6 -3.2 -2.8 -3.4 C -3.6 -4.2 -3.95 -5.4 -3.9 -6.6 C -3.88 -7.4 -3.7 -8.1 -3.4 -8.6 L 2.6 -8.6 Z';
-// the cap: a high crown raised at the front, the red band, a black patent peak
+// Gall's head (docs §10.16): no face. The peaked cap low, small round dark glasses, a
+// black wool mask pulled up over the nose and mouth and down into the coat's collar; the
+// grey hair cut close at the temple, the ear. Drawn as FLINT's head is.
 const GCROWN = 'M -4.0 -8.8 C -4.4 -9.2 -4.85 -9.75 -4.95 -10.2 C -5.02 -10.6 -4.7 -10.82 -4.1 -10.9 C -1.2 -11.32 2.4 -11.72 4.95 -11.86 C 5.65 -11.88 5.95 -11.62 5.82 -11.24 C 5.55 -10.36 5.0 -9.24 4.55 -8.42 C 1.8 -8.5 -1.5 -8.62 -4.0 -8.8 Z';
 const GBAND = 'M -4.05 -7.82 C -1.5 -7.58 1.8 -7.42 4.48 -7.36 C 4.56 -7.72 4.58 -8.1 4.55 -8.44 C 1.8 -8.52 -1.5 -8.64 -4.0 -8.82 C -4.1 -8.5 -4.12 -8.15 -4.05 -7.82 Z';
 const GPEAK = 'M 3.0 -7.62 C 4.3 -7.7 5.6 -7.5 6.55 -7.12 C 6.9 -6.98 7.05 -6.86 6.95 -6.78 C 6.2 -6.86 5.2 -6.98 4.2 -7.08 C 3.7 -7.14 3.3 -7.28 3.0 -7.62 Z';
+const GMASK = 'M -2.6 -4.8 C -1.0 -5.4 1.2 -5.8 3.0 -5.9 C 4.4 -5.95 5.3 -5.5 5.5 -4.6 C 5.7 -3.4 5.3 -2.2 4.4 -1.6 C 3.4 -0.9 1.6 -0.7 0.0 -0.9 C -1.4 -1.1 -2.4 -1.8 -2.8 -2.8 Z';
+const GLENS = 'M 2.9 -6.9 a 0.62 0.6 0 1 0 1.24 0 a 0.62 0.6 0 1 0 -1.24 0 Z';
 function gallHead(g) {
-  const S = G.skin, B = brush(g);
-  // is (x, y) of this frame inside the path, whatever transform the frame is under
-  const inP = (d, x, y) => { const M0 = g.getTransform(); return g.isPointInPath(new Path2D(d), M0.a * x + M0.c * y + M0.e, M0.b * x + M0.d * y + M0.f); };
-  // skin fold: a dark crease, the edge under it catching the light from above
-  const crease = (d, w = 0.06, a = 0.5) => {
-    B.line(d, `rgba(70,36,26,${a})`, w, w * 0.6);
-    g.save(); g.translate(0.02, 0.04); B.line(d, `rgba(255,226,206,${a * 0.45})`, w * 0.8, w * 0.6); g.restore();
-  };
-  // the neck: a column leaning up into the skull, the jaw's shadow across its top, the
-  // cord of the neck from behind the ear down to the collar, the Adam's apple
-  const GNECK = 'M -2.2 1.4 C -2.25 0.2 -2.3 -1.2 -2.6 -2.6 C -2.7 -3.0 -2.8 -3.3 -2.9 -3.6 L 0.0 -3.7 C 0.8 -3.1 1.6 -2.6 2.1 -2.2 C 2.3 -1.2 2.35 0.2 2.3 1.3 Z';
-  B.fill(GNECK, '#a17c67', 0.02);
-  B.inside(GNECK, () => {
-    B.fill('M -3 -4 L 0.6 -4 C 0.4 -2.6 0.4 -1.0 0.8 1.6 L -3 1.6 Z', 'rgba(52,30,24,0.55)', 0.4);
-    B.fill('M -3 -4 L 3 -4 L 3 -2.0 C 1.6 -2.0 0.2 -1.8 -3 -1.2 Z', 'rgba(40,22,16,0.5)', 0.35);
-    B.line('M -0.3 -3.3 C 0.3 -2.0 0.9 -0.8 1.4 0.8', 'rgba(224,180,156,0.35)', 0.32, 0.22);
-    B.line('M -0.7 -3.0 C -0.2 -1.8 0.3 -0.6 0.7 0.8', 'rgba(60,32,24,0.35)', 0.16, 0.14);
-    B.line('M 2.12 -1.9 C 2.24 -1.0 2.26 0.0 2.24 1.0', 'rgba(232,194,170,0.4)', 0.12, 0.08);
-    B.dab(2.05, -1.05, 0.16, 0.3, 'rgba(236,198,176,0.45)');
-    B.dab(1.9, -0.7, 0.18, 0.16, 'rgba(70,40,30,0.3)');
-    texture(g, 'skin', 0.35, 0.9);
+  const S = G.skin;
+  skinNeck(g, G.coat, { wide: 0.1 });
+  const HD = headShape({ jaw: 0.85 });
+  cel(g, HD, S, { sh: 1.2, hl: 0.35 });
+  skinGlaze(g, HD, { k: 1.1 });
+  clip(g, HD, () => {
+    // grey hair cut close at the temple and the back, the ear flat to the head
+    cel(g, 'M -4.3 -8.8 C -4.1 -7.0 -3.7 -5.6 -3.0 -4.6 L -2.1 -5.2 C -2.4 -6.4 -2.4 -7.6 -2.0 -8.8 Z', mat(G.hair, 'wool', 0.6), { sh: 0.3, hl: 0.4, line: false });
+    fill(g, 'M 0.6 -8.6 C 0.5 -7.8 0.4 -7.0 0.5 -6.4 L 1.1 -6.5 C 1.1 -7.2 1.2 -8.0 1.4 -8.6 Z', G.hair.d, 0.8);
+    cel(g, 'M -1.5 -7.4 C -0.7 -7.7 -0.2 -6.9 -0.3 -6.1 C -0.4 -5.4 -1.1 -5.2 -1.6 -5.7 Z', S, { sh: 0.5, hl: 0.3, line: false, ao: 0.6 });
+    stroke(g, 'M -1.1 -7.0 C -0.6 -6.9 -0.6 -6.1 -1.0 -5.9', S.k, 0.12, 0.7);
   });
-
-  // --- the planes: the side of the face in half light, the back of the skull and
-  // everything under the jaw in shade, the front of the face in the lamp
-  B.fill(GHEAD, '#b48c76', 0.03);
-  B.inside(GHEAD, () => {
-    B.fill('M -5 -11 L 1.5 -11 C 1.0 -8.6 0.9 -6.0 1.3 -3.9 C 1.5 -3.0 1.7 -2.4 1.9 -1 L -5 -1 Z', 'rgba(64,38,30,0.62)', 0.55);
-    B.fill('M -5 -11 L 2.4 -11 C 2.0 -8.6 1.9 -6.0 2.2 -3.9 C 2.4 -3.0 2.6 -2.4 2.8 -1 L -5 -1 Z', 'rgba(90,54,42,0.22)', 0.5);
-    B.fill('M 2.9 -9.2 C 3.7 -8.8 4.2 -8.0 4.4 -6.9 L 4.3 -6.4 L 5.2 -4.7 L 4.7 -3.6 L 4.7 -1.9 L 3.7 -1.8 C 3.4 -2.6 3.3 -3.5 3.2 -4.3 C 3.0 -5.3 2.7 -6.4 2.6 -7.6 C 2.6 -8.2 2.7 -8.8 2.9 -9.2 Z', 'rgba(240,206,184,0.82)', 0.24);
-    // the top of the cheekbone, the ridge of the jaw, the top of the chin: planes that face up
-    B.fill('M 2.4 -5.75 C 2.9 -5.85 3.5 -5.85 4.0 -5.7 L 3.9 -5.36 C 3.4 -5.3 2.9 -5.34 2.4 -5.44 Z', 'rgba(252,222,200,0.6)', 0.12);
-    B.line('M 0.4 -3.0 C 1.4 -2.5 2.6 -2.1 3.8 -2.0', 'rgba(250,218,196,0.32)', 0.16, 0.12);
-    B.dab(4.35, -2.32, 0.32, 0.38, 'rgba(255,230,212,0.5)');
-    // the hollow under the cheekbone, the temple's hollow
-    B.fill('M 1.6 -5.0 C 2.3 -4.8 3.1 -4.7 3.8 -4.8 C 3.9 -4.4 3.8 -4.0 3.6 -3.8 C 2.9 -3.9 2.2 -4.1 1.5 -4.4 Z', 'rgba(96,58,44,0.38)', 0.22);
-    B.dab(2.5, -7.0, 0.7, 0.5, 'rgba(96,58,44,0.3)');
-    B.line('M 0.9 -5.6 C 1.6 -5.62 2.2 -5.66 2.8 -5.7', 'rgba(250,220,200,0.3)', 0.22, 0.18);
-    B.fill('M 1.0 -5.3 C 1.6 -4.8 1.8 -3.8 1.6 -2.8 C 1.2 -2.7 0.8 -2.9 0.5 -3.2 C 0.6 -4.0 0.7 -4.8 1.0 -5.3 Z', 'rgba(90,52,40,0.28)', 0.3);
-    B.dab(0.85, -5.0, 0.3, 0.55, 'rgba(80,46,36,0.35)');
-    B.dab(2.2, -3.4, 0.9, 0.6, 'rgba(110,64,50,0.15)');
-    // under the jaw, its own shadow; the jaw's edge crisp where the bone turns
-    B.fill('M -0.8 -3.3 C 0.4 -2.7 1.8 -2.2 3.2 -2.05 C 3.8 -2.0 4.3 -2.1 4.6 -2.2 L 4.8 0 L -1 0 Z', 'rgba(48,26,20,0.72)', 0.12);
-    // the nose: the bridge in the lamp, the side plane in half light, the tip round and
-    // lit, the wing a pad with its groove round the back, the nostril, the shadow it throws
-    B.fill('M 4.2 -6.3 C 4.5 -5.8 4.9 -5.2 5.2 -4.82 L 4.5 -4.56 C 4.3 -5.1 4.06 -5.6 3.9 -6.0 Z', 'rgba(150,100,80,0.3)', 0.1);
-    B.line('M 4.32 -6.32 C 4.48 -6.04 4.6 -5.82 4.68 -5.66 C 4.86 -5.34 5.1 -5.04 5.28 -4.8', 'rgba(255,234,216,0.75)', 0.1, 0.05);
-    B.dab(4.62, -5.7, 0.1, 0.16, 'rgba(255,240,226,0.5)', 1, 'source-over', -0.5);
-    B.dab(5.24, -4.58, 0.18, 0.15, 'rgba(255,238,224,0.7)');
-    B.dab(5.1, -4.48, 0.32, 0.22, 'rgba(200,110,90,0.3)');
-    B.dab(4.62, -4.56, 0.3, 0.22, 'rgba(206,140,116,0.5)');
-    B.line('M 4.42 -4.86 C 4.26 -4.7 4.26 -4.44 4.42 -4.34 C 4.56 -4.28 4.7 -4.28 4.82 -4.3', 'rgba(70,34,24,0.65)', 0.07, 0.04);
-    B.line('M 4.84 -4.33 C 4.98 -4.35 5.1 -4.34 5.2 -4.31', 'rgba(40,16,10,0.8)', 0.06, 0.03);
-    B.fill('M 4.36 -4.24 C 4.58 -4.2 4.7 -4.12 4.7 -4.0 C 4.54 -3.98 4.36 -4.04 4.24 -4.12 Z', 'rgba(60,30,22,0.5)', 0.06);
-    // the fold from the nose to the mouth, and the line down from the mouth's corner:
-    // a man who does not smile
-    crease('M 4.3 -4.82 C 4.06 -4.5 3.96 -4.1 4.0 -3.66', 0.07, 0.62);
-    crease('M 3.98 -3.4 C 3.94 -3.1 3.92 -2.85 3.98 -2.6', 0.05, 0.35);
-    crease('M 2.6 -2.55 C 3.0 -2.4 3.4 -2.36 3.7 -2.4', 0.05, 0.25);
-    // the mouth: thin lips pressed into a straight line, the corner turned a little down
-    B.fill('M 4.6 -3.63 C 4.4 -3.6 4.2 -3.56 4.04 -3.5 L 4.42 -3.5 Z', 'rgba(150,84,72,0.6)', 0.03);
-    B.line('M 4.43 -3.5 C 4.3 -3.49 4.15 -3.47 4.0 -3.42', 'rgba(64,26,20,0.92)', 0.055, 0.02);
-    B.fill('M 4.48 -3.46 C 4.52 -3.36 4.5 -3.24 4.42 -3.18 C 4.3 -3.26 4.16 -3.34 4.06 -3.4 Z', 'rgba(176,104,90,0.45)', 0.04);
-    B.dab(4.4, -3.3, 0.1, 0.05, 'rgba(255,224,206,0.6)');
-    // the colour of the skin: yellow in the forehead, red in the nose, the cheek and the
-    // ear, the blue-grey of a close shave over the jaw and the upper lip
-    B.dab(3.6, -8.4, 1.1, 0.7, 'rgba(214,170,110,0.2)');
-    B.dab(5.0, -4.7, 0.45, 0.4, 'rgba(196,84,70,0.22)');
-    B.dab(3.0, -5.0, 1.0, 0.6, 'rgba(196,90,74,0.16)');
-    B.fill('M 1.0 -4.6 C 2.0 -4.3 3.2 -4.0 4.1 -4.05 C 4.5 -3.9 4.6 -3.4 4.55 -2.6 C 4.5 -2.1 4.2 -1.8 3.6 -1.75 C 2.4 -1.9 1.2 -2.3 0.3 -2.9 Z', 'rgba(84,96,110,0.2)', 0.25);
-    B.dab(4.45, -3.9, 0.22, 0.12, 'rgba(84,96,110,0.18)');
-    // fifty years in the skin: mottling, pores, a few marks
-    const rm = rnd(141), MOT = ['176,82,66', '196,160,110', '120,84,110', '84,48,36', '250,214,190'];
-    for (let i = 0; i < 140; i++) { const x = 0.8 + rm() * 4.2, y = -8.6 + rm() * 6.6, rr = 0.06 + rm() * 0.2; B.dab(x, y, rr, rr * (0.6 + rm() * 0.5), `rgba(${MOT[(rm() * MOT.length) | 0]},${0.05 + rm() * 0.07})`, 1, 'source-over', rm() * 3); }
-    for (let i = 0; i < 260; i++) { const x = 1.2 + rm() * 3.8, y = -8.4 + rm() * 6.2; B.dab(x, y, 0.012 + rm() * 0.02, 0.01 + rm() * 0.016, rm() < 0.6 ? 'rgba(70,34,24,0.22)' : 'rgba(255,226,206,0.16)'); }
-    texture(g, 'skin', 0.4, 0.9);
-    // the street's cold on the back of the skull and the nape
-    B.line('M -3.7 -7.6 C -3.95 -6.4 -3.75 -5.0 -3.1 -3.9', 'rgba(140,160,186,0.35)', 0.16, 0.14);
-  });
-
-  // --- the ear: helix, the hollow inside it, the tragus in front; red where the light
-  // comes through its top, its shadow on the side of the head
-  B.inside(GHEAD, () => B.dab(-0.45, -5.3, 0.5, 1.0, 'rgba(40,20,14,0.4)'));
-  B.fill(GEAR, '#9e7762', 0.02);
-  B.inside(GEAR, () => {
-    B.dab(0.1, -6.1, 0.6, 0.45, 'rgba(226,182,158,0.4)');
-    B.dab(-0.5, -5.2, 0.4, 0.9, 'rgba(70,40,30,0.35)');
-    // the helix rolled over at the back and top, lit along its top
-    B.line('M 0.42 -6.44 C 0.02 -6.58 -0.44 -6.5 -0.64 -6.18 C -0.76 -5.8 -0.66 -5.24 -0.46 -4.8', 'rgba(70,38,28,0.45)', 0.1, 0.06);
-    B.line('M 0.4 -6.52 C 0.0 -6.64 -0.44 -6.56 -0.66 -6.24', 'rgba(246,206,184,0.5)', 0.06, 0.04);
-    // the antihelix, the fold inside it
-    B.line('M 0.3 -6.16 C 0.0 -6.22 -0.3 -6.1 -0.38 -5.82 C -0.42 -5.5 -0.3 -5.2 -0.16 -5.0', 'rgba(236,196,172,0.4)', 0.07, 0.04);
-    B.line('M 0.22 -6.04 C -0.04 -6.06 -0.24 -5.94 -0.28 -5.7', 'rgba(90,50,38,0.4)', 0.04, 0.03);
-    // the concha's hollow, the tragus in front of it
-    B.fill('M 0.38 -5.62 C 0.5 -5.44 0.48 -5.1 0.34 -4.9 C 0.18 -4.88 0.06 -5.02 0.04 -5.28 C 0.04 -5.46 0.16 -5.6 0.38 -5.62 Z', 'rgba(90,50,38,0.55)', 0.05);
-    B.dab(0.54, -5.16, 0.08, 0.14, 'rgba(230,184,160,0.55)');
-    B.dab(0.02, -4.42, 0.2, 0.16, 'rgba(190,104,88,0.3)');
-    texture(g, 'skin', 0.25, 0.9);
-  });
-
-  // --- the hair: cut close, grey, white at the temples, darker behind; combed back
-  // under the cap, the sideburn short and square
-  B.fill(GHAIR, 'rgb(98,94,90)', 0.04);
-  B.inside(GHAIR, () => {
-    B.dab(1.5, -7.3, 1.2, 0.9, 'rgba(200,196,190,0.6)');
-    B.dab(-0.3, -7.2, 1.0, 0.6, 'rgba(170,166,160,0.3)');
-    B.fill('M -5 -9 L 3 -9 L 3 -7.5 C 1 -7.3 -2 -7.3 -5 -7.4 Z', 'rgba(20,18,16,0.4)', 0.2);
-    B.dab(-2.9, -5.8, 1.3, 2.0, 'rgba(22,20,18,0.45)');
-    // the scalp shows through where it is cut shortest, low on the nape
-    B.dab(-1.6, -3.2, 0.9, 0.5, 'rgba(150,112,94,0.3)');
-    texture(g, 'wool', 0.25, 0.4);
-  });
-  B.hairs(1500, 151, (i, rr) => {
-    const x = -4 + rr() * 6.8, y = -8.6 + rr() * 6.2;
-    if (!inP(GHAIR, x, y)) return null;
-    const l = Math.min(1, Math.max(0, (x + 1.2) / 3.2)), salt = rr() < 0.55;
-    const v = (salt ? 128 : 60) + l * 64 + (rr() - 0.5) * 24;
-    return [x, y, x > 0.4 ? Math.PI * 0.64 + (rr() - 0.5) * 0.4 : Math.PI * 0.5 + 0.4 + (rr() - 0.5) * 0.5, 0.06 + rr() * 0.1, `rgba(${v + 2 | 0},${v | 0},${v - 4 | 0},1)`, 0.016, salt ? 0.25 + l * 0.3 : 0.35];
-  });
-  // the hairline softens into the skin, never a cut edge
-  B.hairs(160, 157, (i, rr) => {
-    const x = -3.4 + rr() * 6, y = -7.8 + rr() * 4.4;
-    if (inP(GHAIR, x, y) || !inP(GHEAD, x, y) || inP(GEAR, x, y)) return null;
-    let near = false; for (const [dx, dy] of [[0.15, 0], [-0.15, 0], [0, 0.15], [0, -0.15]]) near = near || inP(GHAIR, x + dx, y + dy);
-    if (!near) return null;
-    return [x, y, Math.PI * 0.55, 0.08 + rr() * 0.1, 'rgba(120,116,110,1)', 0.016, 0.4];
-  });
-
-  // --- the eye, deep under the brow: a wedge open to the front, the white dim, the
-  // iris a pale grey sliver behind the cornea, the upper lid heavy over it; the
-  // bag under it, the lines running back from its corner
-  const EYE = 'M 3.14 -6.12 C 3.38 -6.4 3.7 -6.48 3.98 -6.27 C 4.04 -6.17 4.02 -6.06 3.95 -6.02 C 3.66 -5.9 3.38 -5.94 3.14 -6.12 Z';
-  B.dab(3.6, -6.2, 0.62, 0.36, 'rgba(70,40,30,0.4)');
-  B.fill(EYE, '#a4968a', 0.02);
-  B.inside(EYE, () => {
-    B.dab(3.3, -6.12, 0.3, 0.18, 'rgba(60,40,34,0.6)');
-    B.fill('M 3.68 -6.38 C 3.86 -6.36 3.96 -6.22 3.94 -6.06 C 3.86 -5.98 3.74 -5.97 3.66 -6.03 C 3.58 -6.14 3.58 -6.3 3.68 -6.38 Z', '#7e8c96', 0.01);
-    B.line('M 3.68 -6.38 C 3.58 -6.3 3.58 -6.14 3.66 -6.03', 'rgba(40,46,52,0.8)', 0.03, 0.01);
-    B.dab(3.84, -6.2, 0.055, 0.07, '#141315');
-    B.fill('M 3.1 -6.56 L 4.05 -6.56 L 4.05 -6.28 C 3.8 -6.26 3.5 -6.24 3.1 -6.1 Z', 'rgba(40,22,16,0.55)', 0.03);
-  });
-  B.dab(3.9, -6.25, 0.04, 0.03, '#fff2e4', 0.95);
-  B.line('M 3.12 -6.12 C 3.38 -6.42 3.72 -6.5 4.0 -6.28', 'rgba(30,14,10,0.95)', 0.075, 0.025);
-  B.line('M 3.2 -6.28 C 3.46 -6.52 3.76 -6.56 4.06 -6.4', 'rgba(120,74,58,0.45)', 0.07, 0.05);
-  crease('M 3.18 -6.4 C 3.46 -6.66 3.8 -6.68 4.1 -6.52', 0.04, 0.5);
-  B.line('M 3.26 -6.0 C 3.5 -5.9 3.74 -5.9 3.94 -6.0', 'rgba(240,196,170,0.4)', 0.04, 0.02);
-  crease('M 3.24 -5.86 C 3.5 -5.72 3.78 -5.74 3.98 -5.86', 0.035, 0.32);
-  for (const [dy, l] of [[-0.12, 0.42], [0.02, 0.5], [0.15, 0.38]]) crease(`M 3.08 ${-6.12 + dy * 0.4} l ${-l} ${dy * 0.6}`, 0.025, 0.3);
-  // the brow: thin, straight, grey, low over the eye
-  softBrow(g, 3.05, -6.76, 4.36, -6.86, 0.04, '#6f6a64', 7);
-
-  // --- the cap's shadow: the peak's edge across the face. Under it the forehead and
-  // the eye are still there, in the light thrown back up off the lit cheek
-  const CAPSH = 'M -6 -12 L 8 -12 L 8 -6.18 C 6.4 -6.12 5.0 -6.08 4.46 -6.1 C 4.2 -6.0 3.9 -5.92 3.5 -5.94 C 3.0 -5.98 2.5 -6.3 2.0 -6.8 C 1.6 -7.2 1.2 -7.5 0.8 -7.62 L -6 -7.7 Z';
-  B.inside(GHEAD, () => {
-    B.fill(CAPSH, 'rgba(34,20,16,0.64)', 0.1);
-    B.inside(CAPSH, () => { B.dab(3.8, -6.3, 0.9, 0.3, 'rgba(176,120,96,0.28)'); B.dab(4.3, -6.9, 0.3, 0.4, 'rgba(150,100,80,0.2)'); });
-    B.line('M 4.48 -6.1 C 4.1 -5.98 3.7 -5.9 3.3 -5.96', 'rgba(255,226,206,0.35)', 0.06, 0.05);
-  });
-  B.inside(GHAIR, () => B.fill(CAPSH, 'rgba(20,18,16,0.5)', 0.1));
-  B.inside(GEAR, () => B.fill(CAPSH, 'rgba(34,20,16,0.45)', 0.1));
-
-  // --- the cap: a high crown in the coat's navy wool, stiffened at the front, red
-  // piping round its top; the red band; the silver mark over the peak; the black
-  // patent peak with the sky in it; the silver cord over the peak to its button
-  const C = G.coat;
-  B.fill(GCROWN, C.m, 0.02);
-  B.inside(GCROWN, () => {
-    B.dab(4.0, -10.9, 2.2, 0.9, 'rgba(120,132,160,0.3)');
-    B.fill('M -6 -10 L -1.5 -10 C -1.6 -9.6 -1.8 -9.2 -2.2 -8.6 L -6 -8.6 Z', 'rgba(6,8,12,0.5)', 0.4);
-    B.line('M 4.6 -11.5 C 4.35 -10.5 3.95 -9.5 3.6 -8.7', 'rgba(150,162,190,0.3)', 0.22, 0.18);
-    B.line('M -4.6 -9.9 C -2.0 -9.6 1.4 -9.3 4.5 -9.0', 'rgba(4,6,10,0.4)', 0.16, 0.12);
-    B.line('M -3.6 -10.4 C -1.4 -10.0 0.6 -9.8 2.2 -9.9', 'rgba(140,152,180,0.18)', 0.08, 0.06);
-    texture(g, 'wool', 0.45, 0.6);
-  });
-  B.line('M -4.75 -10.8 C -1.2 -11.24 2.4 -11.64 4.95 -11.78 C 5.6 -11.8 5.86 -11.6 5.8 -11.3', G.red.m, 0.13, 0.02);
-  B.line('M -4.4 -10.92 C -1.2 -11.34 2.4 -11.74 4.95 -11.88', 'rgba(255,190,170,0.4)', 0.04, 0.02);
-  B.fill(GBAND, G.red.d, 0.02);
-  B.inside(GBAND, () => {
-    B.fill('M -5 -9 L 5 -9 L 5 -8.15 C 1.8 -8.2 -1.5 -8.32 -5 -8.5 Z', 'rgba(220,90,86,0.4)', 0.1);
-    B.dab(3.4, -7.9, 1.2, 0.4, 'rgba(255,150,130,0.25)');
-    B.dab(-3.2, -8.2, 1.4, 0.6, 'rgba(20,4,4,0.5)');
-    texture(g, 'wool', 0.4, 0.5);
-  });
-  B.line('M -4.0 -8.82 C -1.5 -8.64 1.8 -8.52 4.55 -8.44', 'rgba(16,6,6,0.55)', 0.05, 0.02);
-  // the mark over the peak, seen nearly edge on at the front of the crown
+  // the mask: black wool up over the nose, close round the jaw, into the collar
+  cel(g, GMASK, mat(tone('#3a3d44', '#24272d', '#16181c', '#08090b'), 'knit', 0.5), { sh: 0.9, hl: 0.4 });
+  clip(g, GMASK, () => { stroke(g, curve([[1.6, -5.75], [3.6, -5.85], [5.4, -4.8]]), '#5a5e66', 0.18, 0.7); });
+  clothFolds(g, GMASK, [[[-2.2, -4.4], [0.4, -4.8], [3.0, -4.9]], [[-1.8, -2.4], [0.6, -2.2], [3.2, -2.4], [4.6, -2.8]]], tone('#3a3d44', '#24272d', '#16181c', '#08090b'));
+  // the glasses: small, round, black glass in a thin silver rim, the arm back over the ear
+  stroke(g, 'M 2.9 -7.0 C 1.6 -7.0 0.2 -6.8 -0.6 -6.5', G.silver.d, 0.12);
+  fill(g, GLENS, '#0d0e11');
+  clip(g, GLENS, () => fill(g, 'M 3.1 -7.6 L 3.4 -7.6 L 3.2 -6.3 L 2.9 -6.3 Z', '#e8eef4', 0.35));
+  stroke(g, GLENS, G.silver.m, 0.1);
+  // the peaked cap: the crown in the coat's navy, the red band, the silver mark, the cord, the peak
+  cel(g, GCROWN, G.coat, { sh: 1.0, hl: 0.5 });
+  clip(g, GCROWN, () => { stroke(g, curve([[-3.6, -10.6], [0.6, -11.4], [5.2, -11.6]]), '#ffffff', 0.12, 0.35); fill(g, 'M -6 -10 L -1.5 -10 C -1.6 -9.6 -1.8 -9.2 -2.2 -8.6 L -6 -8.6 Z', G.coat.k, 0.45); });
+  stroke(g, 'M -4.75 -10.8 C -1.2 -11.24 2.4 -11.64 4.95 -11.78 C 5.6 -11.8 5.86 -11.6 5.8 -11.3', G.red.m, 0.14);
+  cel(g, GBAND, G.red, { sh: 0.3, hl: 0.25, lw: 0.14 });
   g.save(); g.translate(4.92, -9.62); g.scale(0.5, 1); emblem(g, 0, 0, 0.62, G.silver.m); g.restore();
-  B.line('M 4.74 -10.0 L 4.98 -10.02', 'rgba(255,255,255,0.7)', 0.04);
-  // the cord and its button
-  B.line('M 1.5 -7.74 C 2.4 -7.68 3.4 -7.64 4.52 -7.62', G.silver.k, 0.17, 0.01);
-  B.line('M 1.5 -7.74 C 2.4 -7.68 3.4 -7.64 4.52 -7.62', G.silver.m, 0.12, 0.01);
-  for (let x = 1.62; x < 4.5; x += 0.16) B.line(`M ${x} -7.62 l 0.09 -0.12`, G.silver.l, 0.04, 0, 0.9);
-  B.dab(1.42, -7.74, 0.2, 0.2, G.silver.k); B.dab(1.42, -7.75, 0.16, 0.16, G.silver.d); B.dab(1.38, -7.8, 0.08, 0.08, '#ffffff', 0.9);
-  // the peak: patent leather, the sky's grey along its top, black under
-  B.fill(GPEAK, '#0b0c0f', 0.01);
-  B.inside(GPEAK, () => {
-    B.line('M 3.3 -7.56 C 4.4 -7.62 5.6 -7.44 6.6 -7.06', 'rgba(196,206,222,0.55)', 0.07, 0.03);
-    B.dab(5.6, -7.32, 0.6, 0.08, 'rgba(240,244,250,0.7)');
-    B.line('M 4.2 -7.1 C 5.2 -7.0 6.2 -6.88 6.95 -6.8', 'rgba(40,46,40,0.9)', 0.05, 0.02);
-  });
+  stroke(g, 'M 1.5 -7.74 C 2.4 -7.68 3.4 -7.64 4.52 -7.62', G.silver.d, 0.17);
+  stroke(g, 'M 1.5 -7.8 C 2.4 -7.74 3.4 -7.7 4.52 -7.68', G.silver.l, 0.06, 0.8);
+  rivet(g, 1.42, -7.74, 0.18, G.silver);
+  cel(g, GPEAK, G.leather, { sh: 0.3, hl: 0.4, lw: 0.14 });
+  stroke(g, 'M 3.3 -7.56 C 4.4 -7.62 5.6 -7.44 6.6 -7.06', '#ffffff', 0.08, 0.6);
 }
 
 export const GALL = {

@@ -984,3 +984,29 @@ artık askerin yanında oyuncak gibi durmuyor. **Saksı:** kaide, üç blok, ta�
 başlık; başlıktan akan yağmur izi, derzlerde yosun, ıslak koyu dip; içinde
 küçük yapraklı, üstü ışıkta budanmış şimşir.
 
+
+### 10.16 Kafalar: yüz yok
+§10.15'teki kafalar beğenilmedi; görünen yüz denemesi de istenmedi. Karar:
+**hiçbir karakterin yüzü görünmez** (göz, burun, ağız yok). Kafalar sıfırdan,
+FLINT'in kafasının diliyle çizildi: birkaç büyük biçim, malzemesi içinde
+(örgü, kanvas, kauçuk, boya), tek parlak şey, az çizgi. Görünen ten en çok bir
+kulak ve şakak şeridi; FLINT ve HAWK değişmedi.
+
+- **WARDEN:** gri örgü başlık; tepesi sırtlı beyaz kaptan kaskı, siyah bant ve
+  gümüş şerit, kırmızı "07", yanda fener; altın vizör aşağıda, yüzü tümüyle
+  kapatır, içinde gök, yangın şeridi ve lambanın beyaz çizgisi.
+- **SKYE:** mat siyah bisiklet kaskı, beyaz köpük kenar, üç menfez, iki
+  çıkartma; gök mavisi aynalı gözlük takılı; desenli lacivert bandana burnun
+  üstünde, düğümü ve iki ucu kulağın arkasında.
+- **BULWARK:** soluk sarı baret, sırtı, siperi, fener bandı ve feneri; füme
+  güvenlik gözlüğü takılı; gri yarım maske yüzde, iki magenta filtre, valf;
+  görünen yalnız kır ense, kulak ve çenede kır kıl.
+- **VESPER:** zeytin yeşili kapüşon, içi karanlık; boğazlık burnun üstünde;
+  yuvarlak füme kahverengi gözlük; tek kulaklık ve mikrofon kolu.
+- **Tetikçi / Kalkanlı:** yuvarlak gri kabuk, yüzde siyah plaka ve tek füme
+  kırmızı yarık, üç kalın havalandırma oluğu, kulakta gri çanak, yanda amblem.
+- **Hücumcu:** siyah başlık, siyah kauçuk gaz maskesi, kalın çelik çemberli
+  koyu camlar, önde gri filtre kutusu; alçak gri kask.
+- **Gall:** subay şapkası (lacivert, kırmızı bant, gümüş amblem ve kordon,
+  rugan siper), küçük yuvarlak siyah gözlük, burnun üstüne çekilmiş siyah yün
+  boyunluk; kısa gri şakak ve kulak.

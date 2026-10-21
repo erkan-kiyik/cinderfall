@@ -282,114 +282,64 @@ function shin(g, ctx) {
 }
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { lace: '#2a2016' }); }
 
-// --- head: hood up, the roll neck over the nose, smoked glasses, the headset over it all ---------
-const CUP = ell(-0.65, -6.1, 1.12, 1.38);
-// the head under it all (only ever seen as the shade inside the hood)
+// --- head (docs §10.16): no face. The jacket's hood up, the roll neck pulled over the
+// nose, round smoked glasses, one cup of the headset over the hood and its boom at the
+// mouth. Drawn as FLINT's head is: big shapes, their material in them, nothing lit.
+const CUP = ell(-0.6, -6.2, 1.3, 1.55);
 const HEAD = blob([
   [-3.7, -6.2], [-3.2, -8.8], [-1.0, -10.2], [1.8, -10.1], [3.6, -8.8], [4.05, -7.2],
   [3.85, -6.5], [4.1, -6.05], [4.9, -4.98], [4.35, -4.58],
   [4.42, -3.95], [4.22, -3.35], [4.12, -2.62], [3.55, -2.08],
   [2.4, -2.2], [0.9, -2.75], [-0.6, -3.35], [-2.0, -3.7], [-3.1, -4.6],
 ]);
-// the jacket's hood: a peak over the brow, full over the crown, gathered at the nape;
-// the opening's edge runs down the cheek to under the chin
+// the hood: a peak standing out over the brow, full over the crown, gathered at the nape
 const HOOD = blob([
-  [4.75, -9.05], [4.0, -10.3], [2.2, -11.05], [-0.4, -11.25], [-2.8, -10.75], [-4.5, -9.4], [-5.15, -7.2], [-5.1, -4.6],
-  [-4.4, -2.2], [-3.2, -0.4], [-1.4, 0.9], [1.2, 1.0], [2.25, -0.7], [2.55, -3.1], [2.8, -6.0], [3.5, -8.2], [4.2, -8.85],
+  [5.0, -9.2], [4.2, -10.6], [2.2, -11.4], [-0.6, -11.6], [-3.0, -11.0], [-4.8, -9.6], [-5.4, -7.2], [-5.3, -4.4],
+  [-4.5, -2.0], [-3.3, -0.2], [-1.4, 1.0], [1.2, 1.1], [2.2, -0.7], [2.5, -3.1], [2.7, -6.0], [3.4, -8.2], [4.3, -8.95],
 ]);
-const RIM = 'M 4.7 -9.0 C 4.1 -8.9 3.7 -8.6 3.5 -8.2 C 3.1 -7.4 2.88 -6.7 2.8 -6.0 C 2.7 -5.0 2.6 -4.0 2.55 -3.1 C 2.5 -2.1 2.4 -1.3 2.25 -0.7';
-// the roll neck pulled up over the nose and mouth, bunched under the chin
 const SNOOD = blob([
-  [2.65, -6.2], [3.6, -6.4], [4.4, -6.05], [5.05, -5.1], [5.0, -4.3], [4.75, -3.5], [4.62, -2.4],
-  [4.25, -1.2], [3.4, -0.2], [2.0, 0.9], [1.5, -0.9], [2.35, -3.4],
+  [2.55, -6.3], [3.6, -6.5], [4.45, -6.1], [5.1, -5.1], [5.05, -4.3], [4.8, -3.5], [4.66, -2.4],
+  [4.28, -1.2], [3.4, -0.2], [2.0, 0.9], [1.4, -0.9], [2.25, -3.4],
 ]);
-// wrap-round shooting glasses, smoked brown
-const LENS = 'M 2.85 -8.2 C 3.6 -8.4 4.4 -8.35 4.78 -8.02 L 4.72 -6.85 C 4.45 -6.32 3.7 -6.18 2.95 -6.32 C 2.75 -6.9 2.75 -7.6 2.85 -8.2 Z';
+const LENS = ell(3.45, -7.25, 0.66, 0.88);
 function head(g) {
-  const K = PAL.black, J = PAL.jacket, Kn = PAL.jumper, Gl = PAL.glass;
-  // the knit tube over the throat
+  const K = PAL.black, J = PAL.jacket, Kn = PAL.jumper;
   neck(g, Kn, { sh: 0.9 });
-  // in the hood's opening only shade: the face is never shown
-  fill(g, HEAD, '#1d1714');
-  // the hood
-  cel(g, HOOD, J, { sh: 1.4, hl: 0.5 });
+  // inside the hood only shade: the face is never shown
+  fill(g, HEAD, '#14100e');
+  // the hood: the cloth over the crown lit, the opening's edge rolled, the cord's channel
+  cel(g, HOOD, J, { sh: 1.5, hl: 0.55 });
   clip(g, HOOD, () => {
-    // the centre panel's seams over the crown and down the back, the cloth gathered at the nape
-    stroke(g, curve([[3.8, -9.9], [1.2, -10.95], [-2.2, -10.6], [-4.2, -8.9], [-4.85, -6.0]]), J.d, 0.2, 0.75);
-    stitch(g, curve([[3.75, -10.15], [1.2, -11.2], [-2.3, -10.85], [-4.45, -9.05], [-5.1, -6.0]]), J.l, 0.06, 0.5);
-    // the hood's inside showing at the opening, in deep shade
-    fill(g, 'M 4.55 -9.15 C 3.9 -8.9 3.55 -8.5 3.4 -8.1 C 3.05 -7.3 2.85 -6.6 2.8 -6.0 C 2.7 -5.0 2.6 -4.0 2.55 -3.1 L 2.0 -3.1 C 2.1 -4.4 2.3 -6.0 2.7 -7.4 C 3.1 -8.5 3.7 -9.2 4.5 -9.6 Z', J.k, 0.75);
+    stroke(g, curve([[3.9, -10.1], [1.2, -11.15], [-2.4, -10.8], [-4.5, -9.1], [-5.1, -6.0]]), J.d, 0.24, 0.8);
+    stitch(g, curve([[3.85, -10.35], [1.2, -11.4], [-2.5, -11.05], [-4.75, -9.25], [-5.35, -6.0]]), J.l, 0.07, 0.55);
+    fill(g, 'M 4.8 -9.2 C 4.0 -8.9 3.5 -8.5 3.3 -8.1 C 2.95 -7.3 2.75 -6.6 2.7 -6.0 C 2.6 -5.0 2.5 -4.0 2.45 -3.1 L 1.8 -3.1 C 1.9 -4.4 2.1 -6.0 2.5 -7.4 C 2.9 -8.6 3.6 -9.4 4.6 -9.8 Z', J.k, 0.8);
     grime(g, -2, 1.2, 'rgba(24,24,18,0.45)');
   });
-  clothFolds(g, HOOD, [[[-4.5, -3.4], [-3.2, -2.3], [-1.8, -1.6]], [[-4.7, -6.4], [-3.6, -5.6]], [[1.0, -10.6], [1.8, -9.8], [2.6, -9.4]], [[-2.6, -0.4], [-0.6, 0.2], [1.0, -0.2]], [[1.4, -4.2], [1.9, -2.8], [1.9, -1.4]]], J);
-  // the hood over a head: the crown and the brow take the light, the cloth falls away
-  // behind into shade; drawn in by its cord, it gathers in folds that run back from the
-  // opening; the peak stands out over the face and throws the inside into the dark
-  {
-    const B = brush(g);
-    B.inside(HOOD, () => {
-      B.dab(2.0, -10.2, 2.4, 1.0, 'rgba(214,214,170,0.3)');
-      B.line('M -3.8 -9.0 C -2.4 -10.6 0.4 -11.2 3.0 -10.6', 'rgba(220,220,180,0.25)', 0.3, 0.25);
-      B.fill('M -6 -6 C -4.4 -5.6 -3.0 -4.2 -1.4 -0.6 L -6 2 Z', 'rgba(14,14,8,0.45)', 0.6);
-      for (const [d, w] of [['M 2.5 -6.6 C 1.4 -7.2 0.0 -7.6 -1.6 -7.6', 0.16], ['M 2.4 -5.0 C 1.2 -5.4 -0.2 -5.4 -1.4 -5.0', 0.14], ['M 2.2 -3.2 C 1.2 -3.0 0.2 -2.6 -0.6 -2.0', 0.12], ['M 3.4 -8.4 C 2.4 -9.2 1.2 -9.6 -0.2 -9.8', 0.12]]) {
-        B.line(d, 'rgba(20,20,12,0.55)', w, w * 0.8);
-        g.save(); g.translate(0.04, -0.12); B.line(d, 'rgba(220,220,180,0.22)', w * 0.6, w * 0.6); g.restore();
-      }
-      B.line('M 4.6 -9.1 C 4.2 -9.6 3.4 -10.1 2.6 -10.3', 'rgba(230,230,190,0.4)', 0.12, 0.06);
-    });
-  }
-  // the roll neck over the nose: knit ribs running up it, bunched in rings under the chin,
-  // a darker patch where the breath has wet it
-  cel(g, SNOOD, Kn, { sh: 0.9, hl: 0.45 });
+  clothFolds(g, HOOD, [[[-4.7, -3.4], [-3.3, -2.3], [-1.8, -1.6]], [[-4.9, -6.6], [-3.7, -5.7]], [[1.0, -10.8], [1.8, -10.0], [2.6, -9.6]], [[-2.6, -0.4], [-0.6, 0.2], [1.0, -0.2]], [[1.2, -4.6], [1.7, -3.0], [1.7, -1.4]], [[2.0, -7.6], [0.6, -8.2], [-1.0, -8.4]]], J);
+  stroke(g, 'M 5.0 -9.25 C 4.2 -9.1 3.7 -8.7 3.45 -8.3 C 3.0 -7.4 2.78 -6.7 2.7 -6.0 C 2.6 -5.0 2.5 -4.0 2.45 -3.1 C 2.4 -2.1 2.3 -1.3 2.15 -0.7', J.l, 0.14, 0.7);
+  // the roll neck over the nose: knit ribs up it, rolled at its top edge, rings under the chin
+  cel(g, SNOOD, Kn, { sh: 1.0, hl: 0.5 });
   clip(g, SNOOD, () => {
     for (let x = 1.6; x < 5.2; x += 0.34) stroke(g, `M ${x} -6.6 C ${x + 0.1} -4.4 ${x - 0.1} -2.2 ${x - 0.3} 1.0`, Kn.d, 0.09, 0.5);
-    fill(g, ell(4.55, -3.7, 0.55, 0.45), Kn.d, 0.45);
+    stroke(g, 'M 2.6 -6.25 C 3.3 -6.5 4.0 -6.4 4.45 -6.05', Kn.k, 0.24, 0.7);
+    stroke(g, 'M 2.65 -6.4 C 3.3 -6.65 4.0 -6.55 4.45 -6.2', Kn.l, 0.12, 0.7);
   });
-  clothFolds(g, SNOOD, [[[2.1, -2.0], [3.2, -1.9], [4.4, -2.3]], [[2.0, -0.8], [3.0, -0.6], [3.9, -1.0]], [[2.6, -5.6], [3.7, -5.8], [4.6, -5.4]]], Kn);
-  // the knit stretched over the nose: the light along its ridge, the rolled top edge, the
-  // cloth hanging straight off the tip of the nose and gathering under the chin
-  {
-    const B = brush(g);
-    B.inside(SNOOD, () => {
-      B.line('M 3.6 -6.2 C 4.3 -5.9 4.8 -5.4 5.0 -4.9', 'rgba(220,226,236,0.4)', 0.22, 0.14);
-      B.fill('M 1 -4.4 L 4.7 -4.4 C 4.6 -3 4.2 -1.4 3.4 0 L 1 1 Z', 'rgba(12,14,18,0.35)', 0.3);
-      B.line('M 2.65 -6.2 C 3.3 -6.44 4.0 -6.36 4.4 -6.05', 'rgba(16,18,22,0.6)', 0.2, 0.08);
-      B.line('M 2.7 -6.32 C 3.3 -6.56 4.0 -6.48 4.4 -6.17', 'rgba(200,208,220,0.4)', 0.08, 0.04);
-    });
-  }
-  // the glasses: smoked lenses, the street's light across them, the arm back under the hood
-  stroke(g, 'M 2.9 -7.55 L 2.3 -7.35', K.k, 0.24);
-  const gr = g.createLinearGradient(3, -8.4, 4, -6.2);
-  gr.addColorStop(0, Gl.d); gr.addColorStop(0.55, Gl.m); gr.addColorStop(1, Gl.k);
-  fill(g, LENS, gr);
-  clip(g, LENS, () => {
-    fill(g, 'M 3.55 -8.5 L 4.15 -8.5 L 3.55 -6.0 L 2.95 -6.0 Z', '#dfe6ee', 0.18);
-    fill(g, 'M 4.3 -8.5 L 4.5 -8.5 L 3.95 -6.0 L 3.75 -6.0 Z', '#dfe6ee', 0.1);
-    stroke(g, 'M 2.95 -8.05 C 3.7 -8.22 4.35 -8.18 4.7 -7.92', Gl.l, 0.08, 0.6);
-  });
-  stroke(g, LENS, K.k, 0.16, 0.9);
-  // the hood's hem round the opening, the drawstring out of its channel, a cord lock
-  stroke(g, RIM, J.d, 0.3, 0.55);
-  stroke(g, 'M 4.7 -9.1 C 4.1 -9.0 3.65 -8.65 3.42 -8.25 C 3.0 -7.4 2.78 -6.7 2.7 -6.0 C 2.6 -5.0 2.5 -4.0 2.45 -3.1', J.l, 0.1, 0.65);
-  stroke(g, 'M 2.3 -0.9 C 2.5 -0.2 2.4 0.6 2.6 1.4', K.k, 0.12);
-  cel(g, 'M 2.35 1.2 L 2.9 1.15 L 2.95 1.9 L 2.4 1.95 Z', K, { sh: 0.15, hl: 0.2, lw: 0.08 });
-  // the headset over the hood: the band across the crown, the cup over the ear, the boom to the mouth
+  clothFolds(g, SNOOD, [[[2.1, -2.0], [3.2, -1.9], [4.4, -2.3]], [[2.0, -0.8], [3.0, -0.6], [3.9, -1.0]], [[2.6, -5.5], [3.7, -5.7], [4.6, -5.3]]], Kn);
+  // the glasses: round, smoked brown, a thin steel rim, the arm back under the hood
+  stroke(g, 'M 2.85 -7.35 L 2.3 -7.25', PAL.steel.d, 0.18);
+  const gr = g.createLinearGradient(3.2, -8.1, 3.7, -6.4);
+  gr.addColorStop(0, '#5a4636'); gr.addColorStop(0.4, '#3a2c22'); gr.addColorStop(0.7, '#20180f'); gr.addColorStop(1, '#4a3424');
+  g.fillStyle = gr; g.fill(new Path2D(LENS));
+  clip(g, LENS, () => { fill(g, 'M 3.05 -8.3 L 3.5 -8.3 L 3.0 -6.2 L 2.55 -6.2 Z', '#e8eef4', 0.3); fill(g, 'M 3.4 -6.75 L 4.1 -6.85 L 4.1 -6.55 L 3.4 -6.5 Z', '#ffc890', 0.4); });
+  stroke(g, LENS, PAL.steel.m, 0.14); stroke(g, LENS, PAL.steel.l, 0.05, 0.6);
+  // the headset over the hood: the band across the crown, the cup over the ear, the boom
   stroke(g, 'M -1.2 -4.6 C -1.8 -3.0 -2.2 -1.4 -2.0 0.8', K.k, 0.24);
-  const BAND = 'M -1.05 -7.3 C -1.25 -9.2 -0.85 -10.9 0.3 -11.75 L 0.65 -11.45 C -0.4 -10.7 -0.65 -9.1 -0.5 -7.3 Z';
-  cel(g, BAND, K, { sh: 0.3, hl: 0.3, lw: 0.12 });
-  cel(g, 'M -1.1 -7.95 L -0.45 -7.95 L -0.45 -7.3 L -1.1 -7.3 Z', PAL.steel, { sh: 0.15, hl: 0.2, lw: 0.08 });
-  cel(g, CUP, K, { sh: 0.5, hl: 0.35, lw: 0.22 });
-  clip(g, CUP, () => {
-    stroke(g, ell(-0.65, -6.1, 0.8, 1.02), K.d, 0.14, 0.8);
-    fill(g, ell(-0.95, -6.5, 0.4, 0.5), K.l, 0.22);
-    scuffs(g, [[-1.2, -5.2, 0.28, 0.4]], K.l, 0.35);
-  });
-  rivet(g, -0.65, -6.1, 0.16, PAL.steel);
-  const BOOM = 'M 0.3 -5.3 C 1.6 -4.1 3.0 -3.5 4.25 -3.4';
-  stroke(g, BOOM, K.k, 0.18);
-  stroke(g, 'M 0.4 -5.4 C 1.6 -4.25 3.0 -3.65 4.15 -3.55', K.l, 0.05, 0.5);
-  cel(g, ell(4.5, -3.42, 0.34, 0.26), K, { sh: 0.2, hl: 0.2, lw: 0.1 });
-  for (let i = 0; i < 4; i++) fill(g, ell(4.36 + (i % 2) * 0.24, -3.5 + (i >> 1) * 0.16, 0.04, 0.04), K.k, 0.8);
+  cel(g, 'M -1.15 -7.6 C -1.35 -9.4 -0.95 -11.0 0.2 -11.9 L 0.6 -11.6 C -0.45 -10.8 -0.7 -9.2 -0.55 -7.6 Z', K, { sh: 0.3, hl: 0.35, lw: 0.12 });
+  cel(g, CUP, K, { sh: 0.5, hl: 0.4, lw: 0.22 });
+  clip(g, CUP, () => { stroke(g, ell(-0.6, -6.2, 0.95, 1.18), K.d, 0.16, 0.8); fill(g, ell(-0.95, -6.65, 0.45, 0.55), K.l, 0.22); });
+  rivet(g, -0.6, -6.2, 0.18, PAL.steel);
+  stroke(g, 'M 0.4 -5.4 C 1.6 -4.2 3.0 -3.6 4.25 -3.5', K.k, 0.2);
+  cel(g, ell(4.5, -3.5, 0.36, 0.28), K, { sh: 0.2, hl: 0.2, lw: 0.1 });
 }
 
 export const MORROW = {
