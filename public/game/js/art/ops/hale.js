@@ -13,8 +13,10 @@ import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
   glove, boot, headShape, neck, korBand, stitch, rivet, grime, scuffs,
-  clothFolds,
+  clothFolds, brushOf,
 } from './body.js';
+import { rnd } from '../paint.js';
+import { texture } from '../tex.js';
 
 const PAL = {
   coat: mat(tone('#5f615e', '#464845', '#30322f', '#141515'), 'canvas', 0.7),
@@ -122,15 +124,23 @@ function torso(g) {
 }
 
 function chest(g) {
-  // the coat's collar turned up round the hood, the sand lining showing, its throat tab
-  const COLLAR = blob([[-3.8, -22.6], [-3.6, -25.8], [-0.8, -26.6], [2.6, -26.4], [4.4, -25.4], [4.6, -22.6], [2.4, -21.8], [-1.2, -21.9]]);
-  cel(g, COLLAR, PAL.coat, { sh: 0.8, hl: 0.4 });
-  clip(g, COLLAR, () => {
-    stroke(g, curve([[-3.6, -23.4], [0.4, -24.0], [4.5, -23.4]]), PAL.coat.d, 0.3);
-    cel(g, 'M -4 -25.2 C 0 -26.0 2.6 -25.9 5 -25.0 L 5 -27 L -4 -27 Z', PAL.sand, { sh: 0.2, hl: 0.2, line: false, ao: 0.2 });
+  // the turnout coat's collar up round the hood: a tall stiff band, the sand lining rolled
+  // over its top edge, the throat tab fastened across the front
+  const Bc = brushOf(g), Co = PAL.coat;
+  const COLLAR = 'M -4.2 -22.2 C -4.4 -23.8 -4.0 -25.6 -2.8 -26.6 C -1.0 -27.2 1.2 -27.0 2.8 -26.3 C 3.6 -26.0 4.2 -25.6 4.5 -25.2 L 4.7 -22.6 C 3.0 -22.0 0.6 -21.8 -1.6 -21.9 C -2.6 -21.9 -3.5 -22.0 -4.2 -22.2 Z';
+  cel(g, COLLAR, Co, { sh: 0.8, hl: 0.4 });
+  Bc.inside(COLLAR, () => {
+    Bc.line('M -3.0 -26.5 C -1.0 -27.1 1.2 -26.9 2.8 -26.2 C 3.6 -25.9 4.2 -25.5 4.5 -25.1', PAL.sand.m, 0.34, 0.03);
+    Bc.line('M -3.0 -26.3 C -1.0 -26.9 1.2 -26.7 2.8 -26.0 C 3.6 -25.7 4.2 -25.3 4.5 -24.9', 'rgba(60,46,26,0.6)', 0.08, 0.04);
+    Bc.fill('M -6 -23.4 C -3 -23.0 1 -22.8 5 -22.4 L 5 -21 L -6 -21 Z', 'rgba(10,10,10,0.3)', 0.3);
+    Bc.dab(2.4, -25.0, 2.4, 1.0, 'rgba(200,200,190,0.18)');
+    grime(g, -25, -21.6, SOOT);
   });
-  cel(g, 'M 1.6 -25.2 L 5.0 -25.4 L 5.1 -23.6 L 1.7 -23.4 Z', PAL.coat, { sh: 0.3, hl: 0.2, lw: 0.26 });
-  stitch(g, 'M 1.8 -24.9 L 4.9 -25.1', PAL.coat.l, 0.07, 0.6);
+  stitch(g, 'M -3.4 -25.6 C -1.4 -26.2 1.0 -26.0 2.6 -25.4 L 4.3 -24.4', Co.l, 0.06, 0.5);
+  const TAB = 'M 1.6 -25.4 L 5.0 -25.6 L 5.1 -23.8 L 1.7 -23.6 Z';
+  cel(g, TAB, Co, { sh: 0.3, hl: 0.2, lw: 0.22 });
+  Bc.inside(TAB, () => { Bc.line('M 1.7 -25.2 L 5.0 -25.4', 'rgba(220,220,214,0.3)', 0.06, 0.02); Bc.fill('M 4.3 -25.6 L 5.1 -25.6 L 5.1 -23.8 L 4.3 -23.8 Z', 'rgba(10,10,10,0.35)', 0.04); });
+  stitch(g, 'M 1.8 -25.1 L 4.9 -25.3', Co.l, 0.06, 0.6);
   // the lapel mic clipped to the collar, its coiled cord to the radio
   cel(g, 'M 4.4 -24.0 L 5.6 -24.1 L 5.7 -22.4 L 4.5 -22.3 Z', PAL.radio, { sh: 0.2, hl: 0.2, lw: 0.24 });
   for (let i = 0; i < 4; i++) fill(g, `M ${5.0 - i * 0.05} ${-24.0 + i * 0.35} l 0.5 0 l 0 0.15 l -0.5 0 Z`, PAL.radio.d);
@@ -220,53 +230,98 @@ function shin(g, ctx) {
 }
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { toe: PAL.boot }); }
 
-// --- head: the grey hood, the captain's helmet, the gold shield ------------------------------
-const SHELL = 'M -4.7 -3.4 C -5.5 -6.0 -5.3 -9.6 -3.1 -11.5 C -1.0 -13.0 2.5 -13.0 4.5 -11.3 C 5.7 -10.3 6.1 -9.3 6.0 -8.5 C 4.5 -8.9 2.7 -9.0 1.2 -8.7 C 0.6 -7.1 0.4 -5.5 0.6 -4.1 C -0.7 -3.5 -2.7 -3.1 -4.7 -3.4 Z';
-const SHIELD = 'M 1.4 -8.95 C 3.4 -9.25 5.4 -8.95 6.15 -7.95 C 6.65 -6.45 6.55 -4.25 5.95 -2.95 C 5.25 -1.85 3.65 -1.45 2.25 -1.85 C 1.65 -3.45 1.35 -6.05 1.4 -8.95 Z';
+// --- head: the grey hood, the captain's helmet, the gold shield (docs §10.15) -----------------
+// A European fire helmet: a white shell with a ridge over the crown, sooted and gone
+// ivory where the heat has been at it; the gold face shield down, the street and the
+// fires in it; the grey flash hood round the face and the neck; the curtain hanging
+// from the back of the shell over the collar; the torch on its side bracket.
+const SHELL = 'M -4.9 -3.3 C -5.6 -5.6 -5.6 -9.0 -3.6 -11.2 C -1.6 -13.0 2.0 -13.3 4.3 -11.9 C 5.6 -11.0 6.3 -9.8 6.3 -8.9 C 5.0 -9.2 3.2 -9.25 1.6 -9.0 C 1.0 -7.6 0.7 -6.0 0.8 -4.4 C -0.6 -3.7 -2.8 -3.1 -4.9 -3.3 Z';
+const SHIELD = 'M 1.5 -9.0 C 3.4 -9.3 5.5 -9.0 6.25 -8.0 C 6.75 -6.5 6.65 -4.3 6.05 -3.0 C 5.35 -1.9 3.75 -1.5 2.35 -1.9 C 1.75 -3.5 1.45 -6.1 1.5 -9.0 Z';
+const CURTAIN = 'M -5.0 -4.1 C -5.5 -2.8 -5.7 -1.0 -5.5 0.9 C -4.0 1.3 -2.0 1.3 -0.4 0.7 C 0.2 -0.8 0.6 -2.4 0.8 -4.0 C -1.0 -3.4 -3.0 -3.3 -5.0 -4.1 Z';
 function head(g) {
-  const H = PAL.helmet, F = PAL.hood;
-  // the flash hood over the neck and head; the face under it, mostly behind the shield
+  const H = PAL.helmet, F = PAL.hood, B = brushOf(g);
+  // the flash hood over the neck and head, knit, ribbed down the throat
   neck(g, F, { wide: 0.35, sh: 1.0 });
   const HD = headShape({ jaw: 1 });
   cel(g, HD, F, { sh: 1.0, hl: 0.3 });
-  clip(g, HD, () => { cel(g, 'M 1.2 -8.2 C 3 -8.4 4.6 -8.0 5.4 -7.0 L 5.4 -1.4 L 1.2 -1.4 Z', PAL.skin, { sh: 0.6, hl: 0.2, line: false }); });
-  stroke(g, 'M 1.3 -8.6 C 0.9 -6.4 0.9 -3.8 1.6 -1.6', F.k, 0.3);
-  // the chin strap from under the shell to the jaw
-  stroke(g, 'M 0.4 -4.4 C 0.9 -3.4 1.6 -2.4 2.4 -1.8', PAL.band.k, 0.32);
-  // the shell
-  cel(g, SHELL, H, { sh: 1.6, hl: 0.6 });
-  clip(g, SHELL, () => {
-    // the black captain's band round the shell, its reflective edge
-    fill(g, 'M -6 -6.6 C -3.6 -9.0 0.4 -10.2 6.4 -9.9 L 6.4 -9.0 C 0.6 -9.3 -3.4 -8.2 -6 -5.6 Z', PAL.band.m);
-    stroke(g, 'M -6 -6.1 C -3.6 -8.5 0.5 -9.7 6.4 -9.45', PAL.tapeS.d, 0.12, 0.8);
-    // soot: heaviest low and at the back, streaks from the crown
-    const sg = g.createLinearGradient(-5, -5, 3, -12); sg.addColorStop(0, 'rgba(30,26,22,0.6)'); sg.addColorStop(0.5, 'rgba(30,26,22,0.14)'); sg.addColorStop(1, 'rgba(30,26,22,0)');
+  B.inside(HD, () => { B.fill('M 0 -6 L 6 -6 L 6 0 L 0 0 Z', 'rgba(20,20,18,0.35)', 0.4); texture(g, 'knit', 0.4, 0.5); });
+  // the chin strap from inside the shell down under the jaw, its buckle
+  B.line('M 0.7 -5.6 C 1.0 -4.2 1.6 -2.8 2.5 -1.7', '#1a1918', 0.26, 0.01);
+  B.line('M 0.76 -5.6 C 1.06 -4.2 1.66 -2.8 2.56 -1.7', 'rgba(150,146,140,0.35)', 0.05, 0.01);
+  B.fill('M 1.3 -3.6 L 1.85 -3.75 L 2.05 -3.15 L 1.5 -3.0 Z', '#2c2b29', 0.01);
+  // the gold face shield: a mirror. The sky dark above, the burning skyline across it,
+  // the wet street under; its front edge catching the lamp
+  const gr = g.createLinearGradient(3.2, -9.3, 4.0, -1.5);
+  gr.addColorStop(0, '#2c1e08'); gr.addColorStop(0.3, '#5a4012'); gr.addColorStop(0.42, '#d9a640'); gr.addColorStop(0.47, '#fbe39a'); gr.addColorStop(0.53, '#8c6418'); gr.addColorStop(0.75, '#5a3c0e'); gr.addColorStop(1, '#2a1a06');
+  B.fill(SHIELD, gr, 0.01);
+  B.inside(SHIELD, () => {
+    // the skyline, black against the glow: compressed by the curve, bent along it
+    const r = rnd(41);
+    // (a convex mirror: the horizon bows up in the middle, the roofs shrink toward the edges)
+    const hz = (x) => -5.25 - 0.32 * Math.max(0, 1 - ((x - 4.1) / 2.7) ** 2);
+    let x = 1.4;
+    while (x < 6.8) {
+      const w = 0.2 + r() * 0.42, k = Math.max(0.2, 1 - ((x - 4.1) / 2.9) ** 2), h = (0.12 + r() * 0.5) * k, y0 = hz(x), y1 = hz(x + w);
+      B.fill(`M ${x} ${y0 + 0.05} L ${x} ${y0 - h} L ${x + w} ${y1 - h} L ${x + w} ${y1 + 0.05} Z`, 'rgba(40,24,4,0.7)', 0.03);
+      x += w + 0.03;
+    }
+    B.dab(5.2, -5.6, 1.0, 0.3, 'rgba(255,170,70,0.5)');
+    B.line('M 1.2 -5.2 C 2.6 -5.62 5.6 -5.62 7.0 -5.2', 'rgba(40,24,6,0.45)', 0.3, 0.1);
+    // the street lamp: a hard white-gold glint high on the curve, a long soft one down the front
+    B.dab(4.7, -8.3, 0.5, 0.16, 'rgba(255,250,226,0.95)', 1, 'source-over', -0.2);
+    B.line('M 6.1 -7.9 C 6.5 -6.6 6.5 -4.6 6.0 -3.2', 'rgba(255,240,190,0.55)', 0.14, 0.08);
+    B.line('M 1.8 -8.6 C 1.7 -6.0 1.9 -3.8 2.5 -2.2', 'rgba(20,12,2,0.75)', 0.3, 0.16);
+    for (const [x0, y0] of [[3.0, -6.6], [4.2, -3.8], [2.8, -3.2], [5.0, -7.0]]) B.line(`M ${x0} ${y0} l 0.8 -0.22`, 'rgba(255,240,200,0.5)', 0.035);
+  });
+  B.line(SHIELD, 'rgba(30,18,4,0.9)', 0.12, 0.02);
+  B.line('M 6.25 -8.0 C 6.75 -6.5 6.65 -4.3 6.05 -3.0', 'rgba(255,236,170,0.6)', 0.06, 0.02);
+  // the curtain from the back of the shell over the collar: heavy sand cloth, sooted, in folds
+  const Sd = PAL.sand;
+  cel(g, CURTAIN, Sd, { sh: 1.0, hl: 0.3 });
+  B.inside(CURTAIN, () => {
+    for (const x0 of [-4.6, -3.4, -2.2, -1.0]) { B.line(`M ${x0} -3.6 C ${x0 - 0.2} -2 ${x0 - 0.2} -0.4 ${x0 - 0.1} 1.2`, 'rgba(60,46,26,0.55)', 0.24, 0.18); B.line(`M ${x0 + 0.3} -3.6 C ${x0 + 0.1} -2 ${x0 + 0.1} -0.4 ${x0 + 0.2} 1.2`, 'rgba(240,226,190,0.3)', 0.12, 0.1); }
+    B.fill('M -6 -4.4 L 1 -4.4 L 1 -3.0 C -2 -2.8 -4 -2.9 -6 -3.2 Z', 'rgba(30,24,16,0.55)', 0.3);
+    grime(g, -2, 1.4, SOOT);
+    texture(g, 'canvas', 0.4, 0.5);
+  });
+  // the shell: white paint gone ivory, a ridge over the crown, the captain's black band with
+  // its reflective stripe, soot heaviest low and at the back, streaked where rain ran down it
+  cel(g, SHELL, H, { sh: 1.5, hl: 0.6 });
+  B.inside(SHELL, () => {
+    B.line('M -3.4 -11.2 C -1.4 -12.7 2.0 -12.9 4.2 -11.6', 'rgba(255,255,250,0.75)', 0.3, 0.1);
+    B.line('M -3.3 -10.9 C -1.3 -12.4 2.0 -12.6 4.1 -11.3', 'rgba(120,112,96,0.55)', 0.12, 0.08);
+    B.dab(2.0, -11.6, 2.4, 0.9, 'rgba(255,255,248,0.4)');
+    B.dab(-2.6, -8.0, 1.6, 1.2, 'rgba(214,190,130,0.3)');
+    B.dab(3.4, -10.2, 1.0, 0.6, 'rgba(214,190,130,0.22)');
+    // the band and its stripe
+    B.fill('M -6 -6.6 C -3.6 -9.0 0.4 -10.2 6.4 -9.9 L 6.4 -9.0 C 0.6 -9.3 -3.4 -8.2 -6 -5.6 Z', PAL.band.m, 0.02);
+    B.line('M -6 -6.1 C -3.6 -8.5 0.5 -9.7 6.4 -9.45', 'rgba(214,220,224,0.9)', 0.16, 0.02);
+    B.line('M -6 -6.1 C -3.6 -8.5 0.5 -9.7 6.4 -9.45', 'rgba(255,255,255,0.6)', 0.05, 0.01);
+    // the station's number and the captain's two bars
+    g.save(); g.translate(-2.6, -7.6); g.rotate(-0.35);
+    B.fill('M -0.9 -0.5 L 0.9 -0.5 L 0.9 0.5 L -0.9 0.5 Z', PAL.red.m, 0.01);
+    g.scale(1 / 26, 1 / 26); g.fillStyle = 'rgba(239,230,210,0.92)'; g.font = "700 22px 'Barlow Condensed', sans-serif"; g.textAlign = 'center'; g.fillText('07', 0, 8); g.restore();
+    for (const dx of [0, 0.42]) B.fill(`M ${-0.6 + dx} -10.1 L ${-0.36 + dx} -10.16 L ${-0.36 + dx} -9.5 L ${-0.6 + dx} -9.44 Z`, 'rgba(30,28,26,0.75)', 0.01);
+    // soot and heat
+    const sg = g.createLinearGradient(-5, -4, 2, -12); sg.addColorStop(0, 'rgba(30,26,22,0.66)'); sg.addColorStop(0.45, 'rgba(30,26,22,0.16)'); sg.addColorStop(1, 'rgba(30,26,22,0)');
     g.fillStyle = sg; g.fill(new Path2D(SHELL));
-    for (const [x, w] of [[-2.6, 0.5], [-0.6, 0.35], [1.8, 0.45]]) fill(g, `M ${x} -12.6 L ${x + w} -12.6 L ${x + w * 0.6} -9.8 L ${x + 0.1} -9.9 Z`, 'rgba(40,34,28,0.24)');
-    // the gloss: a long highlight along the crown, a scuff, the station number decal
-    stroke(g, curve([[-3.6, -11.0], [-0.6, -12.7], [3.4, -12.2], [5.4, -10.2]]), H.l, 0.45, 0.9);
-    stroke(g, curve([[-2.8, -10.8], [0.0, -12.0], [3.0, -11.6]]), '#ffffff', 0.18, 0.7);
-    stroke(g, 'M -1.4 -7.4 l 1.4 -0.5', H.k, 0.16, 0.6);
-    g.save(); g.translate(-2.6, -7.6); g.rotate(-0.35); fill(g, 'M -0.9 -0.5 L 0.9 -0.5 L 0.9 0.5 L -0.9 0.5 Z', PAL.red.m, 0.9); fill(g, 'M -0.5 -0.25 L -0.2 -0.25 L -0.2 0.25 L -0.5 0.25 Z M 0.1 -0.25 L 0.5 -0.25 L 0.5 0.25 L 0.1 0.25 Z', '#efe6d2', 0.9); g.restore();
+    const r = rnd(53);
+    for (let i = 0; i < 6; i++) { const x0 = -4 + r() * 8.5, y0 = -12.4 + r() * 1.4; B.line(`M ${x0} ${y0} C ${x0 + 0.1} ${y0 + 1.4} ${x0 - 0.1} ${y0 + 2.6} ${x0 + 0.05} ${y0 + 2.4 + r() * 1.6}`, 'rgba(40,34,28,0.1)', 0.1 + r() * 0.14, 0.12); }
+    for (let i = 0; i < 14; i++) B.dab(-5 + r() * 10, -10 + r() * 6, 0.05 + r() * 0.1, 0.04 + r() * 0.07, 'rgba(30,26,22,0.22)', 1, 'source-over', r() * 3);
+    texture(g, 'paint', 0.35, 0.5);
   });
-  // the gold face shield, down
-  const gr = g.createLinearGradient(2, -9.2, 4.6, -1.6);
-  gr.addColorStop(0, '#4a3410'); gr.addColorStop(0.3, '#b98a2c'); gr.addColorStop(0.42, '#f4d27a'); gr.addColorStop(0.55, '#a77922'); gr.addColorStop(1, '#3e2a0c');
-  g.fillStyle = gr; g.fill(new Path2D(SHIELD));
-  clip(g, SHIELD, () => {
-    // what it reflects: a hot window low on the glass, the street darker above
-    fill(g, 'M 3.2 -3.6 C 4.0 -3.8 4.8 -3.6 5.6 -3.2 L 5.4 -2.6 C 4.6 -2.9 3.8 -3.0 3.2 -2.9 Z', '#ffcf86', 0.45);
-    stroke(g, curve([[1.8, -7.6], [3.6, -8.1], [5.6, -7.6]]), '#fff1c4', 0.22, 0.5);
-    stroke(g, 'M 1.6 -8.5 C 1.5 -6 1.8 -3.6 2.4 -2.0', '#2a1c06', 0.4, 0.7);
-    // fine scratches in the gold film
-    for (const [x, y] of [[3.0, -6.0], [4.2, -5.0], [2.6, -4.2]]) stroke(g, `M ${x} ${y} l 0.9 -0.25`, '#fff0c0', 0.05, 0.6);
-  });
-  stroke(g, SHIELD, '#2a1d08', 0.3);
-  // the shield's pivot on the side of the shell, and the helmet torch on its rail
-  cel(g, 'M 0.5 -8.5 a 0.7 0.7 0 1 0 1.4 0 a 0.7 0.7 0 1 0 -1.4 0 Z', PAL.radio, { sh: 0.2, hl: 0.2, lw: 0.24 });
-  rivet(g, 1.2, -8.5, 0.28, PAL.steel);
-  cel(g, 'M -2.6 -9.2 L 1.2 -10.0 L 1.4 -8.9 L -2.4 -8.2 Z', PAL.radio, { sh: 0.3, hl: 0.2, lw: 0.24 });
-  fill(g, 'M 1.05 -9.95 L 1.45 -10.0 L 1.6 -8.95 L 1.2 -8.9 Z', '#fff4d8');
+  // the shell's lip over the face, lit; the shield's knob on the side
+  B.line('M 6.3 -8.9 C 5.0 -9.2 3.2 -9.25 1.6 -9.0 C 1.0 -7.6 0.7 -6.0 0.8 -4.4', 'rgba(250,246,236,0.5)', 0.1, 0.04);
+  cel(g, 'M 0.5 -8.3 a 0.62 0.62 0 1 0 1.24 0 a 0.62 0.62 0 1 0 -1.24 0 Z', PAL.radio, { sh: 0.2, hl: 0.2, lw: 0.2 });
+  for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; B.line(`M ${1.12 + Math.cos(a) * 0.48} ${-8.3 + Math.sin(a) * 0.48} l ${Math.cos(a) * 0.12} ${Math.sin(a) * 0.12}`, 'rgba(150,152,156,0.6)', 0.05); }
+  rivet(g, 1.12, -8.3, 0.24, PAL.steel);
+  // the torch on its side bracket: a black body, a ribbed bezel, the lens
+  B.fill('M -1.0 -10.0 L 0.0 -10.2 L 0.1 -9.5 L -0.9 -9.3 Z', '#2a2b2d', 0.01);
+  const T = 'M -0.4 -10.95 C -0.4 -11.2 -0.2 -11.3 0.1 -11.32 L 1.9 -11.5 C 2.1 -11.52 2.2 -11.4 2.2 -11.2 L 2.24 -10.0 C 2.24 -9.8 2.1 -9.7 1.9 -9.7 L 0.0 -9.56 C -0.25 -9.54 -0.4 -9.7 -0.4 -9.9 Z';
+  cel(g, T, PAL.radio, { sh: 0.4, hl: 0.3, lw: 0.18 });
+  B.inside(T, () => { for (let x0 = 1.5; x0 < 2.2; x0 += 0.14) B.line(`M ${x0} -11.5 L ${x0 + 0.02} -9.6`, 'rgba(0,0,0,0.6)', 0.05); B.line('M -0.2 -11.1 L 1.9 -11.3', 'rgba(170,176,184,0.45)', 0.06, 0.02); });
+  B.fill('M 2.2 -11.4 L 2.5 -11.42 L 2.54 -9.8 L 2.24 -9.78 Z', '#fff2d2', 0.01);
+  B.dab(2.4, -11.0, 0.06, 0.24, '#ffffff', 0.9);
 }
 
 export const HALE = {

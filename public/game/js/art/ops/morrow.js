@@ -322,6 +322,22 @@ function head(g) {
     grime(g, -2, 1.2, 'rgba(24,24,18,0.45)');
   });
   clothFolds(g, HOOD, [[[-4.5, -3.4], [-3.2, -2.3], [-1.8, -1.6]], [[-4.7, -6.4], [-3.6, -5.6]], [[1.0, -10.6], [1.8, -9.8], [2.6, -9.4]], [[-2.6, -0.4], [-0.6, 0.2], [1.0, -0.2]], [[1.4, -4.2], [1.9, -2.8], [1.9, -1.4]]], J);
+  // the hood over a head: the crown and the brow take the light, the cloth falls away
+  // behind into shade; drawn in by its cord, it gathers in folds that run back from the
+  // opening; the peak stands out over the face and throws the inside into the dark
+  {
+    const B = brush(g);
+    B.inside(HOOD, () => {
+      B.dab(2.0, -10.2, 2.4, 1.0, 'rgba(214,214,170,0.3)');
+      B.line('M -3.8 -9.0 C -2.4 -10.6 0.4 -11.2 3.0 -10.6', 'rgba(220,220,180,0.25)', 0.3, 0.25);
+      B.fill('M -6 -6 C -4.4 -5.6 -3.0 -4.2 -1.4 -0.6 L -6 2 Z', 'rgba(14,14,8,0.45)', 0.6);
+      for (const [d, w] of [['M 2.5 -6.6 C 1.4 -7.2 0.0 -7.6 -1.6 -7.6', 0.16], ['M 2.4 -5.0 C 1.2 -5.4 -0.2 -5.4 -1.4 -5.0', 0.14], ['M 2.2 -3.2 C 1.2 -3.0 0.2 -2.6 -0.6 -2.0', 0.12], ['M 3.4 -8.4 C 2.4 -9.2 1.2 -9.6 -0.2 -9.8', 0.12]]) {
+        B.line(d, 'rgba(20,20,12,0.55)', w, w * 0.8);
+        g.save(); g.translate(0.04, -0.12); B.line(d, 'rgba(220,220,180,0.22)', w * 0.6, w * 0.6); g.restore();
+      }
+      B.line('M 4.6 -9.1 C 4.2 -9.6 3.4 -10.1 2.6 -10.3', 'rgba(230,230,190,0.4)', 0.12, 0.06);
+    });
+  }
   // the roll neck over the nose: knit ribs running up it, bunched in rings under the chin,
   // a darker patch where the breath has wet it
   cel(g, SNOOD, Kn, { sh: 0.9, hl: 0.45 });
@@ -330,6 +346,17 @@ function head(g) {
     fill(g, ell(4.55, -3.7, 0.55, 0.45), Kn.d, 0.45);
   });
   clothFolds(g, SNOOD, [[[2.1, -2.0], [3.2, -1.9], [4.4, -2.3]], [[2.0, -0.8], [3.0, -0.6], [3.9, -1.0]], [[2.6, -5.6], [3.7, -5.8], [4.6, -5.4]]], Kn);
+  // the knit stretched over the nose: the light along its ridge, the rolled top edge, the
+  // cloth hanging straight off the tip of the nose and gathering under the chin
+  {
+    const B = brush(g);
+    B.inside(SNOOD, () => {
+      B.line('M 3.6 -6.2 C 4.3 -5.9 4.8 -5.4 5.0 -4.9', 'rgba(220,226,236,0.4)', 0.22, 0.14);
+      B.fill('M 1 -4.4 L 4.7 -4.4 C 4.6 -3 4.2 -1.4 3.4 0 L 1 1 Z', 'rgba(12,14,18,0.35)', 0.3);
+      B.line('M 2.65 -6.2 C 3.3 -6.44 4.0 -6.36 4.4 -6.05', 'rgba(16,18,22,0.6)', 0.2, 0.08);
+      B.line('M 2.7 -6.32 C 3.3 -6.56 4.0 -6.48 4.4 -6.17', 'rgba(200,208,220,0.4)', 0.08, 0.04);
+    });
+  }
   // the glasses: smoked lenses, the street's light across them, the arm back under the hood
   stroke(g, 'M 2.9 -7.55 L 2.3 -7.35', K.k, 0.24);
   const gr = g.createLinearGradient(3, -8.4, 4, -6.2);

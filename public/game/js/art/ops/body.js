@@ -336,3 +336,40 @@ export function softHair(g, d, col, light, dir = [-1, 0.25], n = 260, seed = 5) 
     return [x, y, a + (r() - 0.5) * 0.3, 0.8 + r() * 1.4, lit ? light : r() < 0.5 ? col : 'rgba(0,0,0,0.55)', 0.06, lit ? 0.5 : 0.4];
   }));
 }
+
+// --- painted heads, close up (docs §10.15) ------------------------------------------------
+// The brush for the current frame.
+export const brushOf = (g) => { const T = g.getTransform(); return new Brush(g, Math.hypot(T.a, T.b)); };
+// Is (x, y) of the current frame inside path d, whatever transform the frame is under.
+export function inPath(g, d, x, y) {
+  const T = g.getTransform();
+  return g.isPointInPath(new Path2D(d), T.a * x + T.c * y + T.e, T.b * x + T.d * y + T.f);
+}
+// A skin crease: a dark line, the edge under it catching the light from above.
+export function crease(g, d, w = 0.06, a = 0.5, dark = '70,36,26', lit = '255,226,206') {
+  const B = brushOf(g);
+  B.line(d, `rgba(${dark},${a})`, w, w * 0.6);
+  g.save(); g.translate(0.02, 0.04); B.line(d, `rgba(${lit},${a * 0.45})`, w * 0.8, w * 0.6); g.restore();
+}
+// An ear in profile, tilted back as ears are: the helix rolled over round the back and
+// top and lit along it, the antihelix inside, the hollow of the concha, the tragus in
+// front, the lobe; red where the light comes through. (x, y) its middle, k its size
+// (1: about the length of the nose), s the skin: { base, lit, dark, red }.
+const EAR_D = 'M 0.15 -1.22 C 0.65 -1.18 0.82 -0.7 0.72 -0.15 C 0.66 0.3 0.52 0.68 0.4 0.98 C 0.28 1.18 0.08 1.22 -0.08 1.12 C -0.32 0.9 -0.52 0.4 -0.68 -0.1 C -0.82 -0.55 -0.78 -0.96 -0.5 -1.16 C -0.32 -1.26 -0.1 -1.26 0.15 -1.22 Z';
+export function paintEar(g, x, y, k, s) {
+  const B = brushOf(g);
+  g.save(); g.translate(x, y); g.scale(k, k);
+  B.fill(EAR_D, s.base, 0.02);
+  B.inside(EAR_D, () => {
+    B.dab(0.2, -0.7, 0.6, 0.45, s.lit, 0.4);
+    B.dab(-0.4, 0.2, 0.4, 0.9, s.dark, 0.35);
+    B.line('M 0.52 -1.04 C 0.12 -1.18 -0.34 -1.1 -0.54 -0.78 C -0.66 -0.4 -0.56 0.16 -0.36 0.6', s.dark, 0.1, 0.06, 0.45);
+    B.line('M 0.5 -1.12 C 0.1 -1.24 -0.34 -1.16 -0.56 -0.84', s.lit, 0.06, 0.04, 0.5);
+    B.line('M 0.4 -0.76 C 0.1 -0.82 -0.2 -0.7 -0.28 -0.42 C -0.32 -0.1 -0.2 0.2 -0.06 0.4', s.lit, 0.07, 0.04, 0.4);
+    B.line('M 0.32 -0.64 C 0.06 -0.66 -0.14 -0.54 -0.18 -0.3', s.dark, 0.04, 0.03, 0.4);
+    B.fill('M 0.48 -0.22 C 0.6 -0.04 0.58 0.3 0.44 0.5 C 0.28 0.52 0.16 0.38 0.14 0.12 C 0.14 -0.06 0.26 -0.2 0.48 -0.22 Z', s.dark, 0.05, 0.55);
+    B.dab(0.64, 0.24, 0.08, 0.14, s.lit, 0.55);
+    B.dab(0.12, 0.98, 0.2, 0.16, s.red, 0.3);
+  });
+  g.restore();
+}
