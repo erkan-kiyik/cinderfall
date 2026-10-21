@@ -987,7 +987,8 @@ küçük yapraklı, üstü ışıkta budanmış şimşir.
 
 ### 10.16 Kafalar: yüz yok
 §10.15'teki kafalar beğenilmedi; görünen yüz denemesi de istenmedi. Karar:
-**hiçbir karakterin yüzü görünmez** (göz, burun, ağız yok). Kafalar sıfırdan,
+**hiçbir karakterin yüzü görünmez** (göz, burun, ağız yok); tek istisna
+Gall (aşağıda). Kafalar sıfırdan,
 FLINT'in kafasının diliyle çizildi: birkaç büyük biçim, malzemesi içinde
 (örgü, kanvas, kauçuk, boya), tek parlak şey, az çizgi. Görünen ten en çok bir
 kulak ve şakak şeridi; FLINT ve HAWK değişmedi.
@@ -1013,6 +1014,6 @@ kumaş ya da maske. Operatörlerin başlıkları da yenilendi:
   kırmızı yarık, üç kalın havalandırma oluğu, kulakta gri çanak, yanda amblem.
 - **Hücumcu:** siyah başlık, siyah kauçuk gaz maskesi, kalın çelik çemberli
   koyu camlar, önde gri filtre kutusu; alçak gri kask.
-- **Gall:** subay şapkası (lacivert, kırmızı bant, gümüş amblem ve kordon,
-  rugan siper), yuvarlak siyah gözlük, burnun üstüne çekilmiş siyah yün
-  boyunluk; kısa gri şakak ve kulak.
+- **Gall:** tek istisna. Yüzsüz denemesi (yuvarlak siyah gözlük, burnun
+  üstüne çekilmiş siyah boyunluk) beğenilmedi; §10.15'teki açık yüzü geri
+  geldi: uzun dar yüz, siperin gölgesindeki göz, ince dudaklar, kır saç.
