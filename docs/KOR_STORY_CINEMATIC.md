@@ -58,7 +58,7 @@ Ekip ona telsizden "Operatör" der. Seslendirme yok; her şey altyazı.
 | VASQUEZ | — | Vanta bölge komutanı, kulede. | Görülmez, sadece emirleri. | Final boss |
 
 ### 1.5 Perdeler (10 görev)
-- **Perde 1 — Giriş.** (1) *Sızma*: şehre kapıdan girilir. (2) *HAWK'ın Tezgâhı*:
+- **Perde 1 — Giriş.** (1) *Sızma*: şehre kapıdan girilir. (2) *Pazar Baskını*:
   tek erzak hattı korunur. (3) *Sekreter Gall*: valilik; Gall düşer, masasında
   **"Kül Planı"** bulunur: Vanta çelikhane arazisini ve limanı satmaktadır.
 - **Perde 2 — Derinlik.** (4) *Dökümhane*: kaybolanların kayıtları. (5) *Metro*.
@@ -143,7 +143,7 @@ görev ilk kez başlatılırken oynar, kampanyada "Sahne" düğmesiyle tekrar iz
 | Sahne | Çekim | Satırlar |
 |---|---|---|
 | `m1` öncesi | Gece kapı: bariyer, kulübe ışığı, konteyner yığını, yağmur | VESPER: *Kulübede iki nöbetçi. Kamera yok, sadece göz.* · WARDEN: *Terminal avluda. Ben açarım, siz tutun.* · FLINT: *Girelim.* |
-| `m2` öncesi | Şafak, pazar: kepenkler yarı açık, HAWK tabelası yarım yanıyor, ıslak tezgâh örtüsü | VESPER: *Vanta bu sabah HAWK'ın tezgâhını basacak.* · SKYE: *HAWK giderse mermi de gider, ekmek de.* · HAWK (telefon): *Her şeyin bir fiyatı var, evlat. Bugün benimki sizsiniz.* |
+| `m2` öncesi | Şafak, pazar: kepenkler yarı açık, HAWK tabelası yarım yanıyor, ıslak tezgâh örtüsü | VESPER: *Vanta bu sabah pazarı basacak.* · SKYE: *HAWK giderse mermi de gider, ekmek de.* · HAWK (telefon): *Her şeyin bir fiyatı var, evlat. Bugün benimki sizsiniz.* |
 | `m3` öncesi | Valilik cephesi: Vanta bayrakları, sütunlar, ıslak merdiven, pencerede tek yanan oda | VESPER: *Gall bu gece valilikte. Sözleşmenin aslı onda.* · SKYE: *Salonda üç kat koruma. Gall kaçmaz, bekler.* · FLINT: *Bekletmeyelim.* |
 | Perde 1 sonu (`m3` bitince) | Masa lambası altında belge: başlıkta **KÜL PLANI**; yanında titreşen telefon, ekranda arayan: HAWK | VESPER: *Satmışlar. Ocağı, limanı, hepsini.* · BULWARK: *Satamazlar. Daha bizim.* · (telefon titrer, kimse açmaz) · yazı: *Perde 1 sonu* |
 
@@ -502,7 +502,7 @@ hikâyeden kurar.
   - Kapının kendisi: çelik portal, üstünde beyaz ışıklı *KONTROL NOKTASI ·
     DUR · KİMLİK HAZIRLAYIN* levhası, iki projektör, kamera, kırmızı LED;
     iki yanında T-duvarlar ve jiletli tel.
-- **Pazar (görev 2 · HAWK'ın Tezgâhı):** §10.4'teki tezgâhlar; sokağı kesen
+- **Pazar (görev 2 · Pazar Baskını):** §10.4'teki tezgâhlar; sokağı kesen
   Vanta T-duvarı ve tel.
 - **Valilik (görev 3 · Sekreter Gall):** şehrin eski valilik binası, şimdi
   Vanta'nın sekreterliği. Şehirde temiz tutulan tek yer.
@@ -514,14 +514,14 @@ hikâyeden kurar.
   - Meydan: revak sütunları sıcak kesme taş, budanmış çalılar, bayrak
     direkleri.
 
-### 10.6 Pazar (görev 2 · HAWK'ın Tezgâhı)
+### 10.6 Pazar (görev 2 · Pazar Baskını)
 Pazar şehrin kendi ekonomisidir: Vanta karneyle dağıtır, halk takasla ve
 HAWK'ın getirdiğiyle yaşar. HAWK'ın tezgâhı şehre giren tek erzak hattıdır;
 onu korumak görevin kendisidir.
 
 - **Kural:** pazar kaldırımda, dükkânların önünde kurulur; yolu kesen tezgâh
-  yoktur (sokağın ortasına çıkan tezgâhlar daha önce kaldırıldı). Oyun alanında
-  tek tezgâh HAWK'ınkidir.
+  yoktur (sokağın ortasına çıkan tezgâhlar daha önce kaldırıldı); HAWK'ın
+  tezgâhı da kaldırıldı (§10.14), yolda yalnız iki sandık siper olarak durur.
 - **Dükkânlar ve önleri:**
   - *Manav:* çizgili soluk branda, kasalarda soğan, patates, lahana; boş
     kasalar; kartona keçeli kalemle fiyat (*SOĞAN 30*, *PATATES 35*, *ELMA
@@ -538,7 +538,7 @@ onu korumak görevin kendisidir.
 - **Sokağın üstü:** binadan binaya gerilmiş halatlar, sarkan brandalar,
   jeneratörden ampuller.
 - **Yerde:** lahana yaprağı, ezilmiş karton, kasa tahtası, ip.
-- **HAWK'ın tezgâhı:** iskele borusundan çatı, yamalı aşı boyası branda,
+- **HAWK'ın tezgâhı (kaldırıldı, §10.14):** iskele borusundan çatı, yamalı aşı boyası branda,
   arkada paslı oluklu sac ve raflar (teneke yağ, kavanoz, mum, ilaç
   kutuları, pil); asılı soğan ve sarımsak; tezgâh kasaların üstüne çakılmış
   tahta: pirinç terazi, açık veresiye defteri, gaz lambası; tezgâhın altında
@@ -694,7 +694,7 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 - **FLINT, WARDEN, VESPER, SKYE, BULWARK:** kod adları; telsizde kısa,
   karışmaz, oyuncunun seçtiği hâliyle duruyor.
 - **HAWK, Gall, Vasquez, VANTA SYNDICATE:** kişi ve şirket adları.
-- **Görevler** (Sızma, HAWK'ın Tezgâhı, Sekreter Gall, Dökümhane, Metro, Dron
+- **Görevler** (Sızma, Pazar Baskını, Sekreter Gall, Dökümhane, Metro, Dron
   Fabrikası, Ocak, Kule Baskını, İhanet, Vasquez) ve yerleri: işlevle anılır,
   semt adı yok.
 - **Parça** (para birimi, hurda somun), **Tetikçi / Kalkanlı / Hücumcu**,
@@ -775,7 +775,7 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
   (üstüne binmez).
 
 **Telafi geçişi (ikinci bölüm)**
-- **HAWK tezgâhında:** kolları göğsünde kavuşturulmuş bekler (diz hizasındaki
+- **HAWK tezgâhında (tezgâhla birlikte kaldırıldı):** kolları göğsünde kavuşturulmuş bekler (diz hizasındaki
   tezgâha uzanan imkânsız kol kalktı); paltosu bir beden gibi döner: uzak yanı
   karanlıkta, lamba yanı sıcak, omuzlarında tezgâh ampulü. Portrede ensesi
   karanlığa döner, kısa saç enseye doğru seyrelir, atkı kıvrımlarla sarılı.
@@ -910,3 +910,9 @@ bloğu, alttan vuran korku feneri ışığı.
   katta: kendi koyusu, orta gri, ışığın düştüğü yerde açık tüyler. Kenarı
   tüyle biter, yanakta tıraş gölgesine incelir; atkı boyuna, sakalın alt
   kenarının üstüne sarılır.
+
+**Pazardaki tezgâh kaldırıldı.** HAWK'ın pazarın ortasındaki tezgâhı (branda
+çatı, raflar, tezgâh, HAWK'ın kendisi, tabela ve ampuller) oyundan çıktı;
+HAWK yalnız tüccar ekranında ve lobideki kartta, portresiyle görünür. Görev 2
+artık *Pazar Baskını*: Vanta pazarı basar, ekip pazarın ortasını üç dalgaya
+karşı tutar; tezgâhın yerinde siper olarak iki sandık durur.

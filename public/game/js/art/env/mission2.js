@@ -1,14 +1,13 @@
-// KOR — campaign mission 2, "HAWK'ın Tezgâhı": the market street. Same
+// KOR — campaign mission 2, "Pazar Baskını": the market street. Same
 // rule as mission 1: every feature sits in tile columns and is painted in
 // the same box, so what you see is what you collide with.
 //
 //   A  cordon       a Syndicate barricade across the street        → checkpoint 1
 //   B  the market   along the pavement in front of the shops, tarps slung
-//                   overhead; HAWK's stall in the middle of the street, the
-//                   only one: hold it while three squads come at it → checkpoint 2
+//                   overhead; hold the middle of it while three squads come
+//                   at it from both ends                          → checkpoint 2
 //   C  scaffolding  the street is walled off: up the ladders, over the wall
 //   D  extraction   down on the far side, through the last post to the flare
-import { paintHawkStanding, HAWK_EMBER } from '../hawk.js';
 import { cel, fill, stroke, clip } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
 import { texture } from '../tex.js';
@@ -16,7 +15,7 @@ import { Level, T } from '../../phys/level.js';
 import { crate, lampPost, burnBarrel, dumpster, cone } from './street.js';
 import { catwalk, ladder, barricade } from './course.js';
 import { concrete, beacon, cpPost } from './mission1.js';
-import { facadeLayout, hawkSign, bulb, letters, lightbox, ledBoard, notice } from './city.js';
+import { facadeLayout, bulb, letters, lightbox, ledBoard, notice } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -24,100 +23,8 @@ const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 
 
 const COLS = 400, TOPY = -200, ROWS = 30, STREET = 25;
 const POLE = tone('#8a95a3', '#5d6878', '#3c4654', '#151a21');
-const PIPE = mat(tone('#a3a9ae', '#767d83', '#53595f', '#1a1d20'), 'steel', 0.5);
-const SHEET = mat(tone('#8e7c6a', '#6c5c4c', '#4c4036', '#1e1814'), 'steel', 0.7);
-const PLANK = mat(tone('#b08a5a', '#8a6a40', '#634a2a', '#2a1e10'), 'wood', 0.8);
-const CANV = mat(tone('#c9aa78', '#9e7e4e', '#715634', '#2a1e0e'), 'canvas', 0.8);
-const SACK = mat(tone('#ddd2b4', '#b9ab8a', '#8a7e62', '#3e382a'), 'canvas', 0.85);
 
 // --- painters (drawn from x = 0, placed with `at`) -----------------------------------------
-// HAWK's stall (docs §10.6), the city's one supply line, 64 wide: a roof of
-// scaffold pipe under his patched ochre tarp (you can stand on it, y = -72),
-// a back of rusted corrugated sheet with shelves of what nobody else has,
-// onions and garlic hanging, a counter of planks nailed over crates (x 8..56,
-// 16 high: solid) with the brass scale, the open debt book and a paraffin
-// lamp; in the gap between the crates, under a cloth, the ammunition; flour
-// sacks on one side, the generator on the other; his painted board over it.
-export const HAWK_BULBS = [0, 1, 2, 3, 4].map((k) => [4 + k * 14, -63.6 + Math.sin((k / 4) * Math.PI) * 1.6]);
-export function hawkStall(g) {
-  const w = 64;
-  // the back
-  const BK = rect(3, -66, w - 3, -16);
-  cel(g, BK, SHEET, { sh: 1.4, hl: 0.4 });
-  clip(g, BK, () => {
-    for (let x = 3; x < w; x += 3) { fill(g, rect(x, -66, x + 1.1, -16), SHEET.d, 0.6); fill(g, rect(x + 1.1, -66, x + 1.6, -16), SHEET.l, 0.35); }
-    for (const [x, y, r] of [[12, -60, 5], [44, -24, 6], [56, -48, 4]]) fill(g, ell(x, y, r, r * 0.7), '#7a4024', 0.35);
-    fill(g, rect(3, -40, w - 3, -16), '#000', 0.25);
-  });
-  // shelves and what is on them
-  for (const y of [-52, -38]) { cel(g, rect(5, y, w - 5, y + 1.6), PLANK, { sh: 0.3, hl: 0.3, lw: 0.25 }); for (const x of [8, w - 9]) fill(g, poly([[x, y + 1.6], [x + 1, y + 1.6], [x + 1, y + 4], [x, y + 4]]), PLANK.k); }
-  for (let k = 0; k < 4; k++) { const x = 7 + k * 6; cel(g, rect(x, -59, x + 5, -52), mat(tone('#c9ced2', '#9aa0a4', '#6e7478', '#24282a'), 'steel', 0.5), { sh: 0.4, hl: 0.4, lw: 0.2 }); fill(g, rect(x + 0.6, -57, x + 4.4, -54.4), k % 2 ? '#c9a548' : '#2a5a3a'); }
-  for (let k = 0; k < 3; k++) { const x = 32 + k * 4.2; fill(g, rect(x, -58, x + 3.4, -52), '#8a9a7a', 0.7); fill(g, rect(x - 0.2, -59, x + 3.6, -58), '#6a5a3a'); fill(g, rect(x + 0.4, -56, x + 3, -53), '#d8c890', 0.5); }
-  for (let k = 0; k < 6; k++) fill(g, rect(46 + k * 1.3, -57.6, 47 + k * 1.3, -52), '#e8e0c8');
-  stroke(g, 'M 45.6 -55 L 54 -55', '#8e2a22', 0.4);
-  for (let k = 0; k < 4; k++) { const x = 7 + k * 7; cel(g, rect(x, -45, x + 6, -38), tone('#f4f2ec', '#dcd8cc', '#b0aa9c', '#3a3832'), { sh: 0.3, hl: 0.3, lw: 0.2 }); fill(g, rect(x, -42.6, x + 6, -41.4), '#2a7a4a'); }
-  letters(g, 'İLAÇ', 20.5, -43.4, 1.9, '#1e2a22', { kind: 'print', align: 'center', jit: 0 });
-  for (let k = 0; k < 3; k++) { const x = 36 + k * 4; fill(g, rect(x, -43, x + 3.2, -38), '#2a2a2a'); fill(g, rect(x, -43, x + 3.2, -41.6), '#c9a548'); }
-  cel(g, rect(49, -45, 58, -38), M.charcoal, { sh: 0.3, hl: 0.2, lw: 0.2 }); fill(g, ell(52, -41.4, 1.6, 1.6), '#4a4440'); fill(g, rect(54.6, -43.6, 57, -40.6), '#c99a4a', 0.8);
-  // the prices on a bit of cardboard, between the shelf and the counter
-  g.save(); g.translate(32, -27); g.rotate(-0.03);
-  fill(g, rect(-10, -9, 10, 9), '#b89a6a'); fill(g, rect(-10, -9, 10, -8.2), '#fff', 0.12);
-  [['UN', '40'], ['YAĞ', '90'], ['PİL', '15'], ['İLAÇ', 'SOR']].forEach(([a, b], i) => { letters(g, a, -8.6, -5.4 + i * 4, 2.6, '#17130f', { jit: 0.12, seed: 5 + i }); letters(g, b, 8.6, -5.4 + i * 4, 2.6, '#17130f', { align: 'right', jit: 0.12, seed: 9 + i }); });
-  g.restore();
-  // onions and garlic hanging off the frame
-  for (const [x, c, n] of [[6, '#b07a3a', 5], [58, '#e0d6c0', 4]]) { stroke(g, `M ${x} -66 L ${x} ${-64 + n * 2}`, '#6a5a3a', 0.3); for (let k = 0; k < n; k++) fill(g, ell(x + (k % 2 ? 0.8 : -0.8), -63 + k * 2.2, 1.2, 1.1), c); }
-  // the frame: scaffold pipe with its couplers
-  for (const x of [0.4, w - 0.4]) { cel(g, rect(x - 1, -72, x + 1, 0), PIPE, { sh: 0.3, hl: 0.3, lw: 0.25 }); for (const y of [-66, -36, -6]) fill(g, rect(x - 1.5, y, x + 1.5, y + 1.6), PIPE.k); }
-  cel(g, rect(0, -67, w, -65.4), PIPE, { sh: 0.2, hl: 0.2, lw: 0.2 });
-  // HAWK himself, behind the counter in front of his shelves (art/hawk.js)
-  paintHawkStanding(g);
-  // the counter: planks nailed over three crates, the middle one left out
-  for (const [x0, x1, t] of [[8, 24, 'UN'], [40, 56, 'ŞEKER']]) {
-    const B = rect(x0, -14, x1, 0);
-    cel(g, B, PLANK, { sh: 1.0, hl: 0.4 });
-    clip(g, B, () => { for (let y = -11; y < 0; y += 3.6) fill(g, rect(x0, y, x1, y + 0.5), PLANK.k, 0.7); stroke(g, `M ${x0} -14 L ${x1} 0`, PLANK.d, 0.8); });
-    letters(g, t, (x0 + x1) / 2, -5, 3, '#2a1c10', { kind: 'sten', align: 'center', jit: 0, a: 0.75 });
-  }
-  fill(g, rect(24, -14, 40, 0), '#16110c');
-  // the ammunition in the gap, under a cloth that does not quite cover it
-  cel(g, rect(26, -8, 38, 0), mat(tone('#7a8452', '#5a6238', '#3e4426', '#14160c'), 'paint', 0.6), { sh: 0.4, hl: 0.3, lw: 0.25 });
-  fill(g, rect(26.6, -5.6, 37.4, -4.8), '#c9a548', 0.8);
-  cel(g, `M 24.6 -9.4 C 28 -10.6 34 -10.6 39.4 -9 L 39 -4 C 36 -5.6 33 -3 30 -4.4 C 28 -5.4 26 -3.6 24.8 -4.6 Z`, mat(tone('#7a6a58', '#5a4c3e', '#3e342a', '#16120e'), 'canvas', 0.8), { sh: 0.4, hl: 0.3, lw: 0.25 });
-  const TOP = rect(7, -16, 57, -14);
-  cel(g, TOP, PLANK, { sh: 0.3, hl: 0.4 });
-  // on the counter: the brass scale, the debt book, the paraffin lamp
-  stroke(g, 'M 14 -16 L 14 -21 M 9 -21 L 19 -21', '#a8803e', 0.5);
-  for (const x of [9, 19]) { stroke(g, `M ${x} -21 L ${x - 1.6} -18.6 M ${x} -21 L ${x + 1.6} -18.6`, '#a8803e', 0.2); fill(g, `M ${x - 2} -18.6 L ${x + 2} -18.6 Q ${x} -17 ${x - 2} -18.6 Z`, '#c9a548'); }
-  fill(g, rect(12.6, -16.6, 15.4, -16), '#7a5a2a');
-  fill(g, poly([[24, -16.2], [31, -17.6], [31, -16.2]]), '#e8e0cc'); fill(g, poly([[31, -17.6], [38, -16.2], [31, -16.2]]), '#ddd4bc');
-  for (let k = 0; k < 3; k++) { stroke(g, `M ${25.4 + k * 0.4} ${-16.6 - k * 0.3} L ${29.6} ${-17.2 - k * 0.3}`, '#5a5a6a', 0.12); stroke(g, `M ${32.4} ${-17.2 - k * 0.3} L ${36.6 - k * 0.4} ${-16.6 - k * 0.3}`, '#5a5a6a', 0.12); }
-  fill(g, rect(44, -17.4, 50, -16), '#5a4a2a'); fill(g, `M 45 -17.4 C 44.6 -20 45.6 -21.6 47 -22.4 C 48.4 -21.6 49.4 -20 49 -17.4 Z`, '#fff2d0', 0.8);
-  fill(g, ell(47, -19.4, 0.6, 1.2), '#ffcf6a');
-  // flour sacks on the left, the generator on the right
-  for (const [x, y] of [[-1.6, 0], [0.4, -7]]) {
-    const S = `M ${x} ${y} C ${x - 0.4} ${y - 4} ${x} ${y - 6.6} ${x + 1.4} ${y - 7.4} L ${x + 6.4} ${y - 7.4} C ${x + 7.8} ${y - 6.6} ${x + 8.2} ${y - 4} ${x + 7.8} ${y} Z`;
-    cel(g, S, SACK, { sh: 0.6, hl: 0.4, lw: 0.25 });
-    letters(g, 'UN', x + 3.9, y - 2.4, 2.2, '#7a3a24', { kind: 'sten', align: 'center', jit: 0, a: 0.8 });
-  }
-  cel(g, rect(57.4, -8, 65.6, 0), mat(tone('#a86a46', '#7e4a30', '#58321f', '#1e100a'), 'paint', 0.7), { sh: 0.5, hl: 0.3, lw: 0.25 });
-  fill(g, rect(58.6, -6, 62.4, -2), '#2a2622'); fill(g, ell(64, -4, 1, 1), '#2a2622');
-  stroke(g, 'M 61 -8 C 61 -14 63 -20 63.4 -30 L 63.4 -64', '#0f0e0c', 0.3);
-  // the roof: the tarp over the pipes (stand on it), its patched valance and the bulbs
-  cel(g, rect(-1, -73, w + 1, -70), CANV, { sh: 0.6, hl: 0.4 });
-  const n = 8, V = `M -1 -70 L ${w + 1} -70 L ${w + 1} -65 ` + Array.from({ length: n }, (_, i) => { const xa = w + 1 - (i + 0.5) * ((w + 2) / n), xb = w + 1 - (i + 1) * ((w + 2) / n); return `Q ${xa} -62.4 ${xb} -65`; }).join(' ') + ' Z';
-  cel(g, V, CANV, { sh: 0.8, hl: 0.3 });
-  clip(g, V, () => {
-    for (const [x0, x1, c] of [[8, 18, '#6c6a4a'], [38, 47, '#8a7660']]) { fill(g, rect(x0, -70, x1, -64), c); g.save(); g.setLineDash([0.5, 0.45]); stroke(g, rect(x0, -70, x1, -64), '#2a2016', 0.15, 0.8); g.restore(); }
-  });
-  stroke(g, V, CANV.k, 0.4);
-  stroke(g, `M 0 -64.6 Q ${w / 2} -61 ${w} -64.6`, '#0b0d11', 0.3);
-  for (const [x, y] of HAWK_BULBS) { stroke(g, `M ${x} ${y - 1.6} L ${x} ${y - 0.6}`, '#0b0d11', 0.2); fill(g, ell(x, y, 0.8, 0.9), '#fff1c8'); fill(g, ell(x, y - 0.1, 0.4, 0.45), '#fff'); }
-  // the board, hung off the roof on wires; a bulb either side
-  for (const x of [16, 48]) stroke(g, `M ${x} -78 L ${x} -73`, POLE.k, 0.5);
-  hawkSign(g, 8, -96, 56, -78, false);
-  for (const x of [6, 58]) { stroke(g, `M ${x} -98 L ${x} -96`, POLE.k, 0.5); bulb(g, x, -93, 3, false); }
-}
-
 // a tarp slung across the street between the houses, high up, one piece of
 // a row: the rope, the sagging canvas, two bulbs off the generator's line
 export const TARP_W = 80;
@@ -260,7 +167,7 @@ export function buildMission2() {
   P('m2.barrelA', [X(80) - 2, -16, X(80) + 14, 1], (g) => burnBarrel(g, X(80)), deco);
   addCrate(96);
   // B — the market (docs §10.6): along the pavement in front of the shops,
-  // nothing in the road but HAWK's stall; tarps slung across overhead
+  // tarps slung across overhead; in the road only two crates to fight from
   const tarps = [];
   for (let x = X(112); x < X(236); x += TARP_W + 6) {
     tarps.push(x);
@@ -270,13 +177,8 @@ export function buildMission2() {
   tarps.forEach((x, k) => P(`m2.tarp${k % 4}`, [x - 4, -130, x + TARP_W + 4, -100], (g) => { g.translate(x, 0); crossTarp(g, k); }, deco));
   const litterAt = [X(114), X(141), X(186), X(204), X(219)];
   deco.push({ name: 'm2.litter', box: [-2, -4, 42, 2], paint: (g) => litter(g, 3), at: litterAt });
-  // HAWK's stall: counter over 8 tiles, awning over 8
-  block(166, 171, 1, 2); block(165, 172, 9, 9, '=');
-  P('m2.hawk', [X(165) - 2, -100, X(165) + 66, 1], (g) => { g.translate(X(165), 0); hawkStall(g); });
-  glows.push([X(165) + 6, -92.7, 2.6, 2.6, '#ffe6b0', 0.85, 'bulb'], [X(165) + 58, -92.7, 2.6, 2.6, '#ffe6b0', 0.85, 'bulb'], [X(165) + 32, -87, 30, 9, '#ffcf8f', 0.08, 'bulb'], [X(165) + 47, -19.4, 3, 3, '#ffcf6a', 0.6, 'fire']);
-  lights.push([X(165) + 32, -84, 80, 0.8, [1, 0.74, 0.46], 'bulb'], [X(165) + 47, -22, 34, 0.5, [1, 0.62, 0.3], 'fire']);
-  for (const [bx, by] of HAWK_BULBS) glows.push([X(165) + bx, by, 2.2, 2.2, '#ffe6b0', 0.8, 'bulb']);
-  glows.push([X(165) + HAWK_EMBER[0], HAWK_EMBER[1], 0.9, 0.9, '#ff8a3a', 0.9, 'fire']);
+  // the cover in the middle of the hold
+  addCrate(166); addCrate(170);
   addCrate(226);
   P('m2.dumpB', [X(229) - 4, -24, X(229) + 48, 1], (g) => dumpster(g, X(229)), deco);
   // C — scaffolding over the wall -------------------------------------------------------------
@@ -309,7 +211,7 @@ export function buildMission2() {
 
   const level = new Level(g.map((r) => r.join('')), TOPY);
   const E = (id, x, y, zone, o = {}) => ({ id, kind: id, x, y, zone, facing: -1, ...o });
-  const MZ = [X(112), X(236)]; // the market, where the squads that come for HAWK fight
+  const MZ = [X(112), X(236)]; // the market, where the squads that come for it fight
   return {
     id: 'm2', level, props, front, deco, lamps, glows, lights, width: COLS * T,
     // the street in, Vanta's post at the cordon, then the market's shops and the shut hall
@@ -330,10 +232,10 @@ export function buildMission2() {
       // A
       E('tet', X(74) + 4, 0, [X(60), X(100)]),
       E('tet', X(90), 0, [X(76), X(110)], { patrol: [X(84), X(100)] }),
-      // B, before HAWK's stall
+      // B, before the hold
       E('tet', X(137), 0, [X(124), X(150)]),
       E('huc', X(156), 0, [X(112), X(200)]),
-      // B, the squads that come for the stall
+      // B, the squads that come for the market
       E('tet', X(232), 0, MZ, { wave: 2 }), E('huc', X(228), 0, MZ, { wave: 2 }),
       E('tet', X(114), 0, MZ, { wave: 3, facing: 1 }), E('huc', X(118), 0, MZ, { wave: 3, facing: 1 }), E('tet', X(214), 0, [X(200), X(230)], { wave: 3 }),
       E('kal', X(234), 0, MZ, { wave: 4 }), E('tet', X(230), 0, MZ, { wave: 4 }), E('huc', X(112), 0, MZ, { wave: 4, facing: 1 }),

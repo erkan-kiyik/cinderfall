@@ -182,7 +182,7 @@ if (what === 'market') {
     const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;color:#939dab;font:600 14px sans-serif;margin:4px';
     wrap.append(c, name); return wrap;
   };
-  row().append(pane('hawk', -4, 68, -102, 4, (g) => m2.hawkStall(g)), pane('ration', -36, 64, -54, 4, (g) => m2.rationPoint(g, 0)), pane('site', -4, 32, -50, 4, (g) => m2.siteBoard(g, 0)));
+  row().append(pane('ration', -36, 64, -54, 4, (g) => m2.rationPoint(g, 0)), pane('site', -4, 32, -50, 4, (g) => m2.siteBoard(g, 0)));
   row().append(pane('tarps', -4, 4 * (m2.TARP_W + 6), -132, -98, (g) => { for (let k = 0; k < 4; k++) { g.save(); g.translate(k * (m2.TARP_W + 6), 0); m2.crossTarp(g, k); g.restore(); } }), pane('litter', -4, 44, -6, 3, (g) => m2.litter(g, 3)));
 }
 if (what === 'valilik') {

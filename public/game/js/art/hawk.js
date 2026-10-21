@@ -1,4 +1,4 @@
-// HAWK — the trader, head and shoulders for his stall (docs/KOR_STORY_
+// HAWK — the trader, head and shoulders for the trader screen (docs/KOR_STORY_
 // CINEMATIC.md §9.4, §10.14). In his sixties: a flat tweed cap pulled low, a
 // hooked nose (the name he trades under), deep-set tired eyes under a heavy
 // brow, a close-cropped grey beard along the jaw, an old knitted scarf, a
@@ -43,22 +43,16 @@ const LAPEL = 'M 61 78 C 66 74.6 72 73.6 76.4 75.4 C 81 77.4 85 82.6 87 89 C 82 
 const SCARF = 'M 33.2 70.8 C 37 68.2 42 67.2 47 67.6 C 52 67.8 56 68.8 60 70 C 64 70.6 68 72.2 71.4 74.8 C 74.2 77 75.2 79.6 74.2 82 C 73 84.2 70.4 85.2 67.4 85.6 C 64.6 86.6 61.6 87.4 58.2 87 C 54.6 86.6 51.4 85.6 48 85.8 C 44.2 86 40.4 85 37.2 83 C 34.2 81 32.2 78.4 31.8 75.6 C 31.6 73.6 32.2 72 33.2 70.8 Z';
 const SCARF_END = 'M 58 84 C 62 84.4 66 85.6 68.4 88 C 70 92 69.4 98 68 104 L 58.6 104 C 59.6 98 59.4 91 58 84 Z';
 
-// the coat carried on down to the counter, for HAWK standing at his stall
-const COAT_BODY = 'M 4 346 C 1 300 -2 250 1 205 C 2 170 -4 130 -2 104 C -1 94 6 86 14 80 C 20 76 26 72 30 70.6 C 36 69.2 42 69 46 70 L 64 74 C 72 75 80 77 88 82 C 96 87 103 94 106 104 C 109 130 104 170 104 205 C 105 250 108 300 110 346 Z';
-
 // Paint the portrait into g, size × size px. t: seconds (the ember breathes, the smoke drifts).
-// o.figure: only the man, no stall behind him, no grain or vignette, the coat
-// carried down to frame y 346 (the counter) — for the market scene.
-export function paintHawk(g, size, t = 0, o = {}) {
+export function paintHawk(g, size, t = 0) {
   const M0 = g.getTransform(), k = (size / 100) * (Math.hypot(M0.a, M0.b) || 1), B = new Brush(g, k), r = rnd(11);
   g.save();
   g.scale(size / 100, size / 100);
-  const glow = 0.65 + 0.35 * Math.sin(t * 1.7), fig = !!o.figure;
+  const glow = 0.65 + 0.35 * Math.sin(t * 1.7);
   // is (x, y) of this frame inside the path, whatever transform the frame is under
   const inP = (path, x, y) => { const M = g.getTransform(); return g.isPointInPath(path, M.a * x + M.c * y + M.e, M.b * x + M.d * y + M.f); };
 
   // --- the stall behind him: dark boards, shelves of tins out of focus, the lamp's warmth low right
-  if (!fig) {
   const bg = g.createLinearGradient(0, 0, 100, 100);
   bg.addColorStop(0, '#0b0907'); bg.addColorStop(0.6, '#171009'); bg.addColorStop(1, '#2b1a0e');
   g.fillStyle = bg; g.fillRect(0, 0, 100, 100);
@@ -67,99 +61,26 @@ export function paintHawk(g, size, t = 0, o = {}) {
   for (let i = 0; i < 6; i++) { const x = 3 + i * 5.6, y = 40; B.fill(`M ${x} ${y} L ${x + 3.6} ${y} L ${x + 3.6} ${y + 8} L ${x} ${y + 8} Z`, '#2e2014', 1.8, 0.6); }
   B.dab(104, 96, 46, 40, 'rgba(255,160,80,0.55)');
   B.dab(96, 66, 10, 10, `rgba(255,120,50,${0.12 * glow})`);
-  }
 
   // --- the coat: heavy wool, the collar turned up behind the neck
   B.fill(COLLAR_BACK, '#24211d', 0.4);
   B.inside(COLLAR_BACK, () => { B.dab(36, 64, 9, 7, '#3c3730', 0.7); texture(g, 'wool', 0.5, 7); });
-  const COATP = fig ? COAT_BODY : COAT;
-  B.fill(COATP, '#26231f', 0.3);
-  B.inside(COATP, () => {
+  B.fill(COAT, '#26231f', 0.3);
+  B.inside(COAT, () => {
     texture(g, 'wool', 0.55, 7);
     B.dab(88, 96, 26, 16, 'rgba(176,120,72,0.55)');           // the lamp on the near shoulder
     B.dab(10, 92, 22, 14, 'rgba(70,80,92,0.25)');             // the cold of the street behind
     for (const d of ['M 14 88 C 20 92 24 98 26 106', 'M 40 82 C 44 90 46 98 47 106', 'M 82 86 C 86 92 88 98 88 106']) B.line(d, '#0c0b09', 2.2, 1.6, 0.6);
     for (const d of ['M 16 87 C 22 91 26 97 28 104', 'M 84 85 C 88 91 90 97 90 104']) B.line(d, '#5a4a38', 0.8, 0.8, 0.35);
-    if (fig) {
-      // the body under the coat, turned as a body is: the far side in the dark, the
-      // lamp side warm; the bulb strung over the stall on the shoulders; the street's
-      // cold light along his back; the lamp on the counter warming the skirt from below
-      const turn = g.createLinearGradient(-4, 0, 112, 0);
-      turn.addColorStop(0, 'rgba(0,0,0,0.5)'); turn.addColorStop(0.4, 'rgba(0,0,0,0.12)');
-      turn.addColorStop(0.75, 'rgba(150,104,66,0.1)'); turn.addColorStop(1, 'rgba(190,124,70,0.3)');
-      g.fillStyle = turn; g.fillRect(-10, 60, 130, 300);
-      B.dab(54, 86, 44, 12, 'rgba(176,156,126,0.24)');
-      B.dab(104, 330, 30, 90, 'rgba(190,124,70,0.5)');
-      B.line('M -1 104 C -4 150 -1 200 1 240 C 0 280 1 310 3 346', 'rgba(104,124,146,0.45)', 2, 1.8);
-      // the front edge of the coat under the arms, two buttons, the belt drawn in
-      // at the waist and the wool bunching over it, a flap pocket on the hip
-      B.line('M 76 200 C 76 250 76 300 77 346', '#0a0908', 2.4, 1.2, 0.85);
-      B.line('M 79 200 C 79 250 79 300 80 346', 'rgba(200,140,90,0.3)', 1, 1);
-      B.dab(72, 262, 2.2, 2.2, '#1a1612'); B.dab(71.4, 261.4, 0.8, 0.8, 'rgba(220,170,120,0.5)');
-      B.line('M 2 216 C 30 226 66 224 106 214', '#0b0a08', 3.4, 1.4, 0.9);
-      B.line('M 2 221 C 30 231 66 229 106 219', 'rgba(170,120,76,0.32)', 1.2, 1.2);
-      for (const x of [20, 42, 64, 92]) B.line(`M ${x} 202 C ${x + 2} 208 ${x + 1} 214 ${x - 1} 220`, 'rgba(8,6,4,0.45)', 1.4, 1.2);
-      B.line('M 82 268 C 90 266 98 265 105 266', 'rgba(6,5,4,0.75)', 2.2, 1.2);
-      B.line('M 82 265 C 90 263 98 262 105 263', 'rgba(210,140,84,0.4)', 0.9, 0.8);
-      for (const [d, a] of [['M 20 236 C 26 270 24 310 20 346', 0.5], ['M 50 232 C 54 270 56 310 54 346', 0.4], ['M 96 236 C 100 270 102 310 104 346', 0.35]]) B.line(d, `rgba(6,5,4,${a})`, 3, 3);
-      for (const d of ['M 24 238 C 30 270 28 310 24 346', 'M 100 236 C 104 270 106 310 108 346']) B.line(d, 'rgba(160,112,72,0.22)', 1.4, 1.6);
-      // the arms' shadow on the chest above them and on the belly under them
-      B.dab(60, 206, 46, 8, 'rgba(0,0,0,0.5)');
-      B.dab(66, 140, 36, 10, 'rgba(0,0,0,0.3)');
-    }
   });
-  if (fig) {
-    // his arms folded across his chest — a man waiting at his own counter. The near
-    // arm (his right) down the side, its forearm across over the other; the far
-    // hand out on the near arm. Wool sleeves, the bulb on top of every form, the lamp
-    // on the counter under them, the cold of the street on the near arm's back edge.
-    const sleeve = (d, fn) => { B.fill(d, '#2b2723', 0.35); B.inside(d, () => { texture(g, 'wool', 0.5, 7); fn(); }); };
-    const NEAR_UP = 'M -1 104 C -3 128 -2 160 2 184 C 5 196 12 200 20 198 C 28 188 32 156 34 122 C 35 110 34 100 30 94 C 22 88 8 90 -1 104 Z';
-    sleeve(NEAR_UP, () => {
-      B.dab(20, 92, 16, 10, 'rgba(170,150,120,0.35)');
-      B.line('M -2 106 C -4 140 -2 170 2 186', 'rgba(110,130,152,0.5)', 1.8, 1.4);
-      B.dab(30, 150, 6, 40, 'rgba(0,0,0,0.45)');
-      for (const y of [168, 178]) B.line(`M 2 ${y} C 10 ${y + 4} 20 ${y + 3} 30 ${y - 2}`, 'rgba(6,5,4,0.45)', 1.2, 1);
-    });
-    const FAR_FORE = 'M 108 158 C 86 154 60 148 34 144 L 32 168 C 58 170 84 176 108 180 Z';
-    sleeve(FAR_FORE, () => {
-      B.dab(70, 146, 40, 5, 'rgba(176,156,126,0.3)');
-      B.dab(70, 172, 40, 6, 'rgba(0,0,0,0.5)');
-    });
-    // the far hand on the near arm: old skin, mostly in shadow, the bulb on its knuckles
-    const HAND = 'M 38 146 C 32 139 22 137 15 141 C 9 146 9 158 13 164 C 19 170 30 170 38 168 Z';
-    B.fill(HAND, '#80553e', 0.5);
-    B.inside(HAND, () => {
-      B.dab(26, 142, 12, 5, 'rgba(236,182,140,0.55)');
-      B.dab(22, 166, 14, 6, 'rgba(30,14,8,0.55)');
-      for (let i = 0; i < 3; i++) B.line(`M ${31 - i * 6} 145 C ${27 - i * 6} 151 ${21 - i * 5} 158 ${16 - i * 2} 163`, 'rgba(60,28,16,0.3)', 0.7, 0.8);
-      for (let i = 0; i < 4; i++) B.dab(31 - i * 5.4, 144 + i * 0.6, 1.6, 1.1, 'rgba(255,214,176,0.4)');
-      B.dab(36, 150, 3, 6, 'rgba(236,182,140,0.35)');
-      texture(g, 'skin', 0.35, 6);
-    });
-    B.fill('M 40 144 C 37 150 37 162 39 168 L 34 168 C 33 160 33 150 35 144 Z', '#211e1a', 0.4);
-    const NEAR_FORE = 'M 2 184 C 3 198 14 208 30 206 C 54 202 80 192 104 184 L 102 160 C 78 166 52 172 28 176 C 16 178 6 178 2 184 Z';
-    sleeve(NEAR_FORE, () => {
-      B.dab(60, 166, 50, 6, 'rgba(176,156,126,0.32)');
-      B.dab(84, 196, 34, 10, 'rgba(196,128,74,0.42)');
-      B.dab(12, 196, 12, 8, 'rgba(0,0,0,0.4)');
-      for (const x of [16, 24]) B.line(`M ${x} 178 C ${x + 2} 186 ${x + 1} 196 ${x - 2} 204`, 'rgba(6,5,4,0.5)', 1.2, 1);
-      B.line('M 30 205 C 54 201 80 191 104 183', 'rgba(220,150,96,0.35)', 1.2, 1.2);
-    });
-    const FAR_UP = 'M 88 96 C 98 93 106 99 108 112 C 112 136 114 160 114 182 C 113 193 106 198 99 194 C 95 172 92 140 88 112 Z';
-    sleeve(FAR_UP, () => {
-      B.dab(100, 100, 10, 8, 'rgba(170,150,120,0.3)');
-      B.dab(112, 176, 6, 24, 'rgba(206,136,80,0.45)');
-      B.dab(92, 150, 6, 40, 'rgba(0,0,0,0.4)');
-    });
-  }
 
   // --- the head and neck. The bulb is above him and in front: the planes that face
   // it (the front of the face, the tops of the cheekbone, the nose, the lip, the
   // chin) take it full, the side of the face half, the back of the head and
-  // everything under the jaw none. The cap's peak cuts a hard shadow across the
-  // face just under the eyes. Planes first, with crisp edges where a plane turns
-  // and soft ones where it rounds; then the colour of old skin; then the folds.
+  // everything under the jaw none. The cap's peak throws its shadow over the
+  // forehead down onto the upper lid. Planes first, with crisp edges where a
+  // plane turns and soft ones where it rounds; then the colour of old skin; then
+  // the folds.
   // skin fold: a dark crease, the edge under it catching the bulb from above
   const fold = (d, w = 0.32, a = 0.55) => {
     B.line(d, `rgba(46,20,11,${a})`, w, w * 0.7);
@@ -419,30 +340,17 @@ export function paintHawk(g, size, t = 0, o = {}) {
   B.dab(13.9, 0, 1.0, 0.85, `rgb(255,${120 + 70 * glow},50)`, 1);
   B.dab(13.9, 0, 3.2, 2.6, `rgba(255,120,40,${0.45 * glow})`, 1, 'screen');
   g.restore();
-  for (let i = 0; i < (fig ? 0 : 5); i++) {
+  for (let i = 0; i < 5; i++) {
     const u = (t * 0.12 + i / 5) % 1, x0 = 94.8, y0 = 61.3;
     const x1 = x0 - 2 + Math.sin(u * 5 + i) * 3, y1 = y0 - 8 - u * 26, x2 = x1 + Math.sin(u * 7 + i * 2) * 4, y2 = y1 - 10;
     B.line(`M ${x0} ${y0 - 1} C ${x0 + 1} ${y0 - 6} ${x1 - 2} ${y1 + 4} ${x1} ${y1} S ${x2 + 2} ${y2 + 4} ${x2} ${y2}`, `rgba(190,182,172,${0.16 * (1 - u)})`, 0.8 + u * 3, 0.8 + u * 2.4);
   }
 
   // --- the whole: a cool edge of street light on his back, film grain, the stall's dark round the frame
-  if (!fig) {
-    B.dab(26, 60, 10, 30, 'rgba(110,130,150,0.12)', 1, 'screen');
-    B.grain(0, 0, 100, 100, 0.035);
-    const v = g.createRadialGradient(56, 54, 30, 56, 54, 78);
-    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
-    g.fillStyle = v; g.fillRect(0, 0, 100, 100);
-  }
+  B.dab(26, 60, 10, 30, 'rgba(110,130,150,0.12)', 1, 'screen');
+  B.grain(0, 0, 100, 100, 0.035);
+  const v = g.createRadialGradient(56, 54, 30, 56, 54, 78);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+  g.fillStyle = v; g.fillRect(0, 0, 100, 100);
   g.restore();
 }
-
-// HAWK standing behind his counter in the market (mission 2), world units:
-// cap at y -62, the coat down behind the counter at -16; x0 his left edge.
-export const HAWK_STAND = { x: 24.3, y: -63.54, s: 0.14 };
-export function paintHawkStanding(g) {
-  g.save(); g.translate(HAWK_STAND.x, HAWK_STAND.y); g.scale(HAWK_STAND.s, HAWK_STAND.s);
-  paintHawk(g, 100, 1, { figure: true });
-  g.restore();
-}
-// where his cigarette's ember is, in the stall's frame
-export const HAWK_EMBER = [HAWK_STAND.x + 94.8 * HAWK_STAND.s, HAWK_STAND.y + 61.4 * HAWK_STAND.s];
