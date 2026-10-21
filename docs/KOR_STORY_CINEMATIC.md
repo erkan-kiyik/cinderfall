@@ -887,3 +887,26 @@ silahtı.
 | KARTAL | sürgülü av tüfeği | ceviz | yanak desteği, topuzlu sürgü kolu, uzun dürbün |
 | ÖRS LMG | hafif makineli | kara, zeytin kutu | taşıma kolu, fişek kutusu ve şerit |
 | TOKMAK GL | toplu bombaatar | kara, zeytin | oluklu tambur, kalın namlu, ön kabza |
+
+### 10.14 HAWK'ın yüzü: yeniden
+Eski portrede yüz plastikti: tek renk turuncu ten, düzlemsiz yanak, çizgi
+gibi bir göz, top gibi bir burun, kulaktan çeneye yapışık gri bir sakal
+bloğu, alttan vuran korku feneri ışığı.
+
+- **Işık:** tezgâhın çıplak ampulü yukarıda ve önünde. Kasketin siperi alnı
+  ve üst göz kapağını gölgeye alır; göz yarı gölgede, tek ıslak parıltı.
+  Işık elmacık kemiğinin üstünde, burnun alt yarısında, bıyıkta, çenede.
+  Tezgâh lambası alttan biraz ısıtır; sokağın soğuk ışığı ensede ve kulağın
+  arka kenarında.
+- **Düzlemler:** önce alın, kaş kemeri, elmacık, altındaki çökük yanak,
+  burun, üst dudak, çene, yüzün yana dönen düzlemi; düzlemin döndüğü yerde
+  kenar sert, yuvarlandığı yerde yumuşak.
+- **Burun:** adına yakışır kemerli, ucu aşağı dönük; kanadı, oluğu, burun
+  deliği bir delik değil, ucun altındaki koyu kıvrım.
+- **Ten:** yaşlı derinin rengi tek değil: burunda ve yanakta kırmızı,
+  alında sarı, tıraş yerinde mavi; lekeler, gözenekler, yaş lekeleri.
+  Kırışıklar çizgi değil kıvrım: koyu oluk, altında ışığı tutan kenar.
+- **Sakal:** kısa kırpılmış, çene hattını izler; ressamın fırçası gibi üç
+  katta: kendi koyusu, orta gri, ışığın düştüğü yerde açık tüyler. Kenarı
+  tüyle biter, yanakta tıraş gölgesine incelir; atkı boyuna, sakalın alt
+  kenarının üstüne sarılır.

@@ -48,7 +48,7 @@ if (what === 'crate') {
 if (what === 'hawk') {
   const { paintHawk } = await import('../js/art/hawk.js');
   const r = row();
-  for (const px of [120, 520]) { const c = document.createElement('canvas'); c.width = c.height = px; paintHawk(c.getContext('2d'), px, 1); r.appendChild(c); }
+  for (const px of (q.get('px') || '120,520').split(',').map(Number)) { const c = document.createElement('canvas'); c.width = c.height = px; paintHawk(c.getContext('2d'), px, 1); r.appendChild(c); }
 }
 if (what === 'row') {
   // several figures side by side at one scale: ?ids=a,b,c&s=
