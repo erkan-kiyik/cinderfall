@@ -228,54 +228,58 @@ function shin(g, ctx) {
 }
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { toe: PAL.boot }); }
 
-// --- head (docs §10.16): no face. The grey flash hood, the white captain's helmet, the
-// gold shield down over the face with the fire in it. Drawn as FLINT's head is: a few
-// big shapes with their material in them, one bright thing (the gold), no fuss.
-const SHELL = 'M -4.9 -3.4 C -5.7 -6.2 -5.4 -9.6 -3.3 -11.3 C -1.2 -12.8 2.4 -12.8 4.4 -11.3 C 5.6 -10.4 6.2 -9.4 6.2 -8.6 C 4.6 -9.0 2.8 -9.05 1.3 -8.75 C 0.7 -7.2 0.5 -5.6 0.7 -4.2 C -0.7 -3.5 -2.8 -3.1 -4.9 -3.4 Z';
-const SHIELD = 'M 1.35 -8.95 C 3.4 -9.3 5.5 -9.0 6.25 -7.95 C 6.8 -6.45 6.7 -4.2 6.05 -2.9 C 5.3 -1.8 3.6 -1.4 2.2 -1.8 C 1.6 -3.45 1.3 -6.05 1.35 -8.95 Z';
+// --- head (docs §10.16): no face. The old fire helmet every child draws: a ribbed
+// dome, a short brim in front, the long tail behind to shed the water, white for the
+// captain and black with soot; amber-gold goggles strapped round it and pulled down
+// over the eyes; the grey flash hood up over the nose. FLINT's way: a cap, round
+// goggles for eyes, the cloth over the rest.
+const HELM = 'M -8.9 -5.5 C -8.4 -6.8 -6.6 -7.8 -4.7 -8.2 C -4.9 -10.6 -2.8 -12.6 0.2 -12.7 C 3.2 -12.8 5.0 -11.2 5.1 -8.9 C 5.9 -8.6 6.7 -8.1 7.0 -7.6 C 7.1 -7.3 6.9 -7.1 6.5 -7.25 C 5.4 -7.7 4.2 -7.9 2.6 -7.95 C 0.6 -7.95 -2.0 -7.6 -4.4 -7.0 C -6.2 -6.5 -7.6 -5.9 -8.4 -5.2 C -8.8 -5.0 -9.1 -5.1 -8.9 -5.5 Z';
+const GOG = 'M 0.8 -8.3 C 2.5 -8.85 4.6 -8.7 5.45 -7.85 C 5.75 -7.0 5.65 -6.1 5.2 -5.5 C 4.2 -5.0 2.4 -5.05 1.15 -5.45 C 0.6 -6.3 0.5 -7.4 0.8 -8.3 Z';
+const LENS = 'M 1.35 -7.9 C 2.8 -8.35 4.5 -8.25 5.05 -7.55 C 5.25 -6.9 5.2 -6.2 4.85 -5.85 C 4.0 -5.45 2.5 -5.5 1.6 -5.8 C 1.2 -6.45 1.15 -7.25 1.35 -7.9 Z';
+const MUFF = 'M -3.4 -4.7 C -1.8 -5.25 0.6 -5.6 2.6 -5.5 C 4.1 -5.4 5.25 -5.05 5.45 -4.15 C 5.65 -3.05 5.05 -2.05 3.95 -1.55 C 2.6 -0.95 0.4 -0.85 -1.2 -1.15 C -2.6 -1.45 -3.55 -2.25 -3.75 -3.15 Z';
 function head(g) {
-  const H = PAL.helmet, F = PAL.hood;
-  // the flash hood: grey knit over the head and down the neck, gathered round the shield
+  const H = PAL.helmet, F = PAL.hood, Kb = PAL.radio;
+  // the flash hood: grey knit over the head and down the neck
   neck(g, F, { wide: 0.35, sh: 1.0 });
   const HD = headShape({ jaw: 1 });
-  cel(g, HD, F, { sh: 1.0, hl: 0.3 });
-  clothFolds(g, HD, [[[-3.4, -3.6], [-1.8, -2.6], [0.2, -2.2]], [[-3.8, -5.4], [-2.6, -4.6]], [[0.4, -3.6], [1.2, -2.4]]], F);
-  // the chin strap from inside the shell to under the jaw, its buckle
-  stroke(g, 'M 0.7 -5.4 C 1.0 -4.0 1.6 -2.8 2.5 -1.7', PAL.band.k, 0.34);
-  cel(g, 'M 1.3 -3.7 L 1.9 -3.85 L 2.1 -3.2 L 1.5 -3.05 Z', PAL.steel, { sh: 0.2, hl: 0.3, lw: 0.1 });
-  // the gold shield: a mirror, so it shows the street, not a face: the dark sky in its
-  // top, the fires along the middle, the wet road under; the lamp a hard white streak
-  const gr = g.createLinearGradient(3.2, -9.3, 3.9, -1.5);
-  gr.addColorStop(0, '#3a2a0c'); gr.addColorStop(0.36, '#8a6420'); gr.addColorStop(0.47, '#f4cf6e'); gr.addColorStop(0.52, '#ffe9ae'); gr.addColorStop(0.6, '#a87624'); gr.addColorStop(1, '#3a260a');
-  g.fillStyle = gr; g.fill(new Path2D(SHIELD));
-  clip(g, SHIELD, () => {
-    fill(g, 'M 1 -5.0 C 2.6 -5.3 4.6 -5.3 7 -4.9 L 7 -4.3 C 4.6 -4.6 2.6 -4.6 1 -4.4 Z', '#e8862e', 0.4);
-    fill(g, 'M 1.6 -8.2 C 1.5 -6 1.7 -3.6 2.3 -2.0 L 2.9 -2.0 C 2.3 -3.6 2.1 -6 2.2 -8.4 Z', '#24180a', 0.65);
-    stroke(g, curve([[2.6, -8.3], [4.2, -8.55], [5.8, -7.9]]), '#fffbe8', 0.32, 0.85);
-    stroke(g, 'M 6.1 -7.4 C 6.45 -6.0 6.4 -4.4 6.0 -3.3', '#fff1c0', 0.16, 0.6);
+  cel(g, HD, F, { sh: 1.1, hl: 0.3 });
+  // the goggles' strap back round the helmet
+  stroke(g, 'M 0.9 -7.1 C -1.2 -7.4 -3.0 -7.5 -4.6 -7.3', Kb.k, 0.62);
+  stroke(g, 'M 0.9 -7.25 C -1.2 -7.55 -3.0 -7.65 -4.6 -7.45', Kb.l, 0.12, 0.6);
+  // the hood pulled up over the nose and the mouth, bunched round the jaw
+  cel(g, MUFF, F, { sh: 1.1, hl: 0.4 });
+  clip(g, MUFF, () => { stroke(g, curve([[1.4, -5.4], [3.4, -5.3], [5.4, -4.4]]), F.l, 0.24, 0.8); fill(g, 'M -4 -2.4 C 0 -1.8 3 -1.8 6 -2.4 L 6 0 L -4 0 Z', F.k, 0.35); });
+  clothFolds(g, MUFF, [[[-3.2, -4.1], [-0.8, -4.5], [2.0, -4.6], [4.2, -4.2]], [[-3.0, -2.4], [-0.6, -2.1], [2.2, -2.2], [4.6, -2.6]], [[2.6, -3.9], [3.8, -3.6], [5.0, -3.4]]], F);
+  // the goggles: a black rubber frame, the amber-gold glass with the fire in it
+  cel(g, GOG, Kb, { sh: 0.5, hl: 0.35, lw: 0.24 });
+  const gr = g.createLinearGradient(2.6, -8.3, 3.3, -5.5);
+  gr.addColorStop(0, '#5a3a0e'); gr.addColorStop(0.35, '#c8902c'); gr.addColorStop(0.5, '#ffe7a0'); gr.addColorStop(0.62, '#d08a26'); gr.addColorStop(1, '#4a2a08');
+  g.fillStyle = gr; g.fill(new Path2D(LENS));
+  clip(g, LENS, () => {
+    fill(g, 'M 2.0 -8.4 L 2.75 -8.5 L 2.15 -5.4 L 1.4 -5.4 Z', '#fff8e0', 0.45);
+    fill(g, 'M 3.4 -6.2 L 5.2 -6.4 L 5.2 -5.9 L 3.4 -5.75 Z', '#ff8a30', 0.55);
   });
-  stroke(g, SHIELD, '#3a2608', 0.3);
-  // the shell: white, a ridge over the crown, the captain's black band and its silver
-  // stripe, the station's number; soot low down and at the back
-  cel(g, SHELL, H, { sh: 1.6, hl: 0.7 });
-  clip(g, SHELL, () => {
-    cel(g, 'M -3.6 -11.2 C -1.6 -12.9 2.2 -13.0 4.4 -11.4 L 4.0 -10.7 C 2.0 -12.1 -1.2 -12.1 -3.1 -10.5 Z', H, { sh: 0.3, hl: 0.5, lw: 0.14, ao: 0.25 });
-    fill(g, 'M -6 -6.7 C -3.6 -9.1 0.4 -10.3 6.6 -10.0 L 6.6 -8.95 C 0.6 -9.25 -3.4 -8.2 -6 -5.6 Z', PAL.band.m);
-    stroke(g, 'M -6 -6.15 C -3.6 -8.55 0.5 -9.75 6.6 -9.48', PAL.tapeS.l, 0.2);
-    const sg = g.createLinearGradient(-5, -4, 2, -11); sg.addColorStop(0, 'rgba(30,26,22,0.55)'); sg.addColorStop(0.5, 'rgba(30,26,22,0.1)'); sg.addColorStop(1, 'rgba(30,26,22,0)');
-    g.fillStyle = sg; g.fill(new Path2D(SHELL));
-    g.save(); g.translate(-2.5, -7.4); g.rotate(-0.36);
+  stroke(g, LENS, '#2a1a06', 0.12, 0.8);
+  rivet(g, 0.95, -7.0, 0.2, PAL.steel);
+  // the helmet: the dome and its ribs, the brim round it with its tail, the black band,
+  // the red number; soot heaviest on the tail and low on the dome
+  cel(g, HELM, H, { sh: 1.6, hl: 0.7 });
+  clip(g, HELM, () => {
+    for (const [d, w] of [['M -4.2 -9.4 C -2.6 -11.6 1.8 -12.2 4.4 -10.2', 0.34], ['M -4.5 -8.6 C -3.0 -10.4 1.4 -11.0 4.8 -9.4', 0.3]]) { stroke(g, d, H.d, w); stroke(g, d.replace(/-(\d+\.\d)/g, (m, n) => '-' + (parseFloat(n) + 0.25).toFixed(2)), H.l, w * 0.6, 0.9); }
+    fill(g, 'M -5 -8.4 C -2 -8.9 2 -9.0 5.2 -8.6 L 5.2 -7.9 C 2 -8.2 -2 -8.1 -5 -7.6 Z', PAL.band.m);
+    stroke(g, 'M -5 -8.05 C -2 -8.55 2 -8.65 5.2 -8.25', PAL.tapeS.l, 0.14, 0.9);
+    stroke(g, 'M -8.6 -5.3 C -7.6 -6.0 -6.2 -6.6 -4.4 -7.1 C -2.0 -7.7 0.6 -8.05 2.6 -8.05 C 4.2 -8.0 5.4 -7.8 6.6 -7.35', H.l, 0.18, 0.9);
+    const sg = g.createLinearGradient(-8, -5, 0, -11); sg.addColorStop(0, 'rgba(30,26,22,0.6)'); sg.addColorStop(0.5, 'rgba(30,26,22,0.14)'); sg.addColorStop(1, 'rgba(30,26,22,0)');
+    g.fillStyle = sg; g.fill(new Path2D(HELM));
+    g.save(); g.translate(-3.3, -9.3); g.rotate(-0.42);
     cel(g, 'M -0.95 -0.55 L 0.95 -0.55 L 0.95 0.55 L -0.95 0.55 Z', PAL.red, { sh: 0.2, hl: 0.2, lw: 0.1 });
     g.fillStyle = 'rgba(244,236,218,0.95)'; g.font = "700 0.9px 'Barlow Condensed', sans-serif"; g.textAlign = 'center'; g.fillText('07', 0, 0.32);
     g.restore();
-    scuffs(g, [[1.6, -11.4, 0.35, 0.3], [-3.8, -8.2, 0.3, 1.0]], '#8a8478', 0.4);
+    scuffs(g, [[1.8, -11.6, 0.35, 0.3], [-6.4, -6.2, 0.4, -0.5]], '#8a8478', 0.45);
   });
-  // the shield's pivot on the side of the shell; the torch on its bracket
-  cel(g, 'M 0.5 -8.5 a 0.7 0.7 0 1 0 1.4 0 a 0.7 0.7 0 1 0 -1.4 0 Z', PAL.radio, { sh: 0.2, hl: 0.3, lw: 0.2 });
-  rivet(g, 1.2, -8.5, 0.28, PAL.steel);
-  cel(g, 'M -1.4 -10.4 C -1.4 -10.8 -1.1 -11.0 -0.7 -11.05 L 1.9 -11.3 C 2.3 -11.32 2.5 -11.1 2.5 -10.8 L 2.55 -9.9 C 2.55 -9.6 2.35 -9.45 2.0 -9.42 L -0.7 -9.2 C -1.1 -9.18 -1.4 -9.4 -1.4 -9.7 Z', PAL.radio, { sh: 0.4, hl: 0.35, lw: 0.2 });
-  fill(g, 'M 2.5 -11.25 L 2.85 -11.28 L 2.9 -9.5 L 2.55 -9.47 Z', '#fff2cc');
-  stroke(g, 'M -1.1 -10.85 L 2.2 -11.1', PAL.radio.l, 0.1, 0.7);
+  // the torch clipped on the side of the dome, its lens
+  cel(g, 'M 0.4 -10.7 L 3.0 -11.0 L 3.1 -10.0 L 0.5 -9.7 Z', Kb, { sh: 0.3, hl: 0.35, lw: 0.18 });
+  fill(g, 'M 3.0 -11.05 L 3.35 -11.08 L 3.4 -9.95 L 3.08 -9.92 Z', '#fff2cc');
 }
 
 export const HALE = {

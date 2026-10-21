@@ -992,21 +992,27 @@ FLINT'in kafasının diliyle çizildi: birkaç büyük biçim, malzemesi içinde
 (örgü, kanvas, kauçuk, boya), tek parlak şey, az çizgi. Görünen ten en çok bir
 kulak ve şakak şeridi; FLINT ve HAWK değişmedi.
 
-- **WARDEN:** gri örgü başlık; tepesi sırtlı beyaz kaptan kaskı, siyah bant ve
-  gümüş şerit, kırmızı "07", yanda fener; altın vizör aşağıda, yüzü tümüyle
-  kapatır, içinde gök, yangın şeridi ve lambanın beyaz çizgisi.
-- **SKYE:** mat siyah bisiklet kaskı, beyaz köpük kenar, üç menfez, iki
-  çıkartma; gök mavisi aynalı gözlük takılı; desenli lacivert bandana burnun
-  üstünde, düğümü ve iki ucu kulağın arkasında.
-- **BULWARK:** soluk sarı baret, sırtı, siperi, fener bandı ve feneri; füme
-  güvenlik gözlüğü takılı; gri yarım maske yüzde, iki magenta filtre, valf;
-  görünen yalnız kır ense, kulak ve çenede kır kıl.
+Formül FLINT'inki: bir başlık, göz yerine iri bir gözlük, yüzün geri kalanında
+kumaş ya da maske. Operatörlerin başlıkları da yenilendi:
+
+- **WARDEN:** herkesin çizdiği eski itfaiyeci kaskı: sırtlı kubbe, önde kısa
+  siper, arkada suyu atan uzun kuyruk; beyaz, isli, siyah bant ve gümüş
+  şerit, arkada kırmızı "07", yanda fener. Kaskın etrafına bağlı, gözlere
+  indirilmiş **altın camlı** itfaiye gözlüğü; gri örgü başlık burnun üstünde.
+- **SKYE:** kuryenin bisiklet şapkası: krem, gök mavisi ve hardal çizgili,
+  küçük siperi yukarı kıvrık; şapkanın etrafına bağlı iri **gök mavisi aynalı**
+  kayak gözlüğü; desenli lacivert bandana burnun üstünde, düğümü kulağın
+  arkasında.
+- **BULWARK:** her yanı siperli soluk sarı baret, sırtı ve fener bandıyla;
+  barete takılı turuncu kulaklık; kalın füme gözlük; yüzde gri yarım maske,
+  iki **magenta** filtre; görünen yalnız kır ense ve çenede kır kıl.
 - **VESPER:** zeytin yeşili kapüşon, içi karanlık; boğazlık burnun üstünde;
-  yuvarlak füme kahverengi gözlük; tek kulaklık ve mikrofon kolu.
+  iri, kalın çerçeveli yuvarlak füme kahverengi gözlük; tek kulaklık ve
+  mikrofon kolu.
 - **Tetikçi / Kalkanlı:** yuvarlak gri kabuk, yüzde siyah plaka ve tek füme
   kırmızı yarık, üç kalın havalandırma oluğu, kulakta gri çanak, yanda amblem.
 - **Hücumcu:** siyah başlık, siyah kauçuk gaz maskesi, kalın çelik çemberli
   koyu camlar, önde gri filtre kutusu; alçak gri kask.
 - **Gall:** subay şapkası (lacivert, kırmızı bant, gümüş amblem ve kordon,
-  rugan siper), küçük yuvarlak siyah gözlük, burnun üstüne çekilmiş siyah yün
+  rugan siper), yuvarlak siyah gözlük, burnun üstüne çekilmiş siyah yün
   boyunluk; kısa gri şakak ve kulak.

@@ -301,7 +301,7 @@ const SNOOD = blob([
   [2.55, -6.3], [3.6, -6.5], [4.45, -6.1], [5.1, -5.1], [5.05, -4.3], [4.8, -3.5], [4.66, -2.4],
   [4.28, -1.2], [3.4, -0.2], [2.0, 0.9], [1.4, -0.9], [2.25, -3.4],
 ]);
-const LENS = ell(3.45, -7.25, 0.66, 0.88);
+const LENS = ell(3.5, -7.25, 0.82, 1.02);
 function head(g) {
   const K = PAL.black, J = PAL.jacket, Kn = PAL.jumper;
   neck(g, Kn, { sh: 0.9 });
@@ -331,7 +331,7 @@ function head(g) {
   gr.addColorStop(0, '#5a4636'); gr.addColorStop(0.4, '#3a2c22'); gr.addColorStop(0.7, '#20180f'); gr.addColorStop(1, '#4a3424');
   g.fillStyle = gr; g.fill(new Path2D(LENS));
   clip(g, LENS, () => { fill(g, 'M 3.05 -8.3 L 3.5 -8.3 L 3.0 -6.2 L 2.55 -6.2 Z', '#e8eef4', 0.3); fill(g, 'M 3.4 -6.75 L 4.1 -6.85 L 4.1 -6.55 L 3.4 -6.5 Z', '#ffc890', 0.4); });
-  stroke(g, LENS, PAL.steel.m, 0.14); stroke(g, LENS, PAL.steel.l, 0.05, 0.6);
+  stroke(g, LENS, '#2a2620', 0.26); stroke(g, LENS, PAL.steel.l, 0.06, 0.5);
   // the headset over the hood: the band across the crown, the cup over the ear, the boom
   stroke(g, 'M -1.2 -4.6 C -1.8 -3.0 -2.2 -1.4 -2.0 0.8', K.k, 0.24);
   cel(g, 'M -1.15 -7.6 C -1.35 -9.4 -0.95 -11.0 0.2 -11.9 L 0.6 -11.6 C -0.45 -10.8 -0.7 -9.2 -0.55 -7.6 Z', K, { sh: 0.3, hl: 0.35, lw: 0.12 });

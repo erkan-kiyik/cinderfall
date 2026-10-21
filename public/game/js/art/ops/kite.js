@@ -233,62 +233,59 @@ function foot(g, ctx) {
   fill(g, 'M -2.7 2.25 L 7.1 2.25 L 7.0 2.55 L -2.7 2.55 Z', t(PAL.tights).m, 0.8);
 }
 
-// --- head (docs §10.16): no face. The matt black road helmet, the sky-blue mirrored
-// glasses, the bandana pulled up over the nose and knotted behind. Drawn as FLINT's
-// head is: big shapes, their material in them, one bright thing (the sky in the glass).
-const GLASS = 'M 1.45 -8.15 C 2.9 -8.55 4.6 -8.45 5.5 -7.8 C 5.6 -7.25 5.5 -6.75 5.3 -6.4 C 4.5 -5.85 2.9 -5.8 1.85 -6.15 C 1.45 -6.7 1.35 -7.45 1.45 -8.15 Z';
-const SHELL = 'M -5.3 -6.5 C -5.8 -8.2 -4.8 -10.7 -2.2 -11.8 C 0.6 -12.8 3.6 -12.2 4.9 -10.4 C 5.5 -9.6 5.6 -8.9 5.2 -8.6 C 3.4 -8.75 1.2 -8.6 -0.6 -8.2 C -2.2 -7.8 -3.8 -7.1 -5.3 -6.5 Z';
-const FOAM = 'M 5.2 -8.6 C 3.4 -8.75 1.2 -8.6 -0.6 -8.2 C -2.2 -7.8 -3.8 -7.1 -5.3 -6.5 L -5.15 -6.05 C -3.7 -6.65 -2.1 -7.35 -0.5 -7.75 C 1.2 -8.15 3.4 -8.3 5.1 -8.15 Z';
-const BAND = 'M -2.8 -4.8 C -1.2 -5.6 1.2 -5.95 3.0 -6.05 C 4.4 -6.05 5.3 -5.6 5.45 -4.7 C 5.55 -3.5 4.95 -2.3 3.95 -1.5 L 2.3 0.7 L 0.8 -1.0 C -0.7 -1.4 -2.1 -2.0 -2.8 -3.0 Z';
+// --- head (docs §10.16): no face. A courier's cycling cap, cream with the sky-blue
+// and mustard stripe, its little brim flipped up; big mirrored ski goggles with the sky
+// in them, strapped round the cap; the bandana up over the nose, knotted behind. FLINT's
+// way: a cap, round goggles for eyes, the cloth over the rest.
+const CAP = 'M -4.3 -6.9 C -4.8 -9.6 -3.0 -11.5 0.0 -11.7 C 3.0 -11.8 4.7 -10.4 4.8 -8.6 C 2.6 -8.8 0.0 -8.4 -2.2 -7.8 C -3.0 -7.6 -3.7 -7.3 -4.3 -6.9 Z';
+const PEAK = 'M 3.6 -8.7 C 4.6 -9.1 5.6 -9.9 6.2 -11.0 C 6.4 -11.4 6.2 -11.7 5.8 -11.6 C 5.0 -11.3 4.0 -10.8 3.0 -10.4 C 2.8 -9.9 3.0 -9.2 3.6 -8.7 Z';
+const GOG = 'M 0.7 -8.5 C 2.5 -9.15 4.8 -8.95 5.75 -7.95 C 6.05 -7.0 5.95 -5.95 5.45 -5.35 C 4.4 -4.85 2.3 -4.95 1.05 -5.45 C 0.5 -6.4 0.4 -7.6 0.7 -8.5 Z';
+const LENS = 'M 1.25 -8.1 C 2.8 -8.65 4.65 -8.5 5.3 -7.7 C 5.55 -6.95 5.5 -6.1 5.1 -5.7 C 4.2 -5.3 2.5 -5.35 1.5 -5.75 C 1.05 -6.5 1.0 -7.4 1.25 -8.1 Z';
+const BAND = 'M -2.8 -4.6 C -1.2 -5.3 1.2 -5.6 3.0 -5.6 C 4.4 -5.6 5.3 -5.2 5.45 -4.3 C 5.55 -3.2 4.95 -2.1 3.95 -1.4 L 2.3 0.7 L 0.8 -1.0 C -0.7 -1.4 -2.1 -2.0 -2.8 -3.0 Z';
 function head(g) {
-  const S = PAL.skin, H = PAL.helmet, C = PAL.bandana;
+  const S = PAL.skin, C = PAL.bandana, Cr = PAL.cream, K = PAL.helmet;
   neck(g, S, { glaze: true });
   const HD = headShape({ jaw: 0.5 });
   cel(g, HD, S, { sh: 1.0, hl: 0.35 });
   skinGlaze(g, HD);
   clip(g, HD, () => {
-    // short dark hair out from under the helmet at the nape, the ear
-    cel(g, 'M -3.9 -7.4 C -4.2 -6.0 -3.6 -4.6 -2.5 -3.9 L -1.5 -4.9 C -2.1 -5.8 -2.3 -6.6 -2.1 -7.5 Z', mat(tone('#3a2c26', '#1e1714', '#120d0b', '#050404'), 'wool', 0.6), { sh: 0.3, hl: 0.3, line: false });
-    cel(g, 'M -1.6 -7.4 C -0.6 -7.7 -0.1 -6.7 -0.3 -5.7 C -0.5 -4.9 -1.3 -4.8 -1.8 -5.4 Z', S, { sh: 0.5, hl: 0.3, line: false, ao: 0.6 });
-    stroke(g, 'M -1.2 -6.9 C -0.7 -6.8 -0.7 -6.0 -1.1 -5.8', S.k, 0.14, 0.7);
+    // short dark hair under the cap at the nape and over the ear, the ear
+    cel(g, 'M -4.1 -7.6 C -4.3 -6.0 -3.7 -4.6 -2.6 -3.9 L -1.6 -4.9 C -2.2 -5.8 -2.4 -6.8 -2.1 -7.8 Z', mat(tone('#3a2c26', '#1e1714', '#120d0b', '#050404'), 'wool', 0.6), { sh: 0.3, hl: 0.3, line: false });
+    cel(g, 'M -1.6 -7.0 C -0.6 -7.3 -0.1 -6.4 -0.3 -5.5 C -0.5 -4.8 -1.3 -4.7 -1.8 -5.2 Z', S, { sh: 0.5, hl: 0.3, line: false, ao: 0.6 });
+    stroke(g, 'M -1.2 -6.6 C -0.7 -6.5 -0.7 -5.8 -1.1 -5.6', S.k, 0.14, 0.7);
   });
   // the bandana's knot behind the ear and its two ends
-  for (const d of ['M -2.9 -4.6 C -3.6 -4.3 -4.1 -3.7 -4.2 -2.9 C -3.9 -2.7 -3.5 -2.8 -3.3 -3.0 C -3.2 -3.6 -2.9 -4.0 -2.5 -4.3 Z', 'M -2.5 -4.4 C -2.7 -3.7 -2.8 -3.0 -2.6 -2.4 C -2.3 -2.4 -2.1 -2.5 -2.0 -2.7 C -2.0 -3.4 -2.1 -4.0 -2.2 -4.4 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3, lw: 0.14 });
-  cel(g, 'M -3.1 -5.5 C -2.5 -5.7 -1.9 -5.3 -1.8 -4.8 C -1.8 -4.3 -2.3 -4.0 -2.8 -4.1 C -3.3 -4.3 -3.4 -5.1 -3.1 -5.5 Z', C, { sh: 0.6, hl: 0.4, lw: 0.16 });
-  // the bandana over the nose and mouth: navy cotton, a cream print, tight over the nose
+  for (const d of ['M -2.9 -4.4 C -3.6 -4.1 -4.1 -3.5 -4.2 -2.7 C -3.9 -2.5 -3.5 -2.6 -3.3 -2.8 C -3.2 -3.4 -2.9 -3.8 -2.5 -4.1 Z', 'M -2.5 -4.2 C -2.7 -3.5 -2.8 -2.8 -2.6 -2.2 C -2.3 -2.2 -2.1 -2.3 -2.0 -2.5 C -2.0 -3.2 -2.1 -3.8 -2.2 -4.2 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3, lw: 0.14 });
+  cel(g, 'M -3.1 -5.3 C -2.5 -5.5 -1.9 -5.1 -1.8 -4.6 C -1.8 -4.1 -2.3 -3.8 -2.8 -3.9 C -3.3 -4.1 -3.4 -4.9 -3.1 -5.3 Z', C, { sh: 0.6, hl: 0.4, lw: 0.16 });
+  // the bandana over the nose and mouth: navy cotton, the cream print, tight over the nose
   cel(g, BAND, C, { sh: 1.0, hl: 0.4 });
   clip(g, BAND, () => {
     for (let k = 0; k < 22; k++) {
-      const x = -2.4 + ((k * 29) % 80) / 10, y = -5.7 + ((k * 17) % 60) / 10;
-      fill(g, k % 3 ? `M ${x} ${y} a 0.15 0.15 0 1 0 0.3 0 a 0.15 0.15 0 1 0 -0.3 0 Z` : `M ${x} ${y} c 0.3 -0.3 0.6 0 0.4 0.3 c -0.2 0.2 -0.4 0.1 -0.4 -0.3 Z`, PAL.cream.m, 0.7);
+      const x = -2.4 + ((k * 29) % 80) / 10, y = -5.3 + ((k * 17) % 56) / 10;
+      fill(g, k % 3 ? `M ${x} ${y} a 0.15 0.15 0 1 0 0.3 0 a 0.15 0.15 0 1 0 -0.3 0 Z` : `M ${x} ${y} c 0.3 -0.3 0.6 0 0.4 0.3 c -0.2 0.2 -0.4 0.1 -0.4 -0.3 Z`, Cr.m, 0.7);
     }
-    stroke(g, curve([[1.6, -5.9], [3.6, -5.95], [5.3, -5.0]]), C.l, 0.24, 0.8);
+    stroke(g, curve([[1.6, -5.5], [3.6, -5.5], [5.3, -4.6]]), C.l, 0.24, 0.8);
   });
-  clothFolds(g, BAND, [[[-2.2, -4.6], [0.4, -4.9], [3.2, -5.0]], [[-1.8, -2.6], [0.4, -2.6], [2.6, -2.4], [4.4, -2.8]], [[1.0, -1.6], [2.0, -0.8]], [[3.6, -3.4], [4.8, -2.8]]], C);
-  // the glasses: a matt black bar, the wrap of mirrored lens with the sky in it
-  stroke(g, 'M 1.6 -7.5 C 0.6 -7.4 -0.6 -7.2 -1.5 -6.8', H.k, 0.3);
-  const gr = g.createLinearGradient(3.4, -8.5, 3.1, -5.9);
-  gr.addColorStop(0, '#0e2840'); gr.addColorStop(0.38, '#3586c8'); gr.addColorStop(0.5, '#d8f2ff'); gr.addColorStop(0.58, '#4a94cc'); gr.addColorStop(1, '#0e2a48');
-  g.fillStyle = gr; g.fill(new Path2D(GLASS));
-  clip(g, GLASS, () => { fill(g, 'M 2.1 -8.4 L 2.9 -8.5 L 2.3 -5.9 L 1.5 -5.9 Z', '#ffffff', 0.35); fill(g, 'M 4.4 -6.65 L 5.3 -6.75 L 5.3 -6.45 L 4.4 -6.4 Z', '#ffc890', 0.5); });
-  stroke(g, 'M 1.4 -8.2 C 2.9 -8.6 4.6 -8.5 5.55 -7.85', H.k, 0.32);
-  // the helmet: matt black over white foam, three vents, two stickers, the strap
-  cel(g, FOAM, PAL.cream, { sh: 0.2, hl: 0.2, lw: 0.12 });
-  cel(g, SHELL, H, { sh: 1.2, hl: 0.55 });
-  clip(g, SHELL, () => {
-    for (const [x, y, a, L] of [[2.7, -11.1, -0.42, 0.95], [0.1, -11.75, -0.04, 1.05], [-2.6, -11.0, 0.45, 0.9]]) {
-      g.save(); g.translate(x, y); g.rotate(a);
-      const V = `M ${-L} -0.3 C ${-L} -0.46 ${L} -0.46 ${L} -0.3 L ${L} 0.3 C ${L} 0.46 ${-L} 0.46 ${-L} 0.3 Z`;
-      fill(g, V, '#070708');
-      clip(g, V, () => fill(g, `M ${-L} 0.05 L ${L} 0.05 L ${L} 0.5 L ${-L} 0.5 Z`, '#b7b2a6', 0.7));
-      g.restore();
-    }
-    stroke(g, curve([[-4.2, -9.9], [-1.0, -11.8], [3.2, -11.5]]), H.l, 0.34, 0.8);
-    g.save(); g.translate(-0.8, -9.4); g.rotate(-0.18); cel(g, 'M -1.0 -0.36 L 1.0 -0.4 L 0.96 0.36 L -1.0 0.4 Z', PAL.sky, { sh: 0.1, hl: 0.15, lw: 0.12 }); g.restore();
-    g.save(); g.translate(-3.8, -7.9); g.rotate(-0.4); cel(g, 'M -0.6 -0.3 L 0.6 -0.3 L 0.6 0.3 L -0.6 0.34 Z', tone('#ff9a5c', '#e2782f', '#a8521c', '#4a220a'), { sh: 0.1, hl: 0.1, lw: 0.12 }); g.restore();
-    scuffs(g, [[-1.8, -10.6, 0.35, 0.4], [3.8, -10.0, 0.3, -0.5]], H.l, 0.5);
+  clothFolds(g, BAND, [[[-2.2, -4.4], [0.4, -4.6], [3.2, -4.7]], [[-1.8, -2.6], [0.4, -2.6], [2.6, -2.4], [4.4, -2.8]], [[1.0, -1.6], [2.0, -0.8]], [[3.6, -3.4], [4.8, -2.8]]], C);
+  // the cap: cream cotton, the stripe round it, the little brim flipped up
+  cel(g, CAP, Cr, { sh: 1.2, hl: 0.5 });
+  clip(g, CAP, () => {
+    for (const [y0, c] of [[-10.6, PAL.sky.m], [-10.0, PAL.wind.m], [-9.4, PAL.sky.m]]) fill(g, `M -6 ${y0 + 1.2} C -2 ${y0 - 0.4} 2 ${y0 - 1.0} 6 ${y0 - 0.6} L 6 ${y0 - 0.1} C 2 ${y0 - 0.5} -2 ${y0 + 0.1} -6 ${y0 + 1.7} Z`, c, 0.95);
+    stroke(g, 'M -4.0 -9.8 C -2.2 -11.4 1.0 -11.8 3.8 -10.4', Cr.l, 0.26, 0.8);
+    stitch(g, 'M -4.1 -7.3 C -1.6 -8.3 1.6 -8.8 4.6 -8.75', Cr.d, 0.06, 0.7);
   });
-  stroke(g, 'M -0.4 -7.9 C -0.3 -6.8 -0.1 -5.8 0.2 -4.9', H.k, 0.22);
+  cel(g, PEAK, Cr, { sh: 0.3, hl: 0.35, lw: 0.16 });
+  clip(g, PEAK, () => { fill(g, 'M 3.4 -8.6 C 4.6 -9.2 5.6 -10.0 6.3 -11.0 L 6.6 -10.4 C 5.8 -9.4 4.8 -8.8 3.8 -8.4 Z', PAL.sky.m, 0.95); stroke(g, 'M 3.2 -10.2 C 4.2 -10.6 5.2 -11.1 5.9 -11.5', Cr.l, 0.12, 0.8); });
+  // the goggles' strap round the cap, a white band printed on it
+  stroke(g, 'M 0.8 -7.4 C -1.2 -7.8 -3.0 -8.0 -4.5 -7.8', K.k, 0.62);
+  for (let x = -4.0; x < 0.4; x += 0.7) fill(g, `M ${x} ${-7.75 + (x + 4.5) * 0.06} l 0.36 0 l 0 0.14 l -0.36 0 Z`, '#e6eef4', 0.75);
+  // the goggles: a black frame on its foam, the big mirrored lens, the sky in it
+  cel(g, GOG, K, { sh: 0.5, hl: 0.35, lw: 0.24 });
+  const gr = g.createLinearGradient(3.2, -8.6, 3.3, -5.3);
+  gr.addColorStop(0, '#0c2238'); gr.addColorStop(0.36, '#2f7ab8'); gr.addColorStop(0.5, '#dcf3ff'); gr.addColorStop(0.58, '#4a94cc'); gr.addColorStop(1, '#0d2a46');
+  g.fillStyle = gr; g.fill(new Path2D(LENS));
+  clip(g, LENS, () => { fill(g, 'M 1.9 -8.6 L 2.7 -8.7 L 2.0 -5.3 L 1.2 -5.3 Z', '#ffffff', 0.4); fill(g, 'M 3.6 -6.3 L 5.3 -6.5 L 5.3 -6.1 L 3.6 -5.95 Z', '#ffc890', 0.5); });
+  stroke(g, LENS, '#081420', 0.12, 0.8);
 }
 
 export const KITE = {

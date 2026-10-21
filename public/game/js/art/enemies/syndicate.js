@@ -507,7 +507,7 @@ const GCROWN = 'M -4.0 -8.8 C -4.4 -9.2 -4.85 -9.75 -4.95 -10.2 C -5.02 -10.6 -4
 const GBAND = 'M -4.05 -7.82 C -1.5 -7.58 1.8 -7.42 4.48 -7.36 C 4.56 -7.72 4.58 -8.1 4.55 -8.44 C 1.8 -8.52 -1.5 -8.64 -4.0 -8.82 C -4.1 -8.5 -4.12 -8.15 -4.05 -7.82 Z';
 const GPEAK = 'M 3.0 -7.62 C 4.3 -7.7 5.6 -7.5 6.55 -7.12 C 6.9 -6.98 7.05 -6.86 6.95 -6.78 C 6.2 -6.86 5.2 -6.98 4.2 -7.08 C 3.7 -7.14 3.3 -7.28 3.0 -7.62 Z';
 const GMASK = 'M -2.6 -4.8 C -1.0 -5.4 1.2 -5.8 3.0 -5.9 C 4.4 -5.95 5.3 -5.5 5.5 -4.6 C 5.7 -3.4 5.3 -2.2 4.4 -1.6 C 3.4 -0.9 1.6 -0.7 0.0 -0.9 C -1.4 -1.1 -2.4 -1.8 -2.8 -2.8 Z';
-const GLENS = 'M 2.9 -6.9 a 0.62 0.6 0 1 0 1.24 0 a 0.62 0.6 0 1 0 -1.24 0 Z';
+const GLENS = 'M 2.75 -6.95 a 0.74 0.72 0 1 0 1.48 0 a 0.74 0.72 0 1 0 -1.48 0 Z';
 function gallHead(g) {
   const S = G.skin;
   skinNeck(g, G.coat, { wide: 0.1 });
@@ -526,10 +526,10 @@ function gallHead(g) {
   clip(g, GMASK, () => { stroke(g, curve([[1.6, -5.75], [3.6, -5.85], [5.4, -4.8]]), '#5a5e66', 0.18, 0.7); });
   clothFolds(g, GMASK, [[[-2.2, -4.4], [0.4, -4.8], [3.0, -4.9]], [[-1.8, -2.4], [0.6, -2.2], [3.2, -2.4], [4.6, -2.8]]], tone('#3a3d44', '#24272d', '#16181c', '#08090b'));
   // the glasses: small, round, black glass in a thin silver rim, the arm back over the ear
-  stroke(g, 'M 2.9 -7.0 C 1.6 -7.0 0.2 -6.8 -0.6 -6.5', G.silver.d, 0.12);
+  stroke(g, 'M 2.75 -7.05 C 1.6 -7.0 0.2 -6.8 -0.6 -6.5', G.silver.d, 0.12);
   fill(g, GLENS, '#0d0e11');
   clip(g, GLENS, () => fill(g, 'M 3.1 -7.6 L 3.4 -7.6 L 3.2 -6.3 L 2.9 -6.3 Z', '#e8eef4', 0.35));
-  stroke(g, GLENS, G.silver.m, 0.1);
+  stroke(g, GLENS, G.silver.m, 0.14);
   // the peaked cap: the crown in the coat's navy, the red band, the silver mark, the cord, the peak
   cel(g, GCROWN, G.coat, { sh: 1.0, hl: 0.5 });
   clip(g, GCROWN, () => { stroke(g, curve([[-3.6, -10.6], [0.6, -11.4], [5.2, -11.6]]), '#ffffff', 0.12, 0.35); fill(g, 'M -6 -10 L -1.5 -10 C -1.6 -9.6 -1.8 -9.2 -2.2 -8.6 L -6 -8.6 Z', G.coat.k, 0.45); });

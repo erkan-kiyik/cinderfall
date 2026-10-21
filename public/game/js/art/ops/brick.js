@@ -244,61 +244,69 @@ function foot(g, ctx) {
   g.restore();
 }
 
-// --- head (docs §10.16): no face. The faded yellow hard hat and its lamp, the smoked
-// safety glasses, the half mask over the nose and mouth with its two magenta filters;
-// only the grey crop, the ear and the stubble on the jaw are his. Drawn as FLINT's
-// head is: big shapes, their material in them, one bright thing (the magenta).
-const GLASSES = 'M 1.5 -8.05 C 2.9 -8.45 4.6 -8.35 5.5 -7.75 C 5.6 -7.2 5.5 -6.7 5.3 -6.35 C 4.5 -5.8 2.9 -5.75 1.85 -6.1 C 1.5 -6.7 1.4 -7.4 1.5 -8.05 Z';
-const MASK = 'M 1.0 -6.0 C 2.4 -6.5 4.4 -6.3 5.5 -5.4 C 6.2 -4.4 6.1 -2.7 5.1 -1.8 C 3.9 -1.1 2.1 -1.2 1.1 -2.3 C 0.5 -3.4 0.5 -5.0 1.0 -6.0 Z';
-const HAT = 'M -5.0 -7.3 C -5.4 -10.4 -3.1 -12.9 0.4 -13.0 C 3.4 -13.1 5.3 -11.6 5.5 -9.6 L 7.5 -9.0 C 7.6 -8.6 7.3 -8.3 6.7 -8.3 L 4.8 -8.5 C 2.6 -8.8 -1.4 -8.6 -5.0 -7.3 Z';
+// --- head (docs §10.16): no face. The faded yellow hard hat with its brim all round and
+// the lamp on its front; the orange ear defenders clipped to it; chunky smoked goggles;
+// the half mask over the nose and mouth with its two magenta filters. FLINT's way: a
+// hat, goggles for eyes, the mask over the rest.
+const GOG = 'M 0.9 -8.25 C 2.6 -8.75 4.6 -8.6 5.45 -7.85 C 5.75 -7.05 5.65 -6.2 5.2 -5.7 C 4.2 -5.25 2.4 -5.3 1.25 -5.65 C 0.75 -6.45 0.65 -7.45 0.9 -8.25 Z';
+const LENS = 'M 1.45 -7.85 C 2.85 -8.25 4.5 -8.15 5.05 -7.5 C 5.25 -6.9 5.2 -6.3 4.85 -6.0 C 4.0 -5.65 2.55 -5.7 1.7 -6.0 C 1.3 -6.6 1.25 -7.3 1.45 -7.85 Z';
+const MASK = 'M 1.0 -5.7 C 2.4 -6.2 4.4 -6.0 5.5 -5.1 C 6.2 -4.1 6.1 -2.5 5.1 -1.6 C 3.9 -0.9 2.1 -1.0 1.1 -2.1 C 0.5 -3.2 0.5 -4.7 1.0 -5.7 Z';
+const HAT = 'M -6.4 -7.6 C -6.6 -8.1 -6.0 -8.4 -5.0 -8.5 C -5.0 -11.0 -2.8 -12.9 0.4 -13.0 C 3.4 -13.1 5.4 -11.4 5.5 -9.0 C 6.6 -8.9 7.6 -8.6 7.9 -8.2 C 8.0 -7.9 7.7 -7.7 7.2 -7.8 C 5.6 -8.0 3.4 -8.2 0.4 -8.1 C -2.4 -8.0 -4.6 -7.7 -6.0 -7.3 C -6.3 -7.25 -6.5 -7.4 -6.4 -7.6 Z';
+const MUFF = 'M -2.0 -7.0 C -0.6 -7.4 0.6 -6.7 0.7 -5.6 C 0.8 -4.4 0.1 -3.6 -1.0 -3.6 C -2.2 -3.6 -2.9 -4.6 -2.9 -5.6 C -2.9 -6.3 -2.6 -6.8 -2.0 -7.0 Z';
 const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 function head(g) {
-  const S = PAL.skin, Hh = PAL.hat, Mk = PAL.mask, F = PAL.filter;
+  const S = PAL.skin, Hh = PAL.hat, Mk = PAL.mask, F = PAL.filter, K = PAL.black;
+  const OR = mat(tone('#f2894a', '#d6632b', '#a2451b', '#4e1e09'), 'rubber', 0.3);
   neck(g, S, { wide: 0.45, glaze: true });
   const HD = headShape({ jaw: 1 });
   cel(g, HD, S, { sh: 1.2, hl: 0.35 });
   skinGlaze(g, HD);
   clip(g, HD, () => {
-    // the grey crop at the temple and the back, the grey stubble on the jaw under the ear
-    cel(g, 'M -4.3 -8.8 C -4.0 -7.0 -3.6 -5.6 -2.9 -4.6 L -2.0 -5.2 C -2.3 -6.4 -2.4 -7.6 -2.2 -8.8 Z', mat(tone('#a7a39c', '#7e7a74', '#57544f', '#24221f'), 'wool', 0.7), { sh: 0.3, hl: 0.35, line: false });
-    fill(g, 'M -1.6 -4.6 C -0.4 -4.2 0.6 -3.6 1.2 -2.6 L 1.2 -1.4 C -0.2 -2.0 -1.2 -2.8 -1.8 -3.6 Z', 'rgba(110,106,100,0.55)');
-    for (let k = 0; k < 60; k++) { const x = -1.6 + ((k * 37) % 28) / 10, y = -4.4 + ((k * 53) % 30) / 10; fill(g, `M ${x} ${y} l 0.08 0.12 l -0.06 0.02 Z`, '#cfcac2', 0.7); }
-    cel(g, 'M -1.7 -7.3 C -0.8 -7.7 -0.2 -6.8 -0.4 -5.9 C -0.6 -5.1 -1.4 -4.9 -1.9 -5.5 Z', S, { sh: 0.5, hl: 0.3, line: false, ao: 0.6 });
-    stroke(g, 'M -1.3 -6.9 C -0.8 -6.8 -0.8 -6.0 -1.2 -5.8', S.k, 0.14, 0.7);
+    // the grey crop at the back of the head, grey stubble on the jaw and down the neck
+    cel(g, 'M -4.3 -8.6 C -4.0 -6.8 -3.6 -5.4 -2.9 -4.4 L -2.4 -5.0 C -2.8 -6.2 -3.0 -7.4 -2.8 -8.6 Z', mat(tone('#a7a39c', '#7e7a74', '#57544f', '#24221f'), 'wool', 0.7), { sh: 0.3, hl: 0.35, line: false });
+    fill(g, 'M -1.8 -3.8 C -0.6 -3.4 0.4 -2.8 1.2 -2.0 L 1.2 -0.8 C -0.2 -1.4 -1.4 -2.2 -2.2 -3.0 Z', 'rgba(110,106,100,0.55)');
+    for (let k = 0; k < 50; k++) { const x = -1.8 + ((k * 37) % 30) / 10, y = -3.8 + ((k * 53) % 30) / 10; fill(g, `M ${x} ${y} l 0.08 0.12 l -0.06 0.02 Z`, '#cfcac2', 0.7); }
   });
-  // the glasses: smoked, wrap-round, a side shield, the street's lamps in them
-  stroke(g, 'M 1.6 -7.4 C 0.6 -7.4 -0.6 -7.2 -1.5 -6.9', PAL.black.k, 0.3);
-  const gr = g.createLinearGradient(3.4, -8.45, 3.2, -5.8); gr.addColorStop(0, '#1e2126'); gr.addColorStop(0.42, '#555c66'); gr.addColorStop(0.5, '#9aa3ae'); gr.addColorStop(0.58, '#262a30'); gr.addColorStop(1, '#0e1013');
-  g.fillStyle = gr; g.fill(new Path2D(GLASSES));
-  clip(g, GLASSES, () => { fill(g, 'M 2.1 -8.3 L 2.8 -8.4 L 2.2 -6.0 L 1.5 -6.0 Z', '#ffffff', 0.28); fill(g, 'M 3.8 -6.7 L 5.3 -6.85 L 5.3 -6.5 L 3.8 -6.35 Z', '#ffcf86', 0.45); });
-  stroke(g, 'M 1.45 -8.1 C 2.9 -8.5 4.6 -8.4 5.55 -7.8', PAL.black.k, 0.3);
-  // the half mask: the straps back under the ear, the grey rubber body, the valve, the filters
-  stroke(g, 'M 1.0 -4.0 C -0.4 -4.4 -1.8 -4.6 -3.2 -4.4', PAL.black.k, 0.42);
-  stroke(g, 'M 1.0 -2.8 C -0.6 -2.4 -2.0 -2.6 -3.0 -3.2', PAL.black.k, 0.42);
+  // the goggles' strap back to the hat's band
+  stroke(g, 'M 1.0 -7.1 C -0.8 -7.4 -2.6 -7.6 -4.4 -7.5', K.k, 0.56);
+  // the half mask: its straps back under the ear, the grey body, the valve, the two filters
+  stroke(g, 'M 1.0 -3.8 C -0.4 -4.0 -1.8 -4.1 -3.2 -3.9', K.k, 0.42);
+  stroke(g, 'M 1.0 -2.6 C -0.6 -2.2 -2.0 -2.4 -3.0 -3.0', K.k, 0.42);
   cel(g, MASK, Mk, { sh: 0.9, hl: 0.45 });
-  clip(g, MASK, () => { stroke(g, curve([[1.6, -5.4], [3.6, -5.85], [5.3, -5.0]]), Mk.l, 0.2, 0.75); fill(g, 'M 0 -2.6 C 2 -2 4 -1.8 6.4 -2.4 L 6.4 0 L 0 0 Z', Mk.k, 0.4); });
-  cel(g, 'M 5.0 -3.9 C 5.4 -4.0 5.8 -3.9 6.0 -3.6 L 6.0 -2.5 C 5.8 -2.2 5.4 -2.1 5.0 -2.3 Z', PAL.black, { sh: 0.3, hl: 0.3, lw: 0.12 });
-  for (let y = -3.7; y < -2.4; y += 0.26) stroke(g, `M 5.15 ${y} L 5.9 ${y}`, PAL.black.k, 0.09, 0.9);
-  // the far filter past the nose, then the near one, big, its mesh face and raised rim
-  cel(g, ell(5.7, -3.8, 0.6, 1.1), F, { sh: 0.4, hl: 0.25, lw: 0.16 });
-  cel(g, ell(2.45, -3.55, 1.25, 1.6), Mk, { sh: 0.4, hl: 0.3, lw: 0.2 });
-  cel(g, ell(2.5, -3.55, 1.05, 1.4), F, { sh: 0.5, hl: 0.4, lw: 0.16 });
-  clip(g, ell(2.55, -3.55, 0.78, 1.08), () => { fill(g, ell(2.55, -3.55, 0.78, 1.08), F.d); for (let i = -1.1; i < 1.2; i += 0.22) stroke(g, `M 1.6 ${-3.55 + i} L 3.5 ${-3.55 + i}`, F.k, 0.06, 0.6); });
-  fill(g, ell(2.1, -4.3, 0.28, 0.32), '#ffffff', 0.3);
-  // the hard hat: faded yellow, a ridge over the crown, the peak, the rim gutter dirty;
-  // the lamp's band round it and the lamp on its front
+  clip(g, MASK, () => { stroke(g, curve([[1.6, -5.2], [3.6, -5.65], [5.3, -4.8]]), Mk.l, 0.2, 0.75); fill(g, 'M 0 -2.4 C 2 -1.8 4 -1.6 6.4 -2.2 L 6.4 0 L 0 0 Z', Mk.k, 0.4); });
+  cel(g, 'M 5.0 -3.7 C 5.4 -3.8 5.8 -3.7 6.0 -3.4 L 6.0 -2.3 C 5.8 -2.0 5.4 -1.9 5.0 -2.1 Z', K, { sh: 0.3, hl: 0.3, lw: 0.12 });
+  for (let y = -3.5; y < -2.2; y += 0.26) stroke(g, `M 5.15 ${y} L 5.9 ${y}`, K.k, 0.09, 0.9);
+  cel(g, ell(5.7, -3.6, 0.6, 1.1), F, { sh: 0.4, hl: 0.25, lw: 0.16 });
+  cel(g, ell(2.45, -3.35, 1.25, 1.6), Mk, { sh: 0.4, hl: 0.3, lw: 0.2 });
+  cel(g, ell(2.5, -3.35, 1.05, 1.4), F, { sh: 0.5, hl: 0.4, lw: 0.16 });
+  clip(g, ell(2.55, -3.35, 0.78, 1.08), () => { fill(g, ell(2.55, -3.35, 0.78, 1.08), F.d); for (let i = -1.1; i < 1.2; i += 0.22) stroke(g, `M 1.6 ${-3.35 + i} L 3.5 ${-3.35 + i}`, F.k, 0.06, 0.6); });
+  fill(g, ell(2.1, -4.1, 0.28, 0.32), '#ffffff', 0.3);
+  // the ear defenders: an orange cup over the ear on its arm up to the hat
+  stroke(g, 'M -1.0 -6.6 C -1.2 -7.6 -1.2 -8.4 -0.8 -8.9', K.m, 0.36);
+  cel(g, MUFF, OR, { sh: 0.6, hl: 0.45, lw: 0.22 });
+  clip(g, MUFF, () => { stroke(g, 'M -1.9 -6.6 C -0.9 -6.9 -0.1 -6.4 0.1 -5.6', OR.l, 0.16, 0.8); fill(g, 'M -3 -4.4 C -1.6 -4.0 -0.2 -4.0 1 -4.4 L 1 -3 L -3 -3 Z', OR.k, 0.35); });
+  stroke(g, 'M -2.1 -6.95 C -2.7 -6.7 -3.0 -6.1 -3.0 -5.4 C -3.0 -4.6 -2.6 -3.9 -1.9 -3.65', K.m, 0.34);
+  rivet(g, -1.0, -5.3, 0.2, PAL.steel);
+  // the goggles: chunky, a black frame, smoked glass with the street's lamps in it
+  cel(g, GOG, K, { sh: 0.5, hl: 0.35, lw: 0.24 });
+  const gr = g.createLinearGradient(3.2, -8.2, 3.3, -5.6);
+  gr.addColorStop(0, '#1e2126'); gr.addColorStop(0.4, '#555c66'); gr.addColorStop(0.5, '#a6aeb8'); gr.addColorStop(0.6, '#2a2e34'); gr.addColorStop(1, '#0e1013');
+  g.fillStyle = gr; g.fill(new Path2D(LENS));
+  clip(g, LENS, () => { fill(g, 'M 2.1 -8.2 L 2.8 -8.3 L 2.2 -5.6 L 1.5 -5.6 Z', '#ffffff', 0.3); fill(g, 'M 3.6 -6.4 L 5.1 -6.55 L 5.1 -6.2 L 3.6 -6.05 Z', '#ffcf86', 0.5); });
+  // the hard hat: faded yellow, a ridge over the crown, the brim all round, the lamp's band
   cel(g, HAT, Hh, { sh: 1.5, hl: 0.6 });
   clip(g, HAT, () => {
     cel(g, 'M -3.6 -11.3 C -1.6 -13.0 2.0 -13.2 4.0 -11.9 L 3.6 -11.2 C 1.8 -12.3 -1.2 -12.2 -3.1 -10.7 Z', Hh, { sh: 0.3, hl: 0.5, lw: 0.14, ao: 0.25 });
-    stroke(g, 'M -5.0 -7.7 C -1.4 -8.9 2.6 -9.1 4.8 -8.8', Hh.d, 0.3);
-    g.save(); g.translate(-2.4, -9.6); g.rotate(-0.25); cel(g, 'M -0.9 -0.5 L 0.9 -0.5 L 0.6 0.5 L -0.9 0.5 Z', PAL.blue, { sh: 0.1, hl: 0.1, lw: 0.1 }); fill(g, 'M -0.6 -0.15 L 0.4 -0.15 L 0.4 0.12 L -0.6 0.12 Z', '#e9e4d6', 0.85); g.restore();
-    scuffs(g, [[-3.0, -10.4, 0.5, 0.6], [3.8, -11.0, 0.4, -0.3], [0.8, -12.0, 0.3]], Hh.l, 0.6);
+    stroke(g, 'M -6.2 -7.5 C -4.6 -7.9 -2.4 -8.2 0.4 -8.3 C 3.4 -8.4 5.6 -8.2 7.4 -8.0', Hh.l, 0.16, 0.9);
+    stroke(g, 'M -4.9 -8.6 C -2.0 -9.0 2.6 -9.2 5.4 -9.0', Hh.d, 0.24, 0.8);
+    g.save(); g.translate(-2.2, -10.0); g.rotate(-0.2); cel(g, 'M -0.9 -0.5 L 0.9 -0.5 L 0.6 0.5 L -0.9 0.5 Z', PAL.blue, { sh: 0.1, hl: 0.1, lw: 0.1 }); fill(g, 'M -0.6 -0.15 L 0.4 -0.15 L 0.4 0.12 L -0.6 0.12 Z', '#e9e4d6', 0.85); g.restore();
+    scuffs(g, [[-3.0, -10.6, 0.5, 0.6], [3.8, -11.2, 0.4, -0.3], [0.8, -12.2, 0.3]], Hh.l, 0.6);
     grime(g, -11, -7.4, 'rgba(70,50,20,0.35)');
   });
-  stroke(g, 'M -4.8 -8.3 C -1.6 -9.5 2.0 -9.9 4.9 -10.5', '#1e1f22', 0.52);
-  for (let x = -4.2; x < 4.6; x += 0.8) fill(g, `M ${x} ${-8.55 - (x + 4.8) * 0.18} l 0.32 -0.06 l 0 0.18 l -0.32 0.06 Z`, '#b9b2a2', 0.6);
-  cel(g, 'M 3.1 -11.3 C 3.1 -11.5 3.3 -11.6 3.5 -11.6 L 4.9 -11.6 C 5.2 -11.6 5.3 -11.4 5.3 -11.2 L 5.3 -10.0 C 5.3 -9.8 5.2 -9.7 4.9 -9.7 L 3.5 -9.7 C 3.3 -9.7 3.1 -9.8 3.1 -10.0 Z', PAL.black, { sh: 0.3, hl: 0.35, lw: 0.2 });
-  fill(g, 'M 5.3 -11.3 L 5.65 -11.32 L 5.68 -10.0 L 5.33 -9.98 Z', '#fff2d0');
+  stroke(g, 'M -4.8 -9.0 C -1.6 -10.0 2.0 -10.4 5.0 -10.7', '#1e1f22', 0.5);
+  for (let x = -4.2; x < 4.6; x += 0.8) fill(g, `M ${x} ${-9.25 - (x + 4.8) * 0.17} l 0.32 -0.06 l 0 0.18 l -0.32 0.06 Z`, '#b9b2a2', 0.6);
+  cel(g, 'M 3.2 -11.6 C 3.2 -11.8 3.4 -11.9 3.6 -11.9 L 5.0 -11.9 C 5.3 -11.9 5.4 -11.7 5.4 -11.5 L 5.4 -10.3 C 5.4 -10.1 5.3 -10.0 5.0 -10.0 L 3.6 -10.0 C 3.4 -10.0 3.2 -10.1 3.2 -10.3 Z', K, { sh: 0.3, hl: 0.35, lw: 0.2 });
+  fill(g, 'M 5.4 -11.6 L 5.75 -11.62 L 5.78 -10.3 L 5.43 -10.28 Z', '#fff2d0');
 }
 
 export const BRICK = {
