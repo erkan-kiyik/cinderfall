@@ -916,3 +916,71 @@ bloğu, alttan vuran korku feneri ışığı.
 HAWK yalnız tüccar ekranında ve lobideki kartta, portresiyle görünür. Görev 2
 artık *Pazar Baskını*: Vanta pazarı basar, ekip pazarın ortasını üç dalgaya
 karşı tutar; tezgâhın yerinde siper olarak iki sandık durur.
+
+### 10.15 Yüzler, kafalar ve Vanta'nın su aracı
+FLINT ve HAWK dışında herkesin kafası yeniden boyandı; HAWK'ın portresindeki
+yöntemle: önce düzlemler, sonra tenin bölgelerdeki rengi, en son ayrıntılar;
+çizgi yok, her kenar ışığa karşı karanlık. Ortak araçlar `body.js`'te:
+`paintEar` (sarmal kenar, iç kıvrım, kulak çukuru, tragus, lob), `crease`
+(koyu oluk + ışığı tutan alt kenar), `inPath`, `brushOf`.
+
+- **Gall:** tek açık yüz. Uzun, dar bir yüz; kaş kemerinin altına gömülü göz,
+  hafif kemerli düz burun, çizgi gibi kapanmış ince dudaklar, köşesi aşağı;
+  sert çene, kafaya yatık kulak. Siperin gölgesi alnı ve gözü örter, gözde tek
+  parıltı. Ten: alında sarı, burunda ve yanakta kırmızı, tıraş yerinde mavi
+  gri. Kısa kırçıl saç, şakaklar beyaz, ensede incelir. Şapka: yüksek tepe,
+  kırmızı biye ve bant, siyah rugan siper, gümüş kordon ve düğmesi, önde
+  amblem. Yaka yastık değil: omuza yatan palto yakası, boğazda beyaz gömlek
+  yakası ve siyah kravat, yakanın ucunda kırmızı arma.
+- **WARDEN:** Avrupa tipi itfaiye kaskı: tepede sırt, isli ve ısıdan
+  fildişine dönmüş beyaz kabuk, kaptan bandı ve reflektif şerit, istasyon
+  numarası, yan braketinde fener. Altın vizör bir aynadır: üstte karanlık
+  gök, ortada yangının önünde şehir silüeti (dışbükey yüzeyde eğik), altta
+  ıslak sokak, önden lambanın sert parıltısı. Kaskın arkasından ense perdesi,
+  yüzde gri örgü başlık, çene kayışı ve tokası; uzun, sert ceket yakası ve
+  boğaz bandı.
+- **SKYE:** yol bisikleti kaskı: mat siyah kabuk, kenarında beyaz köpük,
+  menfezlerin içinde köpük, yarısı kalkmış çıkartmalar, arkada ayar çarkı,
+  kulağın önünden ve arkasından gelip altında birleşen kayışlar. Aynalı
+  gözlükte gök, ufuk çizgisi ve sokak lambaları; sap kulağın üstünden geçer.
+  Bandana burnun ucunda gerilir, kıvrımları düğüme doğru akar, kenarında
+  noktalı bordür; düğüm ve iki ucu kulağın arkasında. Koyu ten, kısa fade saç,
+  kulak; rüzgârlığın dik yakası, içinde sweatshirt yakası ve fermuar.
+- **BULWARK:** gerçek yarım yüz maskesi: gri elastomer, sızdırmazlık kenarı,
+  önde nefes valfi kapağı, iki magenta P100 filtre (kalın disk, kabarık
+  kenar, içte ızgara), kafa ve boyun kayışı. Gözlüğün üstünde kalın kır kaş,
+  füme camın arkasında göz ve kaz ayakları, rüzgârdan kızarmış ten, çenede ve
+  boyunda kır sakal, kırpılmış gri saç. Baret: soluk sarı, sırt nervürü,
+  kenarı kirle dolmuş yağmur oluğu, aksesuar yuvası, yarı silinmiş çıkartma,
+  fener bandı ve feneri. Ceket yakası katlanma çizgisiyle.
+- **VESPER:** yüz yine yok. Kapüşonun altında bir kafa var: tepe ve kaş
+  ışıkta, kumaş arkaya gölgeye düşer, büzgü kordonundan arkaya akan
+  kıvrımlar, siper yüzün içini karanlığa atar. Boğazlık burnun sırtında
+  gerilir, üst kenarı kıvrık.
+- **Tetikçi / Kalkanlı:** kulak hizasında kesik balistik kabuk, yan raylar,
+  alında montaj plakası, arkada cırt panel ve birim bandı, kulakta iletişim
+  kulaklığı; şakaktan cıvatalı yüz plakası: üstte gri, içinde çelik çerçeveli
+  füme cam yarık (derinde koyu kırmızı), altta havalandırma oluklu siyah
+  çene. Boyunda dikişli balistik yaka.
+- **Hücumcu:** siyah kauçuk gaz maskesi: sızdırmazlık kenarı, burun kabı,
+  önde konuşma diyaframı; çelik çemberli koyu camlar, ışık camda halka değil
+  bant olarak; yanakta dişli, delikli, boyası aşınmış filtre kutusu; kafa
+  kayışları ve tokaları; üstte Vanta grisi alçak kask.
+- **Yazı yok:** karakterler bir kez sağa bakarken pişirilir, sola bakınca
+  aynalanır. Düşmanlar çoğunlukla sola baktığı için Vanta teçhizatında harf
+  kalmadı (kalkanda büyük amblem ve reflektif bant, kaskta birim bandı).
+
+**Vanta'nın su aracı (m3).** Kutudan gerçek bir TOMA'ya: önde sarı-siyah
+şeritli barikat küreği ve kafesli far; zırhlı kabin, ön cam ve kapı camı
+menteşeli çelik ızgara arkasında, kapı, menteşeler, sarkan basamaklar,
+uzun kollu ayna; kabin tavanında ışık barı, projektörler ve küçük su topu.
+Gövde zırh plakaları, dikiş başına cıvatalar, panjur kapaklı dolaplar,
+YAKLAŞMAYIN levhası, arkada merdiven, tavanda tırabzan, hoparlör ve kamerası
+olan kulede büyük su topu; eşikte püskürtme memeleri ve kehribar lambalar;
+şasi, yakıt tankı, çamurluklar, üç büyük teker. Yıpranma: kendi suyunun
+kireçli izleri, cıvatalardan pas, molotofun kara kabarcığı, yarı yıkanmış boya
+bombası, tekerlerin arkasına sıçramış yol çamuru. Araç büyüdü (150 birim) ve
+artık askerin yanında oyuncak gibi durmuyor. **Saksı:** kaide, üç blok, taşan
+başlık; başlıktan akan yağmur izi, derzlerde yosun, ıslak koyu dip; içinde
+küçük yapraklı, üstü ışıkta budanmış şimşir.
+

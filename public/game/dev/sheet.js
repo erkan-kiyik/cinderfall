@@ -201,7 +201,7 @@ if (what === 'valilik') {
     wrap.append(c, name); return wrap;
   };
   row().append(pane('dais', -4, 196, -80, 4, (g) => m3.dais(g, 0, 192)), pane('arcade', -12, 2 * m3.BAY + 12, -124, 4, (g) => { m3.column(g); g.save(); g.translate(m3.BAY, 0); m3.column(g); g.restore(); }));
-  row().append(pane('fountain', -4, 68, -42, 4, (g) => m3.fountain(g, 0)), pane('vigil', -6, 84, -48, 4, (g) => m3.vigil(g, 0)), pane('tree', -36, 36, -120, 4, (g) => m3.tree(g, 0, 1)), pane('truck', -4, 104, -56, 4, (g) => m3.truck(g, 0)), pane('planter', -4, 28, -24, 4, (g) => m3.planter(g)));
+  row().append(pane('fountain', -4, 68, -42, 4, (g) => m3.fountain(g, 0)), pane('vigil', -6, 84, -48, 4, (g) => m3.vigil(g, 0)), pane('tree', -36, 36, -120, 4, (g) => m3.tree(g, 0, 1)), pane('truck', -10, 152, -78, 4, (g) => m3.truck(g, 0)), pane('planter', -4, 28, -24, 4, (g) => m3.planter(g)));
   row().append(pane('slabs', 0, 2 * m3.PAVE_W, -2, 42, (g) => { m3.plazaSlabs(g); g.save(); g.translate(m3.PAVE_W, 0); m3.plazaSlabs(g); g.restore(); }, true), pane('setts', 0, 2 * m3.PAVE_W, -2, 42, (g) => { m3.courtSlabs(g); g.save(); g.translate(m3.PAVE_W, 0); m3.courtSlabs(g); g.restore(); }, true));
 }
 if (what === 'avatars') {

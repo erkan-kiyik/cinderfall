@@ -88,7 +88,8 @@ function helmet(g) {
     const VEL = 'M -3.9 -10.0 C -3.3 -10.9 -2.4 -11.5 -1.4 -11.8 L -1.1 -11.0 C -2.0 -10.7 -2.7 -10.2 -3.2 -9.5 Z';
     B.fill(VEL, '#56616f', 0.02);
     B.inside(VEL, () => { texture(g, 'knit', 0.5, 0.25); B.line('M -3.8 -10.0 C -3.2 -10.85 -2.3 -11.45 -1.4 -11.75', 'rgba(20,24,30,0.5)', 0.06, 0.02); });
-    g.save(); g.fillStyle = 'rgba(240,244,248,0.62)'; g.translate(-4.5, -4.75); g.rotate(-0.06); g.scale(1 / 50, 1 / 50); g.font = "700 30px 'Barlow Condensed', sans-serif"; g.fillText('V-0417', 0, 0); g.restore();
+    // the unit's ID tape (no lettering: mirrored when he faces left)
+    for (const [x0, w] of [[-4.4, 0.5], [-3.7, 0.5], [-3.0, 1.2], [-1.6, 0.3]]) B.fill(`M ${x0} -5.4 L ${x0 + w} -5.42 L ${x0 + w} -4.9 L ${x0} -4.88 Z`, 'rgba(236,240,244,0.7)', 0.01);
     grime(g, -6, -3.8, DUST);
   });
   worn(g, SHELL, [-5.6, -13.4, 5.9, -4.0], 29, 0.6);
@@ -280,9 +281,11 @@ export function shield(g) {
     // the long reflection down the face, scratches and scuffs from the street
     fill(g, 'M 7.4 -57.4 L 8.6 -57.2 L 8.6 -15.0 L 7.4 -14.4 Z', 'rgba(255,255,255,0.16)');
     for (const [x, y, l] of [[9.4, -40, 2.2], [12.6, -36, 1.6], [10.4, -22, 2.6], [13.8, -27, 1.2]]) stroke(g, `M ${x} ${y} l ${l} 0.6`, 'rgba(255,255,255,0.35)', 0.06);
-    // VANTA, stencilled white, the mark under it
-    g.save(); g.translate(11.0, -40.6); g.rotate(Math.PI / 2); g.fillStyle = 'rgba(244,246,248,0.92)'; g.font = '800 2.6px sans-serif'; g.textAlign = 'center'; g.fillText('VANTA', 0, 0.9); g.restore();
-    emblem(g, 11.0, -25.4, 2.0, '#f1f3f5');
+    // the mark big in white (no lettering: the sprite is mirrored when it faces left),
+    // a band of reflective tape low down
+    emblem(g, 11.0, -40.2, 2.5, 'rgba(244,246,248,0.92)');
+    fill(g, 'M 6.4 -25.6 L 15.6 -25.2 L 15.6 -23.4 L 6.4 -23.8 Z', 'rgba(236,240,244,0.85)');
+    for (let k = 0; k < 6; k++) fill(g, `M ${6.8 + k * 1.6} -23.8 L ${7.6 + k * 1.6} -25.6 L ${8.2 + k * 1.6} -25.6 L ${7.4 + k * 1.6} -23.8 Z`, PAL.visor.m, 0.85);
     // the red band across, the rim
     fill(g, 'M 5 -32.6 L 17 -32.0 L 17 -31.0 L 5 -31.6 Z', PAL.visor.m, 0.85);
     for (const [x, y] of [[8.0, -45], [14.0, -44.4], [8.0, -20], [14.0, -19.4]]) rivet(g, x, y, 0.3, PAL.steel);
@@ -411,7 +414,7 @@ function maskHead(g) {
     for (let y = -0.8; y < 0.9; y += 0.32) B.dab(2.72, y, 0.05, 0.05, '#050607');
     scuffs(g, [[1.4, -0.7, 0.3], [0.8, 0.6, 0.2, 0.4]], '#d8dde2', 0.6);
   });
-  g.save(); g.translate(1.2, 0.18); g.scale(1 / 70, 1 / 70); g.fillStyle = 'rgba(240,244,248,0.6)'; g.font = "700 30px 'Barlow Condensed', sans-serif"; g.textAlign = 'center'; g.fillText('V-F2', 0, 0); g.restore();
+  B.fill('M 1.6 -1.18 L 2.0 -1.18 L 2.0 1.18 L 1.6 1.18 Z', 'rgba(236,240,244,0.75)', 0.01);
   g.restore();
   // the low helmet over it all: a riot shell in Vanta's grey, the mark on its side
   const LID = 'M -4.8 -6.4 C -5.2 -10.0 -2.6 -12.8 0.6 -12.8 C 3.6 -12.8 5.3 -11.0 5.4 -9.0 L 4.6 -8.7 C 2.4 -9.1 -1.2 -8.8 -4.1 -6.0 Z';

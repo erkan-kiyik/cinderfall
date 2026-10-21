@@ -30,16 +30,48 @@ const STEEL = mat(tone('#b9c0c8', '#8c949e', '#646b74', '#22262b'), 'steel', 0.4
 const VAN = mat(tone('#9aa3b0', '#6e7783', '#4e5560', '#1a1e24'), 'paint', 0.4);
 
 // --- painters (from x = 0 unless given) ---------------------------------------------------------
-// a cut-stone planter (16 high, 24 wide: solid), boxwood clipped square in it
+// a cut-stone planter (16 high, 24 wide: solid), boxwood clipped square in it (docs
+// §10.15): a plinth, the box in three blocks, a coping slab overhanging it; the stone
+// stained where the rain runs off the coping, green in the joints, chipped at the
+// corners, wet and dark at its foot; the hedge a mass of small leaves, lit on top
 export function planter(g) {
-  const B = poly([[0, 0], [0, -12], [-1, -13], [25, -13], [24, -12], [24, 0]]);
-  cel(g, B, STONE, { sh: 1.4, hl: 0.6 });
-  clip(g, B, () => { fill(g, rect(-1, -13, 25, -11.6), STONE.l, 0.7); stroke(g, 'M 0 -4 L 24 -4', STONE.d, 0.4); for (const x of [8, 16]) stroke(g, `M ${x} -11.6 L ${x} 0`, STONE.d, 0.3, 0.7); });
-  stroke(g, B, STONE.k, 0.4);
-  const H = mat(tone('#7a9468', '#4e6a44', '#36502f', '#121c0e'), 'wool', 0.6);
-  const hedge = 'M 1.4 -13 L 1.4 -19.4 C 1.4 -20.4 2.4 -21 3.4 -21 L 20.6 -21 C 21.6 -21 22.6 -20.4 22.6 -19.4 L 22.6 -13 Z';
+  const Bk = new Brush(g, Math.hypot(g.getTransform().a, g.getTransform().b)), r = rnd(19);
+  const BOX = poly([[0.6, -1.4], [0.6, -11.6], [23.4, -11.6], [23.4, -1.4]]);
+  cel(g, poly([[-0.4, 0], [-0.4, -1.6], [24.4, -1.6], [24.4, 0]]), STONE, { sh: 0.5, hl: 0.4 });
+  cel(g, BOX, STONE, { sh: 1.4, hl: 0.6 });
+  Bk.inside(BOX, () => {
+    // three blocks, each its own shade of the stone
+    for (const [x0, x1, c] of [[0.6, 8.2, 'rgba(255,248,236,0.06)'], [8.2, 15.8, 'rgba(60,54,46,0.08)'], [15.8, 23.4, 'rgba(255,240,220,0.04)']]) Bk.fill(rect(x0, -11.6, x1, -1.4), c, 0.1);
+    for (const x0 of [8.2, 15.8]) { Bk.line(`M ${x0} -11.6 L ${x0} -1.4`, 'rgba(40,36,30,0.7)', 0.28, 0.05); Bk.line(`M ${x0 + 0.24} -11.6 L ${x0 + 0.24} -1.4`, 'rgba(240,232,216,0.3)', 0.1, 0.04); Bk.line(`M ${x0} -6 L ${x0} -1.4`, 'rgba(70,90,50,0.4)', 0.4, 0.3); }
+    // the coping's shadow, the rain run off it in streaks, the dark wet foot
+    Bk.fill(rect(0, -11.6, 24, -10.4), 'rgba(30,26,22,0.5)', 0.3);
+    for (let i = 0; i < 14; i++) { const x0 = 1 + r() * 22; Bk.line(`M ${x0} -10.6 C ${x0 + 0.1} -8 ${x0 - 0.1} -6 ${x0 + 0.05} ${-4 - r() * 3}`, 'rgba(40,36,30,0.22)', 0.3 + r() * 0.5, 0.25); }
+    Bk.fill(rect(0, -4, 24, -1), 'rgba(24,22,18,0.4)', 0.8);
+    for (let i = 0; i < 40; i++) Bk.dab(1 + r() * 22, -11 + r() * 9.4, 0.06 + r() * 0.16, 0.05 + r() * 0.1, r() < 0.5 ? 'rgba(40,36,30,0.35)' : 'rgba(250,244,230,0.25)');
+    texture(g, 'concrete', 0.4, 0.6);
+  });
+  // the coping: a slab over the box, its top lit, its edge chamfered, a chip off one corner
+  const COP = poly([[-0.8, -11.4], [-0.8, -12.6], [-0.2, -13.2], [24.2, -13.2], [24.8, -12.6], [24.8, -11.4]]);
+  cel(g, COP, STONE, { sh: 0.6, hl: 0.6 });
+  Bk.inside(COP, () => { Bk.line('M -0.2 -13.0 L 24.2 -13.0', 'rgba(255,250,240,0.5)', 0.24, 0.06); Bk.fill('M 21.6 -13.4 L 25 -13.4 L 25 -11.8 C 24 -12.0 22.6 -12.4 21.6 -13.4 Z', 'rgba(60,54,46,0.5)', 0.1); texture(g, 'concrete', 0.35, 0.6); });
+  stroke(g, COP, STONE.k, 0.3, 0.7);
+  // the hedge: clipped box, small dark leaves, the light on its flat top
+  const H = mat(tone('#4e6a44', '#30482a', '#1f3219', '#0a1206'), 'wool', 0.2);
+  const hedge = 'M 1.4 -13 L 1.2 -19.2 C 1.2 -20.4 2.2 -21.1 3.4 -21.1 L 20.6 -21.1 C 21.8 -21.1 22.8 -20.4 22.8 -19.2 L 22.6 -13 Z';
   cel(g, hedge, H, { sh: 1.2, hl: 0.5 });
-  clip(g, hedge, () => { for (let i = 0; i < 18; i++) fill(g, ell(2.5 + (i * 7.3) % 19, -19.6 + ((i * 3.1) % 6), 1, 0.8), H.l, 0.5); });
+  Bk.inside(hedge, () => {
+    Bk.fill(rect(0, -15.6, 24, -12.8), 'rgba(8,14,6,0.55)', 0.6);
+    const LV = ['#14220e', '#203418', '#2e4724', '#3f5c32', '#56764a', '#7c9a6a'];
+    for (let i = 0; i < 1500; i++) {
+      const x0 = 1 + r() * 22, y0 = -21.4 + r() * 8.4, top = (y0 + 21.4) / 8.4, k = Math.min(5, Math.max(0, Math.round((1 - top) * 4.2 + r() * 1.8 - 0.6)));
+      g.save(); g.translate(x0, y0); g.rotate(r() * 3.2);
+      fill(g, 'M -0.2 0 C -0.1 -0.1 0.1 -0.1 0.2 0 C 0.1 0.1 -0.1 0.1 -0.2 0 Z', LV[k], 0.95);
+      g.restore();
+    }
+    Bk.line('M 1.6 -20.7 L 22.4 -20.7', 'rgba(200,220,180,0.3)', 0.5, 0.4);
+  });
+  // a few leaves blown onto the coping
+  for (const [lx, c] of [[3.2, '#5a4422'], [17.6, '#7a5a2a'], [21.0, '#4e6a44']]) fill(g, ell(lx, -13.3, 0.5, 0.18), c);
 }
 
 // a flagpole with a Syndicate flag (background)
@@ -168,51 +200,217 @@ export function tree(g, x, seed = 1) {
   for (let k2 = x - 8; k2 < x + 9; k2 += 2) fill(g, rect(k2, -0.8, k2 + 0.8, 0.4), '#3a3e44');
 }
 
-// Vanta's water-cannon truck, parked on the square: armoured cab, the tank
-// body, the turret on the roof, grilles over the glass
+// Vanta's water-cannon truck, parked on the square (docs §10.15). Front to the left: a
+// dozer blade over the bumper, an armoured cab-forward cab with its glass behind
+// hinged steel mesh, a light bar and spotlights and the small cannon on the cab roof;
+// behind it the tank body in armour plate, bolted, the big cannon in its turret on
+// top, lockers low down, the roof rail, the ladder at the back, the spray nozzles
+// along the sill; the chassis, the fuel tank, mud flaps and three big wheels under
+// it. A truck that has worked the streets: lime streaks where its own water ran
+// down, rust from the bolts, the black blister of a petrol bomb, a paint bomb's
+// splash half washed off, road dirt thrown up the sides.
 export function truck(g, x) {
-  const BODY = VAN;
-  const H = `M ${x} -10 L ${x} -30 L ${x + 4} -36 L ${x + 22} -38 L ${x + 26} -44 L ${x + 96} -44 L ${x + 100} -40 L ${x + 100} -10 Z`;
-  cel(g, H, BODY, { sh: 1.6, hl: 0.5 });
-  clip(g, H, () => {
-    fill(g, poly([[x + 4, -34], [x + 20, -36], [x + 20, -27], [x + 2, -27]]), '#1a2028');
-    for (let k = x + 4; k < x + 20; k += 2) stroke(g, `M ${k} -36 L ${k} -27`, BODY.d, 0.3);
-    stroke(g, `M ${x + 24} -38 L ${x + 24} -10 M ${x + 60} -44 L ${x + 60} -10`, BODY.k, 0.4);
-    fill(g, rect(x, -16, x + 100, -14), '#b3232e');
-    emblem(g, x + 42, -27, 4, '#f0f2f4');
-    letters(g, 'VANTA', x + 76, -24, 5, '#e8ecf0', { kind: 'print', align: 'center', jit: 0, track: 0.1 });
-    letters(g, 'SU-03', x + 76, -18.4, 2.6, '#c9ced6', { kind: 'print', align: 'center', jit: 0 });
-    fill(g, rect(x, -13, x + 100, -10), '#000', 0.25);
-  });
-  // a working truck: the glass with the plaza's lamps in it, wheel arches dark over
-  // the tyres, road spray thrown up behind each wheel, rust run down from the seams
-  // and the bolts, the roof dulled by the rain
-  {
-    const Bk = new Brush(g, Math.hypot(g.getTransform().a, g.getTransform().b)), r = rnd(x | 0);
-    Bk.inside(H, () => {
-      const gl = g.createLinearGradient(x + 4, -36, x + 20, -27);
-      gl.addColorStop(0, 'rgba(150,170,196,0.32)'); gl.addColorStop(0.45, 'rgba(0,0,0,0)'); gl.addColorStop(0.8, 'rgba(255,200,140,0.18)');
-      g.fillStyle = gl; g.fill(new Path2D(poly([[x + 4, -34], [x + 20, -36], [x + 20, -27], [x + 2, -27]])));
-      for (const wx of [x + 16, x + 72, x + 88]) {
-        Bk.dab(wx, -9, 8, 5, 'rgba(6,6,8,0.75)');
-        Bk.dab(wx - 9, -14, 10, 7, 'rgba(52,40,28,0.7)', 1, 'source-over', -0.4);
-        for (let i = 0; i < 26; i++) Bk.dab(wx - 4 - r() * 14, -10 - r() * 10, 0.3 + r() * 0.7, 0.2 + r() * 0.5, `rgba(${60 + r() * 20 | 0},${46 + r() * 14 | 0},32,${0.3 + r() * 0.35})`);
-      }
-      for (const sx of [x + 24, x + 60, x + 42, x + 90]) Bk.line(`M ${sx + 0.6} ${-40 + r() * 6} C ${sx + 1} -30 ${sx + 0.4} -24 ${sx + 1.2} ${-16 - r() * 2}`, 'rgba(120,66,36,0.5)', 1.0 + r() * 0.7, 0.6);
-      Bk.dab(x + 60, -44, 40, 3, 'rgba(10,12,16,0.35)');
-      // road grime up the lower body, heaviest at the sill
-      const gr2 = g.createLinearGradient(0, -24, 0, -10); gr2.addColorStop(0, 'rgba(44,36,26,0)'); gr2.addColorStop(1, 'rgba(44,36,26,0.6)');
-      g.fillStyle = gr2; g.fillRect(x - 2, -24, 104, 14);
-      Bk.dab(x + 50, -40, 30, 2, 'rgba(190,200,214,0.12)');
-      for (let i = 0; i < 18; i++) { const bx = x + 2 + r() * 96; Bk.dab(bx, -30 + r() * 18, 0.25, 0.25, 'rgba(30,26,22,0.6)'); }
+  const BODY = mat(tone('#9aa3b0', '#6e7783', '#4e5560', '#1a1e24'), 'paint', 0.16), Bk = new Brush(g, Math.hypot(g.getTransform().a, g.getTransform().b)), r = rnd(x | 0);
+  const RUB = mat(M.rubber, 'rubber', 0.5), DARK = mat(tone('#4a4f57', '#30343a', '#202328', '#0b0c0e'), 'steel', 0.4);
+  const GLASS = (d) => {
+    Bk.fill(d, '#12171e', 0.01);
+    Bk.inside(d, () => {
+      const gl = g.createLinearGradient(0, -48, 0, -30);
+      gl.addColorStop(0, 'rgba(150,170,196,0.32)'); gl.addColorStop(0.5, 'rgba(0,0,0,0)'); gl.addColorStop(0.85, 'rgba(255,200,140,0.16)');
+      g.fillStyle = gl; g.fill(new Path2D(d));
+      Bk.dab(30, -36, 4, 1.2, 'rgba(40,60,70,0.4)');
     });
+  };
+  const mesh = (d, x0, y0, x1, y1) => Bk.inside(d, () => {
+    for (let k = x0; k < x1; k += 1.1) Bk.line(`M ${k} ${y0} L ${k} ${y1}`, 'rgba(40,46,54,0.95)', 0.24, 0.02);
+    for (let k = y0; k < y1; k += 1.1) Bk.line(`M ${x0} ${k} L ${x1} ${k}`, 'rgba(40,46,54,0.9)', 0.2, 0.02);
+    for (let k = x0; k < x1; k += 1.1) Bk.line(`M ${k + 0.12} ${y0} L ${k + 0.12} ${y1}`, 'rgba(170,180,192,0.3)', 0.06, 0.01);
+  });
+  const bolts = (pts, rr = 0.42) => { for (const [bx, by] of pts) { Bk.dab(bx, by, rr, rr, 'rgba(30,34,40,0.8)'); Bk.dab(bx - rr * 0.25, by - rr * 0.3, rr * 0.5, rr * 0.5, 'rgba(200,208,218,0.6)'); } };
+  g.save(); g.translate(x, 0);
+
+  // --- under it all: the shadow on the slabs, the chassis rails, the fuel tank, the axles
+  Bk.dab(76, 0.4, 82, 3.4, 'rgba(0,0,0,0.55)');
+  fill(g, rect(8, -16, 146, -11), '#14161a');
+  for (const ax of [28, 106, 126]) Bk.fill(rect(ax - 3, -12, ax + 3, -8), '#1b1e22', 0.1);
+  const TANK = 'M 50 -15.2 L 82 -15.2 C 84 -15.2 85 -13.6 85 -11.4 C 85 -9.2 84 -7.6 82 -7.6 L 50 -7.6 C 48 -7.6 47 -9.2 47 -11.4 C 47 -13.6 48 -15.2 50 -15.2 Z';
+  cel(g, TANK, STEEL, { sh: 0.9, hl: 0.5, gloss: 0.4 });
+  for (const sx of [56, 76]) { fill(g, rect(sx, -15.4, sx + 1.4, -7.4), '#1e2126'); Bk.line(`M ${sx + 0.3} -15.2 L ${sx + 0.3} -7.6`, 'rgba(190,198,208,0.4)', 0.2, 0.05); }
+  Bk.inside(TANK, () => { Bk.fill(rect(46, -16, 86, -7), 'rgba(16,18,22,0.55)', 0.2); Bk.fill(rect(46, -10, 86, -7), 'rgba(40,30,20,0.6)', 0.6); Bk.line('M 49 -13.6 L 83 -13.6', 'rgba(220,228,236,0.3)', 0.4, 0.2); });
+  cel(g, rect(88, -14.6, 96, -8.6), DARK, { sh: 0.4, hl: 0.3 });
+  // steps under the cab door, hanging off it
+  for (const sy of [-11.2, -5.6]) { cel(g, rect(21, sy, 35, sy + 1.4), DARK, { sh: 0.2, hl: 0.3, lw: 0.25 }); for (let k = 22; k < 35; k += 1.2) fill(g, rect(k, sy + 0.2, k + 0.5, sy + 0.8), '#0d0e10', 0.7); }
+  stroke(g, 'M 21.4 -14 L 21.4 -4.2 M 34.6 -14 L 34.6 -4.2', '#25282d', 0.5);
+
+  // --- the cab: armoured, cab-forward, the arch over the front wheel
+  const CAB = 'M 6 -14 L 5 -27 L 8 -31 L 15 -47.5 C 15.6 -48.8 16.6 -49.5 18 -49.5 L 43 -49.5 L 43 -14 L 40.5 -14 C 40.5 -20 37.5 -22.6 33 -22.6 L 23 -22.6 C 18.5 -22.6 15.5 -20 15.5 -14 Z';
+  cel(g, CAB, BODY, { sh: 1.4, hl: 0.5 });
+  Bk.inside(CAB, () => {
+    Bk.fill('M 0 -33 L 18 -49 L 50 -49 L 50 -46 L 18 -46 L 2 -31 Z', 'rgba(230,236,244,0.18)', 0.5);
+    // the panel seams, the door and its hinges, the handle
+    stroke(g, 'M 19.5 -47.6 L 19.5 -23.4 M 37.6 -47.6 L 37.6 -23.4 M 19.5 -47.6 L 37.6 -47.6', BODY.k, 0.35);
+    stroke(g, 'M 19.9 -47.2 L 37.2 -47.2', BODY.l, 0.14, 0.6);
+    for (const hy of [-42, -29]) cel(g, rect(18.6, hy, 20.4, hy + 2.6), DARK, { sh: 0.2, hl: 0.3, lw: 0.2 });
+    cel(g, rect(33.4, -31.8, 36.4, -30.6), DARK, { sh: 0.2, hl: 0.3, lw: 0.18 });
+    stroke(g, 'M 5.6 -27 L 43 -27', BODY.d, 0.26, 0.7);
+    stroke(g, 'M 40.6 -49 L 40.6 -27', BODY.d, 0.26, 0.6);
+    // the red stripe, the mark on the door, the cab's number
+    fill(g, 'M 5 -24.6 L 43 -24.6 L 43 -22.8 L 5.2 -22.8 Z', '#b3232e');
+    letters(g, '03', 39.0, -28.6, 2.4, '#e8ecf0', { kind: 'print', align: 'center', jit: 0 });
+    bolts([[8.4, -18], [8.4, -24], [42, -18], [42, -44], [17.6, -45.6], [25, -48.4], [33, -48.4]], 0.32);
+  });
+  // the windscreen behind its mesh, the door window behind its own
+  const WS = 'M 8.6 -31.2 L 14.8 -46.4 L 17.0 -46.4 L 11.0 -31.2 Z';
+  GLASS(WS); mesh(WS, 8, -47, 17.4, -31);
+  stroke(g, WS, '#262a30', 0.5);
+  const WIN = rect(22.2, -45.4, 35.2, -34.2);
+  GLASS(WIN);
+  Bk.inside(WIN, () => { Bk.fill('M 23 -40 L 29 -41 L 30 -35 L 24 -34.6 Z', 'rgba(8,10,12,0.7)', 0.4); });
+  cel(g, rect(21.4, -46.2, 36, -33.4), DARK, { sh: 0.2, hl: 0.25, line: false, ao: 0 });
+  Bk.inside(rect(21.4, -46.2, 36, -33.4), () => { Bk.fill(rect(22.2, -45.4, 35.2, -34.2), 'rgba(0,0,0,1)', 0, 1, 'destination-out'); });
+  GLASS(WIN); mesh(WIN, 22.2, -45.4, 35.2, -34.2);
+  stroke(g, rect(21.4, -46.2, 36, -33.4), '#1c1f24', 0.3);
+  // the bumper, the headlamps in their cages, the dozer blade bolted on in front
+  cel(g, rect(3.6, -19, 9, -12.6), DARK, { sh: 0.4, hl: 0.3 });
+  // the headlamp in its cage: a round lamp seen from the side, its rim, two bars over it
+  cel(g, ell(5.6, -16.6, 1.3, 1.6), DARK, { sh: 0.3, hl: 0.4, lw: 0.18 });
+  fill(g, ell(4.7, -16.6, 0.5, 1.3), '#c9d0d6'); fill(g, ell(4.6, -17.0, 0.2, 0.5), '#ffffff', 0.8);
+  for (const cy of [-17.6, -15.6]) stroke(g, `M 3.6 ${cy} L 7.2 ${cy}`, '#202328', 0.24);
+  const BLADE = 'M -6 -2.6 C -7.6 -8 -7.6 -16 -5.4 -23 L 4.6 -24.4 L 5.4 -21 C 2.6 -16 2.6 -9 4.4 -4.4 L 4.6 -2.4 Z';
+  cel(g, BLADE, DARK, { sh: 1.2, hl: 0.5 });
+  Bk.inside(BLADE, () => {
+    for (const by of [-20, -14, -8]) { Bk.line(`M -7 ${by} L 5 ${by + 0.4}`, 'rgba(0,0,0,0.6)', 0.5, 0.1); Bk.line(`M -7 ${by - 0.5} L 5 ${by - 0.1}`, 'rgba(190,200,210,0.3)', 0.2, 0.05); }
+    for (let k = -2; k < 7; k++) Bk.fill(`M -8 ${-24 + k * 3.4} L 6 ${-28 + k * 3.4} L 6 ${-26.3 + k * 3.4} L -8 ${-22.3 + k * 3.4} Z`, 'rgba(214,170,48,0.75)', 0.02);
+    Bk.line('M -6.6 -4 C -7.4 -10 -7.2 -17 -5.6 -22.4', 'rgba(220,226,234,0.45)', 0.3, 0.1);
+    for (let i = 0; i < 16; i++) Bk.dab(-6 + r() * 10, -24 + r() * 21, 0.2 + r() * 0.5, 0.1 + r() * 0.3, `rgba(${120 + r() * 40 | 0},${70 + r() * 20 | 0},40,${0.3 + r() * 0.3})`, 1, 'source-over', r() * 3);
+    Bk.fill('M -8 -8 L 6 -8 L 6 -2 L -8 -2 Z', 'rgba(44,34,24,0.6)', 0.8);
+  });
+  for (const [bx, by] of [[3.2, -21], [3.0, -6]]) cel(g, rect(bx - 1, by - 1, bx + 2.6, by + 1), DARK, { sh: 0.2, hl: 0.3, lw: 0.2 });
+  // the mirror on its arm off the cab's front corner
+  stroke(g, 'M 8.6 -36 L 2.4 -38.6 L 2.4 -41', '#202328', 0.5);
+  cel(g, rect(0.6, -47.4, 3.4, -38.6), DARK, { sh: 0.3, hl: 0.3, lw: 0.24 });
+  fill(g, rect(1.0, -47, 2.2, -39), '#5d6874', 0.8);
+
+  // --- the body: the armoured tank, the arch over the rear wheels
+  const BOD = 'M 44.6 -14.6 L 44.6 -58.2 C 44.6 -59.8 45.6 -60.6 47.2 -60.6 L 145.6 -60.6 C 147.2 -60.6 148.2 -59.8 148.2 -58.2 L 148.2 -16 L 139 -16 C 139 -20.6 136 -22.8 131.6 -22.8 L 100.4 -22.8 C 96 -22.8 93 -20.6 93 -16 L 86 -16 L 86 -14.6 Z';
+  fill(g, rect(43, -50, 44.8, -14), '#0c0d10');
+  cel(g, BOD, BODY, { sh: 1.6, hl: 0.5 });
+  Bk.inside(BOD, () => {
+    // plates: their seams, the bolts along them, the lap of each over the next
+    for (const sx of [68, 92, 118]) { Bk.line(`M ${sx} -60 L ${sx} -16`, 'rgba(20,24,30,0.8)', 0.36, 0.05); Bk.line(`M ${sx + 0.36} -60 L ${sx + 0.36} -16`, 'rgba(210,218,228,0.3)', 0.14, 0.04); }
+    Bk.line('M 44 -37.6 L 149 -37.6', 'rgba(20,24,30,0.8)', 0.36, 0.05); Bk.line('M 44 -37.24 L 149 -37.24', 'rgba(210,218,228,0.3)', 0.14, 0.04);
+    const bp = []; for (const sx of [68, 92, 118]) for (let by = -57; by < -18; by += 4.4) bp.push([sx - 1.2, by], [sx + 1.6, by]);
+    for (let bx = 47; bx < 147; bx += 4.2) bp.push([bx, -38.8], [bx, -36.0], [bx, -58.8]);
+    bolts(bp, 0.28);
+    // the light over the top edge of the body, the street's cold light down its face
+    Bk.fill('M 44 -61 L 149 -61 L 149 -56 L 44 -56 Z', 'rgba(230,236,244,0.22)', 0.6);
+    // lockers low down: shutter doors, their handles and hinges
+    for (const [lx0, lx1] of [[47, 66.6], [69.4, 90.6]]) {
+      const L = rect(lx0, -35.4, lx1, -18.4);
+      Bk.fill(L, 'rgba(14,16,20,0.28)', 0.05);
+      for (let ly = -35; ly < -18.4; ly += 1.2) { Bk.line(`M ${lx0 + 0.3} ${ly} L ${lx1 - 0.3} ${ly}`, 'rgba(20,24,30,0.55)', 0.14, 0.03); Bk.line(`M ${lx0 + 0.3} ${ly + 0.3} L ${lx1 - 0.3} ${ly + 0.3}`, 'rgba(210,218,228,0.22)', 0.08, 0.02); }
+      stroke(g, L, BODY.k, 0.3, 0.8);
+      cel(g, rect((lx0 + lx1) / 2 - 1.6, -21.4, (lx0 + lx1) / 2 + 1.6, -20.2), DARK, { sh: 0.2, hl: 0.3, lw: 0.16 });
+    }
+    // the red stripe, VANTA, the mark, the number, the warning
+    fill(g, 'M 44 -24.6 L 149 -24.6 L 149 -22.8 L 44 -22.8 Z', '#b3232e');
+    Bk.inside(rect(44, -24.6, 149, -22.8), () => Bk.line('M 44 -24.4 L 149 -24.4', 'rgba(255,170,160,0.4)', 0.2, 0.05));
+    emblem(g, 80, -48.4, 5.0, '#f0f2f4');
+    letters(g, 'VANTA', 120, -45.0, 6.6, '#e8ecf0', { kind: 'print', align: 'center', jit: 0, track: 0.12 });
+    letters(g, 'SU-03', 120, -40.2, 2.8, '#c9ced6', { kind: 'print', align: 'center', jit: 0, track: 0.1 });
+    fill(g, rect(98, -35, 116, -31.4), '#d8b43a', 0.9);
+    letters(g, 'YAKLAŞMAYIN', 107, -32.2, 2.1, '#1a1a1a', { kind: 'print', align: 'center', jit: 0 });
+    for (let k = 0; k < 6; k++) fill(g, `M ${98 + k * 3} -31.4 l 1.5 0 l -1 1.0 l -1.5 0 Z`, '#1a1a1a', 0.85);
+    // the ladder up the back, the rear lamps
+    for (const lx of [142.6, 146.6]) stroke(g, `M ${lx} -58 L ${lx} -17`, '#262a30', 0.5);
+    for (let ly = -56; ly < -18; ly += 3.2) { stroke(g, `M 142.6 ${ly} L 146.6 ${ly}`, '#262a30', 0.42); stroke(g, `M 142.6 ${ly - 0.2} L 146.6 ${ly - 0.2}`, 'rgba(200,208,218,0.4)', 0.12); }
+    fill(g, rect(146.2, -30, 148.2, -26), '#5a1a1e'); fill(g, rect(146.4, -29.6, 148, -28.4), '#8a2a30', 0.8);
+  });
+  // amber marker lamps along the sill (dark), the spray nozzles under it, the mud flaps
+  for (const mx of [56, 78, 108, 128]) { cel(g, rect(mx - 1, -18.2, mx + 1, -16.8), mat(tone('#e8a050', '#b8742c', '#7a4c18', '#3a2408'), 'paint', 0.2), { sh: 0.2, hl: 0.3, lw: 0.14 }); }
+  for (const nx of [48, 54, 60, 66, 72, 78, 84, 142, 146]) { fill(g, rect(nx - 0.5, -16.2, nx + 0.5, -14.6), '#2a2e34'); fill(g, rect(nx - 0.25, -14.6, nx + 0.25, -14.0), '#6c747e'); }
+  for (const [fx, fy] of [[41.2, -14], [139.4, -16]]) { cel(g, rect(fx, fy, fx + 1.6, -3.4), RUB, { sh: 0.3, hl: 0.15, lw: 0.2 }); }
+  // the exhaust up behind the cab, its rain cap
+  cel(g, rect(43.6, -57, 45, -48), STEEL, { sh: 0.4, hl: 0.4, lw: 0.2 });
+  fill(g, 'M 43.2 -57.4 L 45.6 -58.2 L 45.6 -57 L 43.2 -56.6 Z', '#1d2024');
+  Bk.dab(44.4, -57, 1.0, 1.4, 'rgba(10,10,12,0.5)');
+
+  // --- on the roof: the rail and its posts, the light bar, the spotlights, the horn, the
+  // small cannon on the cab, the big one in its turret, the aerials
+  stroke(g, 'M 48 -63.4 L 140 -63.4', '#30353c', 0.5);
+  for (let px = 50; px <= 140; px += 15) stroke(g, `M ${px} -63.4 L ${px} -60.6`, '#30353c', 0.4);
+  stroke(g, 'M 48 -63.7 L 140 -63.7', 'rgba(210,218,228,0.4)', 0.14);
+  cel(g, rect(19, -52.8, 39, -49.4), DARK, { sh: 0.3, hl: 0.3, lw: 0.24 });
+  for (let k = 0; k < 6; k++) { const lx = 19.8 + k * 3.2; fill(g, rect(lx, -52.2, lx + 2.6, -50.2), k % 2 ? '#3a1216' : '#2a3036'); fill(g, rect(lx + 0.2, -52.1, lx + 1.2, -51.6), 'rgba(255,255,255,0.25)'); }
+  for (const sx of [20.6, 37.4]) { stroke(g, `M ${sx} -52.8 L ${sx} -55.2`, '#202328', 0.4); cel(g, ell(sx, -56.4, 1.5, 1.3), DARK, { sh: 0.3, hl: 0.4, lw: 0.2 }); fill(g, ell(sx - 0.9, -56.4, 0.4, 1.0), '#dfe6ec', 0.85); }
+  cel(g, 'M 100 -60.6 L 104 -60.6 L 108 -64.6 L 108 -60 L 100 -60 Z', DARK, { sh: 0.3, hl: 0.3, lw: 0.2 });
+  // the cab cannon: a small dome, its nozzle forward
+  cel(g, 'M 27 -49.5 C 27 -52.6 29 -54.2 31.4 -54.2 C 33.8 -54.2 35.8 -52.6 35.8 -49.5 Z', BODY, { sh: 0.6, hl: 0.5 });
+  g.save(); g.translate(29, -52.6); g.rotate(-0.12);
+  cel(g, rect(-11, -0.7, 0, 0.7), STEEL, { sh: 0.3, hl: 0.4, gloss: 0.4, lw: 0.2 });
+  cel(g, rect(-12.4, -1.0, -10.6, 1.0), DARK, { sh: 0.2, hl: 0.3, lw: 0.18 });
+  g.restore();
+  // the main turret: a ring on the roof, an armoured housing with its camera, the long nozzle
+  cel(g, rect(62, -63, 86, -60.4), DARK, { sh: 0.3, hl: 0.3, lw: 0.24 });
+  const TUR = 'M 64 -63 L 64.6 -68.4 C 64.8 -69.6 65.8 -70.4 67 -70.4 L 81.4 -70.4 C 82.8 -70.4 83.8 -69.6 84 -68.4 L 84.6 -63 Z';
+  cel(g, TUR, BODY, { sh: 0.9, hl: 0.55 });
+  Bk.inside(TUR, () => { Bk.line('M 65 -69.6 L 83.6 -69.6', 'rgba(240,244,250,0.5)', 0.3, 0.1); bolts([[66.4, -64.4], [82.2, -64.4], [74, -64.4]], 0.26); fill(g, rect(70, -66.8, 78, -65.2), '#b3232e'); });
+  cel(g, rect(79.6, -73.2, 83.2, -70.4), DARK, { sh: 0.2, hl: 0.3, lw: 0.18 });
+  fill(g, ell(80.4, -71.8, 0.8, 0.8), '#0a0b0d'); fill(g, ell(80.2, -72.0, 0.3, 0.3), '#4c6a86');
+  g.save(); g.translate(66, -67); g.rotate(-0.08);
+  cel(g, rect(-26, -1.0, 0, 1.0), STEEL, { sh: 0.4, hl: 0.5, gloss: 0.5, lw: 0.22 });
+  for (const sx of [-8, -16]) cel(g, rect(sx - 0.6, -1.3, sx + 0.6, 1.3), DARK, { sh: 0.2, hl: 0.3, lw: 0.16 });
+  cel(g, 'M -28.4 -1.6 L -25.6 -1.2 L -25.6 1.2 L -28.4 1.6 Z', DARK, { sh: 0.2, hl: 0.3, lw: 0.18 });
+  Bk.line('M -27 1.6 C -27.4 3 -27.2 5 -27.6 7', 'rgba(200,214,226,0.35)', 0.2, 0.15);
+  g.restore();
+  for (const [ax, ay, ah] of [[41, -49.5, 16], [137, -60.6, 12]]) { stroke(g, `M ${ax} ${ay} L ${ax - 1.4} ${ay - ah}`, '#1a1c20', 0.24); fill(g, ell(ax, ay - 0.4, 0.6, 0.4), '#1a1c20'); }
+
+  // --- the wheels: big tyres, their tread blocks round the edge, steel wheels, the hubs
+  for (const wx of [28, 106, 126]) {
+    Bk.dab(wx, -9.5, 11, 9, 'rgba(0,0,0,0.6)');
+    cel(g, ell(wx, -9.5, 9.5, 9.5), RUB, { sh: 0.8, hl: 0.3 });
+    Bk.inside(ell(wx, -9.5, 9.5, 9.5), () => {
+      for (let k = 0; k < 28; k++) { const a = (k / 28) * Math.PI * 2; Bk.line(`M ${wx + Math.cos(a) * 8.0} ${-9.5 + Math.sin(a) * 8.0} L ${wx + Math.cos(a) * 9.6} ${-9.5 + Math.sin(a) * 9.6}`, 'rgba(0,0,0,0.6)', 0.5, 0.05); }
+      Bk.line(`M ${wx - 7} -15 A 9 9 0 0 1 ${wx + 5} -17.6`, 'rgba(160,170,180,0.25)', 0.6, 0.3);
+      Bk.fill(rect(wx - 10, -4, wx + 10, 1), 'rgba(40,32,24,0.5)', 0.6);
+    });
+    cel(g, ell(wx, -9.5, 5.2, 5.2), DARK, { sh: 0.6, hl: 0.4 });
+    fill(g, ell(wx, -9.5, 4.2, 4.2), '#22262b');
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; fill(g, ell(wx + Math.cos(a) * 2.9, -9.5 + Math.sin(a) * 2.9, 0.42, 0.42), '#7c848e'); }
+    cel(g, ell(wx, -9.5, 1.9, 1.9), STEEL, { sh: 0.4, hl: 0.5, lw: 0.2 });
+    Bk.dab(wx - 1.6, -11.6, 1.4, 0.8, 'rgba(255,255,255,0.18)');
   }
-  cel(g, rect(x + 62, -50, x + 80, -44), BODY, { sh: 0.6, hl: 0.3 });
-  cel(g, poly([[x + 64, -48], [x + 52, -51], [x + 52, -49], [x + 64, -46.6]]), STEEL, { sh: 0.3, hl: 0.3, lw: 0.3 });
-  for (const lx of [x + 8, x + 28]) { fill(g, rect(lx, -39.4, lx + 4, -38), '#5e1d22'); fill(g, rect(lx, -39.4, lx + 4, -39), '#8a3a3e', 0.6); }
-  fill(g, rect(x + 86, -45.6, x + 90, -44), '#e8f0ff');
-  for (const wx of [x + 16, x + 72, x + 88]) { cel(g, ell(wx, -6, 6, 6), mat(M.rubber, 'rubber', 0.5), { sh: 0.6, hl: 0.3 }); fill(g, ell(wx, -6, 2.6, 2.6), '#4a4e54'); }
-  cel(g, rect(x - 2, -12, x + 4, -9), STEEL, { sh: 0.2, hl: 0.2, lw: 0.25 });
+  // the dark under the arches, over the tyres
+  Bk.inside(CAB, () => Bk.dab(28, -18, 10, 4, 'rgba(0,0,0,0.5)'));
+  Bk.inside(BOD, () => Bk.dab(116, -20, 22, 4, 'rgba(0,0,0,0.5)'));
+
+  // --- a truck that has worked the streets
+  for (const d of [CAB, BOD]) Bk.inside(d, () => {
+    // its own water run down the sides and dried white
+    for (let i = 0; i < 26; i++) { const px = (d === CAB ? 8 : 46) + r() * (d === CAB ? 34 : 100); Bk.line(`M ${px} ${-58 + r() * 8} C ${px + 0.3} -44 ${px - 0.2} -32 ${px + 0.2} ${-20 - r() * 6}`, 'rgba(226,232,236,0.14)', 0.3 + r() * 0.6, 0.3); }
+    // rust from the seams and bolts
+    for (let i = 0; i < 10; i++) { const px = (d === CAB ? 8 : 46) + r() * (d === CAB ? 34 : 100), py = -56 + r() * 20; Bk.line(`M ${px} ${py} C ${px + 0.4} ${py + 4} ${px - 0.2} ${py + 8} ${px + 0.3} ${py + 10 + r() * 8}`, 'rgba(126,68,36,0.42)', 0.4 + r() * 0.5, 0.3); }
+    // road dirt thrown up the sides, heaviest behind each wheel
+    const gr2 = g.createLinearGradient(0, -34, 0, -14); gr2.addColorStop(0, 'rgba(44,36,26,0)'); gr2.addColorStop(1, 'rgba(44,36,26,0.62)');
+    g.fillStyle = gr2; g.fillRect(-10, -34, 170, 22);
+    for (const wx of [28, 106, 126]) { Bk.dab(wx + 12, -18, 9, 6, 'rgba(52,40,28,0.55)', 1, 'source-over', 0.4); for (let i = 0; i < 26; i++) Bk.dab(wx + 4 + r() * 16, -14 - r() * 12, 0.3 + r() * 0.7, 0.2 + r() * 0.5, `rgba(${60 + r() * 20 | 0},${46 + r() * 14 | 0},32,${0.3 + r() * 0.35})`); }
+    // dents catching the light on one side, shadow on the other
+    for (let i = 0; i < 5; i++) { const px = (d === CAB ? 10 : 50) + r() * (d === CAB ? 28 : 90), py = -50 + r() * 26; Bk.dab(px, py, 1.4, 0.9, 'rgba(10,12,16,0.25)'); Bk.dab(px - 0.6, py - 0.6, 1.0, 0.6, 'rgba(230,236,244,0.18)'); }
+    // scratches
+    for (let i = 0; i < 12; i++) { const px = (d === CAB ? 8 : 46) + r() * (d === CAB ? 34 : 100), py = -56 + r() * 34, a = (r() - 0.5) * 0.6, L = 1.6 + r() * 4; Bk.line(`M ${px} ${py} l ${Math.cos(a) * L} ${Math.sin(a) * L}`, 'rgba(220,226,234,0.35)', 0.1, 0.03); }
+  });
+  Bk.inside(BOD, () => {
+    // the black blister where a petrol bomb burst on the plate, the paint bubbled round it
+    Bk.dab(132, -47, 7, 5, 'rgba(14,12,10,0.7)'); Bk.dab(131, -50, 4, 6, 'rgba(14,12,10,0.5)', 1, 'source-over', -0.3);
+    for (let i = 0; i < 18; i++) { const a = r() * Math.PI * 2, d = 4 + r() * 4; Bk.dab(132 + Math.cos(a) * d, -47 + Math.sin(a) * d * 0.7, 0.3 + r() * 0.5, 0.3 + r() * 0.4, 'rgba(120,110,96,0.45)'); }
+    Bk.line('M 128 -54 C 130 -58 131 -60 133 -61', 'rgba(14,12,10,0.4)', 2.4, 1.4);
+    // a paint bomb's splash, white, washed down but not off
+    Bk.dab(58, -48, 3.6, 2.6, 'rgba(232,230,222,0.5)');
+    for (let i = 0; i < 16; i++) { const a = r() * Math.PI * 2, d = 2 + r() * 5; Bk.dab(58 + Math.cos(a) * d, -48 + Math.sin(a) * d, 0.3 + r() * 0.6, 0.3 + r() * 0.5, 'rgba(232,230,222,0.45)'); }
+    for (let i = 0; i < 7; i++) { const px = 55 + r() * 7; Bk.line(`M ${px} -46 C ${px + 0.2} -42 ${px - 0.2} -38 ${px + 0.1} ${-34 - r() * 6}`, 'rgba(232,230,222,0.3)', 0.4, 0.2); }
+    Bk.dab(96, -54, 50, 4, 'rgba(10,12,16,0.25)');
+  });
+  g.restore();
 }
 
 // the courtyard arcade, one bay of it: a square stone pier and the round
@@ -344,7 +542,7 @@ export function buildMission3() {
   for (const [cx, hh] of [[664, 2.4], [668, 3.2], [684, 2], [690, 2.8], [704, 3.4], [712, 2.2], [722, 2.8]]) glows.push([cx, -hh - 0.9, 1.6, 1.8, '#ffb060', 0.6, 'fire']);
   lights.push([694, -6, 30, 0.35, [1, 0.6, 0.3], 'fire']);
   deco.push({ name: 'm3.tree', box: [-34, -118, 36, 1], paint: (g) => tree(g, 0, 1), at: [300, 930, 1120], foot: [0, 6] });
-  P('m3.truck', [1234, -54, 1338, 1], (g) => truck(g, 1236), deco);
+  P('m3.truck', [1222, -78, 1392, 2], (g) => truck(g, 1236), deco);
   // B — the security gate in the compound wall ------------------------------------------------
   conc('m3.concB', 184);
   P('m3.term', [X(204) - 9, -28, X(204) + 18, 1], (g) => terminal(g, X(204)));
