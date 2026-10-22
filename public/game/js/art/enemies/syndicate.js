@@ -72,34 +72,64 @@ function neck(g, t) {
   cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', t, { sh: 1.2, hl: 0.25 });
 }
 function helmet(g) {
-  const A = PAL.armor, K = PAL.black;
+  const A = PAL.armor, B = brush(g);
+  // the balaclava's knit at the throat under the jaw plate
   neck(g, PAL.suit);
-  // the shell: Vanta's grey, round over the skull and closed over the face
-  const SH = 'M -5.0 -4.0 C -5.7 -7.2 -5.2 -10.6 -2.6 -12.0 C 0.2 -13.2 3.6 -12.8 5.2 -10.8 C 6.0 -9.8 6.3 -8.6 6.3 -7.4 L 6.3 -4.0 C 6.2 -2.6 5.3 -1.6 3.9 -1.3 L 1.2 -1.1 C -0.8 -1.3 -2.6 -2.2 -3.8 -3.0 Z';
-  cel(g, SH, A, { sh: 1.5, hl: 0.65 });
-  clip(g, SH, () => {
-    stroke(g, curve([[-4.0, -10.4], [-0.8, -12.6], [3.8, -12.0]]), '#ffffff', 0.22, 0.75);
-    stroke(g, 'M -5 -6.4 C -2.6 -6.0 -0.6 -6.4 0.6 -6.9', A.d, 0.22, 0.8);
-    emblem(g, -1.8, -9.0, 1.05, PAL.white.m);
-    grime(g, -6, -1, DUST);
+  B.inside('M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', () => { for (let x = -2; x < 2.6; x += 0.22) B.line(`M ${x} -4.6 L ${x + 0.1} 1.4`, 'rgba(8,10,16,0.35)', 0.06, 0.03); B.fill('M -3 -5 L 3 -5 L 3 -2.4 L -3 -2.0 Z', 'rgba(6,8,12,0.5)', 0.3); });
+  // the shell: cut high over the ear, the light rolling over its crown
+  cel(g, SHELL, A, { sh: 1.4, hl: 0.6 });
+  B.inside(SHELL, () => {
+    B.line('M -3.8 -10.6 C -0.8 -12.9 3.0 -12.8 4.9 -10.6', 'rgba(255,255,255,0.55)', 0.22, 0.14);
+    B.dab(2.4, -11.6, 2.0, 0.7, 'rgba(236,244,252,0.35)');
+    B.fill('M -6 -6 C -4 -5.0 -2 -4.4 0 -4.6 L 0 -3 L -6 -3 Z', 'rgba(16,20,28,0.4)', 0.4);
+    // the cut's edge, trimmed in rubber
+    B.line('M 4.6 -8.7 C 3.0 -8.8 1.6 -8.6 0.6 -8.0 C -0.4 -7.4 -0.8 -6.6 -0.6 -5.6 C -0.4 -4.8 -0.8 -4.2 -1.6 -4.0 C -2.8 -3.8 -4.0 -4.0 -4.9 -4.6', '#1b1f26', 0.26, 0.02);
+    // the velcro panel at the back and the number stencilled under it
+    const VEL = 'M -3.9 -10.0 C -3.3 -10.9 -2.4 -11.5 -1.4 -11.8 L -1.1 -11.0 C -2.0 -10.7 -2.7 -10.2 -3.2 -9.5 Z';
+    B.fill(VEL, '#56616f', 0.02);
+    B.inside(VEL, () => { texture(g, 'knit', 0.5, 0.25); B.line('M -3.8 -10.0 C -3.2 -10.85 -2.3 -11.45 -1.4 -11.75', 'rgba(20,24,30,0.5)', 0.06, 0.02); });
+    // the unit's ID tape (no lettering: mirrored when he faces left)
+    for (const [x0, w] of [[-4.4, 0.5], [-3.7, 0.5], [-3.0, 1.2], [-1.6, 0.3]]) B.fill(`M ${x0} -5.4 L ${x0 + w} -5.42 L ${x0 + w} -4.9 L ${x0} -4.88 Z`, 'rgba(236,240,244,0.7)', 0.01);
+    grime(g, -6, -3.8, DUST);
   });
-  worn(g, SH, [-5.7, -13.2, 6.3, -1.1], 29, 0.5);
-  // the face: black polymer from the brow to the chin, one slit of smoked glass, three vents
-  const FACE = 'M 1.0 -8.6 C 2.8 -9.0 5.0 -8.9 6.3 -8.4 L 6.3 -4.0 C 6.2 -2.6 5.3 -1.6 3.9 -1.3 L 1.2 -1.1 C 0.6 -2.6 0.5 -4.6 0.6 -6.4 C 0.6 -7.2 0.8 -8.0 1.0 -8.6 Z';
-  cel(g, FACE, K, { sh: 0.8, hl: 0.45, gloss: 0.4 });
-  clip(g, FACE, () => {
-    stroke(g, 'M 6.15 -6.4 C 6.3 -5.0 6.1 -3.4 5.5 -2.4', K.l, 0.16, 0.6);
-    for (const y of [-5.0, -4.2, -3.4]) { stroke(g, `M 3.5 ${y} C 4.4 ${y - 0.12} 5.2 ${y - 0.08} 6.1 ${y + 0.16}`, '#050607', 0.3); stroke(g, `M 3.5 ${y + 0.22} C 4.4 ${y + 0.1} 5.2 ${y + 0.14} 6.1 ${y + 0.38}`, K.l, 0.1, 0.5); }
+  worn(g, SHELL, [-5.6, -13.4, 5.9, -4.0], 29, 0.6);
+  // the rail along the side, its slots; the mount plate over the brow and its screws
+  const RAIL = 'M -4.5 -6.2 C -3.0 -7.5 -1.0 -8.5 1.4 -8.95 C 2.6 -9.12 3.6 -9.14 4.5 -9.02 L 4.5 -9.5 C 3.6 -9.62 2.6 -9.6 1.3 -9.42 C -1.2 -8.96 -3.2 -7.96 -4.8 -6.6 Z';
+  cel(g, RAIL, PAL.black, { sh: 0.3, hl: 0.3, lw: 0.1 });
+  B.inside(RAIL, () => { for (let u = 0; u < 1; u += 0.09) { const x = -4.4 + u * 8.8, y = -6.6 - Math.sin(u * 1.9) * 2.6; B.fill(`M ${x} ${y - 0.12} l 0.28 -0.04 l 0 0.18 l -0.28 0.04 Z`, '#050607', 0.01); } B.line('M -4.6 -6.5 C -3.1 -7.8 -1.1 -8.8 1.35 -9.25 C 2.6 -9.4 3.6 -9.42 4.5 -9.3', 'rgba(170,180,192,0.3)', 0.05, 0.02); });
+  const MOUNT = 'M 4.0 -11.4 L 5.3 -10.9 C 5.6 -10.4 5.7 -10.0 5.7 -9.6 L 4.3 -9.8 Z';
+  cel(g, MOUNT, PAL.black, { sh: 0.3, hl: 0.35, lw: 0.1 });
+  for (const [x, y] of [[4.5, -10.8], [5.2, -10.2], [4.6, -10.1]]) rivet(g, x, y, 0.12, PAL.steel);
+  // the face plate: grey round the slit, its seam to the jaw; the slit of smoked glass in a
+  // steel frame, the street's light across its top edge, red deep in it
+  cel(g, FACE, A, { sh: 0.8, hl: 0.5 });
+  B.inside(FACE, () => { B.line('M 0.6 -8.0 C 2.2 -8.75 4.4 -8.85 5.9 -8.45', 'rgba(255,255,255,0.45)', 0.1, 0.05); B.dab(4.6, -8.2, 1.4, 0.3, 'rgba(236,244,252,0.3)'); });
+  worn(g, FACE, [0.2, -9.0, 6.4, -6.0], 31, 0.5);
+  B.fill('M 1.5 -7.84 C 3.0 -8.1 4.8 -8.1 6.3 -7.72 L 6.34 -6.82 C 4.8 -7.06 3.0 -7.06 1.56 -6.86 Z', '#2a2f37', 0.01);
+  B.fill(SLIT, '#14161b', 0.01);
+  B.inside(SLIT, () => {
+    B.dab(4.0, -7.36, 2.2, 0.3, 'rgba(96,30,36,0.7)');
+    B.dab(5.2, -7.4, 0.5, 0.16, 'rgba(160,44,52,0.6)');
+    B.line('M 1.7 -7.66 C 3.0 -7.92 4.8 -7.92 6.18 -7.58', 'rgba(220,226,236,0.6)', 0.06, 0.02);
+    B.dab(3.0, -7.66, 0.36, 0.05, 'rgba(255,214,160,0.7)');
   });
-  const SLIT = 'M 1.6 -7.75 C 3.2 -8.0 5.0 -8.0 6.32 -7.7 L 6.34 -6.85 C 5.0 -7.1 3.2 -7.1 1.66 -6.9 Z';
-  const gs = g.createLinearGradient(1.6, 0, 6.3, 0); gs.addColorStop(0, '#120c0e'); gs.addColorStop(0.6, '#4a1418'); gs.addColorStop(1, '#2a0a0e');
-  g.fillStyle = gs; g.fill(new Path2D(SLIT));
-  stroke(g, 'M 1.7 -7.62 C 3.2 -7.88 5.0 -7.88 6.25 -7.6', '#e6eaf0', 0.08, 0.6);
-  stroke(g, SLIT, PAL.steel.d, 0.12);
-  // the comms cup over the ear and its stub antenna
-  cel(g, 'M -1.5 -5.8 a 1.1 1.3 0 1 0 2.2 0 a 1.1 1.3 0 1 0 -2.2 0 Z', A, { sh: 0.5, hl: 0.4, lw: 0.2 });
-  stroke(g, 'M -1.1 -5.8 a 0.7 0.85 0 1 0 1.4 0 a 0.7 0.85 0 1 0 -1.4 0 Z', A.d, 0.12, 0.8);
-  rivet(g, -0.4, -5.8, 0.22, PAL.steel);
+  B.line('M 1.62 -6.94 C 3.0 -7.16 4.8 -7.16 6.24 -6.9', 'rgba(170,180,192,0.45)', 0.04, 0.01);
+  // the jaw plate: black polymer, a sheen down its front, the vents pressed in it
+  cel(g, JAW, PAL.black, { sh: 0.8, hl: 0.4, gloss: 0.35 });
+  B.inside(JAW, () => {
+    for (const [y, c] of [[-5.1, 0.02], [-4.4, 0.06], [-3.7, 0.1]]) { B.line(`M 3.4 ${y} C 4.2 ${y - 0.15 + c} 5.0 ${y - 0.1 + c} 5.9 ${y + 0.2}`, 'rgba(0,0,0,0.85)', 0.24, 0.06); B.line(`M 3.4 ${y + 0.2} C 4.2 ${y + 0.05 + c} 5.0 ${y + 0.1 + c} 5.9 ${y + 0.4}`, 'rgba(150,164,180,0.25)', 0.08, 0.04); }
+    B.line('M 6.1 -6.0 C 6.25 -4.8 6.1 -3.4 5.5 -2.5', 'rgba(170,184,200,0.35)', 0.12, 0.08);
+    B.line('M 0.4 -6.35 C 2.4 -6.55 5.0 -6.46 6.3 -6.08', 'rgba(0,0,0,0.6)', 0.08, 0.03);
+    B.fill('M 0 -3 C 2 -2.4 4 -2.0 6.4 -2.6 L 6.4 -1 L 0 -1 Z', 'rgba(0,0,0,0.4)', 0.3);
+  });
+  // the hinge bolts at the temple, the comms cup over the ear and its stub antenna
+  rivet(g, 0.85, -6.25, 0.2, PAL.steel);
+  const CUP = 'M -0.9 -7.3 C 0.0 -7.6 0.9 -7.0 1.0 -6.0 C 1.1 -5.0 0.5 -4.3 -0.4 -4.4 C -1.1 -4.5 -1.4 -5.2 -1.4 -5.9 C -1.4 -6.6 -1.2 -7.1 -0.9 -7.3 Z';
+  cel(g, CUP, PAL.black, { sh: 0.5, hl: 0.4, lw: 0.14 });
+  B.inside(CUP, () => { B.line('M -0.6 -7.0 C 0.2 -7.2 0.7 -6.6 0.76 -6.0', 'rgba(170,180,192,0.4)', 0.08, 0.04); B.fill('M -0.9 -6.4 L 0.5 -6.5 L 0.5 -5.6 L -0.9 -5.5 Z', '#3a404a', 0.04); });
+  rivet(g, -0.2, -5.95, 0.16, PAL.steel);
+  B.line('M -1.0 -7.1 L -1.6 -9.4', '#15181d', 0.18, 0.01);
+  B.dab(-1.62, -9.46, 0.1, 0.1, '#2a2f37');
 }
 
 // --- torso: navy uniform, the plate carrier --------------------------------------------------
@@ -324,35 +354,78 @@ export const KALKANLI = {
 const RED = mat(tone('#e85a55', '#c4302c', '#8c1f1c', '#3e0a09'), 'canvas', 0.5);
 const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
 function maskHead(g) {
-  const A = PAL.armor, RUB = mat(tone('#3c4148', '#272b31', '#181b1f', '#07080a'), 'rubber', 0.45);
+  const A = PAL.armor, B = brush(g);
   neck(g, PAL.black);
-  // the black hood under it all
+  // the black balaclava under it all, the knit drawn tight over the skull
   const HD = headShape({ jaw: 0.8 });
-  cel(g, HD, mat(PAL.black, 'knit', 0.5), { sh: 1.0, hl: 0.3 });
-  // the mask: moulded rubber from the brow to under the chin, the straps back over the hood
-  for (const d of ['M 0.5 -8.4 C -1.2 -9.4 -2.8 -9.6 -4.2 -9.2', 'M 0.3 -6.2 C -1.4 -6.4 -2.8 -6.4 -4.0 -6.0', 'M 0.6 -2.6 C -0.8 -3.0 -2.2 -3.6 -3.4 -4.4']) stroke(g, d, '#0a0b0d', 0.4);
-  const MASK = 'M 0.4 -9.1 C 2.4 -9.6 4.6 -9.2 5.4 -8.1 C 5.7 -7.3 5.7 -6.5 5.5 -5.8 C 6.2 -5.4 6.5 -4.6 6.4 -3.8 C 6.3 -2.8 5.7 -2.0 4.8 -1.6 C 3.8 -1.2 2.5 -1.2 1.5 -1.6 C 0.7 -2.2 0.3 -3.2 0.2 -4.4 C 0.0 -6.0 0.0 -7.8 0.4 -9.1 Z';
-  cel(g, MASK, RUB, { sh: 0.9, hl: 0.5, gloss: 0.4 });
-  clip(g, MASK, () => { stroke(g, curve([[1.0, -8.9], [3.0, -9.25], [5.1, -8.1]]), RUB.l, 0.18, 0.7); fill(g, 'M 0 -3.2 C 2 -2.6 4 -2.2 7 -2.8 L 7 -1 L 0 -1 Z', RUB.k, 0.45); });
-  // the lenses: dark glass in heavy steel rings, the far one only an edge past the nose
-  for (const [x, y, rx, ry] of [[5.15, -7.05, 0.34, 0.62], [2.7, -7.05, 0.92, 0.98]]) {
-    cel(g, `M ${x - rx - 0.28} ${y} a ${rx + 0.28} ${ry + 0.28} 0 1 0 ${2 * rx + 0.56} 0 a ${rx + 0.28} ${ry + 0.28} 0 1 0 ${-2 * rx - 0.56} 0 Z`, PAL.steel, { sh: 0.4, hl: 0.5, lw: 0.14 });
-    const L = `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
-    fill(g, L, '#140c0e');
-    clip(g, L, () => { fill(g, `M ${x - rx} ${y + ry * 0.1} L ${x + rx} ${y - ry * 0.3} L ${x + rx} ${y + ry} L ${x - rx} ${y + ry} Z`, '#3a1216', 0.7); fill(g, `M ${x - rx * 0.7} ${y - ry} L ${x - rx * 0.2} ${y - ry} L ${x - rx * 0.8} ${y + ry} L ${x - rx * 1.2} ${y + ry} Z`, '#e8eef4', 0.3); });
+  cel(g, HD, PAL.black, { sh: 1.0, hl: 0.3 });
+  B.inside(HD, () => { texture(g, 'knit', 0.35, 0.4); B.fill('M -5 -6 L 0 -6 L 0 0 L -5 0 Z', 'rgba(0,0,0,0.35)', 0.4); });
+  // the mask: moulded black rubber over the face from the brow to under the chin; the
+  // seal's softer edge round it, the brow over the lenses, the cheek's swell, the nose cup
+  // standing out in front with the speech disc on it
+  const MASK = 'M 0.4 -9.2 C 2.4 -9.7 4.6 -9.3 5.4 -8.2 C 5.7 -7.4 5.7 -6.6 5.5 -5.9 C 6.3 -5.5 6.7 -4.6 6.6 -3.7 C 6.5 -2.8 5.9 -2.0 5.0 -1.6 C 4.0 -1.2 2.6 -1.2 1.6 -1.6 C 0.8 -2.2 0.3 -3.2 0.2 -4.4 C 0.0 -6.0 0.0 -7.8 0.4 -9.2 Z';
+  const RUB = mat(tone('#4a4f57', '#2e3238', '#1d2025', '#08090b'), 'rubber', 0.4);
+  cel(g, MASK, RUB, { sh: 0.9, hl: 0.45, gloss: 0.4 });
+  B.inside(MASK, () => {
+    B.line(MASK, 'rgba(70,76,86,0.7)', 0.3, 0.1);
+    B.line('M 1.0 -9.0 C 2.6 -9.4 4.4 -9.1 5.2 -8.2', 'rgba(170,180,194,0.4)', 0.14, 0.08);
+    B.fill('M 5.0 -6.0 C 5.8 -5.7 6.3 -5.0 6.4 -4.2 L 4.8 -4.0 Z', 'rgba(150,160,174,0.25)', 0.2);
+    B.fill('M 0 -3.4 C 2 -2.6 4 -2.2 7 -2.8 L 7 -1 L 0 -1 Z', 'rgba(0,0,0,0.45)', 0.3);
+    texture(g, 'rubber', 0.35, 0.5);
+  });
+  // the harness: straps from the mask's edge back over the hood, their steel buckles
+  for (const [d, bx, by] of [['M 0.5 -8.6 C -1.2 -9.6 -2.8 -10.0 -4.2 -9.6', -0.9, -9.25], ['M 0.3 -6.4 C -1.4 -6.6 -2.8 -6.6 -4.0 -6.2', -1.1, -6.55], ['M 0.6 -2.6 C -0.8 -3.0 -2.2 -3.6 -3.4 -4.4', -0.6, -2.95]]) {
+    B.line(d, '#0c0d0f', 0.32, 0.01);
+    B.line(d, 'rgba(110,118,128,0.3)', 0.06, 0.01);
+    B.fill(`M ${bx - 0.24} ${by - 0.2} L ${bx + 0.24} ${by - 0.2} L ${bx + 0.24} ${by + 0.2} L ${bx - 0.24} ${by + 0.2} Z`, '#7b838c', 0.01);
+    B.fill(`M ${bx - 0.12} ${by - 0.1} L ${bx + 0.12} ${by - 0.1} L ${bx + 0.12} ${by + 0.1} L ${bx - 0.12} ${by + 0.1} Z`, '#0c0d0f', 0.01);
   }
-  // the filter canister screwed on at the front: Vanta's grey, threaded, the intake holes
-  g.save(); g.translate(4.6, -3.4); g.rotate(0.35);
-  const CAN = 'M -0.6 -1.0 L 2.2 -1.0 C 2.5 -1.0 2.65 -0.8 2.65 -0.5 L 2.65 0.5 C 2.65 0.8 2.5 1.0 2.2 1.0 L -0.6 1.0 Z';
-  cel(g, CAN, A, { sh: 0.6, hl: 0.5, gloss: 0.3 });
-  clip(g, CAN, () => { for (let x = -0.5; x < 0.5; x += 0.16) stroke(g, `M ${x} -1.1 L ${x} 1.1`, A.k, 0.06, 0.7); fill(g, 'M 2.35 -1.1 L 2.7 -1.1 L 2.7 1.1 L 2.35 1.1 Z', A.k, 0.8); stroke(g, 'M -0.5 -0.8 L 2.4 -0.8', '#ffffff', 0.1, 0.5); });
-  for (const y of [-0.5, 0, 0.5]) fill(g, `M 2.45 ${y - 0.08} l 0.16 0 l 0 0.16 l -0.16 0 Z`, '#050607');
+  // the lenses: dark glass in steel rings crimped into the rubber; the street's light across
+  // the near one, the far one only an edge past the nose
+  const lens = (x, y, rx, ry) => {
+    B.fill(ell(x, y, rx + 0.3, ry + 0.3), '#0c0d10', 0.04);
+    B.fill(ell(x, y, rx + 0.12, ry + 0.12), '#4c535b', 0.02);
+    B.line(`M ${x - rx * 0.9} ${y - ry * 0.5} A ${rx + 0.08} ${ry + 0.08} 0 0 1 ${x + rx * 0.6} ${y - ry * 0.9}`, 'rgba(200,208,218,0.4)', 0.04, 0.02);
+    B.fill(ell(x, y, rx, ry), '#121417', 0.01);
+    B.inside(ell(x, y, rx, ry), () => {
+      B.dab(x + rx * 0.15, y + ry * 0.25, rx * 0.8, ry * 0.6, 'rgba(70,22,26,0.5)');
+      // the street's light lies across the glass as a band, not a ring
+      B.fill(`M ${x - rx} ${y - ry * 0.1} L ${x - rx * 0.2} ${y - ry} L ${x + rx * 0.1} ${y - ry} L ${x - rx * 0.7} ${y + ry * 0.1} Z`, 'rgba(190,204,220,0.22)', rx * 0.08);
+      B.dab(x - rx * 0.35, y - ry * 0.5, rx * 0.12, ry * 0.08, 'rgba(240,246,252,0.8)');
+      B.dab(x + rx * 0.45, y + ry * 0.45, rx * 0.2, ry * 0.06, 'rgba(255,190,130,0.45)');
+    });
+  };
+  lens(5.25, -7.1, 0.34, 0.62);
+  lens(2.75, -7.1, 0.95, 1.0);
+  // the speech disc on the nose cup, the filter on the cheek: a steel canister in Vanta's
+  // grey screwed into its port, threaded, the intake perforated, the paint worn to the steel
+  const VM = ell(6.1, -3.7, 0.55, 0.75);
+  cel(g, VM, mat(tone('#6c747e', '#4a5059', '#30353c', '#101215'), 'steel', 0.3), { sh: 0.4, hl: 0.35, lw: 0.1 });
+  B.inside(VM, () => { for (let i = -0.5; i <= 0.5; i += 0.25) B.line(`M ${5.7} ${-3.7 + i} L ${6.6} ${-3.7 + i}`, 'rgba(0,0,0,0.6)', 0.06, 0.01); });
+  g.save(); g.translate(3.0, -3.3); g.rotate(0.55);
+  const CAN = 'M -0.6 -1.15 L 2.4 -1.15 C 2.7 -1.15 2.85 -0.9 2.85 -0.6 L 2.85 0.6 C 2.85 0.9 2.7 1.15 2.4 1.15 L -0.6 1.15 Z';
+  B.fill('M -0.9 -0.8 L -0.4 -0.8 L -0.4 0.8 L -0.9 0.8 Z', '#16181b', 0.01);
+  cel(g, CAN, A, { sh: 0.7, hl: 0.45, gloss: 0.3 });
+  B.inside(CAN, () => {
+    for (let x = -0.5; x < 0.4; x += 0.14) B.line(`M ${x} -1.2 L ${x} 1.2`, 'rgba(10,12,16,0.55)', 0.05, 0.01);
+    B.line('M -0.5 -0.9 L 2.6 -0.9', 'rgba(255,255,255,0.45)', 0.12, 0.06);
+    B.fill('M -1 0.3 L 3 0.3 L 3 1.3 L -1 1.3 Z', 'rgba(10,14,20,0.4)', 0.2);
+    B.fill('M 2.55 -1.2 L 2.9 -1.2 L 2.9 1.2 L 2.55 1.2 Z', '#2a2f36', 0.02);
+    for (let y = -0.8; y < 0.9; y += 0.32) B.dab(2.72, y, 0.05, 0.05, '#050607');
+    scuffs(g, [[1.4, -0.7, 0.3], [0.8, 0.6, 0.2, 0.4]], '#d8dde2', 0.6);
+  });
+  B.fill('M 1.6 -1.18 L 2.0 -1.18 L 2.0 1.18 L 1.6 1.18 Z', 'rgba(236,240,244,0.75)', 0.01);
   g.restore();
-  // the low helmet over it all, the mark on its side
-  const LID = 'M -4.8 -6.4 C -5.2 -10.0 -2.6 -12.6 0.6 -12.6 C 3.6 -12.6 5.3 -10.9 5.4 -8.9 L 4.6 -8.6 C 2.4 -9.0 -1.2 -8.7 -4.1 -6.0 Z';
-  cel(g, LID, A, { sh: 1.3, hl: 0.6 });
-  clip(g, LID, () => { stroke(g, curve([[-3.8, -10.4], [-0.6, -12.3], [3.6, -11.8]]), '#ffffff', 0.2, 0.75); emblem(g, -1.4, -9.6, 0.9, PAL.white.m); });
-  worn(g, LID, [-5.2, -12.6, 5.4, -6.0], 43, 0.6);
+  // the low helmet over it all: a riot shell in Vanta's grey, the mark on its side
+  const LID = 'M -4.8 -6.4 C -5.2 -10.0 -2.6 -12.8 0.6 -12.8 C 3.6 -12.8 5.3 -11.0 5.4 -9.0 L 4.6 -8.7 C 2.4 -9.1 -1.2 -8.8 -4.1 -6.0 Z';
+  cel(g, LID, A, { sh: 1.3, hl: 0.55 });
+  B.inside(LID, () => {
+    B.line('M -3.8 -10.4 C -1.6 -12.4 1.8 -12.6 4.4 -11.2', 'rgba(255,255,255,0.55)', 0.2, 0.12);
+    B.line('M 5.4 -9.0 L 4.6 -8.7 C 2.4 -9.1 -1.2 -8.8 -4.1 -6.0', '#1b1f26', 0.24, 0.02);
+    emblem(g, -1.4, -9.8, 0.9, PAL.white.m);
+    grime(g, -9, -6, DUST);
+  });
+  worn(g, LID, [-5.2, -12.8, 5.4, -6.0], 43, 0.7);
 }
 function lightTorso(g) {
   uniform(g);

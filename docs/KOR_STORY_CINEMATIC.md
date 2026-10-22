@@ -987,8 +987,8 @@ küçük yapraklı, üstü ışıkta budanmış şimşir.
 
 ### 10.16 Kafalar: yüz yok
 §10.15'teki kafalar beğenilmedi; görünen yüz denemesi de istenmedi. Karar:
-**hiçbir karakterin yüzü görünmez** (göz, burun, ağız yok); tek istisna
-Gall (aşağıda). Kafalar sıfırdan,
+**hiçbir operatörün yüzü görünmez** (göz, burun, ağız yok); Vanta ve Gall
+§10.15'teki hallerinde kaldı (aşağıda). Kafalar sıfırdan,
 FLINT'in kafasının diliyle çizildi: birkaç büyük biçim, malzemesi içinde
 (örgü, kanvas, kauçuk, boya), tek parlak şey, az çizgi. Görünen ten en çok bir
 kulak ve şakak şeridi; FLINT ve HAWK değişmedi.
@@ -1010,10 +1010,9 @@ kumaş ya da maske. Operatörlerin başlıkları da yenilendi:
 - **VESPER:** zeytin yeşili kapüşon, içi karanlık; boğazlık burnun üstünde;
   iri, kalın çerçeveli yuvarlak füme kahverengi gözlük; tek kulaklık ve
   mikrofon kolu.
-- **Tetikçi / Kalkanlı:** yuvarlak gri kabuk, yüzde siyah plaka ve tek füme
-  kırmızı yarık, üç kalın havalandırma oluğu, kulakta gri çanak, yanda amblem.
-- **Hücumcu:** siyah başlık, siyah kauçuk gaz maskesi, kalın çelik çemberli
-  koyu camlar, önde gri filtre kutusu; alçak gri kask.
-- **Gall:** tek istisna. Yüzsüz denemesi (yuvarlak siyah gözlük, burnun
-  üstüne çekilmiş siyah boyunluk) beğenilmedi; §10.15'teki açık yüzü geri
-  geldi: uzun dar yüz, siperin gölgesindeki göz, ince dudaklar, kır saç.
+- **Vanta (Tetikçi, Kalkanlı, Hücumcu) ve Gall:** bu turda yeniden çizilen
+  sade kask, gaz maskesi ve Gall'ın gözlük ve boyunluklu yüzsüz kafası
+  beğenilmedi. Üçü de §10.15'teki haline döndü: ray ve montaj plakalı kask,
+  füme kırmızı yarık, havalandırmalı çene plakası, kulakta telsiz ve kısa
+  anten; kayışlı ve tokalı gaz maskesi, yanakta dişli gri filtre; Gall'ın açık
+  yüzü (uzun dar yüz, siperin gölgesindeki göz, ince dudaklar, kır saç).
