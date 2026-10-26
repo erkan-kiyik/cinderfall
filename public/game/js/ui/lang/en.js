@@ -167,7 +167,8 @@ export default {
   'res.continue': 'Continue', 'res.again': 'Again',
 
   'set.title': 'Settings', 'set.graphics': 'Graphics', 'set.sound': 'Sound', 'set.controls': 'Controls', 'set.access': 'Accessibility', 'set.lang': 'Language', 'set.legal': 'Privacy & legal', 'set.about': 'About',
-  'set.quality': 'Quality', 'set.qualityHint': 'Texture detail changes on the next launch.', 'set.auto': 'Auto', 'set.low': 'Low', 'set.med': 'Medium', 'set.high': 'High',
+  'set.quality': 'Quality', 'set.qualityHint': 'Auto picks for the device. Texture detail changes on the next launch.', 'set.auto': 'Auto', 'set.low': 'Low', 'set.med': 'Medium', 'set.high': 'High',
+  'set.fpsCap': 'Frame rate', 'set.fpsCapHint': '60 is the smoothest, coolest choice on most devices; "Display" costs battery and heat at 120 Hz.', 'set.fpsMax': 'Display',
   'set.dynres': 'Dynamic resolution', 'set.dynresHint': 'Briefly lowers resolution when frames run long.',
   'set.bloom': 'Bloom', 'set.bloomHint': 'A soft glow around lights and muzzle flashes.',
   'set.lights': 'Dynamic lights', 'set.lightsHint': 'Lamps, flames and the light of gunfire.',

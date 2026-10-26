@@ -18,6 +18,17 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 #boot .msg { font: 400 12px/1 var(--f-type); color: var(--n6); }
 #boot.fail .msg { color: var(--danger); }
 #intro { position: fixed; inset: 0; z-index: 11; width: 100%; height: 100%; background: #07090c; touch-action: none; }
+/* the opening as video (ui/introvideo.js): the 2.39:1 picture letterboxed, the type over it */
+.intro-film { --picH: min(100vh, calc(100vw / 2.39)); --picW: min(100vw, calc(100vh * 2.39)); background: #000 !important; transition: opacity .6s; }
+.intro-film.out { opacity: 0; pointer-events: none; }
+.intro-film video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; opacity: 0; transition: opacity .4s; }
+.intro-film video.on { opacity: 1; }
+.intro-film .tag { position: absolute; left: 0; right: 0; top: calc(50% + var(--picH) * 0.12); transform: translateY(-50%); text-align: center; opacity: 0; font: 400 12px/1 Barlow, system-ui, sans-serif; letter-spacing: 1.7px; color: rgba(236,226,210,.9); text-shadow: 0 0 8px rgba(0,0,0,.9); pointer-events: none; }
+.intro-film .load { position: absolute; left: 50%; top: calc(50% + var(--picH) / 2 - 26px); width: min(calc(var(--picW) * 0.22), 220px); transform: translateX(-50%); opacity: 0; pointer-events: none; }
+.intro-film .load i { display: block; height: 1px; background: rgba(236,226,210,.12); }
+.intro-film .load b { display: block; height: 1px; width: 0; background: rgba(255,150,80,.75); }
+.intro-film .load span { position: absolute; left: 50%; top: 13px; transform: translate(-50%, -50%); white-space: nowrap; font: 500 9px/1 Barlow, system-ui, sans-serif; letter-spacing: 1.4px; color: rgba(236,226,210,.45); }
+.intro-film .skip { position: absolute; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); opacity: 0; font: 500 9px/1 Barlow, system-ui, sans-serif; letter-spacing: 1.4px; color: rgba(236,226,210,.35); pointer-events: none; }
 
 /* touch controls (M2) */
 .touch { position: fixed; inset: 0; pointer-events: auto; }
@@ -131,6 +142,10 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .cine-tap span { font: 500 12px/1 Barlow, system-ui, sans-serif; letter-spacing: .32em; text-transform: uppercase; color: rgba(236,230,220,.7); animation: cineTap 2.4s ease-in-out infinite; }
 @keyframes cineTap { 50% { opacity: .35; } }
 .cine canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cine video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
+/* the film grain over a video film (cine/film.js): overlay-blended noise, a new grain 24× a second */
+.film-grain { position: absolute; left: 50%; top: 50%; width: var(--picW, 100vw); height: var(--picH, 42vw); transform: translate(-50%, -50%); pointer-events: none; mix-blend-mode: overlay; opacity: .16; background-image: var(--filmgrain, none); background-size: calc(var(--picW, 100vw) * .2327) auto; animation: filmGrain .333s steps(1, end) infinite; }
+@keyframes filmGrain { 0% { background-position: 0 0; } 12.5% { background-position: -97px -41px; } 25% { background-position: -23px -173px; } 37.5% { background-position: -151px -88px; } 50% { background-position: -61px -129px; } 62.5% { background-position: -199px -17px; } 75% { background-position: -131px -211px; } 87.5% { background-position: -37px -67px; } }
 .cine-sub { position: absolute; left: 50%; bottom: max(calc(var(--barH, 0px) + 10px), 4%); transform: translateX(-50%); max-width: 78%; text-align: center; opacity: 0; transition: opacity .25s; pointer-events: none; }
 .cine-sub.on { opacity: 1; }
 .cine-sub b { display: block; font: 600 9px/1 Barlow, system-ui, sans-serif; letter-spacing: .22em; color: rgba(230,224,214,.55); margin-bottom: 5px; }

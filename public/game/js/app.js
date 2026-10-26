@@ -19,6 +19,7 @@ import { refreshCur } from './ui/screens/common.js';
 import { needsAcceptance } from './legal/consent.js';
 import { Music } from './audio/music.js';
 import { CinePlayer } from './cine/player.js';
+import { FilmPlayer } from './cine/film.js';
 import { PROLOGUE, STORY } from './cine/scenes.js';
 
 const MARKS = { yellow: [1, 0.86, 0.12, 1], blue: [0.2, 0.62, 1, 1], magenta: [1, 0.25, 0.85, 1] };
@@ -76,6 +77,7 @@ export class App {
     if (st.quality !== 'auto' && st.quality !== R.qName) R.setQuality(st.quality);
     R.bloomOn = st.bloom; R.lightsOn = st.lights;
     this.dyn.on = st.dynRes; if (!st.dynRes) { this.dyn.step = 0; R.setDyn(1); }
+    if (this.e.loop) this.e.loop.cap = st.fpsCap ?? 60;
     if (this.perf && this.perf.visible !== st.fps) this.perf.toggle();
     this.e.sfx.setVolumes(st.vol);
     configureKit({ haptics: st.haptics, reduce: st.reduceMotion, sfx: this.e.sfx });
@@ -113,7 +115,9 @@ export class App {
     this.music.play(null);
     const loop = this.e.loop; loop?.stop();
     const st = this.save.d.settings, quality = st.quality === 'low' ? 'low' : st.quality === 'med' ? 'med' : 'high';
-    this.film = new CinePlayer(scene, {
+    // the film as video (drawn ahead of time); ?livefilm draws it live as before
+    const Player = new URLSearchParams(location.search).has('livefilm') ? CinePlayer : FilmPlayer;
+    this.film = new Player(scene, {
       sfx: this.e.sfx, reduce: st.reduceMotion, quality,
       onEnd: () => {
         this.film = null;

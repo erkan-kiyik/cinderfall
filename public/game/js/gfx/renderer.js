@@ -135,10 +135,13 @@ void main() {
   o = vec4(c, 1.0);
 }`;
 
+// px: the most output pixels a quality draws (Mpx). Past it the canvas stays
+// smaller than the screen and the browser scales it up: a 4K monitor or a
+// 3× phone no longer costs four times the fill of a 1080p screen (§10.17)
 export const QUALITY = {
-  low: { scale: 0.7, light: 0.33, bloom: 0, particles: 1024, dpr: 1.5 },
-  med: { scale: 0.85, light: 0.5, bloom: 1, particles: 2048, dpr: 2 },
-  high: { scale: 1.0, light: 0.5, bloom: 2, particles: 4096, dpr: 2.5 },
+  low: { scale: 0.7, light: 0.33, bloom: 0, particles: 1024, dpr: 1.5, px: 0.9 },
+  med: { scale: 0.85, light: 0.5, bloom: 1, particles: 2048, dpr: 2, px: 1.6 },
+  high: { scale: 1.0, light: 0.5, bloom: 2, particles: 4096, dpr: 2.5, px: 2.8 },
 };
 // dynamic resolution never goes below 80 %: the picture stays sharp, the
 // frame rate is held by the steps above it
@@ -179,8 +182,9 @@ export class Renderer {
 
   // Canvas backing store follows CSS size × DPR (capped); targets follow it.
   resize(force = false) {
-    const c = this.canvas, dpr = Math.min(window.devicePixelRatio || 1, this.q.dpr, this.dprCap || 9);
-    const W = Math.round(c.clientWidth * dpr), H = Math.round(c.clientHeight * dpr);
+    const c = this.canvas, cw = Math.max(1, c.clientWidth), ch = Math.max(1, c.clientHeight);
+    const dpr = Math.min(window.devicePixelRatio || 1, this.q.dpr, this.dprCap || 9, Math.sqrt(this.q.px * 1e6 / (cw * ch)));
+    const W = Math.round(cw * dpr), H = Math.round(ch * dpr);
     if (!force && W === c.width && H === c.height) return;
     c.width = W; c.height = H;
     const s = this.q.scale * this.dyn;

@@ -44,6 +44,7 @@ export const settings = {
       if (tab === 'graphics') {
         rows = [
           seg(t('set.quality'), t('set.qualityHint'), [['auto', t('set.auto')], ['low', t('set.low')], ['med', t('set.med')], ['high', t('set.high')]], () => st.quality, (s, v) => { s.settings.quality = v; }),
+          seg(t('set.fpsCap'), t('set.fpsCapHint'), [[30, '30'], [60, '60'], [0, t('set.fpsMax')]], () => st.fpsCap, (s, v) => { s.settings.fpsCap = v; }),
           toggle(t('set.dynres'), t('set.dynresHint'), () => st.dynRes, (s, v) => { s.settings.dynRes = v; }),
           toggle(t('set.bloom'), t('set.bloomHint'), () => st.bloom, (s, v) => { s.settings.bloom = v; }),
           toggle(t('set.lights'), t('set.lightsHint'), () => st.lights, (s, v) => { s.settings.lights = v; }),

@@ -302,7 +302,6 @@ export class Furnace {
     // a 4 % push over the shot
     cam.mm = 135 * (1 + 0.04 * clamp(t / 7));
     cam.update(t + (this.o.dying ? 30 : 0));
-    for (const m of this.men) m.step(dt);
     this.rain.update(dt, cam, 0, false);
     const hot = this.heat(t);
     this.steam.rate = 7 * hot; this.steam.update(dt, [[2, 44, PLANT_Z], [-14, 36, PLANT_Z]], 1.2);

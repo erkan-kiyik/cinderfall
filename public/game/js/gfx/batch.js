@@ -1,19 +1,23 @@
 // KOR — instanced sprite batcher.
 //
-// Every sprite is one instance of a 4-vertex strip: 48 bytes of per-instance
-// data (position, size, anchor, rotation, UV rect, tint). The batch flushes
-// only when the atlas page or blend mode changes, so a whole layer usually
-// costs one draw call. No allocation happens while drawing.
+// Every sprite is one instance of a 4-vertex strip: 52 bytes of per-instance
+// data (position, size, anchor, rotation, UV rect, atlas layer, tint). The
+// atlas pages are layers of a few texture arrays, so the batch flushes only
+// when the array or the blend mode changes (or the buffer is full): a whole
+// frame is a few draw calls. No allocation happens while drawing.
 import { program } from './gl.js';
+import { GROUP } from './atlas.js';
 
 const VS = `#version 300 es
 layout(location=0) in vec4 aRect;   // x, y, w, h (world; negative w flips)
 layout(location=1) in vec3 aAR;     // anchor x, anchor y, rotation
 layout(location=2) in vec4 aUV;     // u0, v0, u1, v1
 layout(location=3) in vec4 aTint;   // premultiplied rgba
+layout(location=4) in float aLayer; // atlas page
 uniform mat3 uView;
 out vec2 vUV;
 out vec4 vTint;
+flat out float vLayer;
 void main() {
   vec2 c = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1));
   vec2 p = (c - aAR.xy) * aRect.zw;
@@ -22,17 +26,20 @@ void main() {
   gl_Position = vec4((uView * vec3(p, 1.0)).xy, 0.0, 1.0);
   vUV = mix(aUV.xy, aUV.zw, c);
   vTint = aTint;
+  vLayer = aLayer;
 }`;
 
 const FS = `#version 300 es
 precision mediump float;
-uniform sampler2D uTex;
+precision mediump sampler2DArray;
+uniform sampler2DArray uTex;
 in vec2 vUV;
 in vec4 vTint;
+flat in float vLayer;
 out vec4 o;
-void main() { o = texture(uTex, vUV) * vTint; }`;
+void main() { o = texture(uTex, vec3(vUV, vLayer)) * vTint; }`;
 
-const FLOATS = 12, BYTES = FLOATS * 4;
+const FLOATS = 13, BYTES = FLOATS * 4;
 
 export class SpriteBatch {
   constructor(gl, atlas, capacity = 16384) {
@@ -41,7 +48,7 @@ export class SpriteBatch {
     this.buf = new ArrayBuffer(capacity * BYTES);
     this.f = new Float32Array(this.buf);
     this.u = new Uint32Array(this.buf);
-    this.n = 0; this.page = -1; this.blend = 0;
+    this.n = 0; this.blend = 0; this.group = -1;
     this.drawCalls = 0; this.sprites = 0;
     this.vao = gl.createVertexArray();
     this.vbo = gl.createBuffer();
@@ -57,13 +64,14 @@ export class SpriteBatch {
     attr(1, 3, gl.FLOAT, false, 16);
     attr(2, 4, gl.FLOAT, false, 28);
     attr(3, 4, gl.UNSIGNED_BYTE, true, 44);
+    attr(4, 1, gl.FLOAT, false, 48);
     gl.bindVertexArray(null);
     this.view = new Float32Array(9);
   }
 
   begin(view) {
     this.view.set(view);
-    this.n = 0; this.page = -1; this.blend = 0;
+    this.n = 0; this.blend = 0; this.group = -1;
   }
 
   // Additive (1) or normal premultiplied (0).
@@ -75,13 +83,15 @@ export class SpriteBatch {
   // Draw region r with its anchor at (x, y). sx/sy scale (negative flips),
   // rot in radians, tint as 0xAABBGGRR premultiplied by the caller or by alpha.
   draw(r, x, y, sx = 1, sy = 1, rot = 0, rgba = 0xffffffff, alpha = 1) {
-    if (r.page !== this.page) { this.flush(); this.page = r.page; }
+    const grp = (r.page / GROUP) | 0;
+    if (grp !== this.group) { this.flush(); this.group = grp; }
     if (this.n === this.cap) this.flush();
     const i = this.n * FLOATS, f = this.f;
     f[i] = x; f[i + 1] = y; f[i + 2] = r.w * sx; f[i + 3] = r.h * sy;
     f[i + 4] = r.ax; f[i + 5] = r.ay; f[i + 6] = rot;
     f[i + 7] = r.u0; f[i + 8] = r.v0; f[i + 9] = r.u1; f[i + 10] = r.v1;
     this.u[i + 11] = alpha === 1 ? rgba : premul(rgba, alpha);
+    f[i + 12] = r.page - grp * GROUP;
     this.n++;
   }
 
@@ -101,7 +111,7 @@ export class SpriteBatch {
     gl.useProgram(this.prog.p);
     gl.uniformMatrix3fv(this.prog.u.uView, false, this.view);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.atlas.pages[this.page].tex);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.atlas.texs[this.group]);
     gl.uniform1i(this.prog.u.uTex, 0);
     if (this.blend) gl.blendFunc(gl.ONE, gl.ONE); else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(this.vao);

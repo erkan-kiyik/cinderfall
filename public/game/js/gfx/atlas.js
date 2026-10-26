@@ -1,11 +1,19 @@
 // KOR — texture atlas.
 //
-// Baked sprites are packed into square pages with a skyline packer, each
-// page is one GPU texture (premultiplied alpha, mipmapped), and every sprite
-// becomes a Region: its page, UV rectangle, size in world units and anchor.
-// One page = one draw call for everything on it.
+// Baked sprites are packed into square pages with a skyline packer and every
+// sprite becomes a Region: its page, UV rectangle, size in world units and
+// anchor. The pages are the layers of GPU texture arrays (premultiplied
+// alpha, mipmapped), GROUP pages to an array: the batcher switches textures
+// only between groups, so a frame is a handful of draw calls whatever pages
+// its sprites sit on, and no single allocation is larger than ~100 MB (a
+// phone's driver may refuse one big block) (docs §10.17).
+//
+// Memory: a sprite is drawn into its page the moment it is placed and is not
+// kept; the pages' 2D canvases live only until they are on the GPU (and in
+// the bake cache), then release() lets them go.
 
 const PAD = 4;
+export const GROUP = 6; // pages per texture array
 
 export class Region {
   constructor(name, page, x, y, w, h, size, unitW, unitH, ax, ay) {
@@ -21,9 +29,7 @@ class Page {
   constructor(size) {
     this.size = size;
     this.sky = [{ x: 0, y: 0, w: size }];
-    this.canvas = null;
-    this.tex = null;
-    this.items = [];
+    this.canvas = null; this.g = null;
   }
   // Skyline bottom-left: lowest position that fits w×h.
   fit(w, h) {
@@ -63,6 +69,7 @@ export class Atlas {
     this.size = Math.min(size, gl ? gl.getParameter(gl.MAX_TEXTURE_SIZE) : size);
     this.pages = [];
     this.regions = new Map();
+    this.texs = []; // TEXTURE_2D_ARRAYs: page p is layer p % GROUP of texs[p / GROUP | 0]
   }
 
   // Add a baked image (canvas/bitmap) that covers unitW×unitH world units.
@@ -73,7 +80,8 @@ export class Atlas {
     let page = null, pos = null;
     for (const p of this.pages) { pos = p.place(w, h); if (pos) { page = p; break; } }
     if (!pos) { page = new Page(this.size); this.pages.push(page); pos = page.place(w, h); }
-    page.items.push({ img, x: pos.x + PAD, y: pos.y + PAD });
+    if (!page.canvas) { page.canvas = new OffscreenCanvas(this.size, this.size); page.g = page.canvas.getContext('2d'); }
+    page.g.drawImage(img, pos.x + PAD, pos.y + PAD);
     const r = new Region(name, this.pages.indexOf(page), pos.x + PAD + margin, pos.y + PAD, img.width - 2 * margin, img.height, this.size, unitW, unitH, ax, ay);
     this.regions.set(name, r);
     return r;
@@ -81,32 +89,32 @@ export class Atlas {
 
   get(name) { return this.regions.get(name); }
 
-  // Compose each page on a 2D canvas and upload it as a mipmapped texture.
-  upload() {
-    const gl = this.gl;
-    for (const p of this.pages) {
-      if (!p.canvas) {
-        p.canvas = new OffscreenCanvas(this.size, this.size);
-        const g = p.canvas.getContext('2d');
-        for (const it of p.items) g.drawImage(it.img, it.x, it.y);
-      }
-      this.uploadPage(p, p.canvas);
+  // Every page into one layer of the texture array, mipmapped.
+  upload() { this.uploadAll(this.pages.map((p) => p.canvas)); }
+
+  uploadAll(sources) {
+    const gl = this.gl, S = this.size, levels = Math.floor(Math.log2(S)) + 1;
+    for (const t of this.texs) gl.deleteTexture(t);
+    this.texs = [];
+    for (let g0 = 0; g0 < Math.max(1, sources.length); g0 += GROUP) {
+      const n = Math.max(1, Math.min(GROUP, sources.length - g0)), tex = gl.createTexture();
+      this.texs.push(tex);
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+      gl.texStorage3D(gl.TEXTURE_2D_ARRAY, levels, gl.RGBA8, S, S, n);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      for (let i = 0; i < n; i++) { const src = sources[g0 + i]; if (src) gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, S, S, 1, gl.RGBA, gl.UNSIGNED_BYTE, src); }
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
   }
 
-  uploadPage(p, src) {
-    const gl = this.gl;
-    if (!p.tex) p.tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, p.tex);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, src);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  }
+  // The pages' 2D canvases are no longer needed once they are on the GPU.
+  release() { for (const p of this.pages) { if (p.canvas) { p.canvas.width = 1; p.canvas.height = 1; } p.canvas = null; p.g = null; } }
 
   // Serialisable layout (for the bake cache).
   layout() {
@@ -116,7 +124,8 @@ export class Atlas {
     this.size = layout.size;
     this.pages = bitmaps.map(() => new Page(this.size));
     for (const [name, page, x, y, pw, ph, w, h, ax, ay] of layout.regions) this.regions.set(name, new Region(name, page, x, y, pw, ph, this.size, w, h, ax, ay));
-    bitmaps.forEach((b, i) => this.uploadPage(this.pages[i], b));
+    this.uploadAll(bitmaps);
+    for (const b of bitmaps) b.close?.();
   }
   memoryMB() { return (this.pages.length * this.size * this.size * 4 * 1.33) / 1048576; }
 }

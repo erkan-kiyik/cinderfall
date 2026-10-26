@@ -7,6 +7,7 @@
 // particle again: no per-frame update loop, no per-frame upload beyond the
 // handful of new births.
 import { program } from './gl.js';
+import { GROUP } from './atlas.js';
 
 const VS = `#version 300 es
 layout(location=0) in vec4 aPV;   // x0, y0, vx, vy
@@ -41,9 +42,10 @@ void main() {
 }`;
 const FS = `#version 300 es
 precision mediump float;
-uniform sampler2D uTex;
+precision mediump sampler2DArray;
+uniform sampler2DArray uTex; uniform float uLayer;
 in vec2 vUV; in vec4 vCol; out vec4 o;
-void main() { o = texture(uTex, vUV) * vCol; }`;
+void main() { o = texture(uTex, vec3(vUV, uLayer)) * vCol; }`;
 
 const F = 14, B = F * 4;
 let shared = null;
@@ -97,8 +99,8 @@ export class ParticleSystem {
     gl.uniform1f(p.u.uTime, t - this.epoch);
     gl.uniform4f(p.u.uUV, this.r.u0, this.r.v0, this.r.u1, this.r.v1);
     gl.uniform1f(p.u.uStreak, this.streak);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.atlas.pages[this.r.page].tex);
-    gl.uniform1i(p.u.uTex, 0);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.atlas.texs[(this.r.page / GROUP) | 0]);
+    gl.uniform1i(p.u.uTex, 0); gl.uniform1f(p.u.uLayer, this.r.page % GROUP);
     if (this.additive) gl.blendFunc(gl.ONE, gl.ONE); else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.cap);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);

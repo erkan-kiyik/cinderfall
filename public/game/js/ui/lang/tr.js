@@ -167,7 +167,8 @@ export default {
   'res.continue': 'Devam', 'res.again': 'Tekrar',
 
   'set.title': 'Ayarlar', 'set.graphics': 'Grafik', 'set.sound': 'Ses', 'set.controls': 'Kontroller', 'set.access': 'Erişilebilirlik', 'set.lang': 'Dil', 'set.legal': 'Gizlilik ve yasal', 'set.about': 'Hakkında',
-  'set.quality': 'Kalite', 'set.qualityHint': 'Doku ayrıntısı bir sonraki açılışta değişir.', 'set.auto': 'Oto', 'set.low': 'Düşük', 'set.med': 'Orta', 'set.high': 'Yüksek',
+  'set.quality': 'Kalite', 'set.qualityHint': 'Oto cihaza göre seçer. Doku ayrıntısı bir sonraki açılışta değişir.', 'set.auto': 'Oto', 'set.low': 'Düşük', 'set.med': 'Orta', 'set.high': 'Yüksek',
+  'set.fpsCap': 'Kare hızı', 'set.fpsCapHint': '60 çoğu cihazda en akıcı ve serin ayar; "Ekran" 120 Hz\'de pili ve ısıyı artırır.', 'set.fpsMax': 'Ekran',
   'set.dynres': 'Dinamik çözünürlük', 'set.dynresHint': 'Kare süresi aşılırsa çözünürlüğü kısa süre düşürür.',
   'set.bloom': 'Parlama (bloom)', 'set.bloomHint': 'Işıklar ve namlu alevi etrafında yumuşak parıltı.',
   'set.lights': 'Dinamik ışıklar', 'set.lightsHint': 'Lambalar, alevler ve atışların ışığı.',

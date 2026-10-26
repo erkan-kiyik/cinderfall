@@ -7,7 +7,7 @@ import { createGL } from './gfx/gl.js';
 import { Atlas } from './gfx/atlas.js';
 import { SpriteBatch } from './gfx/batch.js';
 import { Camera } from './gfx/camera.js';
-import { Renderer, RES_STEPS } from './gfx/renderer.js';
+import { Renderer, RES_STEPS, QUALITY } from './gfx/renderer.js';
 import { bakeAll } from './gfx/baker.js';
 import { Loop } from './core/loop.js';
 import * as M1 from './test/m1scene.js';
@@ -22,6 +22,7 @@ import { setLang } from './ui/i18n.js';
 import { App } from './app.js';
 import { opName } from './ui/data.js';
 import { Intro } from './ui/intro.js';
+import { IntroVideo } from './ui/introvideo.js';
 
 export const VERSION = 'M5 · ' + '2026-10-13';
 
@@ -29,9 +30,27 @@ const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } } };
 
-// the picture is kept at high on every device; dynamic resolution (floor
-// 80 %) holds the frame rate, and Settings can still lower it
-function autoQuality() { return 'high'; }
+// The device (docs §10.17). A phone or tablet draws at medium (the screen is
+// small and dense: high only costs heat), one with little memory or few cores
+// at low; a computer at high. Settings can always choose otherwise.
+const MEM = navigator.deviceMemory || 8, CORES = navigator.hardwareConcurrency || 8;
+const TOUCH = matchMedia('(pointer: coarse)').matches;
+function autoQuality() {
+  if (MEM <= 2 || (TOUCH && (MEM <= 3 || CORES <= 4))) return 'low';
+  if (TOUCH || MEM <= 4) return 'med';
+  return 'high';
+}
+// How finely the sprites are painted (the atlas): as fine as the screen will
+// show at the closest camera (the lobby, 150 units tall) and no finer; less
+// memory caps it. high ≈ 14 atlas pages, med ≈ 8, low ≈ 4 (each 2048², 16 MB).
+function bakeQuality(quality) {
+  const q = QUALITY[quality], cw = innerWidth || 1280, ch = innerHeight || 720;
+  const dpr = Math.min(devicePixelRatio || 1, q.dpr, MEM <= 3 ? 2 : 9, Math.sqrt(q.px * 1e6 / (cw * ch)));
+  const need = Math.min(cw, ch) * dpr * q.scale / 150; // screen px per world unit
+  let b = need <= 3.6 ? 'low' : need <= 5.2 ? 'med' : 'high';
+  if (MEM <= 2) b = 'low'; else if (MEM <= 4 && b === 'high') b = 'med';
+  return b;
+}
 
 async function main() {
   const canvas = $('#game');
@@ -43,14 +62,18 @@ async function main() {
   if (save) setLang(save.d.settings.lang);
   const savedQ = save && save.d.settings.quality !== 'auto' ? save.d.settings.quality : null;
   const quality = params.get('q') || savedQ || (DEV && store.get('kor-lab-q')) || autoQuality();
+  const bakeQ = params.get('bq') || bakeQuality(quality);
   // the sample text pulls in the latin-ext halves too: the signs are lettered in Turkish
   await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter', "800 20px 'Big Shoulders Stencil'", "700 20px 'Barlow Condensed'", "400 12px Barlow", "400 12px 'Special Elite'"].map((f) => document.fonts.load(f, 'AaİŞĞÇÖÜış')));
-  // the opening plays over the bake (not for dev scenes; ?nointro skips it)
+  // the opening plays over the bake (not for dev scenes; ?nointro skips it). It is a
+  // video (drawn ahead of time) so the bake has the processor to itself; ?liveintro
+  // draws it live as before, and so does the video player if the video will not play
   let intro = null;
   if (!DEV && !params.has('nointro')) {
-    const cv = document.createElement('canvas'); cv.id = 'intro'; document.body.appendChild(cv);
     $('#boot').classList.add('done');
-    intro = new Intro(cv, { reduce: save.d.settings.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches });
+    const reduce = save.d.settings.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (params.has('liveintro')) { const cv = document.createElement('canvas'); cv.id = 'intro'; document.body.appendChild(cv); intro = new Intro(cv, { reduce }); }
+    else intro = new IntroVideo({ reduce });
     intro.run();
   }
 
@@ -58,19 +81,22 @@ async function main() {
   const atlas = new Atlas(gl, 2048);
   const SC = DEV || M4;
   const play = SC !== M1;
-  const bake = await bakeAll(atlas, SC.bakeList(quality), {
-    key: params.has('nocache') ? null : `${SC.BAKE_VERSION}:${quality}:${atlas.size}`,
+  // the scene module's file, for the bake workers (they build the same list); ?bakemain paints here
+  const SRC = new Map([[M1, './test/m1scene.js'], [M2, './test/m2scene.js'], [M3, './test/m3scene.js'], [M4, './game/mission.js']]);
+  const bake = await bakeAll(atlas, SC.bakeList(bakeQ), {
+    key: params.has('nocache') ? null : `${SC.BAKE_VERSION}:${bakeQ}:${atlas.size}`,
+    workers: params.has('bakemain') ? null : { module: new URL(SRC.get(SC), import.meta.url).href, quality: bakeQ, css: new URL('../css/tokens.css', import.meta.url).href },
     onProgress: (p) => { bar.style.width = (p * 100).toFixed(0) + '%'; intro?.setProgress(p); },
   });
   const renderer = new Renderer(gl, canvas);
-  // phones with 3 GB or less: the same quality, at most 2× pixel ratio
-  if ((navigator.deviceMemory || 8) <= 3) renderer.dprCap = 2;
+  // phones with 3 GB or less: at most 2× pixel ratio
+  if (MEM <= 3) renderer.dprCap = 2;
   renderer.setQuality(quality);
   const camera = new Camera(); camera.viewH = play ? 192 : 150;
   const batch = new SpriteBatch(gl, atlas);
   const eng = { gl, atlas, batch, camera, renderer, sfx: DEV ? null : new Sfx() };
   // street effects level 0..2: phones with little memory start one step lighter
-  eng.fxMax = 2; eng.fxLevel = (navigator.deviceMemory || 8) <= 3 ? 1 : 2;
+  eng.fxMax = 2; eng.fxLevel = MEM <= 3 ? 1 : 2;
   const controls = new Controls();
   let scene = null, app = null;
   if (DEV) scene = SC === M1 ? new M1.M1Scene(eng) : SC === M2 ? new M2.M2Scene(eng, controls) : SC === M3 ? new M3.M3Scene(eng, controls) : new M4.MissionScene(eng, controls, { id: params.get('m') || 'm1', diff: params.get('diff') || 'normal' });
@@ -106,10 +132,12 @@ async function main() {
       perf.update(now);
     },
   });
+  // the frame cap (Settings; ?fps=0|30|60|120 for the dev scenes)
+  loop.cap = params.has('fps') ? +params.get('fps') : save ? save.d.settings.fpsCap : 60;
   const perf = new PerfOverlay($('#hud'), loop, () => ({
     draws: batch.drawCalls, sprites: batch.sprites, lights: renderer.lastLights, passes: renderer.passes,
     res: `${renderer.rw}×${renderer.rh}`, quality: { low: 'DÜŞÜK', med: 'ORTA', high: 'YÜKSEK' }[renderer.qName], dyn: renderer.dyn.toFixed(2),
-    pages: atlas.pages.length, mem: atlas.memoryMB().toFixed(0), bake: bake.cached ? `önbellek ${bake.ms.toFixed(0)} ms` : `${bake.ms.toFixed(0)} ms`,
+    pages: `${atlas.pages.length} (${bakeQ})`, mem: atlas.memoryMB().toFixed(0), bake: bake.cached ? `önbellek ${bake.ms.toFixed(0)} ms` : `${bake.ms.toFixed(0)} ms`,
   }));
 
   // dev scenes: a control bar for stress, quality and effects
@@ -156,7 +184,7 @@ async function main() {
   const go = () => { app?.start({ entrance: !!intro }); loop.start(); };
   if (intro) { intro.onHandoff = go; intro.assetsDone(); } else go();
   // test harness hook
-  window.__lab = { loop, get scene() { return app ? app.scene : scene; }, app, renderer, atlas, bake, batch, camera, controls, setStress: (n) => scene && scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
+  window.__lab = { loop, get scene() { return app ? app.scene : scene; }, app, renderer, atlas, bake, bakeQ, quality, batch, camera, controls, setStress: (n) => scene && scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
 }
 
 main().catch((err) => {

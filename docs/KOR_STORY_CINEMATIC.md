@@ -1016,3 +1016,66 @@ kumaş ya da maske. Operatörlerin başlıkları da yenilendi:
   füme kırmızı yarık, havalandırmalı çene plakası, kulakta telsiz ve kısa
   anten; kayışlı ve tokalı gaz maskesi, yanakta dişli gri filtre; Gall'ın açık
   yüzü (uzun dar yüz, siperin gölgesindeki göz, ince dudaklar, kır saç).
+
+### 10.17 Performans: telefonda açılış, filmler, oyun içi
+Şikâyet: oyun bilgisayarda bile takılıyor, telefonda açılmadan çöküyor, ışın
+izlenmiş sahneler (filmler) çok kasıyor. Ölçüm (başsız Chromium; telefon
+benzetimi 844×390 @3×, 4 GB, işlemci 4 kat yavaş):
+
+| | önce | sonra |
+|---|---|---|
+| ilk açılış (önbelleksiz pişirme) | 42 s | 7,2 s (orta), 5,1 s (düşük) |
+| sprite atlası, ekran kartında | 14 sayfa, 298 MB | 9 sayfa 192 MB (orta), 4 sayfa 85 MB (düşük) |
+| atlas için ayrıca tutulan bellek | 402 MB (hiç bırakılmıyordu) | 0 (yüklenince bırakılır) |
+| kare başına çizim çağrısı (görev 1 / 2 / 3) | 320 / 214 / 302 | 60 / 38 / 74 |
+| oyun içi çözünürlük (o telefon) | 2110×975 | 1688×780 (orta), 1266×585 (düşük) |
+| lobi portreleri (5 operatör) | 4,5 s ana iş parçacığı | 0,8 s |
+| film sahnesi | her karede canlı çizim; kesmelerde piksel piksel zemin hesabı (bir karede 58 000 çizim) | video, yedi film toplam 12 MB |
+
+Masaüstünde (1280×720) görüntü aynı kalırken çizimin işlemci payı kare başına
+3,0 → 2,4 ms (görev 1), 2,8 → 2,1 ms (görev 3).
+
+Yapılanlar:
+
+- **Atlas belleği:** her sprite paketlendiği anda sayfasına çizilip atılıyor;
+  sayfaların 2B tuvalleri ekran kartına (ve önbelleğe) gidince bırakılıyor.
+  Önbellekten açılışta görüntüler yüklenince kapatılıyor.
+- **Tek doku dizisi:** sayfalar 6'şarlık doku dizilerinin katmanları; çizici
+  yalnız dizi ya da karışım değişince boşaltıyor. Tek parça ayırma ~100 MB'ı
+  geçmiyor (bazı telefon sürücüleri büyük bloğu reddediyor).
+- **Cihaza göre kalite (Oto):** telefon ve tablet orta, az bellekli ya da az
+  çekirdekli cihaz düşük, bilgisayar yüksek. Sprite yoğunluğu ekranın en
+  yakın kamerada (lobi, 150 birim) gösterebileceği kadar; 4 GB ve altı en çok
+  orta, 2 GB düşük. Ayarlar her zaman başka seçebilir.
+- **Piksel sınırı:** düşük 0,9, orta 1,6, yüksek 2,8 Mpx. 4K monitör ya da
+  3× telefon artık 1080p'nin dört katı doldurma yapmıyor; tarayıcı büyütüyor.
+- **Kare hızı (Ayarlar › Grafik):** 30 / 60 / Ekran, varsayılan 60. 120 Hz
+  telefonda ekran kartı yükü yarıya iniyor; 144 Hz monitörde kare dengesi
+  bozulmuyor.
+- **Paralel pişirme:** ilk açılışta sprite'lar 1–4 işçide (Web Worker) çiziliyor,
+  ana iş parçacığı yalnız paketliyor. Bir işçi açılmazsa kalan kısım eskisi
+  gibi ana iş parçacığında çiziliyor.
+- **Filmler video:** açılış, onun kömür döngüsü, prolog, görev öncesi üç sahne
+  ve birinci perde sonu `tools/game/film/render.mjs` ile aynı çekim koduyla
+  kare kare çizilip H.264'e (1280×536, 24 kare) kodlandı
+  (`assets/film/*.mp4`, toplam 12 MB). Film greni videoya konmadı (gürültü
+  videonun bitlerinin çoğunu yiyordu; grenli dosyalar 4–5 kat büyüktü):
+  oynarken üstüne aynı gren CSS katmanı olarak saniyede 24 kez kayıyor.
+  Kömür döngüsü uçları çapraz geçişle eklendiği için dikişsiz. Ses, altyazı, ara yazılar ve
+  geç düğmesi canlı. Video oynatılamazsa (dosya yok, codec yok) film eskisi
+  gibi canlı çiziliyor; o yol da en çok 30 karede çiziyor ve bir çekim hata
+  verirse film donmak yerine bitiyor. Açılış videosu oynarken pişirme işlemciyi
+  tek başına kullanıyor; yazı ve yükleme çizgisi DOM'da. Android kabuğu
+  (`mobile/scripts/patch-android-sdk.mjs`) sessiz videonun dokunmadan
+  başlamasına açıkça izin veriyor.
+- **Lobi portreleri:** operatör kartlarında yalnız baş ve omuz görünürken
+  figürün tamamı (portrenin ~21 katı alan) çizilip kırpılıyordu; artık yalnız
+  portrenin karesi, %12 payla (~14 kat az piksel). Telefonda lobinin ilk
+  açılışta ~10 s donması buydu. Görünüş birebir aynı.
+- **Prolog hatası:** fırın çekimi (3–10 s ve 15–19 s) her karede `this.men`
+  hatası verip filmi donduruyordu (figürler kaldırılırken bir satır kalmıştı).
+
+Bir çekim değişirse filmi yeniden çizmek için: `node tools/game/film/render.mjs
+[id…]` (Playwright'ın Chromium'u ve ffmpeg/libx264 gerekir). Geliştirme
+için `?livefilm` filmleri, `?liveintro` açılışı canlı çizer; `?bakemain`
+pişirmeyi ana iş parçacığında yapar; `?fps=0|30|60` kare sınırı.

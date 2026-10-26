@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOR film render</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<style>html,body{margin:0;background:#000}</style></head>
+<body><script type="module">
+// The film renderer's page (tools/game/film/render.mjs): one film, frame by
+// frame at a fixed step, the picture only (no bars, no subtitles, no sound).
+//   ?scene=prologue|title|m1|m2|m3|opening  &w=1280  &fps=24
+// window.__film: { dur, fps, frame() → JPEG data URL of the next frame }
+import { CinePlayer } from '../js/cine/player.js';
+import * as SC from '../js/cine/scenes.js';
+import { Opening } from '../js/cine/opening.js';
+import { Post, ASPECT } from '../js/cine/post.js';
+import { canvas } from '../js/cine/noise.js';
+import { setLang } from '../js/ui/i18n.js';
+const q = new URLSearchParams(location.search);
+setLang('tr');
+await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter', '400 12px Barlow', "800 20px 'Big Shoulders Stencil'"].map((f) => document.fonts.load(f, 'AaİŞĞÇÖÜış').catch(() => {})));
+// ?grain=0: no film grain in the frames (the player lays it over the video);
+// ?weave=0: no gate weave / exposure flicker either
+const NOGRAIN = q.get('grain') === '0', NOWEAVE = q.get('weave') === '0';
+const strip = (post) => { const ap = post.apply.bind(post); post.apply = (o, w, h, src, t, p = {}) => ap(o, w, h, src, t, { ...p, ...(NOGRAIN ? { grain: 0 } : {}), ...(NOWEAVE ? { weave: 0, flicker: 0 } : {}) }); return post; };
+const id = q.get('scene') || 'prologue', W = +(q.get('w') || 1280), H = Math.round(W / ASPECT), fps = +(q.get('fps') || 24);
+const out = canvas(W, H), og = out.getContext('2d');
+const grab = () => Promise.resolve(out.toDataURL('image/jpeg', 0.96));
+let frame, dur;
+if (id === 'opening') {
+  // the launch film (ui/intro.js): its shot and its post, up from black
+  const shot = new Opening(); shot.init(W, H, {}); await shot.ready; const post = strip(new Post()); const buf = canvas(W, H), b = buf.getContext('2d');
+  const ss = (a, c, x) => { const k = Math.min(1, Math.max(0, (x - a) / (c - a))); return k * k * (3 - 2 * k); };
+  let t = 0; dur = +(q.get('dur') || 17.6);
+  frame = async () => {
+    b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.filter = 'none'; b.fillStyle = '#000'; b.fillRect(0, 0, W, H);
+    shot.draw(b, t);
+    const p = { ...shot.post(t) }; p.fade = 1 - ss(0, 0.9, t);
+    post.apply(og, W, H, buf, t, p);
+    const d = await grab(); t += 1 / fps; shot.update(1 / fps, t); return d;
+  };
+  // jump ahead without frames (for a loop segment)
+  window.__skip = (s) => { while (t < s - 1e-6) { t += 1 / fps; shot.update(1 / fps, t); } };
+} else {
+  const scene = { prologue: SC.PROLOGUE, title: SC.TITLE }[id] || SC.STORY[id];
+  dur = scene.dur;
+  const p = new CinePlayer(scene, { quality: 'high' }); strip(p.post);
+  // no DOM, no loop: the player's buffer and output are ours
+  p.el = document.createElement('div'); p.cv = out; p.out = og; p.buf = canvas(W, H); p.g = p.buf.getContext('2d');
+  p.subEl = p.capEl = p.skipEl = { classList: { toggle() {} }, querySelector: () => ({}), dataset: {} };
+  p.text = () => {};
+  let first = true;
+  // a shot with a plate draws nothing until the plate is decoded: wait for it
+  const settle = async () => { for (const s of p.shots) if (s.inst && s.inst.ready && typeof s.inst.ready.then === 'function') await s.inst.ready; };
+  frame = async () => { if (first) { first = false; p.ensure(p.shotAt(0)); } else p.advance(1 / fps); p.ensure(p.shotAt(p.t)); await settle(); p.render(); return grab(); };
+  window.__skip = (s) => { if (first) { first = false; p.ensure(p.shotAt(0)); } while (p.t < s - 1e-6) p.advance(1 / fps); };
+}
+window.__film = { dur, fps, W, H, frame };
+</script></body></html>

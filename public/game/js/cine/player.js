@@ -65,17 +65,24 @@ export class CinePlayer {
     return s.inst;
   }
 
+  // The films normally play as video (cine/film.js); this live path is the fallback.
+  // It draws at most 30 frames a second (the film look runs at 24 anyway), and a
+  // shot that throws ends the film instead of freezing it.
   play() {
     this.mount();
     return new Promise((resolve) => {
       this.resolve = resolve;
-      let last = performance.now();
+      let last = performance.now(), rafMs = 16.7, lastRaf = last;
       const tick = (now) => {
         if (this.done) return;
-        const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-        if (!this.paused && !this.manual) this.advance(dt);
-        this.render();
         requestAnimationFrame(tick);
+        const d = now - lastRaf; lastRaf = now; if (d > 0 && d < 100) rafMs += (d - rafMs) * 0.1;
+        if (now - last + rafMs * 0.5 < 1000 / 30) return;
+        const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
+        try {
+          if (!this.paused && !this.manual) this.advance(dt);
+          if (!this.done) this.render();
+        } catch (e) { console.error('film', this.S.id, e); this.finish(true); }
       };
       requestAnimationFrame(tick);
     });

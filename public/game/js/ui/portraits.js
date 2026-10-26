@@ -39,10 +39,13 @@ function paintAvatar(id, size) {
   const op = OPS[id], pose = op.pose, z = size / 17.5;
   // the figure's feet origin in the portrait: x 0 left of centre, the crown
   // (about -66) a little under the top edge, head and shoulders in frame
-  const fx = 8.2 * z, fy = 68.0 * z;
-  const W = Math.round(80 * z), H = Math.round(82 * z), ox = W * 0.42, oy = H - 6 * z;
-  const fig = outlined(W, H, z, ox, oy, (g) => drawFigure(g, op, pose));
-  const dx = fx - ox, dy = fy - oy;
+  // The figure is painted straight into the portrait's square (only the head and
+  // shoulders are rasterised; painting the whole 80 × 82 unit figure and cropping
+  // it cost a phone seconds when the lobby first opened, docs §10.17)
+  // (with a margin, so the contact shade reaches the frame's edges as before)
+  const fx = 8.2 * z, fy = 68.0 * z, m = Math.ceil(size * 0.12);
+  const fig = outlined(size + 2 * m, size + 2 * m, z, fx + m, fy + m, (g) => drawFigure(g, op, pose));
+  const dx = -m, dy = -m;
   const c = canvas(size, size), g = c.getContext('2d');
   // sky, the fire glow, a few embers
   const sky = g.createLinearGradient(0, 0, 0, size);

@@ -8,6 +8,11 @@
 // The loop also measures itself: display refresh rate (median of rAF
 // intervals), CPU time spent in update and render, and a frame-time history
 // for the performance overlay.
+//
+// Frame cap (Settings, default 60): on a faster screen, display frames are
+// skipped so a frame is drawn about every 1/cap s; the simulation simply sees
+// a longer step. Half the GPU work on a 120 Hz phone, and no frame pacing
+// fight on a 144 Hz monitor. 0 = draw every display frame.
 
 export const STEP = 1 / 120;
 const MAX_STEPS = 4;
@@ -17,6 +22,7 @@ export class Loop {
   constructor({ update, render }) {
     this.update = update;
     this.render = render;
+    this.cap = 60; this.rafMs = 16.7; this.lastRaf = -1;
     this.acc = 0;
     this.last = -1;
     this.running = false;
@@ -37,13 +43,18 @@ export class Loop {
     document.addEventListener('visibilitychange', this._vis);
   }
 
-  start() { if (!this.running) { this.running = true; this.last = -1; requestAnimationFrame(this._tick); } }
+  start() { if (!this.running) { this.running = true; this.last = -1; this.lastRaf = -1; requestAnimationFrame(this._tick); } }
   stop() { this.running = false; }
 
   tick(now) {
     if (!this.running) return;
     requestAnimationFrame(this._tick);
+    // the display's own frame interval (smoothed), for the cap
+    if (this.lastRaf >= 0) { const d = now - this.lastRaf; if (d > 0 && d < 100) this.rafMs += (d - this.rafMs) * 0.1; }
+    this.lastRaf = now;
     if (this.last < 0) { this.last = now; return; }
+    // capped: skip this display frame if drawing it would come too early
+    if (this.cap > 0 && now - this.last + this.rafMs * 0.5 < 1000 / this.cap) return;
     const raw = now - this.last;
     this.last = now;
     this.trackHz(raw);

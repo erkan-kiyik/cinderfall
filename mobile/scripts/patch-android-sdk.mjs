@@ -73,6 +73,8 @@ public class MainActivity extends BridgeActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    // the films are muted videos that start on their own (docs/KOR_STORY_CINEMATIC.md §10.17)
+    getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
     View content = findViewById(android.R.id.content);
     ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
       Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
