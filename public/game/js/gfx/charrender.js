@@ -14,6 +14,9 @@
 // below the line where the wall meets the street), cut at that line (shadow()).
 //
 // Slots are rendered lazily in groups, so any number of characters works.
+// The slot box is wide enough for a rifle aimed straight up or down, so most
+// of it is empty: each character is composited (and cast) over only the part
+// its parts covered this frame, plus the reach of the shade (§10.18).
 import { program, Target } from './gl.js';
 
 const VS = `#version 300 es
@@ -117,6 +120,7 @@ export class CharRenderer {
     this.wet = 0;           // rain on the figures (scenes set it outdoors)
     this.ppu = 5; this.cols = 1; this.cap = 1;
     this.queue = []; this.done = new Map(); this.slots = [];
+    this.used = new WeakMap(); // character → the local box its parts covered
   }
 
   // Slot resolution follows the scene's pixels per unit, capped so 9 fit.
@@ -154,7 +158,12 @@ export class CharRenderer {
       v[0] = sx; v[1] = 0; v[2] = 0; v[3] = 0; v[4] = sy; v[5] = 0;
       v[6] = -(BOX[0] + bw / 2) * sx; v[7] = -(BOX[1] + bh / 2) * sy; v[8] = 1;
       B.begin(v);
+      let u = this.used.get(ch);
+      if (!u) { u = new Float32Array(4); this.used.set(ch, u); }
+      u[0] = u[1] = Infinity; u[2] = u[3] = -Infinity;
+      B.bounds = u;
       ch.drawParts(B);
+      B.bounds = null;
       B.end();
       const W = this.size;
       this.done.set(ch, [(cx + 1) / W, (cy + this.sh - 1) / W, (cx + this.sw - 1) / W, (cy + 1) / W]);
@@ -164,22 +173,37 @@ export class CharRenderer {
     restore(); // back to the scene target
   }
 
+  // The used part of ch's slot grown by m units (clipped to the slot box), as
+  // a local box and the slot uv under it; false when nothing was drawn.
+  quad(ch, m) {
+    const u = this.used.get(ch), s = this.done.get(ch), q = this._q || (this._q = new Float32Array(8));
+    const x0 = Math.max(BOX[0], u[0] - m), y0 = Math.max(BOX[1], u[1] - m);
+    const x1 = Math.min(BOX[2], u[2] + m), y1 = Math.min(BOX[3], u[3] + m);
+    if (!(x1 > x0 && y1 > y0)) return false;
+    const bw = BOX[2] - BOX[0], bh = BOX[3] - BOX[1];
+    q[0] = x0; q[1] = y0; q[2] = x1; q[3] = y1;
+    q[4] = s[0] + (x0 - BOX[0]) / bw * (s[2] - s[0]); q[5] = s[1] + (y0 - BOX[1]) / bh * (s[3] - s[1]);
+    q[6] = s[0] + (x1 - BOX[0]) / bw * (s[2] - s[0]); q[7] = s[1] + (y1 - BOX[1]) / bh * (s[3] - s[1]);
+    return q;
+  }
+
   // Composite character `ch` into the bound scene target. `restore` rebinds
   // the scene target after any slot rendering this call needs.
   // The shadow the lamp at (lx, ly) throws of `ch` on the wall behind, `k` the
   // magnification about the lamp, `a` its darkness.
   shadow(ch, view, restore, lx, ly, k, a) {
     if (!this.done.has(ch)) this.renderGroup(this.queue.indexOf(ch), restore);
-    const uv = this.done.get(ch);
+    const uv = this.done.get(ch), reach = 1.0 + (k - 1) * 6, q = this.quad(ch, reach + 0.5);
+    if (!q) return;
     const gl = this.gl, p = this.sprog, f = ch.facing, x = ch.rx, y = ch.ry, W = this.size;
     gl.useProgram(p.p);
     gl.uniformMatrix3fv(p.u.uView, false, view);
-    gl.uniform4f(p.u.uRect, x + BOX[0] * f, y + BOX[1], x + BOX[2] * f, y + BOX[3]);
-    gl.uniform4f(p.u.uUV, uv[0], uv[1], uv[2], uv[3]);
+    gl.uniform4f(p.u.uRect, x + q[0] * f, y + q[1], x + q[2] * f, y + q[3]);
+    gl.uniform4f(p.u.uUV, q[4], q[5], q[6], q[7]);
     gl.uniform3f(p.u.uCast, lx, ly, k);
     gl.uniform1f(p.u.uGround, y);
     gl.uniform4f(p.u.uClamp, uv[0] + 0.5 / W, uv[3] + 0.5 / W, uv[2] - 0.5 / W, uv[1] - 0.5 / W);
-    const r = (1.0 + (k - 1) * 6) * this.ppu / W;
+    const r = reach * this.ppu / W;
     gl.uniform2f(p.u.uR, r, r);
     gl.uniform1f(p.u.uA, a);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.sheet.tex); gl.uniform1i(p.u.uTex, 0);
@@ -191,13 +215,14 @@ export class CharRenderer {
 
   composite(ch, view, restore) {
     if (!this.done.has(ch)) this.renderGroup(this.queue.indexOf(ch), restore);
-    const uv = this.done.get(ch);
+    const uv = this.done.get(ch), hard = ch.team === 1 && this.enemyInk;
+    const q = this.quad(ch, (hard ? 0.95 : this.outline) + 0.6);
+    if (!q) return;
     const gl = this.gl, p = this.prog, f = ch.facing, x = ch.rx, y = ch.ry;
     gl.useProgram(p.p);
     gl.uniformMatrix3fv(p.u.uView, false, view);
-    gl.uniform4f(p.u.uRect, x + BOX[0] * f, y + BOX[1], x + BOX[2] * f, y + BOX[3]);
-    gl.uniform4f(p.u.uUV, uv[0], uv[1], uv[2], uv[3]);
-    const hard = ch.team === 1 && this.enemyInk;
+    gl.uniform4f(p.u.uRect, x + q[0] * f, y + q[1], x + q[2] * f, y + q[3]);
+    gl.uniform4f(p.u.uUV, q[4], q[5], q[6], q[7]);
     const W = this.size, r = (hard ? 0.95 : this.outline) * this.ppu / W;
     gl.uniform2f(p.u.uR, r, r);
     gl.uniform1f(p.u.uHard, hard ? 1 : 0);

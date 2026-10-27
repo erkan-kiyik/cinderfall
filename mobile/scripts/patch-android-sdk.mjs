@@ -54,9 +54,12 @@ edit('gradle/wrapper/gradle-wrapper.properties',
 // High refresh rate: many phones (Samsung, Xiaomi, OnePlus in "adaptive" or
 // "standard" mode) hold an app at 60Hz unless the window asks for more, and a
 // WebView's requestAnimationFrame can never run faster than the display. The
-// activity therefore asks for the fastest mode at the current resolution —
-// 90/120/144Hz where the panel has one — and asks again on resume, because
-// some vendors reset the preference when the app comes back to the front.
+// activity therefore asks for the fastest mode at the current resolution
+// whose rate is a whole multiple of 60 (120Hz where the panel has it, else
+// 60), and asks again on resume, because some vendors reset the preference
+// when the app comes back to the front. A 90Hz mode is passed over: the game
+// draws 60 frames a second by default, and 60 on 90Hz cannot be paced evenly
+// (frames held for one refresh, then two: judder; docs/KOR_STORY_CINEMATIC.md §10.18).
 edit(`app/src/main/java/${APP_ID.replace(/\./g, '/')}/MainActivity.java`, () => `package ${APP_ID};
 
 import android.os.Build;
@@ -98,10 +101,12 @@ public class MainActivity extends BridgeActivity {
       if (display == null) return;
       Display.Mode cur = display.getMode();
       Display.Mode best = cur;
+      float bestHz = 0f;
       for (Display.Mode m : display.getSupportedModes()) {
+        float hz = m.getRefreshRate(), k = hz / 60f;
         if (m.getPhysicalWidth() == cur.getPhysicalWidth()
             && m.getPhysicalHeight() == cur.getPhysicalHeight()
-            && m.getRefreshRate() > best.getRefreshRate() + 0.5f) best = m;
+            && Math.abs(k - Math.round(k)) < 0.03f && hz > bestHz + 0.5f) { best = m; bestHz = hz; }
       }
       WindowManager.LayoutParams lp = getWindow().getAttributes();
       if (lp.preferredDisplayModeId == best.getModeId()) return;
@@ -113,4 +118,4 @@ public class MainActivity extends BridgeActivity {
     }
   }
 }
-`, 'MainActivity pads content by system-bar insets + requests the highest refresh rate');
+`, 'MainActivity pads content by system-bar insets + requests the fastest 60-multiple refresh rate');

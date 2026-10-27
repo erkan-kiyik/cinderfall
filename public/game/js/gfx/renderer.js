@@ -4,9 +4,9 @@
 //   light  (light scale)   ambient + additive point/cone lights, stored at ½
 //   lit    (render scale)  scene × light×2, then emissive sprites added on top
 //   bloom  (½ and ¼)       bright pass → separable blur, two levels
-//   screen                 lit + warm halation, a soft shoulder, grade (low
+//   canvas (render scale)  lit + warm halation, a soft shoulder, grade (low
 //                          saturation, cool lifted blacks, warm highlights),
-//                          vignette, 24 Hz grain; upscaled. The look of the
+//                          vignette, 24 Hz grain; the browser upscales it. The look of the
 //                          ray-traced stills (docs §11). Outdoors the wet
 //                          road below the walking line mirrors the street:
 //                          a screen-space reflection, smeared down the way
@@ -185,10 +185,14 @@ export class Renderer {
     const c = this.canvas, cw = Math.max(1, c.clientWidth), ch = Math.max(1, c.clientHeight);
     const dpr = Math.min(window.devicePixelRatio || 1, this.q.dpr, this.dprCap || 9, Math.sqrt(this.q.px * 1e6 / (cw * ch)));
     const W = Math.round(cw * dpr), H = Math.round(ch * dpr);
-    if (!force && W === c.width && H === c.height) return;
-    c.width = W; c.height = H;
+    if (!force && W === this.W && H === this.H) return;
+    this.W = W; this.H = H;
     const s = this.q.scale * this.dyn;
     this.rw = Math.round(W * s); this.rh = Math.round(H * s);
+    // the canvas is the render size and the browser scales the finished frame
+    // up as it composites the page (free): the last pass, the heaviest per
+    // pixel, runs on the render's pixels, not the screen's (§10.18)
+    c.width = this.rw; c.height = this.rh;
     this.scene.resize(this.rw, this.rh); this.lit.resize(this.rw, this.rh);
     this.light.resize(W * this.q.light * this.dyn, H * this.q.light * this.dyn);
     this.b1a.resize(this.rw / 2, this.rh / 2); this.b1b.resize(this.rw / 2, this.rh / 2);

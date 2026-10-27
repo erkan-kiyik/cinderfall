@@ -67,6 +67,7 @@ export class SpriteBatch {
     attr(4, 1, gl.FLOAT, false, 48);
     gl.bindVertexArray(null);
     this.view = new Float32Array(9);
+    this.bounds = null;
   }
 
   begin(view) {
@@ -93,6 +94,19 @@ export class SpriteBatch {
     this.u[i + 11] = alpha === 1 ? rgba : premul(rgba, alpha);
     f[i + 12] = r.page - grp * GROUP;
     this.n++;
+    if (this.bounds) this.grow(x, y, r.w * sx, r.h * sy, r.ax, r.ay, rot);
+  }
+
+  // While `bounds` is set ([x0, y0, x1, y1]), every quad drawn widens it (the
+  // character renderer uses it to composite only the part of a slot in use).
+  grow(x, y, w, h, ax, ay, rot) {
+    const b = this.bounds, s = Math.sin(rot), k = Math.cos(rot);
+    for (let j = 0; j < 4; j++) {
+      const px = ((j & 1) - ax) * w, py = ((j >> 1) - ay) * h;
+      const qx = px * k - py * s + x, qy = px * s + py * k + y;
+      if (qx < b[0]) b[0] = qx; if (qx > b[2]) b[2] = qx;
+      if (qy < b[1]) b[1] = qy; if (qy > b[3]) b[3] = qy;
+    }
   }
 
   // Stretched quad from region r between two points (tracers, beams).

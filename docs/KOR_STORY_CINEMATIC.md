@@ -1079,3 +1079,52 @@ Bir çekim değişirse filmi yeniden çizmek için: `node tools/game/film/render
 [id…]` (Playwright'ın Chromium'u ve ffmpeg/libx264 gerekir). Geliştirme
 için `?livefilm` filmleri, `?liveintro` açılışı canlı çizer; `?bakemain`
 pişirmeyi ana iş parçacığında yapar; `?fps=0|30|60` kare sınırı.
+
+### 10.18 Kare temposu ve ekran kartı yükü (KOR-10 sonrası)
+Şikâyet: KOR-10'da oyun hâlâ takılıyor. İki ayrı neden bulundu.
+
+**1. Takılma (kare temposu).** 60 kare sınırı, ekranın kare aralığının katı
+olmayan bir aralıkla kare atlıyordu. 90 Hz ekranda (pek çok Android telefon;
+Android kabuğu da en hızlı modu istiyordu) kareler bir 11 ms, bir 22 ms
+geliyordu: ortalama 60 kare, göze takılma. Ayrıca kare süresi 90 Hz bütçesine
+(11 ms) göre ölçüldüğü için otomatik çözünürlük her zaman "yetişemiyor" sanıp
+çözünürlüğü ve sokak efektlerini boşuna düşürüyordu. Simülasyon (rAF zamanları
+±0,3 ms titreşimle):
+
+| ekran / sınır | KOR-10 | şimdi |
+|---|---|---|
+| 90 Hz / 60 | 60 kare, 11,1–22,5 ms (takılma) | Android: 60 Hz modu, düz 16,7 ms; tarayıcı: düz 90 kare |
+| 120 Hz / 60 | 60 kare, 16,1–17,1 ms | aynı |
+| 144 Hz / 60 | 72 kare | aynı |
+| 165 Hz / 60 | 55 kare, bütçe 50 sanılıyordu | 55 kare, bütçe 55 |
+
+- Döngü artık her k'inci ekran karesini çiziyor (k tam sayı: 120 Hz → 2,
+  144 Hz → 2, 165 Hz → 3). Sınırın 1,6 katından yavaş ekran (75, 90 Hz) her
+  karede çizilir; bir kısmını atlamak takılma demek.
+- Android kabuğu en hızlı modu değil, 60'ın katı olan en hızlı modu istiyor
+  (120 Hz varsa 120, yoksa 60). 90 Hz'lik telefonda oyun 60 Hz'de, düzgün.
+
+**2. Ekran kartı işi.** Oyun içinde kare başına ekran kartı süresi, aşama aşama
+(SwiftShader'da her çizimden sonra eşitleme; yazılım ekran kartı, oranlar
+anlamlı, mutlak süreler değil; telefon benzetimi, orta kalite, görev 2):
+
+| aşama | önce | sonra |
+|---|---|---|
+| sahne sprite'ları | 68 ms | 71 ms |
+| son geçiş (renk, hale, ıslak yol) | 43 ms | 32 ms |
+| karakterler (gölgelendirme + duvara gölge) | 37 ms | 19 ms |
+| geri kalan (ışık, bloom, birleştirme, parçacık) | 36 ms | 36 ms |
+| toplam | 184 ms | 158 ms (−%14) |
+
+- **Son geçiş render çözünürlüğünde:** tuvalin kendisi render boyutunda;
+  büyütmeyi tarayıcı sayfayı birleştirirken bedavaya yapıyor. Önceden en
+  pahalı piksel işi (9'a varan doku okuması) ekran çözünürlüğünde dönüyordu.
+  Yüksek kalitede (ölçek 1) değişen bir şey yok.
+- **Karakterler yalnız kullandıkları alanda:** her figürün yuvası, yukarı ya
+  da aşağı nişan alan uzun bir tüfeğe yetecek kadar geniş (108×108 birim) ve
+  çoğu boş; o kutunun tamamı karede 29 doku okumalı gölgelendiriciden
+  geçiyordu. Artık parçaların o kare kapladığı kutu (gölge payıyla) çiziliyor;
+  duvara düşen gölge de öyle. Görüntü aynı.
+- Sahne sprite'larının toplam örtüşmesi 4,5 ekran; bunun 1,7'si lambaların
+  altındaki ve katmanlar arasındaki sis/hale (çok düşük opaklıklı geniş
+  dörtgenler). Görüntünün parçası olduğu için dokunulmadı.

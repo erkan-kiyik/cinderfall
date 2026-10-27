@@ -9,20 +9,22 @@
 // intervals), CPU time spent in update and render, and a frame-time history
 // for the performance overlay.
 //
-// Frame cap (Settings, default 60): on a faster screen, display frames are
-// skipped so a frame is drawn about every 1/cap s; the simulation simply sees
-// a longer step. Half the GPU work on a 120 Hz phone, and no frame pacing
-// fight on a 144 Hz monitor. 0 = draw every display frame.
+// Frame cap (Settings, default 60): on a faster screen a frame is drawn every
+// k-th display frame, k a whole number, so frames come evenly: 120 Hz → 60,
+// 144 Hz → 72, 165 Hz → 55. A screen less than ~1.6× the cap (75, 90 Hz) is
+// drawn every frame: skipping some of its frames, not all, is what judders
+// (a 90 Hz phone at 60 alternates 11 and 22 ms). 0 = every display frame.
 
 export const STEP = 1 / 120;
 const MAX_STEPS = 4;
-const HZ_LADDER = [30, 48, 50, 60, 72, 75, 90, 100, 120, 144, 165, 240];
+const HZ_LADDER = [30, 48, 50, 55, 60, 72, 75, 90, 100, 120, 144, 165, 240];
 
 export class Loop {
   constructor({ update, render }) {
     this.update = update;
     this.render = render;
     this.cap = 60; this.rafMs = 16.7; this.lastRaf = -1;
+    this.every = 1; this.skipped = 0; this.ticks = 0; // draw every `every`-th display frame
     this.acc = 0;
     this.last = -1;
     this.running = false;
@@ -53,8 +55,10 @@ export class Loop {
     if (this.lastRaf >= 0) { const d = now - this.lastRaf; if (d > 0 && d < 100) this.rafMs += (d - this.rafMs) * 0.1; }
     this.lastRaf = now;
     if (this.last < 0) { this.last = now; return; }
-    // capped: skip this display frame if drawing it would come too early
-    if (this.cap > 0 && now - this.last + this.rafMs * 0.5 < 1000 / this.cap) return;
+    // capped: draw every `every`-th display frame (rechecked twice a second)
+    if (++this.ticks % 30 === 0) this.every = this.cap > 0 ? Math.max(1, Math.floor(1000 / this.rafMs / this.cap + 0.4)) : 1;
+    if (this.cap > 0 && ++this.skipped < this.every) return;
+    this.skipped = 0;
     const raw = now - this.last;
     this.last = now;
     this.trackHz(raw);
