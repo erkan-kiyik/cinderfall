@@ -17,6 +17,9 @@ const PELVIS = 0, NECK = 1, HEAD = 2, NK = 3, NA = 4, FK = 5, FA = 6, NE = 7, NW
 const N = 11;
 const RADIUS = [5, 4.5, 5.5, 2.4, 2.2, 2.4, 2.2, 2.0, 1.8, 2.0, 1.8];
 const GRAV = 1500, ITER = 6;
+// a dead body has no strength: while it is still upright it tips over, and a
+// straight leg folds at the knee (units/s², scaled by how upright / straight)
+const TIP = 700, FOLD = 900;
 const REST_TORSO = Math.atan2(SK.neck[1], SK.neck[0]);
 
 export class Ragdoll {
@@ -38,6 +41,11 @@ export class Ragdoll {
       ph: Math.hypot(this.x[HEAD] - this.x[PELVIS], this.y[HEAD] - this.y[PELVIS]),
     };
     this.t = 0; this.rest = 0;
+    this.tip = -f; // which way an upright body goes over: backwards, unless a hit says otherwise
+    // one-way platforms above the feet it died on (a deck its head reached
+    // through on a scaffold) never carry it
+    let feet = -1e9; for (let i = 0; i < N; i++) feet = Math.max(feet, this.y[i] + RADIUS[i]);
+    this.feet = feet;
     this.d = new Float32Array(2);
   }
 
@@ -46,6 +54,7 @@ export class Ragdoll {
     let best = 0, bd = 1e9;
     for (let i = 0; i < N; i++) { const d = Math.hypot(this.x[i] - px, this.y[i] - py); if (d < bd) { bd = d; best = i; } }
     const dt = 1 / 120;
+    if (Math.abs(vx) > 1) this.tip = Math.sign(vx);
     for (let i = 0; i < N; i++) {
       const k = i === best ? 1 : i === PELVIS || i === NECK ? 0.45 : 0.25;
       this.ox[i] -= vx * k * dt; this.oy[i] -= vy * k * dt;
@@ -97,6 +106,26 @@ export class Ragdoll {
     }
     const nh = this._nh || (this._nh = [0, 0]), fh = this._fh || (this._fh = [0, 0]);
     const ns = this._ns || (this._ns = [0, 0]), fs = this._fs || (this._fs = [0, 0]);
+    // nothing holds it up: an upright torso tips over (and one stood on its
+    // head against a wall), a straight leg under it folds at the knee
+    // (forward, the way knees bend), so no body is left standing, kneeling
+    // or upside down, balanced on stiff limbs. Against a wall it goes the
+    // other way, and the knees fold away from it. Only in the first seconds:
+    // a body lying along a ramp is not pushed down it for ever.
+    const fall = Math.max(0, 1 - this.t / 3);
+    const up = (Y[PELVIS] - Y[NECK]) / this.len.torso * fall;
+    const blocked = (x, y, d) => level && level.solidBox(x + d * 3 - 0.5, y - 0.5, x + d * 3 + 0.5, y + 0.5);
+    if (Math.abs(up) > 0.3) {
+      const top = up > 0 ? NECK : PELVIS; // the end on top goes over
+      if (blocked(X[top], Y[top], this.tip)) this.tip = -this.tip;
+      X[top] += this.tip * TIP * Math.abs(up) * dt * dt;
+    }
+    this.tp(SK.nearHip, nh); this.tp(SK.farHip, fh);
+    const legL = SK.thigh + SK.shin;
+    for (const [h, K, A] of [[nh, NK, NA], [fh, FK, FA]]) {
+      const st = (Y[A] - h[1]) / legL; // 1 = straight down under the hip
+      if (st > 0.6) X[K] += (blocked(X[K], Y[K], this.f) ? -this.f : this.f) * FOLD * (st - 0.6) * 2.5 * fall * dt * dt;
+    }
     for (let it = 0; it < ITER; it++) {
       this.stick(PELVIS, NECK, this.len.torso, 0.5, 0.5);
       this.stick(NECK, HEAD, this.len.head, 0.3, 0.7);
@@ -122,12 +151,22 @@ export class Ragdoll {
   // Push points out of the floor. Moving a point changes its implied verlet
   // velocity, so the previous position is reset with it: a point that hits
   // the ground keeps at most a small bounce and never gets launched upward.
+  // A point lands only on a surface between where its bottom was a step ago
+  // and where it is now: never on one it was already below. (It used to be
+  // lifted onto any surface up to 24 units above it, so a guard dying on a
+  // container or a platform caught an arm or a foot on its edge and hung
+  // there upside down, and a limb against a wall climbed it.) One-way
+  // platforms count only at or below the feet it died on. A point that
+  // moved sideways into a solid tile goes back to its x.
   collide(level, last = false) {
     if (!level) return;
-    const X = this.x, Y = this.y;
+    const X = this.x, Y = this.y, OX = this.ox, OY = this.oy;
     for (let i = 0; i < N; i++) {
-      const r = RADIUS[i], x = X[i], y = Y[i];
-      const s = level.surface(x - 0.5, x + 0.5, x, y - 24, y + r);
+      const r = RADIUS[i];
+      if (X[i] !== OX[i] && level.solidBox(X[i] - 0.5, Y[i] - 0.5, X[i] + 0.5, Y[i] + 0.5)
+        && !level.solidBox(OX[i] - 0.5, Y[i] - 0.5, OX[i] + 0.5, Y[i] + 0.5)) X[i] = OX[i];
+      const x = X[i], y = Y[i], was = Math.min(OY[i], y) + r - 1;
+      const s = level.surface(x - 0.5, x + 0.5, x, was, y + r, false, Math.max(was, this.feet - 2));
       if (s !== null && y > s - r - (last ? 0.3 : 0)) {
         if (y > s - r) {
           const vy = y - this.oy[i];
@@ -136,7 +175,6 @@ export class Ragdoll {
         }
         if (last) this.ox[i] = X[i] - (X[i] - this.ox[i]) * 0.82; // ground friction
       }
-      if (level.solidBox(X[i] - 0.5, Y[i] - 0.5, X[i] + 0.5, Y[i] + 0.5)) { X[i] = this.ox[i]; }
     }
   }
 

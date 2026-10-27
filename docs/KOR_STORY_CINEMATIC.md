@@ -1128,3 +1128,30 @@ anlamlı, mutlak süreler değil; telefon benzetimi, orta kalite, görev 2):
 - Sahne sprite'larının toplam örtüşmesi 4,5 ekran; bunun 1,7'si lambaların
   altındaki ve katmanlar arasındaki sis/hale (çok düşük opaklıklı geniş
   dörtgenler). Görüntünün parçası olduğu için dokunulmadı.
+
+### 10.19 Ölen muhafızların yerdeki vücutları
+Şikâyet: Vanta muhafızları ölünce vücutları yerde bozuluyor. Ragdoll'da
+(`anim/ragdoll.js`) üç ayrı hata vardı; üçü de KOR-10/11 öncesinden beri
+duruyordu.
+
+- **Yukarıdaki yüzeye ışınlanma:** zemin araması bir noktanın 24 birim
+  üstüne kadar bakıp oradaki en yüksek yüzeye koyuyordu. Konteyner ya da
+  iskele üstünde ölen muhafızın kolu, ayağı platform kenarına takılıp gövde
+  baş aşağı sarkıyordu; duvara değen bir uzuv her adımda biraz daha yukarı
+  "tırmanıyordu" (testte 243 birime kadar). Artık bir nokta yalnız bir adım
+  önce altının bulunduğu yerle şimdiki yeri arasındaki yüzeye konuyor; zaten
+  altında kaldığı bir yüzeye hiç çıkmıyor. Yana doğru katı bir karoya giren
+  nokta eski x'ine dönüyor.
+- **Üst kat platformu:** iskelede başı bir üst katın içinden geçen muhafız
+  ölünce boynu o kata oturuyor, vücut boynundan asılı dik duruyor ve kayıyordu.
+  Tek yönlü platformlar artık yalnız öldüğü andaki ayaklarının hizasında ya da
+  altındaysa vücudu taşıyor.
+- **Çökmeme:** eklemlerde hiç gevşeklik olmadığından vücut dik, diz çökmüş ya
+  da duvara yaslı amuda kalkmış halde dengede kalabiliyordu. İlk üç saniye,
+  dik (ya da ters dönmüş) gövdenin üstteki ucu son kurşunun yönüne devriliyor,
+  gövdenin altında dümdüz kalan bacak dizden katlanıyor; duvar varsa öbür
+  yöne. Üç saniyeden sonra itiş yok, rampa üstündeki vücut kaymaz.
+
+`tools/game/ragdoll.test.mjs` bu durumlar için 9 yeni kontrol içeriyor
+(üst platformun altında ölmek, duvara doğru vurulmak, duvara yaslı ölmek);
+eski kod 5'inde kalıyor.
