@@ -1131,7 +1131,7 @@ anlamlı, mutlak süreler değil; telefon benzetimi, orta kalite, görev 2):
 
 ### 10.19 Ölen muhafızların yerdeki vücutları
 Şikâyet: Vanta muhafızları ölünce vücutları yerde bozuluyor. Ragdoll'da
-(`anim/ragdoll.js`) dört ayrı hata vardı; dördü de KOR-10/11 öncesinden beri
+(`anim/ragdoll.js`) beş ayrı hata vardı; beşi de KOR-10/11 öncesinden beri
 duruyordu.
 
 - **Yukarıdaki yüzeye ışınlanma:** zemin araması bir noktanın 24 birim
@@ -1159,6 +1159,13 @@ duruyordu.
   ya da iki yanından birine) çıkıyor; devirme yönü yalnız öbür yan boşsa
   değişiyor.
 
-`tools/game/ragdoll.test.mjs` bu durumlar için 15 yeni kontrol içeriyor
+- **Başı sandıkta, kalçası havada:** sırtüstü bir sandığa düşen muhafızın
+  boynu sandığın üstüne oturuyor, kalçası yerden 16 birim yukarıda asılı
+  kalıyordu (bükülü bacaklar ve gövde sert bir üçgen oluşturuyor). Dik gövdenin
+  kalçası yere değmiyor ve düşmüyorsa (bir şey tutuyorsa) ilk saniyelerde
+  başın yaslandığı yerden dışarı kayıyor, baş da aynı yöne, sandığın
+  kenarından aşağı devriliyor.
+
+`tools/game/ragdoll.test.mjs` bu durumlar için 18 yeni kontrol içeriyor
 (üst platformun altında ölmek, duvara doğru vurulmak, duvara yaslı ölmek,
-kalçası sandıkta ölmek); eski kod 5'inde kalıyor.
+kalçası sandıkta ölmek, sandığa sırtüstü düşmek); eski kod 5'inde kalıyor.

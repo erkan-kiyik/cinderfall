@@ -64,5 +64,13 @@ const run = (L2, x, f, push) => {
     ok(spread < 25 && up > -0.3, `${name}: not draped over it or on its head (spread ${spread.toFixed(0)}, up ${up.toFixed(2)})`);
   }
 }
+{
+  // knocked back against a crate (3 tiles wide, 4 high) right behind it
+  const L2 = level((r) => { for (let ty = 16; ty < 20; ty++) for (let tx = 24; tx < 27; tx++) r[ty][tx] = '#'; });
+  for (const [name, x, f, push] of [['knocked back onto a crate', 222, -1, [-1, 140]], ['knocked back onto a crate, facing it', 222, 1, [-1, 140]], ['shot standing by a crate', 224, -1, [-1, 60]]]) {
+    const { r } = run(L2, x, f, push);
+    ok(r.y[0] > -12, `${name}: hips down on the street, not held up by a head on the crate (pelvis y ${r.y[0].toFixed(0)})`);
+  }
+}
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

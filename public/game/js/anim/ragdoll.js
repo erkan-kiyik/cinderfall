@@ -19,7 +19,7 @@ const RADIUS = [5, 4.5, 5.5, 2.4, 2.2, 2.4, 2.2, 2.0, 1.8, 2.0, 1.8];
 const GRAV = 1500, ITER = 6;
 // a dead body has no strength: while it is still upright it tips over, and a
 // straight leg folds at the knee (units/s², scaled by how upright / straight)
-const TIP = 700, FOLD = 900;
+const TIP = 700, FOLD = 900, SLIDE = 900;
 const REST_TORSO = Math.atan2(SK.neck[1], SK.neck[0]);
 
 export class Ragdoll {
@@ -119,6 +119,17 @@ export class Ragdoll {
       const top = up > 0 ? NECK : PELVIS; // the end on top goes over
       if (blocked(X[top], Y[top], this.tip) && !blocked(X[top], Y[top], -this.tip)) this.tip = -this.tip;
       X[top] += this.tip * TIP * Math.abs(up) * dt * dt;
+    }
+    // fallen back against a crate with the head on its top, the hips hang in
+    // the air: they slide out from under it (away from where the head leans),
+    // and the head goes the same way, off the top, until all is on the street
+    if (up > 0.3 && level && Math.abs(Y[PELVIS] - this.oy[PELVIS]) < 0.2) { // held, not falling
+      const px = X[PELVIS], py = Y[PELVIS], g = level.surface(px - 0.5, px + 0.5, px, py, py + 60);
+      if (g === null || g - (py + RADIUS[PELVIS]) > 4) {
+        const out = Math.sign(px - X[NECK]) || -this.tip;
+        X[PELVIS] += out * SLIDE * up * dt * dt;
+        this.tip = out;
+      }
     }
     this.tp(SK.nearHip, nh); this.tp(SK.farHip, fh);
     const legL = SK.thigh + SK.shin;
