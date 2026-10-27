@@ -53,5 +53,16 @@ const run = (L2, x, f, push) => {
     ok(spread < 20 && Math.max(...r.y) <= 0.01, `${name}: ends lying on the street, not standing or on its head (spread ${spread.toFixed(0)})`);
   }
 }
+{
+  // died against a crate (2 tiles wide, 5 high), the hip already inside it
+  const L2 = level((r) => { for (let ty = 15; ty < 20; ty++) { r[ty][26] = '#'; r[ty][27] = '#'; } });
+  for (const [name, x, f, push] of [['hip in a crate', 206, 1, null], ['hip in a crate, shot into it', 206, 1, [1, 140]], ['hip in a crate, facing away', 226, -1, null]]) {
+    const { r, spread } = run(L2, x, f, push);
+    let inside = 0; for (let k = 0; k < 11; k++) if (L2.solidBox(r.x[k] - 0.5, r.y[k] - 0.5, r.x[k] + 0.5, r.y[k] + 0.5)) inside++;
+    const up = (r.y[0] - r.y[1]) / r.len.torso;
+    ok(inside === 0, `${name}: nothing left inside the crate (${inside} points)`);
+    ok(spread < 25 && up > -0.3, `${name}: not draped over it or on its head (spread ${spread.toFixed(0)}, up ${up.toFixed(2)})`);
+  }
+}
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

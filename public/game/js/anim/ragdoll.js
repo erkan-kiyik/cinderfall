@@ -117,7 +117,7 @@ export class Ragdoll {
     const blocked = (x, y, d) => level && level.solidBox(x + d * 3 - 0.5, y - 0.5, x + d * 3 + 0.5, y + 0.5);
     if (Math.abs(up) > 0.3) {
       const top = up > 0 ? NECK : PELVIS; // the end on top goes over
-      if (blocked(X[top], Y[top], this.tip)) this.tip = -this.tip;
+      if (blocked(X[top], Y[top], this.tip) && !blocked(X[top], Y[top], -this.tip)) this.tip = -this.tip;
       X[top] += this.tip * TIP * Math.abs(up) * dt * dt;
     }
     this.tp(SK.nearHip, nh); this.tp(SK.farHip, fh);
@@ -163,6 +163,10 @@ export class Ragdoll {
     const X = this.x, Y = this.y, OX = this.ox, OY = this.oy;
     for (let i = 0; i < N; i++) {
       const r = RADIUS[i];
+      // already inside a solid tile (he died against a crate, his hip in
+      // it): out the shortest way, onto its top or out of either side
+      if (level.solidBox(X[i] - 0.5, Y[i] - 0.5, X[i] + 0.5, Y[i] + 0.5)
+        && level.solidBox(OX[i] - 0.5, OY[i] - 0.5, OX[i] + 0.5, OY[i] + 0.5)) this.unstick(level, i);
       if (X[i] !== OX[i] && level.solidBox(X[i] - 0.5, Y[i] - 0.5, X[i] + 0.5, Y[i] + 0.5)
         && !level.solidBox(OX[i] - 0.5, Y[i] - 0.5, OX[i] + 0.5, Y[i] + 0.5)) X[i] = OX[i];
       const x = X[i], y = Y[i], was = Math.min(OY[i], y) + r - 1;
@@ -176,6 +180,22 @@ export class Ragdoll {
         if (last) this.ox[i] = X[i] - (X[i] - this.ox[i]) * 0.82; // ground friction
       }
     }
+  }
+
+  // Move point i out of the solid it is in: up onto the top (within 24
+  // units) or sideways (within 16), whichever is nearer; its velocity goes.
+  unstick(level, i) {
+    const X = this.x, Y = this.y, r = RADIUS[i], x = X[i], y = Y[i];
+    const free = (px, py) => !level.solidBox(px - 0.5, py - 0.5, px + 0.5, py + 0.5);
+    let nx = x, ny = y, best = 1e9;
+    const s = level.surface(x - 0.5, x + 0.5, x, y - 24, y + r);
+    if (s !== null && free(x, s - r) && y - (s - r) < best) { best = y - (s - r); nx = x; ny = s - r; }
+    for (let d = 1; d <= 16 && d < best; d++) {
+      if (free(x + d + 0.5, y)) { best = d; nx = x + d + 0.5; ny = y; break; }
+      if (free(x - d - 0.5, y)) { best = d; nx = x - d - 0.5; ny = y; break; }
+    }
+    if (best === 1e9) return;
+    X[i] = nx; Y[i] = ny; this.ox[i] = nx; this.oy[i] = ny;
   }
 
   get settled() { return this.rest > 0.6; }
