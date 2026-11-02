@@ -1266,3 +1266,29 @@ plakanın askısında eski yeşil el telsizi (ızgarası, turuncu düğmesi).
 İlk açılıştaki boyama süresi değişmedi (telefon benzetimi, 4 kat yavaş
 işlemci, orta kalite: önce 6,1–6,2 sn, sonra 5,8–5,9 sn; fark ölçüm
 gürültüsü içinde).
+
+### 10.22 Öbür operatörler: her birine kendi işinden parçalar
+§10.21'in ölçüsüyle (oyun mesafesinden okunan, hikâyeye uyan, yazısız
+parçalar) Warden, Vesper, Skye ve Bulwark:
+
+- **Warden:** paltonun üstünde merdiven kemeri: siyah dokuma, ağır çelik
+  toka; yanda büyük kurtarma karabinası (sarı kilit somunu); kalçasının
+  arkasında tutucusunda kazma başlı itfaiye baltası: kırmızı fiberglas sap
+  paltonun eteğinin altına iner, çeliğin ağzı ve sivri ucu taşlanmış parlak.
+- **Vesper:** kemerinde, kalçasının arkasında kapanamayacak kadar dolu eski
+  deri evrak çantası: dosyaların kenarları dışarıda, en üsttekinde kırmızı
+  gizlilik damgası (işaret, yazı değil), kayışı tokayla üstlerinden
+  bağlanmış. Söndürme kayıtları, yanında taşıdığı.
+- **Skye:** kurye yıllarından: çantanın arka kenarına hâlâ takılı bisiklet
+  stop lambası, kırmızı camı yanık; çantanın altında bir kayışa asılı koli
+  bandı rulosu (drone onunla tutuluyor); şortun cebinin üstünde lastikle
+  tutturulmuş yedek drone bataryası, sarı etiketi, kırmızı-siyah kabloları
+  cebe sokulu.
+- **Bulwark:** limandan: kalçanın arkasında kemer halkasından geçirilmiş
+  büyük İngiliz anahtarı, ağzı yukarıda, sapı uyluğun arkasından iner, elin
+  tuttuğu yer parlak; önde kemerde vidalı pimiyle çelik liman kilidi
+  (shackle); sırtta kemerin arkasına takılı, ezik yeşil çelik termos.
+
+Hepsi oyun boyutunda (orta kalite, 5,2 piksel/birim) seçiliyor. İlk
+açılıştaki boyama süresi değişmedi (telefon benzetimi: önce 5,4–6,2 sn,
+sonra 5,2–5,5 sn; ölçüm gürültüsü içinde).

@@ -60,6 +60,7 @@ function ratchet(g, x, y, a = 0) {
 }
 
 function backFar(g) {
+  thermos(g);
   // the far shoulder's plate peeking over the far shoulder
   const FP = blob([[2.6, -24.6], [7.0, -25.6], [10.4, -23.0], [10.6, -19.2], [6.6, -18.8], [3.2, -20.6]]);
   cel(g, FP, PAL.blue, { sh: 0.9, hl: 0.4 });
@@ -154,6 +155,39 @@ function chest(g) {
   cel(g, 'M -6.6 -2.2 L -3.8 -2.3 L -3.6 1.0 L -6.4 1.1 Z', PAL.strap, { sh: 0.4, hl: 0.25, lw: 0.24 });
   fill(g, 'M -6.0 -1.6 L -4.2 -1.7 L -4.1 0.4 L -5.9 0.5 Z', PAL.black.m, 0.85);
   buckle(g, 2.6, -1.8, 1.4, 2.2, PAL.steel);
+  craneKit(g);
+}
+// The harbour (docs §10.22): a big adjustable wrench through a loop on the belt
+// behind the hip, its jaw up, bright where the hand wears it; and a steel
+// rigging shackle hung on the belt at the front, its pin screwed in.
+function craneKit(g) {
+  const S = PAL.steel;
+  // the wrench's handle down the back of the thigh, its head and jaw at the belt
+  const H = 'M -8.3 -0.6 L -7.0 -0.7 L -7.1 10.2 C -7.2 10.8 -8.2 10.8 -8.3 10.2 Z';
+  cel(g, H, S, { sh: 0.3, hl: 0.35, gloss: 0.35 });
+  clip(g, H, () => { stroke(g, 'M -7.4 0 L -7.5 10', S.l, 0.14, 0.9); fill(g, 'M -8.4 3 L -6.9 3 L -6.9 8.5 L -8.4 8.5 Z', '#3a2a20', 0.25); fill(g, 'M -8.0 9.6 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 Z', S.k); });
+  const HEAD = 'M -9.6 -3.8 L -6.0 -4.0 L -5.8 -2.6 L -7.0 -2.4 L -7.0 -0.6 L -8.3 -0.5 L -8.4 -2.4 L -9.5 -2.6 Z';
+  cel(g, HEAD, S, { sh: 0.4, hl: 0.4, gloss: 0.35 });
+  fill(g, 'M -8.6 -4.6 L -6.9 -4.7 L -6.9 -3.9 L -8.6 -3.8 Z', S.d);
+  stroke(g, 'M -8.6 -3.1 L -7.0 -3.2', S.k, 0.2);
+  for (let x = -8.4; x < -7.0; x += 0.3) stroke(g, `M ${x} -3.0 l 0 0.4`, S.d, 0.08);
+  cel(g, 'M -8.8 -1.6 L -6.5 -1.7 L -6.4 0.4 L -8.7 0.5 Z', PAL.black, { sh: 0.2, hl: 0.2 });
+  // the shackle: a forged steel bow, its pin through the eyes, on the belt
+  stroke(g, 'M 4.6 0.0 C 3.4 1.2 3.4 3.6 5.0 3.8 C 6.6 3.6 6.6 1.2 5.4 0.0', S.k, 0.62);
+  stroke(g, 'M 4.6 0.0 C 3.4 1.2 3.4 3.6 5.0 3.8 C 6.6 3.6 6.6 1.2 5.4 0.0', S.m, 0.4);
+  stroke(g, 'M 4.3 0.9 C 4.0 2.0 4.2 3.0 4.9 3.3', S.l, 0.14, 0.9);
+  cel(g, 'M 4.1 -0.5 L 6.0 -0.6 L 6.0 0.1 L 4.1 0.2 Z', S, { sh: 0.2, hl: 0.3, gloss: 0.3 });
+  fill(g, 'M 3.8 -0.6 a 0.4 0.4 0 1 0 0.8 0 a 0.4 0.4 0 1 0 -0.8 0 Z', PAL.strap.m);
+}
+// a dented steel thermos clipped on the back of the belt, the cup screwed on as its lid
+function thermos(g) {
+  const T = mat(tone('#7fa38e', '#5a7d69', '#3e5949', '#18241d'), 'paint', 0.5);
+  const C = 'M -12.0 -9.8 L -9.0 -10.0 L -8.9 -0.8 C -9.4 -0.4 -11.6 -0.4 -12.0 -0.8 Z';
+  cel(g, C, T, { sh: 0.8, hl: 0.4, gloss: 0.3 });
+  clip(g, C, () => { scuffs(g, [[-11.4, -6.0, 0.5], [-9.6, -2.2, 0.4, 0.4], [-10.8, -8.6, 0.3]], PAL.steel.l, 0.7); stroke(g, 'M -11.0 -9.6 L -11.2 -1.0', T.l, 0.18, 0.6); grime(g, -6, 0, OIL); });
+  cel(g, 'M -12.2 -11.6 L -8.8 -11.8 L -8.8 -9.8 L -12.2 -9.6 Z', PAL.steel, { sh: 0.3, hl: 0.35, gloss: 0.3 });
+  for (let x = -12; x < -9; x += 0.4) stroke(g, `M ${x} -11.5 l 0 1.6`, PAL.steel.d, 0.08, 0.7);
+  cel(g, 'M -12.3 -6.2 L -8.7 -6.3 L -8.7 -5.2 L -12.3 -5.1 Z', PAL.black, { sh: 0.2, hl: 0.2 });
 }
 
 // --- arms ------------------------------------------------------------------------------------

@@ -143,6 +143,37 @@ function chest(g) {
   cel(g, 'M 4.4 -24.0 L 5.6 -24.1 L 5.7 -22.4 L 4.5 -22.3 Z', PAL.radio, { sh: 0.2, hl: 0.2, lw: 0.24 });
   for (let i = 0; i < 4; i++) fill(g, `M ${5.0 - i * 0.05} ${-24.0 + i * 0.35} l 0.5 0 l 0 0.15 l -0.5 0 Z`, PAL.radio.d);
   stroke(g, 'M 4.9 -22.3 C 4.6 -21.4 4.0 -21.6 3.8 -20.8 C 3.6 -20.0 4.2 -20.0 3.9 -19.4', PAL.radio.k, 0.22);
+  ladderBelt(g);
+}
+// The ladder belt over the coat (docs §10.22): black webbing, the big steel
+// buckle, a rescue carabiner on its ring, and the pick-head axe in its holder
+// behind the hip, red fibreglass handle down past the coat's hem, the steel
+// ground bright on the edge and the pick.
+function ladderBelt(g) {
+  const W = PAL.band, S = PAL.steel;
+  // the axe first: it hangs behind the belt
+  cel(g, 'M -6.75 -6.6 L -5.75 -6.6 L -5.95 9.0 L -6.95 9.0 Z', PAL.red, { sh: 0.3, hl: 0.3, gloss: 0.3 });
+  clip(g, 'M -6.75 -6.6 L -5.75 -6.6 L -5.95 9.0 L -6.95 9.0 Z', () => { stroke(g, 'M -6.1 -6 L -6.3 8.6', PAL.red.l, 0.14, 0.7); grime(g, 3, 9.5, SOOT); });
+  cel(g, 'M -6.95 7.2 L -5.95 7.2 L -5.95 9.2 L -6.95 9.2 Z', PAL.radio, { sh: 0.2, hl: 0.2 });
+  const HEAD = 'M -9.6 -8.4 L -6.9 -8.0 L -5.6 -8.0 L -3.0 -9.2 L -2.6 -6.0 L -5.6 -6.8 L -6.9 -6.8 L -9.0 -7.2 Z';
+  cel(g, HEAD, S, { sh: 0.4, hl: 0.4, gloss: 0.3 });
+  clip(g, HEAD, () => { fill(g, 'M -6 -10 L -2 -10 L -2 -5 L -6 -5 Z', '#1d1e20', 0.55); stroke(g, 'M -3.0 -9.1 L -2.65 -6.1', S.l, 0.24, 0.95); stroke(g, 'M -9.5 -8.3 L -8.9 -7.3', S.l, 0.14, 0.9); scuffs(g, [[-7.6, -7.7, 0.3]], S.l, 0.7); });
+  // the belt
+  const BELT = 'M -8.0 -6.4 C -2.6 -6.9 2.0 -6.9 6.8 -6.5 L 6.85 -4.8 C 2.0 -5.2 -2.6 -5.2 -8.05 -4.7 Z';
+  cel(g, BELT, W, { sh: 0.4, hl: 0.3 });
+  clip(g, BELT, () => { stitch(g, 'M -8 -6.1 C -2.6 -6.6 2 -6.6 6.8 -6.2', W.l, 0.06, 0.6); stitch(g, 'M -8 -5.1 C -2.6 -5.5 2 -5.5 6.8 -5.1', W.l, 0.06, 0.6); grime(g, -6.4, -4.6, SOOT); });
+  // the holder's leather loop over the axe
+  cel(g, 'M -7.4 -6.8 L -5.3 -6.9 L -5.2 -4.4 L -7.3 -4.3 Z', PAL.reinf, { sh: 0.3, hl: 0.25 });
+  rivet(g, -6.3, -5.6, 0.2, S);
+  // the buckle: a heavy steel plate with its hook
+  cel(g, 'M 2.4 -7.0 L 4.8 -7.1 L 4.8 -4.4 L 2.4 -4.3 Z', S, { sh: 0.3, hl: 0.35, gloss: 0.35 });
+  fill(g, 'M 2.9 -6.4 L 4.3 -6.45 L 4.3 -4.95 L 2.9 -4.9 Z', W.d);
+  stroke(g, 'M 2.5 -6.95 L 4.7 -7.0', S.l, 0.12, 0.9);
+  // the rescue carabiner, big and bright, on its ring at the side
+  stroke(g, 'M -1.0 -5.0 a 0.5 0.5 0 1 0 0.01 0', S.m, 0.22);
+  stroke(g, 'M -1.2 -4.4 C -2.2 -3.8 -2.4 -1.2 -1.6 -0.2 C -1.0 0.4 -0.2 0.2 0.1 -0.6 L 0.0 -3.6 C -0.1 -4.4 -0.6 -4.7 -1.2 -4.4 Z', S.k, 0.5);
+  stroke(g, 'M -1.2 -4.4 C -2.2 -3.8 -2.4 -1.2 -1.6 -0.2 C -1.0 0.4 -0.2 0.2 0.1 -0.6 L 0.0 -3.6 C -0.1 -4.4 -0.6 -4.7 -1.2 -4.4 Z', S.l, 0.26);
+  stroke(g, 'M -0.1 -3.4 L -0.05 -1.4', '#e8c64a', 0.3);
 }
 
 // --- arms -------------------------------------------------------------------------

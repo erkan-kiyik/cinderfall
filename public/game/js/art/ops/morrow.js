@@ -163,6 +163,34 @@ function torso(g) {
   clip(g, BELT, () => { stitch(g, 'M -7 -6.75 C -1.6 -7.15 2.6 -7.15 5.8 -6.85', PAL.web.l, 0.05, 0.5); for (const x of [-4.6, -0.6]) fill(g, `M ${x} -7.4 L ${x + 0.3} -7.4 L ${x + 0.3} -5.3 L ${x} -5.3 Z`, PAL.web.k, 0.7); });
   cel(g, 'M 3.4 -7.5 L 5.4 -7.55 L 5.45 -5.0 L 3.45 -4.95 Z', PAL.steel, { sh: 0.3, hl: 0.3, lw: 0.2 });
   fill(g, 'M 3.85 -7.0 L 5.0 -7.05 L 5.0 -5.45 L 3.85 -5.4 Z', PAL.web.d);
+  records(g);
+}
+// What she walked out with (docs §10.22): an old leather document case on the
+// belt behind the hip, stuffed too full to close, the files' edges showing,
+// a red security stamp on the top one (a mark, no lettering: the sprite is
+// mirrored), its strap buckled over them.
+function records(g) {
+  const L = PAL.strap, B = brush(g);
+  // the papers standing out of the top, a little fanned
+  for (const [x, a, c] of [[-8.6, -0.12, '#e9e1cb'], [-7.6, 0.05, '#d9cfb3'], [-6.6, 0.14, '#efe8d6']]) {
+    g.save(); g.translate(x, -7.4); g.rotate(a);
+    cel(g, 'M -1.1 -1.6 L 1.1 -1.6 L 1.1 0.6 L -1.1 0.6 Z', tone(c, c, '#a89c7e', '#5d553f'), { sh: 0.15, hl: 0.1, ao: 0.3 });
+    for (let i = 0; i < 3; i++) stroke(g, `M -0.8 ${-1.2 + i * 0.4} l ${1.2 + (i % 2) * 0.3} 0`, '#6b6458', 0.06, 0.7);
+    g.restore();
+  }
+  B.fill('M -7.9 -8.6 L -6.9 -8.65 L -6.9 -7.7 L -7.9 -7.65 Z', 'rgba(170,30,30,0.85)', 0.02);
+  B.fill('M -7.7 -8.4 L -7.1 -8.42 L -7.1 -7.9 L -7.7 -7.88 Z', '#e9e1cb', 0.01);
+  // the case: worn brown leather, its edge stitched, scuffed pale on the corners
+  const CASE = 'M -10.0 -7.4 L -5.4 -7.6 L -5.2 -1.2 C -6.6 -0.8 -8.6 -0.8 -9.8 -1.1 Z';
+  cel(g, CASE, L, { sh: 0.8, hl: 0.4, gloss: 0.2 });
+  clip(g, CASE, () => {
+    stitch(g, 'M -9.7 -7.0 L -5.6 -7.2 L -5.45 -1.4', L.l, 0.06, 0.6);
+    scuffs(g, [[-9.6, -7.2, 0.4], [-5.5, -1.4, 0.35], [-9.5, -1.4, 0.3]], L.l, 0.6);
+    grime(g, -4, -0.8, 'rgba(26,22,16,0.4)');
+  });
+  // the strap over the top and its buckle
+  cel(g, 'M -8.0 -8.4 L -7.2 -8.42 L -7.1 -3.6 L -7.9 -3.58 Z', L, { sh: 0.2, hl: 0.25 });
+  buckle(g, -8.05, -4.4, 1.0, 0.9, PAL.steel);
 }
 
 function chest(g) {

@@ -92,6 +92,25 @@ function torso(g) {
   buckle(g, -9.4, -8.2, 0.8, 1.0, PAL.steel); buckle(g, -6.6, -8.4, 0.8, 1.0, PAL.steel);
   stroke(g, 'M -4.6 -6.2 a 0.45 0.7 0 1 0 0.2 1.4', PAL.steel.m, 0.16);
   for (const [dx, a] of [[0, 0.3], [0.3, -0.2]]) { g.save(); g.translate(-4.4 + dx, -4.4); g.rotate(a); cel(g, 'M -0.15 0 L 0.15 0 L 0.15 1.2 L -0.15 1.2 Z', PAL.steel, { sh: 0.1, hl: 0.1, lw: 0.1 }); g.restore(); }
+  courierKit(g);
+}
+// From the courier years (docs §10.22): the rear bike light still clipped to
+// the bag's back edge, its red lens lit; a roll of gaffer tape hung on a
+// strap under the bag (the drone is held together with it).
+function courierKit(g) {
+  const B = brushOf(g);
+  cel(g, 'M -12.4 -10.6 L -11.2 -10.7 L -11.1 -7.6 L -12.3 -7.5 Z', PAL.helmet, { sh: 0.2, hl: 0.3, gloss: 0.3 });
+  fill(g, 'M -12.25 -10.2 L -11.35 -10.25 L -11.3 -8.0 L -12.2 -7.95 Z', '#c02a24');
+  for (let y = -9.9; y < -8.1; y += 0.42) stroke(g, `M -12.2 ${y} L -11.35 ${y - 0.02}`, '#ff8a6a', 0.08, 0.6);
+  B.dab(-11.8, -9.1, 0.9, 1.4, 'rgba(255,60,40,0.3)');
+  // the tape: a grey ring, its cardboard core, a loose end
+  stroke(g, 'M -8.6 -3.6 L -8.6 -2.2', PAL.bag.d, 0.3);
+  fill(g, 'M -10.0 -0.8 a 1.4 1.3 0 1 0 2.8 0 a 1.4 1.3 0 1 0 -2.8 0 Z', PAL.tape.d);
+  fill(g, 'M -9.85 -0.85 a 1.25 1.15 0 1 0 2.5 0 a 1.25 1.15 0 1 0 -2.5 0 Z', PAL.tape.m);
+  stroke(g, 'M -9.7 -1.5 a 1.1 1.0 0 0 1 1.9 -0.3', PAL.tape.l, 0.14, 0.8);
+  fill(g, 'M -9.25 -0.85 a 0.65 0.6 0 1 0 1.3 0 a 0.65 0.6 0 1 0 -1.3 0 Z', '#a88a5a');
+  fill(g, 'M -9.0 -0.85 a 0.4 0.36 0 1 0 0.8 0 a 0.4 0.36 0 1 0 -0.8 0 Z', '#1b1a18');
+  fill(g, 'M -7.3 -0.6 L -6.7 0.6 L -7.3 0.9 L -7.6 -0.2 Z', PAL.tape.m);
 }
 function chest(g) {
   // the windbreaker's stand collar round the neck, unzipped at the throat over the dark
@@ -205,6 +224,16 @@ function thigh(g, ctx) {
     grime(g, 3, 10, 'rgba(40,36,26,0.35)');
     fold(g, [[2.4, 1.0], [2.8, 5.0], [2.6, 8.6]], t(PAL.shorts), 0.26);
   });
+  if (!ctx.far) {
+    // a spare drone battery held on the pocket with a rubber band, its yellow
+    // label, the red and black leads tucked into the pocket (docs §10.22)
+    cel(g, 'M -2.0 4.4 L 1.2 4.3 L 1.3 7.3 L -1.9 7.4 Z', PAL.helmet, { sh: 0.3, hl: 0.3, gloss: 0.2 });
+    fill(g, 'M -1.8 4.75 L 1.1 4.66 L 1.12 6.0 L -1.78 6.08 Z', '#e8c23a');
+    stroke(g, 'M -1.5 5.35 L 0.6 5.29', '#2a2620', 0.14, 0.8);
+    stroke(g, 'M -2.2 6.5 L 1.4 6.4', '#7a2a22', 0.22);
+    stroke(g, 'M 1.2 4.6 C 2.0 4.2 2.2 3.2 1.5 2.6', '#c8302a', 0.24);
+    stroke(g, 'M 1.2 5.0 C 2.4 4.6 2.6 3.0 1.7 2.3', '#151515', 0.24);
+  }
 }
 function shin(g, ctx) {
   const t = ctx.t;
