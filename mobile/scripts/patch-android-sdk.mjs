@@ -78,6 +78,10 @@ public class MainActivity extends BridgeActivity {
     super.onCreate(savedInstanceState);
     // the films are muted videos that start on their own (docs/KOR_STORY_CINEMATIC.md §10.17)
     getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
+    // the phone's font-size setting would otherwise scale every line of the game's
+    // text (the objective grew to cover the top of the screen); the game sizes its
+    // own HUD, and Settings has a UI scale (docs/KOR_STORY_CINEMATIC.md §10.21)
+    getBridge().getWebView().getSettings().setTextZoom(100);
     View content = findViewById(android.R.id.content);
     ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
       Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -118,4 +122,4 @@ public class MainActivity extends BridgeActivity {
     }
   }
 }
-`, 'MainActivity pads content by system-bar insets + requests the fastest 60-multiple refresh rate');
+`, 'MainActivity pads content by system-bar insets, fixes text zoom at 100% + requests the fastest 60-multiple refresh rate');

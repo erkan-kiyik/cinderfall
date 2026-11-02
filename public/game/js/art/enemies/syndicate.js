@@ -11,7 +11,7 @@ import { Brush, rnd } from '../paint.js';
 import { texture } from '../tex.js';
 import { M, tone, mat } from '../style.js';
 import { WEAPONS, MAT } from '../weapons/index.js';
-import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, glove, boot, fold, headShape, skinGlaze, softEye, softBrow, softHair, neck as skinNeck, stitch, rivet, buckle, grime, scuffs, clothFolds } from '../ops/body.js';
+import { UPPER, FORE, THIGH, SHIN, TORSO, PELVIS, ELBOW_PAD, glove, boot, fold, headShape, skinGlaze, softEye, softBrow, softHair, neck as skinNeck, stitch, rivet, buckle, grime, scuffs, clothFolds } from '../ops/body.js';
 
 const PAL = {
   armor: mat(tone('#aab7c4', '#7b8b9b', '#546373', '#222c38'), 'paint', 0.1),
@@ -132,9 +132,118 @@ function helmet(g) {
   B.dab(-1.62, -9.46, 0.1, 0.1, '#2a2f37');
 }
 
+// --- the issue's kit (docs §10.21) -----------------------------------------------------------
+// What every trooper carries over the uniform, each piece big enough to read at
+// street distance: the radio on the back with its whip antenna up past the
+// helmet, the body camera on the chest with its red light on (Vanta films the
+// street), the battle belt and what hangs on it, the pistol in a drop-leg
+// holster, elbow pads, the ID patch on the sleeve.
+const disc = (x, y, r) => `M ${x - r} ${y} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0 Z`;
+function backRadio(g) {
+  const B = brush(g);
+  // the whip: a black rod curving back as it rises, its tip
+  B.line('M -8.5 -19.6 C -8.9 -23.0 -9.3 -27.0 -10.2 -31.6', '#0f1216', 0.24, 0.02);
+  B.line('M -8.34 -19.6 C -8.74 -23.0 -9.14 -27.0 -10.02 -31.5', 'rgba(150,160,174,0.4)', 0.07, 0.02);
+  B.fill(disc(-10.22, -31.7, 0.2), '#20252c', 0.02);
+  // the radio standing out of its pouch, the knob and the antenna's mount on top
+  cel(g, 'M -10.0 -20.6 L -7.6 -20.8 L -7.5 -18.6 L -10.0 -18.4 Z', PAL.black, { sh: 0.4, hl: 0.35, gloss: 0.25 });
+  cel(g, 'M -9.7 -21.5 L -9.0 -21.55 L -9.0 -20.5 L -9.7 -20.45 Z', PAL.black, { sh: 0.2, hl: 0.3 });
+  cel(g, 'M -8.8 -20.4 L -8.2 -20.42 L -8.2 -19.4 L -8.8 -19.38 Z', PAL.steel, { sh: 0.2, hl: 0.3 });
+  // the pouch: webbing, a bungee across it, the flap folded down the back
+  const RP = blob([[-10.6, -19.6], [-7.3, -19.9], [-6.9, -14.2], [-7.4, -13.2], [-10.2, -13.3], [-10.8, -15.8]]);
+  cel(g, RP, PAL.webbing, { sh: 0.7, hl: 0.3 });
+  clip(g, RP, () => {
+    for (let y = -18.4; y < -13.6; y += 1.25) stroke(g, `M -11 ${y} L -6.8 ${y - 0.2}`, PAL.webbing.d, 0.26);
+    stroke(g, 'M -10.9 -17.0 L -6.9 -16.4', '#0b0d11', 0.32);
+    stitch(g, 'M -10.4 -19.3 L -7.4 -19.6', PAL.webbing.l, 0.06, 0.5);
+  });
+}
+function bodycam(g, x = 0.2, y = -19.7) {
+  const B = brush(g);
+  const C = `M ${x} ${y} L ${x + 2.0} ${y - 0.1} L ${x + 2.05} ${y + 2.3} L ${x + 0.05} ${y + 2.4} Z`;
+  // the clip behind it, then the camera: black, a lens, the red light that says it is recording
+  B.fill(`M ${x + 0.6} ${y - 0.5} L ${x + 1.4} ${y - 0.55} L ${x + 1.4} ${y + 0.2} L ${x + 0.6} ${y + 0.2} Z`, '#22272e', 0.02);
+  cel(g, C, PAL.black, { sh: 0.4, hl: 0.35, gloss: 0.35, lw: 0.1 });
+  B.fill(disc(x + 1.0, y + 0.95, 0.62), '#07080a', 0.02);
+  B.fill(disc(x + 1.0, y + 0.95, 0.42), '#1a2330', 0.01);
+  B.dab(x + 0.84, y + 0.8, 0.14, 0.1, 'rgba(200,220,240,0.8)');
+  B.dab(x + 1.62, y + 1.95, 0.42, 0.42, 'rgba(255,40,40,0.35)');
+  B.fill(disc(x + 1.62, y + 1.95, 0.17), '#ff4a42', 0.01);
+}
+// the battle belt over the uniform's belt: webbing with its rows of loops, the
+// cobra buckle, and hung on it a rolled dump pouch at the back, a flashbang and
+// a pistol magazine
+function battleBelt(g) {
+  const BB = 'M -6.5 -6.4 C -1.4 -6.8 2.6 -6.8 6.0 -6.5 L 6.05 -3.2 C 2.6 -3.5 -1.4 -3.5 -6.55 -3.1 Z';
+  cel(g, BB, PAL.webbing, { sh: 0.45, hl: 0.3 });
+  clip(g, BB, () => {
+    for (let x = -6.2; x < 6; x += 1.15) fill(g, `M ${x} -5.6 L ${x + 0.55} -5.62 L ${x + 0.55} -4.1 L ${x} -4.08 Z`, PAL.webbing.k, 0.55);
+    stroke(g, 'M -6.5 -6.15 C -1.4 -6.55 2.6 -6.55 6.0 -6.25', PAL.webbing.l, 0.12, 0.7);
+    stitch(g, 'M -6.5 -3.5 C -1.4 -3.85 2.6 -3.85 6.0 -3.55', PAL.webbing.l, 0.05, 0.5);
+  });
+  cel(g, 'M 3.3 -6.1 L 5.3 -6.2 L 5.3 -3.5 L 3.3 -3.4 Z', PAL.black, { sh: 0.3, hl: 0.3, gloss: 0.3, lw: 0.1 });
+  fill(g, 'M 3.65 -5.5 L 4.95 -5.55 L 4.95 -4.1 L 3.65 -4.05 Z', PAL.steel.d);
+  stroke(g, 'M 3.7 -5.45 L 4.9 -5.5', PAL.steel.l, 0.1, 0.9);
+  // the dump pouch, rolled up and strapped, at the back
+  const DUMP = blob([[-7.6, -6.0], [-4.7, -6.2], [-4.3, -2.2], [-4.8, 0.3], [-6.9, 0.5], [-7.8, -2.4]]);
+  cel(g, DUMP, PAL.webbing, { sh: 0.8, hl: 0.35 });
+  clip(g, DUMP, () => { fold(g, [[-7.4, -2.8], [-6.0, -2.4], [-4.6, -2.8]], PAL.webbing, 0.26); fold(g, [[-7.2, -0.8], [-6.0, -0.4], [-4.8, -0.9]], PAL.webbing, 0.22); stroke(g, 'M -6.3 -6.4 L -6.1 0.6', '#0b0d11', 0.36); });
+  // the flashbang: a round pouch, the grey fuze and its ring over the top
+  fill(g, disc(-2.75, -7.3, 0.42), PAL.steel.d);
+  cel(g, 'M -3.5 -7.6 L -2.0 -7.65 L -2.0 -6.6 L -3.5 -6.55 Z', PAL.steel, { sh: 0.3, hl: 0.3, lw: 0.1 });
+  const FB = 'M -3.9 -6.7 L -1.7 -6.8 L -1.65 -2.6 C -2.3 -2.2 -3.3 -2.2 -3.9 -2.6 Z';
+  cel(g, FB, PAL.webbing, { sh: 0.6, hl: 0.35 });
+  clip(g, FB, () => { stroke(g, 'M -4 -5.0 L -1.6 -5.1', '#0b0d11', 0.3); stroke(g, 'M -3.2 -6.8 L -3.2 -2.4', PAL.webbing.l, 0.08, 0.4); });
+  // the pistol magazine, its flap and the pull tab
+  const MP = 'M -1.1 -6.5 L 0.6 -6.55 L 0.65 -3.0 C 0.1 -2.75 -0.6 -2.75 -1.1 -3.0 Z';
+  cel(g, MP, PAL.webbing, { sh: 0.5, hl: 0.3 });
+  cel(g, 'M -1.25 -6.8 L 0.75 -6.85 L 0.72 -5.4 C 0.1 -5.15 -0.6 -5.15 -1.22 -5.4 Z', PAL.webbing, { sh: 0.3, hl: 0.25 });
+  fill(g, 'M -0.45 -5.45 L 0.05 -5.47 L 0.05 -4.8 L -0.45 -4.78 Z', PAL.black.m);
+}
+// the pistol in a drop-leg holster on the near thigh (thigh frame), hung from
+// the belt, two straps round the leg
+function dropLeg(g, ctx) {
+  const t = ctx.t, W = t(PAL.webbing), K = t(PAL.black);
+  clip(g, THIGH, () => {
+    for (const y of [6.0, 9.4]) {
+      cel(g, `M -3.8 ${y} L 3.7 ${y - 0.25} L 3.7 ${y + 0.85} L -3.8 ${y + 1.1} Z`, W, { sh: 0.3, hl: 0.2 });
+      fill(g, `M 1.6 ${y - 0.2} L 2.5 ${y - 0.22} L 2.5 ${y + 0.95} L 1.6 ${y + 0.97} Z`, t(PAL.steel).d);
+    }
+  });
+  // the platform and its hanger
+  cel(g, 'M -1.0 1.6 L 0.6 1.6 L 0.7 4.6 L -1.0 4.6 Z', W, { sh: 0.3, hl: 0.2 });
+  cel(g, 'M -2.4 3.8 L 2.6 3.6 L 2.5 11.6 C 1.0 12.2 -1.0 12.2 -2.3 11.8 Z', W, { sh: 0.5, hl: 0.25 });
+  // the pistol's grip standing out of the back of the holster, stippled
+  const GRIP = 'M -2.6 2.6 C -2.0 2.2 -1.0 2.2 -0.5 2.5 L 0.0 5.4 L -2.0 5.8 Z';
+  cel(g, GRIP, K, { sh: 0.4, hl: 0.35 });
+  clip(g, GRIP, () => { for (let y = 3.0; y < 5.6; y += 0.42) stroke(g, `M -2.6 ${y} L 0 ${y - 0.3}`, '#050607', 0.1, 0.6); });
+  // the holster: black polymer moulded round the slide, the retention hood over it
+  const HOL = 'M -1.6 4.4 C -0.2 4.0 1.6 4.0 2.3 4.4 L 2.0 11.0 C 1.4 11.6 0.0 11.7 -0.8 11.3 C -1.4 9.6 -1.7 6.8 -1.6 4.4 Z';
+  cel(g, HOL, K, { sh: 0.7, hl: 0.45, gloss: 0.35 });
+  clip(g, HOL, () => { stroke(g, 'M 1.6 4.8 L 1.3 10.8', 'rgba(170,180,192,0.35)', 0.12); stroke(g, 'M -0.8 6.6 C 0 6.4 1 6.4 2.0 6.6', '#050607', 0.14, 0.6); });
+  cel(g, 'M -2.4 3.6 C -1.0 3.0 1.4 3.0 2.6 3.6 L 2.4 5.0 C 1.0 4.6 -1.0 4.6 -2.2 5.1 Z', K, { sh: 0.3, hl: 0.35, gloss: 0.3 });
+  rivet(g, 1.8, 4.2, 0.2, t(PAL.steel));
+}
+function elbowPad(g, ctx) {
+  const A = ctx.t(PAL.armor);
+  // the strap round the joint, then the moulded cup on the point of the elbow
+  stroke(g, 'M -2.6 1.6 C -1.0 1.4 0.6 1.6 1.9 2.0', ctx.t(PAL.webbing).k, 0.55);
+  cel(g, ELBOW_PAD, A, { sh: 0.6, hl: 0.45, gloss: 0.25 });
+  clip(g, ELBOW_PAD, () => stroke(g, curve([[-2.6, -0.6], [-1.4, -1.5], [0.2, -1.2]]), '#ffffff', 0.14, 0.6));
+  worn(g, ELBOW_PAD, [-3.0, -1.9, 0.6, 2.6], 61, ctx.far ? 0.4 : 0.7);
+}
+// the ID patch on the sleeve under the shoulder plate: a velcro tab, white bars
+// (no lettering: the sprite is mirrored when he faces left)
+function idPatch(g) {
+  cel(g, 'M -1.9 3.4 L 1.9 3.3 L 1.9 5.9 L -1.9 6.0 Z', PAL.webbing, { sh: 0.25, hl: 0.2, lw: 0.1 });
+  for (const [x0, w] of [[-1.4, 1.4], [0.3, 0.5], [1.0, 0.4]]) fill(g, `M ${x0} 4.15 L ${x0 + w} 4.12 L ${x0 + w} 4.55 L ${x0} 4.58 Z`, PAL.white.m, 0.85);
+  fill(g, 'M -1.4 4.9 L 1.4 4.84 L 1.4 5.2 L -1.4 5.26 Z', PAL.visor.m, 0.85);
+}
+
 // --- torso: navy uniform, the plate carrier --------------------------------------------------
 const PLATE = blob([[-5.2, -21.2], [1.2, -22.2], [5.8, -21.2], [7.4, -17.2], [7.0, -10.8], [5.6, -8.4], [-0.4, -8.0], [-5.8, -9.0], [-6.6, -14.4]]);
 function carrier(g, A = PAL.armor) {
+  backRadio(g);
   // the shoulder strap and cummerbund, webbing, with quick-release buckles
   cel(g, blob([[-3.4, -20.2], [-1.6, -21.0], [0.2, -23.2], [-1.6, -23.6], [-3.4, -22.2], [-4.6, -20.4]]), PAL.webbing, { sh: 0.4, hl: 0.2 });
   cel(g, blob([[-7.2, -13.0], [-4.2, -13.4], [-3.6, -8.8], [-6.6, -8.2], [-7.6, -10.2]]), PAL.webbing, { sh: 0.5, hl: 0.25 });
@@ -151,6 +260,9 @@ function carrier(g, A = PAL.armor) {
     grime(g, -14, -7.6, DUST);
   });
   worn(g, PLATE, [-6.6, -22.2, 7.4, -8.0], 31);
+  bodycam(g);
+  // the plate's edge bound in webbing, so it reads as a carrier and not a shell
+  stroke(g, PLATE, PAL.webbing.d, 0.36, 0.7);
   // the magazine pouches, navy, their flaps
   for (let i = 0; i < 3; i++) {
     const x = -2.6 + i * 2.6;
@@ -184,11 +296,9 @@ function collar(g) {
   }
 }
 function chest(g) {
-  // the collar of the uniform up round the helmet's neck, the belt, a holster
+  // the collar of the uniform up round the helmet's neck, the battle belt
   collar(g);
-  cel(g, 'M -6.0 -5.4 C -1.2 -5.75 2.6 -5.75 5.7 -5.5 L 5.75 -3.6 C 2.6 -3.85 -1.2 -3.85 -6.05 -3.5 Z', PAL.webbing, { sh: 0.4, hl: 0.2 });
-  cel(g, 'M 2.6 -5.9 L 4.8 -5.95 L 4.8 -3.3 L 2.6 -3.25 Z', PAL.black, { sh: 0.3, hl: 0.25, lw: 0.22 });
-  fill(g, 'M 3.1 -5.0 L 4.3 -5.02 L 4.3 -4.2 L 3.1 -4.18 Z', PAL.steel.m);
+  battleBelt(g);
 }
 
 // --- limbs -------------------------------------------------------------------------------------
@@ -211,6 +321,7 @@ function upper(g, ctx) {
   cel(g, UPPER, t(PAL.suit), { sh: 1.5, hl: 0.45 });
   clothFolds(g, UPPER, [[[-2.0, 6.2], [-0.4, 7.0], [1.8, 6.6]], [[-1.8, 10.4], [0.0, 11.0], [1.8, 10.6]]], t(PAL.suit));
   clip(g, UPPER, () => { fold(g, [[-1.8, 8.8], [-0.4, 9.7], [1.2, 9.9]], t(PAL.suit)); stitch(g, curve([[-2.2, 3.0], [-2.4, 7.0], [-2.0, 11.0]]), t(PAL.suit).l, 0.07, 0.5); });
+  if (!ctx.far) idPatch(g);
   shoulderPlate(g, ctx);
 }
 function fore(g, ctx) {
@@ -218,19 +329,25 @@ function fore(g, ctx) {
   cel(g, FORE, t(PAL.suit), { sh: 1.3, hl: 0.4 });
   clip(g, FORE, () => fold(g, [[-1.4, 2.6], [0.0, 3.4], [1.4, 3.2]], t(PAL.suit), 0.26));
   cel(g, blob([[-2.1, 8.0], [2.0, 7.8], [2.1, 10.2], [-2.1, 10.4]]), t(PAL.webbing), { sh: 0.3, hl: 0.2, lw: 0.22 });
+  elbowPad(g, ctx);
 }
 function hand(g, ctx) { glove(g, ctx, PAL.glove, { knuckle: PAL.black }); }
-function thigh(g, ctx) {
-  const t = ctx.t;
+function thigh(g, ctx, o = {}) {
+  const t = ctx.t, holster = !ctx.far && o.holster !== false;
   cel(g, THIGH, t(PAL.suit), { sh: 1.6, hl: 0.4 });
   clip(g, THIGH, () => {
-    cel(g, 'M -2.2 4.0 L 2.0 3.8 L 2.1 9.6 C 0.8 10.0 -0.9 10.0 -2.1 9.7 Z', t(PAL.suit), { sh: 0.4, hl: 0.25, lw: 0.22, ao: 0.3 });
-    stitch(g, 'M -2.0 5.4 L 1.9 5.2', t(PAL.suit).l, 0.07, 0.6);
+    if (!holster) {
+      // the cargo pocket: bellowed, its flap and the flap's shadow
+      cel(g, 'M -2.2 4.0 L 2.0 3.8 L 2.1 9.6 C 0.8 10.0 -0.9 10.0 -2.1 9.7 Z', t(PAL.suit), { sh: 0.4, hl: 0.3, lw: 0.22, ao: 0.4 });
+      cel(g, 'M -2.4 3.6 L 2.2 3.4 L 2.2 5.4 C 0.8 5.7 -0.9 5.7 -2.3 5.5 Z', t(PAL.suit), { sh: 0.25, hl: 0.3, lw: 0.2, ao: 0.5 });
+      stitch(g, 'M -2.0 5.2 C -0.8 5.4 0.8 5.4 1.9 5.1', t(PAL.suit).l, 0.07, 0.6);
+    }
     stitch(g, curve([[2.2, 0.6], [2.0, 7.0], [1.6, 15.0]]), t(PAL.suit).l, 0.07, 0.5);
     fold(g, [[-2.0, 12.4], [0.0, 13.2], [2.0, 13.0]], t(PAL.suit));
   });
   // the suit's cloth gathered behind the knee and pulled across the thigh
   clothFolds(g, THIGH, [[[-3.0, 11.0], [-1.0, 11.8], [1.6, 11.4]], [[-2.8, 2.6], [-1.2, 3.2], [-0.4, 4.4]]], t(PAL.suit));
+  if (holster) dropLeg(g, ctx);
 }
 function kneePlate(g, ctx, A = PAL.armor) {
   const KP = blob([[-0.8, -2.6], [2.4, -2.4], [3.4, 0.4], [3.0, 3.6], [0.8, 4.4], [-0.8, 2.4], [-1.0, -0.2]]);
@@ -340,7 +457,7 @@ function heavyFore(g, ctx) {
   guard(g, ctx, 'M -2.5 1.4 C -0.8 1.0 0.8 1.0 2.4 1.2 C 2.5 3.4 2.5 5.6 2.3 7.6 C 0.7 7.9 -0.8 7.9 -2.2 7.8 C -2.5 5.6 -2.6 3.4 -2.5 1.4 Z', [-2.5, 1.0, 2.4, 7.9], 53, 2);
 }
 function heavyThigh(g, ctx) {
-  thigh(g, ctx);
+  thigh(g, ctx, { holster: false });
   guard(g, ctx, 'M -3.2 1.6 C -1.0 1.1 1.6 1.0 3.4 1.2 C 3.9 4.0 3.8 7.0 3.2 9.6 C 1.2 10.1 -0.8 10.2 -2.8 10.0 C -3.5 7.4 -3.6 4.4 -3.2 1.6 Z', [-3.6, 1.0, 3.8, 10.2], 55, 3);
 }
 
@@ -433,6 +550,8 @@ function lightTorso(g) {
   cel(g, LPLATE, PAL.armor, { sh: 1.6, hl: 0.55 });
   clip(g, LPLATE, () => { stroke(g, curve([[-4.0, -20.0], [1.2, -21.0], [5.0, -20.0]]), '#ffffff', 0.14, 0.6); for (const [x, y] of [[-4.2, -19.6], [5.4, -19.8]]) rivet(g, x, y, 0.24, PAL.steel); });
   worn(g, LPLATE, [-5.8, -21.8, 6.8, -10.8], 35);
+  stroke(g, LPLATE, PAL.webbing.d, 0.34, 0.7);
+  bodycam(g, 0.4, -19.9);
   // the shell bandolier from the far shoulder to the near hip
   const BAND = 'M -6.0 -21.2 L -4.0 -22.2 L 6.6 -7.2 L 5.0 -5.8 Z';
   cel(g, BAND, PAL.webbing, { sh: 0.5, hl: 0.25 });
@@ -452,7 +571,7 @@ function lightUpper(g, ctx) {
 }
 function lightChest(g) {
   collar(g);
-  cel(g, 'M -6.0 -5.4 C -1.2 -5.75 2.6 -5.75 5.7 -5.5 L 5.75 -3.6 C 2.6 -3.85 -1.2 -3.85 -6.05 -3.5 Z', PAL.webbing, { sh: 0.4, hl: 0.2 });
+  battleBelt(g);
 }
 
 export const HUCUMCU = {
@@ -504,6 +623,13 @@ function gallTorso(g) {
   // the shoulder board on the near side, silver piping
   cel(g, 'M -5.6 -22.6 L -1.0 -23.4 L -0.6 -22.2 L -5.2 -21.4 Z', G.coat, { sh: 0.2, hl: 0.2, lw: 0.2 });
   stroke(g, 'M -5.6 -22.6 L -1.0 -23.4', G.silver.m, 0.14);
+  // his sidearm in a black flap holster on the belt behind the hip (docs §10.21)
+  const HOL = 'M -7.6 -5.6 C -6.4 -6.0 -4.6 -6.0 -3.8 -5.6 L -4.0 -0.6 C -4.8 0.0 -6.6 0.0 -7.3 -0.6 Z';
+  cel(g, HOL, G.leather, { sh: 0.7, hl: 0.45, gloss: 0.35 });
+  const FLAP = 'M -7.8 -6.4 C -6.4 -6.9 -4.6 -6.9 -3.6 -6.4 L -3.8 -3.8 C -4.6 -3.2 -6.8 -3.2 -7.6 -3.8 Z';
+  cel(g, FLAP, G.leather, { sh: 0.4, hl: 0.4, gloss: 0.4 });
+  stitch(g, 'M -7.4 -4.0 C -6.6 -3.55 -4.8 -3.55 -4.0 -4.0', G.leather.l, 0.05, 0.6);
+  rivet(g, -5.7, -3.9, 0.26, G.silver);
 }
 function gallChest(g) {
   const B = brush(g), C = G.coat;
@@ -533,6 +659,38 @@ function gallChest(g) {
   B.line('M 1.98 -22.6 L 2.36 -22.62', 'rgba(255,255,255,0.6)', 0.04);
   // the armour vest's edge just showing under the collar's point
   B.line('M 3.7 -20.8 C 4.0 -20.5 4.3 -20.3 4.6 -20.2', G.vest.m, 0.16, 0.03);
+  gallRegalia(g);
+}
+// What makes the Secretary read as the man in charge from across the square
+// (docs §10.21): the ribbon bar over the breast, the cross strap of polished
+// leather from the far shoulder to the near hip with its silver ring, and the
+// silver aiguillette looped from the shoulder board to the first button.
+function gallRegalia(g) {
+  const B = brush(g);
+  // the ribbons, two rows of three in a silver frame
+  const RIB = [['#951f22', '#e8e3d6', '#951f22'], ['#1d2a4a', '#c9a34a', '#1d2a4a'], ['#2f5a3a', '#e8e3d6', '#2f5a3a'], ['#e8e3d6', '#951f22', '#e8e3d6'], ['#c9a34a', '#1d2a4a', '#c9a34a'], ['#4a2f5a', '#c9a34a', '#4a2f5a']];
+  B.fill('M -2.1 -20.0 L 1.9 -20.2 L 1.95 -18.3 L -2.05 -18.1 Z', G.silver.d, 0.02);
+  for (let i = 0; i < 6; i++) {
+    const x = -1.95 + (i % 3) * 1.27, y = -19.9 + Math.floor(i / 3) * 0.85 - (i % 3) * 0.06;
+    for (let k = 0; k < 3; k++) B.fill(`M ${x + k * 0.4} ${y} L ${x + k * 0.4 + 0.42} ${y - 0.02} L ${x + k * 0.4 + 0.42} ${y + 0.72} L ${x + k * 0.4} ${y + 0.74} Z`, RIB[i][k], 0.01);
+    B.line(`M ${x} ${y + 0.05} L ${x + 1.2} ${y + 0.02}`, 'rgba(255,255,255,0.35)', 0.06, 0.02);
+  }
+  // the cross strap: polished black leather, the lamp along its edge, a silver ring at the chest
+  const XS = 'M 3.0 -23.4 L 4.4 -22.8 L -5.6 -5.6 L -7.0 -6.3 Z';
+  cel(g, XS, G.leather, { sh: 0.3, hl: 0.35, gloss: 0.45 });
+  stitch(g, 'M 3.5 -22.9 L -6.4 -6.1', G.leather.l, 0.05, 0.5);
+  const rx = -0.4, ry = -15.4;
+  B.fill(disc(rx, ry, 0.72), G.silver.k, 0.02);
+  B.fill(disc(rx, ry, 0.6), G.silver.m, 0.02);
+  B.fill(disc(rx, ry, 0.34), G.leather.d, 0.02);
+  B.dab(rx - 0.25, ry - 0.3, 0.2, 0.1, 'rgba(255,255,255,0.9)');
+  // the aiguillette: two silver cords from under the shoulder board, looping across the
+  // breast to the first button, a silver tag at the end
+  const cord = (d) => { B.line(d, G.silver.k, 0.34, 0.02); B.line(d, G.silver.m, 0.22, 0.02); g.save(); g.setLineDash([0.22, 0.18]); B.line(d, G.silver.l, 0.1, 0.02); g.restore(); };
+  cord('M -1.6 -22.8 C -2.4 -19.4 -1.4 -16.6 1.0 -15.6');
+  cord('M -1.0 -22.9 C -0.8 -20.4 -0.1 -18.6 1.0 -15.6');
+  B.line('M 1.0 -15.6 C 1.4 -14.6 1.4 -13.6 1.1 -12.8', G.silver.m, 0.16, 0.02);
+  cel(g, 'M 0.85 -12.9 L 1.35 -12.92 L 1.3 -11.6 L 1.1 -11.4 L 0.9 -11.6 Z', G.silver, { sh: 0.2, hl: 0.3, gloss: 0.4 });
 }
 function gallUpper(g, ctx) {
   const t = ctx.t;

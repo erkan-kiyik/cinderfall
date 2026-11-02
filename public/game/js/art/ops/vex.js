@@ -36,6 +36,8 @@ const PAL = {
   skin: mat(M.skinB, 'skin', 0.4),
   brass: mat(M.brass, 'steel', 0.4),
   wood: mat(tone('#a07a52', '#7a5a39', '#553e27', '#271b10'), 'leather', 0.4),
+  canvas: mat(tone('#7d7a5c', '#5c5a42', '#3f3d2c', '#1c1b13'), 'canvas', 0.7),
+  olive: mat(tone('#6b6e52', '#4d503a', '#343627', '#16170f'), 'paint', 0.5),
 };
 const SOOT = 'rgba(28,22,18,0.55)';
 
@@ -75,7 +77,40 @@ const JACKET = blob([
 // the plate cut from the furnace's shell, bent a little round the chest
 const PLATE = blob([[-3.4, -20.4], [1.0, -20.9], [5.6, -20.0], [6.9, -17.2], [6.7, -12.6], [6.1, -9.6], [1.4, -9.0], [-2.8, -9.4], [-3.9, -12.8], [-4.0, -17.4]]);
 const POCKET = 'M -6.3 -9.4 L -3.4 -9.7 L -3.2 -4.6 C -4.2 -4.3 -5.3 -4.3 -6.2 -4.5 Z';
+// The cells' kit (docs §10.21): an army-surplus canvas satchel slung behind the
+// hip, its flap buckled, the ember chalked on it; and on the plate's strap the
+// old walkie-talkie the crews talk on, its stubby rubber antenna up by the scarf.
+const SATCHEL = blob([[-10.0, -9.4], [-6.0, -9.8], [-5.6, -4.0], [-6.2, -1.2], [-9.4, -1.0], [-10.4, -4.6]]);
+function satchel(g) {
+  const C = PAL.canvas;
+  cel(g, SATCHEL, C, { sh: 0.9, hl: 0.4 });
+  clip(g, SATCHEL, () => {
+    // the flap over the top, its edge and its strap down to the buckle
+    cel(g, 'M -10.6 -10.0 L -5.6 -10.4 L -5.7 -5.6 C -7.2 -5.0 -8.8 -5.0 -10.4 -5.4 Z', C, { sh: 0.4, hl: 0.35, ao: 0.5 });
+    stitch(g, 'M -10.2 -5.9 C -8.8 -5.5 -7.2 -5.5 -5.9 -6.0', C.l, 0.08, 0.6);
+    cel(g, 'M -8.4 -7.4 L -7.5 -7.45 L -7.5 -3.4 L -8.4 -3.35 Z', PAL.strap, { sh: 0.2, hl: 0.2 });
+    // the ember, chalked on in a hurry
+    stroke(g, 'M -9.4 -8.6 C -9.0 -9.3 -8.2 -9.3 -7.9 -8.7 C -8.1 -8.1 -8.9 -8.0 -9.4 -8.6 Z', 'rgba(232,140,80,0.75)', 0.16);
+    grime(g, -6, 0, SOOT);
+  });
+  buckle(g, -8.55, -5.2, 1.2, 1.0, PAL.steel);
+}
+function radio(g) {
+  // the clip on the strap, the antenna, the set: olive drab, chipped to the metal, a knob
+  stroke(g, 'M -2.5 -20.6 L -2.75 -24.2', '#141210', 0.5);
+  stroke(g, 'M -2.4 -20.6 L -2.62 -24.0', 'rgba(150,140,130,0.4)', 0.12);
+  const R = 'M -3.6 -20.8 L -1.4 -21.0 L -1.2 -16.2 C -1.8 -15.9 -2.9 -15.9 -3.5 -16.1 Z';
+  cel(g, R, PAL.olive, { sh: 0.5, hl: 0.4, gloss: 0.2 });
+  clip(g, R, () => {
+    for (let y = -19.6; y < -17.4; y += 0.4) stroke(g, `M -3.2 ${y} L -1.6 ${y - 0.05}`, PAL.olive.k, 0.12, 0.8);
+    fill(g, 'M -3.2 -17.0 L -1.6 -17.05 L -1.6 -16.5 L -3.2 -16.45 Z', '#1b1a17');
+    scuffs(g, [[-1.6, -20.4, 0.3], [-3.3, -16.6, 0.25]], '#a8a296', 0.7);
+  });
+  cel(g, 'M -1.9 -21.6 L -1.4 -21.62 L -1.4 -20.9 L -1.9 -20.88 Z', PAL.steel, { sh: 0.2, hl: 0.3 });
+  fill(g, 'M -2.9 -18.7 a 0.18 0.18 0 1 0 0.36 0 a 0.18 0.18 0 1 0 -0.36 0 Z', '#e0623a');
+}
 function torso(g) {
+  satchel(g);
   cel(g, PELVIS, PAL.pants, { sh: 1.1, hl: 0.4 });
   cel(g, TORSO, PAL.shirt, { sh: 1.0, hl: 0.3, line: false });
   cel(g, JACKET, PAL.jacket, { sh: 2.2, hl: 0.6 });
@@ -142,6 +177,7 @@ function torso(g) {
     for (const [x, y] of [[-2.8, -19.4], [5.0, -19.2], [-2.6, -10.2], [5.0, -10.4]]) rivet(g, x, y, 0.36, PAL.steel);
     stroke(g, curve([[-3.2, -19.8], [1.2, -20.3], [5.6, -19.5]]), PAL.plate.l, 0.24, 0.6);
   });
+  radio(g);
 }
 
 function chest(g) {

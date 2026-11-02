@@ -13,7 +13,7 @@ export class MissionHud {
     this.arrow = el('marrow', '<span></span>');
     this.toastEl = el('toast');
     this.card = el('mcard hide', '<div class="box"></div>');
-    this.last = {}; this.toastT = 0;
+    this.last = {}; this.toastT = 0; this.objT = 0;
   }
   set(k, v, fn) { if (this.last[k] !== v) { this.last[k] = v; fn(v); } }
 
@@ -22,7 +22,8 @@ export class MissionHud {
     this.set('obj', `${i}|${text}|${kick}`, () => {
       this.obj.querySelector('.k').textContent = kick || (i > n ? t('game.allDone') : t('game.objCount', { i, n }));
       this.obj.querySelector('.t').textContent = text;
-      this.obj.classList.remove('flash'); void this.obj.offsetWidth; this.obj.classList.add('flash');
+      this.obj.classList.remove('flash', 'mini'); void this.obj.offsetWidth; this.obj.classList.add('flash');
+      this.objT = 4; // full size for a few seconds, then it settles (docs §10.21)
     });
     this.set('hack', hack === null ? -1 : Math.round(hack * 100), (v) => {
       this.obj.classList.toggle('hack', v >= 0);
@@ -66,7 +67,10 @@ export class MissionHud {
   }
 
   toast(text, sec = 1.6) { this.toastEl.textContent = text; this.toastEl.classList.add('on'); this.toastT = sec; }
-  update(dt) { if (this.toastT > 0) { this.toastT -= dt; if (this.toastT <= 0) this.toastEl.classList.remove('on'); } }
+  update(dt) {
+    if (this.toastT > 0) { this.toastT -= dt; if (this.toastT <= 0) this.toastEl.classList.remove('on'); }
+    if (this.objT > 0) { this.objT -= dt; if (this.objT <= 0) this.obj.classList.add('mini'); }
+  }
 
   // full-screen card; buttons: [{ label, ghost, fn }]
   show(html, buttons) {

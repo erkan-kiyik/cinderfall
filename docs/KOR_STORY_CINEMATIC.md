@@ -1217,3 +1217,52 @@ efektleri (yağmur, yansıma, buhar) tamamen kısılmış ve kare hâlâ 3 saniy
 boyunca bütçeyi aşıyorsa kalite bir kademe düşüyor (yüksek → orta → düşük) ve
 bu telefona kaydediliyor: sonraki açılışlar oradan başlıyor. Yalnız Ayarlar'da
 kalite "Oto" iken çalışıyor; elle seçilmiş kaliteye dokunmuyor.
+
+### 10.21 Karakter detayı ve görev satırı
+**Görev satırı.** Şikâyet: görev sırasında hedef kutusu telefonda ekranın
+üst yarısını kaplıyor. Kutu iki satırdı (üstte "HEDEF 1/4", altında 18 px
+yazı) ve tepeden 48 px aşağıdaydı. Android'de WebView, telefonun yazı boyutu
+ayarını oyunun bütün yazılarına uyguluyordu; büyük yazı ayarlı bir telefonda
+kutu ve altındaki boss çubuğu ekranın üstünü dolduruyordu.
+- Hedef artık en üstte (8 px) tek ince satır: "HEDEF 1/4 · Kontrol noktasını
+  geç", 15 px; ekranın yarısından geniş olamaz, sığmayan yazı üç noktayla
+  biter. Yeni hedef geldiğinde 4 saniye tam boyda kalır, sonra küçülüp
+  soluklaşır (12,5 px, %80). Hack ilerlemesi satırın altında ince bir çizgi.
+- Boss çubuğu satırın hemen altında, daha dar ve daha ince yazıyla.
+- Android kabuğu WebView'in yazı yakınlaştırmasını %100'e sabitliyor
+  (`setTextZoom(100)`); oyunun yazı boyutunu oyun belirliyor (Ayarlar'daki
+  arayüz ölçeği hâlâ çalışıyor).
+- 800×360'lık telefon ekranında hedef kutusu 194×45 pikselden 181×21'e indi.
+
+**Vanta muhafızları.** Karakterler atlasa birim başına 3,6–7 piksel boyanıyor
+(64 birimlik bir figür 230–450 piksel); bir birimin altındaki işler (dikiş,
+çizik) telefonda kayboluyor. Bu yüzden eklenenler oyun mesafesinden okunan
+parçalar, hepsi Vanta'nın "temiz, yeni, tek tip" teçhizatında:
+- Sırtta telsiz kesesi ve miğferin arkasından yükselen kamçı anten
+  (silüette görünen ilk şey).
+- Göğüs plakasında yaka kamerası, kırmızı kayıt ışığı yanık: Vanta sokağı
+  filme alıyor.
+- Plakanın kenarı dokuma kayışla çevrili; plaka kabuk değil taşıyıcı gibi.
+- Taktik kemer: ilmek sıraları, kobra toka; arkada rulo yapılmış boş şarjör
+  torbası, yanda şok bombası kesesi (gri tapası üstte), önde tabanca şarjörü.
+- Yakın bacakta bacak tipi tabanca kılıfı: kemerden asılı, iki bacak kayışı,
+  tabancanın kabzası arkadan çıkıyor. Kalkanlıda bacak zırhı kılıfın yerini
+  tutuyor, uzak bacakta körüklü kargo cebi.
+- Dirseklerde kalıp dirsek koruması; kolda omuz plakasının altında kimlik
+  bandı (beyaz çubuklar ve kırmızı şerit, yazı yok: figür sola dönünce
+  aynalanıyor).
+- Hücumcuda da kamera ve kemer var; telsiz yok (hafif teçhizat).
+
+**Sekreter Gall.** Meydanın öbür ucundan "komutan" diye okunsun diye:
+göğüste iki sıra nişan şeridi, uzak omuzdan yakın kalçaya cilalı çapraz
+kayış ve göğsünde gümüş halka, omuz apoletinden ilk düğmeye kıvrılan gümüş
+kordon (ucu gümüş), kemerinde kalçasının arkasında kapaklı siyah tabanca
+kılıfı.
+
+**Flint.** Hücrelerin teçhizatı: kalçanın arkasında askeri fazlası kanvas
+çanta (kapağı tokalı, üstüne aceleyle tebeşirle kor işareti çizilmiş) ve
+plakanın askısında eski yeşil el telsizi (ızgarası, turuncu düğmesi).
+
+İlk açılıştaki boyama süresi değişmedi (telefon benzetimi, 4 kat yavaş
+işlemci, orta kalite: önce 6,1–6,2 sn, sonra 5,8–5,9 sn; fark ölçüm
+gürültüsü içinde).
