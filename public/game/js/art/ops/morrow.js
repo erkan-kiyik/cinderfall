@@ -353,6 +353,8 @@ function head(g) {
     stroke(g, 'M 2.65 -6.4 C 3.3 -6.65 4.0 -6.55 4.45 -6.2', Kn.l, 0.12, 0.7);
   });
   clothFolds(g, SNOOD, [[[2.1, -2.0], [3.2, -1.9], [4.4, -2.3]], [[2.0, -0.8], [3.0, -0.6], [3.9, -1.0]], [[2.6, -5.5], [3.7, -5.7], [4.6, -5.3]]], Kn);
+  // a lock of dark hair escaped from the hood over the glasses (docs §10.23)
+  for (const [d, w, c] of [['M 3.9 -9.2 C 3.7 -8.6 3.9 -8.2 3.5 -7.8 C 3.3 -7.6 3.2 -7.3 3.3 -7.0', 0.36, '#4a2a1c'], ['M 4.2 -9.3 C 4.2 -8.8 4.4 -8.4 4.1 -8.0', 0.22, '#5a3424'], ['M 3.95 -9.1 C 3.8 -8.6 3.95 -8.3 3.62 -7.9', 0.09, 'rgba(196,140,104,0.75)'], ['M 4.24 -9.2 C 4.26 -8.8 4.4 -8.5 4.16 -8.1', 0.06, 'rgba(196,140,104,0.6)']]) stroke(g, d, c, w);
   // the glasses: round, smoked brown, a thin steel rim, the arm back under the hood
   stroke(g, 'M 2.85 -7.35 L 2.3 -7.25', PAL.steel.d, 0.18);
   const gr = g.createLinearGradient(3.2, -8.1, 3.7, -6.4);
@@ -360,6 +362,14 @@ function head(g) {
   g.fillStyle = gr; g.fill(new Path2D(LENS));
   clip(g, LENS, () => { fill(g, 'M 3.05 -8.3 L 3.5 -8.3 L 3.0 -6.2 L 2.55 -6.2 Z', '#e8eef4', 0.3); fill(g, 'M 3.4 -6.75 L 4.1 -6.85 L 4.1 -6.55 L 3.4 -6.5 Z', '#ffc890', 0.4); });
   stroke(g, LENS, '#2a2620', 0.26); stroke(g, LENS, PAL.steel.l, 0.06, 0.5);
+  // the rain on the hood: the cloth wet and dark over the crown, beads on its peak
+  clip(g, HOOD, () => {
+    for (const [x, y, rx, ry] of [[0.4, -10.6, 1.6, 0.8], [-2.8, -9.6, 1.2, 0.9], [2.6, -10.2, 0.9, 0.5]]) fill(g, ell(x, y, rx, ry), J.k, 0.28);
+    for (const [x, y] of [[3.6, -10.0], [1.8, -10.9], [-0.8, -11.1], [-3.4, -10.2], [4.4, -9.5]]) { fill(g, ell(x, y, 0.16, 0.13), J.k, 0.6); fill(g, ell(x - 0.04, y - 0.04, 0.06, 0.05), '#e8eee4', 0.85); }
+  });
+  // the hood's drawcord hanging from its channel by the chin, a steel tip on it
+  stroke(g, 'M 2.3 -2.4 C 2.5 -1.4 2.4 -0.4 2.7 0.6', '#2a2a22', 0.2);
+  cel(g, 'M 2.55 0.5 L 2.95 0.45 L 3.0 1.4 L 2.62 1.45 Z', PAL.steel, { sh: 0.1, hl: 0.2, gloss: 0.3 });
   // the headset over the hood: the band across the crown, the cup over the ear, the boom
   stroke(g, 'M -1.2 -4.6 C -1.8 -3.0 -2.2 -1.4 -2.0 0.8', K.k, 0.24);
   cel(g, 'M -1.15 -7.6 C -1.35 -9.4 -0.95 -11.0 0.2 -11.9 L 0.6 -11.6 C -0.45 -10.8 -0.7 -9.2 -0.55 -7.6 Z', K, { sh: 0.3, hl: 0.35, lw: 0.12 });

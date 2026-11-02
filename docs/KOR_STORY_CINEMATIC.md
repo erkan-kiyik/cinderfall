@@ -1292,3 +1292,38 @@ parçalar) Warden, Vesper, Skye ve Bulwark:
 Hepsi oyun boyutunda (orta kalite, 5,2 piksel/birim) seçiliyor. İlk
 açılıştaki boyama süresi değişmedi (telefon benzetimi: önce 5,4–6,2 sn,
 sonra 5,2–5,5 sn; ölçüm gürültüsü içinde).
+
+### 10.23 Kafalar ve yüzler: ayrıntı
+§10.16'daki karar duruyor: operatörlerin yüzü görünmez (göz, burun, ağız
+yok); yüzü kask, gözlük, maske ve kumaş oluşturur. Bu turda o parçalar ve
+görünen ten (kulak, şakak, ense) ayrıntılandı; Gall'ın açık yüzüne bir iz
+eklendi.
+
+- **Flint:** beresinin kıvrık kenarı örgü nervürlü (her nervürün üstü
+  ışıkta); kenarda sendikanın rozeti: bakır çemberde emaye kor, boyası
+  kırık; kulağın önünde kısa, uçları kıvılcımdan yanık favori; gözlük
+  kayışının kulağın arkasında çelik tokası.
+- **Warden:** kaskın kenarının altından çenenin altına inen çene kayışı ve
+  tokası; nefes aldığı yerde ıslak, kararmış başlık örgüsü; kaskta siperden
+  yukarı yayılan is lekeleri, siperin önünde ısıdan kahverengileşmiş boya,
+  kubbede ışığı arka duvarında tutan bir göçük.
+- **Vesper:** kapüşondan kaçıp gözlüğün arkasına düşen koyu kestane perçem
+  (görünen tek saç); yağmur: kapüşonun tepesinde ıslak koyu lekeler ve
+  siperinde su damlaları; çenenin yanında kordon kanalından sarkan kordon ve
+  çelik ucu.
+- **Skye:** kulakta tek kablolu kulaklık, beyaz kablosu boynundan yakaya
+  iner; kulak memesinde çelik küpe.
+- **Bulwark:** baretin arkasından ensesine yağmura karşı sarkan turuncu
+  bez; fener bandının altına sıkıştırılmış kırmızı marangoz kalemi; vinç
+  ekiplerinin değiş tokuş ettiği çıkartmalar (yeşil artı, mavi kare, yarısı
+  yırtılmış sarı-siyah şerit; yazı yok, figür aynalanıyor); siperde
+  yağmur damlaları.
+- **Vanta kaskı (Tetikçi, Kalkanlı):** kabuğun arkasında cırtla tutturulmuş
+  siyah stroboskop; yarığın derinindeki kırmızı camın çerçevesini
+  aydınlatıyor, camda ince bir tarama çizgisi.
+- **Gall:** gözün altından çeneye doğru inen eski bir yara izi: soluk,
+  kabarık bir dikiş, kenarları içe çekik, iki yanında dikiş izleri.
+
+Kafalar oyunda küçük (orta kalitede 9 birimlik kafa yaklaşık 47 piksel,
+menü fotoğrafında yaklaşık 90 piksel); eklenenler o boyda renk ve biçim
+olarak okunan parçalar. İlk açılış süresi değişmedi (5,8 sn).

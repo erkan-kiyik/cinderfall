@@ -332,16 +332,26 @@ function head(g) {
   }
   for (const a of [0.6, 2.2, 3.8, 5.4]) rivet(g, 2.15 + Math.cos(a) * 1.35, -6.8 + Math.sin(a) * 1.3, 0.11, PAL.copper);
   stroke(g, 'M 3.35 -6.8 L 3.7 -6.75', PAL.copper.d, 0.32);
-  // the strap round the cap to the back
+  // the sideburn in front of the ear, cut short, singed at its tips
+  for (let i = 0; i < 7; i++) stroke(g, `M ${-0.15 + i * 0.09} -7.05 L ${-0.25 + i * 0.1} ${-5.7 + (i % 3) * 0.12}`, i % 2 ? '#2a1a12' : '#3b2618', 0.09, 0.85);
+  // the strap round the cap to the back, its steel buckle behind the ear
   stroke(g, 'M 0.6 -7.0 C -0.6 -7.3 -1.6 -7.3 -2.4 -7.1', PAL.strap.m, 0.55);
   stitch(g, 'M 0.6 -7.0 C -0.6 -7.3 -1.6 -7.3 -2.4 -7.1', PAL.strap.l, 0.07, 0.6);
+  buckle(g, -2.3, -7.55, 0.6, 0.85, PAL.steel);
   // the knit cap, its brim turned up, low at the back
   const CAP = 'M -4.1 -5.6 C -4.7 -8.6 -3.6 -11.4 0.4 -12.0 C 3.4 -12.2 4.9 -10.4 4.6 -8.3 L 4.2 -8.0 C 1.6 -8.5 -1.6 -7.6 -4.1 -5.6 Z';
   cel(g, CAP, PAL.cap, { sh: 1.2, hl: 0.45 });
   clip(g, CAP, () => { fill(g, 'M -1 -12.4 L 2 -12.4 L 1.6 -10.6 L -0.8 -10.8 Z', PAL.cap.d, 0.4); scuffs(g, [[1.2, -10.4, 0.4], [-2.0, -9.4, 0.3]], '#6b5a50', 0.35); });
   const BRIM = 'M -4.3 -5.4 C -1.6 -7.5 1.6 -8.5 4.5 -8.1 L 4.6 -9.2 C 1.6 -9.6 -1.8 -8.7 -4.6 -6.6 Z';
   cel(g, BRIM, mat(PAL.cap, 'knit', 0.9), { sh: 0.4, hl: 0.25, lw: 0.26 });
-  fill(g, 'M 2.4 -8.7 a 0.22 0.18 0 1 0 0.44 0 a 0.22 0.18 0 1 0 -0.44 0 Z', '#120f0d');
+  // the cuff's ribs, lit on their tops (docs §10.23)
+  clip(g, BRIM, () => { for (let x = -4.8; x < 4.8; x += 0.44) { stroke(g, `M ${x} -9.8 L ${x - 0.3} -5.0`, PAL.cap.k, 0.15, 0.75); stroke(g, `M ${x + 0.17} -9.8 L ${x - 0.13} -5.0`, PAL.cap.l, 0.07, 0.45); } });
+  // the union's pin on the cuff: an enamel ember in a copper ring, the paint chipped
+  fill(g, 'M 2.05 -8.62 a 0.5 0.46 0 1 0 1.0 0 a 0.5 0.46 0 1 0 -1.0 0 Z', PAL.copper.d);
+  fill(g, 'M 2.15 -8.64 a 0.4 0.37 0 1 0 0.8 0 a 0.4 0.37 0 1 0 -0.8 0 Z', PAL.copper.m);
+  fill(g, 'M 2.38 -8.6 C 2.42 -8.95 2.7 -9.0 2.78 -8.78 C 2.86 -8.56 2.72 -8.36 2.55 -8.36 C 2.42 -8.38 2.36 -8.48 2.38 -8.6 Z', '#e0622e');
+  fill(g, 'M 2.5 -8.66 C 2.54 -8.82 2.66 -8.84 2.7 -8.72 C 2.7 -8.6 2.6 -8.54 2.5 -8.66 Z', '#ffc070', 0.9);
+  stroke(g, 'M 2.18 -8.86 a 0.42 0.38 0 0 1 0.6 -0.22', PAL.copper.l, 0.07, 0.9);
   // the scarf pulled up over the nose and round the jaw
   const MUFF = 'M -3.3 -4.7 C -1.8 -5.2 0.6 -5.5 2.6 -5.35 C 4.1 -5.25 5.2 -5.0 5.4 -4.1 C 5.6 -3.0 5.0 -2.0 3.9 -1.5 C 2.6 -0.9 0.4 -0.8 -1.2 -1.1 C -2.6 -1.4 -3.5 -2.2 -3.7 -3.1 Z';
   cel(g, MUFF, PAL.scarf, { sh: 1.1, hl: 0.4 });

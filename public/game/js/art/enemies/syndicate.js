@@ -114,6 +114,9 @@ function helmet(g) {
     B.dab(3.0, -7.66, 0.36, 0.05, 'rgba(255,214,160,0.7)');
   });
   B.line('M 1.62 -6.94 C 3.0 -7.16 4.8 -7.16 6.24 -6.9', 'rgba(170,180,192,0.45)', 0.04, 0.01);
+  // the red deep in the glass lighting the frame round it, and a scan line across (docs §10.23)
+  B.dab(4.4, -7.35, 2.4, 0.55, 'rgba(200,40,46,0.22)');
+  B.inside(SLIT, () => B.line('M 2.2 -7.42 C 3.4 -7.6 4.8 -7.6 6.0 -7.38', 'rgba(255,90,90,0.75)', 0.05, 0.02));
   // the jaw plate: black polymer, a sheen down its front, the vents pressed in it
   cel(g, JAW, PAL.black, { sh: 0.8, hl: 0.4, gloss: 0.35 });
   B.inside(JAW, () => {
@@ -130,6 +133,10 @@ function helmet(g) {
   rivet(g, -0.2, -5.95, 0.16, PAL.steel);
   B.line('M -1.0 -7.1 L -1.6 -9.4', '#15181d', 0.18, 0.01);
   B.dab(-1.62, -9.46, 0.1, 0.1, '#2a2f37');
+  // the strobe on the back of the shell: a black box on its velcro, the lens dark
+  cel(g, 'M -3.6 -12.0 L -1.9 -12.7 L -1.6 -11.7 L -3.3 -11.0 Z', PAL.black, { sh: 0.3, hl: 0.35, gloss: 0.3, lw: 0.1 });
+  B.fill('M -2.5 -12.75 L -1.85 -13.0 L -1.75 -12.6 L -2.4 -12.36 Z', '#3a1e22', 0.02);
+  B.dab(-2.1, -12.75, 0.12, 0.08, 'rgba(255,190,190,0.7)');
 }
 
 // --- the issue's kit (docs §10.21) -----------------------------------------------------------
@@ -897,6 +904,13 @@ function gallHead(g) {
   for (const [dy, l] of [[-0.12, 0.42], [0.02, 0.5], [0.15, 0.38]]) crease(`M 3.08 ${-6.12 + dy * 0.4} l ${-l} ${dy * 0.6}`, 0.025, 0.3);
   // the brow: thin, straight, grey, low over the eye
   softBrow(g, 3.05, -6.76, 4.36, -6.86, 0.04, '#6f6a64', 7);
+  // an old scar down the cheek from under the eye toward the jaw: a pale seam, raised,
+  // its edges drawn in, the stitch marks either side (docs §10.23)
+  B.inside(GHEAD, () => {
+    B.line('M 3.0 -5.55 C 2.85 -4.9 2.62 -4.3 2.3 -3.7', 'rgba(90,46,36,0.5)', 0.13, 0.05);
+    B.line('M 3.02 -5.6 C 2.87 -4.95 2.64 -4.35 2.32 -3.75', 'rgba(244,214,196,0.85)', 0.06, 0.02);
+    for (const [x, y] of [[2.97, -5.2], [2.82, -4.7], [2.62, -4.2]]) B.line(`M ${x - 0.13} ${y - 0.04} l 0.26 0.08`, 'rgba(120,70,56,0.45)', 0.03, 0.01);
+  });
 
   // --- the cap's shadow: the peak's edge across the face. Under it the forehead and
   // the eye are still there, in the light thrown back up off the lit cheek

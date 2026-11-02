@@ -341,6 +341,29 @@ function head(g) {
   for (let x = -4.2; x < 4.6; x += 0.8) fill(g, `M ${x} ${-9.25 - (x + 4.8) * 0.17} l 0.32 -0.06 l 0 0.18 l -0.32 0.06 Z`, '#b9b2a2', 0.6);
   cel(g, 'M 3.2 -11.6 C 3.2 -11.8 3.4 -11.9 3.6 -11.9 L 5.0 -11.9 C 5.3 -11.9 5.4 -11.7 5.4 -11.5 L 5.4 -10.3 C 5.4 -10.1 5.3 -10.0 5.0 -10.0 L 3.6 -10.0 C 3.4 -10.0 3.2 -10.1 3.2 -10.3 Z', K, { sh: 0.3, hl: 0.35, lw: 0.2 });
   fill(g, 'M 5.4 -11.6 L 5.75 -11.62 L 5.78 -10.3 L 5.43 -10.28 Z', '#fff2d0');
+  hatKit(g);
+}
+
+// docs §10.23: the orange cloth neck flap hung from the back of the hat against the
+// rain, a carpenter's pencil pushed under the lamp's band, the stickers the crane
+// crews trade (no lettering: the sprite is mirrored), rain beading on the brim
+function hatKit(g) {
+  const O = mat(tone('#f08a4a', '#c8632e', '#8a3f1a', '#3e1a08'), 'canvas', 0.7);
+  const FLAP = 'M -6.4 -8.0 C -5.4 -8.2 -4.4 -8.2 -3.6 -8.0 L -3.2 -4.4 C -4.0 -3.6 -5.6 -3.4 -6.6 -3.8 Z';
+  cel(g, FLAP, O, { sh: 0.7, hl: 0.35 });
+  clip(g, FLAP, () => { fold(g, [[-6.0, -7.4], [-5.4, -5.8], [-5.6, -4.2]], O, 0.2); fold(g, [[-4.4, -7.6], [-4.0, -6.0], [-4.2, -4.4]], O, 0.18); grime(g, -6, -3.4, OIL); });
+  g.save(); g.translate(0.4, -10.1); g.rotate(-0.12);
+  cel(g, 'M -1.6 -0.22 L 1.4 -0.22 L 1.4 0.22 L -1.6 0.22 Z', mat(tone('#e05a40', '#b83a26', '#7e2416', '#360d06'), 'paint', 0.4), { sh: 0.1, hl: 0.2 });
+  fill(g, 'M 1.4 -0.22 L 1.95 0 L 1.4 0.22 Z', '#d8b890');
+  fill(g, 'M 1.8 -0.06 L 1.95 0 L 1.8 0.06 Z', '#2a2420');
+  g.restore();
+  // stickers on the dome: a green cross, a blue square, a half-torn yellow-black stripe
+  fill(g, 'M -2.4 -11.1 L -1.4 -11.3 L -1.3 -10.4 L -2.3 -10.2 Z', '#f4f1e8', 0.9);
+  fill(g, 'M -2.0 -11.15 L -1.7 -11.2 L -1.65 -10.3 L -1.95 -10.25 Z', '#2f8a4a');
+  fill(g, 'M -2.3 -10.85 L -1.4 -11.0 L -1.38 -10.7 L -2.28 -10.55 Z', '#2f8a4a');
+  fill(g, 'M 2.6 -11.9 L 3.6 -11.8 L 3.5 -11.0 L 2.5 -11.1 Z', '#3a6ea8', 0.9);
+  for (let k = 0; k < 3; k++) fill(g, `M ${-4.6 + k * 0.5} -9.4 L ${-4.3 + k * 0.5} -9.45 L ${-4.5 + k * 0.5} -8.9 L ${-4.8 + k * 0.5} -8.85 Z`, k % 2 ? '#1a1814' : '#e8c23a', 0.85);
+  for (const [x, y] of [[4.6, -8.7], [1.4, -9.1], [-2.6, -8.9], [6.0, -8.4]]) { fill(g, `M ${x - 0.16} ${y} a 0.16 0.12 0 1 0 0.32 0 a 0.16 0.12 0 1 0 -0.32 0 Z`, 'rgba(60,50,20,0.5)'); fill(g, `M ${x - 0.08} ${y - 0.04} a 0.06 0.05 0 1 0 0.12 0 a 0.06 0.05 0 1 0 -0.12 0 Z`, '#fffbe8', 0.9); }
 }
 
 export const BRICK = {

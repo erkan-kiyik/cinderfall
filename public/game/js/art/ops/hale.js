@@ -12,7 +12,7 @@ import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
   UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
-  glove, boot, headShape, neck, korBand, stitch, rivet, grime, scuffs,
+  glove, boot, headShape, neck, korBand, stitch, rivet, buckle, grime, scuffs,
   clothFolds, brushOf,
 } from './body.js';
 
@@ -292,6 +292,12 @@ function head(g) {
   });
   stroke(g, LENS, '#2a1a06', 0.12, 0.8);
   rivet(g, 0.95, -7.0, 0.2, PAL.steel);
+  // the chin strap from under the helmet's edge down round the jaw, its buckle (docs §10.23)
+  stroke(g, 'M -0.4 -7.0 C 0.0 -5.0 1.2 -2.6 3.6 -1.3', Kb.k, 0.5);
+  stroke(g, 'M -0.3 -7.0 C 0.1 -5.0 1.3 -2.7 3.6 -1.45', Kb.l, 0.1, 0.5);
+  buckle(g, 0.55, -4.0, 0.7, 0.9, PAL.steel);
+  // the hood's knit wet and dark where he breathes through it
+  clip(g, MUFF, () => { const br = g.createRadialGradient(4.8, -3.4, 0.2, 4.8, -3.4, 2.2); br.addColorStop(0, 'rgba(20,18,16,0.5)'); br.addColorStop(1, 'rgba(20,18,16,0)'); g.fillStyle = br; g.fillRect(2, -6, 5, 5); });
   // the helmet: the dome and its ribs, the brim round it with its tail, the black band,
   // the red number; soot heaviest on the tail and low on the dome
   cel(g, HELM, H, { sh: 1.6, hl: 0.7 });
@@ -307,6 +313,14 @@ function head(g) {
     g.fillStyle = 'rgba(244,236,218,0.95)'; g.font = "700 0.9px 'Barlow Condensed', sans-serif"; g.textAlign = 'center'; g.fillText('07', 0, 0.32);
     g.restore();
     scuffs(g, [[1.8, -11.6, 0.35, 0.3], [-6.4, -6.2, 0.4, -0.5]], '#8a8478', 0.45);
+    // smoke streaked up the dome from the brim, the brim's front browned by heat, a dent
+    // with the light in its far wall (docs §10.23)
+    const Bs = brushOf(g);
+    for (const [x, y, rx, ry, a, r] of [[-2.4, -9.6, 0.9, 1.6, 0.22, 0.25], [-1.9, -11.0, 0.6, 1.0, 0.14, 0.4], [0.4, -9.4, 0.8, 1.3, 0.18, -0.1], [2.4, -9.2, 0.7, 1.0, 0.16, -0.3], [-4.2, -8.0, 1.0, 0.9, 0.24, 0.6]]) Bs.dab(x, y, rx, ry, `rgba(40,34,28,${a})`, 1, 'source-over', r);
+    const hb = g.createRadialGradient(5.6, -7.8, 0.2, 5.6, -7.8, 2.2); hb.addColorStop(0, 'rgba(150,104,40,0.45)'); hb.addColorStop(1, 'rgba(150,104,40,0)');
+    g.fillStyle = hb; g.fillRect(3, -10, 5, 4);
+    stroke(g, 'M 0.0 -10.6 a 0.7 0.45 0 0 0 1.3 0.1', H.k, 0.16, 0.6);
+    stroke(g, 'M 0.1 -10.45 a 0.6 0.35 0 0 1 1.1 0.1', H.l, 0.1, 0.9);
   });
   // the torch clipped on the side of the dome, its lens
   cel(g, 'M 0.4 -10.7 L 3.0 -11.0 L 3.1 -10.0 L 0.5 -9.7 Z', Kb, { sh: 0.3, hl: 0.35, lw: 0.18 });
