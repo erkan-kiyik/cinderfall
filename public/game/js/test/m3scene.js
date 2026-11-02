@@ -424,8 +424,8 @@ export class M3Scene extends M2.M2Scene {
     const c = this.ctl, cam = this.e.camera;
     let ax, ay;
     if (c.aimMode === 'point') {
-      const cv = this.e.renderer.canvas;
-      [ax, ay] = cam.toWorld(c.aimSX / cv.clientWidth, c.aimSY / cv.clientHeight);
+      const R = this.e.renderer;
+      [ax, ay] = cam.toWorld(c.aimSX / R.cssW, c.aimSY / R.cssH);
     } else {
       const sh = P.shoulder(this._a), d = P.shotDir(0, this._d);
       ax = sh[0] + d[0] * 90; ay = sh[1] + d[1] * 90;

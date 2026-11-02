@@ -74,7 +74,10 @@ export class App {
 
   applySettings(first = false) {
     const st = this.save.d.settings, R = this.e.renderer;
-    if (st.quality !== 'auto' && st.quality !== R.qName) R.setQuality(st.quality);
+    // Oto is what this device was found to hold (boot.js, the governor there)
+    const q = st.quality === 'auto' ? this.dyn.autoQ : st.quality;
+    if (q && q !== R.qName) R.setQuality(q);
+    this.dyn.governs = st.quality === 'auto';
     R.bloomOn = st.bloom; R.lightsOn = st.lights;
     this.dyn.on = st.dynRes; if (!st.dynRes) { this.dyn.step = 0; R.setDyn(1); }
     if (this.e.loop) this.e.loop.cap = st.fpsCap ?? 60;

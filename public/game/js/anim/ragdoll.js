@@ -54,6 +54,7 @@ export class Ragdoll {
     let best = 0, bd = 1e9;
     for (let i = 0; i < N; i++) { const d = Math.hypot(this.x[i] - px, this.y[i] - py); if (d < bd) { bd = d; best = i; } }
     const dt = 1 / 120;
+    this.rest = 0; // a body at rest wakes up
     if (Math.abs(vx) > 1) this.tip = Math.sign(vx);
     for (let i = 0; i < N; i++) {
       const k = i === best ? 1 : i === PELVIS || i === NECK ? 0.45 : 0.25;

@@ -1169,3 +1169,51 @@ duruyordu.
 `tools/game/ragdoll.test.mjs` bu durumlar için 18 yeni kontrol içeriyor
 (üst platformun altında ölmek, duvara doğru vurulmak, duvara yaslı ölmek,
 kalçası sandıkta ölmek, sandığa sırtüstü düşmek); eski kod 5'inde kalıyor.
+
+### 10.20 Her telefonda 60: işlemci, ekran kartı, kendini ayarlayan kalite
+Hedef: zayıf telefonlarda da düz 60 kare. Ölçümler Chromium'da, işlemci 6 kat
+yavaşlatılmış (giriş seviyesi bir telefon kadar), 60 karelik bir kare başına
+işlemci süresi:
+
+| sahne | önce | sonra |
+|---|---|---|
+| görev 1 | 10,9 ms | 7,9 ms |
+| görev 2 (sokak, kalabalık) | 17,8 ms | 11,8 ms |
+| görev 3 | 14,6 ms | 11,4 ms |
+
+**İşlemci:**
+- **Düzen okuması:** her karede tuvalin CSS boyutu (`clientWidth`) okunuyordu;
+  her okuma tarayıcıyı sayfa düzenini yeniden hesaplamaya zorlayabiliyor.
+  Boyut artık yalnız değiştiğinde (`ResizeObserver`) alınıyor; nişan,
+  hedef oku ve kamera oranı bu saklı değeri kullanıyor.
+- **Ekran dışındaki karakterler çizilmiyor:** sokağın uzak ucundaki timler
+  her karede karakter çiziminden geçiyordu. Görüşün 130 birim dışındakiler
+  listeye girmiyor.
+- **Uzaktaki karakterlerin pozu seyrek:** görüşün 160 birim dışındaki
+  muhafızın iskeleti, pozu ve kumaşı dört adımda bir hesaplanıyor. Yürüyüşü,
+  aklı ve vurulabilir yeri her adım güncel; görünmeyen tek şey poz.
+- **Duran vücutlar uyuyor:** yerde 0,6 saniyedir kıpırdamayan vücudun
+  ragdoll adımı atlanıyor; bir kurşun ya da patlama itince uyanıyor. Ekran
+  dışındaki ölü vücut hiç pozlanmıyor.
+- **Ses efektleri ayrı iş parçacığında:** oyunun açılışında 40 ses
+  efekti dilimler halinde ana iş parçacığında üretiliyordu (ilk saniyelerde
+  kare başına 6 ms'ye kadar). Artık bir Web Worker'da üretilip hazır
+  geliyor; worker açılamazsa eski dilimli yol devrede.
+
+**Ekran kartı:**
+- **Çip tanıma:** tarayıcının bildirdiği grafik çipi okunuyor. Giriş
+  seviyesi ya da eski çipli telefonlar (Mali-4xx, Mali-T, Mali-G31…G57,
+  Adreno 2xx–5xx ve 600–616, PowerVR, Vivante, VideoCore) ilk açılışta düşük
+  kalitede başlıyor. Çipin adı performans panelinde görünüyor.
+- **Düşük kalitede ucuz gölgelendiriciler:** karakter dış çizgisi 12 yerine 6
+  yön örnekliyor (piksel başına 29 yerine 17 doku okuması), ıslak yol
+  yansıması 4 yerine 2 okuma. Düşük kalitede lambaların duvara düşürdüğü
+  karakter gölgeleri yok.
+- Görev 2'de kare başına ekran kartı süresi (SwiftShader, oranlar anlamlı):
+  orta kalite 156,8 ms, düşük kalite 63,6 ms (−%59).
+
+**Kendini ayarlayan kalite (Oto):** otomatik çözünürlük en dibe inmiş, sokak
+efektleri (yağmur, yansıma, buhar) tamamen kısılmış ve kare hâlâ 3 saniye
+boyunca bütçeyi aşıyorsa kalite bir kademe düşüyor (yüksek → orta → düşük) ve
+bu telefona kaydediliyor: sonraki açılışlar oradan başlıyor. Yalnız Ayarlar'da
+kalite "Oto" iken çalışıyor; elle seçilmiş kaliteye dokunmuyor.

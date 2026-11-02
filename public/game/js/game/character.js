@@ -146,6 +146,10 @@ export class Character {
     this.stepWeapons(dt);
     this.anim.update(dt, m, this.aimLocal);
     this.facing = m.facing;
+    // far off screen (the scene sets `far`) the pose, skeleton and cloth are
+    // worked out on one step in four: nobody sees them, and shots only need the
+    // body's place, which the mover keeps every step (docs §10.20)
+    if (this.far && (this.lod = ((this.lod || 0) + 1) & 3) !== 0) { this.flash = Math.max(0, this.flash - dt * 9); return; }
     const f0 = this.facing, mx = m.x, my = m.y;
     const ground = level && m.grounded ? (lx) => {
       const x = mx + lx * f0;
@@ -240,12 +244,14 @@ export class Character {
 
   stepDead(dt, level) {
     this.deadT += dt;
-    // substeps keep the stiff chains stable
-    this.rag.step(dt, level);
+    // a body at rest stays put until something moves it (a push wakes it); one
+    // far off screen is not posed (docs §10.20)
+    if (!this.rag.settled) this.rag.step(dt, level);
     const r = this.rag.root(this._v);
     this.rx = r[0]; this.ry = r[1];
-    this.rag.pose(this.J, this.rx, this.ry);
     this.P.gun = null;
+    if (this.far) return;
+    this.rag.pose(this.J, this.rx, this.ry);
     this.stepCloth(dt, this.rx, this.ry, 0);
     this.flash = Math.max(0, this.flash - dt * 5);
   }

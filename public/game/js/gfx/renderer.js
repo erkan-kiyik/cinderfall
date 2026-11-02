@@ -84,7 +84,7 @@ void main() {
   o = vec4(c, 1.0);
 }`;
 
-const FINAL_FS = `#version 300 es
+const FINAL_FS_SRC = `#version 300 es
 precision mediump float;
 uniform sampler2D uLit, uB1, uB2;
 uniform vec3 uBloom;      // level 1 gain, level 2 gain, enabled
@@ -134,6 +134,11 @@ void main() {
   c += (hash(vUV * 997.0 + t * 0.37) - 0.5) * uGrade.w * (1.4 - l);
   o = vec4(c, 1.0);
 }`;
+// low quality (docs §10.20): the wet street mirrored with two reads, not four
+const WET4 = `    vec3 m = texture(uLit, r).rgb * 0.4 + texture(uLit, r + vec2(0.0, 0.006)).rgb * 0.3
+           + texture(uLit, r + vec2(0.0, 0.014)).rgb * 0.2 + texture(uLit, r + vec2(0.0, 0.026)).rgb * 0.1;`;
+const WET2 = `    vec3 m = texture(uLit, r + vec2(0.0, 0.003)).rgb * 0.7 + texture(uLit, r + vec2(0.0, 0.018)).rgb * 0.3;`;
+const FINAL_FS = FINAL_FS_SRC, FINAL_FS_LOW = FINAL_FS_SRC.replace(WET4, WET2);
 
 // px: the most output pixels a quality draws (Mpx). Past it the canvas stays
 // smaller than the screen and the browser scales it up: a 4K monitor or a
@@ -161,7 +166,7 @@ export class Renderer {
     this.pCompose = program(gl, FS_TRI, COMPOSE_FS);
     this.pBright = program(gl, FS_TRI, BRIGHT_FS);
     this.pBlur = program(gl, FS_TRI, BLUR_FS);
-    this.pFinal = program(gl, FS_TRI, FINAL_FS);
+    this.pFinal = program(gl, FS_TRI, FINAL_FS); this.pFinalLow = program(gl, FS_TRI, FINAL_FS_LOW);
     this.emptyVAO = gl.createVertexArray();
     // light instances
     this.LCAP = 256; this.lf = new Float32Array(this.LCAP * 10); this.ln = 0;
@@ -175,6 +180,13 @@ export class Renderer {
     this.time = 0;
     // wetness of the road this frame (a scene sets it before finish; 0 = dry)
     this.wet = 0; this.view = null;
+    // the canvas's size in CSS px, kept by a ResizeObserver: reading clientWidth
+    // after the HUD has been written makes the browser lay the page out again
+    // on the spot, and the game did that every step (docs §10.20)
+    this.cssW = Math.max(1, canvas.clientWidth); this.cssH = Math.max(1, canvas.clientHeight);
+    const keep = (w, h) => { this.cssW = Math.max(1, w); this.cssH = Math.max(1, h); };
+    if (typeof ResizeObserver === 'function') new ResizeObserver((es) => { const r = es[es.length - 1].contentRect; keep(r.width, r.height); }).observe(canvas);
+    else addEventListener('resize', () => keep(canvas.clientWidth, canvas.clientHeight));
   }
 
   setQuality(name) { this.q = QUALITY[name]; this.qName = name; this.resize(true); }
@@ -182,7 +194,7 @@ export class Renderer {
 
   // Canvas backing store follows CSS size × DPR (capped); targets follow it.
   resize(force = false) {
-    const c = this.canvas, cw = Math.max(1, c.clientWidth), ch = Math.max(1, c.clientHeight);
+    const c = this.canvas, cw = this.cssW, ch = this.cssH;
     const dpr = Math.min(window.devicePixelRatio || 1, this.q.dpr, this.dprCap || 9, Math.sqrt(this.q.px * 1e6 / (cw * ch)));
     const W = Math.round(cw * dpr), H = Math.round(ch * dpr);
     if (!force && W === this.W && H === this.H) return;
@@ -265,7 +277,7 @@ export class Renderer {
     }
     const G = this.grade, V = this.view, wet = V ? this.wet : 0;
     this.wet = 0;
-    this.fsPass(this.pFinal, null, [this.lit.tex, this.b1a.tex, this.b2a.tex], (u) => {
+    this.fsPass(this.qName === 'low' ? this.pFinalLow : this.pFinal, null, [this.lit.tex, this.b1a.tex, this.b2a.tex], (u) => {
       gl.uniform1i(u.uLit, 0); gl.uniform1i(u.uB1, 1); gl.uniform1i(u.uB2, 2);
       // a lens's halation, not a glow: lamps keep a soft edge, nothing blooms into neon
       gl.uniform3f(u.uBloom, 0.62, lv > 1 ? 0.48 : 0, lv > 0 ? 1 : 0);

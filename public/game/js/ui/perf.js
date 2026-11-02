@@ -44,6 +44,7 @@ export class PerfOverlay {
       `CPU  sim ${s.upd.toFixed(2)} ms  çizim ${s.rnd.toFixed(2)} ms\n` +
       `draw ${i.draws}  sprite ${i.sprites}  ışık ${i.lights}  geçiş ${i.passes}\n` +
       `çöz. ${i.res}  ${i.quality}  dinamik ×${i.dyn}\n` +
-      `atlas ${i.pages} sayfa ~${i.mem} MB  pişirme ${i.bake}`;
+      `atlas ${i.pages} sayfa ~${i.mem} MB  pişirme ${i.bake}` +
+      (i.gpu ? `\nGPU ${i.gpu.slice(0, 40)}` : '');
   }
 }

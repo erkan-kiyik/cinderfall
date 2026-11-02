@@ -80,12 +80,15 @@ export class M2Scene {
     return OPERATORS[this.opIndex];
   }
 
+  // is world x further than `margin` units beyond the edges of the view?
+  offView(x, margin) { return Math.abs(x - this.cam.x) > this.e.camera.viewW / 2 + margin; }
+
   // world aim point from the controls
   aimPoint() {
     if (this.aimWorld) return this.aimWorld; // test hook: a fixed world point
-    const c = this.ctl, m = this.mover, cam = this.e.camera, cv = this.e.renderer.canvas;
+    const c = this.ctl, m = this.mover, cam = this.e.camera, R = this.e.renderer;
     if (c.aimMode === 'point') {
-      const [wx, wy] = cam.toWorld(c.aimSX / cv.clientWidth, c.aimSY / cv.clientHeight);
+      const [wx, wy] = cam.toWorld(c.aimSX / R.cssW, c.aimSY / R.cssH);
       return [wx, wy];
     }
     // touch: stick direction, or the way you are moving when the stick is idle
@@ -191,8 +194,13 @@ export class M2Scene {
     const w = this.viewFor('world', 1);
     const ppu = R.rh / cam.viewH;
     this.cr.configure(ppu);
-    // characters this frame (prepared before anything binds the scene target)
-    const chars = [...this.enemies, this.player];
+    // characters this frame (prepared before anything binds the scene target):
+    // only those near the view are posed, rendered into their slots and drawn;
+    // the squads further down the street cost nothing (docs §10.20)
+    const chars = this._chars || (this._chars = []);
+    chars.length = 0;
+    for (const c of this.enemies) if (!this.offView(c.rag ? c.rx : c.m.x, 130)) chars.push(c);
+    chars.push(this.player);
     for (const c of chars) c.prepare(alpha);
     this.cr.begin(chars);
     // lights
@@ -276,13 +284,16 @@ export class M2Scene {
     // rim of light along the side that faces it
     // (off with the dynamic lights setting: they are light the lamps throw)
     const lit = this.e.fxLevel !== 0 && R.lightsOn, bulbs = this.shadowLamps(out);
+    // low quality: no shadows thrown on the walls, the cheaper outline (docs §10.20)
+    const cast = lit && R.qName !== 'low';
+    this.cr.low = R.qName === 'low';
     const near = chars.map((c) => {
       let b = null;
       if (!lit) return null;
       for (const q of bulbs) if (!b || Math.abs(c.rx - q[0]) < Math.abs(c.rx - b[0])) b = q;
       return b && Math.abs(c.rx - b[0]) < 120 ? b : null;
     });
-    if (lit) chars.forEach((c, i) => {
+    if (cast) chars.forEach((c, i) => {
       const b = near[i];
       if (b && !c.rag && c.alive) this.cr.shadow(c, w, restore, b[0], b[1], b[2], 0.8 * Math.pow(1 - Math.abs(c.rx - b[0]) / 120, 0.8));
     });

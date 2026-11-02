@@ -30,7 +30,9 @@ void main() {
   gl_Position = vec4((uView * vec3(p, 1.0)).xy, 0.0, 1.0);
   vUV = mix(uUV.xy, uUV.zw, c);
 }`;
-const FS = `#version 300 es
+// N directions round each pixel for the contact shade (12; 6 at low quality,
+// docs §10.20: 17 texture reads a pixel instead of 29)
+const FS = (N) => `#version 300 es
 precision mediump float;
 uniform sampler2D uTex;
 uniform vec2 uR;        // contact shade reach in uv
@@ -46,14 +48,14 @@ vec4 tap(vec2 uv) { return texture(uTex, clamp(uv, uClamp.xy, uClamp.zw)); }
 void main() {
   vec4 s = tap(vUV);
   float mx = 0.0, av = 0.0;
-  for (int i = 0; i < 12; i++) {
-    float t = float(i) * 0.5235988;
+  for (int i = 0; i < ${N}; i++) {
+    float t = float(i) * ${(Math.PI * 2 / N).toFixed(7)};
     vec2 d = vec2(cos(t), sin(t)) * uR;
     float a1 = tap(vUV + d).a, a2 = tap(vUV + d * 0.5).a;
     mx = max(mx, max(a1, a2));
     av += a1 * 0.35 + a2 * 0.65;
   }
-  av /= 12.0;
+  av /= ${N}.0;
   // the rim: inside, where the neighbour toward the light is empty
   float r1 = 1.0 - tap(vUV + uL).a, r2 = 1.0 - tap(vUV + uL * 0.45).a;
   float rim = s.a * max(r1 * 0.55, r2);
@@ -107,7 +109,8 @@ export class CharRenderer {
     this.gl = gl; this.batch = batch;
     this.size = Math.min(size, gl.getParameter(gl.MAX_TEXTURE_SIZE));
     this.sheet = new Target(gl, this.size, this.size);
-    this.prog = program(gl, VS, FS);
+    this.prog = program(gl, VS, FS(12)); this.progLow = program(gl, VS, FS(6));
+    this.low = false; // low quality: the cheaper composite (the scene sets it)
     this.sprog = program(gl, SVS, SFS);
     this.vao = gl.createVertexArray();
     this.view = new Float32Array(9);
@@ -218,7 +221,7 @@ export class CharRenderer {
     const uv = this.done.get(ch), hard = ch.team === 1 && this.enemyInk;
     const q = this.quad(ch, (hard ? 0.95 : this.outline) + 0.6);
     if (!q) return;
-    const gl = this.gl, p = this.prog, f = ch.facing, x = ch.rx, y = ch.ry;
+    const gl = this.gl, p = this.low ? this.progLow : this.prog, f = ch.facing, x = ch.rx, y = ch.ry;
     gl.useProgram(p.p);
     gl.uniformMatrix3fv(p.u.uView, false, view);
     gl.uniform4f(p.u.uRect, x + q[0] * f, y + q[1], x + q[2] * f, y + q[3]);

@@ -194,18 +194,24 @@ export class Sfx {
     this.musicBus = c.createGain(); this.musicBus.gain.value = this.vols.music * 0.55; this.musicBus.connect(this.master);
     this.sfxBus.connect(this.comp); this.comp.connect(this.master);
     this.uiBus.connect(this.master); this.master.connect(c.destination);
-    // synthesise in small slices so the first frames stay smooth
-    const names = Object.keys(RECIPES);
-    const next = () => {
-      const t0 = performance.now();
-      while (names.length && performance.now() - t0 < 6) {
-        const n = names.shift(), data = RECIPES[n]();
-        const b = c.createBuffer(1, data.length, SR); b.copyToChannel(data, 0);
-        this.buf[n] = b;
-      }
-      if (names.length) setTimeout(next, 0);
+    // synthesise in a worker (docs §10.20); where one cannot start, here in
+    // small slices so the frames stay smooth
+    const add = (n, data) => { const b = c.createBuffer(1, data.length, SR); b.copyToChannel(data, 0); this.buf[n] = b; };
+    const sliced = () => {
+      const names = Object.keys(RECIPES).filter((n) => !this.buf[n]);
+      const next = () => {
+        const t0 = performance.now();
+        while (names.length && performance.now() - t0 < 6) { const n = names.shift(); add(n, RECIPES[n]()); }
+        if (names.length) setTimeout(next, 0);
+      };
+      next();
     };
-    next();
+    try {
+      const w = new Worker(new URL('./sfxworker.js', import.meta.url), { type: 'module' });
+      w.onmessage = (e) => { if (e.data.done) w.terminate(); else add(e.data.n, e.data.d); };
+      w.onerror = (e) => { e.preventDefault?.(); w.terminate(); sliced(); };
+      w.postMessage(0);
+    } catch { sliced(); }
   }
 
   setVolumes(v) {

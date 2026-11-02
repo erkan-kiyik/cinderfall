@@ -35,11 +35,22 @@ const store = { get(k) { try { return localStorage.getItem(k); } catch { return 
 // at low; a computer at high. Settings can always choose otherwise.
 const MEM = navigator.deviceMemory || 8, CORES = navigator.hardwareConcurrency || 8;
 const TOUCH = matchMedia('(pointer: coarse)').matches;
-function autoQuality() {
-  if (MEM <= 2 || (TOUCH && (MEM <= 3 || CORES <= 4))) return 'low';
+// The graphics chip (docs §10.20): a phone whose GPU is an entry or older one
+// (Mali-4xx/T/G31–G57, Adreno 2xx–5xx and 600–616, any PowerVR, Vivante,
+// VideoCore) cannot fill a phone screen through the whole frame at 60, so it
+// starts at low. The name is what the browser reports for the chip.
+const WEAK_GPU = /Mali-?(?:[45]\d\d|T\d|G3\d|G5[0-7])|Adreno\D*(?:[2-5]\d\d|60\d|61[0-6])\b|PowerVR|SGX|Vivante|VideoCore/i;
+function gpuName(gl) {
+  try { const x = gl.getExtension('WEBGL_debug_renderer_info'); return String(gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || ''); } catch { return ''; }
+}
+function autoQuality(gpu = '') {
+  if (MEM <= 2 || (TOUCH && (MEM <= 3 || CORES <= 4 || WEAK_GPU.test(gpu)))) return 'low';
   if (TOUCH || MEM <= 4) return 'med';
   return 'high';
 }
+// what the frame-rate governor learnt on this device (Oto quality): never above it
+const AUTOQ = 'kor.autoq.v1', QRANK = { low: 0, med: 1, high: 2 };
+const lower = (a, b) => (b && QRANK[b] !== undefined && QRANK[b] < QRANK[a] ? b : a);
 // How finely the sprites are painted (the atlas): as fine as the screen will
 // show at the closest camera (the lobby, 150 units tall) and no finer; less
 // memory caps it. high ≈ 14 atlas pages, med ≈ 8, low ≈ 4 (each 2048², 16 MB).
@@ -61,7 +72,8 @@ async function main() {
   const save = DEV ? null : new Save();
   if (save) setLang(save.d.settings.lang);
   const savedQ = save && save.d.settings.quality !== 'auto' ? save.d.settings.quality : null;
-  const quality = params.get('q') || savedQ || (DEV && store.get('kor-lab-q')) || autoQuality();
+  const GPU = gpuName(gl), autoQ = lower(autoQuality(GPU), store.get(AUTOQ));
+  const quality = params.get('q') || savedQ || (DEV && store.get('kor-lab-q')) || autoQ;
   const bakeQ = params.get('bq') || bakeQuality(quality);
   // the sample text pulls in the latin-ext halves too: the signs are lettered in Turkish
   await Promise.all(['700 20px Rajdhani', '600 20px Rajdhani', '400 12px Inter', "800 20px 'Big Shoulders Stencil'", "700 20px 'Barlow Condensed'", "400 12px Barlow", "400 12px 'Special Elite'"].map((f) => document.fonts.load(f, 'AaİŞĞÇÖÜış')));
@@ -107,7 +119,9 @@ async function main() {
   if (scene && params.get('stress') && scene.setStress) scene.setStress(+params.get('stress'));
 
   // dynamic resolution: step down after 1 s over budget, back up after 4 s of headroom
-  const dyn = { on: true, step: 0, over: 0, under: 0, failedAt: new Float64Array(RES_STEPS.length).fill(-1e9), next: 0 };
+  // governs: the quality is Oto (not chosen in Settings or the URL), so the
+  // governor below may lower it; autoQ is what Oto means on this device
+  const dyn = { on: true, step: 0, over: 0, under: 0, failedAt: new Float64Array(RES_STEPS.length).fill(-1e9), next: 0, autoQ, governs: !params.get('q') && !savedQ && !DEV };
   function dynTick(now) {
     if (!dyn.on || now < dyn.next) return;
     dyn.next = now + 500;
@@ -117,6 +131,14 @@ async function main() {
     if (dyn.over >= 2 && dyn.step < RES_STEPS.length - 1) { dyn.failedAt[dyn.step] = now; dyn.step++; dyn.over = 0; renderer.setDyn(RES_STEPS[dyn.step]); }
     // resolution already at its floor and still over budget: thin the street effects (rain, reflections, steam)
     else if (dyn.over >= 4 && dyn.step === RES_STEPS.length - 1 && eng.fxLevel > 0) { eng.fxLevel--; dyn.over = 0; dyn.fxAt = now; }
+    // and still over with the effects thinned out: on Oto, one quality down, kept
+    // for this device's next launches (a phone that cannot hold 60 at medium
+    // starts at low from then on; docs §10.20)
+    else if (dyn.over >= 6 && dyn.step === RES_STEPS.length - 1 && eng.fxLevel === 0 && dyn.governs && renderer.qName !== 'low') {
+      const q = renderer.qName === 'high' ? 'med' : 'low';
+      renderer.setQuality(q); dyn.autoQ = q; store.set(AUTOQ, q);
+      dyn.step = 0; dyn.over = 0; renderer.setDyn(1);
+    }
     else if (dyn.under >= 16 && eng.fxLevel < eng.fxMax && now - (dyn.fxAt || 0) > 30000) { eng.fxLevel++; dyn.under = 0; }
     else if (dyn.under >= 8 && dyn.step > 0 && now - dyn.failedAt[dyn.step - 1] > 20000) { dyn.step--; dyn.under = 0; renderer.setDyn(RES_STEPS[dyn.step]); }
   }
@@ -125,7 +147,7 @@ async function main() {
     update: (dt) => (app || scene).update(dt),
     render: (alpha) => {
       renderer.resize();
-      camera.aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight);
+      camera.aspect = renderer.cssW / renderer.cssH;
       (app || scene).render(alpha);
       const now = performance.now();
       dynTick(now);
@@ -136,7 +158,7 @@ async function main() {
   loop.cap = params.has('fps') ? +params.get('fps') : save ? save.d.settings.fpsCap : 60;
   const perf = new PerfOverlay($('#hud'), loop, () => ({
     draws: batch.drawCalls, sprites: batch.sprites, lights: renderer.lastLights, passes: renderer.passes,
-    res: `${renderer.rw}×${renderer.rh}`, quality: { low: 'DÜŞÜK', med: 'ORTA', high: 'YÜKSEK' }[renderer.qName], dyn: renderer.dyn.toFixed(2),
+    res: `${renderer.rw}×${renderer.rh}`, quality: { low: 'DÜŞÜK', med: 'ORTA', high: 'YÜKSEK' }[renderer.qName], dyn: renderer.dyn.toFixed(2), gpu: GPU,
     pages: `${atlas.pages.length} (${bakeQ})`, mem: atlas.memoryMB().toFixed(0), bake: bake.cached ? `önbellek ${bake.ms.toFixed(0)} ms` : `${bake.ms.toFixed(0)} ms`,
   }));
 
@@ -184,7 +206,7 @@ async function main() {
   const go = () => { app?.start({ entrance: !!intro }); loop.start(); };
   if (intro) { intro.onHandoff = go; intro.assetsDone(); } else go();
   // test harness hook
-  window.__lab = { loop, get scene() { return app ? app.scene : scene; }, app, renderer, atlas, bake, bakeQ, quality, batch, camera, controls, setStress: (n) => scene && scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
+  window.__lab = { loop, get scene() { return app ? app.scene : scene; }, app, renderer, atlas, bake, bakeQ, quality, gpu: GPU, batch, camera, controls, setStress: (n) => scene && scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
 }
 
 main().catch((err) => {

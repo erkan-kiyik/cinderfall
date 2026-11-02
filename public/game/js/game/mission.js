@@ -242,6 +242,7 @@ export class MissionScene extends M3.M3Scene {
       const inp = b.think(dt, w);
       e.preStep();
       if (e.alive) e.m.step(dt, inp);
+      e.far = this.offView(e.m.x, 160);
       e.postStep(dt, this.L);
       if (e.alive) this.handle(e, dt);
       if (b.bashReq) { b.bashReq = false; this.bash(e); }
@@ -517,9 +518,9 @@ export class MissionScene extends M3.M3Scene {
   }
 
   pointTo() {
-    const p = this.objectivePoint(), cam = this.e.camera, cv = this.e.renderer.canvas;
+    const p = this.objectivePoint(), cam = this.e.camera;
     if (!p || this.paused) { this.mhud.pointer(null); return; }
-    const w = cv.clientWidth, h = cv.clientHeight;
+    const w = this.e.renderer.cssW, h = this.e.renderer.cssH;
     const sx = ((p[0] - this.cam.x) / cam.viewW + 0.5) * w, sy = ((p[1] - this.cam.y) / cam.viewH + 0.5) * h;
     this.mhud.pointer(sx, sy, w, h, Math.round(Math.abs(p[0] - this.mover.x) / 32));
   }
