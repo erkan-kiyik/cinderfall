@@ -15,6 +15,9 @@ import {
   glove, boot, headShape, skinGlaze, skinDetail, neck, softHair, korBand, stitch, rivet, buckle, grime, scuffs,
   clothFolds, brushOf, paintEar, inPath, crease, softBrow,
 } from './body.js';
+import { texture } from '../tex.js';
+import { rnd } from '../paint.js';
+import { PROFILE, SKINS, skin, crop, strap, glass, ell, inP, brushOf as brushR } from './realhead.js';
 
 const PAL = {
   jacket: mat(tone('#f2894a', '#d6632b', '#a2451b', '#4e1e09'), 'canvas', 0.8),
@@ -278,92 +281,78 @@ function foot(g, ctx) {
   g.restore();
 }
 
-// --- head (docs §10.16): no face. The faded yellow hard hat with its brim all round and
-// the lamp on its front; the orange ear defenders clipped to it; chunky smoked goggles;
-// the half mask over the nose and mouth with its two magenta filters. FLINT's way: a
-// hat, goggles for eyes, the mask over the rest.
-const GOG = 'M 0.9 -8.25 C 2.6 -8.75 4.6 -8.6 5.45 -7.85 C 5.75 -7.05 5.65 -6.2 5.2 -5.7 C 4.2 -5.25 2.4 -5.3 1.25 -5.65 C 0.75 -6.45 0.65 -7.45 0.9 -8.25 Z';
-const LENS = 'M 1.45 -7.85 C 2.85 -8.25 4.5 -8.15 5.05 -7.5 C 5.25 -6.9 5.2 -6.3 4.85 -6.0 C 4.0 -5.65 2.55 -5.7 1.7 -6.0 C 1.3 -6.6 1.25 -7.3 1.45 -7.85 Z';
-const MASK = 'M 1.0 -5.7 C 2.4 -6.2 4.4 -6.0 5.5 -5.1 C 6.2 -4.1 6.1 -2.5 5.1 -1.6 C 3.9 -0.9 2.1 -1.0 1.1 -2.1 C 0.5 -3.2 0.5 -4.7 1.0 -5.7 Z';
-const HAT = 'M -6.4 -7.6 C -6.6 -8.1 -6.0 -8.4 -5.0 -8.5 C -5.0 -11.0 -2.8 -12.9 0.4 -13.0 C 3.4 -13.1 5.4 -11.4 5.5 -9.0 C 6.6 -8.9 7.6 -8.6 7.9 -8.2 C 8.0 -7.9 7.7 -7.7 7.2 -7.8 C 5.6 -8.0 3.4 -8.2 0.4 -8.1 C -2.4 -8.0 -4.6 -7.7 -6.0 -7.3 C -6.3 -7.25 -6.5 -7.4 -6.4 -7.6 Z';
-const MUFF = 'M -2.0 -7.0 C -0.6 -7.4 0.6 -6.7 0.7 -5.6 C 0.8 -4.4 0.1 -3.6 -1.0 -3.6 C -2.2 -3.6 -2.9 -4.6 -2.9 -5.6 C -2.9 -6.3 -2.6 -6.8 -2.0 -7.0 Z';
-const ell = (x, y, rx, ry) => `M ${x - rx} ${y} a ${rx} ${ry} 0 1 0 ${2 * rx} 0 a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 Z`;
+// --- head (docs §10.24): a crane driver's head, forty-seven: grey stubble on a wind-burnt
+// jaw, the grey crop at the nape; a half-face respirator sized to the face (grey elastomer,
+// the valve, two magenta pancake filters, the straps); smoked wraparound safety glasses;
+// orange ear defenders on the hat's slots; the faded yellow full-brim hard hat with its ridge,
+// the lamp on its band, stickers, the orange neck flap behind.
+const BMASK = 'M 3.0 -5.9 C 3.7 -6.2 4.4 -6.1 4.7 -5.8 C 5.0 -5.4 5.36 -5.0 5.6 -4.7 C 5.76 -4.4 5.7 -4.1 5.56 -3.9 C 5.6 -3.4 5.5 -2.8 5.2 -2.3 C 4.8 -1.7 4.0 -1.4 3.2 -1.5 C 2.4 -1.7 1.8 -2.2 1.6 -2.9 C 1.5 -3.8 1.8 -4.8 2.3 -5.4 C 2.5 -5.6 2.7 -5.8 3.0 -5.9 Z';
+const BHAT = 'M -6.6 -7.4 C -6.8 -7.9 -6.2 -8.2 -5.1 -8.3 C -5.1 -10.8 -3.0 -12.6 0.2 -12.7 C 3.2 -12.8 5.2 -11.2 5.3 -8.8 C 6.4 -8.7 7.3 -8.4 7.6 -8.0 C 7.7 -7.7 7.4 -7.5 6.9 -7.6 C 5.3 -7.8 3.2 -8.0 0.2 -7.9 C -2.6 -7.8 -4.8 -7.5 -6.2 -7.1 C -6.5 -7.05 -6.7 -7.2 -6.6 -7.4 Z';
+const BCUP = ell(-0.1, -5.6, 1.0, 1.25);
+const BGLASS = 'M 2.75 -7.0 C 3.6 -7.25 4.6 -7.22 5.05 -6.98 C 5.12 -6.62 5.06 -6.26 4.9 -5.96 C 4.3 -5.78 3.5 -5.78 2.9 -5.96 C 2.7 -6.28 2.68 -6.66 2.75 -7.0 Z';
 function head(g) {
-  const S = PAL.skin, Hh = PAL.hat, Mk = PAL.mask, F = PAL.filter, K = PAL.black;
-  const OR = mat(tone('#f2894a', '#d6632b', '#a2451b', '#4e1e09'), 'rubber', 0.3);
-  neck(g, S, { wide: 0.45, glaze: true });
-  const HD = headShape({ jaw: 1 });
-  cel(g, HD, S, { sh: 1.2, hl: 0.35 });
-  skinGlaze(g, HD);
-  clip(g, HD, () => {
-    // the grey crop at the back of the head, grey stubble on the jaw and down the neck
-    cel(g, 'M -4.3 -8.6 C -4.0 -6.8 -3.6 -5.4 -2.9 -4.4 L -2.4 -5.0 C -2.8 -6.2 -3.0 -7.4 -2.8 -8.6 Z', mat(tone('#a7a39c', '#7e7a74', '#57544f', '#24221f'), 'wool', 0.7), { sh: 0.3, hl: 0.35, line: false });
-    fill(g, 'M -1.8 -3.8 C -0.6 -3.4 0.4 -2.8 1.2 -2.0 L 1.2 -0.8 C -0.2 -1.4 -1.4 -2.2 -2.2 -3.0 Z', 'rgba(110,106,100,0.55)');
-    for (let k = 0; k < 50; k++) { const x = -1.8 + ((k * 37) % 30) / 10, y = -3.8 + ((k * 53) % 30) / 10; fill(g, `M ${x} ${y} l 0.08 0.12 l -0.06 0.02 Z`, '#cfcac2', 0.7); }
-  });
-  // the goggles' strap back to the hat's band
-  stroke(g, 'M 1.0 -7.1 C -0.8 -7.4 -2.6 -7.6 -4.4 -7.5', K.k, 0.56);
-  // the half mask: its straps back under the ear, the grey body, the valve, the two filters
-  stroke(g, 'M 1.0 -3.8 C -0.4 -4.0 -1.8 -4.1 -3.2 -3.9', K.k, 0.42);
-  stroke(g, 'M 1.0 -2.6 C -0.6 -2.2 -2.0 -2.4 -3.0 -3.0', K.k, 0.42);
-  cel(g, MASK, Mk, { sh: 0.9, hl: 0.45 });
-  clip(g, MASK, () => { stroke(g, curve([[1.6, -5.2], [3.6, -5.65], [5.3, -4.8]]), Mk.l, 0.2, 0.75); fill(g, 'M 0 -2.4 C 2 -1.8 4 -1.6 6.4 -2.2 L 6.4 0 L 0 0 Z', Mk.k, 0.4); });
-  cel(g, 'M 5.0 -3.7 C 5.4 -3.8 5.8 -3.7 6.0 -3.4 L 6.0 -2.3 C 5.8 -2.0 5.4 -1.9 5.0 -2.1 Z', K, { sh: 0.3, hl: 0.3, lw: 0.12 });
-  for (let y = -3.5; y < -2.2; y += 0.26) stroke(g, `M 5.15 ${y} L 5.9 ${y}`, K.k, 0.09, 0.9);
-  cel(g, ell(5.7, -3.6, 0.6, 1.1), F, { sh: 0.4, hl: 0.25, lw: 0.16 });
-  cel(g, ell(2.45, -3.35, 1.25, 1.6), Mk, { sh: 0.4, hl: 0.3, lw: 0.2 });
-  cel(g, ell(2.5, -3.35, 1.05, 1.4), F, { sh: 0.5, hl: 0.4, lw: 0.16 });
-  clip(g, ell(2.55, -3.35, 0.78, 1.08), () => { fill(g, ell(2.55, -3.35, 0.78, 1.08), F.d); for (let i = -1.1; i < 1.2; i += 0.22) stroke(g, `M 1.6 ${-3.35 + i} L 3.5 ${-3.35 + i}`, F.k, 0.06, 0.6); });
-  fill(g, ell(2.1, -4.1, 0.28, 0.32), '#ffffff', 0.3);
-  // the ear defenders: an orange cup over the ear on its arm up to the hat
-  stroke(g, 'M -1.0 -6.6 C -1.2 -7.6 -1.2 -8.4 -0.8 -8.9', K.m, 0.36);
-  cel(g, MUFF, OR, { sh: 0.6, hl: 0.45, lw: 0.22 });
-  clip(g, MUFF, () => { stroke(g, 'M -1.9 -6.6 C -0.9 -6.9 -0.1 -6.4 0.1 -5.6', OR.l, 0.16, 0.8); fill(g, 'M -3 -4.4 C -1.6 -4.0 -0.2 -4.0 1 -4.4 L 1 -3 L -3 -3 Z', OR.k, 0.35); });
-  stroke(g, 'M -2.1 -6.95 C -2.7 -6.7 -3.0 -6.1 -3.0 -5.4 C -3.0 -4.6 -2.6 -3.9 -1.9 -3.65', K.m, 0.34);
-  rivet(g, -1.0, -5.3, 0.2, PAL.steel);
-  // the goggles: chunky, a black frame, smoked glass with the street's lamps in it
-  cel(g, GOG, K, { sh: 0.5, hl: 0.35, lw: 0.24 });
-  const gr = g.createLinearGradient(3.2, -8.2, 3.3, -5.6);
-  gr.addColorStop(0, '#1e2126'); gr.addColorStop(0.4, '#555c66'); gr.addColorStop(0.5, '#a6aeb8'); gr.addColorStop(0.6, '#2a2e34'); gr.addColorStop(1, '#0e1013');
-  g.fillStyle = gr; g.fill(new Path2D(LENS));
-  clip(g, LENS, () => { fill(g, 'M 2.1 -8.2 L 2.8 -8.3 L 2.2 -5.6 L 1.5 -5.6 Z', '#ffffff', 0.3); fill(g, 'M 3.6 -6.4 L 5.1 -6.55 L 5.1 -6.2 L 3.6 -6.05 Z', '#ffcf86', 0.5); });
-  // the hard hat: faded yellow, a ridge over the crown, the brim all round, the lamp's band
-  cel(g, HAT, Hh, { sh: 1.5, hl: 0.6 });
-  clip(g, HAT, () => {
-    cel(g, 'M -3.6 -11.3 C -1.6 -13.0 2.0 -13.2 4.0 -11.9 L 3.6 -11.2 C 1.8 -12.3 -1.2 -12.2 -3.1 -10.7 Z', Hh, { sh: 0.3, hl: 0.5, lw: 0.14, ao: 0.25 });
-    stroke(g, 'M -6.2 -7.5 C -4.6 -7.9 -2.4 -8.2 0.4 -8.3 C 3.4 -8.4 5.6 -8.2 7.4 -8.0', Hh.l, 0.16, 0.9);
-    stroke(g, 'M -4.9 -8.6 C -2.0 -9.0 2.6 -9.2 5.4 -9.0', Hh.d, 0.24, 0.8);
-    g.save(); g.translate(-2.2, -10.0); g.rotate(-0.2); cel(g, 'M -0.9 -0.5 L 0.9 -0.5 L 0.6 0.5 L -0.9 0.5 Z', PAL.blue, { sh: 0.1, hl: 0.1, lw: 0.1 }); fill(g, 'M -0.6 -0.15 L 0.4 -0.15 L 0.4 0.12 L -0.6 0.12 Z', '#e9e4d6', 0.85); g.restore();
-    scuffs(g, [[-3.0, -10.6, 0.5, 0.6], [3.8, -11.2, 0.4, -0.3], [0.8, -12.2, 0.3]], Hh.l, 0.6);
-    grime(g, -11, -7.4, 'rgba(70,50,20,0.35)');
-  });
-  stroke(g, 'M -4.8 -9.0 C -1.6 -10.0 2.0 -10.4 5.0 -10.7', '#1e1f22', 0.5);
-  for (let x = -4.2; x < 4.6; x += 0.8) fill(g, `M ${x} ${-9.25 - (x + 4.8) * 0.17} l 0.32 -0.06 l 0 0.18 l -0.32 0.06 Z`, '#b9b2a2', 0.6);
-  cel(g, 'M 3.2 -11.6 C 3.2 -11.8 3.4 -11.9 3.6 -11.9 L 5.0 -11.9 C 5.3 -11.9 5.4 -11.7 5.4 -11.5 L 5.4 -10.3 C 5.4 -10.1 5.3 -10.0 5.0 -10.0 L 3.6 -10.0 C 3.4 -10.0 3.2 -10.1 3.2 -10.3 Z', K, { sh: 0.3, hl: 0.35, lw: 0.2 });
-  fill(g, 'M 5.4 -11.6 L 5.75 -11.62 L 5.78 -10.3 L 5.43 -10.28 Z', '#fff2d0');
-  hatKit(g);
-}
-
-// docs §10.23: the orange cloth neck flap hung from the back of the hat against the
-// rain, a carpenter's pencil pushed under the lamp's band, the stickers the crane
-// crews trade (no lettering: the sprite is mirrored), rain beading on the brim
-function hatKit(g) {
+  const S = SKINS.ruddy, B = brushOf(g), Mk = PAL.mask, F = PAL.filter, Ht = PAL.hat;
+  neck(g, PAL.skin, { glaze: true, wide: 0.3 });
+  skin(g, PROFILE, S, { seed: 71, stubble: true, stubbleCol: 'rgba(150,146,140,0.4)' });
+  // grey stubble along the jaw and down the throat, the grey crop at the nape
+  B.hairs(700, 73, (i, r) => { const x = -0.8 + r() * 5.4, y = -4.4 + r() * 4.6; if (!inP(g, PROFILE, x, y) && !(x < 2.2 && y > -2.8)) return null; return [x, y, Math.PI * 0.55 + (r() - 0.5) * 0.6, 0.05 + r() * 0.06, r() < 0.5 ? '#d8d4cc' : '#7a746c', 0.02, 0.55]; });
+  crop(g, 'M -3.95 -6.6 C -3.4 -6.9 -2.4 -7.2 -1.2 -7.3 L -0.9 -6.4 C -1.4 -5.4 -2.0 -4.4 -2.6 -3.6 C -3.3 -4.0 -3.8 -5.0 -3.95 -6.6 Z', { col: '#6e6a64', lit: 'rgba(210,206,200,1)', seed: 75, n: 420, salt: 0.5 });
+  // the respirator's straps: the bottom one round the back of the neck, the top one up under the hat
+  strap(g, 'M 2.0 -2.6 C 0.6 -2.4 -1.0 -2.8 -2.8 -3.6', 0.26, '#2a2c30', '#0a0b0c', 'rgba(140,146,152,0.5)');
+  strap(g, 'M 2.4 -5.3 C 1.4 -6.0 0.6 -6.9 0.0 -7.8', 0.26, '#2a2c30', '#0a0b0c', 'rgba(140,146,152,0.5)');
+  // the ear defenders: the cup over the ear, its arm up into the hat's slot
+  strap(g, 'M -0.1 -6.8 C -0.2 -7.4 -0.1 -7.9 0.2 -8.3', 0.32, PAL.black.m, PAL.black.k, PAL.black.l);
+  const OR = mat(tone('#ff9a52', '#e06a2a', '#a8461a', '#4e1e08'), 'paint', 0.3);
+  cel(g, BCUP, OR, { sh: 0.6, hl: 0.5, gloss: 0.35 });
+  B.inside(BCUP, () => { B.line(ell(-0.1, -5.6, 0.78, 1.02), OR.d, 0.1, 0.04); B.dab(-0.3, -6.2, 0.4, 0.5, 'rgba(255,220,180,0.3)'); });
+  cel(g, ell(-0.1, -5.6, 0.36, 0.44), PAL.black, { sh: 0.2, hl: 0.25 });
+  // the mask: grey elastomer, its seal, the valve's cover, the near filter on the cheek and
+  // the edge of the far one past the nose
+  cel(g, ell(5.4, -3.4, 0.36, 0.86), F, { sh: 0.3, hl: 0.3 });
+  cel(g, BMASK, Mk, { sh: 0.9, hl: 0.5, gloss: 0.3 });
+  B.inside(BMASK, () => { B.line(BMASK, 'rgba(110,116,124,0.6)', 0.24, 0.08); B.line('M 4.7 -5.7 C 5.0 -5.3 5.36 -4.96 5.56 -4.72', 'rgba(200,206,214,0.5)', 0.12, 0.05); texture(g, 'rubber', 0.4, 0.5); });
+  cel(g, 'M 4.8 -3.9 C 5.3 -4.0 5.66 -3.7 5.7 -3.2 C 5.72 -2.7 5.4 -2.4 4.9 -2.4 C 4.5 -2.5 4.36 -2.9 4.4 -3.3 C 4.44 -3.6 4.58 -3.84 4.8 -3.9 Z', PAL.black, { sh: 0.3, hl: 0.35, gloss: 0.3 });
+  for (let y = -3.5; y < -2.6; y += 0.22) B.line(`M 4.6 ${y} L 5.5 ${y}`, 'rgba(0,0,0,0.6)', 0.06, 0.01);
+  const NF = ell(2.9, -3.5, 1.0, 1.0);
+  cel(g, NF, F, { sh: 0.6, hl: 0.5, gloss: 0.3 });
+  B.inside(NF, () => { B.line(ell(2.9, -3.5, 0.74, 0.74), F.d, 0.14, 0.04); for (let a = 0; a < 6.28; a += 0.5) B.line(`M ${2.9 + Math.cos(a) * 0.2} ${-3.5 + Math.sin(a) * 0.2} L ${2.9 + Math.cos(a) * 0.6} ${-3.5 + Math.sin(a) * 0.6}`, F.k, 0.05, 0.01, 0.6); B.dab(2.6, -3.9, 0.4, 0.3, 'rgba(255,200,230,0.4)'); });
+  B.fill(ell(2.9, -3.5, 0.16, 0.16), F.k, 0.01);
+  // the glasses: smoked wraparound, the lamps of the yard in them, the arm back over the cup
+  strap(g, 'M 2.75 -6.7 C 1.8 -6.8 0.9 -6.8 0.2 -6.6', 0.16, '#1b1c1e', '#060606', 'rgba(140,140,140,0.4)');
+  B.fill(BGLASS, '#121314', 0.01);
+  glass(g, 'M 2.84 -6.9 C 3.6 -7.12 4.5 -7.1 4.96 -6.9 C 5.0 -6.6 4.96 -6.3 4.82 -6.06 C 4.26 -5.9 3.54 -5.9 2.98 -6.04 C 2.8 -6.32 2.78 -6.62 2.84 -6.9 Z', [2.8, -7.12, 5.0, -5.9], { tint: ['#141618', '#4a5662', '#c8a060'], a: 0.85, band: 'rgba(200,220,240,0.3)' });
+  // the neck flap, behind the hat's brim
   const O = mat(tone('#f08a4a', '#c8632e', '#8a3f1a', '#3e1a08'), 'canvas', 0.7);
-  const FLAP = 'M -6.4 -8.0 C -5.4 -8.2 -4.4 -8.2 -3.6 -8.0 L -3.2 -4.4 C -4.0 -3.6 -5.6 -3.4 -6.6 -3.8 Z';
-  cel(g, FLAP, O, { sh: 0.7, hl: 0.35 });
-  clip(g, FLAP, () => { fold(g, [[-6.0, -7.4], [-5.4, -5.8], [-5.6, -4.2]], O, 0.2); fold(g, [[-4.4, -7.6], [-4.0, -6.0], [-4.2, -4.4]], O, 0.18); grime(g, -6, -3.4, OIL); });
-  g.save(); g.translate(0.4, -10.1); g.rotate(-0.12);
-  cel(g, 'M -1.6 -0.22 L 1.4 -0.22 L 1.4 0.22 L -1.6 0.22 Z', mat(tone('#e05a40', '#b83a26', '#7e2416', '#360d06'), 'paint', 0.4), { sh: 0.1, hl: 0.2 });
-  fill(g, 'M 1.4 -0.22 L 1.95 0 L 1.4 0.22 Z', '#d8b890');
-  fill(g, 'M 1.8 -0.06 L 1.95 0 L 1.8 0.06 Z', '#2a2420');
+  const FLAP = 'M -6.0 -7.4 C -4.8 -7.7 -3.4 -7.7 -2.2 -7.5 L -1.8 -4.0 C -2.8 -3.2 -4.8 -3.1 -6.2 -3.6 Z';
+  cel(g, FLAP, O, { sh: 0.8, hl: 0.35 });
+  clip(g, FLAP, () => { fold(g, [[-5.4, -7.0], [-5.0, -5.6], [-5.2, -4.0]], O, 0.2); fold(g, [[-3.4, -7.2], [-3.0, -5.6], [-3.2, -4.0]], O, 0.18); grime(g, -6, -3.0, OIL); });
+  // the hard hat: faded yellow, the ridge over the crown, the brim all round, scuffed and dirty
+  cel(g, BHAT, Ht, { sh: 1.5, hl: 0.7 });
+  B.inside(BHAT, () => {
+    B.line('M -4.6 -9.6 C -3.2 -12.2 2.4 -12.8 4.8 -10.0', 'rgba(150,120,50,0.5)', 0.4, 0.12);
+    g.save(); g.translate(0.05, -0.2); B.line('M -4.6 -9.6 C -3.2 -12.2 2.4 -12.8 4.8 -10.0', 'rgba(255,246,200,0.6)', 0.16, 0.06); g.restore();
+    B.line('M -6.4 -7.3 C -4.8 -7.8 -2.6 -8.0 0.2 -8.05 C 3.2 -8.1 5.4 -7.9 7.4 -7.7', 'rgba(110,86,30,0.6)', 0.16, 0.04);
+    B.line('M -6.5 -7.6 C -4.8 -8.1 -2.6 -8.3 0.2 -8.35 C 3.2 -8.4 5.4 -8.2 7.5 -8.0', 'rgba(255,246,200,0.5)', 0.08, 0.03);
+    B.dab(-5.0, -8.0, 1.4, 0.6, 'rgba(60,50,20,0.4)');
+    const r = rnd(77);
+    for (let i = 0; i < 9; i++) B.line(`M ${-3 + r() * 7} ${-11.6 + r() * 3} l ${0.4 + r() * 0.8} ${(r() - 0.5) * 0.3}`, 'rgba(250,240,200,0.5)', 0.05, 0.02);
+    for (const [x, y] of [[4.2, -8.1], [1.2, -8.2], [-2.6, -7.9], [6.2, -7.85]]) { B.dab(x, y, 0.14, 0.1, 'rgba(60,50,20,0.5)'); B.dab(x - 0.04, y - 0.04, 0.05, 0.04, '#fffbe8'); }
+    texture(g, 'paint', 0.35, 0.6);
+  });
+  // the lamp's band and the lamp on the front, a carpenter's pencil pushed under the band
+  B.line('M -5.0 -8.6 C -2.0 -9.1 2.0 -9.3 5.3 -9.0', '#26282b', 0.4, 0.02);
+  cel(g, 'M 3.6 -10.1 L 5.0 -10.2 L 5.1 -8.9 L 3.7 -8.8 Z', PAL.black, { sh: 0.3, hl: 0.35, gloss: 0.3 });
+  B.fill('M 5.0 -10.1 L 5.3 -10.1 L 5.32 -9.0 L 5.04 -8.98 Z', '#fff6d8', 0.01);
+  g.save(); g.translate(0.6, -9.25); g.rotate(-0.06);
+  cel(g, 'M -1.5 -0.18 L 1.3 -0.18 L 1.3 0.18 L -1.5 0.18 Z', mat(tone('#e05a40', '#b83a26', '#7e2416', '#360d06'), 'paint', 0.4), { sh: 0.1, hl: 0.2 });
+  B.fill('M 1.3 -0.18 L 1.8 0 L 1.3 0.18 Z', '#d8b890', 0.005);
   g.restore();
-  // stickers on the dome: a green cross, a blue square, a half-torn yellow-black stripe
-  fill(g, 'M -2.4 -11.1 L -1.4 -11.3 L -1.3 -10.4 L -2.3 -10.2 Z', '#f4f1e8', 0.9);
-  fill(g, 'M -2.0 -11.15 L -1.7 -11.2 L -1.65 -10.3 L -1.95 -10.25 Z', '#2f8a4a');
-  fill(g, 'M -2.3 -10.85 L -1.4 -11.0 L -1.38 -10.7 L -2.28 -10.55 Z', '#2f8a4a');
-  fill(g, 'M 2.6 -11.9 L 3.6 -11.8 L 3.5 -11.0 L 2.5 -11.1 Z', '#3a6ea8', 0.9);
-  for (let k = 0; k < 3; k++) fill(g, `M ${-4.6 + k * 0.5} -9.4 L ${-4.3 + k * 0.5} -9.45 L ${-4.5 + k * 0.5} -8.9 L ${-4.8 + k * 0.5} -8.85 Z`, k % 2 ? '#1a1814' : '#e8c23a', 0.85);
-  for (const [x, y] of [[4.6, -8.7], [1.4, -9.1], [-2.6, -8.9], [6.0, -8.4]]) { fill(g, `M ${x - 0.16} ${y} a 0.16 0.12 0 1 0 0.32 0 a 0.16 0.12 0 1 0 -0.32 0 Z`, 'rgba(60,50,20,0.5)'); fill(g, `M ${x - 0.08} ${y - 0.04} a 0.06 0.05 0 1 0 0.12 0 a 0.06 0.05 0 1 0 -0.12 0 Z`, '#fffbe8', 0.9); }
+  // stickers: a green cross, a blue square, a torn yellow-black stripe (no lettering)
+  B.fill('M -2.4 -11.0 L -1.4 -11.2 L -1.3 -10.3 L -2.3 -10.1 Z', '#f4f1e8', 0.01, 0.9);
+  B.fill('M -2.0 -11.05 L -1.7 -11.1 L -1.65 -10.2 L -1.95 -10.15 Z', '#2f8a4a', 0.005);
+  B.fill('M -2.3 -10.75 L -1.4 -10.9 L -1.38 -10.6 L -2.28 -10.45 Z', '#2f8a4a', 0.005);
+  B.fill('M 1.6 -11.9 L 2.6 -11.86 L 2.54 -11.06 L 1.54 -11.1 Z', '#3a6ea8', 0.01, 0.9);
+  for (let k = 0; k < 3; k++) B.fill(`M ${-4.4 + k * 0.5} -9.4 L ${-4.1 + k * 0.5} -9.45 L ${-4.3 + k * 0.5} -8.95 L ${-4.6 + k * 0.5} -8.9 Z`, k % 2 ? '#1a1814' : '#e8c23a', 0.005, 0.85);
 }
 
 export const BRICK = {

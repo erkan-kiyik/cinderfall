@@ -1327,3 +1327,78 @@ eklendi.
 Kafalar oyunda küçük (orta kalitede 9 birimlik kafa yaklaşık 47 piksel,
 menü fotoğrafında yaklaşık 90 piksel); eklenenler o boyda renk ve biçim
 olarak okunan parçalar. İlk açılış süresi değişmedi (5,8 sn).
+
+### 10.24 Kafalar sıfırdan (Gall hariç)
+İstek: Gall dışındaki bütün kafalar sıfırdan. Ölçü Gall: gerçek oranlı bir
+kafa, önce düzlemler, sonra tenin bölgeleri, en son ayrıntılar. Eski
+kafaların asıl kusuru oranlardı: gözlükler gerçeğinin iki-üç katıydı
+(Flint'in gözlük camı kafanın üçte biri), kasklar kafadan kopuk, yüz
+dediğimiz şey kumaşla kaplı bir kutuydu. §10.16'daki karar duruyor:
+operatörlerin yüzü görünmez; ama artık örtünün altında gerçek bir yüz var.
+
+**Ortak araçlar (`art/ops/realhead.js`):** Gall'ın oranlarında erkek profili
+(`PROFILE`: kafatası, kaş kemeri, düz burun, dudaklar, sert çene, kulağın
+altındaki çene açısı) ve daha genç, ince bir profil (`PROFILE_F`: kısa,
+ucu kalkık burun, dolgun dudak, yuvarlak çene); düzlem düzlem ten boyama
+(`skin`: ensede ve çene altında gölge, yanda yarı ışık, önde lamba; elmacık,
+çene ve çene ucu yukarı bakan düzlemler; alında sarı, burunda ve yanakta
+kırmızı, tıraş yerinde mavi ya da kır; gözenek ve lekeler) ve dört ten
+(açık-yıpranmış, zeytin, rüzgârdan kızarmış, koyu kahve); kulak (sarmal,
+iç kıvrım, kulak çukuru, tragus, lob); kısa saç (yöne taranmış tek tek
+teller, kır karışabilir); örgü dokusu (sıra ya da nervür); kayış; cam
+(gece: üstte koyu gök, ortada sokak ışığı bandı, altta ateşin sıcağı, tek
+sert parıltı).
+
+- **Flint:** kafaya oturan örgü bere: tepede örgü sıraları, kıvrık nervürlü
+  kenar kulakların üstüne iner, sendikanın emaye kor rozeti; gerçek boyda
+  kaynak gözlüğü: deri yuvalarda iki yuvarlak bakır çerçeve, şişe yeşili
+  cam, burun köprüsü, berenin üstünden dolanan lastik kayış ve tokası;
+  kaşlar yuvaların üstünde çatık, yakın kaşta eski yanık izi; kulak, zeytin
+  ten, kıvılcımdan uçları yanık favori, ensede kısa koyu saç, gözlüğün
+  çevresinde is; babasının atkısı burun köprüsünden ucuna gerilip çeneye
+  düşer, boyna iki tur sarılı, nefesinden kararmış, yamalı.
+- **Warden:** bütün kafayı saran gri itfaiye başlığı (örgü burnun ve
+  çenenin üstünde gerili, nefes aldığı yerde ıslak ve kararmış, ense
+  dikişi, altında kulağın kabarıklığı); yüz açıklığında ten, kıvrık örgü
+  kenarı; tek parça kehribar camlı kask gözlüğü; kafaya göre ölçülmüş
+  geleneksel itfaiye kaskı: nervürlü kubbe, önde kısa siper, ensede uzun
+  kuyruk, kuyrukta reflektif şerit, siyah bant ve kaptanın gümüş çizgisi,
+  is ve ısı lekeleri, istasyon numarası, siperin üstünde dik açılı fener;
+  çene kayışı ve tokası.
+- **Vesper:** kapüşon gerçek bir kafanın üstünde: tepe ışıkta, açıklığın
+  astarı gölgede, kordon kanalı, ense dikişi, yağmurdan ıslak lekeler ve
+  damlalar; içeride yüz kapüşonun gölgesinde, yalnız alın ışık alır;
+  siperin altından kestane bir perçem; küçük yuvarlak füme gözlük, tek
+  parıltısıyla; boğazlık burnun ucuna gerili, nervürleri yukarı akar;
+  kulaklık bandı kapüşonun üstünden, kulak kabı, ağza uzanan mikrofon kolu;
+  çeneden sarkan kordon ve çelik ucu.
+- **Skye:** koyu ten, kulak, kısa fade (tepede koyu, kulağın üstünde ve
+  ensede tene inen); kafaya oturan pamuklu bisiklet şapkası, gök mavisi ve
+  hardal çizgi, küçük siperi yukarı kıvrık; gerçek boyda saran spor
+  gözlüğü, gök mavisi ayna, sapı kulağın üstünden; lacivert, krem desenli
+  bandana burnun ucuna gerili, düğümü ve iki ucu kulağın arkasında;
+  kablolu kulaklık ve çelik küpe.
+- **Bulwark:** rüzgârdan kızarmış ten, çenede ve boğazda kır sakal, ensede
+  kır kısa saç; yüze göre ölçülmüş yarım maske: gri elastomer, sızdırmazlık
+  kenarı, önde valf kapağı, yanakta magenta disk filtre (içinde ızgara),
+  burnun ötesinde öbür filtrenin kenarı, alt ve üst kayışlar; füme saran
+  iş gözlüğü; baretin yuvasına takılı turuncu kulaklık; tam siperli soluk
+  sarı baret, sırt nervürü, fener bandı ve feneri, banda sıkışmış marangoz
+  kalemi, çıkartmalar, çizikler, damlalar; arkada turuncu ense bezi.
+- **Vanta (Tetikçi, Kalkanlı):** lacivert örgü balaklava; yüze göre
+  kalıplanmış yüz kabuğu (gri, tek füme cam yarık, derinde kırmızı ve
+  çerçeveyi aydınlatan ışığı, tarama çizgisi) ve havalandırma oluklu siyah
+  çene koruması; kulağın üstünden kesik balistik kask: yan raylar, alında
+  gece görüş montajı, tepede ve arkada cırt panel, birim bandı, yanda
+  amblem; raya takılı iletişim kulaklığı ve kablosu; arkada stroboskop.
+- **Hücumcu:** siyah balaklava; modern tam yüz maskesi: siyah kauçuk, gri
+  çerçevede tek geniş kavisli vizör (ışık bant halinde, içte kırmızı),
+  ağızda konuşma diyaframı, yanak yuvasına vidalı Vanta grisi filtre, beş
+  kayışlı kafa bağı ve çelik tokaları; tepede amblemli alçak çevik kuvvet
+  kaskı.
+- **Gall** değişmedi.
+
+Oyun boyutunda (orta kalite, kafa yaklaşık 47 piksel) yeni kafalar daha
+küçük ve gerçekçi; Flint'in yeşil camları okunsun diye gözlüğü gerçeğin
+biraz üstünde (cam yarıçapı 0,76 birim). İlk açılış süresi değişmedi
+(5,3–5,6 sn), açılışta hata yok.

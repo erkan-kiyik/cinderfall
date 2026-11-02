@@ -15,6 +15,8 @@ import {
   glove, boot, headShape, neck, korBand, stitch, rivet, buckle, grime, scuffs,
   clothFolds, brushOf,
 } from './body.js';
+import { texture } from '../tex.js';
+import { SKINS, skin, knit, strap, glass, ell, brushOf as brushR } from './realhead.js';
 
 const PAL = {
   coat: mat(tone('#5f615e', '#464845', '#30322f', '#141515'), 'canvas', 0.7),
@@ -259,72 +261,90 @@ function shin(g, ctx) {
 }
 function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { toe: PAL.boot }); }
 
-// --- head (docs §10.16): no face. The old fire helmet every child draws: a ribbed
-// dome, a short brim in front, the long tail behind to shed the water, white for the
-// captain and black with soot; amber-gold goggles strapped round it and pulled down
-// over the eyes; the grey flash hood up over the nose. FLINT's way: a cap, round
-// goggles for eyes, the cloth over the rest.
-const HELM = 'M -8.9 -5.5 C -8.4 -6.8 -6.6 -7.8 -4.7 -8.2 C -4.9 -10.6 -2.8 -12.6 0.2 -12.7 C 3.2 -12.8 5.0 -11.2 5.1 -8.9 C 5.9 -8.6 6.7 -8.1 7.0 -7.6 C 7.1 -7.3 6.9 -7.1 6.5 -7.25 C 5.4 -7.7 4.2 -7.9 2.6 -7.95 C 0.6 -7.95 -2.0 -7.6 -4.4 -7.0 C -6.2 -6.5 -7.6 -5.9 -8.4 -5.2 C -8.8 -5.0 -9.1 -5.1 -8.9 -5.5 Z';
-const GOG = 'M 0.8 -8.3 C 2.5 -8.85 4.6 -8.7 5.45 -7.85 C 5.75 -7.0 5.65 -6.1 5.2 -5.5 C 4.2 -5.0 2.4 -5.05 1.15 -5.45 C 0.6 -6.3 0.5 -7.4 0.8 -8.3 Z';
-const LENS = 'M 1.35 -7.9 C 2.8 -8.35 4.5 -8.25 5.05 -7.55 C 5.25 -6.9 5.2 -6.2 4.85 -5.85 C 4.0 -5.45 2.5 -5.5 1.6 -5.8 C 1.2 -6.45 1.15 -7.25 1.35 -7.9 Z';
-const MUFF = 'M -3.4 -4.7 C -1.8 -5.25 0.6 -5.6 2.6 -5.5 C 4.1 -5.4 5.25 -5.05 5.45 -4.15 C 5.65 -3.05 5.05 -2.05 3.95 -1.55 C 2.6 -0.95 0.4 -0.85 -1.2 -1.15 C -2.6 -1.45 -3.55 -2.25 -3.75 -3.15 Z';
+// --- head (docs §10.24): a fire captain in his gear. The grey flash hood over the whole
+// head, pulled up over the nose (the knit stretched over a real nose and chin); the face
+// opening round the eyes filled by the helmet goggles, a single amber lens in a black
+// frame; the traditional helmet sized to the skull: a ribbed composite dome, a short
+// brim at the front, the long tail over the nape, the black band and reflective tape, a
+// right-angle light on the brim. White for a captain, gone ivory with heat, sooted.
+const WHOOD = 'M -3.2 -1.6 C -4.2 -2.6 -4.5 -4.4 -4.4 -6.4 C -4.3 -8.4 -3.4 -10.0 -1.7 -10.8 C 0.0 -11.4 2.0 -11.3 3.2 -10.5 C 4.1 -9.9 4.5 -9.0 4.55 -8.0 C 4.6 -7.4 4.72 -7.0 4.84 -6.8 C 4.84 -6.6 4.74 -6.5 4.66 -6.42 C 4.84 -6.1 5.0 -5.84 5.12 -5.62 C 5.34 -5.26 5.62 -4.92 5.8 -4.66 C 5.92 -4.4 5.84 -4.2 5.64 -4.14 C 5.44 -3.6 5.2 -2.8 4.95 -2.0 C 4.6 -1.2 3.8 -0.8 2.8 -0.7 C 1.4 -0.6 -0.2 -0.7 -1.6 -1.0 C -2.3 -1.1 -2.8 -1.3 -3.2 -1.6 Z';
+const WOPEN = 'M 2.7 -7.7 C 3.4 -7.95 4.2 -7.95 4.86 -7.7 C 5.0 -7.1 5.0 -6.4 4.86 -5.7 C 4.2 -5.4 3.3 -5.4 2.6 -5.6 C 2.4 -6.3 2.45 -7.1 2.7 -7.7 Z';
+const WGOG = 'M 2.55 -7.55 C 3.5 -7.9 4.6 -7.86 5.3 -7.5 C 5.5 -6.9 5.48 -6.2 5.25 -5.66 C 4.5 -5.36 3.4 -5.36 2.6 -5.6 C 2.36 -6.2 2.36 -6.95 2.55 -7.55 Z';
+const WLENS = 'M 2.85 -7.3 C 3.6 -7.58 4.5 -7.55 5.08 -7.28 C 5.24 -6.85 5.22 -6.3 5.04 -5.9 C 4.4 -5.66 3.5 -5.66 2.88 -5.84 C 2.7 -6.3 2.7 -6.86 2.85 -7.3 Z';
+const WDOME = 'M -4.6 -7.7 C -4.9 -9.8 -3.6 -11.7 -1.2 -12.3 C 1.2 -12.8 3.4 -12.2 4.4 -10.6 C 4.9 -9.8 5.0 -8.9 4.9 -8.1 C 3.2 -8.5 1.0 -8.6 -1.2 -8.4 C -2.4 -8.2 -3.6 -8.0 -4.6 -7.7 Z';
+const WBRIM = 'M -8.6 -4.9 C -7.8 -6.0 -6.4 -7.0 -4.6 -7.7 C -3.6 -8.0 -2.4 -8.2 -1.2 -8.4 C 1.0 -8.6 3.2 -8.5 4.9 -8.1 C 5.7 -7.9 6.4 -7.6 6.9 -7.2 C 7.0 -7.0 6.9 -6.9 6.7 -6.95 C 6.0 -7.2 5.2 -7.4 4.4 -7.5 C 2.6 -7.7 0.6 -7.66 -1.4 -7.4 C -3.4 -7.1 -5.4 -6.5 -7.0 -5.6 C -7.6 -5.2 -8.1 -4.8 -8.4 -4.5 C -8.7 -4.4 -8.8 -4.6 -8.6 -4.9 Z';
 function head(g) {
-  const H = PAL.helmet, F = PAL.hood, Kb = PAL.radio;
-  // the flash hood: grey knit over the head and down the neck
-  neck(g, F, { wide: 0.35, sh: 1.0 });
-  const HD = headShape({ jaw: 1 });
-  cel(g, HD, F, { sh: 1.1, hl: 0.3 });
-  // the goggles' strap back round the helmet
-  stroke(g, 'M 0.9 -7.1 C -1.2 -7.4 -3.0 -7.5 -4.6 -7.3', Kb.k, 0.62);
-  stroke(g, 'M 0.9 -7.25 C -1.2 -7.55 -3.0 -7.65 -4.6 -7.45', Kb.l, 0.12, 0.6);
-  // the hood pulled up over the nose and the mouth, bunched round the jaw
-  cel(g, MUFF, F, { sh: 1.1, hl: 0.4 });
-  clip(g, MUFF, () => { stroke(g, curve([[1.4, -5.4], [3.4, -5.3], [5.4, -4.4]]), F.l, 0.24, 0.8); fill(g, 'M -4 -2.4 C 0 -1.8 3 -1.8 6 -2.4 L 6 0 L -4 0 Z', F.k, 0.35); });
-  clothFolds(g, MUFF, [[[-3.2, -4.1], [-0.8, -4.5], [2.0, -4.6], [4.2, -4.2]], [[-3.0, -2.4], [-0.6, -2.1], [2.2, -2.2], [4.6, -2.6]], [[2.6, -3.9], [3.8, -3.6], [5.0, -3.4]]], F);
-  // the goggles: a black rubber frame, the amber-gold glass with the fire in it
-  cel(g, GOG, Kb, { sh: 0.5, hl: 0.35, lw: 0.24 });
-  const gr = g.createLinearGradient(2.6, -8.3, 3.3, -5.5);
-  gr.addColorStop(0, '#5a3a0e'); gr.addColorStop(0.35, '#c8902c'); gr.addColorStop(0.5, '#ffe7a0'); gr.addColorStop(0.62, '#d08a26'); gr.addColorStop(1, '#4a2a08');
-  g.fillStyle = gr; g.fill(new Path2D(LENS));
-  clip(g, LENS, () => {
-    fill(g, 'M 2.0 -8.4 L 2.75 -8.5 L 2.15 -5.4 L 1.4 -5.4 Z', '#fff8e0', 0.45);
-    fill(g, 'M 3.4 -6.2 L 5.2 -6.4 L 5.2 -5.9 L 3.4 -5.75 Z', '#ff8a30', 0.55);
+  const Hm = PAL.helmet, F = PAL.hood, Kb = PAL.radio, B = brushOf(g);
+  // the hood down the neck, then over the head: grey aramid knit, its seams
+  neck(g, F, { wide: 0.45, sh: 1.0 });
+  cel(g, WHOOD, F, { sh: 1.4, hl: 0.4 });
+  knit(g, WHOOD, F, { step: 0.28, bend: 0.2, box: [-5, -12, 7, 0], ta: 0.5 });
+  B.inside(WHOOD, () => {
+    // the knit stretched over the nose and the chin, the light on the ridge of the nose
+    B.line('M 4.9 -6.4 C 5.2 -5.8 5.5 -5.2 5.74 -4.7', 'rgba(220,218,210,0.45)', 0.16, 0.08);
+    B.dab(5.2, -3.2, 0.4, 1.2, 'rgba(10,10,10,0.35)');
+    // wet and dark where he breathes; soot ground into it round the opening
+    const br = g.createRadialGradient(5.2, -3.6, 0.2, 5.2, -3.6, 1.8); br.addColorStop(0, 'rgba(20,18,16,0.5)'); br.addColorStop(1, 'rgba(20,18,16,0)'); g.fillStyle = br; g.fillRect(3, -6, 4, 5);
+    B.dab(3.8, -5.0, 1.4, 0.5, 'rgba(26,22,18,0.35)');
+    // the seam up the back of the head, the ear's bump under the knit
+    B.line('M -3.9 -2.4 C -4.4 -4.6 -4.2 -7.4 -2.8 -9.8', 'rgba(20,20,20,0.45)', 0.1, 0.05);
+    B.dab(0.0, -5.4, 0.8, 1.1, 'rgba(200,198,190,0.18)');
+    B.line('M 0.7 -6.2 C 0.8 -5.5 0.62 -4.8 0.36 -4.36', 'rgba(20,20,20,0.35)', 0.14, 0.1);
   });
-  stroke(g, LENS, '#2a1a06', 0.12, 0.8);
-  rivet(g, 0.95, -7.0, 0.2, PAL.steel);
-  // the chin strap from under the helmet's edge down round the jaw, its buckle (docs §10.23)
-  stroke(g, 'M -0.4 -7.0 C 0.0 -5.0 1.2 -2.6 3.6 -1.3', Kb.k, 0.5);
-  stroke(g, 'M -0.3 -7.0 C 0.1 -5.0 1.3 -2.7 3.6 -1.45', Kb.l, 0.1, 0.5);
-  buckle(g, 0.55, -4.0, 0.7, 0.9, PAL.steel);
-  // the hood's knit wet and dark where he breathes through it
-  clip(g, MUFF, () => { const br = g.createRadialGradient(4.8, -3.4, 0.2, 4.8, -3.4, 2.2); br.addColorStop(0, 'rgba(20,18,16,0.5)'); br.addColorStop(1, 'rgba(20,18,16,0)'); g.fillStyle = br; g.fillRect(2, -6, 5, 5); });
-  // the helmet: the dome and its ribs, the brim round it with its tail, the black band,
-  // the red number; soot heaviest on the tail and low on the dome
-  cel(g, HELM, H, { sh: 1.6, hl: 0.7 });
-  clip(g, HELM, () => {
-    for (const [d, w] of [['M -4.2 -9.4 C -2.6 -11.6 1.8 -12.2 4.4 -10.2', 0.34], ['M -4.5 -8.6 C -3.0 -10.4 1.4 -11.0 4.8 -9.4', 0.3]]) { stroke(g, d, H.d, w); stroke(g, d.replace(/-(\d+\.\d)/g, (m, n) => '-' + (parseFloat(n) + 0.25).toFixed(2)), H.l, w * 0.6, 0.9); }
-    fill(g, 'M -5 -8.4 C -2 -8.9 2 -9.0 5.2 -8.6 L 5.2 -7.9 C 2 -8.2 -2 -8.1 -5 -7.6 Z', PAL.band.m);
-    stroke(g, 'M -5 -8.05 C -2 -8.55 2 -8.65 5.2 -8.25', PAL.tapeS.l, 0.14, 0.9);
-    stroke(g, 'M -8.6 -5.3 C -7.6 -6.0 -6.2 -6.6 -4.4 -7.1 C -2.0 -7.7 0.6 -8.05 2.6 -8.05 C 4.2 -8.0 5.4 -7.8 6.6 -7.35', H.l, 0.18, 0.9);
-    const sg = g.createLinearGradient(-8, -5, 0, -11); sg.addColorStop(0, 'rgba(30,26,22,0.6)'); sg.addColorStop(0.5, 'rgba(30,26,22,0.14)'); sg.addColorStop(1, 'rgba(30,26,22,0)');
-    g.fillStyle = sg; g.fill(new Path2D(HELM));
-    g.save(); g.translate(-3.3, -9.3); g.rotate(-0.42);
-    cel(g, 'M -0.95 -0.55 L 0.95 -0.55 L 0.95 0.55 L -0.95 0.55 Z', PAL.red, { sh: 0.2, hl: 0.2, lw: 0.1 });
-    g.fillStyle = 'rgba(244,236,218,0.95)'; g.font = "700 0.9px 'Barlow Condensed', sans-serif"; g.textAlign = 'center'; g.fillText('07', 0, 0.32);
-    g.restore();
-    scuffs(g, [[1.8, -11.6, 0.35, 0.3], [-6.4, -6.2, 0.4, -0.5]], '#8a8478', 0.45);
-    // smoke streaked up the dome from the brim, the brim's front browned by heat, a dent
-    // with the light in its far wall (docs §10.23)
-    const Bs = brushOf(g);
-    for (const [x, y, rx, ry, a, r] of [[-2.4, -9.6, 0.9, 1.6, 0.22, 0.25], [-1.9, -11.0, 0.6, 1.0, 0.14, 0.4], [0.4, -9.4, 0.8, 1.3, 0.18, -0.1], [2.4, -9.2, 0.7, 1.0, 0.16, -0.3], [-4.2, -8.0, 1.0, 0.9, 0.24, 0.6]]) Bs.dab(x, y, rx, ry, `rgba(40,34,28,${a})`, 1, 'source-over', r);
-    const hb = g.createRadialGradient(5.6, -7.8, 0.2, 5.6, -7.8, 2.2); hb.addColorStop(0, 'rgba(150,104,40,0.45)'); hb.addColorStop(1, 'rgba(150,104,40,0)');
-    g.fillStyle = hb; g.fillRect(3, -10, 5, 4);
-    stroke(g, 'M 0.0 -10.6 a 0.7 0.45 0 0 0 1.3 0.1', H.k, 0.16, 0.6);
-    stroke(g, 'M 0.1 -10.45 a 0.6 0.35 0 0 1 1.1 0.1', H.l, 0.1, 0.9);
+  clothFolds(g, WHOOD, [[[1.0, -2.0], [2.6, -1.4], [4.4, -1.4]], [[-2.6, -1.8], [-1.0, -1.2], [0.8, -1.0]], [[3.0, -4.4], [4.0, -4.0], [5.2, -4.2]]], F);
+  // the face opening: skin round the eyes, the knit's edge rolled round it
+  skin(g, WOPEN, SKINS.fair, { seed: 41 });
+  B.line(WOPEN, F.k, 0.22, 0.06, 0.8); B.line(WOPEN, F.l, 0.08, 0.04, 0.5);
+  // the goggles: the black frame on its foam, the single amber lens, the fire in it
+  cel(g, WGOG, Kb, { sh: 0.4, hl: 0.4, gloss: 0.3 });
+  glass(g, WLENS, [2.7, -7.58, 5.24, -5.66], { tint: ['#5a3a0e', '#e8b04a', '#ff8a30'], band: 'rgba(255,240,200,0.4)', a: 0.85 });
+  B.line(WLENS, '#1a1006', 0.06, 0.01);
+  for (const x of [2.7, 5.2]) B.fill(ell(x, -6.6, 0.1, 0.22), Kb.l, 0.01);
+  // the chin strap from inside the helmet down round the jaw, its buckle
+  strap(g, 'M -0.6 -7.6 C -0.3 -5.4 0.8 -3.0 3.4 -1.2', 0.34, '#1d1c1a', '#060606', 'rgba(140,140,130,0.5)');
+  buckle(g, 0.3, -4.6, 0.6, 0.8, PAL.steel);
+  // the goggles' strap back round the helmet over the band
+  strap(g, 'M 2.5 -6.9 C 0.6 -7.5 -1.8 -7.7 -4.4 -7.6', 0.4, Kb.m, Kb.k, Kb.l);
+  // the helmet: the tail and brim, then the dome with its ribs, the band and the tape
+  cel(g, WBRIM, Hm, { sh: 0.9, hl: 0.6 });
+  B.inside(WBRIM, () => {
+    B.line('M -8.4 -4.7 C -6.6 -6.0 -4.0 -6.9 -1.4 -7.25 C 0.8 -7.55 3.0 -7.55 4.6 -7.35 C 5.6 -7.2 6.3 -7.0 6.8 -6.95', 'rgba(60,54,46,0.6)', 0.2, 0.06);
+    B.line('M -8.5 -4.9 C -6.8 -6.3 -4.2 -7.3 -1.2 -7.8 C 1.0 -8.1 3.2 -8.0 4.9 -7.8', 'rgba(255,250,236,0.55)', 0.1, 0.04);
+    // reflective tape on the tail, smoke heaviest on its tip, the brim's front browned
+    B.fill('M -7.9 -5.2 C -7.0 -5.9 -6.0 -6.5 -5.0 -6.9 L -4.8 -6.5 C -5.8 -6.1 -6.8 -5.5 -7.6 -4.9 Z', '#d8c85a', 0.02);
+    B.fill('M -7.75 -5.08 C -6.9 -5.75 -5.95 -6.3 -4.95 -6.72 L -4.9 -6.62 C -5.9 -6.2 -6.85 -5.65 -7.7 -5.0 Z', '#eef0f0', 0.01);
+    B.dab(-7.6, -5.0, 1.4, 0.8, 'rgba(36,30,24,0.55)');
+    B.dab(6.0, -7.2, 1.2, 0.5, 'rgba(150,104,40,0.45)');
+    texture(g, 'paint', 0.35, 0.6);
   });
-  // the torch clipped on the side of the dome, its lens
-  cel(g, 'M 0.4 -10.7 L 3.0 -11.0 L 3.1 -10.0 L 0.5 -9.7 Z', Kb, { sh: 0.3, hl: 0.35, lw: 0.18 });
-  fill(g, 'M 3.0 -11.05 L 3.35 -11.08 L 3.4 -9.95 L 3.08 -9.92 Z', '#fff2cc');
+  cel(g, WDOME, Hm, { sh: 1.5, hl: 0.75 });
+  B.inside(WDOME, () => {
+    // the ribs running front to back, seen from the side as arcs over the dome, each a ridge
+    // lit along its top; the comb along the crown
+    for (const k of [0.78, 0.52]) {
+      const d = `M -4.5 -8.0 C -4.2 ${-8.0 - 4.6 * k} 4.2 ${-8.2 - 4.6 * k} 4.8 -8.3`;
+      B.line(d, 'rgba(120,112,100,0.45)', 0.28, 0.1);
+      g.save(); g.translate(0.04, -0.15); B.line(d, 'rgba(255,252,240,0.6)', 0.12, 0.05); g.restore();
+    }
+    B.line('M -4.4 -9.6 C -3.2 -12.0 2.2 -12.6 4.4 -10.4', 'rgba(255,252,240,0.5)', 0.18, 0.08);
+    // smoke streaked up from the band, heat-browned at the front, a dent
+    for (const [x, y, rx, ry, a] of [[-2.6, -9.4, 0.9, 1.6, 0.24], [-0.4, -9.6, 0.7, 1.2, 0.18], [1.8, -9.4, 0.7, 1.1, 0.16], [-4.0, -8.4, 1.0, 1.0, 0.3]]) B.dab(x, y, rx, ry, `rgba(40,34,28,${a})`);
+    B.dab(4.4, -9.4, 0.8, 1.0, 'rgba(150,104,40,0.35)');
+    texture(g, 'paint', 0.35, 0.6);
+  });
+  // the black band round the base of the dome, the captain's silver stripe on it
+  const BAND = 'M -4.6 -7.7 C -3.6 -8.0 -2.4 -8.2 -1.2 -8.4 C 1.0 -8.6 3.2 -8.5 4.9 -8.1 L 4.92 -8.75 C 3.2 -9.12 1.0 -9.22 -1.2 -9.02 C -2.4 -8.84 -3.6 -8.62 -4.6 -8.3 Z';
+  cel(g, BAND, PAL.band, { sh: 0.2, hl: 0.25 });
+  B.line('M -4.6 -8.0 C -3.6 -8.32 -2.4 -8.52 -1.2 -8.72 C 1.0 -8.92 3.2 -8.82 4.9 -8.42', PAL.tapeS.l, 0.12, 0.02);
+  // the station number on its badge, the right-angle light clipped on the brim
+  g.save(); g.translate(-3.0, -10.2); g.rotate(-0.42);
+  cel(g, 'M -0.85 -0.5 L 0.85 -0.5 L 0.85 0.5 L -0.85 0.5 Z', PAL.red, { sh: 0.2, hl: 0.25 });
+  g.fillStyle = 'rgba(244,236,218,0.95)'; g.font = "700 0.8px 'Barlow Condensed', sans-serif"; g.textAlign = 'center'; g.fillText('07', 0, 0.29);
+  g.restore();
+  cel(g, 'M 1.8 -9.6 L 3.6 -9.75 L 3.7 -8.85 L 1.9 -8.7 Z', PAL.torch, { sh: 0.3, hl: 0.35, gloss: 0.2 });
+  cel(g, 'M 3.6 -9.85 L 4.2 -9.9 L 4.25 -8.75 L 3.65 -8.7 Z', Kb, { sh: 0.2, hl: 0.3 });
+  B.fill('M 4.18 -9.78 L 4.36 -9.8 L 4.4 -8.82 L 4.22 -8.8 Z', '#fff2cc', 0.01);
+  B.dab(4.6, -9.3, 0.6, 0.5, 'rgba(255,240,200,0.3)');
 }
 
 export const HALE = {
