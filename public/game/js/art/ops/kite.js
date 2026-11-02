@@ -16,7 +16,7 @@ import {
 } from './body.js';
 import { texture } from '../tex.js';
 import { rnd } from '../paint.js';
-import { PROFILE_F, SKINS, skin, ear, crop, strap, glass, ell, inP } from './realhead.js';
+import { PROFILE_F, SKINS, face, crop, strap, glass, ell, inP } from './realhead.js';
 
 const PAL = {
   wind: mat(tone('#d6b467', '#b19044', '#84692b', '#3d3011'), 'nylon', 0.55),
@@ -265,46 +265,29 @@ function foot(g, ctx) {
   fill(g, 'M -2.7 2.25 L 7.1 2.25 L 7.0 2.55 L -2.7 2.55 Z', t(PAL.tights).m, 0.8);
 }
 
-// --- head (docs §10.24): a courier's head: a short fade under a cotton cycling cap (cream,
-// the sky-blue and mustard stripe, the little brim flipped up), wraparound sport glasses with
-// a sky-blue mirror, a navy bandana with the cream print tied over the nose and knotted
-// behind; the ear with one wired earbud in it and a steel stud.
+// --- head (docs §10.25): Skye's face, open. Twenty-two: deep brown skin, a fine short nose,
+// full lips, dark eyes with long lashes, a short fade; the cotton cycling cap, the mirrored
+// sport glasses pushed up on it, the bandana pulled down round the neck; one earbud in.
 const SCAP = 'M -3.9 -7.3 C -4.3 -9.2 -3.3 -10.9 -1.3 -11.5 C 0.8 -12.0 3.0 -11.6 4.0 -10.4 C 4.4 -9.9 4.5 -9.3 4.42 -8.8 C 2.6 -9.0 0.8 -8.9 -0.8 -8.5 C -2.0 -8.2 -3.0 -7.8 -3.9 -7.3 Z';
 const SPEAK = 'M 3.6 -8.9 C 4.2 -9.2 4.9 -9.8 5.3 -10.6 C 5.42 -10.9 5.3 -11.06 5.04 -10.98 C 4.5 -10.8 3.9 -10.5 3.3 -10.2 C 3.1 -9.8 3.2 -9.3 3.6 -8.9 Z';
 const SFADE = 'M -3.85 -7.2 C -3.0 -7.7 -2.0 -8.1 -0.8 -8.4 C 0.4 -8.7 1.6 -8.8 2.8 -8.8 C 2.6 -8.2 2.0 -7.6 1.3 -7.2 C 0.9 -6.9 0.7 -6.6 0.62 -6.2 L -0.4 -6.8 C -1.4 -6.4 -2.4 -5.4 -2.7 -3.8 C -3.4 -4.4 -3.9 -5.6 -3.85 -7.2 Z';
-const SGLASS = 'M 2.7 -7.1 C 3.6 -7.32 4.6 -7.3 5.0 -7.06 C 5.08 -6.7 5.02 -6.3 4.86 -5.98 C 4.3 -5.8 3.5 -5.8 2.86 -5.98 C 2.66 -6.3 2.62 -6.72 2.7 -7.1 Z';
-const SBAND = 'M 2.6 -5.84 C 3.4 -6.0 4.1 -5.96 4.6 -5.72 C 4.84 -5.36 5.0 -5.04 5.1 -4.8 C 5.2 -4.5 5.16 -4.3 5.0 -4.14 C 4.9 -3.4 4.7 -2.6 4.5 -1.8 C 4.3 -0.8 3.6 0.0 2.6 0.6 L 1.0 -0.8 C 0.2 -1.4 -0.6 -2.0 -1.2 -2.6 C -1.6 -3.2 -1.8 -3.8 -1.8 -4.2 C -0.8 -4.6 0.2 -5.0 1.2 -5.4 C 1.7 -5.6 2.1 -5.76 2.6 -5.84 Z';
+const SCOLL = 'M 4.2 -2.0 C 3.3 -1.5 2.0 -1.6 0.8 -2.3 C -0.4 -2.9 -2.0 -3.3 -3.4 -3.1 C -4.2 -2.2 -4.4 -0.8 -4.0 0.6 C -2.4 1.6 0.6 1.8 3.0 1.4 C 4.3 1.1 4.8 0.4 4.8 -0.6 C 4.7 -1.2 4.5 -1.6 4.2 -2.0 Z';
 function head(g) {
-  const S = SKINS.deep, B = brushOf(g), Cr = PAL.cream, C = PAL.bandana, K = PAL.helmet;
+  const S = SKINS.deep, B = brushOf(g), Cr = PAL.cream, C = PAL.bandana;
   neck(g, PAL.skin, { glaze: true });
-  skin(g, PROFILE_F, S, { seed: 61 });
-  // the fade: dark on top, cut down to the skin over the ear and the nape
+  face(g, { prof: 'f', s: S, age: 0.04, seed: 61, iris: '#2a1810', white: '#a49488', brow: ['#140c08', 0.08, 1.0], lips: '110,52,44', lash: true });
   crop(g, SFADE, { col: '#140e0b', lit: 'rgba(90,70,60,1)', seed: 63, n: 700, a: Math.PI * 0.62 });
   B.inside(SFADE, () => { const fg = g.createLinearGradient(0, -8, 0, -4); fg.addColorStop(0, 'rgba(0,0,0,0)'); fg.addColorStop(1, S.base); g.fillStyle = fg; g.globalAlpha = 0.6; g.fillRect(-5, -8, 7, 5); g.globalAlpha = 1; });
-  ear(g, S);
-  // the earbud, its white cable down the neck; the steel stud in the lobe
+  // the earbud and its white cable, the steel stud
   B.line('M -0.1 -5.4 C -0.5 -4.4 -0.7 -3.0 -0.4 -0.4', '#d8dadc', 0.12, 0.01);
   cel(g, ell(0.18, -5.42, 0.26, 0.22), mat(tone('#ffffff', '#e4e6e8', '#b4b8bc', '#6a6e72'), 'paint', 0.2), { sh: 0.2, hl: 0.3, gloss: 0.4 });
   B.fill(ell(0.0, -4.44, 0.09, 0.09), PAL.steel.l, 0.005);
-  // the knot behind the head and the bandana's two ends
-  for (const d of ['M -2.3 -4.0 C -3.1 -3.7 -3.6 -3.0 -3.7 -2.2 C -3.4 -2.0 -3.0 -2.1 -2.8 -2.3 C -2.7 -2.9 -2.4 -3.4 -2.0 -3.7 Z', 'M -1.9 -3.8 C -2.1 -3.0 -2.2 -2.3 -2.0 -1.7 C -1.7 -1.7 -1.5 -1.8 -1.4 -2.0 C -1.4 -2.7 -1.5 -3.3 -1.6 -3.8 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3 });
-  cel(g, ell(-1.9, -4.2, 0.48, 0.44), C, { sh: 0.6, hl: 0.4 });
-  // the bandana over the nose and mouth, pulled tight over the tip, the print on it
-  cel(g, SBAND, C, { sh: 1.0, hl: 0.45 });
-  B.inside(SBAND, () => {
-    const r = rnd(65);
-    for (let k = 0; k < 38; k++) { const x = -1.8 + r() * 7, y = -6.0 + r() * 6.6; if (!inP(g, SBAND, x, y)) continue; B.fill(ell(x, y, 0.13, 0.1), Cr.m, 0.005, 0.85); if (r() < 0.5) B.fill(`M ${x - 0.3} ${y + 0.2} q 0.15 -0.35 0.36 -0.1`, Cr.d, 0, 0.6); }
-    B.line('M -1.6 -4.0 C 0.4 -4.8 2.4 -5.5 4.4 -5.6', Cr.m, 0.08, 0.01, 0.6);
-    B.line('M 4.62 -5.6 C 4.84 -5.3 5.0 -5.0 5.08 -4.8', 'rgba(170,190,230,0.5)', 0.14, 0.06);
-    B.dab(4.8, -2.8, 0.3, 1.0, 'rgba(6,8,16,0.4)');
-    texture(g, 'canvas', 0.35, 0.7);
-  });
-  clothFolds(g, SBAND, [[[4.6, -4.0], [3.0, -3.4], [1.0, -3.0]], [[4.4, -2.6], [2.6, -2.0], [0.6, -1.6]], [[4.0, -1.2], [2.8, -0.4]]], C);
-  // the glasses: the arm back over the ear, the frame, the sky-blue mirror with the street in it
-  strap(g, 'M 2.7 -6.8 C 1.6 -6.9 0.6 -6.8 -0.6 -6.5', 0.18, '#1d1f22', '#060708', 'rgba(140,150,160,0.5)');
-  B.fill(SGLASS, '#16181b', 0.01);
-  glass(g, 'M 2.8 -7.0 C 3.6 -7.2 4.5 -7.18 4.9 -6.98 C 4.96 -6.68 4.92 -6.36 4.78 -6.1 C 4.28 -5.92 3.54 -5.92 2.94 -6.08 C 2.76 -6.36 2.74 -6.7 2.8 -7.0 Z', [2.76, -7.2, 4.96, -5.92], { tint: ['#123a66', '#8fd0ff', '#e8c070'], band: 'rgba(240,250,255,0.55)', a: 0.95, fire: 'rgba(255,200,120,0.5)' });
-  B.line('M 2.8 -7.08 C 3.6 -7.3 4.5 -7.28 4.92 -7.06', '#2c2f34', 0.1, 0.01);
+  // the bandana down round the neck: navy, the cream print, its knot behind
+  cel(g, SCOLL, C, { sh: 1.0, hl: 0.45 });
+  B.inside(SCOLL, () => { const r = rnd(65); for (let k = 0; k < 30; k++) { const x = -4 + r() * 9, y = -3.2 + r() * 4.6; if (!inP(g, SCOLL, x, y)) continue; B.fill(ell(x, y, 0.13, 0.1), Cr.m, 0.005, 0.85); } texture(g, 'canvas', 0.35, 0.7); });
+  clothFolds(g, SCOLL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], C);
+  cel(g, ell(-3.4, -1.4, 0.5, 0.46), C, { sh: 0.6, hl: 0.4 });
+  for (const d of ['M -3.6 -1.0 C -4.2 -0.4 -4.4 0.4 -4.3 1.2 C -4.0 1.3 -3.7 1.2 -3.6 1.0 C -3.6 0.3 -3.4 -0.3 -3.2 -0.8 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3 });
   // the cap: cream cotton fitted to the head, the stripe round it, the brim flipped up
   cel(g, SCAP, Cr, { sh: 1.2, hl: 0.5 });
   B.inside(SCAP, () => {
@@ -316,6 +299,12 @@ function head(g) {
   B.line('M -3.9 -7.3 C -3.0 -7.8 -2.0 -8.2 -0.8 -8.5 C 0.8 -8.9 2.6 -9.0 4.42 -8.8', Cr.k, 0.12, 0.04, 0.7);
   cel(g, SPEAK, Cr, { sh: 0.4, hl: 0.4 });
   B.inside(SPEAK, () => { B.line('M 3.5 -9.4 C 4.1 -9.8 4.7 -10.3 5.1 -10.8', PAL.sky.m, 0.16, 0.02); B.dab(4.0, -9.4, 0.8, 0.4, 'rgba(60,46,30,0.3)'); });
+  // the glasses pushed up on the cap: the arm round it, the frame, the sky-blue mirror
+  g.save(); g.translate(0.1, -3.2); g.rotate(-0.08);
+  strap(g, 'M 2.7 -6.8 C 1.6 -6.9 0.6 -6.8 -0.6 -6.5', 0.18, '#1d1f22', '#060708', 'rgba(140,150,160,0.5)');
+  B.fill('M 2.7 -7.1 C 3.6 -7.32 4.6 -7.3 5.0 -7.06 C 5.08 -6.7 5.02 -6.3 4.86 -5.98 C 4.3 -5.8 3.5 -5.8 2.86 -5.98 C 2.66 -6.3 2.62 -6.72 2.7 -7.1 Z', '#16181b', 0.01);
+  glass(g, 'M 2.8 -7.0 C 3.6 -7.2 4.5 -7.18 4.9 -6.98 C 4.96 -6.68 4.92 -6.36 4.78 -6.1 C 4.28 -5.92 3.54 -5.92 2.94 -6.08 C 2.76 -6.36 2.74 -6.7 2.8 -7.0 Z', [2.76, -7.2, 4.96, -5.92], { tint: ['#123a66', '#8fd0ff', '#e8c070'], band: 'rgba(240,250,255,0.55)', a: 0.95, fire: 'rgba(255,200,120,0.5)' });
+  g.restore();
 }
 
 export const KITE = {

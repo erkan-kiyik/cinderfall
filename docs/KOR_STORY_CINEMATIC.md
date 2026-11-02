@@ -1402,3 +1402,48 @@ Oyun boyutunda (orta kalite, kafa yaklaşık 47 piksel) yeni kafalar daha
 küçük ve gerçekçi; Flint'in yeşil camları okunsun diye gözlüğü gerçeğin
 biraz üstünde (cam yarıçapı 0,76 birim). İlk açılış süresi değişmedi
 (5,3–5,6 sn), açılışta hata yok.
+
+### 10.25 Yüzler açık, Gall'ın ölçüsünde
+Şikâyet: yüzlerin oranları kötü, ayrıntı yok. §10.24'teki kapalı yüzler
+(gözlük, maske, kumaş) oyunda insan yüzü gibi okunmuyordu; lobideki
+fotoğraflarda yanlarındaki HAWK portresinin yanında maskeli küçük kafalar
+kalıyordu. Karar değişti: **operatörlerin yüzü açık** (§10.16'nın yerine).
+Vanta muhafızları maskeli kalır (yüzsüz bir güç; Gall onların tek yüzü).
+
+**Ortak yüz (`realhead.js`, `face`):** Gall'ın yüzü parametreli hale geldi:
+ten düzlemler ve bölgelerle (`skin`); burun (ışıkta sırt, yarı ışıkta yan
+düzlem, yuvarlak parlak uç, kanat ve oluğu, burun deliği, düşürdüğü
+gölge); burundan ağza ve ağız köşesinden inen kıvrımlar (yaşla derinleşir);
+dudaklar (üst dudak gölgede, birleşme çizgisi, alt dudak ışıkta; kadın
+profilinde daha dolgun ve renkli); kaş kemerinin altına gömülü göz (loş
+beyaz, korneanın arkasında iris, ağır üst kapak, tek parıltı; kirpik
+seçeneği); kaş; kulak; yaşla alın çizgileri, göz altı ve kaz ayakları;
+tıraş gölgesi ve kısa sakal telleri. Oranlar Gall'ınki: göz hizası tepeyle
+çenenin ortasında, burun ucu üçte ikide, ağız burunla çenenin üçte birinde,
+kulak göz hizasıyla burun tabanı arasında.
+
+- **Flint** (29): zeytin ten, düz burun, sert çene, üç günlük sakal,
+  kahverengi göz, yanık izli kalın kaşlar, kurumlu kıvrımlar; bere ve
+  rozeti; kaynak gözlüğü berenin üstüne itilmiş; atkı boyna indirilmiş.
+- **Warden** (41): yıpranmış açık ten, kaz ayakları, kırlaşan koyu kalın
+  bıyık, sakal gölgesi, gri-mavi göz; başlık boyunda toplanmış; gözlük
+  kaskın önüne itilmiş; çene kayışı çene boyunca.
+- **Vesper** (33): güneş görmemiş açık ten, kısa düz burun, dolgun dudak,
+  yeşil-gri göz, çelik çerçeveli yuvarlak gözlüğün ardında; alnına düşen ve
+  yanaktan inen kestane saç; kapüşon yüzün arkasında, kulağın üstünde;
+  boğazlık çenenin altında; kulaklık kapüşonun üstünde, mikrofon ağızda.
+- **Skye** (22): koyu kahve ten, ince kısa burun, dolgun dudak, uzun
+  kirpikli koyu göz, kısa fade; spor gözlük şapkanın üstüne itilmiş;
+  bandana boyunda; kulaklık ve küpe.
+- **Bulwark** (47): rüzgârdan kızarmış ten, kısa kır sakal ve bıyık, gür
+  kır kaşlar, derin kaz ayaklı açık mavi göz; yarım maske boynunda
+  sarkıyor; iş gözlüğü baretin siperinde; kulaklık takılı; baret, kalem,
+  çıkartmalar, ense bezi.
+- **Vanta:** yüz kabuğu ve çene koruması yüze yaklaştırıldı (öne çıkıntı
+  yarıya indi).
+
+**Lobi fotoğrafları:** çerçeve yüze alındı (kare 14 birim, kafanın ortası
+pozdan hesaplanıyor); figürün üstündeki karartma hafifledi, yüz ateşin
+ışığında okunuyor.
+
+İlk açılış 4,4 sn, açılışta hata yok.

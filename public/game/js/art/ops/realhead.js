@@ -148,3 +148,97 @@ export function glass(g, d, [x0, y0, x1, y1], o = {}) {
     B.dab(x0 + w * 0.75, y1 - h * 0.2, w * 0.25, h * 0.1, o.fire ?? 'rgba(255,150,70,0.4)');
   });
 }
+
+// A skin crease: a dark line, the edge under it catching the light from above.
+export function crease(g, d, w = 0.06, a = 0.5, s = SKINS.fair) {
+  const B = brushOf(g);
+  B.line(d, `rgba(${s.dark},${a})`, w, w * 0.6);
+  g.save(); g.translate(0.02, 0.04); B.line(d, `rgba(${s.pale},${a * 0.45})`, w * 0.8, w * 0.6); g.restore();
+}
+
+// A face in profile, painted the way Gall's is (docs §10.25): the skin in planes and
+// zones (skin()), then the nose (the bridge in the lamp, the side plane in half light,
+// the tip round and lit, the wing and its groove, the nostril, the shadow it throws),
+// the folds from the nose to the mouth, the lips, the eye deep under the brow (the white
+// dim, the iris a sliver behind the cornea, the lid heavy over it, one glint), the
+// brow, the ear; age in the folds and round the eye; stubble.
+//   o.prof 'm' (PROFILE) | 'f' (PROFILE_F); o.s a skin of SKINS; o.age 0..1;
+//   o.iris eye colour; o.brow [colour, lift, thickness]; o.lips rgb of the lips;
+//   o.stubble { col, n } hairs over the jaw and lip; o.lash (a darker, thicker lid)
+export function face(g, o) {
+  const f = o.prof === 'f', P = f ? PROFILE_F : PROFILE, s = o.s, B = brushOf(g), age = o.age ?? 0.3;
+  const cr = (d, w, a) => crease(g, d, w, a, s);
+  skin(g, P, s, { seed: o.seed ?? 77, stubble: !!o.shave, stubbleCol: o.shave });
+  // the nose, its features at their place on the profile
+  const dn = f ? -0.27 : 0, dm = f ? -0.13 : 0, de = f ? -0.08 : 0;
+  B.inside(P, () => {
+    g.save(); g.translate(dn, f ? -0.05 : 0);
+    B.fill('M 4.2 -6.3 C 4.5 -5.8 4.9 -5.2 5.2 -4.82 L 4.5 -4.56 C 4.3 -5.1 4.06 -5.6 3.9 -6.0 Z', `rgba(${s.half},0.35)`, 0.1);
+    B.line('M 4.32 -6.32 C 4.48 -6.04 4.6 -5.82 4.68 -5.66 C 4.86 -5.34 5.1 -5.04 5.28 -4.8', `rgba(${s.pale},0.75)`, 0.1, 0.05);
+    B.dab(4.62, -5.7, 0.1, 0.16, `rgba(${s.pale},0.5)`, 1, 'source-over', -0.5);
+    B.dab(5.24, -4.58, 0.18, 0.15, `rgba(${s.pale},0.7)`);
+    B.dab(5.1, -4.48, 0.32, 0.22, `rgba(${s.red},0.3)`);
+    B.dab(4.62, -4.56, 0.3, 0.22, `rgba(${s.lit},0.45)`);
+    B.line('M 4.42 -4.86 C 4.26 -4.7 4.26 -4.44 4.42 -4.34 C 4.56 -4.28 4.7 -4.28 4.82 -4.3', `rgba(${s.dark},0.65)`, 0.07, 0.04);
+    B.line('M 4.84 -4.33 C 4.98 -4.35 5.1 -4.34 5.2 -4.31', `rgba(${s.shade},0.85)`, 0.06, 0.03);
+    B.fill('M 4.36 -4.24 C 4.58 -4.2 4.7 -4.12 4.7 -4.0 C 4.54 -3.98 4.36 -4.04 4.24 -4.12 Z', `rgba(${s.dark},0.5)`, 0.06);
+    g.restore();
+    g.save(); g.translate(dm, 0);
+    // the fold from the nose to the mouth, the line from the mouth's corner, deeper with age
+    cr('M 4.3 -4.82 C 4.06 -4.5 3.96 -4.1 4.0 -3.66', 0.07, 0.25 + age * 0.4);
+    if (age > 0.35) cr('M 3.98 -3.4 C 3.94 -3.1 3.92 -2.85 3.98 -2.6', 0.05, age * 0.4);
+    cr('M 2.6 -2.55 C 3.0 -2.4 3.4 -2.36 3.7 -2.4', 0.05, 0.15 + age * 0.15);
+    // the mouth: the upper lip in shade, the line where they meet, the lower lip lit
+    const L = o.lips ?? s.red;
+    B.fill(f ? 'M 4.66 -3.66 C 4.44 -3.66 4.2 -3.6 4.02 -3.5 L 4.5 -3.47 Z' : 'M 4.6 -3.63 C 4.4 -3.6 4.2 -3.56 4.04 -3.5 L 4.42 -3.5 Z', `rgba(${L},${f ? 0.75 : 0.55})`, 0.03);
+    B.line('M 4.43 -3.5 C 4.3 -3.49 4.15 -3.47 4.0 -3.42', `rgba(${s.shade},0.92)`, 0.055, 0.02);
+    B.fill(f ? 'M 4.5 -3.46 C 4.56 -3.32 4.52 -3.16 4.42 -3.08 C 4.28 -3.18 4.12 -3.3 4.02 -3.38 Z' : 'M 4.48 -3.46 C 4.52 -3.36 4.5 -3.24 4.42 -3.18 C 4.3 -3.26 4.16 -3.34 4.06 -3.4 Z', `rgba(${L},${f ? 0.6 : 0.42})`, 0.04);
+    B.dab(4.4, -3.28, 0.1, 0.05, `rgba(${s.pale},0.6)`);
+    g.restore();
+    // age: lines across the forehead, the bag under the eye
+    if (age > 0.4) for (const y of [-8.6, -8.15]) cr(`M ${3.0 + de} ${y} C 3.4 ${y - 0.08} 3.8 ${y - 0.06} 4.1 ${y + 0.04}`, 0.035, (age - 0.4) * 0.6);
+  });
+  // stubble: short dark points over the jaw, the lip and the throat
+  if (o.stubble) B.hairs(o.stubble.n ?? 900, (o.seed ?? 77) + 3, (i, r) => {
+    const x = 0.4 + r() * 4.4, y = -4.6 + r() * 3.2;
+    if (!inP(g, P, x, y)) return null;
+    if (y < -4.0 && x > 4.0 + dm && x < 4.5) return null;
+    if (x > 4.0 && y > -3.66 && y < -3.1) return null;
+    return [x, y, Math.PI * 0.6 + (r() - 0.5) * 0.8, 0.04 + r() * 0.05, o.stubble.col, 0.018, 0.5];
+  });
+  ear(g, s);
+  // the eye, deep under the brow
+  g.save(); g.translate(de, 0);
+  const EYE = 'M 3.14 -6.12 C 3.38 -6.4 3.7 -6.48 3.98 -6.27 C 4.04 -6.17 4.02 -6.06 3.95 -6.02 C 3.66 -5.9 3.38 -5.94 3.14 -6.12 Z';
+  B.dab(3.6, -6.2, 0.62, 0.36, `rgba(${s.dark},0.4)`);
+  B.fill(EYE, o.white ?? '#b4a89c', 0.02);
+  B.inside(EYE, () => {
+    B.dab(3.3, -6.12, 0.3, 0.18, `rgba(${s.shade},0.6)`);
+    B.fill('M 3.68 -6.38 C 3.86 -6.36 3.96 -6.22 3.94 -6.06 C 3.86 -5.98 3.74 -5.97 3.66 -6.03 C 3.58 -6.14 3.58 -6.3 3.68 -6.38 Z', o.iris ?? '#6a4a34', 0.01);
+    B.line('M 3.68 -6.38 C 3.58 -6.3 3.58 -6.14 3.66 -6.03', 'rgba(20,14,12,0.8)', 0.03, 0.01);
+    B.dab(3.84, -6.2, 0.055, 0.07, '#141315');
+    B.fill('M 3.1 -6.56 L 4.05 -6.56 L 4.05 -6.28 C 3.8 -6.26 3.5 -6.24 3.1 -6.1 Z', `rgba(${s.shade},0.55)`, 0.03);
+  });
+  B.dab(3.9, -6.25, 0.04, 0.03, '#fff2e4', 0.95);
+  B.line('M 3.12 -6.12 C 3.38 -6.42 3.72 -6.5 4.0 -6.28', 'rgba(24,12,8,0.95)', o.lash ? 0.11 : 0.075, 0.025);
+  if (o.lash) B.line('M 3.9 -6.3 L 4.12 -6.38', 'rgba(24,12,8,0.9)', 0.05, 0.01);
+  B.line('M 3.2 -6.28 C 3.46 -6.52 3.76 -6.56 4.06 -6.4', `rgba(${s.half},0.45)`, 0.07, 0.05);
+  crease(g, 'M 3.18 -6.4 C 3.46 -6.66 3.8 -6.68 4.1 -6.52', 0.04, 0.5, s);
+  B.line('M 3.26 -6.0 C 3.5 -5.9 3.74 -5.9 3.94 -6.0', `rgba(${s.lit},0.4)`, 0.04, 0.02);
+  crease(g, 'M 3.24 -5.86 C 3.5 -5.72 3.78 -5.74 3.98 -5.86', 0.035, 0.2 + age * 0.25, s);
+  for (const [dy, l] of [[-0.12, 0.42], [0.02, 0.5], [0.15, 0.38]]) crease(g, `M 3.08 ${-6.12 + dy * 0.4} l ${-l} ${dy * 0.6}`, 0.025, 0.08 + age * 0.35, s);
+  const [bc, bl, bt] = o.brow ?? ['#3a2a20', 0.06, 1];
+  g.save(); g.translate(0, -0.02); g.scale(1, bt);
+  softBrowR(g, 3.0, -6.78 / bt, 4.38, -6.88 / bt, bl, bc, (o.seed ?? 7) + 9);
+  g.restore();
+  g.restore();
+}
+
+// a brow: a soft mass and short hairs along it, lighter where it thins out
+function softBrowR(g, x0, y0, x1, y1, lift, col, seed) {
+  const B = brushOf(g), w = x1 - x0;
+  const mid = (u) => [x0 + u * w, y0 + (y1 - y0) * u - Math.sin(u * Math.PI) * lift];
+  const [mx, my] = mid(0.5);
+  B.line(`M ${x0} ${y0} Q ${mx} ${my - lift} ${x1} ${y1}`, col, w * 0.14, w * 0.05, 0.75);
+  B.hairs(Math.round(w * 34), seed, (i, r) => { const u = r(), [x, y] = mid(u); return [x, y + (r() - 0.5) * w * 0.08, -0.35 - r() * 0.4, w * (0.08 + r() * 0.08), col, w * 0.025, 0.6 * (1 - u * 0.4)]; });
+}

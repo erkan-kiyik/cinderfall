@@ -3,7 +3,7 @@
 // once and cached.
 import { outlined, setRoot, canvas, rng, cel, fill, stroke, clip, metalOver } from '../art/kit.js';
 import { tone, mat } from '../art/style.js';
-import { drawFigure } from '../art/figure.js';
+import { drawFigure, solve } from '../art/figure.js';
 import { OPS } from '../art/ops/index.js';
 import { WEAPONS, PRIMER } from '../art/weapons/index.js';
 import { paintHawk } from '../art/hawk.js';
@@ -36,14 +36,15 @@ export function avatar(id, px = 44) {
 // the operator dark against them with an ember rim on the edges that face
 // the fire; nothing on them lights up by itself.
 function paintAvatar(id, size) {
-  const op = OPS[id], pose = op.pose, z = size / 17.5;
-  // the figure's feet origin in the portrait: x 0 left of centre, the crown
-  // (about -66) a little under the top edge, head and shoulders in frame
-  // The figure is painted straight into the portrait's square (only the head and
-  // shoulders are rasterised; painting the whole 80 × 82 unit figure and cropping
-  // it cost a phone seconds when the lobby first opened, docs §10.17)
-  // (with a margin, so the contact shade reaches the frame's edges as before)
-  const fx = 8.2 * z, fy = 68.0 * z, m = Math.ceil(size * 0.12);
+  // framed on the face (docs §10.25): about 14 units of the figure across the square,
+  // centred on the head as this operator's pose puts it
+  const op = OPS[id], pose = op.pose, z = size / 14;
+  const J = solve(pose), [nx, ny] = J.neck;
+  const hx = nx + 1.0, hy = ny - 6.2;
+  const m = Math.ceil(size * 0.12);
+  const fx = size * 0.46 - hx * z, fy = size * 0.5 - hy * z;
+  // only the head and shoulders are rasterised (painting the whole figure and cropping it
+  // cost a phone seconds when the lobby first opened, docs §10.17)
   const fig = outlined(size + 2 * m, size + 2 * m, z, fx + m, fy + m, (g) => drawFigure(g, op, pose));
   const dx = -m, dy = -m;
   const c = canvas(size, size), g = c.getContext('2d');
@@ -75,9 +76,9 @@ function paintAvatar(id, size) {
   bg.drawImage(fig, dx, dy);
   bg.globalCompositeOperation = 'source-atop';
   const shade = bg.createLinearGradient(0, 0, size, size * 0.4);
-  shade.addColorStop(0, 'rgba(8,9,13,0.74)'); shade.addColorStop(1, 'rgba(8,9,13,0.42)');
+  shade.addColorStop(0, 'rgba(8,9,13,0.5)'); shade.addColorStop(1, 'rgba(8,9,13,0.12)');
   bg.fillStyle = shade; bg.fillRect(0, 0, size, size);
-  bg.fillStyle = 'rgba(255,110,50,0.07)'; bg.fillRect(0, 0, size, size);
+  bg.fillStyle = 'rgba(255,110,50,0.08)'; bg.fillRect(0, 0, size, size);
   g.drawImage(body, 0, 0);
   // the ember rim: the silhouette pushed toward the fire, minus the figure
   const r = Math.max(1, size * 0.028);

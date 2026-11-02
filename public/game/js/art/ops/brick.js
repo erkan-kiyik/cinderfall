@@ -17,7 +17,7 @@ import {
 } from './body.js';
 import { texture } from '../tex.js';
 import { rnd } from '../paint.js';
-import { PROFILE, SKINS, skin, crop, strap, glass, ell, inP, brushOf as brushR } from './realhead.js';
+import { PROFILE, SKINS, face, crop, strap, glass, ell, inP } from './realhead.js';
 
 const PAL = {
   jacket: mat(tone('#f2894a', '#d6632b', '#a2451b', '#4e1e09'), 'canvas', 0.8),
@@ -281,52 +281,43 @@ function foot(g, ctx) {
   g.restore();
 }
 
-// --- head (docs §10.24): a crane driver's head, forty-seven: grey stubble on a wind-burnt
-// jaw, the grey crop at the nape; a half-face respirator sized to the face (grey elastomer,
-// the valve, two magenta pancake filters, the straps); smoked wraparound safety glasses;
-// orange ear defenders on the hat's slots; the faded yellow full-brim hard hat with its ridge,
-// the lamp on its band, stickers, the orange neck flap behind.
-const BMASK = 'M 3.0 -5.9 C 3.7 -6.2 4.4 -6.1 4.7 -5.8 C 5.0 -5.4 5.36 -5.0 5.6 -4.7 C 5.76 -4.4 5.7 -4.1 5.56 -3.9 C 5.6 -3.4 5.5 -2.8 5.2 -2.3 C 4.8 -1.7 4.0 -1.4 3.2 -1.5 C 2.4 -1.7 1.8 -2.2 1.6 -2.9 C 1.5 -3.8 1.8 -4.8 2.3 -5.4 C 2.5 -5.6 2.7 -5.8 3.0 -5.9 Z';
+// --- head (docs §10.25): Bulwark's face, open. Forty-seven, wind-burnt: ruddy skin, a broad
+// nose, a short grey beard and moustache, bushy grey brows, pale blue eyes in deep crow's
+// feet. The respirator let down to hang at the throat on its neck strap; the safety glasses
+// up on the hat's brim; the ear defenders on; the faded yellow full-brim hard hat with its
+// lamp, the pencil, stickers, the neck flap.
+const BBEARD = 'M 0.9 -4.6 C 1.8 -4.2 2.8 -4.0 3.9 -4.05 C 4.2 -3.6 4.5 -3.2 4.6 -2.7 C 4.7 -2.2 4.5 -1.8 4.0 -1.55 C 3.0 -1.3 1.8 -1.5 0.8 -2.0 C 0.2 -2.4 -0.4 -2.9 -0.7 -3.4 C -0.5 -3.9 0.2 -4.4 0.9 -4.6 Z';
+const BMOUST = 'M 4.78 -4.18 C 4.9 -3.98 4.88 -3.74 4.7 -3.58 C 4.4 -3.5 4.0 -3.54 3.68 -3.68 C 3.66 -3.88 3.82 -4.06 4.06 -4.16 C 4.3 -4.24 4.56 -4.24 4.78 -4.18 Z';
 const BHAT = 'M -6.6 -7.4 C -6.8 -7.9 -6.2 -8.2 -5.1 -8.3 C -5.1 -10.8 -3.0 -12.6 0.2 -12.7 C 3.2 -12.8 5.2 -11.2 5.3 -8.8 C 6.4 -8.7 7.3 -8.4 7.6 -8.0 C 7.7 -7.7 7.4 -7.5 6.9 -7.6 C 5.3 -7.8 3.2 -8.0 0.2 -7.9 C -2.6 -7.8 -4.8 -7.5 -6.2 -7.1 C -6.5 -7.05 -6.7 -7.2 -6.6 -7.4 Z';
 const BCUP = ell(-0.1, -5.6, 1.0, 1.25);
-const BGLASS = 'M 2.75 -7.0 C 3.6 -7.25 4.6 -7.22 5.05 -6.98 C 5.12 -6.62 5.06 -6.26 4.9 -5.96 C 4.3 -5.78 3.5 -5.78 2.9 -5.96 C 2.7 -6.28 2.68 -6.66 2.75 -7.0 Z';
 function head(g) {
   const S = SKINS.ruddy, B = brushOf(g), Mk = PAL.mask, F = PAL.filter, Ht = PAL.hat;
   neck(g, PAL.skin, { glaze: true, wide: 0.3 });
-  skin(g, PROFILE, S, { seed: 71, stubble: true, stubbleCol: 'rgba(150,146,140,0.4)' });
-  // grey stubble along the jaw and down the throat, the grey crop at the nape
-  B.hairs(700, 73, (i, r) => { const x = -0.8 + r() * 5.4, y = -4.4 + r() * 4.6; if (!inP(g, PROFILE, x, y) && !(x < 2.2 && y > -2.8)) return null; return [x, y, Math.PI * 0.55 + (r() - 0.5) * 0.6, 0.05 + r() * 0.06, r() < 0.5 ? '#d8d4cc' : '#7a746c', 0.02, 0.55]; });
+  face(g, { prof: 'm', s: S, age: 0.75, seed: 71, iris: '#7a9ab0', brow: ['#b8b2aa', 0.1, 1.6], lips: '170,90,76' });
+  // the short grey beard and moustache, salt and pepper, trimmed close to the jaw
+  crop(g, BBEARD, { col: 'rgba(120,114,106,0.8)', lit: 'rgba(220,216,208,1)', seed: 73, n: 1100, a: Math.PI * 0.62, salt: 0.55 });
+  crop(g, BMOUST, { col: 'rgba(130,124,116,0.85)', lit: 'rgba(226,222,214,1)', seed: 74, n: 420, a: Math.PI * 0.6, salt: 0.6 });
   crop(g, 'M -3.95 -6.6 C -3.4 -6.9 -2.4 -7.2 -1.2 -7.3 L -0.9 -6.4 C -1.4 -5.4 -2.0 -4.4 -2.6 -3.6 C -3.3 -4.0 -3.8 -5.0 -3.95 -6.6 Z', { col: '#6e6a64', lit: 'rgba(210,206,200,1)', seed: 75, n: 420, salt: 0.5 });
-  // the respirator's straps: the bottom one round the back of the neck, the top one up under the hat
-  strap(g, 'M 2.0 -2.6 C 0.6 -2.4 -1.0 -2.8 -2.8 -3.6', 0.26, '#2a2c30', '#0a0b0c', 'rgba(140,146,152,0.5)');
-  strap(g, 'M 2.4 -5.3 C 1.4 -6.0 0.6 -6.9 0.0 -7.8', 0.26, '#2a2c30', '#0a0b0c', 'rgba(140,146,152,0.5)');
+  // the respirator hanging at the throat on its neck strap, the filter showing
+  strap(g, 'M 3.2 -0.6 C 1.6 -1.2 -0.6 -2.0 -2.8 -2.8', 0.24, '#2a2c30', '#0a0b0c', 'rgba(140,146,152,0.5)');
+  g.save(); g.translate(4.0, -0.2); g.rotate(1.3);
+  const M2 = 'M -1.2 -1.4 C -0.4 -1.8 0.6 -1.7 1.2 -1.2 C 1.6 -0.6 1.6 0.4 1.2 1.0 C 0.6 1.5 -0.4 1.6 -1.1 1.2 C -1.6 0.6 -1.6 -0.6 -1.2 -1.4 Z';
+  cel(g, M2, Mk, { sh: 0.8, hl: 0.5, gloss: 0.3 });
+  cel(g, ell(-0.1, 0.0, 0.8, 0.8), F, { sh: 0.5, hl: 0.5, gloss: 0.3 });
+  B.inside(ell(-0.1, 0.0, 0.8, 0.8), () => { B.line(ell(-0.1, 0.0, 0.58, 0.58), F.d, 0.12, 0.03); for (let a = 0; a < 6.28; a += 0.6) B.line(`M ${-0.1 + Math.cos(a) * 0.16} ${Math.sin(a) * 0.16} L ${-0.1 + Math.cos(a) * 0.48} ${Math.sin(a) * 0.48}`, F.k, 0.04, 0.01, 0.6); });
+  g.restore();
   // the ear defenders: the cup over the ear, its arm up into the hat's slot
   strap(g, 'M -0.1 -6.8 C -0.2 -7.4 -0.1 -7.9 0.2 -8.3', 0.32, PAL.black.m, PAL.black.k, PAL.black.l);
   const OR = mat(tone('#ff9a52', '#e06a2a', '#a8461a', '#4e1e08'), 'paint', 0.3);
   cel(g, BCUP, OR, { sh: 0.6, hl: 0.5, gloss: 0.35 });
   B.inside(BCUP, () => { B.line(ell(-0.1, -5.6, 0.78, 1.02), OR.d, 0.1, 0.04); B.dab(-0.3, -6.2, 0.4, 0.5, 'rgba(255,220,180,0.3)'); });
   cel(g, ell(-0.1, -5.6, 0.36, 0.44), PAL.black, { sh: 0.2, hl: 0.25 });
-  // the mask: grey elastomer, its seal, the valve's cover, the near filter on the cheek and
-  // the edge of the far one past the nose
-  cel(g, ell(5.4, -3.4, 0.36, 0.86), F, { sh: 0.3, hl: 0.3 });
-  cel(g, BMASK, Mk, { sh: 0.9, hl: 0.5, gloss: 0.3 });
-  B.inside(BMASK, () => { B.line(BMASK, 'rgba(110,116,124,0.6)', 0.24, 0.08); B.line('M 4.7 -5.7 C 5.0 -5.3 5.36 -4.96 5.56 -4.72', 'rgba(200,206,214,0.5)', 0.12, 0.05); texture(g, 'rubber', 0.4, 0.5); });
-  cel(g, 'M 4.8 -3.9 C 5.3 -4.0 5.66 -3.7 5.7 -3.2 C 5.72 -2.7 5.4 -2.4 4.9 -2.4 C 4.5 -2.5 4.36 -2.9 4.4 -3.3 C 4.44 -3.6 4.58 -3.84 4.8 -3.9 Z', PAL.black, { sh: 0.3, hl: 0.35, gloss: 0.3 });
-  for (let y = -3.5; y < -2.6; y += 0.22) B.line(`M 4.6 ${y} L 5.5 ${y}`, 'rgba(0,0,0,0.6)', 0.06, 0.01);
-  const NF = ell(2.9, -3.5, 1.0, 1.0);
-  cel(g, NF, F, { sh: 0.6, hl: 0.5, gloss: 0.3 });
-  B.inside(NF, () => { B.line(ell(2.9, -3.5, 0.74, 0.74), F.d, 0.14, 0.04); for (let a = 0; a < 6.28; a += 0.5) B.line(`M ${2.9 + Math.cos(a) * 0.2} ${-3.5 + Math.sin(a) * 0.2} L ${2.9 + Math.cos(a) * 0.6} ${-3.5 + Math.sin(a) * 0.6}`, F.k, 0.05, 0.01, 0.6); B.dab(2.6, -3.9, 0.4, 0.3, 'rgba(255,200,230,0.4)'); });
-  B.fill(ell(2.9, -3.5, 0.16, 0.16), F.k, 0.01);
-  // the glasses: smoked wraparound, the lamps of the yard in them, the arm back over the cup
-  strap(g, 'M 2.75 -6.7 C 1.8 -6.8 0.9 -6.8 0.2 -6.6', 0.16, '#1b1c1e', '#060606', 'rgba(140,140,140,0.4)');
-  B.fill(BGLASS, '#121314', 0.01);
-  glass(g, 'M 2.84 -6.9 C 3.6 -7.12 4.5 -7.1 4.96 -6.9 C 5.0 -6.6 4.96 -6.3 4.82 -6.06 C 4.26 -5.9 3.54 -5.9 2.98 -6.04 C 2.8 -6.32 2.78 -6.62 2.84 -6.9 Z', [2.8, -7.12, 5.0, -5.9], { tint: ['#141618', '#4a5662', '#c8a060'], a: 0.85, band: 'rgba(200,220,240,0.3)' });
   // the neck flap, behind the hat's brim
   const O = mat(tone('#f08a4a', '#c8632e', '#8a3f1a', '#3e1a08'), 'canvas', 0.7);
   const FLAP = 'M -6.0 -7.4 C -4.8 -7.7 -3.4 -7.7 -2.2 -7.5 L -1.8 -4.0 C -2.8 -3.2 -4.8 -3.1 -6.2 -3.6 Z';
   cel(g, FLAP, O, { sh: 0.8, hl: 0.35 });
   clip(g, FLAP, () => { fold(g, [[-5.4, -7.0], [-5.0, -5.6], [-5.2, -4.0]], O, 0.2); fold(g, [[-3.4, -7.2], [-3.0, -5.6], [-3.2, -4.0]], O, 0.18); grime(g, -6, -3.0, OIL); });
-  // the hard hat: faded yellow, the ridge over the crown, the brim all round, scuffed and dirty
+  // the hard hat
   cel(g, BHAT, Ht, { sh: 1.5, hl: 0.7 });
   B.inside(BHAT, () => {
     B.line('M -4.6 -9.6 C -3.2 -12.2 2.4 -12.8 4.8 -10.0', 'rgba(150,120,50,0.5)', 0.4, 0.12);
@@ -339,7 +330,6 @@ function head(g) {
     for (const [x, y] of [[4.2, -8.1], [1.2, -8.2], [-2.6, -7.9], [6.2, -7.85]]) { B.dab(x, y, 0.14, 0.1, 'rgba(60,50,20,0.5)'); B.dab(x - 0.04, y - 0.04, 0.05, 0.04, '#fffbe8'); }
     texture(g, 'paint', 0.35, 0.6);
   });
-  // the lamp's band and the lamp on the front, a carpenter's pencil pushed under the band
   B.line('M -5.0 -8.6 C -2.0 -9.1 2.0 -9.3 5.3 -9.0', '#26282b', 0.4, 0.02);
   cel(g, 'M 3.6 -10.1 L 5.0 -10.2 L 5.1 -8.9 L 3.7 -8.8 Z', PAL.black, { sh: 0.3, hl: 0.35, gloss: 0.3 });
   B.fill('M 5.0 -10.1 L 5.3 -10.1 L 5.32 -9.0 L 5.04 -8.98 Z', '#fff6d8', 0.01);
@@ -347,12 +337,16 @@ function head(g) {
   cel(g, 'M -1.5 -0.18 L 1.3 -0.18 L 1.3 0.18 L -1.5 0.18 Z', mat(tone('#e05a40', '#b83a26', '#7e2416', '#360d06'), 'paint', 0.4), { sh: 0.1, hl: 0.2 });
   B.fill('M 1.3 -0.18 L 1.8 0 L 1.3 0.18 Z', '#d8b890', 0.005);
   g.restore();
-  // stickers: a green cross, a blue square, a torn yellow-black stripe (no lettering)
   B.fill('M -2.4 -11.0 L -1.4 -11.2 L -1.3 -10.3 L -2.3 -10.1 Z', '#f4f1e8', 0.01, 0.9);
   B.fill('M -2.0 -11.05 L -1.7 -11.1 L -1.65 -10.2 L -1.95 -10.15 Z', '#2f8a4a', 0.005);
   B.fill('M -2.3 -10.75 L -1.4 -10.9 L -1.38 -10.6 L -2.28 -10.45 Z', '#2f8a4a', 0.005);
   B.fill('M 1.6 -11.9 L 2.6 -11.86 L 2.54 -11.06 L 1.54 -11.1 Z', '#3a6ea8', 0.01, 0.9);
   for (let k = 0; k < 3; k++) B.fill(`M ${-4.4 + k * 0.5} -9.4 L ${-4.1 + k * 0.5} -9.45 L ${-4.3 + k * 0.5} -8.95 L ${-4.6 + k * 0.5} -8.9 Z`, k % 2 ? '#1a1814' : '#e8c23a', 0.005, 0.85);
+  // the safety glasses up on the brim: smoked wraparound
+  g.save(); g.translate(0.4, -2.2); g.rotate(-0.04);
+  B.fill('M 2.75 -7.0 C 3.6 -7.25 4.6 -7.22 5.05 -6.98 C 5.12 -6.62 5.06 -6.26 4.9 -5.96 C 4.3 -5.78 3.5 -5.78 2.9 -5.96 C 2.7 -6.28 2.68 -6.66 2.75 -7.0 Z', '#121314', 0.01);
+  glass(g, 'M 2.84 -6.9 C 3.6 -7.12 4.5 -7.1 4.96 -6.9 C 5.0 -6.6 4.96 -6.3 4.82 -6.06 C 4.26 -5.9 3.54 -5.9 2.98 -6.04 C 2.8 -6.32 2.78 -6.62 2.84 -6.9 Z', [2.8, -7.12, 5.0, -5.9], { tint: ['#141618', '#4a5662', '#c8a060'], a: 0.85, band: 'rgba(200,220,240,0.3)' });
+  g.restore();
 }
 
 export const BRICK = {

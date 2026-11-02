@@ -16,7 +16,7 @@ import {
   clothFolds, brushOf,
 } from './body.js';
 import { texture } from '../tex.js';
-import { SKINS, skin, knit, strap, glass, ell, brushOf as brushR } from './realhead.js';
+import { PROFILE, SKINS, face, crop, knit, strap, glass, ell } from './realhead.js';
 
 const PAL = {
   coat: mat(tone('#5f615e', '#464845', '#30322f', '#141515'), 'canvas', 0.7),
@@ -267,44 +267,34 @@ function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { toe: PAL.boot }); }
 // frame; the traditional helmet sized to the skull: a ribbed composite dome, a short
 // brim at the front, the long tail over the nape, the black band and reflective tape, a
 // right-angle light on the brim. White for a captain, gone ivory with heat, sooted.
-const WHOOD = 'M -3.2 -1.6 C -4.2 -2.6 -4.5 -4.4 -4.4 -6.4 C -4.3 -8.4 -3.4 -10.0 -1.7 -10.8 C 0.0 -11.4 2.0 -11.3 3.2 -10.5 C 4.1 -9.9 4.5 -9.0 4.55 -8.0 C 4.6 -7.4 4.72 -7.0 4.84 -6.8 C 4.84 -6.6 4.74 -6.5 4.66 -6.42 C 4.84 -6.1 5.0 -5.84 5.12 -5.62 C 5.34 -5.26 5.62 -4.92 5.8 -4.66 C 5.92 -4.4 5.84 -4.2 5.64 -4.14 C 5.44 -3.6 5.2 -2.8 4.95 -2.0 C 4.6 -1.2 3.8 -0.8 2.8 -0.7 C 1.4 -0.6 -0.2 -0.7 -1.6 -1.0 C -2.3 -1.1 -2.8 -1.3 -3.2 -1.6 Z';
-const WOPEN = 'M 2.7 -7.7 C 3.4 -7.95 4.2 -7.95 4.86 -7.7 C 5.0 -7.1 5.0 -6.4 4.86 -5.7 C 4.2 -5.4 3.3 -5.4 2.6 -5.6 C 2.4 -6.3 2.45 -7.1 2.7 -7.7 Z';
 const WGOG = 'M 2.55 -7.55 C 3.5 -7.9 4.6 -7.86 5.3 -7.5 C 5.5 -6.9 5.48 -6.2 5.25 -5.66 C 4.5 -5.36 3.4 -5.36 2.6 -5.6 C 2.36 -6.2 2.36 -6.95 2.55 -7.55 Z';
 const WLENS = 'M 2.85 -7.3 C 3.6 -7.58 4.5 -7.55 5.08 -7.28 C 5.24 -6.85 5.22 -6.3 5.04 -5.9 C 4.4 -5.66 3.5 -5.66 2.88 -5.84 C 2.7 -6.3 2.7 -6.86 2.85 -7.3 Z';
 const WDOME = 'M -4.6 -7.7 C -4.9 -9.8 -3.6 -11.7 -1.2 -12.3 C 1.2 -12.8 3.4 -12.2 4.4 -10.6 C 4.9 -9.8 5.0 -8.9 4.9 -8.1 C 3.2 -8.5 1.0 -8.6 -1.2 -8.4 C -2.4 -8.2 -3.6 -8.0 -4.6 -7.7 Z';
 const WBRIM = 'M -8.6 -4.9 C -7.8 -6.0 -6.4 -7.0 -4.6 -7.7 C -3.6 -8.0 -2.4 -8.2 -1.2 -8.4 C 1.0 -8.6 3.2 -8.5 4.9 -8.1 C 5.7 -7.9 6.4 -7.6 6.9 -7.2 C 7.0 -7.0 6.9 -6.9 6.7 -6.95 C 6.0 -7.2 5.2 -7.4 4.4 -7.5 C 2.6 -7.7 0.6 -7.66 -1.4 -7.4 C -3.4 -7.1 -5.4 -6.5 -7.0 -5.6 C -7.6 -5.2 -8.1 -4.8 -8.4 -4.5 C -8.7 -4.4 -8.8 -4.6 -8.6 -4.9 Z';
+// docs §10.25: the face open. Forty-one, a captain's face: weathered fair skin, crow's
+// feet, a heavy dark moustache going grey, stubble, grey-blue eyes under a straight brow.
+// The flash hood pulled down and bunched round the neck; the goggles pushed up onto the
+// helmet's front; the chin strap down along the jaw.
+const WCOLLAR = 'M 4.7 -1.9 C 3.6 -1.4 2.0 -1.6 0.6 -2.4 C -0.6 -3.0 -2.2 -3.5 -3.6 -3.2 C -4.4 -2.2 -4.6 -0.8 -4.2 0.6 C -2.4 1.6 0.6 1.8 3.2 1.4 C 4.6 1.1 5.3 0.3 5.3 -0.7 C 5.2 -1.2 5.0 -1.6 4.7 -1.9 Z';
+const WMOUST = 'M 4.78 -4.18 C 4.92 -3.98 4.92 -3.72 4.72 -3.56 C 4.4 -3.46 4.0 -3.5 3.66 -3.66 C 3.62 -3.86 3.8 -4.06 4.06 -4.16 C 4.3 -4.24 4.56 -4.24 4.78 -4.18 Z';
+const WHAIR = 'M -3.95 -6.6 C -3.7 -7.4 -2.6 -7.9 -1.0 -8.0 L 1.0 -7.9 C 0.95 -7.3 1.0 -6.7 1.1 -6.2 C 1.0 -5.8 0.9 -5.5 0.8 -5.3 L 0.55 -6.55 C -0.1 -6.75 -0.7 -6.6 -0.95 -6.2 C -1.1 -5.4 -1.3 -4.6 -1.6 -3.9 C -2.2 -3.3 -2.8 -3.2 -3.2 -3.5 C -3.7 -4.3 -4.0 -5.4 -3.95 -6.6 Z';
 function head(g) {
-  const Hm = PAL.helmet, F = PAL.hood, Kb = PAL.radio, B = brushOf(g);
-  // the hood down the neck, then over the head: grey aramid knit, its seams
-  neck(g, F, { wide: 0.45, sh: 1.0 });
-  cel(g, WHOOD, F, { sh: 1.4, hl: 0.4 });
-  knit(g, WHOOD, F, { step: 0.28, bend: 0.2, box: [-5, -12, 7, 0], ta: 0.5 });
-  B.inside(WHOOD, () => {
-    // the knit stretched over the nose and the chin, the light on the ridge of the nose
-    B.line('M 4.9 -6.4 C 5.2 -5.8 5.5 -5.2 5.74 -4.7', 'rgba(220,218,210,0.45)', 0.16, 0.08);
-    B.dab(5.2, -3.2, 0.4, 1.2, 'rgba(10,10,10,0.35)');
-    // wet and dark where he breathes; soot ground into it round the opening
-    const br = g.createRadialGradient(5.2, -3.6, 0.2, 5.2, -3.6, 1.8); br.addColorStop(0, 'rgba(20,18,16,0.5)'); br.addColorStop(1, 'rgba(20,18,16,0)'); g.fillStyle = br; g.fillRect(3, -6, 4, 5);
-    B.dab(3.8, -5.0, 1.4, 0.5, 'rgba(26,22,18,0.35)');
-    // the seam up the back of the head, the ear's bump under the knit
-    B.line('M -3.9 -2.4 C -4.4 -4.6 -4.2 -7.4 -2.8 -9.8', 'rgba(20,20,20,0.45)', 0.1, 0.05);
-    B.dab(0.0, -5.4, 0.8, 1.1, 'rgba(200,198,190,0.18)');
-    B.line('M 0.7 -6.2 C 0.8 -5.5 0.62 -4.8 0.36 -4.36', 'rgba(20,20,20,0.35)', 0.14, 0.1);
-  });
-  clothFolds(g, WHOOD, [[[1.0, -2.0], [2.6, -1.4], [4.4, -1.4]], [[-2.6, -1.8], [-1.0, -1.2], [0.8, -1.0]], [[3.0, -4.4], [4.0, -4.0], [5.2, -4.2]]], F);
-  // the face opening: skin round the eyes, the knit's edge rolled round it
-  skin(g, WOPEN, SKINS.fair, { seed: 41 });
-  B.line(WOPEN, F.k, 0.22, 0.06, 0.8); B.line(WOPEN, F.l, 0.08, 0.04, 0.5);
-  // the goggles: the black frame on its foam, the single amber lens, the fire in it
-  cel(g, WGOG, Kb, { sh: 0.4, hl: 0.4, gloss: 0.3 });
-  glass(g, WLENS, [2.7, -7.58, 5.24, -5.66], { tint: ['#5a3a0e', '#e8b04a', '#ff8a30'], band: 'rgba(255,240,200,0.4)', a: 0.85 });
-  B.line(WLENS, '#1a1006', 0.06, 0.01);
-  for (const x of [2.7, 5.2]) B.fill(ell(x, -6.6, 0.1, 0.22), Kb.l, 0.01);
-  // the chin strap from inside the helmet down round the jaw, its buckle
-  strap(g, 'M -0.6 -7.6 C -0.3 -5.4 0.8 -3.0 3.4 -1.2', 0.34, '#1d1c1a', '#060606', 'rgba(140,140,130,0.5)');
-  buckle(g, 0.3, -4.6, 0.6, 0.8, PAL.steel);
-  // the goggles' strap back round the helmet over the band
-  strap(g, 'M 2.5 -6.9 C 0.6 -7.5 -1.8 -7.7 -4.4 -7.6', 0.4, Kb.m, Kb.k, Kb.l);
+  const Hm = PAL.helmet, F = PAL.hood, Kb = PAL.radio, B = brushOf(g), S = SKINS.fair;
+  neck(g, PAL.skin, { glaze: true, wide: 0.3 });
+  face(g, { prof: 'm', s: S, age: 0.55, seed: 41, iris: '#56707e', brow: ['#3a2c22', 0.04, 1.25], lips: '160,90,78', shave: 'rgba(84,96,110,0.26)', stubble: { col: '#3a2c24', n: 700 } });
+  crop(g, WHAIR, { col: '#3a2c22', lit: 'rgba(150,130,110,1)', seed: 43, n: 500, salt: 0.25 });
+  // the moustache: thick, dark, going grey at its ends, combed down over the lip
+  crop(g, WMOUST, { col: 'rgba(58,44,34,0.85)', lit: 'rgba(170,150,128,1)', seed: 45, n: 520, a: Math.PI * 0.6, salt: 0.25 });
+  brushOf(g).line('M 4.7 -3.58 C 4.4 -3.5 4.0 -3.54 3.68 -3.68', 'rgba(30,22,16,0.6)', 0.05, 0.02);
+  B.inside(PROFILE, () => { B.dab(2.8, -5.2, 0.9, 0.4, 'rgba(40,34,28,0.22)'); B.dab(4.0, -7.8, 0.9, 0.3, 'rgba(40,34,28,0.18)'); });
+  // the hood down round the neck, bunched
+  cel(g, WCOLLAR, F, { sh: 1.0, hl: 0.45 });
+  knit(g, WCOLLAR, F, { step: 0.28, bend: -0.3, box: [-5, -3.6, 6, 2] });
+  clothFolds(g, WCOLLAR, [[[4.6, -1.2], [2.6, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.8, 0.3], [2.4, 0.7], [-0.4, 0.3], [-3.4, -0.6]]], F);
+  B.line('M 4.7 -1.9 C 3.6 -1.4 2.0 -1.6 0.6 -2.4 C -0.6 -3.0 -2.2 -3.5 -3.6 -3.2', F.l, 0.1, 0.04, 0.6);
+  // the chin strap from inside the helmet down along the jaw, its buckle
+  strap(g, 'M -0.7 -7.6 C -0.5 -5.6 0.4 -3.6 2.2 -2.2 C 3.0 -1.7 3.8 -1.6 4.4 -1.8', 0.3, '#1d1c1a', '#060606', 'rgba(140,140,130,0.5)');
+  buckle(g, 0.0, -4.4, 0.55, 0.75, PAL.steel);
   // the helmet: the tail and brim, then the dome with its ribs, the band and the tape
   cel(g, WBRIM, Hm, { sh: 0.9, hl: 0.6 });
   B.inside(WBRIM, () => {
@@ -332,6 +322,12 @@ function head(g) {
     B.dab(4.4, -9.4, 0.8, 1.0, 'rgba(150,104,40,0.35)');
     texture(g, 'paint', 0.35, 0.6);
   });
+  // the goggles pushed up onto the helmet's front: the black frame, the amber lens
+  g.save(); g.translate(0.7, -3.4); g.rotate(-0.12);
+  cel(g, WGOG, Kb, { sh: 0.4, hl: 0.4, gloss: 0.3 });
+  glass(g, WLENS, [2.7, -7.58, 5.24, -5.66], { tint: ['#5a3a0e', '#e8b04a', '#ff8a30'], band: 'rgba(255,240,200,0.4)', a: 0.85 });
+  B.line(WLENS, '#1a1006', 0.06, 0.01);
+  g.restore();
   // the black band round the base of the dome, the captain's silver stripe on it
   const BAND = 'M -4.6 -7.7 C -3.6 -8.0 -2.4 -8.2 -1.2 -8.4 C 1.0 -8.6 3.2 -8.5 4.9 -8.1 L 4.92 -8.75 C 3.2 -9.12 1.0 -9.22 -1.2 -9.02 C -2.4 -8.84 -3.6 -8.62 -4.6 -8.3 Z';
   cel(g, BAND, PAL.band, { sh: 0.2, hl: 0.25 });

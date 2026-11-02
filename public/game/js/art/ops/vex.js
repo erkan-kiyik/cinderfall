@@ -17,7 +17,7 @@ import {
   clothFolds, softBrow,
 } from './body.js';
 import { texture } from '../tex.js';
-import { PROFILE, SKINS, skin, ear, crop, knit, strap, glass, ell, brushOf } from './realhead.js';
+import { PROFILE, SKINS, face, crop, knit, strap, glass, ell, brushOf } from './realhead.js';
 
 const PAL = {
   jacket: mat(tone('#8a5c3f', '#62402b', '#40291b', '#1d120b'), 'leather', 0.7),
@@ -299,68 +299,36 @@ function foot(g, ctx) {
   rivet(g, 1.2, -0.9, 0.16, PAL.steel);
 }
 
-// --- head (docs §10.24): a furnace man's head under a watch cap, real welding goggles,
-// his father's scarf pulled up over the nose -------------------------------------------------
-// The cap fits the skull: knitted rows over the crown, the cuff turned up and ribbed, pulled
-// down over the tops of the ears; the goggles are two small round cups in leather, copper
-// rims, bottle-green glass, a bridge over the nose and an elastic strap round the cap; the
-// scarf is stretched from the bridge of the nose over its tip and falls straight to the
-// chin, wound twice round the neck. Seen: the ear, the temple, a cheekbone, a sideburn, the
-// brows frowning over the cups (a scar through the near one).
+// --- head (docs §10.25): Flint's face, open. Twenty-nine, a furnace man's face: olive skin
+// gone dark with soot in its creases, a straight nose, a hard jaw under three days of
+// stubble, brown eyes deep under heavy brows (an old burn through the near one). The watch
+// cap fitted to the skull, its cuff ribbed, the union's pin on it; the welding goggles pushed
+// up onto the cap; his father's scarf pulled down round the neck to the jaw.
 const FCAP = 'M -4.2 -5.0 C -4.6 -6.8 -4.4 -8.6 -3.4 -10.0 C -2.2 -11.3 -0.2 -11.6 1.6 -11.3 C 3.1 -11.0 4.1 -10.0 4.4 -8.7 C 4.5 -8.3 4.5 -7.95 4.42 -7.7 C 3.0 -7.62 1.8 -7.5 0.8 -7.1 C -0.2 -6.7 -0.9 -6.3 -1.5 -6.0 C -2.4 -5.6 -3.3 -5.2 -4.2 -5.0 Z';
 const FCUFF = 'M -4.3 -5.0 C -3.3 -5.2 -2.4 -5.6 -1.5 -6.0 C -0.9 -6.3 -0.2 -6.7 0.8 -7.1 C 1.8 -7.5 3.0 -7.62 4.42 -7.7 C 4.5 -8.15 4.5 -8.6 4.4 -9.05 C 2.8 -9.1 1.4 -8.9 0.2 -8.4 C -1.0 -7.9 -2.0 -7.2 -3.0 -6.7 C -3.5 -6.5 -4.0 -6.4 -4.5 -6.4 Z';
-const FSCARF = 'M 4.36 -5.95 C 4.7 -5.6 5.1 -5.15 5.45 -4.72 C 5.6 -4.5 5.58 -4.3 5.46 -4.1 C 5.3 -3.4 5.12 -2.6 4.9 -1.8 C 4.6 -0.9 3.6 -0.3 2.2 -0.2 C 0.6 -0.1 -1.0 -0.4 -2.4 -1.0 C -3.2 -1.4 -3.6 -2.2 -3.4 -3.0 C -2.6 -3.6 -1.6 -3.9 -0.6 -4.1 C 0.4 -4.3 1.0 -4.9 1.8 -5.3 C 2.6 -5.62 3.5 -5.8 4.36 -5.95 Z';
-const FWRAP = 'M -3.9 -2.6 C -2.6 -3.3 -0.8 -3.5 1.0 -3.1 C 2.4 -2.8 3.8 -2.3 4.9 -1.7 C 5.2 -0.8 5.0 0.2 4.4 1.0 C 2.8 1.6 0.6 1.7 -1.4 1.4 C -2.8 1.2 -3.8 0.6 -4.2 -0.2 C -4.4 -1.1 -4.3 -1.9 -3.9 -2.6 Z';
+const FCOLLAR = 'M 4.75 -1.95 C 3.6 -1.45 2.0 -1.65 0.6 -2.45 C -0.6 -3.05 -2.0 -3.45 -3.4 -3.25 C -4.2 -2.4 -4.4 -1.0 -4.0 0.4 C -2.4 1.4 0.6 1.7 3.2 1.3 C 4.6 1.0 5.25 0.2 5.25 -0.8 C 5.2 -1.3 5.0 -1.7 4.75 -1.95 Z';
+const FWRAP = 'M -4.2 -1.0 C -2.6 -1.7 -0.4 -1.6 1.6 -1.0 C 3.0 -0.6 4.4 -0.2 5.4 0.4 C 5.6 1.2 5.2 2.0 4.4 2.4 C 2.6 2.9 0.2 2.9 -1.8 2.5 C -3.2 2.2 -4.2 1.5 -4.5 0.6 C -4.6 0.0 -4.5 -0.6 -4.2 -1.0 Z';
 const FSIDEBURN = 'M 0.62 -7.0 C 0.9 -6.95 1.1 -6.8 1.15 -6.5 C 1.18 -6.1 1.12 -5.7 1.0 -5.35 C 0.84 -5.4 0.7 -5.6 0.66 -5.9 C 0.6 -6.3 0.58 -6.7 0.62 -7.0 Z';
 const FNAPE = 'M -3.95 -5.6 C -3.4 -5.3 -2.6 -5.4 -1.8 -5.8 L -1.0 -6.2 C -1.1 -5.4 -1.5 -4.4 -2.2 -3.6 C -2.9 -3.7 -3.5 -4.4 -3.95 -5.6 Z';
 function head(g) {
   const S = SKINS.olive, B = brushOf(g), C = PAL.cap, R = PAL.scarf, Cu = PAL.copper;
   neck(g, PAL.skin, { sh: 1.0, glaze: true });
-  skin(g, PROFILE, S, { seed: 31, stubble: true, stubbleCol: 'rgba(40,30,26,0.3)' });
-  // soot worked into the skin round where the goggles sit
-  B.inside(PROFILE, () => { B.dab(3.4, -6.4, 1.6, 1.0, 'rgba(26,20,16,0.34)'); B.dab(2.0, -5.6, 0.8, 0.4, 'rgba(26,20,16,0.25)'); });
-  crop(g, FSIDEBURN, { col: '#2a1a12', lit: 'rgba(110,80,60,1)', seed: 33, n: 140, a: Math.PI * 0.5 });
+  face(g, { prof: 'm', s: S, age: 0.22, seed: 31, iris: '#4a3020', brow: ['#1b120d', 0.1, 1.2], lips: '150,84,70', shave: 'rgba(36,28,24,0.32)', stubble: { col: '#1a120d', n: 1100 } });
+  // soot in the creases and round where the goggles sat, a smear along the cheekbone
+  B.inside(PROFILE, () => { B.dab(3.5, -6.2, 1.0, 0.55, 'rgba(26,20,16,0.28)'); B.dab(2.6, -5.3, 1.0, 0.25, 'rgba(26,20,16,0.3)', 1, 'source-over', -0.2); B.dab(4.0, -8.0, 0.8, 0.3, 'rgba(26,20,16,0.18)'); });
+  // the old burn through the near brow
+  B.line('M 3.5 -7.15 L 3.68 -6.62', `rgba(${S.pale},0.8)`, 0.07, 0.02);
+  crop(g, FSIDEBURN, { col: '#2a1a12', lit: 'rgba(110,80,60,1)', seed: 33, n: 160, a: Math.PI * 0.5 });
   crop(g, FNAPE, { col: '#24170f', lit: 'rgba(100,72,52,1)', seed: 35, n: 260, a: Math.PI * 0.55 });
-  ear(g, S);
-  // the brows, frowning, close over the cups; the old burn scar through the near one
-  softBrow(g, 2.7, -7.18, 4.15, -7.06, 0.08, '#1f1510', 11);
-  B.line('M 3.3 -7.6 L 3.5 -6.9', `rgba(${S.pale},0.75)`, 0.08, 0.02);
-
-  // the goggles: the far cup past the bridge of the nose, the bridge, the near cup
-  const NC = [3.48, -6.16], RN = 0.76;
-  B.fill(ell(4.76, -6.1, 0.27, 0.7), '#2a1a10', 0.02);
-  glass(g, ell(4.78, -6.1, 0.17, 0.56), [4.62, -6.66, 4.95, -5.54], { tint: ['#0c2418', '#2c5a44', '#c8783a'], a: 0.6 });
-  B.line(ell(4.78, -6.1, 0.19, 0.58), Cu.m, 0.08, 0.01);
-  B.line('M 4.18 -6.2 C 4.32 -6.32 4.46 -6.3 4.56 -6.2', Cu.d, 0.16, 0.01);
-  B.fill(ell(NC[0], NC[1], RN + 0.22, RN + 0.18), '#3a2416', 0.03);
-  B.inside(ell(NC[0], NC[1], RN + 0.22, RN + 0.18), () => { B.dab(NC[0] - 0.2, NC[1] - 0.5, 0.6, 0.25, 'rgba(160,110,80,0.5)'); B.dab(NC[0] + 0.1, NC[1] + 0.6, 0.7, 0.3, 'rgba(10,6,4,0.6)'); texture(g, 'leather', 0.5, 0.6); });
-  glass(g, ell(NC[0], NC[1], RN, RN), [NC[0] - RN, NC[1] - RN, NC[0] + RN, NC[1] + RN], { tint: ['#0c2418', '#3a7258', '#d0803e'] });
-  B.line(ell(NC[0], NC[1], RN, RN), Cu.k, 0.16, 0.01);
-  B.line(ell(NC[0], NC[1], RN, RN), Cu.m, 0.1, 0.01);
-  B.line(`M ${NC[0] - RN * 0.8} ${NC[1] - RN * 0.5} A ${RN} ${RN} 0 0 1 ${NC[0] + RN * 0.3} ${NC[1] - RN * 0.95}`, Cu.l, 0.05, 0.01);
-  for (const a of [0.4, 2.0, 3.6, 5.2]) B.fill(ell(NC[0] + Math.cos(a) * (RN + 0.1), NC[1] + Math.sin(a) * (RN + 0.1), 0.05, 0.05), Cu.l, 0.005);
-
-  // the scarf over the nose and mouth: stretched from the bridge over the tip, falling to
-  // the chin; the wraps round the neck under it
+  // the scarf pulled down round the neck to the jaw, wound twice, knit, darned
   cel(g, FWRAP, R, { sh: 0.9, hl: 0.4 });
-  knit(g, FWRAP, R, { step: 0.32, bend: -0.4, box: [-5, -3.6, 6, 2] });
-  clothFolds(g, FWRAP, [[[-3.8, -1.6], [-1.0, -2.0], [2.0, -1.6], [4.6, -0.8]], [[-3.6, 0.0], [-0.6, 0.4], [2.6, 0.4], [4.4, 0.2]]], R);
-  cel(g, FSCARF, R, { sh: 1.0, hl: 0.45 });
-  knit(g, FSCARF, R, { step: 0.3, bend: -0.3, box: [-4, -6.4, 6, 0] });
-  B.inside(FSCARF, () => {
-    // pulled tight over the nose: the light on the ridge, the cloth tenting from the tip
-    B.line('M 4.5 -5.8 C 4.9 -5.4 5.2 -5.0 5.42 -4.7', `rgba(240,140,120,0.5)`, 0.18, 0.1);
-    B.dab(5.2, -3.4, 0.3, 1.0, 'rgba(30,4,4,0.35)');
-    B.line('M 5.4 -4.5 C 5.2 -3.6 5.0 -2.6 4.8 -1.9', 'rgba(255,160,140,0.35)', 0.1, 0.06);
-    // where his breath has darkened the wool, a darned hole
-    B.dab(4.9, -3.5, 0.7, 0.6, 'rgba(40,6,6,0.3)');
-    B.fill(ell(2.9, -3.6, 0.42, 0.3), 'rgba(140,40,34,0.6)', 0.06);
-  });
-  clothFolds(g, FSCARF, [[[4.8, -4.4], [3.4, -3.8], [1.4, -3.4]], [[4.7, -3.0], [3.0, -2.6], [0.8, -2.2]], [[4.4, -2.0], [2.6, -1.4], [0.2, -1.0]]], R);
-  // its top edge rolled under the goggles, a few loose ends of wool
-  B.line('M 4.36 -5.95 C 3.5 -5.8 2.6 -5.62 1.8 -5.3 C 1.0 -4.9 0.4 -4.3 -0.6 -4.1', R.k, 0.14, 0.04, 0.8);
-  for (const [x, y] of [[2.4, -5.5], [1.2, -5.0]]) B.line(`M ${x} ${y} q 0.1 -0.3 0.3 -0.35`, R.l, 0.04, 0.01, 0.7);
-
+  knit(g, FWRAP, R, { step: 0.32, bend: -0.4, box: [-5, -1.8, 6, 3] });
+  clothFolds(g, FWRAP, [[[-4.0, 0.2], [-1.0, -0.2], [2.0, 0.2], [5.0, 1.0]], [[-3.6, 1.8], [-0.6, 2.2], [2.6, 2.2], [4.4, 1.9]]], R);
+  cel(g, FCOLLAR, R, { sh: 1.0, hl: 0.45 });
+  knit(g, FCOLLAR, R, { step: 0.3, bend: -0.3, box: [-5, -3.6, 6, 2] });
+  clothFolds(g, FCOLLAR, [[[4.6, -1.2], [2.6, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.8, 0.2], [2.4, 0.6], [-0.4, 0.2], [-3.4, -0.8]]], R);
+  B.line('M 4.75 -1.95 C 3.6 -1.45 2.0 -1.65 0.6 -2.45 C -0.6 -3.05 -2.0 -3.45 -3.4 -3.25', R.l, 0.1, 0.04, 0.6);
+  B.fill(ell(2.4, -0.4, 0.36, 0.26), 'rgba(140,40,34,0.55)', 0.05);
   // the cap: knitted rows over the crown, the cuff ribbed and turned up, the union's pin
   cel(g, FCAP, C, { sh: 1.2, hl: 0.5 });
   knit(g, FCAP, C, { step: 0.36, bend: 0.5, box: [-5, -12, 5, -6] });
@@ -368,14 +336,18 @@ function head(g) {
   cel(g, FCUFF, C, { sh: 0.5, hl: 0.4, ao: 0.6 });
   knit(g, FCUFF, C, { ribs: true, step: 0.34, lean: -0.3, box: [-5, -9.4, 5, -4.8] });
   B.inside(FCUFF, () => { B.line('M -4.4 -6.4 C -3.0 -6.6 -1.0 -7.8 0.2 -8.4 C 1.4 -8.9 2.8 -9.1 4.4 -9.05', 'rgba(140,130,120,0.4)', 0.1, 0.06); scuffs(g, [[1.4, -8.4, 0.3], [-2.2, -6.4, 0.25]], '#6b5a50', 0.35); });
-  // the pin: an enamel ember in a copper ring, the paint chipped
-  B.fill(ell(3.25, -8.38, 0.36, 0.34), Cu.d, 0.01);
-  B.fill(ell(3.25, -8.4, 0.28, 0.26), Cu.m, 0.01);
-  B.fill('M 3.12 -8.36 C 3.16 -8.62 3.36 -8.66 3.42 -8.5 C 3.48 -8.34 3.38 -8.2 3.26 -8.2 C 3.16 -8.22 3.1 -8.28 3.12 -8.36 Z', '#e0622e', 0.005);
-  B.dab(3.22, -8.48, 0.06, 0.05, '#ffc070');
-  // the goggles' strap round the cap, its stitched leather tab and buckle behind the ear
-  strap(g, 'M 2.74 -6.3 C 1.6 -6.5 0.0 -7.0 -1.6 -7.3 C -2.8 -7.5 -3.8 -7.5 -4.5 -7.3', 0.42, '#3b2a20', '#120c08', 'rgba(170,130,100,0.6)');
-  buckle(g, -2.0, -7.75, 0.5, 0.75, PAL.steel);
+  B.fill(ell(0.6, -8.1, 0.36, 0.34), Cu.d, 0.01);
+  B.fill(ell(0.6, -8.12, 0.28, 0.26), Cu.m, 0.01);
+  B.fill('M 0.47 -8.08 C 0.51 -8.34 0.71 -8.38 0.77 -8.22 C 0.83 -8.06 0.73 -7.92 0.61 -7.92 C 0.51 -7.94 0.45 -8.0 0.47 -8.08 Z', '#e0622e', 0.005);
+  // the goggles pushed up on the cap: the strap round it, the two cups tipped up on the brow
+  strap(g, 'M 3.6 -9.3 C 2.0 -9.2 0.0 -8.6 -1.8 -7.9 C -2.9 -7.5 -3.8 -7.2 -4.5 -7.0', 0.4, '#3b2a20', '#120c08', 'rgba(170,130,100,0.6)');
+  for (const [cx, cy, rx, ry, far] of [[4.72, -9.7, 0.3, 0.66, true], [3.5, -9.85, 0.72, 0.62, false]]) {
+    B.fill(ell(cx, cy, rx + 0.18, ry + 0.16), '#3a2416', 0.03);
+    glass(g, ell(cx, cy, rx, ry), [cx - rx, cy - ry, cx + rx, cy + ry], { tint: ['#0c2418', '#3a7258', '#d0803e'], a: far ? 0.6 : 0.85 });
+    B.line(ell(cx, cy, rx, ry), Cu.k, 0.15, 0.01); B.line(ell(cx, cy, rx, ry), Cu.m, 0.09, 0.01);
+    if (!far) B.line(`M ${cx - rx * 0.8} ${cy - ry * 0.5} A ${rx} ${ry} 0 0 1 ${cx + rx * 0.3} ${cy - ry * 0.95}`, Cu.l, 0.05, 0.01);
+  }
+  B.line('M 4.2 -9.8 C 4.3 -9.9 4.4 -9.9 4.46 -9.8', Cu.d, 0.14, 0.01);
 }
 
 // Runtime scarf: tails simulated as verlet chains and drawn with this segment
