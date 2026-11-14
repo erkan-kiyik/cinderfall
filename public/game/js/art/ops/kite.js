@@ -275,7 +275,11 @@ const SCOLL = 'M 4.2 -2.0 C 3.3 -1.5 2.0 -1.6 0.8 -2.3 C -0.4 -2.9 -2.0 -3.3 -3.
 function head(g) {
   const S = SKINS.deep, B = brushOf(g), Cr = PAL.cream, C = PAL.bandana;
   neck(g, PAL.skin, { glaze: true });
-  face(g, { prof: 'f', s: S, age: 0.04, seed: 61, iris: '#2a1810', white: '#a49488', brow: ['#140c08', 0.08, 1.0], lips: '110,52,44', lash: true });
+  // her own face (docs §10.29): young and round, a small nose with a scooped bridge, a
+  // turned-up tip and broad wings, full forward lips, a small soft chin
+  const FS = face(g, { prof: 'f', s: S, age: 0.04, seed: 61, iris: '#2a1810', white: '#a49488', brow: ['#140c08', 0.08, 1.0], lips: '110,52,44', lash: true,
+    shape: { fore: 0.1, brow: -0.1, nasion: -0.3, nose: -0.45, hump: -0.3, tip: 0.45, wing: 0.6, lips: 0.75, chin: -0.2, long: -0.25, jaw: -0.6, eye: -0.1 } });
+  const COL = FS.w(SCOLL);
   crop(g, SFADE, { col: '#140e0b', lit: 'rgba(90,70,60,1)', seed: 63, n: 700, a: Math.PI * 0.62 });
   B.inside(SFADE, () => { const fg = g.createLinearGradient(0, -8, 0, -4); fg.addColorStop(0, 'rgba(0,0,0,0)'); fg.addColorStop(1, S.base); g.fillStyle = fg; g.globalAlpha = 0.6; g.fillRect(-5, -8, 7, 5); g.globalAlpha = 1; });
   // the earbud and its white cable, the steel stud
@@ -283,9 +287,9 @@ function head(g) {
   cel(g, ell(0.18, -5.42, 0.26, 0.22), mat(tone('#ffffff', '#e4e6e8', '#b4b8bc', '#6a6e72'), 'paint', 0.2), { sh: 0.2, hl: 0.3, gloss: 0.4 });
   B.fill(ell(0.0, -4.44, 0.09, 0.09), PAL.steel.l, 0.005);
   // the bandana down round the neck: navy, the cream print, its knot behind
-  cel(g, SCOLL, C, { sh: 1.0, hl: 0.45 });
-  B.inside(SCOLL, () => { const r = rnd(65); for (let k = 0; k < 30; k++) { const x = -4 + r() * 9, y = -3.2 + r() * 4.6; if (!inP(g, SCOLL, x, y)) continue; B.fill(ell(x, y, 0.13, 0.1), Cr.m, 0.005, 0.85); } texture(g, 'canvas', 0.35, 0.7); });
-  clothFolds(g, SCOLL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], C);
+  cel(g, COL, C, { sh: 1.0, hl: 0.45 });
+  B.inside(COL, () => { const r = rnd(65); for (let k = 0; k < 30; k++) { const x = -4 + r() * 9, y = -3.2 + r() * 4.6; if (!inP(g, COL, x, y)) continue; B.fill(ell(x, y, 0.13, 0.1), Cr.m, 0.005, 0.85); } texture(g, 'canvas', 0.35, 0.7); });
+  clothFolds(g, COL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], C);
   cel(g, ell(-3.4, -1.4, 0.5, 0.46), C, { sh: 0.6, hl: 0.4 });
   for (const d of ['M -3.6 -1.0 C -4.2 -0.4 -4.4 0.4 -4.3 1.2 C -4.0 1.3 -3.7 1.2 -3.6 1.0 C -3.6 0.3 -3.4 -0.3 -3.2 -0.8 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3 });
   // the cap: cream cotton fitted to the head, the stripe round it, the brim flipped up

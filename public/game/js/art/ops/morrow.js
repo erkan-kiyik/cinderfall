@@ -325,7 +325,11 @@ const VCOLL = 'M 4.3 -2.0 C 3.4 -1.5 2.0 -1.6 0.8 -2.3 C -0.4 -2.9 -2.0 -3.3 -3.
 function head(g) {
   const K = PAL.black, J = PAL.jacket, Kn = PAL.jumper, B = brush(g), S = SKINS.fair;
   neck(g, PAL.skin, { glaze: true });
-  face(g, { prof: 'f', s: S, age: 0.12, seed: 51, iris: '#6a7a5a', brow: ['#5a3424', 0.08, 0.9], lips: '176,96,92', lash: true });
+  // her own face (docs §10.29): a high upright forehead, a short straight nose turned up a
+  // little at the tip, full lips, a narrow soft jaw
+  const FS = face(g, { prof: 'f', s: S, age: 0.12, seed: 51, iris: '#6a7a5a', brow: ['#5a3424', 0.08, 0.9], lips: '176,96,92', lash: true,
+    shape: { fore: 0.35, brow: -0.2, nasion: -0.1, nose: -0.25, hump: -0.1, tip: 0.2, lips: 0.45, chin: 0.1, long: -0.1, jaw: -0.45 } });
+  const COL = FS.w(VCOLL);
   // auburn hair: the fringe swept across the brow, a lock down past the cheek
   for (const d of [VFRINGE, VLOCK]) crop(g, d, { col: '#5a3020', lit: 'rgba(206,140,100,1)', seed: 53, n: 420, a: Math.PI * 0.62 });
   // the glasses: round, steel-rimmed, the eye behind the glass, the arm back into the hood
@@ -334,9 +338,9 @@ function head(g) {
   B.inside(ell(3.52, -6.2, 0.5, 0.5), () => { B.fill('M 3.1 -6.8 L 3.36 -6.8 L 3.0 -5.6 L 2.74 -5.6 Z', 'rgba(255,255,255,0.35)', 0.02); B.dab(3.8, -5.9, 0.2, 0.06, 'rgba(255,180,120,0.4)'); });
   B.line(ell(3.52, -6.2, 0.5, 0.5), '#3a3a3c', 0.06, 0.005); B.line(ell(3.52, -6.2, 0.5, 0.5), PAL.steel.l, 0.025, 0.005, 0.7);
   // the roll neck down under the chin
-  cel(g, VCOLL, Kn, { sh: 1.0, hl: 0.5 });
-  knit(g, VCOLL, Kn, { ribs: true, step: 0.26, lean: 0.3, box: [-5, -3.6, 6, 2] });
-  clothFolds(g, VCOLL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], Kn);
+  cel(g, COL, Kn, { sh: 1.0, hl: 0.5 });
+  knit(g, COL, Kn, { ribs: true, step: 0.26, lean: 0.3, box: [-5, -3.6, 6, 2] });
+  clothFolds(g, COL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], Kn);
   // the hood: lit over the crown, the lining in shade at its edge, seams, the rain
   cel(g, VHOOD, J, { sh: 1.6, hl: 0.6 });
   B.inside(VHOOD, () => {

@@ -281,19 +281,23 @@ const WHAIR = 'M -3.95 -6.6 C -3.7 -7.4 -2.6 -7.9 -1.0 -8.0 L 1.0 -7.9 C 0.95 -7
 function head(g) {
   const Hm = PAL.helmet, F = PAL.hood, Kb = PAL.radio, B = brushOf(g), S = SKINS.fair;
   neck(g, PAL.skin, { glaze: true, wide: 0.3 });
-  face(g, { prof: 'm', s: S, age: 0.55, seed: 41, iris: '#56707e', brow: ['#3a2c22', 0.04, 1.25], lips: '160,90,78', shave: 'rgba(84,96,110,0.26)', stubble: { col: '#3a2c24', n: 700 } });
+  // his own face (docs §10.29): an upright forehead, a long lower face, a big nose with a
+  // broad hanging tip, a heavy jaw
+  const FS = face(g, { prof: 'm', s: S, age: 0.55, seed: 41, iris: '#56707e', brow: ['#3a2c22', 0.04, 1.25], lips: '160,90,78', shave: 'rgba(84,96,110,0.26)', stubble: { col: '#3a2c24', n: 700 },
+    shape: { fore: 0.25, brow: 0.3, nasion: 0.1, nose: 0.35, hump: 0.05, tip: -0.3, wing: 0.9, lips: 0, chin: 0.15, long: 0.4, jaw: 0.55, eye: 0.3 } });
   crop(g, WHAIR, { col: '#3a2c22', lit: 'rgba(150,130,110,1)', seed: 43, n: 500, salt: 0.25 });
   // the moustache: thick, dark, going grey at its ends, combed down over the lip
-  crop(g, WMOUST, { col: 'rgba(58,44,34,0.85)', lit: 'rgba(170,150,128,1)', seed: 45, n: 520, a: Math.PI * 0.6, salt: 0.25 });
-  brushOf(g).line('M 4.7 -3.58 C 4.4 -3.5 4.0 -3.54 3.68 -3.68', 'rgba(30,22,16,0.6)', 0.05, 0.02);
-  B.inside(PROFILE, () => { B.dab(2.8, -5.2, 0.9, 0.4, 'rgba(40,34,28,0.22)'); B.dab(4.0, -7.8, 0.9, 0.3, 'rgba(40,34,28,0.18)'); });
+  crop(g, FS.w(WMOUST), { col: 'rgba(58,44,34,0.85)', lit: 'rgba(170,150,128,1)', seed: 45, n: 520, a: Math.PI * 0.6, salt: 0.25 });
+  brushOf(g).line(FS.w('M 4.7 -3.58 C 4.4 -3.5 4.0 -3.54 3.68 -3.68'), 'rgba(30,22,16,0.6)', 0.05, 0.02);
+  B.inside(FS.P, () => { B.dab(2.8, -5.2, 0.9, 0.4, 'rgba(40,34,28,0.22)'); B.dab(4.0, -7.8, 0.9, 0.3, 'rgba(40,34,28,0.18)'); });
   // the hood down round the neck, bunched
-  cel(g, WCOLLAR, F, { sh: 1.0, hl: 0.45 });
-  knit(g, WCOLLAR, F, { step: 0.28, bend: -0.3, box: [-5, -3.6, 6, 2] });
-  clothFolds(g, WCOLLAR, [[[4.6, -1.2], [2.6, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.8, 0.3], [2.4, 0.7], [-0.4, 0.3], [-3.4, -0.6]]], F);
-  B.line('M 4.7 -1.9 C 3.6 -1.4 2.0 -1.6 0.6 -2.4 C -0.6 -3.0 -2.2 -3.5 -3.6 -3.2', F.l, 0.1, 0.04, 0.6);
+  const COL = FS.w(WCOLLAR);
+  cel(g, COL, F, { sh: 1.0, hl: 0.45 });
+  knit(g, COL, F, { step: 0.28, bend: -0.3, box: [-5, -3.6, 6, 2] });
+  clothFolds(g, COL, [[[4.6, -1.2], [2.6, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.8, 0.3], [2.4, 0.7], [-0.4, 0.3], [-3.4, -0.6]]], F);
+  B.line(FS.w('M 4.7 -1.9 C 3.6 -1.4 2.0 -1.6 0.6 -2.4 C -0.6 -3.0 -2.2 -3.5 -3.6 -3.2'), F.l, 0.1, 0.04, 0.6);
   // the chin strap from inside the helmet down along the jaw, its buckle
-  strap(g, 'M -0.7 -7.6 C -0.5 -5.6 0.4 -3.6 2.2 -2.2 C 3.0 -1.7 3.8 -1.6 4.4 -1.8', 0.3, '#1d1c1a', '#060606', 'rgba(140,140,130,0.5)');
+  strap(g, FS.w('M -0.7 -7.6 C -0.5 -5.6 0.4 -3.6 2.2 -2.2 C 3.0 -1.7 3.8 -1.6 4.4 -1.8'), 0.3, '#1d1c1a', '#060606', 'rgba(140,140,130,0.5)');
   buckle(g, 0.0, -4.4, 0.55, 0.75, PAL.steel);
   // the helmet: the tail and brim, then the dome with its ribs, the band and the tape
   cel(g, WBRIM, Hm, { sh: 0.9, hl: 0.6 });

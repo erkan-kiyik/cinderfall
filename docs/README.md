@@ -62,7 +62,7 @@ boss; VASQUEZ, Vanta's commander in the tower, is the final one.
 | [`KOR_STORY_CINEMATIC.md`](KOR_STORY_CINEMATIC.md) | Index of the design sections (§1–§10.x) and where each lives |
 | [`design/1-hikaye.md`](design/1-hikaye.md) | Story bible (§1): world, timeline, characters, the ten missions, writing rules |
 | [`design/2-sinematik.md`](design/2-sinematik.md) | Prologue, opening and mission films; the cinematic rig; acceptance rules; the still series (§2–§8) |
-| [`design/3-karakterler.md`](design/3-karakterler.md) | Character design and every revision of characters, faces and heads (§9, §10.1, §10.10–11, §10.14–16, §10.21–) |
+| [`design/3-karakterler.md`](design/3-karakterler.md) | Character design and every revision of characters, faces and heads (§9, §10.1, §10.10–11, §10.14–16, §10.21–25, §10.29) |
 | [`design/4-dunya-ve-gorevler.md`](design/4-dunya-ve-gorevler.md) | Obstacles, interface, city, places, missions, the lobby, the realism pass, weapons (§10.2–9, §10.12–13) |
 | [`design/5-teknik-ve-performans.md`](design/5-teknik-ve-performans.md) | Phone performance, frame pacing, quality, ragdolls, measurements (§10.17–20, §10.26–28 and later technical sections) |
 | [`KOR_YAPI.md`](KOR_YAPI.md) | How KOR replaced Cinderfall in this repository and on the store |

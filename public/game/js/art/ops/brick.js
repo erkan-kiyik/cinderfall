@@ -293,10 +293,13 @@ const BCUP = ell(-0.1, -5.6, 1.0, 1.25);
 function head(g) {
   const S = SKINS.ruddy, B = brushOf(g), Mk = PAL.mask, F = PAL.filter, Ht = PAL.hat;
   neck(g, PAL.skin, { glaze: true, wide: 0.3 });
-  face(g, { prof: 'm', s: S, age: 0.75, seed: 71, iris: '#7a9ab0', brow: ['#b8b2aa', 0.1, 1.6], lips: '170,90,76' });
+  // his own face (docs §10.29): a sloping forehead over a heavy brow ridge, pale eyes deep
+  // under it, a big broad hooked nose with a hanging tip, a heavy jaw under the beard
+  const FS = face(g, { prof: 'm', s: S, age: 0.75, seed: 71, iris: '#7a9ab0', brow: ['#b8b2aa', 0.1, 1.6], lips: '170,90,76',
+    shape: { fore: -0.35, brow: 0.85, nasion: 0.5, nose: 0.6, hump: 0.55, tip: -0.45, wing: 1.0, lips: -0.1, chin: -0.05, long: 0.15, jaw: 0.6, eye: 0.6 } });
   // the short grey beard and moustache, salt and pepper, trimmed close to the jaw
-  crop(g, BBEARD, { col: 'rgba(120,114,106,0.8)', lit: 'rgba(220,216,208,1)', seed: 73, n: 1100, a: Math.PI * 0.62, salt: 0.55 });
-  crop(g, BMOUST, { col: 'rgba(130,124,116,0.85)', lit: 'rgba(226,222,214,1)', seed: 74, n: 420, a: Math.PI * 0.6, salt: 0.6 });
+  crop(g, FS.w(BBEARD), { col: 'rgba(120,114,106,0.8)', lit: 'rgba(220,216,208,1)', seed: 73, n: 1100, a: Math.PI * 0.62, salt: 0.55 });
+  crop(g, FS.w(BMOUST), { col: 'rgba(130,124,116,0.85)', lit: 'rgba(226,222,214,1)', seed: 74, n: 420, a: Math.PI * 0.6, salt: 0.6 });
   crop(g, 'M -3.95 -6.6 C -3.4 -6.9 -2.4 -7.2 -1.2 -7.3 L -0.9 -6.4 C -1.4 -5.4 -2.0 -4.4 -2.6 -3.6 C -3.3 -4.0 -3.8 -5.0 -3.95 -6.6 Z', { col: '#6e6a64', lit: 'rgba(210,206,200,1)', seed: 75, n: 420, salt: 0.5 });
   // the respirator hanging at the throat on its neck strap, the filter showing
   strap(g, 'M 3.2 -0.6 C 1.6 -1.2 -0.6 -2.0 -2.8 -2.8', 0.24, '#2a2c30', '#0a0b0c', 'rgba(140,146,152,0.5)');

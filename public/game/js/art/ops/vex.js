@@ -313,9 +313,13 @@ const FNAPE = 'M -3.95 -5.6 C -3.4 -5.3 -2.6 -5.4 -1.8 -5.8 L -1.0 -6.2 C -1.1 -
 function head(g) {
   const S = SKINS.olive, B = brushOf(g), C = PAL.cap, R = PAL.scarf, Cu = PAL.copper;
   neck(g, PAL.skin, { sh: 1.0, glaze: true });
-  face(g, { prof: 'm', s: S, age: 0.22, seed: 31, iris: '#4a3020', brow: ['#1b120d', 0.1, 1.2], lips: '150,84,70', shave: 'rgba(36,28,24,0.32)', stubble: { col: '#1a120d', n: 1100 } });
+  // his own face (docs §10.29): heavy brow over deep eyes, a straight nose with the bump of
+  // an old break, thin set lips, a hard square jaw and a chin that stands out
+  const FS = face(g, { prof: 'm', s: S, age: 0.22, seed: 31, iris: '#4a3020', brow: ['#1b120d', 0.1, 1.2], lips: '150,84,70', shave: 'rgba(36,28,24,0.32)', stubble: { col: '#1a120d', n: 1100 },
+    shape: { fore: -0.1, brow: 0.6, nasion: 0.4, nose: 0.15, hump: 0.4, tip: -0.1, lips: -0.25, chin: 0.4, long: 0.2, jaw: 0.8, eye: 0.5 } });
+  const COL = FS.w(FCOLLAR);
   // soot in the creases and round where the goggles sat, a smear along the cheekbone
-  B.inside(PROFILE, () => { B.dab(3.5, -6.2, 1.0, 0.55, 'rgba(26,20,16,0.28)'); B.dab(2.6, -5.3, 1.0, 0.25, 'rgba(26,20,16,0.3)', 1, 'source-over', -0.2); B.dab(4.0, -8.0, 0.8, 0.3, 'rgba(26,20,16,0.18)'); });
+  B.inside(FS.P, () => { B.dab(3.5, -6.2, 1.0, 0.55, 'rgba(26,20,16,0.28)'); B.dab(2.6, -5.3, 1.0, 0.25, 'rgba(26,20,16,0.3)', 1, 'source-over', -0.2); B.dab(4.0, -8.0, 0.8, 0.3, 'rgba(26,20,16,0.18)'); });
   // the old burn through the near brow
   B.line('M 3.5 -7.15 L 3.68 -6.62', `rgba(${S.pale},0.8)`, 0.07, 0.02);
   crop(g, FSIDEBURN, { col: '#2a1a12', lit: 'rgba(110,80,60,1)', seed: 33, n: 160, a: Math.PI * 0.5 });
@@ -324,10 +328,10 @@ function head(g) {
   cel(g, FWRAP, R, { sh: 0.9, hl: 0.4 });
   knit(g, FWRAP, R, { step: 0.32, bend: -0.4, box: [-5, -1.8, 6, 3] });
   clothFolds(g, FWRAP, [[[-4.0, 0.2], [-1.0, -0.2], [2.0, 0.2], [5.0, 1.0]], [[-3.6, 1.8], [-0.6, 2.2], [2.6, 2.2], [4.4, 1.9]]], R);
-  cel(g, FCOLLAR, R, { sh: 1.0, hl: 0.45 });
-  knit(g, FCOLLAR, R, { step: 0.3, bend: -0.3, box: [-5, -3.6, 6, 2] });
-  clothFolds(g, FCOLLAR, [[[4.6, -1.2], [2.6, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.8, 0.2], [2.4, 0.6], [-0.4, 0.2], [-3.4, -0.8]]], R);
-  B.line('M 4.75 -1.95 C 3.6 -1.45 2.0 -1.65 0.6 -2.45 C -0.6 -3.05 -2.0 -3.45 -3.4 -3.25', R.l, 0.1, 0.04, 0.6);
+  cel(g, COL, R, { sh: 1.0, hl: 0.45 });
+  knit(g, COL, R, { step: 0.3, bend: -0.3, box: [-5, -3.6, 6, 2] });
+  clothFolds(g, COL, [[[4.6, -1.2], [2.6, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.8, 0.2], [2.4, 0.6], [-0.4, 0.2], [-3.4, -0.8]]], R);
+  B.line(FS.w('M 4.75 -1.95 C 3.6 -1.45 2.0 -1.65 0.6 -2.45 C -0.6 -3.05 -2.0 -3.45 -3.4 -3.25'), R.l, 0.1, 0.04, 0.6);
   B.fill(ell(2.4, -0.4, 0.36, 0.26), 'rgba(140,40,34,0.55)', 0.05);
   // the cap: knitted rows over the crown, the cuff ribbed and turned up, the union's pin
   cel(g, FCAP, C, { sh: 1.2, hl: 0.5 });

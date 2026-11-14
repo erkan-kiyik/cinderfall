@@ -4,10 +4,9 @@
 // gear (skull, brow, nose, lips, chin, jaw, the ear set back), painted in
 // planes first (the back of the skull and under the jaw in shade, the side
 // in half light, the front in the street lamp), then the skin's colour in
-// its zones, then pores and marks. The faces stay covered (§10.16), but the
-// cloth over them is stretched over a real nose and chin, the goggles are
-// the size real goggles are, and the skin that shows (an ear, a temple, a
-// nape, a jaw) is painted as skin.
+// its zones, then pores and marks. The faces are open (§10.25) and each has
+// its own shape (shaper(), §10.29): the outline, the planes and the features
+// bend together, and so does the gear that sits on the face.
 //
 // Head frame: origin at the base of the neck, facing +x, y down; the crown
 // at about y -10.7, the chin at about -1.7 (Gall's proportions).
@@ -30,6 +29,62 @@ export const PROFILE_F = 'M -2.7 -3.5 C -3.5 -4.3 -3.85 -5.5 -3.8 -6.7 C -3.75 -
 // the ear, tilted back, at its place on PROFILE
 export const EAR = 'M 0.05 -6.62 C 0.55 -6.58 0.72 -6.1 0.62 -5.55 C 0.56 -5.1 0.42 -4.72 0.3 -4.42 C 0.18 -4.22 -0.02 -4.18 -0.18 -4.28 C -0.42 -4.5 -0.62 -5.0 -0.78 -5.5 C -0.92 -5.95 -0.88 -6.36 -0.6 -6.56 C -0.42 -6.66 -0.2 -6.66 0.05 -6.62 Z';
 
+// --- a face's own shape (docs §10.29) ---------------------------------------
+// Every operator used to have the same profile line. A shape bends the
+// standard one (PROFILE / PROFILE_F) where faces differ, in head units:
+//   fore   forehead upright (+) or sloping back (−)
+//   brow   the ridge over the eye standing out (+) or flat (−)
+//   nasion the dip between brow and nose deeper (+)
+//   nose   the nose longer, standing further out (+)
+//   hump   a bump on the bridge (+) or a scooped one (−)
+//   tip    the tip turned up (+) or hanging (−)
+//   wing   the nostril's wing broader (+)
+//   lips   the lips fuller and forward (+) or thin and set back (−)
+//   chin   the chin forward (+) or receding (−)
+//   long   the lower face longer (+): chin and jaw line lower
+//   jaw    the angle of the jaw lower and harder (+) or soft (−)
+//   eye    the eye set deeper under the brow (+)
+// The warp moves points, so the outline and everything painted on the face
+// (planes, nose, mouth, folds, beard, moustache, straps) move together.
+const bump = (v, c, r) => { const t = (v - c) / r; return t * t >= 1 ? 0 : (1 - t * t) * (1 - t * t); };
+const ramp = (v, a, b) => (v <= a ? 0 : v >= b ? 1 : (v - a) / (b - a));
+export function shaper(sh = {}, prof = 'm') {
+  const { fore = 0, brow = 0, nasion = 0, nose = 0, hump = 0, tip = 0, lips = 0, chin = 0, long = 0, jaw = 0, wing = 0, eye = 0 } = sh;
+  const W = (x, y) => {
+    let dx = 0, dy = 0;
+    const front = ramp(x, 3.0, 3.9), nz = ramp(x, 4.15, 4.6);
+    dx += fore * 0.5 * bump(y, -8.7, 1.35) * ramp(x, 2.2, 3.4);
+    dx += brow * 0.32 * bump(y, -6.9, 0.42) * front;
+    dx -= nasion * 0.22 * bump(y, -6.46, 0.24) * front;
+    dx += nose * 0.62 * bump(y, -4.62, 0.8) * nz;
+    dx += hump * 0.3 * bump(y, -5.72, 0.48) * nz;
+    dy -= tip * 0.32 * bump(y, -4.5, 0.42) * nz;
+    dx += lips * 0.3 * bump(y, -3.42, 0.36) * ramp(x, 3.9, 4.35);
+    dx += chin * 0.6 * bump(y, -2.3, 0.62) * ramp(x, 3.4, 4.1);
+    const low = ramp(y, -3.1, -2.1) * ramp(x, -0.8, 0.8);
+    dy += long * 0.8 * low;
+    dy += jaw * 0.5 * bump(x, 0.4, 1.6) * ramp(y, -3.7, -2.7);
+    dx -= jaw * 0.2 * bump(x, 0.4, 1.6) * ramp(y, -3.7, -2.7);
+    return [x + dx, y + dy];
+  };
+  const P = warpPath(prof === 'f' ? PROFILE_F : PROFILE, W);
+  return { W, P, w: (d) => warpPath(d, W), sh: { fore, brow, nasion, nose, hump, tip, lips, chin, long, jaw, wing, eye }, prof };
+}
+// a path through a warp: the coordinates of absolute M L C Q S T commands
+// move; relative and arc commands pass unchanged
+export function warpPath(d, W) {
+  const tok = d.match(/[A-Za-z]|-?\d*\.?\d+(?:e-?\d+)?/g) || [], out = [];
+  let cmd = '', pair = [];
+  for (const t of tok) {
+    if (/[A-Za-z]/.test(t)) { cmd = t; out.push(t); pair = []; continue; }
+    if ('MLCQST'.includes(cmd)) {
+      pair.push(+t);
+      if (pair.length === 2) { const [x, y] = W(pair[0], pair[1]); out.push(+x.toFixed(3), +y.toFixed(3)); pair = []; }
+    } else out.push(t);
+  }
+  return out.join(' ');
+}
+
 // Skins: base, and the glazes laid over it (rgb triples).
 export const SKINS = {
   // weathered light skin (Gall's)
@@ -47,8 +102,10 @@ export const SKINS = {
 // facing up; the colour in its zones; pores and mottling. o.stubble: the blue
 // of a close shave (or a grey stubble, o.stubbleCol) over the jaw and lip.
 export function skin(g, d, s, o = {}) {
-  const B = brushOf(g), r = rnd(o.seed ?? 77);
-  B.fill(d, s.base, 0.03);
+  const B0 = brushOf(g), r = rnd(o.seed ?? 77), Wp = o.warp;
+  // with a shape (o.warp), the planes and marks follow the face's own line
+  const B = !Wp ? B0 : { fill: (p, ...a) => B0.fill(warpPath(p, Wp), ...a), line: (p, ...a) => B0.line(warpPath(p, Wp), ...a), inside: (p, fn) => B0.inside(p, fn), dab: (x, y, ...a) => { const [X, Y] = Wp(x, y); B0.dab(X, Y, ...a); } };
+  B0.fill(d, s.base, 0.03);
   B.inside(d, () => {
     B.fill('M -5 -11 L 1.5 -11 C 1.0 -8.6 0.9 -6.0 1.3 -3.9 C 1.5 -3.0 1.7 -2.4 1.9 -1 L -5 -1 Z', `rgba(${s.shade},0.62)`, 0.55);
     B.fill('M -5 -11 L 2.4 -11 C 2.0 -8.6 1.9 -6.0 2.2 -3.9 C 2.4 -3.0 2.6 -2.4 2.8 -1 L -5 -1 Z', `rgba(${s.half},0.22)`, 0.5);
@@ -164,15 +221,23 @@ export function crease(g, d, w = 0.06, a = 0.5, s = SKINS.fair) {
 // brow, the ear; age in the folds and round the eye; stubble.
 //   o.prof 'm' (PROFILE) | 'f' (PROFILE_F); o.s a skin of SKINS; o.age 0..1;
 //   o.iris eye colour; o.brow [colour, lift, thickness]; o.lips rgb of the lips;
-//   o.stubble { col, n } hairs over the jaw and lip; o.lash (a darker, thicker lid)
+//   o.stubble { col, n } hairs over the jaw and lip; o.lash (a darker, thicker lid);
+//   o.shape the face's own shape (see shaper(): an object of offsets, or a shaper)
+// Returns the shaper: .P the face's profile (to clip to), .w(path) to bend gear
+// that sits on the face (a moustache, a beard, a strap under the chin).
 export function face(g, o) {
-  const f = o.prof === 'f', P = f ? PROFILE_F : PROFILE, s = o.s, B = brushOf(g), age = o.age ?? 0.3;
-  const cr = (d, w, a) => crease(g, d, w, a, s);
-  skin(g, P, s, { seed: o.seed ?? 77, stubble: !!o.shave, stubbleCol: o.shave });
-  // the nose, its features at their place on the profile
-  const dn = f ? -0.27 : 0, dm = f ? -0.13 : 0, de = f ? -0.08 : 0;
+  const f = o.prof === 'f', SH = o.shape && o.shape.W ? o.shape : shaper(o.shape, f ? 'f' : 'm'), P = SH.P, s = o.s, B0 = brushOf(g), age = o.age ?? 0.3;
+  // the nose and mouth sit a little further back on the women's profile; then the face's own shape
+  const dn = f ? -0.27 : 0, dm = f ? -0.13 : 0, de = (f ? -0.08 : 0) - SH.sh.eye * 0.12;
+  let ox = 0, oy = 0;
+  const Wf = (x, y) => SH.W(x + ox, y + oy), wp = (d) => warpPath(d, Wf);
+  const B = { fill: (d, ...a) => B0.fill(wp(d), ...a), line: (d, ...a) => B0.line(wp(d), ...a), inside: (d, fn) => B0.inside(d, fn), hairs: (...a) => B0.hairs(...a), dab: (x, y, ...a) => { const [X, Y] = Wf(x, y); B0.dab(X, Y, ...a); } };
+  const cr = (d, w, a) => crease(g, wp(d), w, a, s);
+  skin(g, P, s, { seed: o.seed ?? 77, stubble: !!o.shave, stubbleCol: o.shave, warp: SH.W });
   B.inside(P, () => {
-    g.save(); g.translate(dn, f ? -0.05 : 0);
+    ox = dn; oy = f ? -0.05 : 0;
+    // a broader nose: the wing's shadow wider, set further back
+    if (SH.sh.wing > 0) B.dab(4.5, -4.5, 0.36 + SH.sh.wing * 0.22, 0.24, `rgba(${s.half},${0.18 + SH.sh.wing * 0.12})`);
     B.fill('M 4.2 -6.3 C 4.5 -5.8 4.9 -5.2 5.2 -4.82 L 4.5 -4.56 C 4.3 -5.1 4.06 -5.6 3.9 -6.0 Z', `rgba(${s.half},0.35)`, 0.1);
     B.line('M 4.32 -6.32 C 4.48 -6.04 4.6 -5.82 4.68 -5.66 C 4.86 -5.34 5.1 -5.04 5.28 -4.8', `rgba(${s.pale},0.75)`, 0.1, 0.05);
     B.dab(4.62, -5.7, 0.1, 0.16, `rgba(${s.pale},0.5)`, 1, 'source-over', -0.5);
@@ -182,8 +247,7 @@ export function face(g, o) {
     B.line('M 4.42 -4.86 C 4.26 -4.7 4.26 -4.44 4.42 -4.34 C 4.56 -4.28 4.7 -4.28 4.82 -4.3', `rgba(${s.dark},0.65)`, 0.07, 0.04);
     B.line('M 4.84 -4.33 C 4.98 -4.35 5.1 -4.34 5.2 -4.31', `rgba(${s.shade},0.85)`, 0.06, 0.03);
     B.fill('M 4.36 -4.24 C 4.58 -4.2 4.7 -4.12 4.7 -4.0 C 4.54 -3.98 4.36 -4.04 4.24 -4.12 Z', `rgba(${s.dark},0.5)`, 0.06);
-    g.restore();
-    g.save(); g.translate(dm, 0);
+    ox = dm; oy = 0;
     // the fold from the nose to the mouth, the line from the mouth's corner, deeper with age
     cr('M 4.3 -4.82 C 4.06 -4.5 3.96 -4.1 4.0 -3.66', 0.07, 0.25 + age * 0.4);
     if (age > 0.35) cr('M 3.98 -3.4 C 3.94 -3.1 3.92 -2.85 3.98 -2.6', 0.05, age * 0.4);
@@ -194,16 +258,17 @@ export function face(g, o) {
     B.line('M 4.43 -3.5 C 4.3 -3.49 4.15 -3.47 4.0 -3.42', `rgba(${s.shade},0.92)`, 0.055, 0.02);
     B.fill(f ? 'M 4.5 -3.46 C 4.56 -3.32 4.52 -3.16 4.42 -3.08 C 4.28 -3.18 4.12 -3.3 4.02 -3.38 Z' : 'M 4.48 -3.46 C 4.52 -3.36 4.5 -3.24 4.42 -3.18 C 4.3 -3.26 4.16 -3.34 4.06 -3.4 Z', `rgba(${L},${f ? 0.6 : 0.42})`, 0.04);
     B.dab(4.4, -3.28, 0.1, 0.05, `rgba(${s.pale},0.6)`);
-    g.restore();
+    ox = 0; oy = 0;
     // age: lines across the forehead, the bag under the eye
     if (age > 0.4) for (const y of [-8.6, -8.15]) cr(`M ${3.0 + de} ${y} C 3.4 ${y - 0.08} 3.8 ${y - 0.06} 4.1 ${y + 0.04}`, 0.035, (age - 0.4) * 0.6);
   });
   // stubble: short dark points over the jaw, the lip and the throat
   if (o.stubble) B.hairs(o.stubble.n ?? 900, (o.seed ?? 77) + 3, (i, r) => {
-    const x = 0.4 + r() * 4.4, y = -4.6 + r() * 3.2;
+    const x = 0.4 + r() * 4.8, y = -4.6 + r() * 3.4 + SH.sh.long * 0.3;
     if (!inP(g, P, x, y)) return null;
-    if (y < -4.0 && x > 4.0 + dm && x < 4.5) return null;
-    if (x > 4.0 && y > -3.66 && y < -3.1) return null;
+    const [mx, my] = SH.W(4.3 + dm, -3.4);
+    if (y < -4.0 && x > 4.0 + dm && x < mx + 0.2) return null;
+    if (x > mx - 0.3 && y > my - 0.26 && y < my + 0.3) return null;
     return [x, y, Math.PI * 0.6 + (r() - 0.5) * 0.8, 0.04 + r() * 0.05, o.stubble.col, 0.018, 0.5];
   });
   ear(g, s);
@@ -229,9 +294,13 @@ export function face(g, o) {
   for (const [dy, l] of [[-0.12, 0.42], [0.02, 0.5], [0.15, 0.38]]) crease(g, `M 3.08 ${-6.12 + dy * 0.4} l ${-l} ${dy * 0.6}`, 0.025, 0.08 + age * 0.35, s);
   const [bc, bl, bt] = o.brow ?? ['#3a2a20', 0.06, 1];
   g.save(); g.translate(0, -0.02); g.scale(1, bt);
-  softBrowR(g, 3.0, -6.78 / bt, 4.38, -6.88 / bt, bl, bc, (o.seed ?? 7) + 9);
+  const bx1 = 4.38 + SH.sh.brow * 0.12;
+  softBrowR(g, 3.0, -6.78 / bt, bx1, -6.88 / bt, bl, bc, (o.seed ?? 7) + 9);
   g.restore();
+  // a heavy ridge throws the eye into deeper shade
+  if (SH.sh.brow > 0 || SH.sh.eye > 0) B0.dab(3.62, -6.32, 0.62, 0.22, `rgba(${s.shade},${Math.min(0.5, 0.2 * (SH.sh.brow + SH.sh.eye))})`);
   g.restore();
+  return SH;
 }
 
 // a brow: a soft mass and short hairs along it, lighter where it thins out

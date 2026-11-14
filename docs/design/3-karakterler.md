@@ -504,3 +504,32 @@ pozdan hesaplanıyor); figürün üstündeki karartma hafifledi, yüz ateşin
 ışığında okunuyor.
 
 İlk açılış 4,4 sn, açılışta hata yok.
+
+### 10.29 Her yüz kendi yüzü
+
+§10.25'te yüzler açıldı ama beşi de aynı profil çizgisinden çıkıyordu (biri
+erkek, biri kadın): aynı alın, aynı burun, aynı dudak, aynı çene; farkı ten,
+göz rengi, kaş ve yaştı. Artık her operatörün kendi yüz yapısı var.
+
+- **Şekil** (`art/ops/realhead.js` → `shaper`): standart profil, yüzlerin
+  ayrıldığı yerlerden bükülüyor. On iki ayar, kafa biriminde: alın
+  (dik/yatık), kaş kemeri, burun kökü çukuru, burun boyu, burun sırtı
+  (kemerli/çukur), burun ucu (kalkık/sarkık), burun kanadı genişliği, dudak
+  (dolgun/ince), çene ucu (önde/geride), alt yüz boyu, çene köşesi (sert/
+  yumuşak), göz derinliği.
+- **Her şey birlikte bükülüyor:** büküm noktaları taşıyor, böylece profil
+  çizgisi, ışık düzlemleri (burun sırtındaki ışık, yanak, çene altı gölgesi),
+  burun ucu ve kanadı, ağız, kırışıklar, sakal bölgesi aynı yerden geçiyor.
+  Yüzün üstüne oturan donanım da (`FS.w(...)`): Warden'ın bıyığı ve çene
+  kayışı, Bulwark'ın sakalı ve bıyığı, beşinin de yakası.
+
+| Operatör | Yüz |
+| --- | --- |
+| FLINT (29) | Ağır kaş kemeri, derin gözler; eski bir kırığın tümseği olan düz burun; ince, sıkılı dudak; sert, köşeli çene, önde çene ucu |
+| WARDEN (41) | Dik alın, uzun alt yüz; büyük burun, geniş ve sarkık uç; ağır çene |
+| VESPER (33) | Yüksek dik alın; kısa, düz, ucu hafif kalkık burun; dolgun dudak; dar, yumuşak çene |
+| SKYE (22) | Genç, yuvarlak; küçük burun, çukur sırt, kalkık uç, geniş kanat; dolgun, önde dudak; küçük yumuşak çene |
+| BULWARK (47) | Geriye yatık alın üstünde ağır kaş kemeri, altında derin açık mavi gözler; büyük, geniş, kemerli burun, sarkık uç; sakalın altında ağır çene |
+
+Gall'ın kafası kendi çizimi; dokunulmadı. Çizim sürümü `d4-58` (telefonlar
+yeniden boyar).
