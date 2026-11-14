@@ -67,6 +67,7 @@ import android.os.Bundle;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.WebView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -82,6 +83,9 @@ public class MainActivity extends BridgeActivity {
     // text (the objective grew to cover the top of the screen); the game sizes its
     // own HUD, and Settings has a UI scale (docs/KOR_STORY_CINEMATIC.md §10.21)
     getBridge().getWebView().getSettings().setTextZoom(100);
+    // ...and hands the font-size setting to the game instead, which scales its
+    // menus and HUD text within what the layout can take (docs §10.26)
+    sendFontScale();
     View content = findViewById(android.R.id.content);
     ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
       Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -95,6 +99,20 @@ public class MainActivity extends BridgeActivity {
   public void onResume() {
     super.onResume();
     requestHighRefreshRate();
+    sendFontScale();
+  }
+
+  // The page may still be loading when this runs, so it is said now and twice
+  // more; the game applies it once and ignores repeats of the same value.
+  private void sendFontScale() {
+    try {
+      final WebView wv = getBridge().getWebView();
+      final float fs = getResources().getConfiguration().fontScale;
+      final String js = "window.__korFontScale=" + fs + ";window.dispatchEvent(new Event('korfontscale'))";
+      for (long d : new long[] { 0L, 1500L, 5000L }) wv.postDelayed(() -> wv.evaluateJavascript(js, null), d);
+    } catch (Exception ignored) {
+      // no WebView yet: the next resume sends it
+    }
   }
 
   @SuppressWarnings("deprecation")
@@ -122,4 +140,4 @@ public class MainActivity extends BridgeActivity {
     }
   }
 }
-`, 'MainActivity pads content by system-bar insets, fixes text zoom at 100% + requests the fastest 60-multiple refresh rate');
+`, 'MainActivity pads content by system-bar insets, fixes text zoom at 100% and passes the font scale to the game + requests the fastest 60-multiple refresh rate');

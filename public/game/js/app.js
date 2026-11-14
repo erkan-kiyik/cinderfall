@@ -57,6 +57,27 @@ export class App {
     document.addEventListener('visibilitychange', () => { const c = eng.sfx.ctx; if (!c) return; if (document.hidden) c.suspend?.(); else c.resume?.(); });
     for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, unlock, { passive: true });
     this.applySettings(true);
+    // the phone's font size (Android passes it in; docs §10.26)
+    const fs = () => this.fontScale(window.__korFontScale);
+    addEventListener('korfontscale', fs);
+    if (window.__korFontScale) fs();
+  }
+
+  // The phone's font-size setting. The WebView's own text zoom is pinned at 100 %
+  // (the HUD used to blow up over the screen), so the setting arrives here instead
+  // and sets the interface scale, within what the menus can take, until the player
+  // picks a scale in Settings; the in-game HUD's text follows it too (--hudk).
+  fontScale(f) {
+    if (!(f > 0)) return;
+    document.documentElement.style.setProperty('--hudk', clamp(f, 1, 1.2).toFixed(3));
+    const st = this.save.d.settings;
+    if (st.uiScaleBy === 'player') return;
+    // a scale chosen before this build is the player's own
+    if (!st.uiScaleFromFont && Math.abs((st.uiScale || 1) - 1) > 1e-3) { this.save.set((d) => { d.settings.uiScaleBy = 'player'; }); return; }
+    const v = clamp(Math.round(f * 20) / 20, 0.85, 1.15);
+    if (v === st.uiScale && st.uiScaleFromFont) return;
+    this.save.set((d) => { d.settings.uiScale = v; d.settings.uiScaleFromFont = true; });
+    this.fit();
   }
 
   // UI zoom. The menus are laid out on a canvas of at least 720×360: never

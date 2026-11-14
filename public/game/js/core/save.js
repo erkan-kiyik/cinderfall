@@ -32,7 +32,7 @@ export function freshSave() {
     settings: {
       quality: 'auto', dynRes: true, bloom: true, lights: true, fps: false, fpsCap: 60,
       vol: { master: 0.8, sfx: 1, ui: 0.7, music: 0.6 },
-      haptics: true, uiScale: 1, enemyMark: 'off', reduceMotion: false, shake: 1,
+      haptics: true, uiScale: 1, uiScaleBy: 'auto', enemyMark: 'off', reduceMotion: false, shake: 1,
       lang: 'tr', fireRing: 0.78, diff: 'normal',
     },
     hud: { layout: null },  // touch button positions (HUD editor)

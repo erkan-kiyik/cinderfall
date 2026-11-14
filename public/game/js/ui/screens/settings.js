@@ -66,7 +66,7 @@ export const settings = {
         ];
       } else if (tab === 'access') {
         rows = [
-          range(t('set.uiScale'), t('set.uiScaleHint'), 0.85, 1.15, 0.05, () => st.uiScale, (s, v) => { s.settings.uiScale = v; }),
+          range(t('set.uiScale'), t('set.uiScaleHint'), 0.85, 1.15, 0.05, () => st.uiScale, (s, v) => { s.settings.uiScale = v; s.settings.uiScaleBy = 'player'; }),
           seg(t('set.enemyMark'), t('set.enemyMarkHint'), [['off', t('set.off')], ['yellow', t('set.yellow')], ['blue', t('set.blue')], ['magenta', t('set.magenta')]], () => st.enemyMark, (s, v) => { s.settings.enemyMark = v; }),
           range(t('set.shake'), t('set.shakeHint'), 0, 1, 0.1, () => st.shake, (s, v) => { s.settings.shake = v; }),
           toggle(t('set.reduce'), t('set.reduceHint'), () => st.reduceMotion, (s, v) => { s.settings.reduceMotion = v; }),
