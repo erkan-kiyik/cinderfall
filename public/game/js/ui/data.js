@@ -46,20 +46,30 @@ export function gunBars(id) {
   };
 }
 
-// The campaign map: three acts, ten missions; act 1 (missions 1–3) is playable,
-// each one opens when the one before it is done.
+// The campaign map: three acts, ten missions; acts 1 and 2 (missions 1–7) are
+// playable, each one opens when the one before it is done.
 export const MISSIONS = [
   { id: 'm1', act: 1, x: 0.10, y: 0.62, ready: true },
   { id: 'm2', act: 1, x: 0.21, y: 0.36, ready: true },
   { id: 'm3', act: 1, x: 0.32, y: 0.66, boss: true, ready: true },
-  { id: 'm4', act: 2, x: 0.44, y: 0.40 },
-  { id: 'm5', act: 2, x: 0.53, y: 0.70 },
-  { id: 'm6', act: 2, x: 0.62, y: 0.34 },
-  { id: 'm7', act: 2, x: 0.71, y: 0.62, boss: true },
+  { id: 'm4', act: 2, x: 0.44, y: 0.40, ready: true },
+  { id: 'm5', act: 2, x: 0.53, y: 0.70, ready: true },
+  { id: 'm6', act: 2, x: 0.62, y: 0.34, ready: true },
+  // act 2 ends at the furnace: no boss, a stand while it is lit (docs §10.30)
+  { id: 'm7', act: 2, x: 0.71, y: 0.62, ready: true },
   { id: 'm8', act: 3, x: 0.80, y: 0.36 },
   { id: 'm9', act: 3, x: 0.88, y: 0.64 },
   { id: 'm10', act: 3, x: 0.95, y: 0.30, boss: true },
 ];
+
+// the radio in the lobby before a mission that has no story film: its lines
+// (missions with a film use the film's subtitles, cine/scenes.js)
+export const RADIO = {
+  m4: [{ who: 'VESPER', key: 'story.m4.1' }, { who: 'FLINT', key: 'story.m4.2' }, { who: 'WARDEN', key: 'story.m4.3' }],
+  m5: [{ who: 'SKYE', key: 'story.m5.1' }, { who: 'VESPER', key: 'story.m5.2' }, { who: 'BULWARK', key: 'story.m5.3' }],
+  m6: [{ who: 'VESPER', key: 'story.m6.1' }, { who: 'SKYE', key: 'story.m6.2' }, { who: 'WARDEN', key: 'story.m6.3' }],
+  m7: [{ who: 'VESPER', key: 'story.m7.1' }, { who: 'WARDEN', key: 'story.m7.2' }, { who: 'FLINT', key: 'story.m7.3' }],
+};
 
 export const CRATES = [
   { id: 'std', color: '#a39b8f', price: 300, odds: [['common', 62], ['rare', 28], ['epic', 8.5], ['legendary', 1.4], ['mythic', 0.1]] },

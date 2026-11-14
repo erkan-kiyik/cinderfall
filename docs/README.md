@@ -14,7 +14,8 @@ four years ago, the night the blast furnace was put out (*the Quench*: 37
 detained, 6 never seen again). Five people who stayed call themselves **KOR**
 (*embers*: "the furnace goes out, the embers stay"). The player is their
 Operator, on the radio. Ten missions in three acts; act 1 ends with the fall
-of Gall, Vanta's Secretary in the city, and the "Ash Plan" found on his desk.
+of Gall, Vanta's Secretary in the city, and the "Ash Plan" found on his desk;
+act 2 with the blast furnace lit again. Acts 1 and 2 (missions 1–7) are playable.
 
 | Operator | Age | Who | Role |
 | --- | --- | --- | --- |
@@ -63,7 +64,7 @@ boss; VASQUEZ, Vanta's commander in the tower, is the final one.
 | [`design/1-hikaye.md`](design/1-hikaye.md) | Story bible (§1): world, timeline, characters, the ten missions, writing rules |
 | [`design/2-sinematik.md`](design/2-sinematik.md) | Prologue, opening and mission films; the cinematic rig; acceptance rules; the still series (§2–§8) |
 | [`design/3-karakterler.md`](design/3-karakterler.md) | Character design and every revision of characters, faces and heads (§9, §10.1, §10.10–11, §10.14–16, §10.21–25, §10.29) |
-| [`design/4-dunya-ve-gorevler.md`](design/4-dunya-ve-gorevler.md) | Obstacles, interface, city, places, missions, the lobby, the realism pass, weapons (§10.2–9, §10.12–13) |
+| [`design/4-dunya-ve-gorevler.md`](design/4-dunya-ve-gorevler.md) | Obstacles, interface, city, places, missions, the lobby, the realism pass, weapons, act 2 (§10.2–9, §10.12–13, §10.30) |
 | [`design/5-teknik-ve-performans.md`](design/5-teknik-ve-performans.md) | Phone performance, frame pacing, quality, ragdolls, measurements (§10.17–20, §10.26–28 and later technical sections) |
 | [`KOR_YAPI.md`](KOR_YAPI.md) | How KOR replaced Cinderfall in this repository and on the store |
 | [`RELEASE.md`](RELEASE.md) | Store release: signing (§5a: the lost upload key), store forms, assets |

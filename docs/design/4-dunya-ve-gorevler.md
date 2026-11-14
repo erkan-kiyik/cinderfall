@@ -440,3 +440,36 @@ silahtı.
 | KARTAL | sürgülü av tüfeği | ceviz | yanak desteği, topuzlu sürgü kolu, uzun dürbün |
 | ÖRS LMG | hafif makineli | kara, zeytin kutu | taşıma kolu, fişek kutusu ve şerit |
 | TOKMAK GL | toplu bombaatar | kara, zeytin | oluklu tambur, kalın namlu, ön kabza |
+
+### 10.30 Perde 2: Derinlik (görev 4–7)
+
+Hikâyenin ikinci perdesi (§1.5) oynanır oldu. Dört görev, birinci perdenin
+yapı taşlarıyla (sokak, konteyner, barikat, iskele, kapı ve terminal) ve
+her biri için kendi yerinin parçalarıyla kuruldu (`art/env/act2.js`). Görevler
+sırayla açılıyor; kampanya haritasında 4–7 artık kilitsiz.
+
+| Görev | Yer | Akış | Yerin parçaları |
+| --- | --- | --- | --- |
+| 4 · Dökümhane | Çelikhanenin dökümhanesi | Cüruf sahasını geç → arşiv kapısını hackle → Vesper kayıtları kopyalarken arşivi 45 sn tut (3 dalga) → tahliye | Döküm potaları (numaralı, cüruf kabuklu), külçe kalıpları, cüruf yığını ve el arabası, vinç yolu |
+| 5 · Metro | Eski hat, 3. peron | Viyadüğe çık → peronu geç (altındaki sokağı duvar kesiyor, yol peron) → tünel kapısının sinyal kutusunu hackle → tünele gir | Viyadük (ayaklar ve tabliye ayrı), elektriği kesilmiş eski vagon (içinde KOR'un feneri, yanında işareti), "METRO · 3. PERON" tabelası, tünel ağzı ve sönük sinyal |
+| 6 · Dron Fabrikası | Kuzey depolar | Depo sahasını geç (vinç güvertesi) → fabrika kapısını hackle → Skye hattı yakarken üretim hattını 50 sn tut (3 dalga) → tahliye | Dron rafları (katlanmış kollu dronlar, şarj ışıkları), dron gövdeli konveyörler (siper), konteynerler, vinç |
+| 7 · Ocak | Yüksek fırın | Sıcak hava sobalarını geç (vana platformları) → ocak kontrolünü hackle → fırın rüzgârı alırken döküm holünü 90 sn tut (4 dalga, kalkanlılar) → tahliye | Yüksek fırın (perçinli gövde, rüzgâr borusu çemberi, iniş borusu, döküm holü içiyle, delik ateşi), dört soba, sendikanın pankartı: "OCAK SÖNER / KOR KALIR" |
+
+- **Perde sonu boss'suz:** ikinci perde fırının yeniden yanmasıyla bitiyor;
+  yeni bir boss uydurmak yerine son sınav fırın ısınırken döküm holünü
+  tutmak. Haritada 7'nin kafatası işareti kalktı.
+- **Telsiz:** film olmayan görevlerde lobideki telsiz görevin üç satırını
+  çalıyor (`ui/data.js` → `RADIO`): Vesper, Flint ("Altı dosya. Biri
+  babamın."), Warden; Skye, Bulwark ("Ben önden."); "Soğuyan ocak yanmaz
+  derler." / "Yanar." Brifingler ve hedefler Türkçe ve İngilizce.
+- **Bellek:** büyük yapılar tekrar eden tek parça olarak çiziliyor (viyadük
+  ayağı bir kez, her yerde; dört soba tek sprite). Perde 2'nin atlas payı
+  orta kalitede ~2,5 sayfa (perde 1'inki 1,8). İlk açılışta lobi yine 6,7
+  sn'de açılıyor (§10.28), her şey 15,5 sn'de hazır; ekran kartında 276 MB.
+- **Denendi:** dört görev betikle baştan sona oynandı: her hedef, kapı ve
+  dalga çalışıyor (doğan düşman sayısı = tanımlı sayı). Kampanya ve lobi
+  görüntüleri hata vermiyor. Görev başına ayrıntılı oynanış ayarı (zorluk,
+  sürelerin hissi) gerçek oyunda bakılacak.
+
+Çizim sürümü `d4-59`. Hikâye filmleri ve harita fotoğrafları perde 2 için
+henüz yok (isteğe bağlı).

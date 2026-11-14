@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>KOR act 2 props</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<style>body{margin:0;background:#1a1d24}canvas{display:block}</style></head>
+<body><script type="module">
+// the act 2 props (docs §10.30), painted alone at a large scale on a night backdrop
+import * as A from '../js/art/env/act2.js';
+import { setRoot } from '../js/art/kit.js';
+await Promise.all(["800 20px 'Big Shoulders Stencil'", "700 20px 'Barlow Condensed'", '400 12px Barlow', '700 20px Rajdhani'].map((f) => document.fonts.load(f, 'AaİŞĞÇÖÜış')));
+const cv = document.createElement('canvas'); cv.width = 1600; cv.height = 1000; document.body.appendChild(cv);
+const g = cv.getContext('2d');
+const bg = g.createLinearGradient(0, 0, 0, 1000); bg.addColorStop(0, '#20242c'); bg.addColorStop(1, '#30343c'); g.fillStyle = bg; g.fillRect(0, 0, 1600, 1000);
+const at = (x, y, s, fn) => { g.save(); g.translate(x, y); g.scale(s, s); setRoot(g); fn(g); g.restore(); };
+at(20, 300, 3.2, (g) => A.ladle(g, 0, 3));
+at(250, 300, 3.2, (g) => A.moulds(g, 0));
+at(380, 300, 3.2, (g) => A.slag(g, 0));
+at(640, 300, 3.0, (g) => A.droneRack(g, 0));
+at(820, 300, 3.0, (g) => A.conveyor(g, 0, 96));
+at(1160, 300, 2.6, (g) => A.stationSign(g, 0, 0));
+at(20, 560, 2.6, (g) => { for (let x = 24; x < 200; x += A.PIER_STEP) { g.save(); g.translate(x, 0); A.pier(g, -60); g.restore(); } A.viaduct(g, 0, 200, -60); A.metroCar(g, 30, -60); });
+at(620, 640, 2.2, (g) => A.tunnelMouth(g, 20, 120));
+at(980, 980, 3.4, (g) => A.hotStove(g, 0, 150));
+at(1180, 990, 2.3, (g) => A.blastFurnace(g, 0));
+document.body.dataset.done = '1';
+</script></body></html>

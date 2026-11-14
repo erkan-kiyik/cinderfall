@@ -68,6 +68,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.27 | Gerçek telefonda ölçmek: performans testi ve hata kaydı | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1027-gerçek-telefonda-ölçmek-performans-testi-ve-hata-kaydı) |
 | 10.28 | İlk açılış: önce lobi, sokaklar arkadan | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1028-ilk-açılış-önce-lobi-sokaklar-arkadan) |
 | 10.29 | Her yüz kendi yüzü | [3-karakterler](design/3-karakterler.md#1029-her-yüz-kendi-yüzü) |
+| 10.30 | Perde 2: Derinlik (görev 4–7) | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1030-perde-2-derinlik-görev-47) |
 
 Giriş notu (eski belgenin başı):
 

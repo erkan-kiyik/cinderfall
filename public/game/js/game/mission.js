@@ -17,6 +17,7 @@ import { buildMission1, gateLeaf } from '../art/env/mission1.js';
 import { buildMission2 } from '../art/env/mission2.js';
 import { concrete } from '../art/env/mission1.js';
 import { buildMission3 } from '../art/env/mission3.js';
+import { buildMission4, buildMission5, buildMission6, buildMission7 } from '../art/env/act2.js';
 import { itemBakeList, charBakeList } from './bakechars.js';
 import { Character } from './character.js';
 import { Mover } from '../phys/mover.js';
@@ -32,7 +33,7 @@ import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'd4-58';
+export const BAKE_VERSION = 'd4-59';
 // Endless: the market from mission 2, walled off at both ends; squads come in
 // waves, every fifth one with Gall.
 function buildEndless() {
@@ -43,7 +44,7 @@ function buildEndless() {
   }
   return Object.assign(M, { id: 'endless', objectives: [{ type: 'endless' }], enemies: [], checkpoints: [], spawn: [X(170), 0], arena: [X(110), X(240)], extract: null, par: 0 });
 }
-const BUILD = { m1: buildMission1, m2: buildMission2, m3: buildMission3, endless: buildEndless };
+const BUILD = { m1: buildMission1, m2: buildMission2, m3: buildMission3, m4: buildMission4, m5: buildMission5, m6: buildMission6, m7: buildMission7, endless: buildEndless };
 export const MISSION_IDS = Object.keys(BUILD);
 
 // What the lobby shows (docs §10.28): the basement, the operators with every
@@ -86,7 +87,7 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
 export class MissionScene extends M3.M3Scene {
-  // opts: id (m1, m2, m3), diff, op + loadout (from preparation), brief (show
+  // opts: id (m1 … m7, endless), diff, op + loadout (from preparation), brief (show
   // the briefing card), onExit(result) (back to the menus; without it the card reloads)
   constructor(eng, controls, { id = 'm1', diff = 'normal', op = null, loadout = null, brief = true, onExit = null } = {}) {
     // each run gets a fresh level (gates and walls change its tiles)
