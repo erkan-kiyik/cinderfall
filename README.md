@@ -18,7 +18,7 @@ stores (same application id). The structure of that change is in
 | `public/game/` | The game: a self-contained web build (`index.html`, `css/`, `js/`, `assets/`). `dev/` holds review pages that are not shipped |
 | `mobile/` | Capacitor shell that packages `public/game` as the Android / iOS app (`KOR`, `com.cinderfall.sector9`) |
 | `tools/game/` | Tests (`*.test.mjs`), the plate ray tracer (`plate/`), the still series (`series/`) |
-| `docs/` | `KOR_STORY_CINEMATIC.md` (story, world, art direction), `KOR_YAPI.md` (structure), `RELEASE.md` (release guide), `LAB_REWRITE_PLAN.md` (history of the rewrite) |
+| `docs/` | Start at [`docs/README.md`](docs/README.md) (English summary). The design document is split by topic in `docs/design/` (Turkish), indexed by section number in `KOR_STORY_CINEMATIC.md`; `RELEASE.md` is the release guide, `KOR_YAPI.md` how KOR replaced Cinderfall |
 | `store/` | Store texts, icon, feature graphic, screenshots |
 | `scripts/` | `build-legal-site.mjs`: the privacy notice and terms as public pages |
 | `.github/workflows/` | `build-android.yml` (debug APK on every change, released as `kor-build-N`), `release-android-aab.yml` (store bundle), `pages.yml` (legal pages) |
