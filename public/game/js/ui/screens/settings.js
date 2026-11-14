@@ -4,6 +4,7 @@
 import { h, svg, press, popIn, ui, modal, toast, haptic } from '../kit.js';
 import { t, LANG_NAMES } from '../i18n.js';
 import { shead } from './common.js';
+import { errors, errorsText, clearErrors } from '../../core/errlog.js';
 
 export const settings = {
   mount(ctx, params) {
@@ -49,6 +50,8 @@ export const settings = {
           toggle(t('set.bloom'), t('set.bloomHint'), () => st.bloom, (s, v) => { s.settings.bloom = v; }),
           toggle(t('set.lights'), t('set.lightsHint'), () => st.lights, (s, v) => { s.settings.lights = v; }),
           toggle(t('set.fps'), t('set.fpsHint'), () => st.fps, (s, v) => { s.settings.fps = v; }),
+          action(t('set.bench'), t('set.benchHint'), t('set.benchRun'), () => modal({ kicker: t('bench.kicker'), title: t('set.bench'), body: t('bench.confirm'),
+            actions: [{ label: t('ui.cancel'), kind: 'ghost' }, { label: t('set.benchRun'), kind: 'primary', fn: (close) => { close(); ctx.runBench(); } }] })),
         ];
       } else if (tab === 'sound') {
         rows = [
@@ -81,6 +84,12 @@ export const settings = {
           action(t('set.readTerms'), null, t('set.read'), () => ctx.router.go('legal', { mode: 'manage', doc: 'terms' })),
           action(t('set.resetProgress'), t('set.resetHint'), t('set.reset'), () => modal({ kicker: t('set.legal'), title: t('set.resetProgress'), body: t('set.resetConfirm'),
             actions: [{ label: t('ui.cancel'), kind: 'ghost' }, { label: t('set.reset'), kind: 'danger', fn: (close) => { S.reset(); ctx.applySettings(); close(); toast(t('set.resetDone')); ctx.router.go('lobby', {}, { root: true }); } }] }), 'danger'),
+          action(t('set.errlog'), t('set.errlogHint', { n: errors().length }), t('set.errlogShow'), () => {
+            const text = errorsText() || t('set.errlogNone');
+            modal({ kicker: t('set.legal'), title: t('set.errlog'), body: h('pre.bench-report', text),
+              actions: [{ label: t('bench.copy'), kind: 'primary', fn: () => ctx.copyText(text) },
+                { label: t('set.errlogClear'), kind: 'ghost', fn: (close) => { clearErrors(); close(); render(); toast(t('set.errlogCleared')); } }] });
+          }),
           h('div.grp', t('set.about')),
           row('KOR', t('set.aboutHint')),
           row(t('set.build'), `${ctx.version}`),

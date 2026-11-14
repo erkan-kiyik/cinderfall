@@ -64,6 +64,8 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.23 | Kafalar ve yüzler: ayrıntı | [3-karakterler](design/3-karakterler.md#1023-kafalar-ve-yüzler-ayrıntı) |
 | 10.24 | Kafalar sıfırdan (Gall hariç) | [3-karakterler](design/3-karakterler.md#1024-kafalar-sıfırdan-gall-hariç) |
 | 10.25 | Yüzler açık, Gall'ın ölçüsünde | [3-karakterler](design/3-karakterler.md#1025-yüzler-açık-gallın-ölçüsünde) |
+| 10.26 | Telefonun yazı boyutu | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1026-telefonun-yazı-boyutu) |
+| 10.27 | Gerçek telefonda ölçmek: performans testi ve hata kaydı | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1027-gerçek-telefonda-ölçmek-performans-testi-ve-hata-kaydı) |
 
 Giriş notu (eski belgenin başı):
 

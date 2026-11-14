@@ -204,3 +204,70 @@ efektleri (yağmur, yansıma, buhar) tamamen kısılmış ve kare hâlâ 3 saniy
 boyunca bütçeyi aşıyorsa kalite bir kademe düşüyor (yüksek → orta → düşük) ve
 bu telefona kaydediliyor: sonraki açılışlar oradan başlıyor. Yalnız Ayarlar'da
 kalite "Oto" iken çalışıyor; elle seçilmiş kaliteye dokunmuyor.
+
+### 10.26 Telefonun yazı boyutu
+
+Android'de yazı boyutunu büyüten oyuncu oyunda bir şey görmüyordu: Android
+WebView'ın kendi büyütmesi (`textZoom`) yerleşimi bozduğu için kapalıydı ve
+yerine bir şey konmamıştı.
+
+- **Uygulama yazı ölçeğini oyuna söylüyor:** `MainActivity` açılışta ve her
+  geri dönüşte telefonun yazı ölçeğini (`fontScale`, ör. 1,3) okuyup oyuna
+  `korfontscale` olayıyla gönderiyor (`mobile/scripts/patch-android-sdk.mjs`).
+  WebView'ın kendi büyütmesi kapalı kalıyor (`setTextZoom(100)`).
+- **Menüler:** oyuncu Ayarlar > Erişilebilirlik'te arayüz ölçeğine hiç
+  dokunmadıysa arayüz ölçeği yazı ölçeğini izliyor (0,85–1,15 aralığında,
+  0,05'lik adımlarla; 1,3 → 1,15). Oyuncu ölçeği kendisi değiştirdiyse
+  (`uiScaleBy: 'player'`) telefon ona dokunmuyor.
+- **Görev ekranı:** hedef satırı, patron çubuğu, süre, bildirimler ve
+  yetenek yazıları ayrıca büyüyor (`--hudk`, 1–1,2), çünkü oyun alanının
+  ölçeği değişmiyor.
+- Tarayıcıda denendi: yazı 1,3 → ölçek 1,15; 0,9 → 0,9; oyuncunun seçtiği
+  1,1 yazı 1,15 gelince 1,1 kaldı.
+
+### 10.27 Gerçek telefonda ölçmek: performans testi ve hata kaydı
+
+Buraya kadarki bütün kare hızları öykünülmüş telefondan (yazılım ekran kartı,
+yavaşlatılmış işlemci). Gerçek telefonun ne yaptığını oyunun kendisi ölçüyor.
+
+**Performans testi** (Ayarlar > Grafik > Performans testi,
+`js/game/bench.js`):
+- Görev 2'nin (Pazar Baskını) 30 saniyesini oyun kendi oynuyor: operatör
+  koşuyor, en yakın muhafızı görünce durup ateş ediyor, ölmüyor. Kalite,
+  çözünürlük ve kare sınırı oyuncunun ayarları; ilk 3 saniye ısınma, sayılmıyor.
+  Ekranın altında "Performans testi · 27" gibi bir etiket kalan saniyeyi
+  gösteriyor. Kariyere hiçbir şey yazılmıyor.
+- Sonunda bir kart: başlık özet ("Akıcı çalışıyor" / "Neredeyse akıcı" /
+  "Bu telefonda zorlanıyor"), altında kopyalanabilir rapor. Rapor İngilizce ve
+  düz metin, çünkü bize gönderilecek:
+
+```
+KOR performance test · 2026-11-14 11:17 · build KOR 2.1 · 2026-11-14
+Device: SM-A146B · GPU: Mali-G57 MC2 · 8 cores · 4 GB
+Screen: 860×400 @2.75 · 60 Hz · cap 60
+Quality: med → low · render 1180×549 · lowest dynamic x0.80 · effects 1
+FPS avg 58.9 · 1% low 41.2 · p95 18.4 ms · worst 52 ms · over 20 ms 3.1%
+CPU: sim 0.68 ms · draw 0.64 ms · 1766 frames · errors logged 0
+```
+  (Satırların anlamı: cihaz modeli ve grafik çipi; ekran ve tazeleme hızı;
+  testte kalitenin düşüp düşmediği, en düşük otomatik çözünürlük, efekt
+  kademesi; ortalama kare hızı, en kötü %1, kare sürelerinin %95'i, en uzun
+  kare, 20 ms'yi aşan karelerin payı; kare başına simülasyon ve çizim
+  komutlarının işlemci süresi. Örnek değerler biçimi göstermek için.)
+- "Akıcı": ortalama kare sınırının 3 altına kadar (60'ta 57) ve karelerin
+  %95'i 20 ms altında. "Neredeyse": ortalama 45 ve üstü.
+- Ölçüm oyunun kendi döngüsünden: her çizilen karenin süresi ve o karede
+  simülasyon ile çizim komutlarının süresi (`core/loop.js`).
+
+**Hata kaydı** (`js/core/errlog.js`, Ayarlar > Gizlilik ve yasal > Hata
+kaydı):
+- Oyunda yakalanmayan her hata (`error`, `unhandledrejection`) ve açılışın
+  çöktüğü durum telefonda tutuluyor: son 20 hata, zamanı, sürümü, nerede
+  olduğu, yığının ilk 6 satırı. Aynı hata bir saniye içinde tekrarlarsa sayısı
+  artıyor, kayıt dolmuyor.
+- Hiçbir şey telefondan çıkmıyor (veri toplamıyoruz, gizlilik metniyle
+  uyumlu). Oyuncu kaydı görüp kopyalayabiliyor ve silebiliyor; satırda kaç
+  hata olduğu yazıyor.
+- Tarayıcıda denendi: SwiftShader'da test 46 saniyede bitti, rapor çıktı
+  ("zorlanıyor", 25,7 kare/sn: yazılım ekran kartı); atılan bir hata ve bir
+  reddedilen söz kayda yığınlarıyla düştü.

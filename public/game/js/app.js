@@ -6,12 +6,13 @@
 // scaled as a whole with CSS zoom so they keep their composition on every
 // screen size.
 import { Router } from './ui/router.js';
-import { configureKit, toast, ui as uiSound, grain } from './ui/kit.js';
+import { configureKit, toast, modal, h, ui as uiSound, grain } from './ui/kit.js';
 import { setLang, getLang, t } from './ui/i18n.js';
 import * as SCREENS from './ui/screens/index.js';
 import { hudLayout } from './ui/screens/hudedit.js';
 import { Showcase } from './game/showcase.js';
 import { MissionScene } from './game/mission.js';
+import { Bench, reportText } from './game/bench.js';
 import { bindKeyboard, bindTouch } from './game/input.js';
 import { applyMission } from './core/save.js';
 import { syncTints, ensureDaily } from './core/economy.js';
@@ -24,6 +25,18 @@ import { PROLOGUE, STORY } from './cine/scenes.js';
 
 const MARKS = { yellow: [1, 0.86, 0.12, 1], blue: [0.2, 0.62, 1, 1], magenta: [1, 0.25, 0.85, 1] };
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+// copy diagnostic text (the WebView may refuse the clipboard API: fall back to a selection)
+export function copyText(text) {
+  const ok = () => toast(t('bench.copied')), fail = () => toast(t('bench.copyFail'), { kind: 'warn' });
+  const legacy = () => {
+    const ta = Object.assign(document.createElement('textarea'), { value: text, readOnly: true });
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta); ta.select();
+    let r = false; try { r = document.execCommand('copy'); } catch { r = false; }
+    ta.remove(); (r ? ok : fail)();
+  };
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(ok, legacy); else legacy();
+}
 
 export class App {
   constructor(eng, { save, version, controls, perf, dyn }) {
@@ -41,6 +54,8 @@ export class App {
       playStory: (id, o) => this.playStory(id, o),
       hasStory: (id) => !!STORY[id],
       applySettings: () => this.applySettings(),
+      runBench: () => this.runBench(),
+      copyText,
     };
     this.router = this.ctx.router = new Router(this.uiRoot, this.ctx, SCREENS);
     this.router.onRootBack = () => this.rootBack();
@@ -172,6 +187,22 @@ export class App {
     setTimeout(() => { if (this.exitArmed) { this.exitArmed = false; history.pushState({ g: 1 }, ''); } }, 2000);
   }
 
+  // --- the performance test (docs §10.27) ---------------------------------------------------
+  runBench() {
+    if (this.bench) return;
+    this.bench = new Bench(this, (r) => {
+      this.bench = null;
+      this.router.go('settings', { tab: 'graphics' }, { root: true });
+      const text = reportText(r);
+      modal({
+        kicker: t('bench.kicker'), title: { ok: t('bench.ok'), close: t('bench.close'), slow: t('bench.slow') }[r.verdict],
+        body: h('pre.bench-report', text),
+        actions: [{ label: t('bench.copy'), kind: 'primary', fn: () => copyText(text) }, { label: t('ui.ok'), kind: 'ghost' }],
+      });
+    });
+    this.bench.start();
+  }
+
   // --- missions --------------------------------------------------------------------------
   startMission(id, { diff = 'normal' } = {}) {
     // the first time: the scene before the mission
@@ -206,6 +237,7 @@ export class App {
   }
 
   update(dt) {
+    if (this.bench) this.bench.step(dt);
     this.scene.update(dt);
     // the fight drives the music: share of enemies in combat, eased
     if (this.scene !== this.showcase && this.scene.brains) {
@@ -215,6 +247,7 @@ export class App {
     }
   }
   render(alpha) {
+    if (this.bench) { this.scene.render(alpha); this.bench.frame(); return; }
     // the menus are a backdrop: half rate is plenty, and saves battery
     if (this.scene === this.showcase && (this.frame = (this.frame || 0) + 1) % 2 && this.e.loop.hz > 70) return;
     this.scene.render(alpha);

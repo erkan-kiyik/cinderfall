@@ -23,8 +23,11 @@ import { App } from './app.js';
 import { opName } from './ui/data.js';
 import { Intro } from './ui/intro.js';
 import { IntroVideo } from './ui/introvideo.js';
+import { installErrorLog, logError } from './core/errlog.js';
 
-export const VERSION = 'M5 · ' + '2026-10-13';
+export const VERSION = 'KOR 2.1 · 2026-11-14';
+// errors are kept on the device from the first line on (docs §10.27)
+installErrorLog(VERSION);
 
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
@@ -121,7 +124,7 @@ async function main() {
   // dynamic resolution: step down after 1 s over budget, back up after 4 s of headroom
   // governs: the quality is Oto (not chosen in Settings or the URL), so the
   // governor below may lower it; autoQ is what Oto means on this device
-  const dyn = { on: true, step: 0, over: 0, under: 0, failedAt: new Float64Array(RES_STEPS.length).fill(-1e9), next: 0, autoQ, governs: !params.get('q') && !savedQ && !DEV };
+  const dyn = { on: true, step: 0, over: 0, under: 0, failedAt: new Float64Array(RES_STEPS.length).fill(-1e9), next: 0, autoQ, gpu: GPU, governs: !params.get('q') && !savedQ && !DEV };
   function dynTick(now) {
     if (!dyn.on || now < dyn.next) return;
     dyn.next = now + 500;
@@ -211,6 +214,7 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
+  logError(err?.message || err, 'boot', err?.stack);
   const m = $('#boot .msg'); if (m) m.textContent = 'Hata: ' + err.message;
   $('#boot').classList.add('fail');
 });
