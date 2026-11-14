@@ -102,6 +102,8 @@ async function main() {
     key: params.has('nocache') ? null : `${SC.BAKE_VERSION}:${bakeQ}:${atlas.size}`,
     workers: params.has('bakemain') ? null : { module: new URL(SRC.get(SC), import.meta.url).href, quality: bakeQ, css: new URL('../css/tokens.css', import.meta.url).href },
     onProgress: (p) => { bar.style.width = (p * 100).toFixed(0) + '%'; intro?.setProgress(p); },
+    // the app: the lobby's sprites first, the rest behind the lobby (docs §10.28; ?onestage paints all first)
+    split: DEV || params.has('onestage') ? null : M4.forLobby,
   });
   const renderer = new Renderer(gl, canvas);
   // phones with 3 GB or less: at most 2× pixel ratio
@@ -202,14 +204,16 @@ async function main() {
   if (!DEV) {
     eng.loop = loop;
     perf.toggle(); // hidden unless the player turns it on in Settings
-    app = new App(eng, { save, version: VERSION, controls, perf, dyn });
+    app = new App(eng, { save, version: VERSION, controls, perf, dyn, rest: bake.rest });
   }
   $('#boot').classList.add('done');
   // with the opening, the lobby starts at the hand-off so its entrance plays as the intro fades
   const go = () => { app?.start({ entrance: !!intro }); loop.start(); };
   if (intro) { intro.onHandoff = go; intro.assetsDone(); } else go();
+  // the rest of the sprites now: behind the opening film, or behind the lobby (docs §10.28)
+  bake.rest?.start();
   // test harness hook
-  window.__lab = { loop, get scene() { return app ? app.scene : scene; }, app, renderer, atlas, bake, bakeQ, quality, gpu: GPU, batch, camera, controls, setStress: (n) => scene && scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
+  window.__lab = { loop, get scene() { return app ? app.scene : scene; }, app, renderer, atlas, bake, bakeRest: bake.rest, bakeQ, quality, gpu: GPU, batch, camera, controls, setStress: (n) => scene && scene.setStress && scene.setStress(n), setQuality: (q) => renderer.setQuality(q), dyn };
 }
 
 main().catch((err) => {

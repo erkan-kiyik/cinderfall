@@ -66,6 +66,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.25 | Yüzler açık, Gall'ın ölçüsünde | [3-karakterler](design/3-karakterler.md#1025-yüzler-açık-gallın-ölçüsünde) |
 | 10.26 | Telefonun yazı boyutu | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1026-telefonun-yazı-boyutu) |
 | 10.27 | Gerçek telefonda ölçmek: performans testi ve hata kaydı | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1027-gerçek-telefonda-ölçmek-performans-testi-ve-hata-kaydı) |
+| 10.28 | İlk açılış: önce lobi, sokaklar arkadan | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1028-ilk-açılış-önce-lobi-sokaklar-arkadan) |
 
 Giriş notu (eski belgenin başı):
 

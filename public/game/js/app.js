@@ -39,8 +39,9 @@ export function copyText(text) {
 }
 
 export class App {
-  constructor(eng, { save, version, controls, perf, dyn }) {
+  constructor(eng, { save, version, controls, perf, dyn, rest = null }) {
     this.e = eng; this.save = save; this.version = version; this.controls = controls; this.perf = perf; this.dyn = dyn;
+    this.rest = rest; // after a first start, the street and the missions still painting (docs §10.28)
     grain();
     // the economy: the hub's coin counter, the finishes the guns are drawn with, today's tasks
     refreshCur.save = save; syncTints(save.d); ensureDaily(save);
@@ -188,8 +189,22 @@ export class App {
   }
 
   // --- the performance test (docs §10.27) ---------------------------------------------------
+  // the street and the missions are painted behind the lobby on a first start:
+  // a mission asked for before they are ready waits, with the progress shown
+  whenPainted(then) {
+    const R = this.rest;
+    if (!R || R.done) return true;
+    if (this.waiting) return false;
+    const pct = h('span', '0%'), el = h('div.paint-wait.cut', h('b', t('app.painting')), pct);
+    document.body.appendChild(el);
+    const tick = setInterval(() => { pct.textContent = `${Math.round(R.p * 100)}%`; }, 150);
+    this.waiting = true;
+    R.promise.then(() => { clearInterval(tick); el.remove(); this.waiting = false; then(); });
+    return false;
+  }
+
   runBench() {
-    if (this.bench) return;
+    if (this.bench || !this.whenPainted(() => this.runBench())) return;
     this.bench = new Bench(this, (r) => {
       this.bench = null;
       this.router.go('settings', { tab: 'graphics' }, { root: true });
@@ -207,6 +222,7 @@ export class App {
   startMission(id, { diff = 'normal' } = {}) {
     // the first time: the scene before the mission
     if (STORY[id] && !this.save.d.story.seen[id]) { this.playStory(id, { then: () => this.startMission(id, { diff }) }); return; }
+    if (!this.whenPainted(() => this.startMission(id, { diff }))) return;
     const d = this.save.d, op = d.roster.op, lo = d.roster.loadout[op];
     this.router.clear();
     document.body.classList.add('ui-hidden');

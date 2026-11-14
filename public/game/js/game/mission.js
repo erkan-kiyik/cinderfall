@@ -46,6 +46,13 @@ function buildEndless() {
 const BUILD = { m1: buildMission1, m2: buildMission2, m3: buildMission3, endless: buildEndless };
 export const MISSION_IDS = Object.keys(BUILD);
 
+// What the lobby shows (docs §10.28): the basement, the operators with every
+// weapon, the effects and small items. A first start paints these first and
+// opens the lobby; the street, the buildings, the missions' pieces and Vanta
+// paint behind it.
+const LOBBY = new RegExp(`^(h|w|fx|i|${M2.OPERATORS.join('|')})\\.`);
+export const forLobby = (e) => LOBBY.test(e.name);
+
 export function bakeList(quality) {
   const [, ch, fx] = DENS[quality];
   // the street, the operators and mission 1's pieces, then what the other missions add

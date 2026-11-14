@@ -271,3 +271,49 @@ kaydı):
 - Tarayıcıda denendi: SwiftShader'da test 46 saniyede bitti, rapor çıktı
   ("zorlanıyor", 25,7 kare/sn: yazılım ekran kartı); atılan bir hata ve bir
   reddedilen söz kayda yığınlarıyla düştü.
+
+### 10.28 İlk açılış: önce lobi, sokaklar arkadan
+
+İlk açılışta (ve her güncellemeden sonraki ilk açılışta, çünkü çizimler
+sürümle birlikte yeniden boyanıyor) oyun 384 parçanın hepsini boyamadan lobiyi
+açmıyordu. Lobide görünen bunların yarısından azı.
+
+- **İki aşama** (`gfx/baker.js`, `game/mission.js` → `forLobby`): önce lobinin
+  gördüğü 209 parça (sığınak, beş operatör ve bütün silahları, efektler, küçük
+  eşyalar) boyanıp ekran kartına yükleniyor ve lobi açılıyor. Kalan 175 parça
+  (sokak katmanları, binalar, görev parçaları, Vanta) lobinin arkasında
+  boyanıyor.
+- **Arkadaki iş lobiyi sarsmasın diye:** ikinci aşama lobi ilk karelerini
+  çizene kadar bekliyor; sonra işçiler boyuyor, ana iş parçacığı parçaları
+  sayfalara kare aralarında 6 ms'lik dilimlerle yerleştiriyor, işçiler en
+  fazla 12 parça öne geçiyor. Sayfalar artık işlemci belleğinde
+  (`willReadFrequently`): her parça yerleştiği anda sayfaya çiziliyor,
+  yüklemede birikmiş bir çizim yığını patlamıyor. Bitince yeni sayfalar ekran
+  kartına kare başına bir sayfa yükleniyor.
+- **Ayrı doku grubu:** ilk aşamanın sayfaları mühürleniyor; ikinci aşama yeni
+  bir doku grubunda başlıyor (aradaki boş sayfa numaraları bellek tutmuyor),
+  böylece lobinin dokusu bir daha yüklenmiyor.
+- **Görev beklerse:** oyuncu boyama bitmeden göreve basarsa "Sokaklar
+  boyanıyor · %53" kartı çıkıyor, bitince görev kendiliğinden başlıyor
+  (performans testi de aynı). Hikâye filmi olan görevde film zaten o süreyi
+  dolduruyor.
+- **Önbellek** aynı: iki aşama da bitince bütün sayfalar tek kayıt olarak
+  saklanıyor (boş numaralar dahil); ikinci açılış önbellekten tek seferde
+  (0,6 sn, bu ölçümlerde). Açılış filmi oynarken ikinci aşama filmin arkasında
+  sürüyor. `?onestage` eski tek aşamalı yolu açar.
+
+Ölçüm (öykünülmüş orta telefon: 844×390 @3, 4 GB, işlemci 4× yavaş,
+yazılım ekran kartı, önbelleksiz, filmsiz; `perf/lobbytime.mjs`):
+
+| | Tek aşama | İki aşama |
+| --- | --- | --- |
+| Lobinin ilk karesi | 8,8–10,6 sn | 6,4–7,0 sn |
+| Lobiden önceki boyama | 4,5–5,0 sn | 2,2–2,8 sn |
+| Her şey hazır | lobiyle birlikte | lobiden ~5–6 sn sonra |
+| Sayfa (ekran kartı) | 9 (191 MB) | 10 (212 MB) |
+
+İlk aşamanın son sayfası yarı boş kaldığı için bir sayfa fazla. Öykünücüde
+arka plandaki sayfa yüklemeleri 0,6–0,8 sn'lik kareler yapıyor (yazılım ekran
+kartı 16 MB'lık sayfayı işlemciyle kopyalıyor); gerçek telefonda bu bir
+sayfa için onlarca milisaniye. Gerçek değeri performans testi (§10.27)
+gösterecek.

@@ -64,7 +64,7 @@ boss; VASQUEZ, Vanta's commander in the tower, is the final one.
 | [`design/2-sinematik.md`](design/2-sinematik.md) | Prologue, opening and mission films; the cinematic rig; acceptance rules; the still series (§2–§8) |
 | [`design/3-karakterler.md`](design/3-karakterler.md) | Character design and every revision of characters, faces and heads (§9, §10.1, §10.10–11, §10.14–16, §10.21–) |
 | [`design/4-dunya-ve-gorevler.md`](design/4-dunya-ve-gorevler.md) | Obstacles, interface, city, places, missions, the lobby, the realism pass, weapons (§10.2–9, §10.12–13) |
-| [`design/5-teknik-ve-performans.md`](design/5-teknik-ve-performans.md) | Phone performance, frame pacing, quality, ragdolls, measurements (§10.17–20, §10.26–27 and later technical sections) |
+| [`design/5-teknik-ve-performans.md`](design/5-teknik-ve-performans.md) | Phone performance, frame pacing, quality, ragdolls, measurements (§10.17–20, §10.26–28 and later technical sections) |
 | [`KOR_YAPI.md`](KOR_YAPI.md) | How KOR replaced Cinderfall in this repository and on the store |
 | [`RELEASE.md`](RELEASE.md) | Store release: signing (§5a: the lost upload key), store forms, assets |
 | [`PERF_UI_PLAN.md`](PERF_UI_PLAN.md), [`LAB_REWRITE_PLAN.md`](LAB_REWRITE_PLAN.md), [`CROW_DESIGN.md`](CROW_DESIGN.md) | Earlier plans, kept for history |

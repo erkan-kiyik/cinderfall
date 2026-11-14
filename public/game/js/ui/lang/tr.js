@@ -186,6 +186,7 @@ export default {
   'set.language': 'Arayüz dili', 'set.languageHint': 'Yedi dil cila aşamasında tamamlanacak.',
   'set.privacy': 'Gizlilik ve yasal', 'set.privacyHint': 'Metinler, rıza seçimleri, verilerin.', 'set.open': 'Aç', 'set.read': 'Oku',
   'set.readPrivacy': 'Gizlilik politikası', 'set.readTerms': 'Kullanım koşulları',
+  'app.painting': 'Sokaklar boyanıyor',
   'set.bench': 'Performans testi', 'set.benchHint': 'Pazar baskınından 30 saniye, oyunun kendisi oynar; bu telefonu ölçer.', 'set.benchRun': 'Başlat',
   'bench.kicker': 'Performans testi', 'bench.confirm': 'Oyun 2. görevin 30 saniyesini kendi oynar, sonra bu telefonun ne yaptığını gösterir. Kariyerine bir şey kaydedilmez. Ekranı açık tut.',
   'bench.ok': 'Akıcı çalışıyor', 'bench.close': 'Neredeyse akıcı', 'bench.slow': 'Bu telefonda zorlanıyor', 'bench.copy': 'Kopyala', 'bench.copied': 'Kopyalandı — mesajına yapıştır', 'bench.copyFail': 'Kopyalanamadı: metni seçip kopyala',

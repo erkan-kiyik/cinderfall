@@ -186,6 +186,7 @@ export default {
   'set.language': 'Interface language', 'set.languageHint': 'Seven languages are completed in the polish phase.',
   'set.privacy': 'Privacy & legal', 'set.privacyHint': 'Texts, consent choices, your data.', 'set.open': 'Open', 'set.read': 'Read',
   'set.readPrivacy': 'Privacy policy', 'set.readTerms': 'Terms of use',
+  'app.painting': 'Painting the streets',
   'set.bench': 'Performance test', 'set.benchHint': '30 seconds of the market raid, played by the game, to measure this phone.', 'set.benchRun': 'Run',
   'bench.kicker': 'Performance test', 'bench.confirm': 'The game plays 30 seconds of mission 2 on its own and then shows what this phone did. Nothing is saved to your career. Keep the screen on.',
   'bench.ok': 'Runs smoothly', 'bench.close': 'Nearly smooth', 'bench.slow': 'Struggles on this phone', 'bench.copy': 'Copy', 'bench.copied': 'Copied — paste it into your message', 'bench.copyFail': 'Could not copy: select the text and copy it',
