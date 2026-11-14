@@ -17,8 +17,19 @@ name: Build Android release AAB
 #   jarsigner -keystore cinderfall-upload.keystore app-release.aab cinderfall
 # (`jarsigner` ships with any JDK; no Android SDK needed for that step.) The
 # keystore itself is never generated, logged, committed, or uploaded here.
+#
+# Since KOR (docs/RELEASE.md §5a) an unsigned bundle is no longer the quiet
+# default: run 12-15 all came out unsigned without anyone noticing. The run now
+# fails when the secrets are missing, unless `allow_unsigned` is ticked for a
+# test build, and a signed run prints the upload certificate's fingerprint so
+# it can be checked against Play Console before uploading.
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      allow_unsigned:
+        description: "Build even without the signing secrets (the bundle cannot be uploaded to Play)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -105,9 +116,12 @@ jobs:
              [ -n "${{ secrets.ANDROID_KEYSTORE_PASS }}" ] && \
              [ -n "${{ secrets.ANDROID_KEY_PASS }}" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
+          elif [ "${{ inputs.allow_unsigned }}" = "true" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No signing secrets configured — building an UNSIGNED .aab. See docs/RELEASE.md to sign in CI, or sign the downloaded bundle yourself with jarsigner."
+            echo "::warning::No signing secrets configured — building an UNSIGNED .aab, as asked. It cannot be uploaded to Play Console as it is."
+          else
+            echo "::error::The signing secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASS and ANDROID_KEY_PASS are not all set. Set them (docs/RELEASE.md §5a: lost upload key) or run again with allow_unsigned for a test build."
+            exit 1
           fi
 
       - name: Decode signing keystore
@@ -153,6 +167,13 @@ jobs:
       - name: Build release AAB
         working-directory: mobile/android
         run: ./gradlew bundleRelease --no-daemon
+
+      # The certificate the bundle is signed with: its SHA-256 must equal
+      # Play Console > App integrity > App signing > "Upload key certificate".
+      - name: Show the upload certificate fingerprint
+        if: steps.signing.outputs.enabled == 'true'
+        run: |
+          keytool -printcert -jarfile android/app/build/outputs/bundle/release/app-release.aab | grep -E 'Owner:|SHA1:|SHA256:' | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Remove the keystore from the workspace
         if: always()

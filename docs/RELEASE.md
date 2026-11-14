@@ -27,8 +27,9 @@ account holder can do: signing, the store uploads and the listing's forms.
 
 1. **Keep the bundle id** `com.cinderfall.sector9` — it is the existing Play
    listing; a new id would be a new, unrelated app.
-2. **Build and sign** the KOR bundle with the same upload key (see §5): run
-   `release-android-aab.yml`, sign if the secrets are not set.
+2. **Build and sign** the KOR bundle with the upload key (see §5). The
+   original key is lost: reset it first (§5a), then run
+   `release-android-aab.yml`.
 3. **Update the listing** — texts, icon, feature graphic and screenshots from
    `store/` (the screenshots are 1920×1080, 16:9).
 4. **Fill the store questionnaires again for KOR** — content/age rating (IARC + Apple),
@@ -156,12 +157,51 @@ build artifact — it is never written back into the repository. The keystore
 itself is decoded to a runner-local temp file for the build only and deleted
 before the job ends; it is not logged or uploaded anywhere.
 
-**Losing this keystore means you can never publish another update to the same
-Play Store listing** (a new keystore is a new, unrelated app to Google, unless
-you've enrolled in Play App Signing's key-upgrade process — which itself
-starts from your original upload key). Save a copy of the keystore and both
-passwords somewhere durable — a password manager, not just this CI secret —
-the moment you receive them.
+The workflow **fails** when the three secrets are not all set (runs 12–15
+quietly produced unsigned bundles); tick `allow_unsigned` for a test build
+that is not meant for Play. A signed run prints the upload certificate's
+SHA-1 and SHA-256 in the run summary: before uploading, check that the SHA-256
+equals Play Console › App integrity › App signing › *Upload key certificate*.
+
+Keep a copy of the keystore and its password somewhere durable (a password
+manager and an offline copy), not only in the CI secret.
+
+### 5a. If the upload key is lost (the state of this repository)
+
+As of the last bundle run (`release-aab-15`, 12 October 2026) the signing
+secrets were **not** set, and the local copy of Cinderfall's upload keystore
+is gone. Two keys matter here:
+
+- **The app signing key** signs what players install. If the listing is
+  enrolled in **Play App Signing** (every app published since August 2021
+  is), Google holds it and it cannot be lost.
+- **The upload key** signs what you upload. If it is lost, Google can reset
+  it: you make a new one and send them its certificate.
+
+So, to publish KOR on the existing listing:
+
+1. **Check enrolment.** Play Console › KOR (com.cinderfall.sector9) › Test
+   and release › App integrity › App signing. If it says the app is signed by
+   Google Play, carry on. If the listing is *not* enrolled and the old key is
+   gone, the listing cannot be updated: KOR would have to go out as a new app
+   with a new id.
+2. **Make a new upload key** on your own computer (needs a JDK):
+   `bash scripts/new-upload-key.sh ~/kor-signing`. It asks for a password and
+   writes `kor-upload.keystore`, `upload_certificate.pem` and
+   `keystore.base64.txt` into that folder, outside the repository. Back up the
+   keystore and the password before anything else.
+3. **Request the reset.** On the App signing page: *Request upload key reset*,
+   reason *I lost my upload key*, upload `upload_certificate.pem`. Google
+   emails when the new key is active (usually within a few days); the page
+   then shows its fingerprint, which matches the one the script printed.
+4. **Set the three secrets** on GitHub (Settings › Secrets and variables ›
+   Actions): `ANDROID_KEYSTORE_BASE64` = the contents of `keystore.base64.txt`,
+   `ANDROID_KEYSTORE_PASS` and `ANDROID_KEY_PASS` = the password.
+5. **Run "Build Android release AAB"**, compare the fingerprint in the run
+   summary with Play Console, and upload the bundle from the
+   `release-aab-N` release.
+
+The keystore keeps the alias `cinderfall`, which the workflow signs with.
 
 ## 6. Store asset specs (re-export at these sizes)
 
