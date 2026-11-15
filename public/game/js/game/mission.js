@@ -101,6 +101,9 @@ export class MissionScene extends M3.M3Scene {
       this.player = new Character(op, eng.atlas, this.mover, loadout ? { weapon: loadout.primary, sidearm: loadout.sidearm } : {});
     }
     this.M = M; this.D = DIFF[diff] || DIFF.normal;
+    // the gate's sign and girder over the opening are solid: a shut gate cannot be
+    // climbed (a jump and a pull-up reach 74 units over the feet) (docs §10.31)
+    if (M.gate) for (let c = M.gate.c0; c <= M.gate.c1; c++) for (let n = M.gate.n1 + 1; n <= M.gate.n1 + 4; n++) this.L.set(c, 25 - n, SOLID);
     this.enemyDmg = this.D.dmg;
     this.squad = new Squad(this.D.tokens);
     this.covers = findCovers(this.L);
@@ -433,6 +436,7 @@ export class MissionScene extends M3.M3Scene {
       }
     }
     this.updateNades(dt);
+    this.relightStep(dt);
     if (o && o.type === 'hack') prog = this.hack / MS.terminal.time;
     else if (o && o.type === 'hold') prog = this.holdT / o.time;
     this.mhud.boss((this.endless || (o && o.type === 'boss')) && this.boss && this.boss.ch.alive ? t('boss.gall') : null, this.boss ? this.boss.ch.hp / this.boss.ch.hpMax : 0);
@@ -549,10 +553,41 @@ export class MissionScene extends M3.M3Scene {
     B.end();
   }
 
+  // how far the furnace has come back (mission 7, docs §10.31): 0 cold, 1 burning;
+  // it follows the hold at the cast house, then stays lit
+  relightTarget() {
+    const RL = this.M.relight;
+    if (!RL) return 0;
+    if (this.obj > RL.obj || this.done) return 1;
+    return this.obj === RL.obj ? this.holdT / this.M.objectives[RL.obj].time : 0;
+  }
+  relightStep(dt) {
+    const RL = this.M.relight;
+    if (!RL) return;
+    const was = this.rk || 0, k = this.rk = was + (this.relightTarget() - was) * Math.min(1, dt * 1.2);
+    if (was < 0.5 && k >= 0.5) { this.mhud.toast(t('game.furnaceBlast'), 1.8); this.sfx.play('charge', RL.tap[0], RL.tap[1], { vol: 0.8, rate: 0.4 }); this.e.camera.addShake(0.12); }
+    if (was < 0.97 && k >= 0.97) { this.mhud.toast(t('game.furnaceLit'), 2.2); this.sfx.play('boom', RL.tap[0], RL.tap[1], { vol: 0.6, rate: 0.5 }); this.e.camera.addShake(0.3); }
+    if (k < 0.04) return;
+    const [tx, ty] = RL.tap, ft = this.fx.t;
+    // sparks spitting from the tap hole, more as it heats
+    if (Math.random() < dt * 40 * k) this.fx.sparks.emit(ft, tx + rand(-2, 2), ty + rand(-1, 1), rand(10, 70), rand(-60, -10), rand(0.4, 1.0), rand(0.5, 1), 0.2, col('#ffd28a', 1), col('#ff6a2a', 0), 160, 0.6, 0, 0);
+    // iron running down the trough once it has taken the blast
+    if (k > 0.45 && Math.random() < dt * 30 * k) { const [[ax, ay], [bx, by]] = RL.trough, u = Math.random(); this.fx.sparks.emit(ft, ax + (bx - ax) * u, ay + (by - ay) * u - 1, rand(-6, 16), rand(-30, -8), rand(0.2, 0.5), rand(0.4, 0.8), 0.1, col('#ffe0a0', 1), col('#ff5a1a', 0), 120, 0.4, 0, 0); }
+    // smoke and steam off the throat, then the top gas flaring
+    const [px, py] = RL.top;
+    if (Math.random() < dt * 6 * k) this.fx.smoke.emit(ft, px + rand(-10, 10), py + rand(0, 4), rand(4, 14), rand(-20, -8), rand(2.5, 4.5), rand(8, 12), rand(26, 40), col('#cbbcae', 0.22 * k), col('#cbbcae', 0), -6, 0.3, rand(0, 6), rand(-0.4, 0.4));
+  }
+
   addLights(R) {
     super.addLights(R);
     this.ab.lights(R);
     const MS = this.M, T = MS.terminal, t = this.t;
+    if (MS.relight && this.rk > 0.02) {
+      const k = this.rk, fl = 0.9 + 0.1 * Math.sin(t * 13) * Math.sin(t * 5.3), RL = MS.relight;
+      R.addLight(RL.tap[0], RL.tap[1] + 4, 30 + 110 * k, (0.3 + 1.5 * k) * fl, [1, 0.5, 0.2]);
+      if (k > 0.45) R.addLight(RL.trough[1][0], RL.trough[1][1], 70 * k, 1.2 * (k - 0.4) * fl, [1, 0.55, 0.22]);
+      R.addLight(RL.top[0], RL.top[1] + 10, 50 + 60 * k, 0.9 * k * fl, [1, 0.6, 0.3]);
+    }
     if (T) {
       const tc = this.gateOpen ? [0.6, 0.9, 0.65] : this.hack > 0 ? [1, 0.78, 0.45] : [0.9, 0.45, 0.38];
       R.addLight(T.x, -19, 22, 0.6, tc);
@@ -578,6 +613,21 @@ export class MissionScene extends M3.M3Scene {
       B.draw(glow, T.x, -19, 7, 5, 0, rgba(sc, 0.12));
       // hack ring around the terminal
       if (this.objective && this.objective.type === 'hack') this.ring(B, white, T.x, -36, 16, this.hack / T.time);
+    }
+    // the furnace coming back: the tap hole, the iron in the trough, the throat
+    if (MS.relight && this.rk > 0.02) {
+      const k = this.rk, fl = 0.85 + 0.15 * Math.sin(t * 11) * Math.sin(t * 4.1), RL = MS.relight, [tx, ty] = RL.tap;
+      B.draw(glow, tx, ty, 8 + 14 * k, 5 + 8 * k, 0, rgba('#ff7a2a', (0.25 + 0.6 * k) * fl));
+      B.draw(white, tx, ty, 3 + 2 * k, 1.6 + k, 0, rgba('#ffe2a8', 0.4 + 0.6 * k));
+      if (k > 0.45) {
+        const [[ax, ay], [bx, by]] = RL.trough, a = Math.min(1, (k - 0.45) * 2.2);
+        B.line(white, ax, ay, bx, by, 1.4, rgba('#ffcf80', 0.9 * a));
+        B.draw(glow, (ax + bx) / 2, (ay + by) / 2, 22, 10, Math.atan2(by - ay, bx - ax), rgba('#ff6a20', 0.35 * a * fl));
+        B.draw(glow, bx, by + 2, 26, 6, 0, rgba('#ff7a2a', 0.45 * a * fl));
+      }
+      const [px, py] = RL.top;
+      B.draw(glow, px, py + 4, 16 + 30 * k, 8 + 10 * k, 0, rgba('#ff9a50', 0.45 * k * fl));
+      if (k > 0.9) B.draw(glow, px + 2, py - 6 - Math.sin(t * 7) * 2, 6, 12, 0, rgba('#ffd090', 0.6 * fl));
     }
     // the hold zone: chalk marks at both ends, as the cells mark a place on a wall
     const o = this.objective;

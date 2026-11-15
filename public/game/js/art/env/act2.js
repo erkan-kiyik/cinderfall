@@ -613,9 +613,8 @@ export function buildMission7() {
   P('m7.gate', [X(204) - 78, -150, X(206) + 78, 1], (g) => gateFrame(g, X(204), X(206), 96, ['YÜKSEK FIRIN · DÖKÜM', 'SICAK ALAN']), deco);
   // D — the furnace over the cast house; ladles to fight from
   P('m7.furnace', [X(224) - 8, -204, X(224) + 160, 1], (g) => blastFurnace(g, X(224)), deco);
+  // the furnace is cold when you get there; it lights during the hold (mission.js, relight)
   const tap = X(224) + 70;
-  glows.push([tap, -44, 7, 3.6, '#ff7a2a', 0.85, 'fire'], [tap + 18, -14, 18, 4, '#ff8a3a', 0.45, 'fire']);
-  lights.push([tap, -40, 110, 0.9, [1, 0.5, 0.2], 'fire'], [tap + 20, -10, 60, 0.6, [1, 0.55, 0.25], 'fire']);
   block(216, 221, 1, 4); P('m7.ladleD', [X(216) - 8, -80, X(216) + 56, 1], (g) => ladle(g, X(216) - 4, 1));
   addCrate(258); addCrate(272);
   block(286, 291, 1, 4); P('m7.ladleE', [X(286) - 8, -80, X(286) + 56, 1], (g) => ladle(g, X(286) - 4, 2));
@@ -630,7 +629,9 @@ export function buildMission7() {
   return K.finish({
     par: 380,
     facade: strip(-10, ['union', 'antrepo', 'warehouse', 'ruin', 'garage', 'antrepo', 'warehouse', 'wallC', 'antrepo', 'ruin', 'warehouse', 'antrepo', 'garage', 'warehouse', 'ruin', 'antrepo', 'warehouse', 'antrepo', 'ruin', 'warehouse', 'antrepo']),
-    fires: [X(56) + 5, tap + 4],
+    fires: [X(56) + 5],
+    // the furnace taking the blast: the tap hole, the trough down to the floor, the throat at the top
+    relight: { obj: 2, tap: [tap, -44], trough: [[tap + 2, -36], [tap + 26, -6]], top: [tap, -192] },
     checkpoints: [{ x: X(78) }, { x: X(170) }, { x: X(306) }],
     gate: { c0: 204, c1: 205, n0: 1, n1: 12, x: X(204), w: 16, h: 96, wave: 1 },
     terminal: { x: X(192), x0: X(192) - 26, x1: X(192) + 26, time: 7 },

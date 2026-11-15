@@ -249,6 +249,8 @@ export class App {
     if (r.abandoned && !r.endless) { this.router.go('campaign', { sel: r.id }, { root: true }); return; }
     // the end of the first act, the first time the governor's building falls
     if (r.id === 'm3' && gain.firstClear && !this.save.d.story.seen.act1) { this.playStory('act1', { then: () => this.router.go('result', { r, gain }, { root: true }) }); return; }
+    // and of the second, the first time the furnace is lit again (docs §10.31)
+    if (r.id === 'm7' && gain.firstClear && !this.save.d.story.seen.act2) { this.playStory('act2', { then: () => this.router.go('result', { r, gain }, { root: true }) }); return; }
     this.router.go('result', { r, gain }, { root: true });
   }
 

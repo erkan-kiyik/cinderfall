@@ -471,5 +471,50 @@ sırayla açılıyor; kampanya haritasında 4–7 artık kilitsiz.
   görüntüleri hata vermiyor. Görev başına ayrıntılı oynanış ayarı (zorluk,
   sürelerin hissi) gerçek oyunda bakılacak.
 
-Çizim sürümü `d4-59`. Hikâye filmleri ve harita fotoğrafları perde 2 için
-henüz yok (isteğe bağlı).
+Çizim sürümü `d4-59`. Filmler ve harita fotoğrafları: §10.31.
+
+### 10.31 Perde 2'yi bitirmek: filmler, fırın, kapılar
+
+§10.30'da perde 2 oynanır olmuştu; birinci perdede olup ikincide olmayanlar
+eklendi.
+
+**Görev öncesi filmler ve perde sonu** (`cine/shots4.js`, `cine/scenes.js`):
+birinci perdedeki gibi tek çekim, üstünde telsiz. Yer, serinin (§8) aynı
+sahnelerinden ışın izlenmiş bir plaka (`tools/game/series/opening.js`,
+kameralar `cine/plates.js`); kımıldayan her şey canlı çiziliyor. İçlerinde
+kimse yok.
+
+| Film | Yer (seri karesi) | Canlı olan |
+| --- | --- | --- |
+| 4 · Dökümhane | Döküm holü, çatısı delik (22) | Işık sütunlarında dönen toz, çatı aralığından inen yağmur, potaların üstünden damlalar |
+| 5 · Metro | 3. peron, karo tonoz (24) | Bir türlü oturmayan floresan, tonozdan raylara damlayan su, toz; üstten geçen bir araba sesi |
+| 6 · Dron Fabrikası | Üretim hattı (25) | Hattaki her dronun kırmızı gözü sırayla göz kırpıyor; biten bir dron raftan kalkıp ışıkların altından üstümüzden geçiyor |
+| 7 · Ocak | Fırın, avludan, soğuk (açılışın plakası) | Yağmur, döküm holü kapısının üstünde yerine oturmayan sodyum lamba |
+| Perde 2 sonu | Aynı kamera | Soğuk plaka yanan plakaya geçiyor (seri 26), tepeden buhar, gazın alevi, döküm holünden kıvılcım ve ışık, yağmur inceliyor; "Perde 2 sonu" |
+
+- Perde sonu filminde Warden: "Duman kuleden de görünür." Flint:
+  "Görsünler." (perde 3: kule). 7. görevi ilk bitirişte oynuyor, birinci
+  perdenin sonu gibi.
+- Lobideki telsiz artık filmin satırlarını çalıyor (birinci perde gibi);
+  ayrı `RADIO` tablosu kalktı.
+- Kampanya haritasında 4–7'nin de fotoğrafı var (aynı plakalar).
+- Filmler video olarak (`assets/film/m4…m7.mp4`, `act2.mp4`), canlı çizim yedekte.
+
+**Fırın oyunda yanıyor** (`game/mission.js` → `relight`): 7. görevde döküm
+holünü tutarken fırın tutma süresiyle birlikte ısınıyor: önce delik
+kızarıyor ve kıvılcım atıyor, yarıda "Fırın rüzgârı aldı" (sarsıntı, ses),
+oluktan erimiş demir akıyor, avlu ısınıyor, tepeden duman çıkıyor; bitince
+"Ocak yanıyor" ve tepede gaz alevi. Görevin geri kalanında yanık kalıyor.
+Önceden delikte hep yanan sabit ışık kaldırıldı: fırın soğuk başlıyor.
+
+**Kapılar tırmanılamıyor** (bütün görevler): zıplayıp tutunarak (ayakların
+74 birim üstüne kadar) kapalı bir kapının üstünden aşılabiliyordu; hack
+atlanabilirdi. Kapı kanadının üstündeki dört sıra (tabela ve kiriş) artık
+katı. Altı kapı da denendi: koşup zıplayan oyuncu duruyor.
+
+**Gerçek hareketle oynandı:** dört görev, ışınlanmadan, yalnız denetimlerle
+(yürü, takılınca zıpla/tutun, gerekirse merdivene git ve tırman) baştan sona
+oynayan bir betikle bitirildi (oyuncu ölmüyor): 4 → 73 sn, 5 → 27 sn,
+6 → 79 sn, 7 → 118 sn (oyun saati; tutma süreleri dahil). 5. görevde
+viyadüğün altındaki duvar, zıplayıp tutununca oyuncuyu perona çıkarıyor:
+istenen yol bu.

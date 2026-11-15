@@ -3,6 +3,7 @@
 // over the radio (it gets the squelch and a different style).
 import * as S from './shots.js';
 import * as M from './shots3.js';
+import * as A2 from './shots4.js';
 
 const shot = (at, dur, make) => ({ at, dur, make });
 
@@ -111,4 +112,36 @@ export const STORY = {
   ], [{ at: 0.4, name: 'buzzphone' }, { at: 2.8, name: 'buzzphone' }, { at: 5.2, name: 'buzzphone' }, { at: 7.6, name: 'buzzphone' }, { at: 10.0, name: 'buzzphone' }, { at: 12.4, name: 'buzzphone' }],
   [{ at: 0, name: 'hum', level: 0.35, sec: 1 }, { at: 0, name: 'rain', level: 0.12, sec: 1 }, { at: 15.6, name: 'hum', level: 0, sec: 1.2 }, { at: 15.6, name: 'rain', level: 0, sec: 1.2 }],
   [{ at: 12.0, to: 16.4, key: 'story.a1.cap', pos: 'title' }]),
+  // act 2 (docs §10.31): the same one shot under the radio, over the series' places
+  m4: one('m4', 16, () => new A2.Foundry(), [
+    { at: 1.4, to: 5.2, who: 'VESPER', key: 'story.m4.1', radio: true },
+    { at: 6.4, to: 9.4, who: 'FLINT', key: 'story.m4.2' },
+    { at: 10.4, to: 14.0, who: 'WARDEN', key: 'story.m4.3', radio: true },
+  ], [{ at: 1.3, name: 'radio' }, { at: 10.3, name: 'radio', o: { vol: 0.6 } }],
+  [{ at: 0, name: 'rain', level: 0.3, sec: 1.5 }, { at: 0, name: 'hum', level: 0.15, sec: 2 }, { at: 14.8, name: 'rain', level: 0, sec: 1.2 }, { at: 14.8, name: 'hum', level: 0, sec: 1.2 }]),
+  m5: one('m5', 16, () => new A2.Metro(), [
+    { at: 1.4, to: 5.0, who: 'SKYE', key: 'story.m5.1', radio: true },
+    { at: 5.8, to: 9.8, who: 'VESPER', key: 'story.m5.2', radio: true },
+    { at: 11.2, to: 12.8, who: 'BULWARK', key: 'story.m5.3' },
+  ], [{ at: 1.3, name: 'radio' }, { at: 5.7, name: 'radio', o: { vol: 0.6 } }, { at: 8.5, name: 'car', o: { vol: 0.4 } }],
+  [{ at: 0, name: 'hum', level: 0.35, sec: 1.5 }, { at: 14.8, name: 'hum', level: 0, sec: 1.2 }]),
+  m6: one('m6', 16, () => new A2.Drones(), [
+    { at: 1.4, to: 5.4, who: 'VESPER', key: 'story.m6.1', radio: true },
+    { at: 6.2, to: 9.8, who: 'SKYE', key: 'story.m6.2', radio: true },
+    { at: 10.8, to: 13.6, who: 'WARDEN', key: 'story.m6.3', radio: true },
+  ], [{ at: 1.3, name: 'radio' }, { at: 6.1, name: 'radio', o: { vol: 0.6 } }, { at: 3.4, name: 'uav', o: { vol: 0.5 } }, { at: 10.7, name: 'radio', o: { vol: 0.6 } }],
+  [{ at: 0, name: 'hum', level: 0.3, sec: 1.5 }, { at: 0, name: 'drone', level: 0.15, sec: 2 }, { at: 14.8, name: 'hum', level: 0, sec: 1.2 }, { at: 14.8, name: 'drone', level: 0, sec: 1.2 }]),
+  m7: one('m7', 16, () => new A2.FurnaceCold(), [
+    { at: 1.4, to: 5.2, who: 'VESPER', key: 'story.m7.1', radio: true },
+    { at: 6.2, to: 9.6, who: 'WARDEN', key: 'story.m7.2', radio: true },
+    { at: 11.0, to: 12.6, who: 'FLINT', key: 'story.m7.3' },
+  ], [{ at: 1.3, name: 'radio' }, { at: 6.1, name: 'radio', o: { vol: 0.6 } }, { at: 4.0, name: 'siren', o: { vol: 0.2 } }],
+  [{ at: 0, name: 'rain', level: 0.55, sec: 1.5 }, { at: 0, name: 'city', level: 0.2, sec: 2 }, { at: 14.8, name: 'rain', level: 0, sec: 1.2 }, { at: 14.8, name: 'city', level: 0, sec: 1.2 }]),
+  // the end of act 2: the furnace takes the blast
+  act2: one('act2', 18, () => new A2.Relit(), [
+    { at: 10.6, to: 13.6, who: 'WARDEN', key: 'story.a2.1' },
+    { at: 14.2, to: 15.6, who: 'FLINT', key: 'story.a2.2' },
+  ], [{ at: 2.6, name: 'hiss', o: { dur: 4 } }, { at: 5.8, name: 'boom', o: { vol: 0.7 } }, { at: 6.2, name: 'crackle', o: { dur: 5, n: 24 } }],
+  [{ at: 0, name: 'rain', level: 0.5, sec: 1 }, { at: 2.5, name: 'furnace', level: 0.65, sec: 6 }, { at: 9, name: 'rain', level: 0.2, sec: 4 }, { at: 16.6, name: 'furnace', level: 0, sec: 1.4 }, { at: 16.6, name: 'rain', level: 0, sec: 1.4 }],
+  [{ at: 15.8, to: 18.6, key: 'story.a2.cap', pos: 'title' }]),
 };

@@ -143,13 +143,13 @@ function atOf(P, [x, y, z]) {
   ok(worst < 0.01, `spot shafts sampled over the cone's span match the long way (worst ${(worst * 100).toFixed(2)}%)`);
 }
 
-// every plate has a scene, and its scene builds (the opening's come from the series: tools/game/series/opening.js)
+// every plate has a scene, and its scene builds (the opening's and act 2's come from the series: tools/game/series/opening.js)
 for (const name of Object.keys(PLATES)) {
-  const make = name.startsWith('open_') ? OPEN[name]?.scene : SCENES[name];
+  const make = OPEN[name]?.scene ?? SCENES[name];
   ok(typeof make === 'function', `${name}: has a scene`);
   if (typeof make !== 'function') continue;
   const spec = make(plateCam(name, 1));
-  ok(spec.prims.length > (name.startsWith('open_') ? 10 : 20) && spec.lights.length > 0, `${name}: ${spec.prims.length} prims, ${spec.lights.length} lamps`);
+  ok(spec.prims.length > (OPEN[name] ? 10 : 20) && spec.lights.length > 0, `${name}: ${spec.prims.length} prims, ${spec.lights.length} lamps`);
   ok(spec.prims.every((q) => (q.box || q.cyl || q.sph || q.cap || q.ell || q.hull) && (typeof q.m === 'string' ? spec.mats[q.m] : q.m)), `${name}: every prim has a shape and a material`);
 }
 

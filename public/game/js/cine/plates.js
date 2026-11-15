@@ -23,6 +23,12 @@ export const PLATES = {
   // a plate and its variant (a light off, the coals cooler) share a camera
   open_furnace: OPEN.furnace, open_roof: OPEN.roof, open_poster: OPEN.poster, open_poster_off: OPEN.poster,
   open_alley: OPEN.alley, open_coals: OPEN.coals, open_coals_dim: OPEN.coals,
+  // act 2's films (docs §10.31), from the series' cameras (tools/game/series/shots.js 22, 24,
+  // 25, 26): the foundry, the metro, the drone works; the furnace lit again (the opening's camera)
+  foundry: { mm: 24, pos: [5, 1.7, 3], yaw: -0.1049, pitch: 0.0401, core: 1280, W: 1376, H: 632 },
+  metro: { mm: 24, pos: [1.4, 2.55, -1], yaw: -0.0311, pitch: -0.0057, core: 1280, W: 1376, H: 632 },
+  drones: { mm: 28, pos: [-6.5, 2.6, 1], yaw: 0.1776, pitch: -0.0353, core: 1280, W: 1376, H: 632 },
+  open_furnace_relit: OPEN.furnace,
 };
 
 // the camera a plate is traced from (ss: supersampling)

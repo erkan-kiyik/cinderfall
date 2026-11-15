@@ -6,7 +6,7 @@ import { t } from '../i18n.js';
 import { hubbar, stars } from './common.js';
 import { dailyDone, traderStock, traderSold } from '../../core/economy.js';
 import { avatar, hawkPic } from '../portraits.js';
-import { OPS, MISSIONS, RADIO, opName } from '../data.js';
+import { OPS, MISSIONS, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 import { STORY } from '../../cine/scenes.js';
 
@@ -52,7 +52,7 @@ export const lobby = {
       hawkPic(64),
       h('div', h('div.eyebrow', h('span.dot'), t('lobby.crow')), h('div.typed', t('lobby.crowSub')), h('div.eyebrow.accent', t('lobby.crowOpen', { n: left })))));
     // the radio on the shelf: the next job's lines, one at a time, typed out
-    const lines = STORY[next.id] ? STORY[next.id].subs : RADIO[next.id] || [];
+    const lines = STORY[next.id] ? STORY[next.id].subs : [];
     const said = h('p.said');
     const radio = lines.length ? h('div.radio-log', { 'aria-hidden': 'true' },
       h('div.eyebrow', h('i.led'), t('lobby.radio'), ' · ', t('lobby.next', { n: next.id.slice(1), name: t(`mission.${next.id}`) })), said) : null;

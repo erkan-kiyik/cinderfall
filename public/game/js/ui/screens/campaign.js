@@ -7,7 +7,7 @@ import { MISSIONS } from '../data.js';
 
 // the missions that have a photograph of their place (the cinematics' plates)
 const plate = (n) => new URL(`../../../assets/plates/${n}.webp`, import.meta.url).href;
-const PHOTO = { m1: plate('gate'), m2: plate('market'), m3: plate('governor') };
+const PHOTO = { m1: plate('gate'), m2: plate('market'), m3: plate('governor'), m4: plate('foundry'), m5: plate('metro'), m6: plate('drones'), m7: plate('open_furnace') };
 
 export const campaign = {
   mount(ctx, params) {
