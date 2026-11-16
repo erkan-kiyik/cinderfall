@@ -16,7 +16,7 @@ import {
 } from './body.js';
 import { texture } from '../tex.js';
 import { rnd } from '../paint.js';
-import { PROFILE_F, SKINS, face, crop, strap, glass, ell, inP } from './realhead.js';
+import { PROFILE_F, SKINS, face, crop, strap, glass, ell, inP, flowHair, braid } from './realhead.js';
 import { FACES } from './faces.js';
 
 const PAL = {
@@ -266,23 +266,28 @@ function foot(g, ctx) {
   fill(g, 'M -2.7 2.25 L 7.1 2.25 L 7.0 2.55 L -2.7 2.55 Z', t(PAL.tights).m, 0.8);
 }
 
-// --- head (docs §10.25): Skye's face, open. Twenty-two: deep brown skin, a fine short nose,
-// full lips, dark eyes with long lashes, a short fade; the cotton cycling cap, the mirrored
-// sport glasses pushed up on it, the bandana pulled down round the neck; one earbud in.
+// --- head (docs §10.25, §10.35): Skye's face, open. Twenty-two: deep warm brown skin with
+// the light catching it, a fine nose, full lips in a half smile, big dark eyes with long
+// lashes; her hair pulled back under the cotton cycling cap and braided, the braids tied at
+// the nape and down her back; the mirrored sport glasses pushed up on the cap, the bandana
+// pulled down round the neck below the jaw; one earbud in.
 const SCAP = 'M -3.9 -7.3 C -4.3 -9.2 -3.3 -10.9 -1.3 -11.5 C 0.8 -12.0 3.0 -11.6 4.0 -10.4 C 4.4 -9.9 4.5 -9.3 4.42 -8.8 C 2.6 -9.0 0.8 -8.9 -0.8 -8.5 C -2.0 -8.2 -3.0 -7.8 -3.9 -7.3 Z';
 const SPEAK = 'M 3.6 -8.9 C 4.2 -9.2 4.9 -9.8 5.3 -10.6 C 5.42 -10.9 5.3 -11.06 5.04 -10.98 C 4.5 -10.8 3.9 -10.5 3.3 -10.2 C 3.1 -9.8 3.2 -9.3 3.6 -8.9 Z';
-const SFADE = 'M -3.85 -7.2 C -3.0 -7.7 -2.0 -8.1 -0.8 -8.4 C 0.4 -8.7 1.6 -8.8 2.8 -8.8 C 2.6 -8.2 2.0 -7.6 1.3 -7.2 C 0.9 -6.9 0.7 -6.6 0.62 -6.2 L -0.4 -6.8 C -1.4 -6.4 -2.4 -5.4 -2.7 -3.8 C -3.4 -4.4 -3.9 -5.6 -3.85 -7.2 Z';
-const SCOLL = 'M 4.2 -2.0 C 3.3 -1.5 2.0 -1.6 0.8 -2.3 C -0.4 -2.9 -2.0 -3.3 -3.4 -3.1 C -4.2 -2.2 -4.4 -0.8 -4.0 0.6 C -2.4 1.6 0.6 1.8 3.0 1.4 C 4.3 1.1 4.8 0.4 4.8 -0.6 C 4.7 -1.2 4.5 -1.6 4.2 -2.0 Z';
+const SHAIR = 'M -3.95 -7.3 C -3.0 -7.8 -2.0 -8.2 -0.8 -8.5 C 0.4 -8.8 1.6 -8.9 2.6 -8.85 C 2.5 -8.4 2.2 -8.0 1.8 -7.7 C 1.3 -7.4 1.0 -7.0 0.9 -6.5 L 0.5 -6.6 C -0.2 -6.9 -0.9 -6.8 -1.2 -6.3 C -1.6 -5.6 -2.1 -4.9 -2.8 -4.4 C -3.5 -4.9 -3.9 -6.0 -3.95 -7.3 Z';
+const SCOLL = 'M 2.7 -1.3 C 1.9 -1.2 1.0 -1.5 0.2 -2.0 C -0.8 -2.5 -2.2 -2.8 -3.4 -2.6 C -4.2 -1.8 -4.4 -0.5 -4.0 0.8 C -2.4 1.8 0.6 2.0 2.8 1.7 C 3.6 1.4 3.9 0.6 3.7 -0.2 C 3.5 -0.7 3.2 -1.1 2.7 -1.3 Z';
 function head(g) {
-  const S = SKINS.deep, B = brushOf(g), Cr = PAL.cream, C = PAL.bandana;
+  const S = SKINS.umber, B = brushOf(g), Cr = PAL.cream, C = PAL.bandana;
   neck(g, PAL.skin, { glaze: true });
-  // her own face (docs §10.29): young and round, a small nose with a scooped bridge, a
-  // turned-up tip and broad wings, full forward lips, a small soft chin
-  const FS = face(g, { paint: FACES.skye, prof: 'f', s: S, age: 0.04, seed: 61, iris: '#2a1810', white: '#a49488', brow: ['#140c08', 0.08, 1.0], lips: '110,52,44', lash: true,
-    shape: { fore: 0.1, brow: -0.1, nasion: -0.3, nose: -0.45, hump: -0.3, tip: 0.45, wing: 0.6, lips: 0.75, chin: -0.2, long: -0.25, jaw: -0.6, eye: -0.1 } });
+  // her own face (docs §10.29, §10.35): young, a smooth forehead, a fine straight nose with a
+  // rounded tip, full lips, a clear chin and a neat jawline down to a long neck
+  const FS = face(g, { paint: FACES.skye, prof: 'f', s: S, soft: 0.85, age: 0.02, seed: 61, iris: '#2a1810', white: '#b4a498', brow: ['#140c08', 0.08, 1.0], lips: '128,58,50', lash: true,
+    shape: { fore: 0.15, brow: -0.15, nasion: -0.15, nose: -0.15, hump: -0.2, tip: 0.2, wing: 0.3, lips: 0.25, chin: 0.25, long: -0.2, jaw: -0.35, eye: -0.1, lower: 1 } });
   const COL = FS.w(SCOLL);
-  crop(g, SFADE, { col: '#140e0b', lit: 'rgba(90,70,60,1)', seed: 63, n: 700, a: Math.PI * 0.62 });
-  B.inside(SFADE, () => { const fg = g.createLinearGradient(0, -8, 0, -4); fg.addColorStop(0, 'rgba(0,0,0,0)'); fg.addColorStop(1, S.base); g.fillStyle = fg; g.globalAlpha = 0.6; g.fillRect(-5, -8, 7, 5); g.globalAlpha = 1; });
+  // her hair pulled back from the face, the strands running back to the nape; the edges
+  // laid in small waves at the temple
+  flowHair(g, SHAIR, { col: '#120a07', mid: 'rgba(54,36,28,1)', lit: 'rgba(160,118,92,1)', dark: 'rgba(4,2,1,0.5)', seed: 63, n: 120, w: 0.045, wave: 0.03, sheen: [0.3, 0.5],
+    a: [[2.6, -8.85], [1.0, -8.9], [-1.6, -8.4], [-3.9, -7.3]], b: [[0.9, -6.5], [-0.4, -6.9], [-1.8, -5.6], [-2.9, -4.5]] });
+  for (const [x, y, k] of [[2.55, -8.7, 1], [2.15, -8.25, 0.9], [1.7, -7.8, 0.8], [1.25, -7.3, 0.7]]) B.line(`M ${x} ${y} c ${0.12 * k} ${0.04 * k} ${0.16 * k} ${0.16 * k} ${0.06 * k} ${0.22 * k} c ${-0.08 * k} ${0.04 * k} ${-0.04 * k} ${0.14 * k} ${0.06 * k} ${0.16 * k}`, 'rgba(18,10,7,0.75)', 0.025, 0.008);
   // the earbud and its white cable, the steel stud
   B.line('M -0.1 -5.4 C -0.5 -4.4 -0.7 -3.0 -0.4 -0.4', '#d8dadc', 0.12, 0.01);
   cel(g, ell(0.18, -5.42, 0.26, 0.22), mat(tone('#ffffff', '#e4e6e8', '#b4b8bc', '#6a6e72'), 'paint', 0.2), { sh: 0.2, hl: 0.3, gloss: 0.4 });
@@ -293,6 +298,10 @@ function head(g) {
   clothFolds(g, COL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], C);
   cel(g, ell(-3.4, -1.4, 0.5, 0.46), C, { sh: 0.6, hl: 0.4 });
   for (const d of ['M -3.6 -1.0 C -4.2 -0.4 -4.4 0.4 -4.3 1.2 C -4.0 1.3 -3.7 1.2 -3.6 1.0 C -3.6 0.3 -3.4 -0.3 -3.2 -0.8 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3 });
+  // the braids: gathered at the nape in a cream band, falling down her back over the bandana
+  const T = [-3.3, -4.7];
+  for (const [ex, ey, bend] of [[-4.5, 0.9, -0.3], [-4.1, 1.3, -0.15], [-3.7, 1.0, 0.0], [-3.3, 1.4, 0.15], [-2.95, 0.8, 0.3]]) braid(g, [T, [T[0] + bend - 0.15, T[1] + 1.8], [ex + bend * 0.5, ey - 2.2], [ex, ey]], { col: '#1a100b', lit: 'rgba(150,110,84,0.7)', w: 0.32 });
+  cel(g, ell(T[0], T[1] + 0.05, 0.3, 0.2), Cr, { sh: 0.3, hl: 0.4 });
   // the cap: cream cotton fitted to the head, the stripe round it, the brim flipped up
   cel(g, SCAP, Cr, { sh: 1.2, hl: 0.5 });
   B.inside(SCAP, () => {

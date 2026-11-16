@@ -49,7 +49,7 @@ export const EAR = 'M 0.05 -6.62 C 0.55 -6.58 0.72 -6.1 0.62 -5.55 C 0.56 -5.1 0
 const bump = (v, c, r) => { const t = (v - c) / r; return t * t >= 1 ? 0 : (1 - t * t) * (1 - t * t); };
 const ramp = (v, a, b) => (v <= a ? 0 : v >= b ? 1 : (v - a) / (b - a));
 export function shaper(sh = {}, prof = 'm') {
-  const { fore = 0, brow = 0, nasion = 0, nose = 0, hump = 0, tip = 0, lips = 0, chin = 0, long = 0, jaw = 0, wing = 0, eye = 0 } = sh;
+  const { fore = 0, brow = 0, nasion = 0, nose = 0, hump = 0, tip = 0, lips = 0, chin = 0, long = 0, jaw = 0, wing = 0, eye = 0, lower = 0 } = sh;
   const W = (x, y) => {
     let dx = 0, dy = 0;
     const front = ramp(x, 3.0, 3.9), nz = ramp(x, 4.15, 4.6);
@@ -65,10 +65,12 @@ export function shaper(sh = {}, prof = 'm') {
     dy += long * 0.8 * low;
     dy += jaw * 0.5 * bump(x, 0.4, 1.6) * ramp(y, -3.7, -2.7);
     dx -= jaw * 0.2 * bump(x, 0.4, 1.6) * ramp(y, -3.7, -2.7);
+    // a shorter lower face: under the mouth drawn up toward it (docs §10.35)
+    if (lower) dy -= lower * 0.16 * Math.min(Math.max(0, y + 3.6), 1.8) * ramp(x, -1.6, -0.4);
     return [x + dx, y + dy];
   };
   const P = warpPath(prof === 'f' ? PROFILE_F : PROFILE, W);
-  return { W, P, w: (d) => warpPath(d, W), sh: { fore, brow, nasion, nose, hump, tip, lips, chin, long, jaw, wing, eye }, prof };
+  return { W, P, w: (d) => warpPath(d, W), sh: { fore, brow, nasion, nose, hump, tip, lips, chin, long, jaw, wing, eye, lower }, prof };
 }
 // a path through a warp: the coordinates of absolute M L C Q S T commands
 // move; relative and arc commands pass unchanged
@@ -94,6 +96,10 @@ export const SKINS = {
   // ruddy, wind-burnt (Bulwark)
   ruddy: { base: '#b07c64', shade: '66,34,26', half: '96,50,38', lit: '246,200,176', red: '204,82,64', yellow: '214,164,110', dark: '74,34,24', pale: '255,222,200', ear: '#a06650' },
   // deep brown (Skye)
+  // fair and fresh, rosy (Vesper, docs §10.35)
+  rose: { base: '#c9a088', shade: '100,60,50', half: '140,92,78', lit: '252,228,212', red: '214,116,104', yellow: '228,186,140', dark: '102,56,46', pale: '255,240,228', ear: '#b98d76' },
+  // deep warm brown with a glow, the light catching it (Skye, docs §10.35)
+  umber: { base: '#6e432f', shade: '36,18,10', half: '62,34,22', lit: '206,148,108', red: '156,70,48', yellow: '186,126,74', dark: '32,15,9', pale: '246,200,160', ear: '#5e3826' },
   deep: { base: '#5e3a28', shade: '24,12,8', half: '40,22,14', lit: '170,118,86', red: '120,46,30', yellow: '150,100,60', dark: '22,10,6', pale: '200,150,116', ear: '#52321f' },
 };
 
@@ -102,7 +108,9 @@ export const SKINS = {
 // facing up; the colour in its zones; pores and mottling. o.stubble: the blue
 // of a close shave (or a grey stubble, o.stubbleCol) over the jaw and lip.
 export function skin(g, d, s, o = {}) {
-  const B0 = brushOf(g), r = rnd(o.seed ?? 77), Wp = o.warp;
+  // o.soft (0..1): a smooth young face: no hollow under the cheekbone or at the temple,
+  // less mottling, finer pores (docs §10.35)
+  const B0 = brushOf(g), r = rnd(o.seed ?? 77), Wp = o.warp, k = 1 - (o.soft ?? 0);
   // with a shape (o.warp), the planes and marks follow the face's own line
   const B = !Wp ? B0 : { fill: (p, ...a) => B0.fill(warpPath(p, Wp), ...a), line: (p, ...a) => B0.line(warpPath(p, Wp), ...a), inside: (p, fn) => B0.inside(p, fn), dab: (x, y, ...a) => { const [X, Y] = Wp(x, y); B0.dab(X, Y, ...a); } };
   B0.fill(d, s.base, 0.03);
@@ -110,20 +118,20 @@ export function skin(g, d, s, o = {}) {
     B.fill('M -5 -11 L 1.5 -11 C 1.0 -8.6 0.9 -6.0 1.3 -3.9 C 1.5 -3.0 1.7 -2.4 1.9 -1 L -5 -1 Z', `rgba(${s.shade},0.62)`, 0.55);
     B.fill('M -5 -11 L 2.4 -11 C 2.0 -8.6 1.9 -6.0 2.2 -3.9 C 2.4 -3.0 2.6 -2.4 2.8 -1 L -5 -1 Z', `rgba(${s.half},0.22)`, 0.5);
     B.fill('M 2.9 -9.2 C 3.7 -8.8 4.2 -8.0 4.4 -6.9 L 4.3 -6.4 L 5.2 -4.7 L 4.7 -3.6 L 4.7 -1.9 L 3.7 -1.8 C 3.4 -2.6 3.3 -3.5 3.2 -4.3 C 3.0 -5.3 2.7 -6.4 2.6 -7.6 C 2.6 -8.2 2.7 -8.8 2.9 -9.2 Z', `rgba(${s.lit},0.8)`, 0.24);
-    B.fill('M 2.4 -5.75 C 2.9 -5.85 3.5 -5.85 4.0 -5.7 L 3.9 -5.36 C 3.4 -5.3 2.9 -5.34 2.4 -5.44 Z', `rgba(${s.lit},0.6)`, 0.12);
+    B.fill('M 2.4 -5.75 C 2.9 -5.85 3.5 -5.85 4.0 -5.7 L 3.9 -5.36 C 3.4 -5.3 2.9 -5.34 2.4 -5.44 Z', `rgba(${s.lit},${0.6 * (0.15 + 0.85 * k)})`, 0.12 + 0.2 * (1 - k));
     B.line('M 0.4 -3.0 C 1.4 -2.5 2.6 -2.1 3.8 -2.0', `rgba(${s.lit},0.32)`, 0.16, 0.12);
-    B.dab(4.35, -2.32, 0.32, 0.38, `rgba(${s.pale},0.45)`);
-    B.fill('M 1.6 -5.0 C 2.3 -4.8 3.1 -4.7 3.8 -4.8 C 3.9 -4.4 3.8 -4.0 3.6 -3.8 C 2.9 -3.9 2.2 -4.1 1.5 -4.4 Z', `rgba(${s.dark},0.3)`, 0.22);
-    B.dab(2.5, -7.0, 0.7, 0.5, `rgba(${s.dark},0.24)`);
+    B.dab(4.35, -2.32, 0.32, 0.38, `rgba(${k < 1 ? s.lit : s.pale},${0.45 * (0.5 + 0.5 * k)})`);
+    B.fill('M 1.6 -5.0 C 2.3 -4.8 3.1 -4.7 3.8 -4.8 C 3.9 -4.4 3.8 -4.0 3.6 -3.8 C 2.9 -3.9 2.2 -4.1 1.5 -4.4 Z', `rgba(${s.dark},${0.3 * (0.25 + 0.75 * k)})`, 0.22);
+    B.dab(2.5, -7.0, 0.7, 0.5, `rgba(${s.dark},${0.24 * k})`);
     B.fill('M -0.8 -3.3 C 0.4 -2.7 1.8 -2.2 3.2 -2.05 C 3.8 -2.0 4.3 -2.1 4.6 -2.2 L 4.8 0 L -1 0 Z', `rgba(${s.shade},0.7)`, 0.12);
     B.dab(3.6, -8.4, 1.1, 0.7, `rgba(${s.yellow},0.2)`);
     B.dab(5.0, -4.7, 0.45, 0.4, `rgba(${s.red},0.24)`);
     B.dab(3.0, -5.0, 1.0, 0.6, `rgba(${s.red},0.16)`);
     if (o.stubble) B.fill('M 1.0 -4.6 C 2.0 -4.3 3.2 -4.0 4.1 -4.05 C 4.5 -3.9 4.6 -3.4 4.55 -2.6 C 4.5 -2.1 4.2 -1.8 3.6 -1.75 C 2.4 -1.9 1.2 -2.3 0.3 -2.9 Z', o.stubbleCol ?? 'rgba(84,96,110,0.22)', 0.25);
     const MOT = [s.red, s.yellow, s.dark, s.pale];
-    for (let i = 0; i < 120; i++) { const x = 0.6 + r() * 4.4, y = -9.4 + r() * 7.4, rr = 0.06 + r() * 0.2; B.dab(x, y, rr, rr * (0.6 + r() * 0.5), `rgba(${MOT[(r() * MOT.length) | 0]},${0.04 + r() * 0.06})`, 1, 'source-over', r() * 3); }
-    for (let i = 0; i < 220; i++) { const x = 0.8 + r() * 4.0, y = -9.2 + r() * 7.0; B.dab(x, y, 0.012 + r() * 0.02, 0.01 + r() * 0.016, r() < 0.6 ? `rgba(${s.dark},0.2)` : `rgba(${s.pale},0.14)`); }
-    texture(g, 'skin', 0.4, 0.9);
+    for (let i = 0; i < 120; i++) { const x = 0.6 + r() * 4.4, y = -9.4 + r() * 7.4, rr = 0.06 + r() * 0.2; B.dab(x, y, rr, rr * (0.6 + r() * 0.5), `rgba(${MOT[(r() * MOT.length) | 0]},${(0.04 + r() * 0.06) * (0.3 + 0.7 * k)})`, 1, 'source-over', r() * 3); }
+    for (let i = 0; i < 220; i++) { const x = 0.8 + r() * 4.0, y = -9.2 + r() * 7.0; B.dab(x, y, 0.012 + r() * 0.02, 0.01 + r() * 0.016, r() < 0.6 ? `rgba(${s.dark},${0.2 * (0.3 + 0.7 * k)})` : `rgba(${s.pale},${0.14 * k})`); }
+    texture(g, 'skin', 0.4 * (0.5 + 0.5 * k), 0.9);
     // the street's cold on the back of the skull and the nape
     B.line('M -3.7 -7.6 C -3.95 -6.4 -3.75 -5.0 -3.1 -3.9', 'rgba(140,160,186,0.3)', 0.16, 0.14);
   });
@@ -206,6 +214,49 @@ export function glass(g, d, [x0, y0, x1, y1], o = {}) {
   });
 }
 
+// a point along a cubic [[x, y] × 4]
+export const bez = (P, t) => { const u = 1 - t; return [0, 1].map((k) => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]); };
+
+// Hair that flows (docs §10.35): the shape filled in its dark, then strands running
+// between two guide curves a and b (cubics), each with its own small wave, mid-toned,
+// and lit where they cross the sheen band (sheen: [t0, t1] along the flow).
+export function flowHair(g, d, o) {
+  const B = brushOf(g), r = rnd(o.seed ?? 3), { a, b, col, mid, lit, n = 90, w = 0.05, sheen = [0.25, 0.45], wave = 0.05, dark = 'rgba(0,0,0,0.35)' } = o;
+  B.fill(d, col, 0.03);
+  B.inside(d, () => {
+    for (let i = 0; i < n; i++) {
+      const f = r(), ph = r() * 6.28, fr = 1.2 + r() * 1.4, t0 = r() * 0.12, t1 = 0.8 + r() * 0.2, pts = [];
+      for (let k = 0; k <= 18; k++) {
+        const t = t0 + (t1 - t0) * k / 18, A = bez(a, t), Bq = bez(b, t), ax = Bq[0] - A[0], ay = Bq[1] - A[1], L = Math.hypot(ax, ay) || 1;
+        const wv = Math.sin(t * fr * 6.28 + ph) * wave;
+        pts.push([A[0] + ax * f + ax / L * wv, A[1] + ay * f + ay / L * wv, t]);
+      }
+      const path = (q) => 'M ' + q.map((p) => `${p[0].toFixed(3)} ${p[1].toFixed(3)}`).join(' L ');
+      const shade = r() < 0.3;
+      B.line(path(pts), shade ? dark : mid, w * (0.6 + r() * 0.8), w * 0.3, shade ? 0.6 : 0.5);
+      const sh = pts.filter((p) => p[2] > sheen[0] + (r() - 0.5) * 0.08 && p[2] < sheen[1] + (r() - 0.5) * 0.08);
+      if (sh.length > 1 && r() < 0.8) B.line(path(sh), lit, w * (0.4 + r() * 0.5), w * 0.3, 0.35 + r() * 0.35);
+    }
+  });
+}
+
+// A braid along a cubic P (docs §10.35): the plaits crossing left and right, each
+// lobe lit on its top, the creases between them dark; w its width.
+export function braid(g, P, o) {
+  const B = brushOf(g), { col, lit, dark = 'rgba(8,4,2,0.7)', w = 0.3 } = o;
+  let len = 0, prev = bez(P, 0);
+  for (let k = 1; k <= 20; k++) { const q = bez(P, k / 20); len += Math.hypot(q[0] - prev[0], q[1] - prev[1]); prev = q; }
+  const n = Math.max(4, Math.round(len / (w * 0.55)));
+  B.line(`M ${P[0].join(' ')} C ${P[1].join(' ')} ${P[2].join(' ')} ${P[3].join(' ')}`, col, w * 0.9, w * 0.1);
+  for (let j = 0; j < n; j++) {
+    const t = (j + 0.5) / n, [x, y] = bez(P, t), [x2, y2] = bez(P, Math.min(1, t + 0.01)), ang = Math.atan2(y2 - y, x2 - x), side = j % 2 ? 1 : -1, taper = t > 0.88 ? 1 - (t - 0.88) / 0.2 : 1;
+    const nx = -Math.sin(ang) * side * w * 0.16, ny = Math.cos(ang) * side * w * 0.16;
+    B.dab(x + nx, y + ny, w * 0.42 * taper, w * 0.26 * taper, col, 1, 'source-over', ang + side * 0.6);
+    B.dab(x + nx - Math.cos(ang) * w * 0.08, y + ny - Math.sin(ang) * w * 0.08 - w * 0.05, w * 0.24 * taper, w * 0.08 * taper, lit, 1, 'source-over', ang + side * 0.6);
+    B.dab(x - nx * 0.6 + Math.cos(ang) * w * 0.22, y - ny * 0.6 + Math.sin(ang) * w * 0.22, w * 0.18 * taper, w * 0.05, dark, 1, 'source-over', ang - side * 0.6);
+  }
+}
+
 // A skin crease: a dark line, the edge under it catching the light from above.
 export function crease(g, d, w = 0.06, a = 0.5, s = SKINS.fair) {
   const B = brushOf(g);
@@ -236,7 +287,7 @@ export function face(g, o) {
   // shape, the skin, and where the features sit; `at` moves the next strokes
   const PT = o.paint || {};
   const F = { g, B, B0, s, P, SH, W: Wf, wp, age, o, f, dn, dm, de, cr: (d, w, a) => crease(g, wp(d), w, a, s), at: (x = 0, y = 0) => { ox = x; oy = y; }, inside: (fn) => B0.inside(P, fn) };
-  skin(g, P, s, { seed: o.seed ?? 77, stubble: !!o.shave, stubbleCol: o.shave, warp: SH.W });
+  skin(g, P, s, { seed: o.seed ?? 77, stubble: !!o.shave, stubbleCol: o.shave, warp: SH.W, soft: o.soft });
   B.inside(P, () => {
     F.at(dn, f ? -0.05 : 0); (PT.nose || noseStd)(F);
     F.at(dm, 0); (PT.folds || foldsStd)(F); (PT.mouth || mouthStd)(F);

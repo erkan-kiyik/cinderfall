@@ -569,3 +569,36 @@ ortasına çerçeveli; figürü karartan gölge hafifledi ve yüze ateşin sıca
 artık seçiliyor.
 
 Gall'ın kafası kendi çizimi; dokunulmadı. Çizim sürümü `d4-61`.
+
+### 10.35 Skye ve Vesper: yüzler yeniden
+
+§10.34'ten sonra iki kadın operatörün yüzü beğenilmedi. Sebepler: ikisi de
+erkek yüzleri için yazılmış ışık düzlemlerini taşıyordu (elmacık altında
+koyu çukur, şakakta gölge, tende lekeler; koyu tende bunlar kir gibi
+duruyordu); yaka çenenin hizasına kadar çıkıp çeneyi ve boynu yutuyordu;
+alt yüz uzun ve ağırdı; Skye'ın ağzı fazla önde, çenesi geride, burnu
+geniş ve kalkıktı; saçlar düz kesik lekelerdi.
+
+- **Yumuşak ten** (`skin(…, { soft })`): elmacık altı çukur ve şakak gölgesi
+  kalkıyor, lekeler ve gözenekler inceliyor, yanaktaki ışık şeridi
+  yumuşuyor; ışıklar beyaz değil tenin kendi açık rengiyle (gri leke gibi
+  durmasın diye).
+- **Yeni tenler:** `rose` (Vesper: açık, pembe-sıcak), `umber` (Skye: sıcak,
+  derin kahve, ışığı tutan).
+- **Daha kısa alt yüz** (`shaper` → `lower`): ağzın altı ağıza doğru
+  toplanıyor (çene ~0,3 birim yukarı).
+- **İnce burun** (`noseSoft`): burun sırtında tek bir yumuşak ışık çizgisi
+  (ışık topağı yok), uçta yumuşak ışık, kanat ve burun deliği hafif; çene
+  altında katlanma çizgisi yok (`foldsSoft`).
+- **Yakalar aşağıda:** Vesper'ın balıkçı yakası ve Skye'ın bandanası boynun
+  ortasına indi; çene hattı ve boyun görünüyor.
+- **Saç** (`flowHair`, `braid`): saç artık iki kılavuz eğri arasında akan
+  tellerle çiziliyor (her telin kendi dalgası, ışığın düştüğü bantta parlak
+  teller).
+
+| | Önce | Şimdi |
+| --- | --- | --- |
+| SKYE | Ağız önde, çene geride, geniş kalkık burun; yanakta koyu lekeler; kısa saç düz bir leke; bandana çeneye kadar | Dengeli profil: ince düz burun, yuvarlak uç; dolgun dudak, yarım gülüş ve gamze; belirgin çene, uzun boyun; saçı kepin altında geriye taranmış, şakakta ince kıvrımlar; örgüler ensede krem bir lastikle toplanıp sırtına düşüyor; elmacıkta, alında, üst dudakta ve çenede ışık |
+| VESPER | Alt yüz uzun ve ağır, çene altında katlanma; saç iki düz kızıl leke; gözlükte kalın parlama | Kısa düz burun, ucu hafif kalkık; daha kısa alt yüz, açık çene hattı; koyu kumral saç: ayrımdan alnına süzülen perçem, yanaktan çeneye dalgalı tutam; çiller daha hafif; gözlük parlaması inceldi, göz görünüyor |
+
+Çizim sürümü `d4-62` (telefonlar yeniden boyar).
