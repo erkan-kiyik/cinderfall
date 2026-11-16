@@ -10,7 +10,7 @@
 import { M, tone, mat } from '../style.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
-  UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
+  UPPER_LOW as UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
   glove, kneePad, headShape, skinGlaze, skinDetail, neck, korBand, stitch, rivet, buckle, grime, scuffs,
   clothFolds, brushOf, paintEar,
 } from './body.js';
@@ -46,8 +46,10 @@ const WIND = blob([
 function torso(g) {
   cel(g, PELVIS, PAL.shorts, { sh: 1.1, hl: 0.4 });
   cel(g, TORSO, PAL.sweat, { sh: 1.0, hl: 0.3, line: false });
-  // the hood rolled up at the back of the neck
-  cel(g, blob([[-6.6, -21.6], [-4.4, -24.6], [-1.4, -25.2], [-0.6, -23.0], [-3.0, -21.6], [-5.4, -20.2]]), PAL.wind, { sh: 0.7, hl: 0.3 });
+  // the hood rolled up at the back of the neck, lying low and flat (docs §10.36)
+  const ROLLH = blob([[-6.6, -21.2], [-4.8, -22.6], [-2.4, -23.1], [-1.4, -22.5], [-3.2, -21.4], [-5.4, -20.6]]);
+  cel(g, ROLLH, PAL.wind, { sh: 0.6, hl: 0.3 });
+  clothFolds(g, ROLLH, [[[-5.8, -21.4], [-4.0, -22.2], [-2.2, -22.6]]], PAL.wind);
   cel(g, WIND, PAL.wind, { sh: 2.0, hl: 0.6 });
   clip(g, WIND, () => {
     // the strip across the back, the zip, the elastic hem gathering the cloth
@@ -120,20 +122,21 @@ function chest(g) {
   // the windbreaker's stand collar round the neck, unzipped at the throat over the dark
   // sweatshirt's neck; the zip's pull hanging
   const B = brushOf(g), W = PAL.wind;
-  const CREW = 'M 1.0 -24.4 C 1.8 -24.6 2.8 -24.5 3.5 -24.1 L 3.7 -22.6 C 2.8 -22.4 1.8 -22.5 1.0 -22.8 Z';
+  const CREW = 'M 1.4 -23.45 C 2.0 -23.6 2.6 -23.55 3.1 -23.3 L 3.3 -22.4 C 2.6 -22.25 1.9 -22.3 1.4 -22.6 Z';
   cel(g, CREW, PAL.sweat, { sh: 0.4, hl: 0.25, lw: 0.14 });
-  B.inside(CREW, () => { for (let x = 1.2; x < 3.6; x += 0.18) B.line(`M ${x} -24.5 L ${x + 0.05} -22.6`, 'rgba(10,10,12,0.4)', 0.05, 0.02); });
-  const COL = 'M -3.4 -22.2 C -3.5 -23.4 -3.2 -24.6 -2.4 -25.2 C -1.0 -25.6 0.6 -25.4 1.6 -24.9 C 2.1 -24.7 2.4 -24.5 2.6 -24.3 L 2.9 -22.4 C 1.8 -22.0 0.4 -21.9 -0.9 -21.9 C -1.9 -21.9 -2.8 -22.0 -3.4 -22.2 Z';
+  B.inside(CREW, () => { for (let x = 1.4; x < 3.4; x += 0.16) B.line(`M ${x} -24.1 L ${x + 0.05} -22.4`, 'rgba(10,10,12,0.4)', 0.05, 0.02); });
+  // (docs §10.36: a band round the base of the neck, not a roll up to the jaw)
+  const COL = 'M -2.4 -22.05 C -2.5 -22.55 -2.4 -23.0 -2.0 -23.3 C -0.8 -23.6 0.9 -23.6 2.3 -23.3 C 2.5 -23.22 2.65 -23.12 2.75 -23.02 L 2.95 -22.2 C 1.8 -21.95 0.4 -21.85 -0.9 -21.85 C -1.6 -21.85 -2.0 -21.92 -2.4 -22.05 Z';
   cel(g, COL, W, { sh: 0.8, hl: 0.4 });
   B.inside(COL, () => {
-    B.line('M -2.6 -25.1 C -1.0 -25.5 0.6 -25.32 1.6 -24.82 C 2.1 -24.62 2.4 -24.42 2.6 -24.22', 'rgba(255,236,190,0.4)', 0.14, 0.08);
-    B.fill('M -5 -23.4 C -2 -23.2 1 -23.0 4 -22.6 L 4 -21 L -5 -21 Z', 'rgba(40,28,8,0.35)', 0.3);
-    B.dab(-2.8, -23.4, 0.9, 1.4, 'rgba(40,28,8,0.4)');
+    B.line('M -2.0 -23.27 C -0.8 -23.57 0.9 -23.57 2.3 -23.27 C 2.5 -23.19 2.65 -23.09 2.75 -22.99', 'rgba(255,236,190,0.4)', 0.1, 0.05);
+    B.fill('M -5 -22.6 C -2 -22.5 1 -22.4 4 -22.2 L 4 -21 L -5 -21 Z', 'rgba(40,28,8,0.3)', 0.2);
+    B.dab(-2.4, -22.6, 0.6, 0.8, 'rgba(40,28,8,0.35)');
   });
-  stitch(g, 'M -2.8 -24.7 C -1.2 -25.1 0.6 -25.0 2.3 -24.3', W.l, 0.05, 0.5);
+  stitch(g, 'M -2.2 -23.05 C -0.8 -23.35 0.9 -23.35 2.4 -23.05', W.l, 0.05, 0.5);
   // the zip's teeth down the open edge and its pull
-  B.line('M 2.56 -24.2 L 2.84 -22.4', '#3a3226', 0.12, 0.01);
-  for (let y = -24.1; y < -22.5; y += 0.16) B.line(`M ${2.5 + (y + 24.2) * 0.17} ${y} l 0.16 0`, 'rgba(200,190,160,0.5)', 0.04);
+  B.line('M 2.74 -23.02 L 2.93 -22.25', '#3a3226', 0.12, 0.01);
+  for (let y = -22.95; y < -22.35; y += 0.16) B.line(`M ${2.68 + (y + 23.0) * 0.25} ${y} l 0.16 0`, 'rgba(200,190,160,0.5)', 0.04);
   B.fill('M 2.86 -22.9 L 3.12 -22.92 L 3.18 -22.1 L 2.94 -22.06 Z', '#2a2620', 0.01);
   // the bag's wide strap across the chest, its cam buckle
   const STRAP = 'M -3.6 -22.0 L -1.8 -22.6 L 6.6 -8.6 L 5.0 -7.6 Z';
@@ -274,14 +277,16 @@ function foot(g, ctx) {
 const SCAP = 'M -3.9 -7.3 C -4.3 -9.2 -3.3 -10.9 -1.3 -11.5 C 0.8 -12.0 3.0 -11.6 4.0 -10.4 C 4.4 -9.9 4.5 -9.3 4.42 -8.8 C 2.6 -9.0 0.8 -8.9 -0.8 -8.5 C -2.0 -8.2 -3.0 -7.8 -3.9 -7.3 Z';
 const SPEAK = 'M 3.6 -8.9 C 4.2 -9.2 4.9 -9.8 5.3 -10.6 C 5.42 -10.9 5.3 -11.06 5.04 -10.98 C 4.5 -10.8 3.9 -10.5 3.3 -10.2 C 3.1 -9.8 3.2 -9.3 3.6 -8.9 Z';
 const SHAIR = 'M -3.95 -7.3 C -3.0 -7.8 -2.0 -8.2 -0.8 -8.5 C 0.4 -8.8 1.6 -8.9 2.6 -8.85 C 2.5 -8.4 2.2 -8.0 1.8 -7.7 C 1.3 -7.4 1.0 -7.0 0.9 -6.5 L 0.5 -6.6 C -0.2 -6.9 -0.9 -6.8 -1.2 -6.3 C -1.6 -5.6 -2.1 -4.9 -2.8 -4.4 C -3.5 -4.9 -3.9 -6.0 -3.95 -7.3 Z';
-const SCOLL = 'M 2.7 -1.3 C 1.9 -1.2 1.0 -1.5 0.2 -2.0 C -0.8 -2.5 -2.2 -2.8 -3.4 -2.6 C -4.2 -1.8 -4.4 -0.5 -4.0 0.8 C -2.4 1.8 0.6 2.0 2.8 1.7 C 3.6 1.4 3.9 0.6 3.7 -0.2 C 3.5 -0.7 3.2 -1.1 2.7 -1.3 Z';
+const SCOLL = 'M 2.5 -1.25 C 1.8 -1.15 0.9 -1.35 0.0 -1.65 C -0.9 -1.95 -1.7 -2.05 -2.3 -1.85 C -2.6 -1.1 -2.6 0.0 -2.35 0.85 C -1.0 1.25 1.0 1.35 2.65 1.05 C 2.95 0.4 2.95 -0.5 2.5 -1.25 Z';
+// the bandana's point, hanging at the front of the roll
+const STRI = 'M 1.9 0.2 C 2.6 0.3 3.15 0.8 3.3 1.5 C 3.05 2.1 2.6 2.55 2.2 2.8 C 2.05 2.0 1.95 1.1 1.9 0.2 Z';
 function head(g) {
   const S = SKINS.umber, B = brushOf(g), Cr = PAL.cream, C = PAL.bandana;
-  neck(g, PAL.skin, { glaze: true });
+  neck(g, PAL.skin, { glaze: true, slim: 1 });
   // her own face (docs §10.29, §10.35): young, a smooth forehead, a fine straight nose with a
   // rounded tip, full lips, a clear chin and a neat jawline down to a long neck
-  const FS = face(g, { paint: FACES.skye, prof: 'f', s: S, soft: 0.85, age: 0.02, seed: 61, iris: '#2a1810', white: '#b4a498', brow: ['#140c08', 0.08, 1.0], lips: '128,58,50', lash: true,
-    shape: { fore: 0.15, brow: -0.15, nasion: -0.15, nose: -0.15, hump: -0.2, tip: 0.2, wing: 0.3, lips: 0.25, chin: 0.25, long: -0.2, jaw: -0.35, eye: -0.1, lower: 1 } });
+  const FS = face(g, { paint: FACES.skye, prof: 'f', s: S, soft: 0.85, earK: 0.86, age: 0.02, seed: 61, iris: '#2a1810', white: '#b4a498', brow: ['#140c08', 0.08, 1.0], lips: '128,58,50', lash: true,
+    shape: { fore: 0.15, brow: -0.15, nasion: -0.15, nose: -0.15, hump: -0.2, tip: 0.2, wing: 0.3, lips: 0.15, chin: 0.38, long: -0.2, jaw: -0.35, eye: -0.1, lower: 1 } });
   const COL = FS.w(SCOLL);
   // her hair pulled back from the face, the strands running back to the nape; the edges
   // laid in small waves at the temple
@@ -289,15 +294,20 @@ function head(g) {
     a: [[2.6, -8.85], [1.0, -8.9], [-1.6, -8.4], [-3.9, -7.3]], b: [[0.9, -6.5], [-0.4, -6.9], [-1.8, -5.6], [-2.9, -4.5]] });
   for (const [x, y, k] of [[2.55, -8.7, 1], [2.15, -8.25, 0.9], [1.7, -7.8, 0.8], [1.25, -7.3, 0.7]]) B.line(`M ${x} ${y} c ${0.12 * k} ${0.04 * k} ${0.16 * k} ${0.16 * k} ${0.06 * k} ${0.22 * k} c ${-0.08 * k} ${0.04 * k} ${-0.04 * k} ${0.14 * k} ${0.06 * k} ${0.16 * k}`, 'rgba(18,10,7,0.75)', 0.025, 0.008);
   // the earbud and its white cable, the steel stud
-  B.line('M -0.1 -5.4 C -0.5 -4.4 -0.7 -3.0 -0.4 -0.4', '#d8dadc', 0.12, 0.01);
-  cel(g, ell(0.18, -5.42, 0.26, 0.22), mat(tone('#ffffff', '#e4e6e8', '#b4b8bc', '#6a6e72'), 'paint', 0.2), { sh: 0.2, hl: 0.3, gloss: 0.4 });
-  B.fill(ell(0.0, -4.44, 0.09, 0.09), PAL.steel.l, 0.005);
+  B.line('M 0.0 -5.3 C -0.3 -4.4 -0.45 -3.0 -0.3 -1.2', 'rgba(214,216,220,0.9)', 0.055, 0.01);
+  cel(g, ell(0.1, -5.38, 0.19, 0.16), mat(tone('#ffffff', '#e4e6e8', '#b4b8bc', '#6a6e72'), 'paint', 0.2), { sh: 0.2, hl: 0.3, gloss: 0.4 });
+  B.fill(ell(-0.04, -4.6, 0.07, 0.07), PAL.steel.l, 0.005);
   // the bandana down round the neck: navy, the cream print, its knot behind
   cel(g, COL, C, { sh: 1.0, hl: 0.45 });
-  B.inside(COL, () => { const r = rnd(65); for (let k = 0; k < 30; k++) { const x = -4 + r() * 9, y = -3.2 + r() * 4.6; if (!inP(g, COL, x, y)) continue; B.fill(ell(x, y, 0.13, 0.1), Cr.m, 0.005, 0.85); } texture(g, 'canvas', 0.35, 0.7); });
-  clothFolds(g, COL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], C);
-  cel(g, ell(-3.4, -1.4, 0.5, 0.46), C, { sh: 0.6, hl: 0.4 });
-  for (const d of ['M -3.6 -1.0 C -4.2 -0.4 -4.4 0.4 -4.3 1.2 C -4.0 1.3 -3.7 1.2 -3.6 1.0 C -3.6 0.3 -3.4 -0.3 -3.2 -0.8 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3 });
+  const TRI = FS.w(STRI);
+  const dots = (d) => B.inside(d, () => { const r = rnd(65); for (let k = 0; k < 40; k++) { const x = -3 + r() * 6.6, y = -2.2 + r() * 5.2; if (!inP(g, d, x, y)) continue; B.fill(ell(x, y, 0.08, 0.065), Cr.m, 0.005, 0.85); } texture(g, 'canvas', 0.35, 0.7); });
+  dots(COL);
+  clothFolds(g, COL, [[[2.6, -0.6], [1.2, -0.4], [-0.6, -0.9], [-2.2, -1.2]], [[2.6, 0.5], [1.0, 0.7], [-0.8, 0.4], [-2.3, 0.1]]], C);
+  cel(g, TRI, C, { sh: 0.6, hl: 0.4 }); dots(TRI);
+  clothFolds(g, TRI, [[[2.1, 0.4], [2.5, 1.4], [2.4, 2.4]]], C);
+  // the knot at the back of the neck, its two ends
+  cel(g, ell(-2.45, -0.7, 0.36, 0.32), C, { sh: 0.6, hl: 0.4 });
+  for (const d of ['M -2.6 -0.45 C -3.0 0.0 -3.15 0.6 -3.05 1.2 C -2.85 1.25 -2.65 1.15 -2.6 1.0 C -2.6 0.45 -2.5 0.0 -2.35 -0.35 Z']) cel(g, d, C, { sh: 0.5, hl: 0.3 });
   // the braids: gathered at the nape in a cream band, falling down her back over the bandana
   const T = [-3.3, -4.7];
   for (const [ex, ey, bend] of [[-4.5, 0.9, -0.3], [-4.1, 1.3, -0.15], [-3.7, 1.0, 0.0], [-3.3, 1.4, 0.15], [-2.95, 0.8, 0.3]]) braid(g, [T, [T[0] + bend - 0.15, T[1] + 1.8], [ex + bend * 0.5, ey - 2.2], [ex, ey]], { col: '#1a100b', lit: 'rgba(150,110,84,0.7)', w: 0.32 });
@@ -313,12 +323,15 @@ function head(g) {
   B.line('M -3.9 -7.3 C -3.0 -7.8 -2.0 -8.2 -0.8 -8.5 C 0.8 -8.9 2.6 -9.0 4.42 -8.8', Cr.k, 0.12, 0.04, 0.7);
   cel(g, SPEAK, Cr, { sh: 0.4, hl: 0.4 });
   B.inside(SPEAK, () => { B.line('M 3.5 -9.4 C 4.1 -9.8 4.7 -10.3 5.1 -10.8', PAL.sky.m, 0.16, 0.02); B.dab(4.0, -9.4, 0.8, 0.4, 'rgba(60,46,30,0.3)'); });
-  // the glasses pushed up on the cap: the arm round it, the frame, the sky-blue mirror
-  g.save(); g.translate(0.1, -3.2); g.rotate(-0.08);
-  strap(g, 'M 2.7 -6.8 C 1.6 -6.9 0.6 -6.8 -0.6 -6.5', 0.18, '#1d1f22', '#060708', 'rgba(140,150,160,0.5)');
-  B.fill('M 2.7 -7.1 C 3.6 -7.32 4.6 -7.3 5.0 -7.06 C 5.08 -6.7 5.02 -6.3 4.86 -5.98 C 4.3 -5.8 3.5 -5.8 2.86 -5.98 C 2.66 -6.3 2.62 -6.72 2.7 -7.1 Z', '#16181b', 0.01);
-  glass(g, 'M 2.8 -7.0 C 3.6 -7.2 4.5 -7.18 4.9 -6.98 C 4.96 -6.68 4.92 -6.36 4.78 -6.1 C 4.28 -5.92 3.54 -5.92 2.94 -6.08 C 2.76 -6.36 2.74 -6.7 2.8 -7.0 Z', [2.76, -7.2, 4.96, -5.92], { tint: ['#123a66', '#8fd0ff', '#e8c070'], band: 'rgba(240,250,255,0.55)', a: 0.95, fire: 'rgba(255,200,120,0.5)' });
-  g.restore();
+  // the sport glasses pushed up on the cap (docs §10.36): a wraparound lens seen from the
+  // side, curving back from the front, its thin top rim, the arm lying back along the cap
+  B.line('M 3.35 -10.12 C 2.4 -10.18 1.4 -10.04 0.3 -9.76', '#1d1f22', 0.13, 0.01);
+  B.line('M 3.35 -10.17 C 2.4 -10.23 1.4 -10.09 0.3 -9.81', 'rgba(150,160,170,0.5)', 0.035, 0.01);
+  B.line('M 0.9 -9.9 L 0.3 -9.76', PAL.sky.m, 0.13, 0.01);
+  const LENS = 'M 3.3 -10.3 C 3.9 -10.5 4.5 -10.46 4.86 -10.28 C 4.98 -10.0 4.9 -9.72 4.66 -9.58 C 4.12 -9.48 3.62 -9.56 3.32 -9.74 C 3.2 -9.92 3.22 -10.14 3.3 -10.3 Z';
+  glass(g, LENS, [3.2, -10.5, 4.98, -9.48], { tint: ['#123a66', '#8fd0ff', '#e8c070'], band: 'rgba(240,250,255,0.5)', a: 0.95, fire: 'rgba(255,200,120,0.45)' });
+  B.line('M 3.3 -10.3 C 3.9 -10.5 4.5 -10.46 4.86 -10.28', '#16181b', 0.07, 0.01);
+  B.line('M 3.3 -10.3 C 3.22 -10.14 3.2 -9.92 3.32 -9.74', '#16181b', 0.05, 0.01);
 }
 
 export const KITE = {

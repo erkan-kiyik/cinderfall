@@ -22,6 +22,9 @@ export function scaledHead(g, fn) { g.save(); g.scale(HEAD_K, HEAD_K); fn(); g.r
 // v3 (docs §10.1): real proportions, the limbs slimmer than the heroic v2.
 // upper arm: round deltoid cap, biceps on the front, triceps behind
 export const UPPER = limb(11.6, [[0, 2.7], [0.18, 2.68], [0.45, 2.42], [0.75, 2.05], [1, 1.88]], [[0, 2.75], [0.25, 2.65], [0.55, 2.38], [0.85, 1.95], [1, 1.85]], 0.6, 0.5);
+// the same arm with a lower cap: a narrower shoulder that sits into the torso instead of
+// rising over it like a pad (the women's builds, docs §10.36)
+export const UPPER_LOW = limb(11.6, [[0, 2.5], [0.18, 2.5], [0.45, 2.3], [0.75, 1.98], [1, 1.82]], [[0, 2.55], [0.25, 2.48], [0.55, 2.28], [0.85, 1.9], [1, 1.8]], 0.28, 0.5);
 // forearm: thick below the elbow, tapering to the wrist
 export const FORE = limb(10.4, [[0, 1.98], [0.22, 2.16], [0.55, 1.88], [1, 1.48]], [[0, 1.94], [0.2, 2.2], [0.5, 1.92], [1, 1.44]], 0.5, 0.4);
 // thigh: full at the hip, quad on the front, narrowing to the knee
@@ -259,8 +262,9 @@ export function softBrow(g, x0, y0, x1, y1, lift, col, seed = 3) {
 
 // The neck: a column leaning up into the skull, not a cut polygon; the jaw's
 // shade across its top, the key light down its front. `glaze` for bare skin.
-export function neck(g, t, { wide = 0, sh = 0.8, glaze = false } = {}) {
-  const l = -1.7 - wide, r = 2.0 + wide * 0.4;
+export function neck(g, t, { wide = 0, sh = 0.8, glaze = false, slim = 0 } = {}) {
+  // slim: a woman's neck, narrower front to back (docs §10.36)
+  const l = -1.7 - wide + slim * 0.55, r = 2.0 + wide * 0.4 - slim * 0.2;
   const d = `M ${l} 1.2 C ${l - 0.2} -0.6 ${l - 0.2} -2.6 ${l - 0.1} ${-4.3 - wide * 0.3} C -0.6 -4.1 0.5 -3.8 ${1.4 + wide * 0.5} -3.1 C ${r + 0.1} -2.2 ${r + 0.1} -0.4 ${r} 1.0 C 0.8 1.3 -0.5 1.3 ${l} 1.2 Z`;
   cel(g, d, t, { sh, hl: 0.25 });
   if (!glaze) return;

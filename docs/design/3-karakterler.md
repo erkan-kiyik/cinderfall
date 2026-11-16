@@ -602,3 +602,40 @@ geniş ve kalkıktı; saçlar düz kesik lekelerdi.
 | VESPER | Alt yüz uzun ve ağır, çene altında katlanma; saç iki düz kızıl leke; gözlükte kalın parlama | Kısa düz burun, ucu hafif kalkık; daha kısa alt yüz, açık çene hattı; koyu kumral saç: ayrımdan alnına süzülen perçem, yanaktan çeneye dalgalı tutam; çiller daha hafif; gözlük parlaması inceldi, göz görünüyor |
 
 Çizim sürümü `d4-62` (telefonlar yeniden boyar).
+
+### 10.36 Skye ve Vesper: işaretlenen yerler
+
+§10.35'ten sonra karşılaştırma görselinde işaretlenen yerler düzeltildi.
+
+**Vesper**
+- **Başlık ve kulaklık:** başlık başın üstünde sivri ve yüksekti; artık başa
+  yakın ve yuvarlak. Kulaklığın bandı başlığın tepesinden dışarı
+  taşıyordu; şimdi başlığın üstünde yatıp tepede bitiyor. Kulaklık daha
+  küçük, yastığı ve bağlantısı var.
+- **Ağız ve çene:** mikrofon dudağın üstündeydi; şimdi yanağı izleyip ağzın
+  köşesinin yanında duruyor. Dudak geri, çene ileri alındı.
+- **Omuzlar:** başlığın ense kısmı omuzda yuvarlak bir topak olarak
+  çiziliyordu; artık başlığın kumaşı başın arkasından omza düz iniyor (başın
+  çiziminde, başlığın altında). Balıkçı yaka boynun iki katı genişlikte bir
+  balondu; şimdi boğaza oturan ince, fitilli bir yaka, kıvrımı ışıkta. Yakanın
+  önde açık duran ucu küçüldü, yassılaştı.
+
+**Skye**
+- **Kepteki gözlük:** yassı, kalın çerçeveli bir dikdörtgendi; şimdi
+  yandan görülen saran bir spor gözlük: kavisli ayna cam, ince üst çerçeve,
+  kepin üstünden geriye uzanan sap.
+- **Kulak ve boyun:** boyun erkek boynu genişliğindeydi (`neck(…, { slim })`:
+  daha ince); kulak küçüldü (`face(…, { earK })`), kulaklık ve kablosu inceldi.
+- **Ağız ve çene:** dudak geri, çene ileri alındı.
+- **Yaka ve göğüs:** ceketin dik yakası çeneye kadar çıkan kalın bir
+  topaktı; şimdi boynun dibinde ince bir bant. Bandana kalın bir simitti;
+  şimdi boyna sarılı ince bir rulo, önde sarkan ucu ve arkada küçük düğümü
+  var.
+- **Sırt:** ensede yuvarlanmış kapüşon büyük bir topaktı; şimdi alçak ve
+  yassı, örgüler üstünden düşüyor.
+
+**İkisinde:** omuz başı (kolun üst ucu) omzun üstüne yastık gibi taşıyordu;
+kadınlarda daha alçak ve dar (`UPPER_LOW`). Bütün pozlarda (bekleme, nişan,
+koşu, çömelme, yukarı) omuzda boşluk açılmadığı kontrol edildi.
+
+Çizim sürümü `d4-63`.

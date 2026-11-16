@@ -15,7 +15,7 @@ import { tone, mat, M } from '../style.js';
 import { Brush, rnd } from '../paint.js';
 import {
   cel, fill, stroke, clip, blob, curve, fold,
-  UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
+  UPPER_LOW as UPPER, FORE, THIGH, SHIN, TORSO, PELVIS,
   glove, boot, korBand, stitch, rivet, buckle, grime, scuffs,
   neck, clothFolds,
 } from './body.js';
@@ -199,18 +199,16 @@ function records(g) {
 function chest(g) {
   const J = PAL.jacket, W = PAL.web;
   // the hood's back where it comes out of the collar, lying in folds on the shoulders
-  const BACK = blob([[-6.0, -21.2], [-6.2, -24.0], [-4.6, -26.0], [-2.4, -26.2], [-1.6, -24.0], [-2.2, -21.8]]);
-  cel(g, BACK, J, { sh: 0.9, hl: 0.35 });
-  clothFolds(g, BACK, [[[-5.6, -23.0], [-4.2, -23.6], [-2.6, -23.2]], [[-5.4, -24.8], [-3.8, -25.4], [-2.4, -25.2]]], J);
-  // the roll neck round the throat, going on up over the chin
-  const ROLL = blob([[-3.2, -21.8], [-3.4, -24.8], [-2.2, -25.9], [-0.2, -25.9], [1.8, -25.1], [3.2, -24.1], [3.5, -22.0], [0.2, -21.4]]);
-  cel(g, ROLL, PAL.jumper, { sh: 0.9, hl: 0.4 });
-  clip(g, ROLL, () => { for (let x = -3.2; x < 3.6; x += 0.34) stroke(g, `M ${x} -26.2 L ${x + 0.25} -21.6`, PAL.jumper.d, 0.09, 0.5); });
-  clothFolds(g, ROLL, [[[-2.6, -23.2], [-0.4, -23.8], [2.6, -23.0]]], PAL.jumper);
+  // the hood's base gathered round the back and sides of the neck, where it leaves the
+  // collar, lying in soft folds (docs §10.36: no lump on the shoulders)
+  // the roll neck snug round the throat in front of it, ribbed
+  const ROLL = 'M 1.4 -25.1 C 2.2 -25.4 3.1 -25.15 3.5 -24.4 C 3.7 -23.4 3.6 -22.4 3.35 -21.5 C 2.6 -21.25 1.9 -21.3 1.4 -21.6 Z';
+  cel(g, ROLL, PAL.jumper, { sh: 0.7, hl: 0.4 });
+  clip(g, ROLL, () => { for (let x = 1.2; x < 3.8; x += 0.2) stroke(g, `M ${x} -25.6 L ${x + 0.08} -21.2`, PAL.jumper.d, 0.07, 0.5); });
   // the collar's point lying open on the front
-  const POINT = blob([[2.6, -22.6], [3.8, -24.0], [5.2, -23.2], [5.8, -21.0], [4.6, -19.8], [3.2, -21.0]]);
-  cel(g, POINT, J, { sh: 0.6, hl: 0.35, lw: 0.24 });
-  stitch(g, 'M 3.6 -23.4 C 4.6 -22.8 5.2 -21.8 5.4 -20.8', J.l, 0.06, 0.55);
+  const POINT = 'M 3.0 -22.1 C 3.4 -22.7 4.0 -23.05 4.7 -23.05 C 5.15 -22.45 5.4 -21.5 5.4 -20.5 C 4.8 -20.3 4.2 -20.6 3.7 -21.1 C 3.4 -21.4 3.15 -21.75 3.0 -22.1 Z';
+  cel(g, POINT, J, { sh: 0.5, hl: 0.35, lw: 0.2 });
+  stitch(g, 'M 3.4 -22.3 C 4.0 -22.7 4.5 -22.75 4.75 -22.7 C 5.05 -22.1 5.2 -21.4 5.2 -20.7', J.l, 0.05, 0.55);
   // the pack's harness: a strap over each shoulder and one across the chest
   const NEAR = 'M -3.4 -23.0 L -1.6 -23.4 C -0.4 -21.0 0.4 -17.0 0.6 -10.0 L -1.0 -9.8 C -1.2 -16.6 -2.0 -20.6 -3.4 -23.0 Z';
   const FAR = 'M 3.0 -22.6 L 4.4 -22.8 C 5.2 -20.0 5.6 -16.0 5.6 -11.0 L 4.4 -10.8 C 4.4 -15.6 4.0 -19.6 3.0 -22.6 Z';
@@ -318,18 +316,20 @@ function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { lace: '#2a2016' }); }
 // round steel-rimmed glasses, auburn hair falling out of the hood across the brow and down
 // past the cheek. The hood up behind the face, over the ear; the roll neck down under the
 // chin; the headset over the hood, its boom at the mouth. Rain on the cloth.
-const VHOOD = 'M 4.3 -9.85 C 3.6 -11.0 1.8 -11.9 -0.4 -11.9 C -2.8 -11.8 -4.6 -10.4 -5.2 -8.2 C -5.6 -6.2 -5.4 -3.8 -4.5 -2.0 C -3.7 -0.6 -2.0 0.8 0.0 1.2 L 1.6 1.0 C 1.5 -0.4 1.4 -1.8 1.5 -3.0 C 1.6 -4.6 1.8 -6.2 2.1 -7.4 C 2.4 -8.6 3.2 -9.5 4.3 -9.85 Z';
-const VLINE = 'M 4.3 -9.85 C 3.2 -9.5 2.4 -8.6 2.1 -7.4 C 1.8 -6.2 1.6 -4.6 1.5 -3.0 C 1.4 -1.8 1.5 -0.4 1.6 1.0 L 1.0 1.0 C 0.9 -0.4 0.8 -1.8 0.9 -3.0 C 1.0 -4.8 1.2 -6.6 1.6 -7.8 C 2.0 -9.0 2.9 -9.9 4.3 -9.85 Z';
+const VHOOD = 'M 4.2 -9.7 C 3.6 -10.75 2.0 -11.45 -0.2 -11.42 C -2.6 -11.32 -4.4 -10.1 -5.0 -8.1 C -5.4 -6.2 -5.2 -3.9 -4.4 -2.1 C -3.6 -0.7 -2.0 0.6 0.0 1.1 L 1.6 1.0 C 1.5 -0.4 1.4 -1.8 1.5 -3.0 C 1.6 -4.6 1.8 -6.2 2.1 -7.4 C 2.4 -8.6 3.2 -9.4 4.2 -9.7 Z';
+const VLINE = 'M 4.2 -9.7 C 3.2 -9.4 2.4 -8.6 2.1 -7.4 C 1.8 -6.2 1.6 -4.6 1.5 -3.0 C 1.4 -1.8 1.5 -0.4 1.6 1.0 L 1.0 1.0 C 0.9 -0.4 0.8 -1.8 0.9 -3.0 C 1.0 -4.8 1.2 -6.6 1.6 -7.8 C 2.0 -9.0 2.9 -9.8 4.2 -9.7 Z';
 const VFRINGE = 'M 2.1 -9.7 C 2.9 -10.2 3.9 -10.15 4.45 -9.7 C 4.55 -9.2 4.4 -8.6 4.05 -8.15 C 3.75 -7.8 3.4 -7.7 3.1 -7.85 C 2.9 -7.5 2.6 -7.15 2.25 -7.0 C 2.1 -7.8 2.0 -8.8 2.1 -9.7 Z';
 const VLOCK = 'M 1.7 -7.8 C 2.25 -7.4 2.55 -6.7 2.55 -5.9 C 2.55 -5.1 2.4 -4.5 2.6 -3.9 C 2.7 -3.6 2.82 -3.4 2.74 -3.2 L 2.6 -3.4 L 2.52 -3.05 L 2.38 -3.36 L 2.22 -3.15 C 2.1 -3.5 2.0 -3.9 1.9 -4.4 C 1.75 -5.2 1.65 -6.1 1.6 -6.8 C 1.58 -7.2 1.6 -7.5 1.7 -7.8 Z';
-const VCOLL = 'M 2.7 -1.1 C 1.9 -1.0 1.0 -1.3 0.2 -1.8 C -0.8 -2.3 -2.2 -2.6 -3.4 -2.4 C -4.2 -1.6 -4.4 -0.4 -4.0 0.8 C -2.4 1.8 0.6 2.0 3.0 1.6 C 4.0 1.3 4.2 0.4 4.0 -0.3 C 3.8 -0.7 3.3 -1.0 2.7 -1.1 Z';
+// the hood's fabric falling from the back of the head down to the shoulders (docs §10.36)
+const VHNECK = 'M -5.1 -5.0 C -5.15 -3.0 -5.4 -1.0 -6.2 1.0 C -6.5 1.7 -6.7 2.2 -6.8 2.5 C -4.5 2.8 -1.5 2.6 1.2 1.9 L 1.0 0.9 C -1.6 0.5 -3.6 -0.8 -4.5 -2.4 Z';
+const VCOLL = 'M 0.8 -1.2 C 1.5 -1.45 2.3 -1.45 2.75 -1.15 C 2.95 -0.5 2.95 0.6 2.8 1.7 C 2.1 2.0 1.3 2.0 0.8 1.7 Z';
 function head(g) {
   const K = PAL.black, J = PAL.jacket, Kn = PAL.jumper, B = brush(g), S = SKINS.rose;
-  neck(g, PAL.skin, { glaze: true });
+  neck(g, PAL.skin, { glaze: true, slim: 1 });
   // her own face (docs §10.29, §10.35): a smooth rounded forehead, a short straight nose
   // turned up a little at the tip, full lips, a clear chin, a fine jawline down to the neck
-  const FS = face(g, { paint: FACES.vesper, prof: 'f', s: S, soft: 0.75, age: 0.08, seed: 51, iris: '#6a7a5a', brow: ['#5a3424', 0.08, 0.9], lips: '196,104,104', lash: true,
-    shape: { fore: 0.25, brow: -0.25, nasion: -0.05, nose: -0.4, hump: -0.2, tip: 0.3, wing: -0.1, lips: 0.3, chin: 0.2, long: -0.2, jaw: -0.35, eye: -0.1, lower: 1 } });
+  const FS = face(g, { paint: FACES.vesper, prof: 'f', s: S, soft: 0.75, earK: 0.86, age: 0.08, seed: 51, iris: '#6a7a5a', brow: ['#5a3424', 0.08, 0.9], lips: '196,104,104', lash: true,
+    shape: { fore: 0.25, brow: -0.25, nasion: -0.05, nose: -0.4, hump: -0.2, tip: 0.3, wing: -0.1, lips: 0.15, chin: 0.38, long: -0.2, jaw: -0.35, eye: -0.1, lower: 1 } });
   const COL = FS.w(VCOLL);
   // auburn hair: the fringe swept from the parting across the brow, a wavy lock down past
   // the cheek to the jaw; strands with the light along them
@@ -343,8 +343,10 @@ function head(g) {
   B.line(ell(3.52, -6.2, 0.5, 0.5), '#3a3a3c', 0.06, 0.005); B.line(ell(3.52, -6.2, 0.5, 0.5), PAL.steel.l, 0.025, 0.005, 0.7);
   // the roll neck down under the chin
   cel(g, COL, Kn, { sh: 1.0, hl: 0.5 });
-  knit(g, COL, Kn, { ribs: true, step: 0.26, lean: 0.3, box: [-5, -3.6, 6, 2] });
-  clothFolds(g, COL, [[[4.2, -1.2], [2.4, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.4, 0.3], [2.2, 0.7], [-0.4, 0.3], [-3.2, -0.6]]], Kn);
+  knit(g, COL, Kn, { ribs: true, step: 0.2, lean: 0.12, box: [-1, -3.6, 4, 2.4] });
+  B.inside(COL, () => { B.line(FS.w('M 0.8 -0.5 C 1.5 -0.66 2.3 -0.66 2.95 -0.46'), Kn.k, 0.1, 0.05, 0.7); B.line(FS.w('M 0.8 -0.62 C 1.5 -0.8 2.3 -0.8 2.95 -0.6'), Kn.l, 0.08, 0.05, 0.5); });
+  cel(g, VHNECK, J, { sh: 1.2, hl: 0.3 });
+  clothFolds(g, VHNECK, [[[-4.8, -2.0], [-5.4, 0.2], [-6.0, 2.0]], [[-3.0, -0.4], [-3.6, 1.0], [-4.0, 2.4]], [[-1.2, 0.8], [-1.4, 2.0]]], J);
   // the hood: lit over the crown, the lining in shade at its edge, seams, the rain
   cel(g, VHOOD, J, { sh: 1.6, hl: 0.6 });
   B.inside(VHOOD, () => {
@@ -362,13 +364,20 @@ function head(g) {
   B.line('M 1.5 -1.6 C 1.8 -0.8 1.7 0.2 2.0 1.0', '#26261e', 0.2, 0.01);
   cel(g, 'M 1.84 0.9 L 2.2 0.86 L 2.26 1.7 L 1.9 1.74 Z', PAL.steel, { sh: 0.1, hl: 0.2, gloss: 0.3 });
   // the headset over the hood: the band, the cup where the ear is, the boom to the mouth
-  strap(g, 'M -0.4 -7.2 C -0.6 -9.2 -0.3 -11.2 0.5 -12.2', 0.3, K.m, K.k, K.l);
-  const CUP = ell(-0.2, -5.9, 1.0, 1.24);
+  // the headset over the hood: the band lying on the hood up to its top, the yoke, the cup
+  strap(g, 'M -0.3 -6.9 C -0.42 -8.6 -0.36 -10.2 -0.18 -11.38', 0.2, K.m, K.k, K.l);
+  cel(g, 'M -0.52 -7.25 L 0.0 -7.25 L -0.04 -6.62 L -0.48 -6.62 Z', K, { sh: 0.2, hl: 0.3 });
+  const CUP = ell(-0.2, -5.9, 0.8, 1.0);
+  cel(g, ell(-0.32, -5.9, 0.82, 1.04), mat(tone('#4a4c50', '#34363a', '#222326', '#0c0c0e'), 'leather', 0.4), { sh: 0.4, hl: 0.3 });
   cel(g, CUP, K, { sh: 0.5, hl: 0.45, gloss: 0.25 });
-  B.inside(CUP, () => { B.line(ell(-0.2, -5.9, 0.78, 1.0), K.d, 0.12, 0.04); B.dab(-0.5, -6.4, 0.4, 0.5, 'rgba(160,166,176,0.25)'); });
-  rivet(g, -0.2, -5.9, 0.15, PAL.steel);
-  B.line('M 0.6 -5.3 C 1.8 -4.4 3.0 -3.9 3.9 -3.75', K.k, 0.14, 0.01);
-  cel(g, ell(4.06, -3.74, 0.26, 0.22), K, { sh: 0.2, hl: 0.25 });
+  B.inside(CUP, () => { B.line(ell(-0.2, -5.9, 0.62, 0.8), K.d, 0.08, 0.04); B.dab(-0.45, -6.3, 0.3, 0.4, 'rgba(160,166,176,0.25)'); });
+  rivet(g, -0.2, -5.9, 0.13, PAL.steel);
+  // the boom along the cheek, its capsule by the corner of the mouth, not on the lips
+  B.line(FS.w('M 0.45 -5.3 C 1.5 -4.55 2.5 -3.8 3.3 -3.48'), K.k, 0.1, 0.01);
+  B.line(FS.w('M 0.45 -5.36 C 1.5 -4.61 2.5 -3.86 3.3 -3.54'), K.l, 0.03, 0.01, 0.5);
+  const [mx, my] = FS.W(3.5, -3.44);
+  cel(g, ell(mx, my, 0.2, 0.16), K, { sh: 0.2, hl: 0.25 });
+  for (const [dx, dy] of [[-0.06, -0.04], [0.05, -0.02], [-0.02, 0.05], [0.08, 0.05]]) B.dab(mx + dx, my + dy, 0.02, 0.02, 'rgba(120,126,136,0.6)');
 }
 
 export const MORROW = {

@@ -74,6 +74,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.33 | Düz görevler: inişler çıkışlar azaldı | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1033-düz-görevler-inişler-çıkışlar-azaldı) |
 | 10.34 | Yüzler tek tek: göz, kaş, burun, ağız, izler | [3-karakterler](design/3-karakterler.md#1034-yüzler-tek-tek-göz-kaş-burun-ağız-izler) |
 | 10.35 | Skye ve Vesper: yüzler yeniden | [3-karakterler](design/3-karakterler.md#1035-skye-ve-vesper-yüzler-yeniden) |
+| 10.36 | Skye ve Vesper: işaretlenen yerler | [3-karakterler](design/3-karakterler.md#1036-skye-ve-vesper-işaretlenen-yerler) |
 
 Giriş notu (eski belgenin başı):
 

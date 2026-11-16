@@ -304,7 +304,8 @@ export function face(g, o) {
     if (x > mx - 0.3 && y > my - 0.26 && y < my + 0.3) return null;
     return [x, y, Math.PI * 0.6 + (r() - 0.5) * 0.8, 0.04 + r() * 0.05, o.stubble.col, 0.018, 0.5];
   });
-  ear(g, s);
+  // the ear, smaller on a finer head (o.earK, docs §10.36)
+  if (o.earK) { g.save(); g.translate(-0.1, -5.4); g.scale(o.earK, o.earK); g.translate(0.1, 5.4); ear(g, s); g.restore(); } else ear(g, s);
   // the eye, deep under the brow, then the brow
   g.save(); g.translate(de, 0);
   (PT.eye || eyeStd)(F);
