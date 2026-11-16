@@ -21,6 +21,7 @@ import {
 } from './body.js';
 import { texture } from '../tex.js';
 import { PROFILE_F, SKINS, face, crop, knit, strap, glass, inP } from './realhead.js';
+import { FACES } from './faces.js';
 
 const PAL = {
   jacket: mat(tone('#7a7a5c', '#5c5d45', '#404130', '#181912'), 'canvas', 0.7),
@@ -327,7 +328,7 @@ function head(g) {
   neck(g, PAL.skin, { glaze: true });
   // her own face (docs §10.29): a high upright forehead, a short straight nose turned up a
   // little at the tip, full lips, a narrow soft jaw
-  const FS = face(g, { prof: 'f', s: S, age: 0.12, seed: 51, iris: '#6a7a5a', brow: ['#5a3424', 0.08, 0.9], lips: '176,96,92', lash: true,
+  const FS = face(g, { paint: FACES.vesper, prof: 'f', s: S, age: 0.12, seed: 51, iris: '#6a7a5a', brow: ['#5a3424', 0.08, 0.9], lips: '176,96,92', lash: true,
     shape: { fore: 0.35, brow: -0.2, nasion: -0.1, nose: -0.25, hump: -0.1, tip: 0.2, lips: 0.45, chin: 0.1, long: -0.1, jaw: -0.45 } });
   const COL = FS.w(VCOLL);
   // auburn hair: the fringe swept across the brow, a lock down past the cheek

@@ -16,9 +16,8 @@ import { M, tone, mat } from '../style.js';
 import { texture } from '../tex.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
-import { catwalk, ladder, barricade, scrapBarricade, container, CONT } from './course.js';
+import { catwalk, barricade, scrapBarricade, container, CONT } from './course.js';
 import { concrete, beacon, cpPost, terminal, gateFrame, rtg, portLamp, roadSign } from './mission1.js';
-import { scaffold } from './mission2.js';
 import { BUILDINGS, letters } from './city.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
@@ -311,7 +310,11 @@ function kit(id) {
   const { g, block } = grid();
   const props = [], front = [], deco = [], lamps = [], glows = [], lights = [], crates = [];
   const P = (name, box, paint, list = props) => list.push({ name, box, paint });
-  const bar = (name, c0, c1, n) => { block(c0, c1 - 1, 1, n); P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (gg) => barricade(gg, X(c0), X(c1), n * T), front); };
+  // (docs §10.33: nothing on the way higher than three tiles: barricades, T-walls and scrap are
+  // to fight from and step over; containers, ladles and platforms are scenery behind)
+  const bar = (name, c0, c1, n = 3) => { n = Math.min(n, 3); block(c0, c1 - 1, 1, n); P(name, [X(c0) - 4, -n * T - 6, X(c1) + 4, 1], (gg) => barricade(gg, X(c0), X(c1), n * T), front); };
+  const conc = (name, c) => { block(c, c + 1, 1, 3); P(name, [X(c) - 1, -26, X(c + 2) + 1, 1], (gg) => concrete(gg, X(c), X(c + 2), 24)); };
+  const scrap = (name, c) => { block(c, c + 2, 1, 3); P(name, [X(c) - 4, -3 * T - 8, X(c + 3) + 8, 1], (gg) => scrapBarricade(gg, X(c), X(c + 3), 3 * T), front); };
   const addCrate = (c) => { block(c, c + 1, 1, 2); crates.push(X(c)); };
   const finish = (o) => {
     props.push({ name: `${id}.crate`, box: [-2, -18, 18, 1], paint: (gg) => crate(gg, 0, 16, 16), at: crates, foot: [8, 9] });
@@ -319,7 +322,7 @@ function kit(id) {
     P(`${id}.beacon`, [o.extract.x - 5, -28, o.extract.x + 5, 1], (gg) => beacon(gg, o.extract.x), deco);
     return { id, level: new Level(g.map((r) => r.join('')), TOPY), props, front, deco, lamps, glows, lights, width: COLS * T, spawn: [64, 0], ...o };
   };
-  return { g, block, props, front, deco, lamps, glows, lights, P, bar, addCrate, finish };
+  return { g, block, props, front, deco, lamps, glows, lights, P, bar, conc, scrap, addCrate, finish };
 }
 
 // --- mission 4 ------------------------------------------------------------------------
@@ -330,24 +333,21 @@ function kit(id) {
 //                      the disappeared: three squads come for it
 //   D  extraction      out over the scrap barricade to the flare
 export function buildMission4() {
-  const K = kit('m4'), { block, P, bar, addCrate, deco, lights, glows, lamps } = K;
+  const K = kit('m4'), { block, P, bar, conc, scrap, addCrate, deco, lights, glows, lamps } = K;
   // A
   P('m4.sign', [X(14) - 12, -46, X(14) + 12, 1], (g) => roadSign(g, X(14), ['ÇELİKHANE', 'DÖKÜMHANE', '→']), deco);
   addCrate(28);
   P('m4.slagA', [X(40) - 2, -20, X(40) + 74, 1], (g) => slag(g, X(40)), deco);
   P('m4.burn', [X(62) - 2, -16, X(62) + 14, 1], (g) => burnBarrel(g, X(62)), deco);
-  block(74, 79, 1, 4); P('m4.ladleA', [X(74) - 8, -80, X(74) + 56, 1], (g) => ladle(g, X(74) - 4, 3));
-  bar('m4.barA', 96, 99, 4);
+  P('m4.ladleA', [X(74) - 8, -80, X(74) + 56, 1], (g) => ladle(g, X(74) - 4, 3), deco);
+  addCrate(82);
+  bar('m4.barA', 96, 99);
   block(110, 113, 1, 3); P('m4.mouldA', [X(110) - 4, -26, X(110) + 40, 1], (g) => moulds(g, X(110)));
-  block(126, 131, 1, 4); P('m4.ladleB', [X(126) - 8, -80, X(126) + 56, 1], (g) => ladle(g, X(126) - 4, 7));
-  // the overhead crane's runway: up the ladder, along it, over the yard
-  block(138, 138, 1, 11, 'H'); block(139, 168, 11, 11, '=');
-  P('m4.scaf', [X(139) - 2, -104, X(169) + 2, 1], (g) => scaffold(g, X(139), X(169), -88));
-  P('m4.lad', [X(138) - 1, -100, X(139) + 1, 1], (g) => ladder(g, X(138), -88, 0));
-  addCrate(156);
+  P('m4.ladleB', [X(126) - 8, -80, X(126) + 56, 1], (g) => ladle(g, X(126) - 4, 7), deco);
+  addCrate(140); addCrate(156);
   P('m4.slagB', [X(172) - 2, -20, X(172) + 74, 1], (g) => slag(g, X(172)), deco);
   // B — the archive gate
-  block(196, 197, 1, 5); P('m4.concB', [X(196) - 1, -42, X(198) + 1, 1], (g) => concrete(g, X(196), X(198), 40));
+  conc('m4.concB', 196);
   P('m4.term', [X(212) - 9, -28, X(212) + 18, 1], (g) => terminal(g, X(212)));
   block(224, 225, 1, 12);
   P('m4.gate', [X(224) - 78, -150, X(226) + 78, 1], (g) => gateFrame(g, X(224), X(226), 96, ['DÖKÜMHANE · ARŞİV', 'YETKİSİZ GİRİLMEZ']), deco);
@@ -355,10 +355,11 @@ export function buildMission4() {
   // C — the archive yard: what cover there is, the moulds, a ladle on its side
   block(240, 243, 1, 3); P('m4.mouldC', [X(240) - 4, -26, X(240) + 40, 1], (g) => moulds(g, X(240)));
   addCrate(258); addCrate(276);
-  block(290, 295, 1, 4); P('m4.ladleC', [X(290) - 8, -80, X(290) + 56, 1], (g) => ladle(g, X(290) - 4, 11));
+  P('m4.ladleC', [X(290) - 8, -80, X(290) + 56, 1], (g) => ladle(g, X(290) - 4, 11), deco);
+  addCrate(298);
   P('m4.burnC', [X(268) - 2, -16, X(268) + 14, 1], (g) => burnBarrel(g, X(268)), deco);
   // D
-  block(330, 332, 1, 4); P('m4.barD', [X(330) - 4, -4 * T - 8, X(333) + 8, 1], (g) => scrapBarricade(g, X(330), X(333), 4 * T), K.front);
+  scrap('m4.barD', 330);
   addCrate(352);
   P('m4.coneD', [X(366) - 6, -12, X(366) + 8, 1], (g) => cone(g, X(366)), deco);
   for (const x of [120, 700, 1240, 1640, 2240, 2700, 3060]) lamps.push(x);
@@ -385,7 +386,7 @@ export function buildMission4() {
       E('tet', X(66), 0, [X(46), X(92)]),
       E('tet', X(99) + 4, 0, [X(88), X(120)]),
       E('huc', X(118), 0, [X(100), X(136)], { patrol: [X(112), X(124)] }),
-      E('tet', X(160), -88, [X(140), X(168)]),
+      E('tet', X(160), 0, [X(140), X(170)]),
       E('kal', X(184), 0, [X(170), X(194)]),
       // B
       E('tet', X(200), 0, [X(190), X(222)]),
@@ -406,24 +407,22 @@ export function buildMission4() {
 
 // --- mission 5 ------------------------------------------------------------------------
 //   A  under the line  the street below the viaduct, a post at the stairs
-//   B  platform 3      up the stairs onto the dead line (a wall closes the
-//                      street under it): the old car, the platform held
-//                      by a squad, the sign                      → checkpoint 2
+//   B  the station     along the street under the dead line (the old car and
+//                      the sign up on it), held by a squad          → checkpoint 2
 //   C  the line's gate down at the tunnel mouth: hack the signal box, the
 //                      gate goes up, the tunnel's guard comes out
 //   D  the tunnel      in under the city to the cells' flare
 export function buildMission5() {
-  const K = kit('m5'), { block, P, bar, addCrate, deco, lights, glows, lamps } = K;
+  const K = kit('m5'), { block, P, bar, conc, scrap, addCrate, deco, lights, glows, lamps } = K;
   const DY = -12 * T; // the line's deck
   // A
   addCrate(22);
   P('m5.cone', [X(34) - 6, -12, X(34) + 8, 1], (g) => cone(g, X(34)), deco);
-  bar('m5.barA', 52, 55, 4);
+  bar('m5.barA', 52, 55);
   P('m5.dump', [X(66) - 4, -24, X(66) + 48, 1], (g) => dumpster(g, X(66)), deco);
   addCrate(84);
-  // B — the viaduct from 96 to 260, up by the stairs at 96
-  block(96, 96, 1, 12, 'H'); block(97, 259, 12, 12, '=');
-  P('m5.lad', [X(96) - 1, DY - 16, X(97) + 1, 1], (g) => ladder(g, X(96), DY, 0));
+  // B — the viaduct from 96 to 260 over the street (docs §10.33: overhead, not climbed;
+  // the way is the street under it)
   // the piers, one sprite at each place; the deck in pieces (an atlas page is only so wide)
   deco.push({ name: 'm5.pier', box: [-10, DY + 2, 10, 1], paint: (g) => pier(g, DY), at: Array.from({ length: Math.floor((X(260) - X(97) - 32) / PIER_STEP) + 1 }, (_, k) => X(97) + 24 + k * PIER_STEP), foot: [0, 8] });
   for (let k = 0, a = 97; a < 260; k++, a += 28) { const b = Math.min(260, a + 28); P(`m5.via${k}`, [X(a) - 2, DY - 14, X(b) + 2, DY + 8], (g) => clip(g, rect(X(a) - 2, DY - 16, X(b) + 2, DY + 8), () => viaduct(g, X(97), X(260), DY)), deco); }
@@ -431,25 +430,18 @@ export function buildMission5() {
   lights.push([X(118) + 54, DY - 25, 26, 0.45, [1, 0.78, 0.5]]);
   P('m5.signA', [X(178) - 18, DY - 46, X(178) + 18, DY + 1], (g) => stationSign(g, X(178), DY), deco);
   lights.push([X(178), DY - 40, 40, 0.5, [0.95, 0.97, 1]]);
-  // cover on the platform: crates stacked by the cells, a barricade of benches
-  block(196, 197, 13, 14); P('m5.crateP', [X(196) - 2, DY - 18, X(198) + 2, DY + 1], (g) => { g.translate(0, DY); crate(g, X(196), 16, 16); });
-  block(230, 232, 13, 15); P('m5.barP', [X(230) - 4, DY - 3 * T - 8, X(233) + 8, DY + 1], (g) => { g.translate(0, DY); scrapBarricade(g, X(230), X(233), 3 * T); }, K.front);
-  // and down the far stairs at 260
-  block(260, 260, 1, 12, 'H');
-  P('m5.lad2', [X(260) - 1, DY - 16, X(261) + 1, 1], (g) => ladder(g, X(260), DY, 0));
-  // under the viaduct, in the street: a burning barrel the cells keep going, then
-  // Vanta's wall across the street up to the deck: the way on is the platform
+  // under the viaduct: a burning barrel the cells keep going, crates, a barricade of benches
   P('m5.burn', [X(150) - 2, -16, X(150) + 14, 1], (g) => burnBarrel(g, X(150)), deco);
-  block(204, 205, 1, 11);
-  P('m5.wall', [X(204) - 2, DY + 2, X(206) + 2, 1], (g) => concrete(g, X(204), X(206), -DY - 8), K.front);
+  addCrate(176); addCrate(214);
+  scrap('m5.barB', 236);
   // C — the tunnel mouth and its gate
-  block(274, 275, 1, 5); P('m5.concC', [X(274) - 1, -42, X(276) + 1, 1], (g) => concrete(g, X(274), X(276), 40));
+  conc('m5.concC', 274);
   P('m5.term', [X(290) - 9, -28, X(290) + 18, 1], (g) => terminal(g, X(290)));
   block(302, 303, 1, 12);
   P('m5.gate', [X(302) - 78, -150, X(304) + 78, 1], (g) => gateFrame(g, X(302), X(304), 96, ['ESKİ HAT · 3', 'TÜNEL · GİRİLMEZ']), deco);
   // D — the cut down to the tunnel: the cells' barricade, then the mouth with the flare inside
   addCrate(320);
-  block(334, 336, 1, 4); P('m5.barD', [X(334) - 4, -4 * T - 8, X(337) + 8, 1], (g) => scrapBarricade(g, X(334), X(337), 4 * T), K.front);
+  scrap('m5.barD', 334);
   P('m5.tunnel', [X(354) - 20, -118, X(382) + 34, 1], (g) => tunnelMouth(g, X(354), X(382)), deco);
   for (const x of [140, 560, 1000, 1600, 2160]) lamps.push(x);
   deco.push({ name: 'c.lamp', box: [-8, -86, 24, 1], paint: (g) => lampPost(g, 0), at: lamps });
@@ -475,14 +467,12 @@ export function buildMission5() {
       E('tet', X(55) + 4, 0, [X(44), X(80)]),
       E('tet', X(78), 0, [X(60), X(94)], { patrol: [X(70), X(88)] }),
       E('huc', X(110), 0, [X(98), X(160)]),
-      // B — on the platform
-      E('tet', X(150), DY, PZ),
-      E('tet', X(186), DY, PZ, { patrol: [X(176), X(194)] }),
-      E('kal', X(212), DY, PZ),
-      E('tet', X(236), DY, PZ),
-      E('huc', X(248), DY, PZ),
-      // under the line while you are up there
-      E('tet', X(196), 0, [X(160), X(203)]),
+      // B — under the line, the station's guard
+      E('tet', X(150), 0, PZ),
+      E('tet', X(186), 0, PZ, { patrol: [X(176), X(194)] }),
+      E('kal', X(212), 0, PZ),
+      E('tet', X(240) + 4, 0, PZ),
+      E('huc', X(250), 0, PZ),
       // C
       E('tet', X(278) + 4, 0, [X(264), X(298)]),
       E('huc', X(294), 0, [X(270), X(300)]),
@@ -497,33 +487,31 @@ export function buildMission5() {
 
 // --- mission 6 ------------------------------------------------------------------------
 //   A  the depot road  past Vanta's post into the north depots
-//   B  the yard        containers and the gantry crane, its deck → checkpoint 2
+//   B  the yard        containers and the gantry crane at the back, crates → checkpoint 2
 //   C  the factory     hack the factory gate; its guard comes out
 //   D  the line        hold the drone line while Skye's charges burn it out:
 //                      three squads, the shield men with them
 //   E  extraction      out the back through the scrap
 export function buildMission6() {
-  const K = kit('m6'), { block, P, bar, addCrate, deco, lights, glows, lamps } = K;
+  const K = kit('m6'), { block, P, bar, conc, scrap, addCrate, deco, lights, glows, lamps } = K;
   // A
   P('m6.sign', [X(16) - 12, -46, X(16) + 12, 1], (g) => roadSign(g, X(16), ['KUZEY', 'DEPOLARI', 'VANTA']), deco);
   addCrate(30);
-  bar('m6.barA', 46, 49, 4);
+  bar('m6.barA', 46, 49);
   P('m6.burn', [X(58) - 2, -16, X(58) + 14, 1], (g) => burnBarrel(g, X(58)), deco);
   // B — the yard
-  block(72, 81, 1, 5); P('m6.contA', [X(72) - 2, -42, X(82) + 2, 1], (g) => container(g, X(72), -40, X(82), 0, CONT.navy, { code: 'VNTU 520448 3' }));
-  block(100, 120, 12, 12, '='); block(99, 99, 1, 12, 'H');
+  // (docs §10.33: the containers and the crane stand at the back; crates to fight from)
+  P('m6.contA', [X(72) - 2, -42, X(82) + 2, 1], (g) => container(g, X(72), -40, X(82), 0, CONT.navy, { code: 'VNTU 520448 3' }), deco);
+  addCrate(84);
   P('m6.rtg', [X(100) - 18, -150, X(121) + 16, 1], (g) => rtg(g, X(100), X(121)), deco);
-  P('m6.deck', [X(100) - 2, -114, X(121) + 2, -78], (g) => catwalk(g, X(100), X(121), -96));
-  P('m6.lad', [X(99) - 1, -112, X(100) + 1, 1], (g) => ladder(g, X(99), -96, 0));
   addCrate(110);
-  block(132, 141, 1, 5); block(136, 141, 6, 10);
-  P('m6.contB', [X(132) - 2, -42, X(142) + 2, 1], (g) => container(g, X(132), -40, X(142), 0, CONT.teal, { code: 'VNTU 520451 0' }));
-  P('m6.contC', [X(136) - 2, -82, X(142) + 2, -39], (g) => container(g, X(136), -80, X(142), -40, CONT.rust, { code: 'TGHU 41907', kor: true }));
+  P('m6.contB', [X(132) - 2, -42, X(142) + 2, 1], (g) => container(g, X(132), -40, X(142), 0, CONT.teal, { code: 'VNTU 520451 0', kor: true }), deco);
+  addCrate(138);
   P('m6.dump', [X(152) - 4, -24, X(152) + 48, 1], (g) => dumpster(g, X(152)), deco);
   P('m6.rackA', [X(166) - 2, -68, X(166) + 50, 1], (g) => droneRack(g, X(166)), deco);
   addCrate(178);
   // C — the factory gate
-  block(192, 193, 1, 5); P('m6.concC', [X(192) - 1, -42, X(194) + 1, 1], (g) => concrete(g, X(192), X(194), 40));
+  conc('m6.concC', 192);
   P('m6.term', [X(206) - 9, -28, X(206) + 18, 1], (g) => terminal(g, X(206)));
   block(218, 219, 1, 12);
   P('m6.gate', [X(218) - 78, -150, X(220) + 78, 1], (g) => gateFrame(g, X(218), X(220), 96, ['VANTA · ÜRETİM', 'DRON HATTI']), deco);
@@ -534,9 +522,10 @@ export function buildMission6() {
   deco.push({ name: 'm6.rack', box: [-2, -68, 50, 1], paint: (g) => droneRack(g, 0), at: [X(226), X(254), X(288)] });
   for (const x of [X(240), X(276)]) lights.push([x, -60, 50, 0.45, [0.85, 0.92, 1]]);
   // E
-  block(318, 320, 1, 4); P('m6.barE', [X(318) - 4, -4 * T - 8, X(321) + 8, 1], (g) => scrapBarricade(g, X(318), X(321), 4 * T), K.front);
+  scrap('m6.barE', 318);
   addCrate(342);
-  block(356, 365, 1, 5); P('m6.contE', [X(356) - 2, -42, X(366) + 2, 1], (g) => container(g, X(356), -40, X(366), 0, CONT.rust, { code: 'VNTU 520460 9' }));
+  P('m6.contE', [X(356) - 2, -42, X(366) + 2, 1], (g) => container(g, X(356), -40, X(366), 0, CONT.rust, { code: 'VNTU 520460 9' }), deco);
+  addCrate(362);
   for (const x of [130, 520, 980, 1300, 2600, 2980]) lamps.push(x);
   deco.push({ name: 'm6.lamp', box: [-8, -88, 24, 1], paint: (g) => portLamp(g, 0), at: lamps });
   glows.push([X(58) + 5, -13, 6, 4, '#ff8a3a', 0.4, 'fire']);
@@ -561,9 +550,9 @@ export function buildMission6() {
       E('tet', X(49) + 4, 0, [X(38), X(70)]),
       E('tet', X(64), 0, [X(52), X(86)], { patrol: [X(60), X(70)] }),
       // B
-      E('tet', X(116), -96, [X(101), X(120)]),
+      E('tet', X(116), 0, [X(100), X(128)]),
       E('huc', X(126), 0, [X(84), X(150)], { patrol: [X(118), X(130)] }),
-      E('tet', X(138), -80, [X(136), X(141)]),
+      E('tet', X(146), 0, [X(128), X(160)]),
       E('kal', X(170), 0, [X(150), X(188)]),
       // C
       E('tet', X(196) + 4, 0, [X(186), X(214)]),
@@ -577,7 +566,7 @@ export function buildMission6() {
       // E
       E('tet', X(321) + 4, 0, [X(310), X(350)]),
       E('huc', X(350), 0, [X(320), X(380)]),
-      E('tet', X(366), -40, [X(356), X(365)]),
+      E('tet', X(368), 0, [X(352), X(384)]),
       E('tet', X(386), 0, [X(366), X(396)]),
     ],
   });
@@ -585,29 +574,27 @@ export function buildMission6() {
 
 // --- mission 7 ------------------------------------------------------------------------
 //   A  the works road  in through the works' own gate, the union hall
-//   B  the stoves      the four hot-blast stoves, their valve platforms; a
-//                      squad up on them                         → checkpoint 2
+//   B  the stoves      the four hot-blast stoves, a squad between them → checkpoint 2
 //   C  the control     hack the furnace control; the cast house opens
 //   D  the cast house  hold it while the furnace takes the blast and lights:
 //                      ninety seconds, four squads, the shield men
 //   E  extraction      out past the furnace's foot to the flare
 export function buildMission7() {
-  const K = kit('m7'), { block, P, bar, addCrate, deco, lights, glows, lamps } = K;
+  const K = kit('m7'), { block, P, bar, conc, scrap, addCrate, deco, lights, glows, lamps } = K;
   // A
   P('m7.sign', [X(14) - 12, -46, X(14) + 12, 1], (g) => roadSign(g, X(14), ['ÇELİKHANE', 'YÜKSEK FIRIN', 'GİRİŞ']), deco);
   addCrate(26);
-  bar('m7.barA', 42, 45, 4);
+  bar('m7.barA', 42, 45);
   P('m7.burnA', [X(56) - 2, -16, X(56) + 14, 1], (g) => burnBarrel(g, X(56)), deco);
   addCrate(70);
-  // B — the stoves, each with its valve platform at 40 units
-  // (one stove sprite, drawn at each stove's place)
+  // B — the stoves (one sprite, drawn at each stove's place; docs §10.33: their valve
+  // platforms are not climbed, the fight is on the ground between them)
   const STOVES = [84, 104, 124, 144];
-  deco.push({ name: 'm7.stove', box: [-8, -186, 64, 1], paint: (g) => { hotStove(g, 0, 168); ladder(g, 48, -40, 0); }, at: STOVES.map(X), foot: [17, 22] });
-  for (const c of STOVES) { block(c - 1, c + 5, 5, 5, '='); block(c + 6, c + 6, 1, 5, 'H'); }
-  addCrate(96); addCrate(136);
+  deco.push({ name: 'm7.stove', box: [-8, -186, 64, 1], paint: (g) => hotStove(g, 0, 168), at: STOVES.map(X), foot: [17, 22] });
+  addCrate(96); addCrate(116); addCrate(136);
   block(158, 163, 1, 3); P('m7.mould', [X(158) - 4, -26, X(158) + 40, 1], (g) => moulds(g, X(158)));
   // C — the furnace control and the cast house gate
-  block(178, 179, 1, 5); P('m7.concC', [X(178) - 1, -42, X(180) + 1, 1], (g) => concrete(g, X(178), X(180), 40));
+  conc('m7.concC', 178);
   P('m7.term', [X(192) - 9, -28, X(192) + 18, 1], (g) => terminal(g, X(192)));
   block(204, 205, 1, 12);
   P('m7.gate', [X(204) - 78, -150, X(206) + 78, 1], (g) => gateFrame(g, X(204), X(206), 96, ['YÜKSEK FIRIN · DÖKÜM', 'SICAK ALAN']), deco);
@@ -615,12 +602,13 @@ export function buildMission7() {
   P('m7.furnace', [X(224) - 8, -204, X(224) + 160, 1], (g) => blastFurnace(g, X(224)), deco);
   // the furnace is cold when you get there; it lights during the hold (mission.js, relight)
   const tap = X(224) + 70;
-  block(216, 221, 1, 4); P('m7.ladleD', [X(216) - 8, -80, X(216) + 56, 1], (g) => ladle(g, X(216) - 4, 1));
-  addCrate(258); addCrate(272);
-  block(286, 291, 1, 4); P('m7.ladleE', [X(286) - 8, -80, X(286) + 56, 1], (g) => ladle(g, X(286) - 4, 2));
+  P('m7.ladleD', [X(216) - 8, -80, X(216) + 56, 1], (g) => ladle(g, X(216) - 4, 1), deco);
+  addCrate(244); addCrate(258); addCrate(272);
+  P('m7.ladleE', [X(286) - 8, -80, X(286) + 56, 1], (g) => ladle(g, X(286) - 4, 2), deco);
+  addCrate(292);
   // E
   P('m7.slag', [X(316) - 2, -20, X(316) + 74, 1], (g) => slag(g, X(316)), deco);
-  block(340, 342, 1, 4); P('m7.barE', [X(340) - 4, -4 * T - 8, X(343) + 8, 1], (g) => scrapBarricade(g, X(340), X(343), 4 * T), K.front);
+  scrap('m7.barE', 340);
   addCrate(362);
   for (const x of [110, 560, 1360, 2700, 3060]) lamps.push(x);
   deco.push({ name: 'm7.lamp', box: [-8, -88, 24, 1], paint: (g) => portLamp(g, 0), at: lamps });
@@ -647,10 +635,10 @@ export function buildMission7() {
       E('tet', X(45) + 4, 0, [X(34), X(66)]),
       E('huc', X(64), 0, [X(48), X(80)], { patrol: [X(58), X(70)] }),
       // B — on the stoves' platforms and between them
-      E('tet', X(88), -40, [X(83), X(89)]),
-      E('tet', X(128), -40, [X(123), X(129)]),
+      E('tet', X(90), 0, [X(80), X(100)]),
+      E('tet', X(130), 0, [X(120), X(140)]),
       E('kal', X(116), 0, [X(98), X(140)]),
-      E('tet', X(148), -40, [X(143), X(149)]),
+      E('tet', X(150), 0, [X(140), X(162)]),
       E('huc', X(152), 0, [X(130), X(170)]),
       // C
       E('tet', X(182) + 4, 0, [X(172), X(200)]),

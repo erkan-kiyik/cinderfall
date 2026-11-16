@@ -36,11 +36,11 @@ export function avatar(id, px = 44) {
 // the operator dark against them with an ember rim on the edges that face
 // the fire; nothing on them lights up by itself.
 function paintAvatar(id, size) {
-  // framed on the face (docs §10.25): about 14 units of the figure across the square,
-  // centred on the head as this operator's pose puts it
-  const op = OPS[id], pose = op.pose, z = size / 14;
+  // framed on the face (docs §10.25, §10.34): about 12 units of the figure across the
+  // square, centred on the face as this operator's pose puts it
+  const op = OPS[id], pose = op.pose, z = size / 12;
   const J = solve(pose), [nx, ny] = J.neck;
-  const hx = nx + 1.0, hy = ny - 6.2;
+  const hx = nx + 1.5, hy = ny - 6.3;
   const m = Math.ceil(size * 0.12);
   const fx = size * 0.46 - hx * z, fy = size * 0.5 - hy * z;
   // only the head and shoulders are rasterised (painting the whole figure and cropping it
@@ -76,9 +76,14 @@ function paintAvatar(id, size) {
   bg.drawImage(fig, dx, dy);
   bg.globalCompositeOperation = 'source-atop';
   const shade = bg.createLinearGradient(0, 0, size, size * 0.4);
-  shade.addColorStop(0, 'rgba(8,9,13,0.5)'); shade.addColorStop(1, 'rgba(8,9,13,0.12)');
+  shade.addColorStop(0, 'rgba(8,9,13,0.42)'); shade.addColorStop(1, 'rgba(8,9,13,0.06)');
   bg.fillStyle = shade; bg.fillRect(0, 0, size, size);
-  bg.fillStyle = 'rgba(255,110,50,0.08)'; bg.fillRect(0, 0, size, size);
+  bg.fillStyle = 'rgba(255,110,50,0.06)'; bg.fillRect(0, 0, size, size);
+  // the fire's light on the face, so the face is what the eye goes to
+  const ex = fx + (nx + 3.4) * z + dx + m, ey = fy + (ny - 5.4) * z + dy + m;
+  const key = bg.createRadialGradient(ex, ey, 0, ex, ey, size * 0.36);
+  key.addColorStop(0, 'rgba(255,214,176,0.2)'); key.addColorStop(1, 'rgba(255,214,176,0)');
+  bg.fillStyle = key; bg.fillRect(0, 0, size, size);
   g.drawImage(body, 0, 0);
   // the ember rim: the silhouette pushed toward the fire, minus the figure
   const r = Math.max(1, size * 0.028);

@@ -526,7 +526,8 @@ export function buildMission3() {
   };
   const planters = [], flags = [];
   const addPlanter = (c) => { block(c, c + 2, 1, 2); planters.push(X(c)); };
-  const conc = (name, c, o) => { block(c, c + 1, 1, 5); P(name, [X(c) - 1, -42, X(c + 2) + 1, 1], (g) => concrete(g, X(c), X(c + 2), 40, o)); };
+  // (docs §10.33: T-walls three tiles high, to fight from and step over)
+  const conc = (name, c, o) => { block(c, c + 1, 1, 3); P(name, [X(c) - 1, -26, X(c + 2) + 1, 1], (g) => concrete(g, X(c), X(c + 2), 24, o)); };
   const floor = [];
 
   // A — the square (docs §10.7): slabs, the dry pool, the plane trees, the
@@ -534,7 +535,7 @@ export function buildMission3() {
   for (const c of [30, 70, 110, 150]) flags.push(X(c));
   P('m3.coneA', [X(20) - 6, -12, X(20) + 8, 1], (g) => cone(g, X(20)), deco);
   addPlanter(44); conc('m3.concA', 76); addPlanter(96);
-  bar('m3.barA', 124, 127, 4);
+  bar('m3.barA', 124, 127, 3);
   addPlanter(150);
   block(166, 167, 1, 2); P('m3.crateA', [X(166) - 2, -18, X(168) + 2, 1], (g) => crate(g, X(166), 16, 16));
   P('m3.fountain', [398, -40, 466, 1], (g) => fountain(g, 400), deco);

@@ -70,6 +70,9 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.29 | Her yüz kendi yüzü | [3-karakterler](design/3-karakterler.md#1029-her-yüz-kendi-yüzü) |
 | 10.30 | Perde 2: Derinlik (görev 4–7) | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1030-perde-2-derinlik-görev-47) |
 | 10.31 | Perde 2'yi bitirmek: filmler, fırın, kapılar | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1031-perde-2yi-bitirmek-filmler-fırın-kapılar) |
+| 10.32 | Karakterler öne, arka plan geride | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1032-karakterler-öne-arka-plan-geride) |
+| 10.33 | Düz görevler: inişler çıkışlar azaldı | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1033-düz-görevler-inişler-çıkışlar-azaldı) |
+| 10.34 | Yüzler tek tek: göz, kaş, burun, ağız, izler | [3-karakterler](design/3-karakterler.md#1034-yüzler-tek-tek-göz-kaş-burun-ağız-izler) |
 
 Giriş notu (eski belgenin başı):
 

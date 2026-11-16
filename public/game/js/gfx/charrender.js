@@ -4,9 +4,10 @@
 // first drawn into its own slot of an offscreen "slot sheet" (local,
 // facing-right space), and the slot is then composited into the scene through
 // a shader that works on the whole silhouette at once: a rim of the night's
-// ambient light along the edge that faces the key light, and a faint soft
-// contact shade outside it (docs §11: no ink line round anyone). With the
-// accessibility option on, enemies get a clear outline instead.
+// ambient light along the edge that faces the key light, and a soft dark
+// shade outside it that parts the figure from whatever is behind (docs §11:
+// no ink line round anyone; §10.32: the figures stand out from the place).
+// With the accessibility option on, enemies get a clear outline instead.
 //
 // A street lamp near someone also throws their shadow on the wall behind
 // them: the same slot drawn as a soft dark shape, projected from the lamp
@@ -43,6 +44,7 @@ uniform vec2 uL;        // toward the key light, in uv, rim width long
 uniform vec3 uRim;      // rim light colour × strength
 uniform vec4 uFlash;    // rgb, amount (hit flash)
 uniform vec3 uWet;      // rain on them: strength, then "up" in uv (one rim width)
+uniform vec2 uLift;     // the figure a little brighter and richer than the place (docs §10.32)
 in vec2 vUV; out vec4 o;
 vec4 tap(vec2 uv) { return texture(uTex, clamp(uv, uClamp.xy, uClamp.zw)); }
 void main() {
@@ -59,6 +61,10 @@ void main() {
   // the rim: inside, where the neighbour toward the light is empty
   float r1 = 1.0 - tap(vUV + uL).a, r2 = 1.0 - tap(vUV + uL * 0.45).a;
   float rim = s.a * max(r1 * 0.55, r2);
+  // richer and a little brighter than the place: colour pushed out from its grey, contrast round the mid
+  float lum = dot(s.rgb, vec3(0.299, 0.587, 0.114));
+  s.rgb = max(mix(vec3(lum), s.rgb, uLift.y), 0.0) * uLift.x;
+  s.rgb = max((s.rgb - 0.5 * s.a) * 1.08 + 0.5 * s.a, 0.0);
   s.rgb = mix(s.rgb, uFlash.rgb * s.a, uFlash.a);
   s.rgb += uRim * rim;
   // out in the rain every upward face is wet: a thin cool sheen along the tops of
@@ -114,10 +120,14 @@ export class CharRenderer {
     this.sprog = program(gl, SVS, SFS);
     this.vao = gl.createVertexArray();
     this.view = new Float32Array(9);
-    this.ink = [0.035, 0.027, 0.022, 0.4]; // the soft contact shade (style INK, faint)
-    this.outline = 0.9;     // its reach in units
-    this.rim = [0.2, 0.23, 0.27]; // the night's ambient along the lit edge
-    this.rimW = 0.7;        // rim width in units
+    // docs §10.32: the figures were the same values as the street behind them; now
+    // a darker, wider shade parts them from it, the rim along the lit edge is
+    // brighter and wider, and the figure itself is lifted a little
+    this.ink = [0.012, 0.012, 0.016, 0.62]; // the shade outside the silhouette
+    this.outline = 1.5;     // its reach in units
+    this.rim = [0.34, 0.39, 0.47]; // the night's ambient along the lit edge
+    this.rimW = 0.85;       // rim width in units
+    this.lift = [1.06, 1.22]; // the figure's own light and colour, over the place's
     this.light = [0.55, -0.84]; // style LIGHT
     this.enemyInk = null; // accessibility: a bright outline colour for enemies
     this.wet = 0;           // rain on the figures (scenes set it outdoors)
@@ -231,8 +241,11 @@ export class CharRenderer {
     gl.uniform1f(p.u.uHard, hard ? 1 : 0);
     const rw = this.rimW * this.ppu / W;
     gl.uniform2f(p.u.uL, this.light[0] * f * rw, -this.light[1] * rw);
-    gl.uniform3f(p.u.uRim, this.rim[0], this.rim[1], this.rim[2]);
+    // the operator's rim brighter still: the one you play is the clearest thing on the street
+    const rk = ch.team === 1 ? 1 : 1.35;
+    gl.uniform3f(p.u.uRim, this.rim[0] * rk, this.rim[1] * rk, this.rim[2] * rk);
     gl.uniform3f(p.u.uWet, this.wet, 0, this.rimW * 0.8 * this.ppu / W);
+    gl.uniform2f(p.u.uLift, this.lift[0] * (ch.team === 1 ? 1 : 1.05), this.lift[1]);
     gl.uniform4f(p.u.uClamp, uv[0] + 0.5 / W, uv[3] + 0.5 / W, uv[2] - 0.5 / W, uv[1] - 0.5 / W);
     const ink = hard || this.ink;
     gl.uniform4f(p.u.uInk, ink[0], ink[1], ink[2], ink[3]);

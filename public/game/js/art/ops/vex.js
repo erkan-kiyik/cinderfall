@@ -18,6 +18,7 @@ import {
 } from './body.js';
 import { texture } from '../tex.js';
 import { PROFILE, SKINS, face, crop, knit, strap, glass, ell, brushOf } from './realhead.js';
+import { FACES } from './faces.js';
 
 const PAL = {
   jacket: mat(tone('#8a5c3f', '#62402b', '#40291b', '#1d120b'), 'leather', 0.7),
@@ -315,13 +316,11 @@ function head(g) {
   neck(g, PAL.skin, { sh: 1.0, glaze: true });
   // his own face (docs §10.29): heavy brow over deep eyes, a straight nose with the bump of
   // an old break, thin set lips, a hard square jaw and a chin that stands out
-  const FS = face(g, { prof: 'm', s: S, age: 0.22, seed: 31, iris: '#4a3020', brow: ['#1b120d', 0.1, 1.2], lips: '150,84,70', shave: 'rgba(36,28,24,0.32)', stubble: { col: '#1a120d', n: 1100 },
+  const FS = face(g, { paint: FACES.flint, prof: 'm', s: S, age: 0.22, seed: 31, iris: '#4a3020', brow: ['#1b120d', 0.1, 1.2], lips: '150,84,70', shave: 'rgba(36,28,24,0.32)', stubble: { col: '#1a120d', n: 1100 },
     shape: { fore: -0.1, brow: 0.6, nasion: 0.4, nose: 0.15, hump: 0.4, tip: -0.1, lips: -0.25, chin: 0.4, long: 0.2, jaw: 0.8, eye: 0.5 } });
   const COL = FS.w(FCOLLAR);
   // soot in the creases and round where the goggles sat, a smear along the cheekbone
   B.inside(FS.P, () => { B.dab(3.5, -6.2, 1.0, 0.55, 'rgba(26,20,16,0.28)'); B.dab(2.6, -5.3, 1.0, 0.25, 'rgba(26,20,16,0.3)', 1, 'source-over', -0.2); B.dab(4.0, -8.0, 0.8, 0.3, 'rgba(26,20,16,0.18)'); });
-  // the old burn through the near brow
-  B.line('M 3.5 -7.15 L 3.68 -6.62', `rgba(${S.pale},0.8)`, 0.07, 0.02);
   crop(g, FSIDEBURN, { col: '#2a1a12', lit: 'rgba(110,80,60,1)', seed: 33, n: 160, a: Math.PI * 0.5 });
   crop(g, FNAPE, { col: '#24170f', lit: 'rgba(100,72,52,1)', seed: 35, n: 260, a: Math.PI * 0.55 });
   // the scarf pulled down round the neck to the jaw, wound twice, knit, darned

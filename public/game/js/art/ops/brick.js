@@ -18,6 +18,7 @@ import {
 import { texture } from '../tex.js';
 import { rnd } from '../paint.js';
 import { PROFILE, SKINS, face, crop, strap, glass, ell, inP } from './realhead.js';
+import { FACES } from './faces.js';
 
 const PAL = {
   jacket: mat(tone('#f2894a', '#d6632b', '#a2451b', '#4e1e09'), 'canvas', 0.8),
@@ -295,7 +296,7 @@ function head(g) {
   neck(g, PAL.skin, { glaze: true, wide: 0.3 });
   // his own face (docs §10.29): a sloping forehead over a heavy brow ridge, pale eyes deep
   // under it, a big broad hooked nose with a hanging tip, a heavy jaw under the beard
-  const FS = face(g, { prof: 'm', s: S, age: 0.75, seed: 71, iris: '#7a9ab0', brow: ['#b8b2aa', 0.1, 1.6], lips: '170,90,76',
+  const FS = face(g, { paint: FACES.bulwark, prof: 'm', s: S, age: 0.75, seed: 71, iris: '#7a9ab0', brow: ['#b8b2aa', 0.1, 1.6], lips: '170,90,76',
     shape: { fore: -0.35, brow: 0.85, nasion: 0.5, nose: 0.6, hump: 0.55, tip: -0.45, wing: 1.0, lips: -0.1, chin: -0.05, long: 0.15, jaw: 0.6, eye: 0.6 } });
   // the short grey beard and moustache, salt and pepper, trimmed close to the jaw
   crop(g, FS.w(BBEARD), { col: 'rgba(120,114,106,0.8)', lit: 'rgba(220,216,208,1)', seed: 73, n: 1100, a: Math.PI * 0.62, salt: 0.55 });

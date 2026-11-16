@@ -3,9 +3,10 @@
 // feature is placed in tile columns and painted inside the same box, so what
 // you see is what you collide with.
 //
-//   A  approach      crate, duct to slide under, a gap      → checkpoint 1
+//   A  approach      crate, the steam main overhead          → checkpoint 1
 //   B  checkpoint    Syndicate post behind concrete and steel barricades
-//   C  container yard ladder, fire-escape deck, stacked containers → checkpoint 2
+//   C  container yard the gantry crane, containers at the back, crates → checkpoint 2
+//   (docs §10.33: the street stays level: no pit, ladder, deck or stack to climb)
 //   D  gate court    shield trooper, riflemen, a rusher; hack the gate terminal
 //   E  extraction    the gate opens, a last squad arrives, reach the flare
 import { cel, fill, stroke, clip } from '../kit.js';
@@ -13,7 +14,7 @@ import { Brush, rnd } from '../paint.js';
 import { M, tone, mat, C } from '../style.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, barrier, lampPost, burnBarrel, dumpster, cone, korMark } from './street.js';
-import { CONT, container, catwalk, ladder, pit, duct, barricade, scrapBarricade } from './course.js';
+import { CONT, container, duct, barricade, scrapBarricade } from './course.js';
 import { emblem } from '../enemies/syndicate.js';
 import { letters, lightbox, razor } from './city.js';
 import { texture } from '../tex.js';
@@ -217,7 +218,7 @@ export function boom(g, x, len = 44) {
 
 // the rubber-tyred gantry crane in the container yard: yellow legs and
 // tyres, the girder with the owner's name, the trolley and its cab; the deck
-// you climb to is its sill walkway (drawn by catwalk)
+// was its sill walkway (no longer climbed, docs §10.33)
 export function rtg(g, x0, x1) {
   const Y = mat(tone('#e2c062', '#c09a38', '#8a6a1e', '#2e220a'), 'paint', 0.7);
   for (const lx of [x0 - 6, x1 + 2]) {
@@ -352,37 +353,35 @@ export function buildMission1() {
   // A — approach -----------------------------------------------------------------
   P('m.welcome', [X(12) - 22, -50, X(12) + 22, 1], (g) => welcomeSign(g, X(12)), deco);
   block(22, 23, 1, 2); P('m.crateA', [X(22) - 2, -18, X(24) + 2, 1], (g) => crate(g, X(22), 16, 16));
-  block(34, 42, 5, 6); P('m.duct', [X(34) - 16, -50, X(43) + 16, 1], (g) => duct(g, X(34), X(43), -48, -32));
-  for (let c = 50; c <= 53; c++) for (let r = STREET; r < STREET + 4; r++) g[r][c] = '.';
-  P('m.pit', [X(50) - 8, -11, X(54) + 8, 33], (g) => pit(g, X(50), X(54), 32));
+  // the steam main on its trestles, high over the road (docs §10.33: walked under, not slid under)
+  P('m.duct', [X(34) - 16, -90, X(43) + 16, 1], (g) => duct(g, X(34), X(43), -88, -72), deco);
+  // (docs §10.33: no pit in the road any more; the street stays level)
   P('m.cone1', [X(46) - 6, -12, X(46) + 8, 1], (g) => cone(g, X(46)), deco);
   // B — checkpoint post -------------------------------------------------------------
   P('m.roadSign', [X(66) - 12, -46, X(66) + 12, 1], (g) => roadSign(g, X(66), ['KONTROL', 'NOKTASI', 'YAVAŞLA']), deco);
-  bar('m.barB1', 72, 75, 4);
+  bar('m.barB1', 72, 75, 3);
   block(86, 89, 1, 2); P('m.barB', [X(86) - 4, -18, X(90) + 4, 1], (g) => barrier(g, X(86) + 1, 30), front);
   P('m.booth', [X(104) - 4, -84, X(104) + 48, 1], (g) => booth(g, X(104)), deco);
   glows.push([X(104) + BOOTH_TV[0], BOOTH_TV[1], 5, 4, '#b8d4ff', 0.5, 'tv']);
   lights.push([X(104) + BOOTH_TV[0], BOOTH_TV[1] + 4, 30, 0.45, [0.6, 0.75, 1], 'tv']);
   P('m.boom', [X(103) - 50, -24, X(103) + 12, 1], (g) => boom(g, X(103), 46), deco);
-  block(100, 101, 1, 5); P('m.concB', [X(100) - 1, -42, X(102) + 1, 1], (g) => concrete(g, X(100), X(102), 40));
-  bar('m.barB2', 116, 119, 4);
+  block(100, 101, 1, 3); P('m.concB', [X(100) - 1, -26, X(102) + 1, 1], (g) => concrete(g, X(100), X(102), 24));
+  bar('m.barB2', 116, 119, 3);
   P('m.barrelB', [X(124) - 2, -16, X(124) + 14, 1], (g) => burnBarrel(g, X(124)), deco);
   // C — container yard -----------------------------------------------------------------
-  block(140, 149, 1, 5); P('m.contA', [X(140) - 2, -42, X(150) + 2, 1], (g) => container(g, X(140), -40, X(150), 0, CONT.teal, { code: 'MSKU 704410 2', kor: true }));
-  block(160, 180, 12, 12, '='); block(159, 159, 1, 12, 'H');
+  // (docs §10.33: the containers stand at the back of the yard, nothing to climb; crates to fight from)
+  P('m.contA', [X(140) - 2, -42, X(150) + 2, 1], (g) => container(g, X(140), -40, X(150), 0, CONT.teal, { code: 'MSKU 704410 2', kor: true }), deco);
+  block(152, 153, 1, 2); P('m.crateY', [X(152) - 2, -18, X(154) + 2, 1], (g) => crate(g, X(152), 16, 16));
   P('m.rtg', [X(160) - 18, -150, X(181) + 16, 1], (g) => rtg(g, X(160), X(181)), deco);
   lights.push([X(160) + 120, -124, 30, 0.3, [1, 0.7, 0.4]]);
-  P('m.deck', [X(160) - 2, -114, X(181) + 2, -78], (g) => catwalk(g, X(160), X(181), -96));
-  P('m.ladder', [X(159) - 1, -112, X(160) + 1, 1], (g) => ladder(g, X(159), -96, 0));
   block(190, 191, 1, 2); P('m.crateC', [X(190) - 2, -18, X(192) + 2, 1], (g) => crate(g, X(190), 16, 16));
-  block(205, 214, 1, 5); block(209, 214, 6, 10);
-  P('m.contB', [X(205) - 2, -42, X(215) + 2, 1], (g) => container(g, X(205), -40, X(215), 0, CONT.navy, { code: 'VNTU 482116 1' }));
-  P('m.contC', [X(209) - 2, -82, X(215) + 2, -39], (g) => container(g, X(209), -80, X(215), -40, CONT.rust, { code: 'TGHU 30129' }));
+  P('m.contB', [X(205) - 2, -42, X(215) + 2, 1], (g) => container(g, X(205), -40, X(215), 0, CONT.navy, { code: 'VNTU 482116 1' }), deco);
+  block(208, 209, 1, 2); P('m.crateZ', [X(208) - 2, -18, X(210) + 2, 1], (g) => crate(g, X(208), 16, 16));
   P('m.dumpC', [X(220) - 4, -24, X(220) + 48, 1], (g) => dumpster(g, X(220)), deco);
   // D — gate court ----------------------------------------------------------------------
-  block(246, 247, 1, 5); P('m.concD1', [X(246) - 1, -42, X(248) + 1, 1], (g) => concrete(g, X(246), X(248), 40));
-  block(274, 275, 1, 5); P('m.concD2', [X(274) - 1, -42, X(276) + 1, 1], (g) => concrete(g, X(274), X(276), 40));
-  bar('m.barD', 294, 297, 4);
+  block(246, 247, 1, 3); P('m.concD1', [X(246) - 1, -26, X(248) + 1, 1], (g) => concrete(g, X(246), X(248), 24));
+  block(274, 275, 1, 3); P('m.concD2', [X(274) - 1, -26, X(276) + 1, 1], (g) => concrete(g, X(274), X(276), 24));
+  bar('m.barD', 294, 297, 3);
   P('m.term', [X(312) - 9, -28, X(312) + 18, 1], (g) => terminal(g, X(312)));
   block(322, 323, 1, 12);
   P('m.gateFrame', [X(322) - 78, -150, X(324) + 78, 1], (g) => cityGate(g, X(322), X(324), 96), deco);
@@ -393,7 +392,7 @@ export function buildMission1() {
   // E — extraction -----------------------------------------------------------------------
   block(350, 351, 1, 2); P('m.crateE', [X(350) - 2, -18, X(352) + 2, 1], (g) => crate(g, X(350), 16, 16));
   // the cells hold the extraction: their own barricade, no light
-  block(362, 364, 1, 4); P('m.barE', [X(362) - 4, -4 * T - 8, X(365) + 8, 1], (g) => scrapBarricade(g, X(362), X(365), 4 * T), front);
+  block(362, 364, 1, 3); P('m.barE', [X(362) - 4, -3 * T - 8, X(365) + 8, 1], (g) => scrapBarricade(g, X(362), X(365), 3 * T), front);
   P('m.beacon', [X(387) - 5, -28, X(387) + 5, 1], (g) => beacon(g, X(387)), deco);
   // checkpoint posts
   const checkpoints = [{ x: X(60) }, { x: X(228) }, { x: X(316) }];
@@ -437,9 +436,9 @@ export function buildMission1() {
       E('tet', X(119) + 4, 0, [X(96), X(128)]),
       E('tet', X(108), 0, [X(96), X(128)], { patrol: [X(105), X(114)] }),
       // C
-      E('tet', X(176), -96, [X(161), X(180)]),
+      E('tet', X(176), 0, [X(156), X(186)]),
       E('huc', X(196), 0, [X(152), X(226)], { patrol: [X(186), X(200)] }),
-      E('tet', X(207), -40, [X(205), X(208)]),
+      E('tet', X(212), 0, [X(200), X(226)]),
       // D
       E('kal', X(266), 0, [X(249), X(273)]),
       E('tet', X(276) + 4, 0, [X(268), X(306)]),

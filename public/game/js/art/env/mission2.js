@@ -6,14 +6,14 @@
 //   B  the market   along the pavement in front of the shops, tarps slung
 //                   overhead; hold the middle of it while three squads come
 //                   at it from both ends                          → checkpoint 2
-//   C  scaffolding  the street is walled off: up the ladders, over the wall
+//   C  the site     the stopped building site, its barricade across the street
 //   D  extraction   down on the far side, through the last post to the flare
 import { cel, fill, stroke, clip } from '../kit.js';
 import { M, tone, mat, C } from '../style.js';
 import { texture } from '../tex.js';
 import { Level, T } from '../../phys/level.js';
 import { crate, lampPost, burnBarrel, dumpster, cone } from './street.js';
-import { catwalk, ladder, barricade } from './course.js';
+import { catwalk, barricade } from './course.js';
 import { concrete, beacon, cpPost } from './mission1.js';
 import { facadeLayout, bulb, letters, lightbox, ledBoard, notice } from './city.js';
 
@@ -134,12 +134,6 @@ export function scaffold(g, x0, x1, y) {
   catwalk(g, x0, x1, y);
 }
 
-// barbed wire on top of a wall
-function wire(g, x0, x1, y) {
-  for (let x = x0; x < x1; x += 3) stroke(g, ell(x + 1.5, y - 2, 2.2, 2.2), '#3c4654', 0.3);
-  for (let x = x0; x < x1; x += 3) stroke(g, `M ${x} ${y - 2} l 0.8 -0.8 M ${x + 1.4} ${y - 4} l 0.6 0.8`, '#939dab', 0.25);
-}
-
 // --- the mission -------------------------------------------------------------------
 export function buildMission2() {
   const g = Array.from({ length: ROWS }, () => Array(COLS).fill('.'));
@@ -163,7 +157,7 @@ export function buildMission2() {
   // Vanta's ration point, nothing today
   P('m2.ration', [X(46) - 34, -52, X(46) + 60, 1], (g) => rationPoint(g, X(46) + 2), deco);
   lights.push([X(46) + 30, -40, 44, 0.35, [0.9, 0.93, 0.95]]);
-  bar('m2.barA', 70, 73, 4);
+  bar('m2.barA', 70, 73, 3);
   P('m2.barrelA', [X(80) - 2, -16, X(80) + 14, 1], (g) => burnBarrel(g, X(80)), deco);
   addCrate(96);
   // B — the market (docs §10.6): along the pavement in front of the shops,
@@ -181,23 +175,13 @@ export function buildMission2() {
   addCrate(166); addCrate(170);
   addCrate(226);
   P('m2.dumpB', [X(229) - 4, -24, X(229) + 48, 1], (g) => dumpster(g, X(229)), deco);
-  // C — scaffolding over the wall -------------------------------------------------------------
-  block(240, 240, 1, 10, 'H'); block(241, 267, 10, 10, '=');
-  P('m2.scafA', [X(241) - 2, -100, X(268) + 2, 1], (g) => scaffold(g, X(241), X(268), -80));
-  P('m2.ladA', [X(240) - 1, -96, X(241) + 1, 1], (g) => ladder(g, X(240), -80, 0));
-  block(267, 267, 11, 15, 'H'); block(268, 312, 15, 15, '=');
-  // (in two pieces: an atlas page is only so wide)
-  for (const [k, a, b] of [[1, 268, 290], [2, 290, 313]]) P(`m2.scafB${k}`, [X(a) - 2, -140, X(b) + 2, -78], (g) => clip(g, rect(X(a) - 4, -142, X(b) + 4, -80), () => scaffold(g, X(a), X(b), -120)));
-  P('m2.ladB', [X(267) - 1, -136, X(268) + 1, -78], (g) => ladder(g, X(267), -120, -80));
-  // poles of the upper scaffold that stand on the street behind the wall
-  deco.push({ name: 'm2.pole', box: [-2, -82, 2, 1], paint: (g) => cel(g, rect(-0.8, -80, 0.8, 0), tone('#a9b3c0', '#7c8796', '#56606e', '#232831'), { sh: 0.3, hl: 0.2, lw: 0.25 }), at: [X(268) + 1, X(290), X(313) - 1], foot: [0, 2] });
+  // C — the building site (docs §10.33: no more scaffolding and wall to climb; the
+  // street stays level, the site's barricade across it to get past)
   addCrate(250);
   P('m2.site', [X(272) - 2, -48, X(272) + 30, 1], (g) => siteBoard(g, X(272)), deco);
-  // the wall across the street (12 tiles high), wire on top
-  block(296, 297, 1, 12);
-  P('m2.wall', [X(296) - 2, -106, X(298) + 2, 1], (g) => { concrete(g, X(296), X(298), 96); wire(g, X(296) - 1, X(298) + 1, -96); }, front);
+  bar('m2.barC', 296, 299, 3);
   // D — the far side and the flare -----------------------------------------------------------
-  bar('m2.barD', 336, 339, 4);
+  bar('m2.barD', 336, 339, 3);
   addCrate(352);
   P('m2.coneD', [X(366) - 6, -12, X(366) + 8, 1], (g) => cone(g, X(366)), deco);
   P('m2.beacon', [X(388) - 5, -28, X(388) + 5, 1], (g) => beacon(g, X(388)), deco);
@@ -240,8 +224,8 @@ export function buildMission2() {
       E('tet', X(114), 0, MZ, { wave: 3, facing: 1 }), E('huc', X(118), 0, MZ, { wave: 3, facing: 1 }), E('tet', X(214), 0, [X(200), X(230)], { wave: 3 }),
       E('kal', X(234), 0, MZ, { wave: 4 }), E('tet', X(230), 0, MZ, { wave: 4 }), E('huc', X(112), 0, MZ, { wave: 4, facing: 1 }),
       // C, on the scaffolding and behind the wall
-      E('tet', X(262), -80, [X(244), X(266)]),
-      E('tet', X(306), -120, [X(286), X(312)]),
+      E('tet', X(262), 0, [X(244), X(290)]),
+      E('tet', X(306), 0, [X(300), X(330)]),
       E('huc', X(286), 0, [X(270), X(295)]),
       // D
       E('tet', X(339) + 4, 0, [X(326), X(360)]),

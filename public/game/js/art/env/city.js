@@ -1803,6 +1803,21 @@ export function facadeLayout(x0, x1, seed = 1, first = ['walkup', 'crow', 'alley
   return out;
 }
 
+// Fewer buildings behind the fight (docs §10.32): the places the story is
+// about stay (HAWK's shop, the governor's, the town hall, the market hall, the
+// customs house, the union's hall, Vanta's container wall); of the ordinary
+// houses, sheds and shops along a street every other one goes, and the
+// alleys between them, so the street has gaps where the dark town shows.
+const LANDMARK = new Set(['crow', 'wallC', 'valilik', 'valFence', 'valWing', 'belediye', 'hal', 'gumruk', 'union']);
+export function sparseFacade(facade) {
+  let n = 0;
+  return facade.filter((f) => {
+    if (LANDMARK.has(f.type)) return true;
+    if (f.type === 'alley') return false;
+    return n++ % 2 === 0;
+  });
+}
+
 // bake entries for every building type (background density, no outline)
 // Weather over every painted facade (docs §11, kit.weatherOver): night falls
 // from the top, since the street lamps never reach the upper floors; damp and

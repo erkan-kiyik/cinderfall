@@ -6,7 +6,7 @@
 // troopers at the far end track the player with their aim.
 import { STREET } from '../art/env/street.js';
 import { weathered, defocus } from '../art/kit.js';
-import { BUILDINGS, buildingBakeList, facadeLayout } from '../art/env/city.js';
+import { BUILDINGS, buildingBakeList, facadeLayout, sparseFacade } from '../art/env/city.js';
 import { buildCourse } from '../art/env/course.js';
 import { FX, DENS } from './m1scene.js';
 import { charBakeList } from '../game/bakechars.js';
@@ -45,6 +45,8 @@ export function bakeList(quality, course = COURSE) {
 }
 
 const PLX = { sky: 0, far: 0.15, mid: 0.35 };
+// how far back the place sits behind the figures (multiplied in, docs §10.32)
+const BACK = { far: rgba('#5c6478'), house: rgba('#6e7688'), deco: rgba('#a2a8b6') };
 const LAYER_Y = { sky: -176, far: -182, mid: -168, fac: -118, ground: -0.5 };
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
@@ -55,6 +57,8 @@ export class M2Scene {
     this.L = this.C.level;
     // the buildings along the street (scenes that do not lay them out get a default street)
     if (!this.C.facade) this.C.facade = facadeLayout(-10, this.C.width + 10, 3);
+    // half as many buildings behind the fight (docs §10.32)
+    this.C.facade = sparseFacade(this.C.facade);
     this.cr = new CharRenderer(gl, batch);
     this.dust = new ParticleSystem(gl, atlas, atlas.get('fx.smoke'), 512, { additive: false });
     this.opIndex = 0;
@@ -210,6 +214,9 @@ export class M2Scene {
     const vis = this.C.facade.filter((f) => f.x + BUILDINGS[f.type].w > x0 && f.x < x1);
     for (const f of vis) for (const [lx, ly, rad, k, c, fl] of BUILDINGS[f.type].lights || []) R.addLight(f.x + lx, ly, rad, k * this.flicker(fl, f.x), c);
     for (const [lx, ly, rad, k, c, fl] of this.C.lights || []) if (lx > x0 && lx < x1) R.addLight(lx, ly, rad, k * this.flicker(fl, lx), c);
+    // the operator's own light (docs §10.32): a soft key from our side, so the one you
+    // play reads off the street even in the dark between the lamps
+    { const P = this.player; if (P && !this.C.interior) R.addLight(P.rx - P.facing * 10, P.ry - 46, 64, 0.5, [1, 0.93, 0.84]); }
     const fire = 0.86 + Math.sin(t * 23) * 0.06 + Math.sin(t * 7.3) * 0.06;
     // a fire is an x on the street, or [x, y] (a brazier up on something)
     for (const f of this.C.fires || []) { const [fx, fy] = f.length ? f : [f, 0]; if (fx > x0 && fx < x1) R.addLight(fx, fy - 20, 80, 1.2 * fire, [1, 0.55, 0.24]); }
@@ -219,11 +226,14 @@ export class M2Scene {
     const restore = () => { R.scene.bind(); };
     const kMax = Math.ceil(this.C.width / 600) + 1;
     // each layer is 600 wide; copies every 600 cover the whole course
+    // docs §10.32: the place stays back so the figures read: the distance and the
+    // buildings darker, cooler and greyer than the street the fight is on
+    const out0 = !this.C.interior, FAR = out0 ? BACK.far : 0xffffffff, HOUSE = out0 ? BACK.house : 0xffffffff, DECO = out0 ? BACK.deco : 0xffffffff;
     const layer = (name, view) => {
       B.begin(view);
       for (let k = -2; k < kMax; k++) for (let i = 0; ; i++) {
         const r = A.get(`${name}#${i}`); if (!r) break;
-        B.draw(r, -10 + i * 300 + k * 600, LAYER_Y[name]);
+        B.draw(r, -10 + i * 300 + k * 600, LAYER_Y[name], 1, 1, 0, name === 'ground' ? 0xffffffff : FAR);
       }
       B.end();
     };
@@ -254,7 +264,7 @@ export class M2Scene {
     B.begin(w);
     for (const p of this.C.back || []) B.draw(A.get(p.name), 0, 0);
     for (const p of this.C.floor || []) { const r = A.get(p.name); if (p.at) { for (const x of p.at) if (x + p.box[2] > x0 && x + p.box[0] < x1) B.draw(r, x, 0); } else B.draw(r, 0, 0); }
-    for (const f of vis) B.draw(A.get(`b.${f.type}`), f.x, 0);
+    for (const f of vis) B.draw(A.get(`b.${f.type}`), f.x, 0, 1, 1, 0, HOUSE);
     // contact shadows: every prop that stands on the street, every character on its feet
     const glow0 = A.get('fx.glow'), shade = rgba('#05060a', 0.55);
     const foot = (x, y, hw) => B.draw(glow0, x, y + 0.4, hw, 2.4, 0, shade);
@@ -274,7 +284,7 @@ export class M2Scene {
     // props behind the characters
     for (const p of this.C.deco) {
       const r = A.get(p.name);
-      if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0);
+      if (p.at) for (const x of p.at) B.draw(r, x, 0, 1, 1, 0, DECO); else B.draw(r, 0, 0, 1, 1, 0, DECO);
     }
     for (const p of this.C.props) { const r = A.get(p.name); if (p.at) for (const x of p.at) B.draw(r, x, 0); else B.draw(r, 0, 0); }
     B.end();

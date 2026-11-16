@@ -17,6 +17,7 @@ import {
 import { texture } from '../tex.js';
 import { rnd } from '../paint.js';
 import { PROFILE_F, SKINS, face, crop, strap, glass, ell, inP } from './realhead.js';
+import { FACES } from './faces.js';
 
 const PAL = {
   wind: mat(tone('#d6b467', '#b19044', '#84692b', '#3d3011'), 'nylon', 0.55),
@@ -277,7 +278,7 @@ function head(g) {
   neck(g, PAL.skin, { glaze: true });
   // her own face (docs §10.29): young and round, a small nose with a scooped bridge, a
   // turned-up tip and broad wings, full forward lips, a small soft chin
-  const FS = face(g, { prof: 'f', s: S, age: 0.04, seed: 61, iris: '#2a1810', white: '#a49488', brow: ['#140c08', 0.08, 1.0], lips: '110,52,44', lash: true,
+  const FS = face(g, { paint: FACES.skye, prof: 'f', s: S, age: 0.04, seed: 61, iris: '#2a1810', white: '#a49488', brow: ['#140c08', 0.08, 1.0], lips: '110,52,44', lash: true,
     shape: { fore: 0.1, brow: -0.1, nasion: -0.3, nose: -0.45, hump: -0.3, tip: 0.45, wing: 0.6, lips: 0.75, chin: -0.2, long: -0.25, jaw: -0.6, eye: -0.1 } });
   const COL = FS.w(SCOLL);
   crop(g, SFADE, { col: '#140e0b', lit: 'rgba(90,70,60,1)', seed: 63, n: 700, a: Math.PI * 0.62 });

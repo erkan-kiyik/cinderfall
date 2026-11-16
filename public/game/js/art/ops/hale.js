@@ -17,6 +17,7 @@ import {
 } from './body.js';
 import { texture } from '../tex.js';
 import { PROFILE, SKINS, face, crop, knit, strap, glass, ell } from './realhead.js';
+import { FACES } from './faces.js';
 
 const PAL = {
   coat: mat(tone('#5f615e', '#464845', '#30322f', '#141515'), 'canvas', 0.7),
@@ -283,7 +284,7 @@ function head(g) {
   neck(g, PAL.skin, { glaze: true, wide: 0.3 });
   // his own face (docs §10.29): an upright forehead, a long lower face, a big nose with a
   // broad hanging tip, a heavy jaw
-  const FS = face(g, { prof: 'm', s: S, age: 0.55, seed: 41, iris: '#56707e', brow: ['#3a2c22', 0.04, 1.25], lips: '160,90,78', shave: 'rgba(84,96,110,0.26)', stubble: { col: '#3a2c24', n: 700 },
+  const FS = face(g, { paint: FACES.warden, prof: 'm', s: S, age: 0.55, seed: 41, iris: '#56707e', brow: ['#3a2c22', 0.04, 1.25], lips: '160,90,78', shave: 'rgba(84,96,110,0.26)', stubble: { col: '#3a2c24', n: 700 },
     shape: { fore: 0.25, brow: 0.3, nasion: 0.1, nose: 0.35, hump: 0.05, tip: -0.3, wing: 0.9, lips: 0, chin: 0.15, long: 0.4, jaw: 0.55, eye: 0.3 } });
   crop(g, WHAIR, { col: '#3a2c22', lit: 'rgba(150,130,110,1)', seed: 43, n: 500, salt: 0.25 });
   // the moustache: thick, dark, going grey at its ends, combed down over the lip

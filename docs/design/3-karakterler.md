@@ -533,3 +533,39 @@ göz rengi, kaş ve yaştı. Artık her operatörün kendi yüz yapısı var.
 
 Gall'ın kafası kendi çizimi; dokunulmadı. Çizim sürümü `d4-58` (telefonlar
 yeniden boyar).
+
+### 10.34 Yüzler tek tek: göz, kaş, burun, ağız, izler
+
+§10.29'da her yüzün şekli ayrıldı, ama gözler, kaşlar, burnun ve ağzın
+boyası beşinde de aynıydı. Artık her operatör kendi gözünü, kaşını,
+burnunu, ağzını ve yalnız ona ait izleri taşıyor.
+
+- **Yapı** (`art/ops/realhead.js` → `face`): ten, ışık düzlemleri ve profil
+  bükümü ortak; göz, kaş, burun, kırışıklar, ağız ve izler değiştirilebilir
+  parçalar (`paint: { eye, brow, nose, folds, mouth, marks }`). Verilmeyen
+  parça standart olanla çiziliyor (Vanta ve Hücumcu gibi). Parçalar yüzün
+  bükümünü izleyen fırçayla çiziyor, böylece yerlerine oturuyorlar.
+- **Göz** (`art/ops/faces.js` → `eyeOf`): göz kapaklarının açıklığı, alt
+  kapağın yüksekliği (kısık bakış), dış köşenin düşüklüğü (yorgun göz),
+  kaşın derisinin kapağın üstüne düşmesi (çökük kapak), kapak çizgisinin
+  yüksekliği, kirpikler, irisin boyu ve rengi (alttan ışık alıyor, kenarı
+  koyu), göz altı torbası ve morluğu, kaz ayağı çizgileri, gözün ne kadar
+  derinde olduğu, ışık noktasının boyu.
+- **Kaş** (`browOf`): yumuşak bir kütle ve üstünde kaşın yönünde yatan
+  kıllar (başında yukarı, kuyruğunda geriye); kalınlık, kemer ve tepesinin
+  yeri, kırlar, dağınık kıllar, bir yara izinin açtığı boşluk.
+
+| Operatör | Göz | Kaş | Burun, ağız | İzler |
+| --- | --- | --- | --- | --- |
+| FLINT | Derin, çökük kapaklı, kısık; koyu kahve | Kalın, alçak, düz; eski yanık izi ortasından geçiyor | Kırığın tümseği ışıkta, keskin burun sırtı; ince, sıkılı dudak, köşeleri aşağı | Elmacık kemiğinin altı çökük, çene kası, çenede küçük bir kesik |
+| WARDEN | Yorgun: dış köşe düşük, torbalı, kaz ayağı; gri-mavi | Ağır, düz, kırlaşan, birkaç dağınık kıl | Ucu geniş, kırmızı, damarlı; bıyığın altında alt dudak | Burundan ağza derin çizgi, kızarık yanak, yanakta eski bir yanık |
+| VESPER | Açık badem göz, belirgin kapak çizgisi, kirpikler; yeşil-gri | İnce, kemerli, kumral | Ucu hafif kalkık, küçük ışık; dolgun dudak, belirgin yay | Burnun ve yanağın üstünde çiller, hafif allık |
+| SKYE | İri, parlak, yüksek kapak çizgisi, uzun kirpikler, iki ışık noktası; koyu | Koyu, belirgin kemerli, başı dolgun | Yuvarlak, geniş kanatlı, kanatta çelik bir küpe; dolgun, parlak dudak, yarım gülüş | Koyu tende elmacık ve alında ışık, çenede küçük bir iz |
+| BULWARK | Küçük, derin, ağır çökük kapak, torbalı, çok kaz ayağı; açık mavi | Gür, kır, her yöne kıl | Büyük kemerli burun, ucu iri, damarlı; burun kökünde eski bir yara; sakalın altında ince ağız | Güneş lekeleri, rüzgârdan kızarmış yanak, alında derin çizgiler |
+
+**Menü portreleri** (`ui/portraits.js`): kare 14 yerine 12 birim, yüzün
+ortasına çerçeveli; figürü karartan gölge hafifledi ve yüze ateşin sıcak
+ışığı düşüyor. Lobideki operatör seçiminde, profilde, hazırlıkta yüzler
+artık seçiliyor.
+
+Gall'ın kafası kendi çizimi; dokunulmadı. Çizim sürümü `d4-61`.

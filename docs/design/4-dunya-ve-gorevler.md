@@ -518,3 +518,65 @@ oynayan bir betikle bitirildi (oyuncu ölmüyor): 4 → 73 sn, 5 → 27 sn,
 6 → 79 sn, 7 → 118 sn (oyun saati; tutma süreleri dahil). 5. görevde
 viyadüğün altındaki duvar, zıplayıp tutununca oyuncuyu perona çıkarıyor:
 istenen yol bu.
+
+### 10.32 Karakterler öne, arka plan geride
+
+Karakterler arkalarındaki sokakla aynı değerlerdeydi: koyu bir montun
+arkasında koyu bir duvar, ikisi birbirine karışıyordu. Arka planda da çok
+bina vardı. İkisi birden düzeltildi.
+
+**Karakterler** (`gfx/charrender.js`, bütün figürler aynı gölgelendiriciden
+geçiyor):
+
+- Siluetin dışındaki yumuşak gölge koyulaştı ve genişledi (0,4 → 0,62
+  yoğunluk, 0,9 → 1,5 birim): figür arkasındakinden bir koyu halkayla
+  ayrılıyor. Çizgi değil, yumuşak; §11'deki "kimsenin etrafında mürekkep
+  çizgisi yok" kuralı duruyor.
+- Işığa bakan kenardaki gece ışığı (rim) daha parlak ve geniş (0,7 → 0,85
+  birim); oynanan operatörde 1,35 kat daha güçlü.
+- Figürün kendisi biraz kaldırıldı: renk doygunluğu ×1,22, parlaklık ×1,06
+  (operatörde ×1,11), orta tonların çevresinde hafif kontrast.
+- Dışarıda operatörün üstünde kendi yumuşak, sıcak ışığı var: lambaların
+  arasındaki karanlıkta da okunuyor.
+
+**Arka plan geride** (`test/m2scene.js`, yalnız dışarıda): uzak katmanlar
+(`#5c6478`), binalar (`#6e7688`) ve süsler (`#a2a8b6`) bu renklerle
+çarpılıyor: daha koyu, daha soğuk, daha gri. Üstünde dövüşülen zemin ve
+karakterler olduğu gibi.
+
+**Daha az bina** (`art/env/city.js` → `sparseFacade`): hikâyenin geçtiği
+yerler duruyor (HAWK'ın dükkânı, valilik ve kanatları, belediye, hal,
+gümrük, sendika, Vanta'nın konteyner duvarı); sıradan ev, depo ve
+dükkânlardan biri kalıyor biri gidiyor, aralarındaki ara sokaklar kalkıyor.
+Sokakta boşluklar var, arkadan karanlık şehir görünüyor.
+
+Lobinin içi (atölye) etkilenmiyor; karakter ayrışması orada da geçerli.
+
+### 10.33 Düz görevler: inişler çıkışlar azaldı
+
+Görevlerin yolunda çok merdiven, iskele, platform, çukur ve tırmanılacak
+duvar vardı; dövüşün temposu sürekli yukarı aşağı kesiliyordu. Kural artık
+şu: **yolda tırmanılacak bir şey yok, siper en çok üç sıra yüksek.**
+
+- Merdivenler, iskeleler, platformlar, vinç güvertesi ve yolu kesen çukur
+  kalktı. Konteynerler, potalar, vinç ve iskele parçaları sahnenin arkasına
+  süs olarak geçti (yürünmüyor); yerlerine siper olarak sandıklar kondu.
+- Barikat, T-duvar ve hurda yığınları en çok üç sıra (üstünden atlanıyor,
+  arkasından ateş ediliyor). Yüksek beton bloklar alçaldı.
+- Yükseklerde duran düşmanlar sokağa indi.
+- 1. görev: buhar borusu yola asılı, altından yürünüyor (eskiden kayarak
+  geçiliyordu); çukur yok; liman kısmı düz, konteyner duvarının yerine
+  sandıklar.
+- 2. görev: şantiyenin iskeleleri, merdivenleri ve duvarı yerine tek bir
+  barikat. Hedef: "Şantiyeden geç".
+- 4–7. görevler: dökümhanede potalar arkada, vinç yolu yok; metroda viyadük
+  ve peron yukarıda kalıyor, yol altından geçiyor (hedefler: "İstasyona
+  ulaş", "Viyadüğün altından geç"); dron fabrikasında konteynerler ve vinç
+  arkada; ocakta sobaların merdiveni ve platformlar yok.
+
+**Denendi:** yalnız denetimlerle oynayan betik (ışınlanma yok) yedi
+görevin yolunu baştan sona yürüdü: 1 → 27 sn, 2 → 60 sn, 4 → 73 sn,
+5 → 27 sn, 6 → 78 sn, 7 → 120 sn; 3. görevde yol açık, betik ateş
+etmediği için son dövüşte süre doluyor (yürüme sorunu değil).
+
+Çizim sürümü `d4-61` (telefonlar yeniden boyar). Yüzler: §10.34.
