@@ -95,10 +95,11 @@ export const SKINS = {
   olive: { base: '#9a6e52', shade: '52,30,20', half: '78,46,32', lit: '226,180,148', red: '180,76,56', yellow: '196,150,96', dark: '60,30,20', pale: '246,212,186', ear: '#8a5e44' },
   // ruddy, wind-burnt (Bulwark)
   ruddy: { base: '#b07c64', shade: '66,34,26', half: '96,50,38', lit: '246,200,176', red: '204,82,64', yellow: '214,164,110', dark: '74,34,24', pale: '255,222,200', ear: '#a06650' },
-  // deep brown (Skye)
-  // fair and fresh, rosy (Vesper, docs §10.35)
+  // fair and fresh, rosy (docs §10.35)
   rose: { base: '#c9a088', shade: '100,60,50', half: '140,92,78', lit: '252,228,212', red: '214,116,104', yellow: '228,186,140', dark: '102,56,46', pale: '255,240,228', ear: '#b98d76' },
-  // deep warm brown with a glow, the light catching it (Skye, docs §10.35)
+  // fair, the pallor of someone who works nights indoors (Vesper, docs §10.37)
+  pale: { base: '#bd9786', shade: '78,50,46', half: '112,78,70', lit: '242,220,206', red: '196,104,96', yellow: '210,174,136', dark: '80,46,40', pale: '255,236,226', ear: '#ad8573' },
+  // deep warm brown with a glow, the light catching it (Skye, docs §10.35, §10.37)
   umber: { base: '#6e432f', shade: '36,18,10', half: '62,34,22', lit: '206,148,108', red: '156,70,48', yellow: '186,126,74', dark: '32,15,9', pale: '246,200,160', ear: '#5e3826' },
   deep: { base: '#5e3a28', shade: '24,12,8', half: '40,22,14', lit: '170,118,86', red: '120,46,30', yellow: '150,100,60', dark: '22,10,6', pale: '200,150,116', ear: '#52321f' },
 };
@@ -171,6 +172,60 @@ export function crop(g, d, o) {
     const grey = r() < salt, l = r();
     const c = grey ? `rgba(${170 + l * 50 | 0},${166 + l * 50 | 0},${160 + l * 50 | 0},1)` : l < 0.3 ? lit : col;
     return [x, y, a + (r() - 0.5) * 0.5, 0.06 + r() * 0.12, c, 0.018, grey ? 0.4 : 0.45];
+  });
+}
+
+// the box round an absolute path's points
+function bbox(d) {
+  const v = (d.match(/-?\d*\.?\d+/g) || []).map(Number);
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (let i = 0; i + 1 < v.length; i += 2) { x0 = Math.min(x0, v[i]); x1 = Math.max(x1, v[i]); y0 = Math.min(y0, v[i + 1]); y1 = Math.max(y1, v[i + 1]); }
+  return [x0, y0, x1, y1];
+}
+
+// A beard over d (docs §10.37; d already bent to the face with FS.w): a soft mass whose
+// edge on the cheek fades into the skin, darker under the jaw, lit on the cheek and the
+// chin's front; then short hairs growing down the cheek, forward and down on the chin,
+// back and down under the jaw. o: { col (rgb), lit, dark, seed, n, len, w, edge, a, dir }
+export function beard(g, d, o) {
+  const B = brushOf(g), { col, lit, dark = 'rgba(0,0,0,0.4)', seed = 9, n = 1400, len = 0.14, w = 0.022, edge = 0.16, a = 0.8, dir = 0.13 } = o;
+  const [x0, y0, x1, y1] = bbox(d);
+  B.fill(d, `rgba(${col},${a * 0.55})`, edge);
+  B.fill(d, `rgba(${col},${a * 0.6})`, edge * 0.3);
+  B.inside(d, () => {
+    B.dab(0.6, -2.3, 1.8, 0.9, dark);
+    B.dab(4.3, -2.7, 0.6, 0.7, lit, 0.25);
+    B.dab(2.6, -4.4, 1.3, 0.5, lit, 0.16);
+    texture(g, 'wool', 0.25, 0.5);
+  });
+  B.hairs(n, seed, (i, r) => {
+    const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0);
+    if (!inP(g, d, x, y)) return null;
+    const ang = Math.PI * 0.5 - (x - 1.6) * dir + (r() - 0.5) * 0.6, l = r();
+    return [x, y, ang, len * (0.6 + r() * 0.8), l < 0.3 ? lit : l < 0.5 ? dark : `rgb(${col})`, w, 0.6];
+  });
+}
+
+// Hair cut short over d (docs §10.37): its mass thick at the top (y0) and thinning to the
+// skin at the edge (y1: a taper), the edge itself soft; short hairs combed along `a`, salt
+// for grey. col is an rgb triple.
+export function shortHair(g, d, o) {
+  const B = brushOf(g), { col, lit, seed = 5, n = 900, a = Math.PI * 0.8, y0 = -9, y1 = -4, fade = [0.95, 0.25], salt = 0, len = 0.1 } = o;
+  const [bx0, by0, bx1, by1] = bbox(d), f = (y) => fade[0] + (fade[1] - fade[0]) * Math.min(1, Math.max(0, (y - y0) / (y1 - y0)));
+  B.fill(d, `rgba(${col},0.3)`, 0.14);
+  B.inside(d, () => {
+    const gr = g.createLinearGradient(0, y0, 0, y1);
+    gr.addColorStop(0, `rgba(${col},${fade[0]})`); gr.addColorStop(1, `rgba(${col},${fade[1]})`);
+    g.save(); g.fillStyle = gr; g.fill(new Path2D(d)); g.restore();
+    B.dab(1.0, -9.0, 2.4, 1.0, lit, 0.3);
+    texture(g, 'wool', 0.2, 0.4);
+  });
+  B.hairs(n, seed, (i, r) => {
+    const x = bx0 + r() * (bx1 - bx0), y = by0 + r() * (by1 - by0);
+    if (!inP(g, d, x, y) || r() > f(y) + 0.15) return null;
+    const grey = r() < salt, l = r();
+    const c = grey ? 'rgba(196,192,186,1)' : l < 0.3 ? lit : `rgb(${col})`;
+    return [x, y, a + (r() - 0.5) * 0.5, len * (0.6 + r() * 0.8), c, 0.02, 0.5 * Math.max(0.3, f(y))];
   });
 }
 

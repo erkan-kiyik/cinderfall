@@ -116,7 +116,7 @@ async function main() {
   eng.fxMax = 2; eng.fxLevel = MEM <= 3 ? 1 : 2;
   const controls = new Controls();
   let scene = null, app = null;
-  if (DEV) scene = SC === M1 ? new M1.M1Scene(eng) : SC === M2 ? new M2.M2Scene(eng, controls) : SC === M3 ? new M3.M3Scene(eng, controls) : new M4.MissionScene(eng, controls, { id: params.get('m') || 'm1', diff: params.get('diff') || 'normal' });
+  if (DEV) scene = SC === M1 ? new M1.M1Scene(eng) : SC === M2 ? new M2.M2Scene(eng, controls) : SC === M3 ? new M3.M3Scene(eng, controls) : new M4.MissionScene(eng, controls, { id: params.get('m') || 'm1', diff: params.get('diff') || 'normal', op: params.get('op') || null });
   if (DEV && play) {
     bindKeyboard(controls, canvas);
     if (matchMedia('(pointer: coarse)').matches || params.has('touch')) bindTouch(controls, $('#hud'));

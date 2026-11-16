@@ -15,13 +15,13 @@ Bu bölüm çizimden önce yazıldı; kodlar (`public/game/js/art/ops/*.js`,
   kanvas, deri, yün, yansıtıcı bant, solmuş güvenlik turuncusu, konteyner
   sacı. Neon, uzay giysisi, mor cüppe, robot zırhı yok.
 - **Renkler soluk ve kirli.** Her birinin tek imza rengi geçmişinden gelir
-  (FLINT'in atkısı, WARDEN'in kaskı, VESPER'in sırt telsizi, SKYE'ın gözlüğü,
+  (FLINT'in atkısı, WARDEN'in kaskı, VESPER'in sırt telsizi, SKYE'ın kulaklığı,
   BULWARK'ın turuncusu); gerisi is, pas, kömür, lacivert.
 - **Takım işareti:** sol üst kolda aynı yerde, aynı boyda kor bandı: koyu
   kumaş üstünde turuncu bir kor lekesi. Vanta'dan ayıran ortak öğe.
 - **Yüzler kapalı, ama işten gelen bir şeyle:** kaynak gözlüğü ve atkı,
-  itfaiye kaskının vizörü, kulaklık ve boyunluk, kurye kaskı ve bandana,
-  baret ve gaz maskesi. Lens ışıkları (portre ve intro) bu camlardan.
+  itfaiye kaskının vizörü, tel çerçeveli gözlük ve telsiz kulaklığı,
+  boyundaki kulaklık, baret ve gaz maskesi (yüzler §10.25'ten beri açık). Lens ışıkları (portre ve intro) bu camlardan.
 - **Vanta tek tip ve temizdir:** mavi-gri polimer zırh, lacivert üniforma,
   beyaz halka-şerit arması, kırmızı vizör yarığı. Takımın yamalı, eskimiş
   görünüşünün tersi: yeni, aynı, tekrarlanan.
@@ -31,8 +31,8 @@ Bu bölüm çizimden önce yazıldı; kodlar (`public/game/js/art/ops/*.js`,
 |---|---|---|---|---|---|---|
 | **FLINT** (saldırı) | 29, üçüncü kuşak ocakçı | yuvarlak kaynak gözlüğü, örgü bere, uçuşan uzun kırmızı atkı, kalın deri ceket | siyah örgü bere; deri çerçeveli yuvarlak yeşil kaynak gözlüğü; babasının atkısı burnun üstüne çekili | yanık kahve deri ocakçı ceketi (yamalı, kıvılcım lekeli); önünde ocak çeliğinden kesilmiş paslı plaka, "3" şablonu, iki deri kayış | uzun deri kaynak eldiveni; is grisi kanvas pantolon, dizde deri yama; çelik burunlu ocakçı botu | is siyahı, yanık kahve, kül grisi, pas; **sendika kırmızısı** atkı |
 | **WARDEN** (savunma) | 41, kapatılan itfaiyenin son ekip amiri | yuvarlak itfaiye kaskı, inik altın vizör, dizüstü itfaiye ceketi, sırtta halligan | **beyaz amir kaskı** (isli, siyah şerit), altın vizör, gri yanmaz başlık | kömür grisi itfaiye ceketi, göğüste ve etekte sarı-gümüş-sarı yansıtıcı bant, göğüs cebinde telsiz | sarı-kahve itfaiye eldiveni; aynı kumaştan pantolon, dizde bant; siyah itfaiye çizmesi | kömür, kum, yansıtıcı gümüş/sarı; **kask beyazı** |
-| **VESPER** (kontrol) | 33, eski Vanta sinyal analisti | orta boy, ince; kalçaya kadar saha ceketi; sırtta eski bir **sırt telsizi**, şerit anteni ağırlığıyla geriye eğik | **yüzü görünmez:** ceketin kapüşonu başında, balıkçı yaka burnun üstüne çekili, koyu füme atış gözlüğü; tek kulaklı kulaklık kapüşonun üstünde, mikrofonu ağızda | soluk zeytin pamuklu saha ceketi (göğüs ve kalça cepleri, çıtçıtlı fermuar kapağı, sırtta yama), yakasından dinleme odasından kalma **gri-mavi balıkçı yaka kazak**; omuzlarda telsizin kayışları, göğüs kayışında spiral kablolu **ahize**; ceketin üstünden kemer | parmakları kesik yün eldiven (kadranlar için), sade çelik kol saati; antrasit iş pantolonu (yan cepli), baldır ortası kahverengi bağcıklı bot | soluk zeytin, antrasit, Vanta gri-mavisi, kahverengi deri; **üstünde ışık saçan hiçbir şey yok** |
-| **SKYE** (keşif) | 22, eski kurye; dron yapar | kısa, hafif; bisiklet kaskı, bol rüzgârlık, çapraz postacı çantası, dizlik; yanında hurda dron | çıkartmalı mat siyah bisiklet kaskı; aynalı **gök mavisi** spor gözlük; desenli bandana | soluk hardal rüzgârlık (sırtta yansıtıcı şerit), altında koyu sweatshirt; yamalı kanvas postacı çantası | sıvanmış kollar, parmaksız bisiklet eldiveni; siyah tayt üstüne kısa kargo şort, siyah dizlik, yıpranmış koşu ayakkabısı | hardal, kömür, krem; **gök mavisi** |
+| **VESPER** (kontrol) | 33, eski Vanta sinyal analisti | uzun boylu, ince; başı açık, sakallı; kalçaya kadar kemerli mumlu ceket; sırtta eski bir **sırt telsizi**, şerit anteni ağırlığıyla geriye eğik | koyu saç: yanlar ve ense kısa, üstü uzun ve ayrımdan geriye taranmış, şakakta birkaç beyaz tel; kısa kesilmiş koyu sakal ve bıyık; ince **dikdörtgen çelik çerçeveli gözlük**; saçın üstünden tek kulaklı telsiz kulaklığı, mikrofonu ağzın köşesinde | koyu orman yeşili **mumlu pamuk ceket** (kırışıklarında mumu aşınıp açılmış; kahverengi kadife yaka yassı yatar; pirinç çıtçıtlar, göğüs ve kalça cepleri, aynı kumaştan kemer, pirinç toka); yakasından dinleme odasından kalma **siyah balıkçı yaka**; omuzlarda telsizin haki kayışları, göğüs kayışında spiral kablolu **ahize**; kemerde evrak çantası | parmakları kesik siyah deri eldiven (kadranlar için), sade çelik kol saati; düz düşen gri iş pantolonu, siyah deri bağcıklı bot | orman yeşili, kadife kahvesi, pirinç, gri; telsizin zeytini; **üstünde ışık saçan hiçbir şey yok** |
+| **SKYE** (keşif) | 22, eski kurye; dron yapar | orta boy, hafif ve çevik; başı açık, üstte kısa twistler; açık renk şişme yelek, çapraz postacı çantası; yanında hurda dron | koyu kahve ten; üstte kısa **twistler**, yanlar ve ense deriye kadar inen fade, şakakta keskin çizgi; ince bıyık, çenede kısa sakal; bir kaşta tıraşla açılmış çentik; boynunda beyaz, kapları **gök mavisi** büyük kulaklık | taş grisi **şişme yelek** (yatay dikişli dilimler, isli; sırtında yarısı soyulmuş yansıtıcı şerit, bantla yamanmış yırtık); altında **gök mavisi** uzun kollu üst, eteği yeleğin altından görünür; yamalı kanvas postacı çantası, arkasında eski bisiklet lambası | kollar dirseğe kadar sıvanmış, çıplak ön kol, bilekte düğümlü ip; parmaksız bisiklet eldiveni; yanında açık şerit olan siyah eşofman altı, bilekte lastikli paça; grileşmiş beyaz bilekli spor ayakkabı | taş grisi, siyah, krem; **gök mavisi** |
 | **BULWARK** (ağır) | 47, liman vinç operatörü | en iri; baret, iki filtreli yarım maske, kalın turuncu iş ceketi, konteyner sacından göğüs ve omuz plakaları | soluk sarı baret, kafa lambası; koyu güvenlik gözlüğü; iki **magenta filtreli** yarım yüz maske | soluk **güvenlik turuncusu** iş ceketi, iki yansıtıcı bant, yağ lekeleri; üstünde konteyner kapısından kesilmiş oluklu mavi plaka, beyaz şablon kod | omuzlarda oluklu sac; kalın deri iş eldiveni; lacivert iş tulumu, dizde yansıtıcı; büyük çelik burunlu bot | güvenlik turuncusu, konteyner mavisi, gri; magenta filtre |
 
 Arayüz renkleri (yetenek HUD'u, listeler) imza renginden: FLINT `#d9533a`,
@@ -639,3 +639,66 @@ kadınlarda daha alçak ve dar (`UPPER_LOW`). Bütün pozlarda (bekleme, nişan,
 koşu, çömelme, yukarı) omuzda boşluk açılmadığı kontrol edildi.
 
 Çizim sürümü `d4-63`.
+
+### 10.37 Vesper ve Skye: erkek, sıfırdan
+
+Vesper ve Skye erkek karakterler olarak baştan çizildi. Adları, rolleri,
+yaşları, yetenekleri ve hikâyeleri aynı. Sırt telsizi, evrak çantası, dron
+ve postacı çantası da kaldı, çünkü yeteneklere ve hikâyeye bağlılar. Baş,
+yüz, saç ve kıyafetlerin geri kalanı yeni (§9.2'deki satırlar güncellendi).
+§10.29 ve §10.34–36'daki eski Vesper ve Skye satırları artık geçerli değil.
+
+**Vesper** (33)
+- **Yüz:** soluk, gece çalışan birinin teni (`SKINS.pale`). Uzun ve ince bir
+  yüz, yüksek alın, uzun düz ve dar bir burun, ince dudak. Gri-yeşil gözler
+  yorgun, kapakları ağır, altları hafif torbalı ve koyu. Kaşlar düz ve koyu.
+  Alında ilk çizgi var, burun kemerinde gözlük izi.
+- **Saç ve sakal:** yanlar ve ense kısa, deriye doğru incelir. Üstü uzun,
+  ayrımdan geriye taranmış, önü hafif kalkık. Şakakta birkaç beyaz tel var.
+  Kısa kesilmiş koyu sakal favoriden çeneye ve çene altına iner; bıyık üst
+  dudağın üstünde durur.
+- **Takılar:** ince, dikdörtgen çelik çerçeveli gözlük; camın ardında göz
+  görünür. Saçın üstünden geçen tek kulaklı telsiz kulaklığı kulağı örter;
+  mikrofon sakalın üstünden ağzın köşesine uzanır.
+- **Kıyafet:** koyu orman yeşili mumlu pamuk ceket, kalçaya kadar. Mum,
+  kırışıklarda, kenarlarda ve dirsekte aşınıp açık kesik çizgiler bırakmış.
+  Kahverengi kadife yaka boynun dibinde yassı yatar. Pirinç çıtçıtlar, göğüs
+  ve kalça cepleri, aynı kumaştan kemer ve pirinç toka var. Yakasından
+  dinleme odasından kalma siyah balıkçı yaka görünür. Altta düz düşen gri iş
+  pantolonu ve siyah deri bot; parmakları kesik siyah deri eldiven. Telsizin
+  kayışları haki.
+
+**Skye** (22)
+- **Yüz:** koyu kahve ten (`SKINS.umber`). Genç, güçlü bir çene, geniş
+  kanatlı bir burun, yana kaykılmış bir sırıtışla dolgun dudaklar (ağzın
+  köşesi yanağa doğru kalkık). İri, parlak koyu gözler; sırıtış alt kapağı
+  kaldırır. Kalın koyu kaşında tıraşla açılmış bir çentik var.
+- **Saç ve sakal:** üstte kısa twistler, her biri kafa derisinden dışarı ve
+  biraz geriye uzanır, tepeleri ışıkta. Yanlar ve ense fade: twistlerin
+  dibinde koyu, kulağın çevresinde ve ensede deriye kadar iner. Şakakta
+  keskin bir çizgi var. İnce bir bıyık ve çenede kısa sakal.
+- **Takılar:** boynunda büyük kulaklık; bandı ensenin arkasında, yakın
+  kabı köprücük kemiğinin üstünde, yastığı yukarıda. Plastiği beyaz, kapların
+  sırtı gök mavisi.
+- **Kıyafet:** taş grisi şişme yelek, kalçaya kadar. Yatay dikişli dilimleri
+  kabarık ve isli; sırtında kuryelikten kalma, yarısı soyulmuş yansıtıcı
+  şerit, bantla yamanmış bir yırtık, gök mavisi fermuar çekeceği. Altında gök
+  mavisi uzun kollu bir üst var: yaka boynun dibinde alçak, eteği yeleğin
+  altından görünür, kolları dirseğin üstünde toplanmış. Ön kol çıplak,
+  bilekte düğümlü ip, parmaksız bisiklet eldiveni. Yanında açık şerit olan
+  siyah eşofman altı, bilekte lastikli paça, cebinde bantlı yedek dron
+  pili. Ayakta grileşmiş beyaz bilekli spor ayakkabı, yanında gök mavisi
+  şerit. Postacı çantası, bisiklet lambası ve koli bandı yerinde.
+
+**Ortak araçlar** (`realhead.js`): `beard()` sakalı çizer: kenarı yanakta
+deriye karışır, kıllar yanakta aşağı, çenede ileri ve aşağı, çene altında
+geri ve aşağı uzanır. `shortHair()` kısa saçı çizer: üstte dolu, kenara
+doğru deriye kadar incelir. Skye'ın twistleri `braid()` ile kısa örgüler
+olarak çiziliyor. İkisi de erkek profilini (`prof: 'm'`) ve standart omuzu
+(`UPPER`) kullanıyor. Kadın yüzü için yazılmış `noseSoft` ve `foldsSoft`
+kaldırıldı.
+
+Geliştirici kısayolu: `index.html?scene=mission&m=m2&op=kite` görevi
+seçilen operatörle açar.
+
+Çizim sürümü `d4-64`.

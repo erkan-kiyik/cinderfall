@@ -145,23 +145,6 @@ function scar(B, d, w, s) {
   B.line(d, 'rgba(255,248,240,0.35)', w * 0.35, 0.01);
 }
 
-// a finer nose for the women's faces: the bridge lit along its line (no knot of light),
-// the tip's light soft, the wing and nostril drawn light (docs §10.35)
-function noseSoft(F, k = 1) {
-  const { B, s, SH } = F;
-  if (SH.sh.wing > 0) B.dab(4.52, -4.52, 0.3 + SH.sh.wing * 0.16, 0.2, rgba(s.half, 0.12 + SH.sh.wing * 0.08));
-  B.fill('M 4.2 -6.3 C 4.5 -5.8 4.9 -5.2 5.2 -4.82 L 4.5 -4.56 C 4.3 -5.1 4.06 -5.6 3.9 -6.0 Z', rgba(s.half, 0.22), 0.16);
-  B.line('M 4.32 -6.3 C 4.48 -6.02 4.62 -5.78 4.72 -5.6 C 4.9 -5.3 5.1 -5.02 5.24 -4.82', rgba(s.lit, 0.5 * k), 0.08, 0.07);
-  B.dab(5.16, -4.62, 0.16, 0.12, rgba(s.lit, 0.5 * k));
-  B.dab(5.06, -4.5, 0.3, 0.2, rgba(s.red, 0.16));
-  B.dab(4.62, -4.56, 0.26, 0.2, rgba(s.lit, 0.3));
-  B.line('M 4.46 -4.8 C 4.34 -4.66 4.34 -4.46 4.46 -4.38 C 4.58 -4.33 4.7 -4.33 4.8 -4.34', rgba(s.dark, 0.42), 0.05, 0.035);
-  B.line('M 4.86 -4.36 C 4.98 -4.37 5.08 -4.36 5.16 -4.33', rgba(s.shade, 0.6), 0.05, 0.025);
-  B.fill('M 4.36 -4.24 C 4.58 -4.2 4.7 -4.12 4.7 -4.0 C 4.54 -3.98 4.36 -4.04 4.24 -4.12 Z', rgba(s.dark, 0.28), 0.08);
-}
-// only a faint line from the nose toward the mouth: no fold under the chin
-function foldsSoft(F) { F.cr('M 4.3 -4.82 C 4.08 -4.52 3.98 -4.16 4.0 -3.8', 0.06, 0.14); }
-
 // FLINT: deep-set, hooded, narrowed eyes; a thick low straight brow cut by an old
 // burn; the bump of a break on the bridge; a thin set mouth, its corners down;
 // hollow cheeks over a hard jaw.
@@ -234,70 +217,70 @@ const warden = {
 // the lit lip of a fold, beside it
 function g_lit(B, d, s) { B.line(d, rgba(s.lit, 0.3), 0.08, 0.06); }
 
-// VESPER: open almond eyes, a clear lid crease, lashes; a thin arched auburn brow;
-// a short nose turned up at the tip; full lips with a sharp bow; freckles.
+// VESPER (docs §10.37): tired grey-green eyes under a heavy lid, a little pouched, dark
+// under them from the night shifts; a straight dark brow, level; a long straight narrow
+// nose, its bridge lit in one line; thin lips mostly under the moustache; the forehead's
+// first line.
 const vesper = {
-  eye: eyeOf({ open: 1.1, low: 1.0, iris: 1.06, col: '#5c7a52', irisLit: 'rgba(214,236,180,0.32)', crease: 0.27, creaseA: 0.5, lashes: { n: 6, len: 0.15, w: 0.017 }, lashW: 0.09, lowLash: 2, under: 0.1, crow: 0, glint: 1.1 }),
-  brow: browOf({ col: '#6a3a24', lit: 'rgba(196,120,80,0.8)', x0: 2.98, x1: 4.3, y0: -6.74, y1: -6.86, arch: 0.13, peak: 0.36, w: 0.14, tail: 0.35, n: 60, a: 0.75, seed: 51 }),
-  nose(F) { noseSoft(F); },
-  folds: foldsSoft,
+  eye: eyeOf({ open: 0.86, low: 0.95, hood: 0.35, lid: 0.12, iris: 0.95, col: '#62786e', irisLit: 'rgba(200,232,216,0.3)', socket: 0.5, under: 0.2, bag: 0.45, crow: 2, crowL: 0.32, crowA: 0.06, glint: 1.0 }),
+  brow: browOf({ col: '#1a120d', x0: 2.94, x1: 4.4, y0: -6.74, y1: -6.84, arch: 0.035, peak: 0.55, w: 0.2, tail: 0.5, n: 95, stray: 3, a: 0.86, seed: 51 }),
+  nose(F) {
+    noseStd(F);
+    const { B, s } = F;
+    // the long bridge: one clean line of light down it, the side plane in half light
+    B.line('M 4.3 -6.36 C 4.5 -6.0 4.72 -5.6 5.0 -5.12', rgba(s.pale, 0.55), 0.05, 0.02);
+    B.dab(4.5, -5.5, 0.14, 0.4, rgba(s.half, 0.22), 1, 'source-over', -0.5);
+  },
   mouth(F) {
     const { B, s, o } = F, L = o.lips;
-    B.fill('M 4.72 -3.7 C 4.6 -3.73 4.46 -3.7 4.3 -3.64 C 4.18 -3.6 4.08 -3.55 4.0 -3.5 L 4.5 -3.47 Z', rgba(L, 0.85), 0.025);
-    B.line('M 4.72 -3.71 C 4.6 -3.75 4.46 -3.72 4.3 -3.66', rgba(s.pale, 0.55), 0.03, 0.015);
-    B.line('M 4.46 -3.49 C 4.3 -3.48 4.14 -3.46 3.98 -3.42', rgba(s.dark, 0.88), 0.05, 0.02);
-    B.fill('M 4.54 -3.46 C 4.62 -3.32 4.57 -3.13 4.44 -3.05 C 4.28 -3.13 4.12 -3.27 4.0 -3.38 Z', rgba(L, 0.72), 0.035);
-    B.dab(4.44, -3.24, 0.1, 0.05, rgba(s.pale, 0.7));
-    B.dab(4.0, -3.44, 0.04, 0.04, rgba(s.dark, 0.45));
-    F.cr('M 4.42 -2.98 C 4.3 -2.93 4.18 -2.93 4.08 -2.97', 0.04, 0.22);
+    B.line('M 4.44 -3.5 C 4.3 -3.49 4.14 -3.47 3.98 -3.42', rgba(s.dark, 0.9), 0.05, 0.02);
+    B.fill('M 4.47 -3.46 C 4.51 -3.36 4.49 -3.26 4.41 -3.2 C 4.29 -3.27 4.15 -3.34 4.05 -3.4 Z', rgba(L, 0.5), 0.035);
+    B.dab(4.4, -3.3, 0.08, 0.035, rgba(s.pale, 0.45));
   },
   marks(F) {
-    const { B, s } = F;
-    B.dab(3.3, -4.9, 0.7, 0.4, rgba(s.red, 0.13));
-    const eye = (x, y) => ((x - 3.58) / 0.62) ** 2 + ((y + 6.2) / 0.3) ** 2 < 1;
-    spots(B, 52, 55, 3.9, -5.25, 1.0, 0.5, 'rgba(168,92,60,A)', 0.03, eye);
-    spots(B, 53, 24, 4.6, -5.4, 0.35, 0.5, 'rgba(168,92,60,A)', 0.026);
-    // the light on the cheekbone and the chin
-    B.dab(3.4, -5.45, 0.8, 0.36, rgba(s.lit, 0.22));
+    const { B, s, de } = F;
+    // the cheekbone lit above the beard, the hollow under it; the forehead's first line
+    B.dab(3.1, -5.35, 0.8, 0.18, rgba(s.lit, 0.24), 1, 'source-over', -0.15);
+    B.dab(2.9, -4.75, 0.8, 0.3, rgba(s.shade, 0.16), 1, 'source-over', -0.25);
+    F.cr(`M ${f3(3.1 + de)} -8.2 C 3.5 -8.3 3.9 -8.28 4.2 -8.16`, 0.035, 0.22);
+    // the nose pads' marks on the bridge, from years of glasses
+    B.dab(4.36, -6.15, 0.07, 0.05, rgba(s.red, 0.35));
   },
 };
 
-// SKYE: big bright eyes, a high crease, long lashes, a strong catchlight; a dark
-// brow, full at its head, arched; a small round nose, broad at the wings, a stud;
-// full lips in a half smile; the sheen on her cheek; a little scar on the chin.
+// SKYE (docs §10.37): big bright dark eyes, the lower lid lifted by the grin; a thick dark
+// brow with a notch shaved through it; a broad nose, the wings wide, the tip round and lit;
+// full lips in a lopsided grin, the corner pulled up into the cheek; the light on deep skin
+// where it catches: the cheekbone, the forehead, the bridge, the chin.
 const skye = {
-  eye: eyeOf({ open: 1.2, low: 1.0, iris: 1.2, col: '#26150c', irisLit: 'rgba(170,110,60,0.35)', white: '#b2a296', crease: 0.32, creaseA: 0.45, lashes: { n: 8, len: 0.2, w: 0.021 }, lashW: 0.1, lowLash: 3, crow: 0, socket: 0.3, glint: 1.5, glint2: true }),
-  brow: browOf({ col: '#100806', x0: 2.96, x1: 4.34, y0: -6.76, y1: -6.86, arch: 0.1, peak: 0.4, w: 0.2, tail: 0.3, taper: 0.4, n: 85, a: 0.85, seed: 61 }),
-  folds: foldsSoft,
+  eye: eyeOf({ open: 1.02, low: 0.82, iris: 1.12, col: '#24140c', irisLit: 'rgba(176,116,64,0.38)', white: '#b0a092', crease: 0.22, creaseA: 0.4, lashW: 0.085, socket: 0.34, glint: 1.4, glint2: true, crow: 2, crowL: 0.22, crowA: 0.05 }),
+  brow: browOf({ col: '#0e0806', x0: 2.94, x1: 4.4, y0: -6.74, y1: -6.86, arch: 0.07, peak: 0.45, w: 0.25, tail: 0.45, n: 115, a: 0.9, gap: [0.28, 0.34], seed: 61 }),
   nose(F) {
-    noseSoft(F, 0.8);
-    const { B } = F;
-    // the stud on the wing: steel, a glint
-    B.fill(ell(4.64, -4.66, 0.062, 0.062), '#2a2c30', 0.004);
-    B.fill(ell(4.64, -4.665, 0.048, 0.048), '#c4c8cc', 0.004);
-    B.dab(4.625, -4.685, 0.018, 0.016, '#ffffff');
+    noseStd(F);
+    const { B, s } = F;
+    B.dab(5.18, -4.66, 0.16, 0.12, rgba(s.lit, 0.5));
+    B.line('M 4.32 -6.32 C 4.48 -6.0 4.66 -5.7 4.86 -5.36', rgba(s.lit, 0.35), 0.06, 0.03);
   },
   mouth(F) {
     const { B, s, o } = F, L = o.lips;
-    B.fill('M 4.74 -3.72 C 4.58 -3.75 4.4 -3.71 4.24 -3.63 C 4.12 -3.6 4.04 -3.58 3.98 -3.56 L 4.5 -3.47 Z', rgba(L, 0.88), 0.025);
-    B.line('M 4.74 -3.73 C 4.58 -3.77 4.42 -3.73 4.26 -3.65', rgba(s.lit, 0.5), 0.03, 0.015);
-    B.line('M 4.46 -3.49 C 4.3 -3.49 4.12 -3.5 3.98 -3.56 C 3.94 -3.58 3.91 -3.62 3.9 -3.66', rgba(s.dark, 0.95), 0.05, 0.02);
-    B.fill('M 4.55 -3.46 C 4.63 -3.3 4.59 -3.1 4.45 -3.02 C 4.27 -3.1 4.1 -3.26 3.98 -3.4 Z', rgba(L, 0.8), 0.035);
-    B.dab(4.45, -3.22, 0.12, 0.05, rgba(s.pale, 0.8));
-    F.cr('M 3.86 -3.78 C 3.79 -3.64 3.79 -3.48 3.84 -3.34', 0.05, 0.32);
+    B.fill('M 4.66 -3.66 C 4.5 -3.67 4.32 -3.63 4.16 -3.57 C 4.06 -3.55 3.98 -3.56 3.92 -3.6 L 4.46 -3.47 Z', rgba(L, 0.72), 0.03);
+    B.line('M 4.66 -3.67 C 4.5 -3.7 4.34 -3.66 4.18 -3.6', rgba(s.lit, 0.35), 0.03, 0.015);
+    B.line('M 4.46 -3.49 C 4.3 -3.5 4.12 -3.52 3.98 -3.6 C 3.93 -3.63 3.9 -3.68 3.89 -3.74', rgba(s.dark, 0.95), 0.055, 0.02);
+    B.fill('M 4.5 -3.46 C 4.57 -3.32 4.53 -3.14 4.42 -3.06 C 4.26 -3.13 4.1 -3.27 3.98 -3.42 Z', rgba(L, 0.62), 0.035);
+    B.dab(4.42, -3.24, 0.1, 0.045, rgba(s.pale, 0.55));
+    // the grin pulling the corner up into the cheek
+    F.cr('M 3.86 -3.86 C 3.76 -3.7 3.74 -3.52 3.8 -3.34', 0.055, 0.38);
   },
   marks(F) {
     const { B, s } = F;
-    // the light on deep skin, where it catches: the cheekbone, the forehead, the ridge of the
-    // upper lip, the chin; the warmth in the cheek
-    B.dab(3.4, -5.45, 0.85, 0.38, rgba(s.lit, 0.24));
-    B.dab(3.4, -4.7, 0.6, 0.4, rgba(s.red, 0.22));
-    B.dab(3.8, -8.3, 0.55, 0.3, rgba(s.lit, 0.32));
-    B.dab(3.95, -8.4, 0.2, 0.1, rgba(s.pale, 0.3));
-    B.dab(4.56, -3.84, 0.1, 0.05, rgba(s.pale, 0.4));
-    B.dab(4.22, -2.4, 0.24, 0.18, rgba(s.lit, 0.22));
-    // a dimple at the corner of the smile
-    F.cr('M 3.72 -3.6 C 3.68 -3.5 3.68 -3.42 3.72 -3.36', 0.035, 0.25);
+    B.dab(3.4, -5.45, 0.85, 0.36, rgba(s.lit, 0.26));
+    B.dab(3.3, -4.75, 0.6, 0.4, rgba(s.red, 0.16));
+    B.dab(3.8, -8.3, 0.6, 0.32, rgba(s.lit, 0.3));
+    B.dab(3.95, -8.42, 0.2, 0.1, rgba(s.pale, 0.28));
+    B.dab(4.3, -2.42, 0.26, 0.18, rgba(s.lit, 0.24));
+    // the cheek lifted by the grin: its round lit, the fold under it
+    B.dab(3.55, -4.55, 0.4, 0.26, rgba(s.lit, 0.18));
+    F.cr('M 4.3 -4.86 C 4.04 -4.5 3.9 -4.1 3.88 -3.84', 0.06, 0.3);
   },
 };
 
