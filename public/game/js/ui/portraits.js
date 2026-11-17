@@ -99,11 +99,11 @@ function paintAvatar(id, size) {
   return c;
 }
 
-// A supply crate seized from Vanta (docs §10.3): their blue-grey polymer, the
-// ring-and-bar mark stencilled on it, a band of the tier's colour, and the
+// A supply crate seized from Vorsa (docs §10.3): their blue-grey polymer, the
+// ring-and-chevron mark stencilled on it, a band of the tier's colour, and the
 // cells' ember sprayed over the mark. `color` is the tier's colour.
-// a seized Vanta crate (art/crate.js), the tier's colour on its band
-const CRATE_LABEL = { '#a39b8f': 'VANTA · ERZAK', '#6aa6d6': 'VANTA · MÜHİMMAT', '#e6a93c': 'VANTA · KOMUTA' };
+// a seized Vorsa crate (art/crate.js), the tier's colour on its band
+const CRATE_LABEL = { '#a39b8f': 'VORSA · ERZAK', '#6aa6d6': 'VORSA · MÜHİMMAT', '#e6a93c': 'VORSA · KOMUTA' };
 export function crateArt(color, px = 96) {
   const key = `c:${color}:${px}:${dpr()}`;
   if (!cache.has(key)) {

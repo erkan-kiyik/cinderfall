@@ -1,7 +1,7 @@
 // KOR — series: the town at night. From a roof: the parapet and its coping
 // close, an aerial, a dish turned to the tower, the blocks of flats going
 // off into the rain with their windows, a grid of sodium lamps in the
-// streets, the dead chimneys of the works to the left, the Vanta tower to
+// streets, the dead chimneys of the works to the left, the Vorsa tower to
 // the right with its red lights and the searchlight sweeping the roofs.
 // Or the tower from its foot: the plaza, the barriers, looking up the face
 // into the fog.

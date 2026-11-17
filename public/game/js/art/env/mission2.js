@@ -78,7 +78,7 @@ export function litter(g, seed = 1) {
   stroke(g, 'M 8 0.4 C 12 -1 14 1 19 0', '#a8946a', 0.15);
 }
 
-// Vanta's ration point at the cordon: a white cabin, the lit sign, a red LED
+// Vorsa's ration point at the cordon: a white cabin, the lit sign, a red LED
 // board saying there is nothing today, the queue rails, the shutter down
 export function rationPoint(g, x) {
   const S = mat(tone('#e2e6ea', '#c2c8ce', '#9aa2aa', '#2a2f36'), 'paint', 0.25);
@@ -99,7 +99,7 @@ export function rationPoint(g, x) {
 }
 
 // the building site under the scaffolding, stopped since the furnace went
-// cold: the council's board, Vanta's stamp across it
+// cold: the council's board, Vorsa's stamp across it
 export function siteBoard(g, x) {
   for (const px of [x + 2, x + 24]) cel(g, rect(px, -30, px + 1.4, 0), POLE, { sh: 0.3, hl: 0.2, lw: 0.25 });
   const B = rect(x, -46, x + 28, -28);
@@ -154,7 +154,7 @@ export function buildMission2() {
   // A — the cordon -----------------------------------------------------------------
   addCrate(24);
   P('m2.coneA', [X(40) - 6, -12, X(40) + 8, 1], (g) => cone(g, X(40)), deco);
-  // Vanta's ration point, nothing today
+  // Vorsa's ration point, nothing today
   P('m2.ration', [X(46) - 34, -52, X(46) + 60, 1], (g) => rationPoint(g, X(46) + 2), deco);
   lights.push([X(46) + 30, -40, 44, 0.35, [0.9, 0.93, 0.95]]);
   bar('m2.barA', 70, 73, 3);
@@ -198,7 +198,7 @@ export function buildMission2() {
   const MZ = [X(112), X(236)]; // the market, where the squads that come for it fight
   return {
     id: 'm2', level, props, front, deco, lamps, glows, lights, width: COLS * T,
-    // the street in, Vanta's post at the cordon, then the market's shops and the shut hall
+    // the street in, Vorsa's post at the cordon, then the market's shops and the shut hall
     facade: facadeLayout(-10, COLS * T + 10, 23, ['walkupB', 'teahouse', 'garage', 'walkup', 'crow', 'alley', 'synBlock', 'pazar', 'hal', 'pazarB', 'pazar', 'alley', 'pazarB', 'teahouse', 'pazar', 'union', 'warehouse', 'ruin', 'hotel']),
     fires: [X(80) + 5],
     spawn: [64, 0],

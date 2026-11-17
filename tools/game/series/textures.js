@@ -15,13 +15,13 @@ function grime(g, w, h, r, a = 0.25, col = '40,30,22') {
   for (let i = 0; i < 18; i++) { const x = r() * w, y0 = r() * h * 0.6, l = (0.1 + r() * 0.4) * h; const gr = g.createLinearGradient(0, y0, 0, y0 + l); gr.addColorStop(0, `rgba(${col},${(a * 0.6).toFixed(3)})`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.fillRect(x, y0, 1 + r() * 3, l); }
 }
 
-// the cast house door: a Vanta closure notice, pasted over and rained on
+// the cast house door: a Vorsa closure notice, pasted over and rained on
 P.sealNotice = { w: 512, h: 720, draw(g, w, h, r) {
   g.fillStyle = '#d8d2c2'; g.fillRect(0, 0, w, h);
   g.fillStyle = '#1b1b1b'; g.fillRect(0, 0, w, 120);
   g.fillStyle = '#d8d2c2'; g.font = '700 54px "Courier New", monospace'; g.textAlign = 'center'; g.fillText('KAPATILMIŞTIR', w / 2, 82);
   g.fillStyle = '#1b1b1b'; g.font = '700 30px "Courier New", monospace';
-  ['VANTA SENDİKASI', 'KAMU DÜZENİ DAİRESİ', '', "3 NO'LU YÜKSEK FIRIN", 'VE DÖKÜM HOLÜ', '', 'GEÇİCİ GÜVENLİK', 'SÖZLEŞMESİ MD. 4', 'UYARINCA', '', 'GİRİLMEZ'].forEach((l, i) => g.fillText(l, w / 2, 190 + i * 42));
+  ['VORSA SENDİKASI', 'KAMU DÜZENİ DAİRESİ', '', "3 NO'LU YÜKSEK FIRIN", 'VE DÖKÜM HOLÜ', '', 'GEÇİCİ GÜVENLİK', 'SÖZLEŞMESİ MD. 4', 'UYARINCA', '', 'GİRİLMEZ'].forEach((l, i) => g.fillText(l, w / 2, 190 + i * 42));
   g.strokeStyle = 'rgba(160,30,26,0.8)'; g.lineWidth = 6; g.beginPath(); g.arc(w / 2, h - 110, 62, 0, Math.PI * 2); g.stroke();
   g.beginPath(); g.moveTo(w / 2 - 40, h - 128); g.lineTo(w / 2, h - 84); g.lineTo(w / 2 + 40, h - 128); g.stroke();
   grime(g, w, h, r, 0.35);
@@ -96,7 +96,7 @@ P.posterVanta = { w: 600, h: 860, draw(g, w, h, r) {
   mark(g, w / 2, 250, 130, '#b8bec4', 22);
   g.fillStyle = '#e6e2d8'; g.textAlign = 'center'; g.font = '800 64px "Arial Narrow", Arial, sans-serif';
   g.fillText('DÜZEN', w / 2, 500); g.fillText('GÜVENLİK', w / 2, 575); g.fillStyle = '#c23a2c'; g.fillText('İTAAT', w / 2, 650);
-  g.fillStyle = '#9aa4ac'; g.font = '600 20px Arial, sans-serif'; g.fillText('VANTA SENDİKASI · KAMU DÜZENİ DAİRESİ', w / 2, 720);
+  g.fillStyle = '#9aa4ac'; g.font = '600 20px Arial, sans-serif'; g.fillText('VORSA SENDİKASI · KAMU DÜZENİ DAİRESİ', w / 2, 720);
   g.fillStyle = '#e6e2d8'; g.fillRect(40, 750, w - 80, 2); g.font = '700 24px Arial, sans-serif'; g.fillText('SOKAĞA ÇIKMA YASAĞI 22:00 — 05:00', w / 2, 792);
   g.font = '400 14px Arial, sans-serif'; g.fillStyle = '#7d878f'; g.fillText('İhlaller Geçici Güvenlik Sözleşmesi Md. 4 uyarınca işlem görür.', w / 2, 822);
   grime(g, w, h, r, 0.5, '20,16,12');
@@ -175,7 +175,7 @@ P.photoWorks = { w: 640, h: 460, draw(g, w, h, r) {
 // the plan on the secretary's desk: KÜL PLANI, typed, stamped, signed
 P.kulPlani = { w: 760, h: 1060, draw(g, w, h, r) {
   paper(g, w, h, r, '232,229,220', 0.04);
-  g.textAlign = 'left'; g.fillStyle = '#222'; g.font = '700 18px Arial, sans-serif'; g.fillText('VANTA SENDİKASI', 60, 70); g.font = '400 14px Arial'; g.fillText('Kamu Düzeni Dairesi — Sekreterlik', 60, 92);
+  g.textAlign = 'left'; g.fillStyle = '#222'; g.font = '700 18px Arial, sans-serif'; g.fillText('VORSA SENDİKASI', 60, 70); g.font = '400 14px Arial'; g.fillText('Kamu Düzeni Dairesi — Sekreterlik', 60, 92);
   g.font = '700 14px Arial'; g.fillText('Sayı: KD-SEK/0417', w - 230, 70); g.fillText('GİZLİ', w - 230, 92);
   g.fillRect(60, 110, w - 120, 2);
   g.font = '800 54px "Arial Narrow", Arial, sans-serif'; g.fillText('KÜL PLANI', 60, 190);
@@ -240,10 +240,10 @@ P.fileSpines = { w: 1024, h: 256, draw(g, w, h, r) {
   grime(g, w, h, r, 0.25, '30,24,18');
 } };
 
-// the mark on a wall: the ring and chevron in brushed steel, VANTA under it
+// the mark on a wall: the ring and chevron in brushed steel, VORSA under it
 P.vantaWall = { w: 800, h: 600, draw(g, w, h) {
   g.clearRect(0, 0, w, h); mark(g, w / 2, 250, 190, 'rgba(190,196,202,1)', 34);
-  g.fillStyle = 'rgba(190,196,202,1)'; g.font = '700 86px "Arial Narrow", Arial, sans-serif'; g.textAlign = 'center'; g.fillText('V A N T A', w / 2, 560);
+  g.fillStyle = 'rgba(190,196,202,1)'; g.font = '700 86px "Arial Narrow", Arial, sans-serif'; g.textAlign = 'center'; g.fillText('V O R S A', w / 2, 560);
 } };
 
 // a station's line sign: the line, the direction, a white arrow on blue enamel, chipped

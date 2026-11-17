@@ -73,6 +73,8 @@ export class Save {
       const b = read(store, BAK);
       if (b) { s = b; this.recovered = !!safeGet(store, KEY); }
     }
+    // a first start on this device (the language then follows the phone: boot.js)
+    this.fresh = !s;
     this.data = s || freshSave();
     this.timer = null; this.listeners = new Set();
     this.flush();

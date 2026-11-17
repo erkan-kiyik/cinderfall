@@ -18,7 +18,7 @@ history. The design and the story are in docs/KOR_STORY_CINEMATIC.md.
 - `js/art/figure.js` — skeleton, pose solving, two-bone IK, held weapons;
   parts are painted per bone so the in-game rig reuses them
 - `js/art/ops/` — VEX, HALE, MORROW, KITE, BRICK
-- `js/art/enemies/syndicate.js` — Vanta Syndicate rifleman and shield trooper
+- `js/art/enemies/syndicate.js` — Vorsa Syndicate rifleman and shield trooper
 - `js/art/weapons/` — Wren-9, Kestrel AR, Ramrod-12, Marksman DMR
 - `js/art/env/street.js` — street cut and props
 - `css/` — design tokens, components, screen layouts (lobby, arsenal)

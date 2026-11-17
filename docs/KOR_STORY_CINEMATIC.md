@@ -36,7 +36,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 9 | Karakter tasarımı (sıfırdan, hikâyeye göre) | [3-karakterler](design/3-karakterler.md#9-karakter-tasarımı-sıfırdan-hikâyeye-göre) |
 | 9.1 | Ortak kurallar | [3-karakterler](design/3-karakterler.md#91-ortak-kurallar) |
 | 9.2 | Operatörler | [3-karakterler](design/3-karakterler.md#92-operatörler) |
-| 9.3 | Vanta | [3-karakterler](design/3-karakterler.md#93-vanta) |
+| 9.3 | Vorsa | [3-karakterler](design/3-karakterler.md#93-vanta) |
 | 9.4 | HAWK | [3-karakterler](design/3-karakterler.md#94-hawk) |
 | 10 | Görsel dil v3: karakter, engel, arayüz (sıfırdan) | [3-karakterler](design/3-karakterler.md#10-görsel-dil-v3-karakter-engel-arayüz-sıfırdan) |
 | 10.1 | Karakterler: boyanmış, gerçek oranlı | [3-karakterler](design/3-karakterler.md#101-karakterler-boyanmış-gerçek-oranlı) |
@@ -53,7 +53,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.12 | Gerçekçilik geçişi: ışın izlenmiş karelerin yanına | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1012-gerçekçilik-geçişi-ışın-izlenmiş-karelerin-yanına) |
 | 10.13 | Silahlar: gözden geçirme ve yeni standart | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1013-silahlar-gözden-geçirme-ve-yeni-standart) |
 | 10.14 | HAWK'ın yüzü: yeniden | [3-karakterler](design/3-karakterler.md#1014-hawkın-yüzü-yeniden) |
-| 10.15 | Yüzler, kafalar ve Vanta'nın su aracı | [3-karakterler](design/3-karakterler.md#1015-yüzler-kafalar-ve-vantanın-su-aracı) |
+| 10.15 | Yüzler, kafalar ve Vorsa'nın su aracı | [3-karakterler](design/3-karakterler.md#1015-yüzler-kafalar-ve-vantanın-su-aracı) |
 | 10.16 | Kafalar: yüz yok | [3-karakterler](design/3-karakterler.md#1016-kafalar-yüz-yok) |
 | 10.17 | Performans: telefonda açılış, filmler, oyun içi | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1017-performans-telefonda-açılış-filmler-oyun-içi) |
 | 10.18 | Kare temposu ve ekran kartı yükü (KOR-10 sonrası) | [5-teknik-ve-performans](design/5-teknik-ve-performans.md#1018-kare-temposu-ve-ekran-kartı-yükü-kor-10-sonrası) |
@@ -76,6 +76,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.35 | Skye ve Vesper: yüzler yeniden | [3-karakterler](design/3-karakterler.md#1035-skye-ve-vesper-yüzler-yeniden) |
 | 10.36 | Skye ve Vesper: işaretlenen yerler | [3-karakterler](design/3-karakterler.md#1036-skye-ve-vesper-işaretlenen-yerler) |
 | 10.37 | Vesper ve Skye: erkek, sıfırdan | [3-karakterler](design/3-karakterler.md#1037-vesper-ve-skye-erkek-sıfırdan) |
+| 10.38 | Kapak, lobi, on dil, telif taraması | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1038-kapak-lobi-on-dil-telif-taraması) |
 
 Giriş notu (eski belgenin başı):
 

@@ -330,7 +330,7 @@ karbon, mermer, hex…) → çıkartmalar (logo, numara, çizik) → kenar aşı
 
 ## 10. Düşmanlar ve yapay zekâ
 
-**Faksiyon:** *Vanta Syndicate* (şehri tutan paralı ordu).
+**Faksiyon:** *Vorsa Syndicate* (şehri tutan paralı ordu).
 
 **Tipler:**
 - **Tetikçi:** tüfek, siper kullanır.

@@ -5,7 +5,7 @@
 > Bölüm numaraları (§) ana belgedekiyle aynı; dizin: [`../KOR_STORY_CINEMATIC.md`](../KOR_STORY_CINEMATIC.md). English summary: [`../README.md`](../README.md).
 
 ### 10.2 Engeller: üç taraf, üç malzeme
-- **Vanta (temiz, tekrarlanan):** gri-mavi polimer jersey bariyer, beyaz
+- **Vorsa (temiz, tekrarlanan):** gri-mavi polimer jersey bariyer, beyaz
   halka-şerit arması, üstte çelik kapak rayı, sıra numarası; kontrol noktası
   çelik kapısı; kalkan gibi düzgün, yeni. Kendi ışığı yoktur.
 - **Kor direnişi (elden yapılma):** ocak sacından kaynaklı barikat (kaynak
@@ -15,8 +15,8 @@
   ateşi), soluk trafik konisi. Neon yok; ışık sokak lambası ve ateşten gelir.
 
 ### 10.3 Arayüz: "Kor Hattı'nın duvarı"
-Menüler direnişin sığınağındaki duvar ve tezgâhtır; Vanta'nın soğuk
-mavi-grisi yalnızca Vanta'ya ait şeylerde görünür.
+Menüler direnişin sığınağındaki duvar ve tezgâhtır; Vorsa'nın soğuk
+mavi-grisi yalnızca Vorsa'ya ait şeylerde görünür.
 - **Malzemeler:** is siyahı zemin (beton/sıva dokusu), kraft kâğıt, maskeleme
   bandı, boyalı sac plaka, tebeşir beyazı yazı, kor turuncusu (tek vurgu),
   sendika kırmızısı damga.
@@ -30,20 +30,20 @@ mavi-grisi yalnızca Vanta'ya ait şeylerde görünür.
   notlar); Kampanya = duvardaki şehir haritası (kâğıt, kırmızı ip, raptiye,
   görev fotoğrafları); Operatörler = kişi dosyaları (ataşlı fotoğraf, rol
   damgası, daktilo özgeçmiş); Cephanelik = delikli pano ve tezgâh; Sandıklar =
-  el konmuş Vanta sandıkları; Tüccar = HAWK'ın tezgâhı ve portresi; Profil =
+  el konmuş Vorsa sandıkları; Tüccar = HAWK'ın tezgâhı ve portresi; Profil =
   sendika üye kartı; Görevler = panoya iğnelenmiş iş emirleri; Ayarlar = sade
   sac panel; HUD = şablon rakamlar, kor turuncusu, ince ve okunur.
 
 ### 10.4 Şehir: binalar, tabelalar, ışık
 Önceki sokak her kapıda başka renkte neon yanan bir gece caddesiydi (pembe
 BAR, yeşil BAKKAL, camgöbeği OTEL ve "12", mavi OTO SERVİS, HAWK'ın kırmızı
-neonu). Hikâyedeki şehir bu değil: ocak dört yıldır soğuk, elektriği Vanta
+neonu). Hikâyedeki şehir bu değil: ocak dört yıldır soğuk, elektriği Vorsa
 tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurulur.
 
 - **Halkın ışığı:** jeneratörden çıplak ampul (2700 K, hafif dalgalanır,
   arada bir düşer), perde arkasında gaz lambası, varil ateşi, eski sodyum
   sokak lambası. Pencerelerin çoğu karanlık; yananlar perdeli ve loş.
-- **Vanta'nın ışığı:** beyaz projektör ve kollu lamba; tabelaları emaye çelik
+- **Vorsa'nın ışığı:** beyaz projektör ve kollu lamba; tabelaları emaye çelik
   levha (halka-şerit arması, kırmızı bant), duyuru panosu beyaz sac üstüne
   şablon harf: *SOKAĞA ÇIKMA YASAĞI 22:00–06:00*. Temiz, yeni, sabit;
   titremez. Hiçbiri kendinden ışımaz; LED şerit, ışıklı kutu, LED pano yok.
@@ -55,7 +55,7 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
 - **Tabelalar:** boyalı sac ve tahta; fırça yazısı ya da şablon harf; solmuş
   boya, pas akıntısı, cıvata, eğik asılmış. Geceleri tabelayı kuğu boyunlu
   lamba aydınlatır. Esnafın dili Türkçe ve sade: BAKKAL, BERBER, OTO TAMİR,
-  ÇAY OCAĞI, OTEL, SENDİKA. Vanta'nınki tek tip ve basılı: VANTA SYNDICATE ·
+  ÇAY OCAĞI, OTEL, SENDİKA. Vorsa'nınki tek tip ve basılı: VORSA SYNDICATE ·
   DÜZEN · GÜVENLİK · İTAAT.
 - **Binalar:**
   - *İşçi lojmanı:* isli tuğla, yangın merdiveni, pencereden çıkan soba
@@ -64,9 +64,9 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
   - *Sıvalı apartman:* dökük sıvanın altından tuğla; köşede bakkal, camında
     elle yazılmış *EKMEK YOK*, rafların yarısı boş.
   - *Çelikhane deposu:* paslı oluklu sac, soluk şablon *ÇELİK İŞLETMELERİ ·
-    DEPO 12*, üstünde Vanta'nın *EL KONULMUŞTUR* levhası; kapıda zincir ve
-    mühür; Vanta'nın taktığı beyaz projektör.
-  - *Vanta karakolu:* eski binaya vidalanmış yeni gri kompozit panel,
+    DEPO 12*, üstünde Vorsa'nın *EL KONULMUŞTUR* levhası; kapıda zincir ve
+    mühür; Vorsa'nın taktığı beyaz projektör.
+  - *Vorsa karakolu:* eski binaya vidalanmış yeni gri kompozit panel,
     pankart, emaye levha tabela ve üstünde kollu lamba, sac duyuru panosu,
     kamera, jiletli tel, sıra sıra aynı afiş.
   - *Otel:* eski görkemden kalan korniş ve balkonlar, ölü dikey neon, kapı
@@ -75,7 +75,7 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
     floresan iş lambası, liftte araç.
   - *Sendika binası (yeni):* alınlıktaki kabartma *OCAK İŞÇİLERİ SENDİKASI*
     yazısının üstü gri boyayla kapatılmış, harfler gölgeden okunur; kapıda
-    zincir ve Vanta mührü (*MÜHÜRLENMİŞTİR*); kapının önünde mumlar ve
+    zincir ve Vorsa mührü (*MÜHÜRLENMİŞTİR*); kapının önünde mumlar ve
     Söndürme gecesi kaybolanların fotoğraflı *KAYIP* ilanları; duvarda sprey:
     *6 KİŞİ NEREDE?*
   - *Çay ocağı (yeni):* buğulu camın arkasında tek ampul, boyalı tabela,
@@ -89,18 +89,18 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
   lamba tabelayı aydınlatır. Yamalı branda tente, altında kabloya dizili
   çıplak ampuller; kablo yan taraftaki jeneratöre ve bidonlara iner.
   Duvarda kara tahta: *BUGÜN · UN · YAĞ · PİL · İLAÇ · MERMİ: SOR*; kepenkte
-  boyayla *NE VARSA ALINIR*; yanında yarısı yırtılmış Vanta tebliği *KAYITSIZ
+  boyayla *NE VARSA ALINIR*; yanında yarısı yırtılmış Vorsa tebliği *KAYITSIZ
   TİCARET YASAKTIR*. Üst katta tek sıcak, perdeli pencere: HAWK orada
   yaşar. Çatıda tahta güvercinlik. Görev 2'deki pazar tezgâhında aynı tahta
   tabela, aynı ampuller.
-- **Duvar yazıları ve kâğıtlar:** Vanta afişleri; üstlerine kor işareti ve
+- **Duvar yazıları ve kâğıtlar:** Vorsa afişleri; üstlerine kor işareti ve
   *KOR* spreyi; *KAYIP* ilanları; sendika bildirisinin yırtık kalıntısı.
 - **Renk ve doku:** is siyahı, pas, tuğla, kirli sıva; tuğla, beton, sac,
   tahta ve boya dokusu bina ölçeğinde. Sıcak ışık yalnız ampul ve ateşten,
-  soğuk ışık yalnız Vanta'dan. Doygun pembe, camgöbeği, mor yok.
+  soğuk ışık yalnız Vorsa'dan. Doygun pembe, camgöbeği, mor yok.
 - **Ufuk:** soğuk yüksek fırın (dört soba, eğik besleme köprüsü, dumansız
   baca), liman vinçleri ve kule; ufuktaki aydınlık yangın değil, limandaki
-  Vanta projektörleri ve alçak bulutlara vuran sodyum. Duman yalnız evlerin
+  Vorsa projektörleri ve alçak bulutlara vuran sodyum. Duman yalnız evlerin
   sobalarından çıkar.
 - **Pazar (görev 2):** tezgâh tenteleri solmuş branda (kiremit, hardal,
   zeytin); teknoloji tezgâhı radyo ve pil tamircisi; ampuller jeneratörden.
@@ -118,34 +118,34 @@ hikâyeden kurar.
   - *Yol:* yama yama asfalt, katran derzleri, çatlaklar, zırhlı araç izleri;
     çelikhanenin eski sanayi hattı yol boyunca asfalta gömülü, raylar ışığı
     yakalar; belediyenin döküm rögar kapakları, ızgaralı yağmur giderleri;
-    birikintilerde sodyum ışığı; drondan atılmış Vanta bildirileri.
+    birikintilerde sodyum ışığı; drondan atılmış Vorsa bildirileri.
   - *Lambalar:* eski çelik direk, kuğu boyunlu kol, turuncu sodyum ışık;
-    her direğe Vanta'nın hoparlörü bağlanmış (sokağa çıkma anonsları), kablo
+    her direğe Vorsa'nın hoparlörü bağlanmış (sokağa çıkma anonsları), kablo
     bantla direğe sarılmış, gövdede yasak tebliği.
-- **Kapı (görev 1 · Sızma):** şehre girilen yer, Vanta'nın kontrol noktası.
+- **Kapı (görev 1 · Sızma):** şehre girilen yer, Vorsa'nın kontrol noktası.
   - Yaklaşma: belediyenin eski mavi *HOŞ GELDİNİZ* levhası; şehrin adının
-    üstüne Vanta'nın *KONTROLLÜ BÖLGE* etiketi yapıştırılmış.
+    üstüne Vorsa'nın *KONTROLLÜ BÖLGE* etiketi yapıştırılmış.
   - Çelikhanenin buhar boru köprüsü yolu alçaktan keser (altından kayılır):
     yalıtım sargılı iki boru, kafes ayaklar, *DİKKAT · ALÇAK GEÇİT*.
   - Çökmüş yol: kırık asfalt kenarı, toprak, açıkta kalmış eski kanal borusu.
-  - Kontrol kulübesi Vanta grisi; yolda *KONTROL NOKTASI · YAVAŞLA* levhası.
+  - Kontrol kulübesi Vorsa grisi; yolda *KONTROL NOKTASI · YAVAŞLA* levhası.
   - Kapının kendisi: çelik portal, üstünde beyaz ışıklı *KONTROL NOKTASI ·
     DUR · KİMLİK HAZIRLAYIN* levhası, iki projektör, kamera, kırmızı LED;
     iki yanında T-duvarlar ve jiletli tel.
 - **Pazar (görev 2 · Pazar Baskını):** §10.4'teki tezgâhlar; sokağı kesen
-  Vanta T-duvarı ve tel.
+  Vorsa T-duvarı ve tel.
 - **Valilik (görev 3 · Sekreter Gall):** şehrin eski valilik binası, şimdi
-  Vanta'nın sekreterliği. Şehirde temiz tutulan tek yer.
+  Vorsa'nın sekreterliği. Şehirde temiz tutulan tek yer.
   - Bina: kesme taş, kemerli yüksek pencereler, kalın silmeler; ortada
     alınlıkta kabartma *VALİLİK*; geniş merdiven.
-  - Vanta'nın eklediği: dev kırmızı pankartlar, kırmızı LED, kameralar,
-    projektörler, beyaz ışıklı *VANTA SYNDICATE · SEKRETERLİK* levhası;
+  - Vorsa'nın eklediği: dev kırmızı pankartlar, kırmızı LED, kameralar,
+    projektörler, beyaz ışıklı *VORSA SYNDICATE · SEKRETERLİK* levhası;
     kapıda tebliğ panosu: *MECLİS ASKIYA ALINMIŞTIR*, *SOKAĞA ÇIKMA YASAĞI*.
   - Meydan: revak sütunları sıcak kesme taş, budanmış çalılar, bayrak
     direkleri.
 
 ### 10.6 Pazar (görev 2 · Pazar Baskını)
-Pazar şehrin kendi ekonomisidir: Vanta karneyle dağıtır, halk takasla ve
+Pazar şehrin kendi ekonomisidir: Vorsa karneyle dağıtır, halk takasla ve
 HAWK'ın getirdiğiyle yaşar. HAWK'ın tezgâhı şehre giren tek erzak hattıdır;
 onu korumak görevin kendisidir.
 
@@ -160,7 +160,7 @@ onu korumak görevin kendisidir.
     piller, kablo; *PİL VAR*, *TAMİR*.
   - *Fırın:* boş ekmek rafları, camda *KİŞİ BAŞI 1 EKMEK*, önünde sıra ipi.
   - *Battaniye ve palto:* askıda kışlıklar, katlanmış battaniyeler.
-  - *Hal:* şehrin eski sebze-meyve hali; büyük kemerli kapısı Vanta
+  - *Hal:* şehrin eski sebze-meyve hali; büyük kemerli kapısı Vorsa
     mühürüyle kapalı (*KAPATILMIŞTIR*), alınlıkta soluk *SEBZE · MEYVE
     HALİ*. Kapısının önünde çuvallarla bakliyat (*MERCİMEK*, *BULGUR*,
     *NOHUT*) ve teneke yağ satılır.
@@ -174,13 +174,13 @@ onu korumak görevin kendisidir.
   tahta: pirinç terazi, açık veresiye defteri, gaz lambası; tezgâhın altında
   bezle örtülmüş cephane kutusu; yanında un çuvalları ve jeneratör; üstte
   boyalı tahta tabelası ve ampuller.
-- **Kordon (A):** Vanta'nın dağıtım noktası: beyaz ışıklı *DAĞITIM NOKTASI*,
+- **Kordon (A):** Vorsa'nın dağıtım noktası: beyaz ışıklı *DAĞITIM NOKTASI*,
   kırmızı LED *BUGÜN DAĞITIM YOK*, sıra direkleri, kepenk kapalı.
 - **İskele (C):** inşaat Söndürme'den beri durmuş: *İNŞAAT ALANI · GİRİLMEZ*
-  levhası, üstünde Vanta damgası *DURDURULDU*; yeşil file.
+  levhası, üstünde Vorsa damgası *DURDURULDU*; yeşil file.
 
 ### 10.7 Valilik (görev 3 · Sekreter Gall)
-Valilik, Vanta'nın şehri yönettiği yerdir: Gall buradan yasakları imzalar.
+Valilik, Vorsa'nın şehri yönettiği yerdir: Gall buradan yasakları imzalar.
 Meclis askıda, belediye kapalı; "geçici güvenlik sözleşmesi" dört yılda
 sekizinci kez uzatılmak üzere. Görevin gecesi o tören için hazırlık
 yapılmıştır. Gall düşünce masasında *Kül Planı* bulunur.
@@ -189,17 +189,17 @@ yapılmıştır. Gall düşünce masasında *Kül Planı* bulunur.
   (saat kulesi, kapısında zincir ve *MECLİS ASKIYA ALINMIŞTIR*), öbür yanda
   valiliğin demir parmaklıklı bahçe duvarı. Zemin büyük taş plakalar.
   - Kurumuş süs havuzu; çıplak çınarlar demir ızgaralı ağaç çukurlarında.
-  - Vanta'nın polis bariyerine aileler kaybolanların fotoğraflarını,
+  - Vorsa'nın polis bariyerine aileler kaybolanların fotoğraflarını,
     karanfilleri bağlamış, dibinde mumlar; yanında *TOPLANMA YASAKTIR*.
-  - Park etmiş zırhlı tazyikli su aracı (Vanta işaretli).
-  - Taş saksılarda budanmış şimşir; bayrak direklerinde Vanta bayrakları.
+  - Park etmiş zırhlı tazyikli su aracı (Vorsa işaretli).
+  - Taş saksılarda budanmış şimşir; bayrak direklerinde Vorsa bayrakları.
 - **Güvenlik kapısı (B):** bahçe duvarındaki kontrol portalı:
   *SEKRETERLİK · YETKİSİZ GİRİŞ YASAKTIR*.
 - **Avlu (C):** valiliğin kemerli revakı (taş ayaklar, yarım daire kemerler),
-  avlu zemini kesme taş. Kapak olarak taş saksılar ve Vanta'nın T-duvarları
+  avlu zemini kesme taş. Kapak olarak taş saksılar ve Vorsa'nın T-duvarları
   (avluda kor işareti yok: içeri girilememiş).
 - **Kürsü (Gall):** valiliğin ana merdiveninin önüne kurulmuş tören
-  platformu: arkasında basın duvarı (sıra sıra Vanta arması), üst bandında
+  platformu: arkasında basın duvarı (sıra sıra Vorsa arması), üst bandında
   *GEÇİCİ GÜVENLİK SÖZLEŞMESİ · 8. UZATMA*; ortada armalı kürsü ve
   mikrofonlar; iki uçta hoparlör ve beyaz projektör (ateş yok).
 - **Valilik binası:** kesme taş, kemerli pencereler, *VALİLİK* kabartması;
@@ -208,8 +208,8 @@ yapılmıştır. Gall düşünce masasında *Kül Planı* bulunur.
   belediyededir.
 
 ### 10.8 Kapı (görev 1 · Sızma)
-§10.5'teki kapı maddesinin yerine geçer. *Limanı, elektriği, kapıları Vanta
-tutar.* Kapı, liman yolunun şehre girdiği yerde Vanta'nın kurduğu kontrol
+§10.5'teki kapı maddesinin yerine geçer. *Limanı, elektriği, kapıları Vorsa
+tutar.* Kapı, liman yolunun şehre girdiği yerde Vorsa'nın kurduğu kontrol
 noktasıdır: şehir buradan konteyner duvarıyla kapatılmıştır. Ekip dışarıdan,
 limanın yanından gelir; görev kapıdan şehre girmektir. Sinematikteki satır
 bağlayıcıdır: *Kulübede iki nöbetçi. Kamera yok, sadece göz.* Kapıda kamera
@@ -219,15 +219,15 @@ yoktur.
   şerit çizgileri, lastik izleri, su birikintisi. Lambalar şehrinkiler değil:
   galvaniz sanayi direği, çift başlık, hoparlör yok. Arka plan:
   - *Antrepo:* uzun, alçak liman ambarı; numaralı kapılar (*ANTREPO 3*),
-    soluk *LİMAN İŞLETMESİ* boyası, Vanta'nın *EL KONULMUŞTUR* levhası.
+    soluk *LİMAN İŞLETMESİ* boyası, Vorsa'nın *EL KONULMUŞTUR* levhası.
   - *Gümrük:* eski taş gümrük binası, kabartma *GÜMRÜK*, kapalı.
   - *Konteyner yığınları:* üç kat, renk renk, sahip kodları (*VNTU*).
-  - Çelikhane deposu ve Vanta karakolu yolun üstünde.
-- **Yaklaşma (A):** belediyenin *HOŞ GELDİNİZ* levhası (şehrin adı Vanta
+  - Çelikhane deposu ve Vorsa karakolu yolun üstünde.
+- **Yaklaşma (A):** belediyenin *HOŞ GELDİNİZ* levhası (şehrin adı Vorsa
   etiketinin altında), çelikhanenin boru köprüsü, çökmüş yol.
 - **Kontrol noktası (B):** nöbetçi kulübesi: camında televizyonun titreyen
   mavi ışığı, çatıdaki sobanın buharı; kırmızı-beyaz bariyer kolu yolun
-  üstüne inmiş; Vanta bariyerleri ve T-duvar; *KONTROL NOKTASI · YAVAŞLA*.
+  üstüne inmiş; Vorsa bariyerleri ve T-duvar; *KONTROL NOKTASI · YAVAŞLA*.
 - **Konteyner sahası (C):** konteynerlerde sahip kodu (kor işareti yalnız
   birinde, alçakta); üst geçit lastik tekerlekli bir saha vincinin (RTG)
   yürüme yolu: sarı ayaklar, tekerlekler, kabin, *VNTU* yazılı kiriş.
@@ -260,7 +260,7 @@ ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
   - Delikli pano ve tezgâh (Cephanelik): aletler, WARDEN'ın halligan'ı,
     BULWARK'ın bareti, SKYE'ın dron parçaları.
   - Soba ve borusu, sedir/portatif yatak ve yün battaniye; üst üste el konmuş
-    Vanta sandıkları (Sandıklar ekranı).
+    Vorsa sandıkları (Sandıklar ekranı).
   - Duvarda elle boyanmış kor işareti ve ocakçıların sözü: *OCAK SÖNER KOR
     KALIR*.
 - **Malzeme:** nemli beton ve tuğla, kireç izleri, tavanda borular ve kiriş;
@@ -285,7 +285,7 @@ ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
 - **Boyun:** kafaya doğru eğilen bir sütun; çenenin gölgesi üstünde, ışık
   önünde. SKYE'ın kask delikleri içinde köpüğü görünen delikler; BULWARK'ın
   kır saçı yumuşak bir kütle.
-- **Vanta zırhı:** daha gri bir çelik mavisi; lambanın parlaklığı, kenarlarda
+- **Vorsa zırhı:** daha gri bir çelik mavisi; lambanın parlaklığı, kenarlarda
   boyası kalkmış yerler, çizikler, aşağıda kuru yağmur kiri.
 - **HAWK:** sakal çene hattını izler (favoriden ağız köşesine, çenenin
   altından boğaza), yanak açık kalır, üst kenar kıl kıl incelir; bıyık aynı
@@ -317,7 +317,7 @@ ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
 - Silahlar: üstten yuvarlanan ışık, üst yüzeyde lamba çizgisi, boyuna
   fırçalanmış metal, el değen kenarlarda aşınma.
 - Eller dört ayrı parmakla kabzayı sarar; boğumların sırtı ışığı yakalar.
-- Vanta'nın tazyikli su aracı ve kapı kulübesi: camda ışık, tekerlek arkasında
+- Vorsa'nın tazyikli su aracı ve kapı kulübesi: camda ışık, tekerlek arkasında
   çamur, eklerden pas akıntısı. Hücumcu'nun maskesi kalıplanmış kauçuk,
   derindeki koyu camlarda kırmızı ışık, dişli filtre; Tetikçi'nin yarığında
   füme camın ardında yanan sensör.
@@ -343,16 +343,16 @@ ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
   sıçrayan damlalar.
 - **Şehir:** pencereler duvarın içine gömülü (girinti gölgesi, camda gökyüzü,
   denizlik altında gölge ve yağmurun aşağı taşıdığı kir); kemerli pencereler
-  de taşın içinde. Vanta karakolunun nöbet odası panjur ardında yanar;
+  de taşın içinde. Vorsa karakolunun nöbet odası panjur ardında yanar;
   gümrük binası arduvaz çatılı. Konteynerler limanda olduğu gibi yıpranmış:
   oluk oluk gölge, raylardan ve köşe dökümlerinden pas akıntısı, ezikler,
-  tutmayan bir rötuş. Vanta bariyerlerinde mermi izleri, çizikler, dipte kir.
-  Vanta bayrakları ağır, ıslak kumaş gibi asılı; pazarın brandaları iki bağ
+  tutmayan bir rötuş. Vorsa bariyerlerinde mermi izleri, çizikler, dipte kir.
+  Vorsa bayrakları ağır, ıslak kumaş gibi asılı; pazarın brandaları iki bağ
   arasında sarkar, altından ampulle ısınır. Valilik meydanındaki çınarlar
   gerçek ağaç: çatallanıp incelen dallar, alacalı kabuk, tohum topları.
 - **Hasar:** vurulunca görüşün kenarı koyu kan kırmızısına kararır; atışın
   geldiği yan yumuşakça parlar.
-- **Giysiler:** bütün operatörlerin, Vanta'nın ve Gall'ın kumaşı kıvrımlı:
+- **Giysiler:** bütün operatörlerin, Vorsa'nın ve Gall'ın kumaşı kıvrımlı:
   koltuk altından bele çekilen kıvrımlar, kemer üstünde toplanan kumaş,
   kollarda dirsek kıvrımları, diz arkasında toplanan pantolon. FLINT'in eski
   deri ceketi belde ve kolda buruşuk.
@@ -362,7 +362,7 @@ ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
   sodyum kahvesine tek bir yumuşak geçiş, alttan aydınlanan yumuşak bulut
   kümeleri.
 - **Pazar hâli ve liman:** hâlin kemerli pencereleri tuğla kemerli ve duvarın
-  içinde; limandaki Vanta panosu panel panel basılı, alttan projektörle
+  içinde; limandaki Vorsa panosu panel panel basılı, alttan projektörle
   aydınlanır, üst kenarından kir akar, ayağında bakım iskelesi var.
 - **Sığınak:** kilim dokuma ve eskimiş: ortası yürünmekten solmuş, sandalye
   izleri, kenarlarında kir, yarısı dökülmüş saçak.
@@ -373,7 +373,7 @@ ve 9): ekip buradan çıkar, buraya döner. Bütün menü ekranları bu odanın
   panoya gölge düşürür; tezgâhta motor, pervaneler, şarjdaki pil, boyası
   dökük alet çantası; harita masası, saha telsizi, emaye kupalar, pirinç
   mermiler, bükme sandalyeler; beton merdiven ve yuvarlak tırabzan;
-  boyalı tahta Vanta sandıkları; döküm soba ve çaydanlık; zeytin yeşili
+  boyalı tahta Vorsa sandıkları; döküm soba ve çaydanlık; zeytin yeşili
   telsiz ve kulaklık; askeri ranza ve battaniye. Duvardaki harita kurşun
   kalemle çizilmiş bir pafta gibi: soluk sokak blokları, kahve halkası,
   katlama izleri, nem.
@@ -401,7 +401,7 @@ silahtı.
   şeridi dört pirinç kutucuk.
 - **Kimlik:** on iki silah aynı renk, aynı yapı. KERKENEZ, BURÇ ve ATMACA
   uzaktan birbirinin büyütülmüşü.
-- **Vanta ile Kor Hattı aynı:** Vanta'nın depodan yeni çıkmış silahı ile
+- **Vorsa ile Kor Hattı aynı:** Vorsa'nın depodan yeni çıkmış silahı ile
   ekibin eski, onarılmış silahı ayrışmıyor.
 
 **Standart**
@@ -411,8 +411,8 @@ silahtı.
   gibi: üstten yuvarlanır, üst yüzeyde lamba çizgisi, boyuna fırça izi.
 - **Turuncu yok.** Ekibin işareti sargı: solmuş pas rengi bez bant ve
   paraşüt ipi, mat; her silahta değil.
-- **Vanta'nın silahları:** yeni, temiz, mavimsi kara polimer; dipçikte beyaz
-  şablon seri numarası. Vanta'nın pompalısı sentetik dipçikli.
+- **Vorsa'nın silahları:** yeni, temiz, mavimsi kara polimer; dipçikte beyaz
+  şablon seri numarası. Vorsa'nın pompalısı sentetik dipçikli.
 - **Parçalar:** pim, vida, emniyet ve şarjör bırakma mandalı, kayış halkası,
   gez ve arpacık; şarjör yuvası korkuluğun önünde; namlu ağızlığı gerçek
   biçiminde (kafes, fren, susturucu).
@@ -546,7 +546,7 @@ karakterler olduğu gibi.
 
 **Daha az bina** (`art/env/city.js` → `sparseFacade`): hikâyenin geçtiği
 yerler duruyor (HAWK'ın dükkânı, valilik ve kanatları, belediye, hal,
-gümrük, sendika, Vanta'nın konteyner duvarı); sıradan ev, depo ve
+gümrük, sendika, Vorsa'nın konteyner duvarı); sıradan ev, depo ve
 dükkânlardan biri kalıyor biri gidiyor, aralarındaki ara sokaklar kalkıyor.
 Sokakta boşluklar var, arkadan karanlık şehir görünüyor.
 
@@ -580,3 +580,65 @@ görevin yolunu baştan sona yürüdü: 1 → 27 sn, 2 → 60 sn, 4 → 73 sn,
 etmediği için son dövüşte süre doluyor (yürüme sorunu değil).
 
 Çizim sürümü `d4-61` (telefonlar yeniden boyar). Yüzler: §10.34.
+
+### 10.38 Kapak, lobi, on dil, telif taraması
+
+**Kapak.** Açılışın son karesinde (korlar) KOR yazısı korların ışığında koyu
+yazılmıştı; telefonda neredeyse görünmüyordu, alt satır da okunmuyordu.
+Başlık artık videoya gömülü değil, sayfada çiziliyor (`ui/titlecard.js`):
+KOR (Big Shoulders Stencil, açık krem, alttan kor rengine dönen dolgu, kor
+parıltısı), iki çizgi arasında kor taşı (uygulama simgesinin işareti, nefes
+alır gibi parlar), altında oyuncunun dilinde slogan. Altında hafif bir
+karartma var; korların üstünden net okunur, her ekran boyunda keskindir.
+Hem video açılışta hem canlı çizilen yedekte aynı kart. Açılış filmi ve
+döngüsü başlıksız yeniden kaydedildi. Mağaza kapağı (feature graphic,
+1024×500) yeniden: yeniden yanan yüksek fırının önünde beş operatör, solda
+KOR ve slogan; on dilin her biri için ayrı (`store/feature/`).
+
+**Lobi.** Ölçülen sorunlar ve çözümleri:
+- "GÖREVE ÇIK" kartında üst satır Ö'nün noktalarına biniyordu: başlığa
+  aksanlar için yer açıldı, tek satır ve kutuya sığana kadar küçülüyor
+  (`kit.js fitText`; uzun dillerde de taşmaz).
+- 16:9 telefonlarda (640×360) başlık iki satıra kırılıp HAWK kartını
+  ekrandan itiyordu: artık tek satır, kart yerinde.
+- Sol sütun (isim, telsiz, fotoğraflar) yukarıdan aşağı dizili; telsiz
+  kutusu isme ve fotoğraflara hiç binmiyor, kısa ekranda küçülüyor.
+- Tablette sağ sütun ortalanıyor, kart büyüyor; boş alan kalmıyor.
+- Görev notundaki iğne sağ köşede (uzun yazının üstüne binmiyor).
+
+**On dil.** Türkçe ve İngilizceye en çok konuşulan sekiz dil eklendi:
+Çince (basitleştirilmiş), Hintçe, İspanyolca, Fransızca, Arapça, Bengalce,
+Portekizce (Brezilya), Rusça. Her dilde 510 anahtarın hepsi var; test on
+dilin hepsinde eksik anahtarı ve yer tutucuyu yakalar.
+- İlk açılışta oyun telefonun dilini seçer (bilmediği dilde İngilizce);
+  yeni oyuncunun takma adı da kendi dilinde. Ayarlar › Dil: on dil, her
+  biri kendi yazısıyla, ızgara halinde.
+- Yazı tipleri: Kiril için Oswald, Devanagari için Teko, Bengal için Hind
+  Siliguri, Arap için Cairo (hepsi OFL, yalnız başlık kesimleri). Çince ve
+  bu dillerin gövde yazısı telefonun kendi yazı tipiyle.
+- Arapça: sayfa düzeni olduğu gibi kalır, her satır kendi yönünü yazısından
+  alır. Arapça, Hintçe, Bengalcede harf aralığı sıfır (harfleri ayırmasın),
+  tek satırlık etiketlere üst ve alt işaretler için yer açıldı.
+- Yasal ekran: Çince ve Bengalce metinler eklendi (Çin, Tayvan, Hong Kong,
+  Singapur için Çince; Bangladeş ve Hindistan için Bengalce de sunuluyor).
+- Mağaza: kısa ve uzun açıklama on dilde (`store/play/`).
+
+**Telif taraması.** Bulunanlar ve yapılanlar:
+- Kötü şirketin adı **Vanta** gerçek bir güvenlik şirketinin adıydı.
+  Adı **Vorsa** oldu (Türkçe ekler aynı: Vorsa'nın, Vorsa'ya): metinler,
+  tabelalar, sinematik plakalar (yeniden ışın izlendi), bütün filmler
+  (yeniden kaydedildi), mağaza metinleri ve belgeler.
+- Oyun içindeki Vorsa işareti (halkayı yatay bir çubuk kesiyor) bir şehir
+  metrosunun tescilli amblemine çok benziyordu. İşaret artık sinematikteki
+  gibi **halka ve içinde aşağı bakan şevron** (`art/enemies/syndicate.js
+  emblem`); sandıklar dahil hepsi bu tek işlevden çiziliyor.
+- Eski mağaza görselleri eski adı ve eski işareti gösteriyordu: kapak ve
+  sekiz ekran görüntüsü güncel oyundan yeniden alındı.
+- Değişmeyenler, kontrol edildi: yazı tiplerinin hepsi OFL ya da Apache
+  2.0, lisans metinleri `assets/fonts/` altında; müzik ve sesler oyunun
+  içinde sentezleniyor (dosya yok); bütün görseller ve filmler oyunun kendi
+  kodu ve ışın izleyicisiyle üretiliyor; silah adları uydurma (gerçek model
+  ya da marka yok); karakter adları sıradan sözcükler; oyun başka bir
+  oyunun kopyası değil.
+
+Çizim sürümü `d4-65` (telefonlar yeniden boyar).

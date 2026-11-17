@@ -117,7 +117,7 @@ anlamlı, mutlak süreler değil; telefon benzetimi, orta kalite, görev 2):
   dörtgenler). Görüntünün parçası olduğu için dokunulmadı.
 
 ### 10.19 Ölen muhafızların yerdeki vücutları
-Şikâyet: Vanta muhafızları ölünce vücutları yerde bozuluyor. Ragdoll'da
+Şikâyet: Vorsa muhafızları ölünce vücutları yerde bozuluyor. Ragdoll'da
 (`anim/ragdoll.js`) beş ayrı hata vardı; beşi de KOR-10/11 öncesinden beri
 duruyordu.
 
@@ -281,7 +281,7 @@ açmıyordu. Lobide görünen bunların yarısından azı.
 - **İki aşama** (`gfx/baker.js`, `game/mission.js` → `forLobby`): önce lobinin
   gördüğü 209 parça (sığınak, beş operatör ve bütün silahları, efektler, küçük
   eşyalar) boyanıp ekran kartına yükleniyor ve lobi açılıyor. Kalan 175 parça
-  (sokak katmanları, binalar, görev parçaları, Vanta) lobinin arkasında
+  (sokak katmanları, binalar, görev parçaları, Vorsa) lobinin arkasında
   boyanıyor.
 - **Arkadaki iş lobiyi sarsmasın diye:** ikinci aşama lobi ilk karelerini
   çizene kadar bekliyor; sonra işçiler boyuyor, ana iş parçacığı parçaları

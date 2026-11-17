@@ -150,7 +150,7 @@ const LIST = [
     post: { grain: 0.08, halation: 0.55, lift: [5, 6, 8], cool: 0.05, vignette: 0.6, dirt: 0.35 },
   },
   {
-    id: '14', name: 'Liman, gece', cap: 'Liman Vanta\'nın. Gemi üç gündür yanaşık; vinç hiç durmuyor.',
+    id: '14', name: 'Liman, gece', cap: 'Liman Vorsa\'nın. Gemi üç gündür yanaşık; vinç hiç durmuyor.',
     cam: look([196, 3.4, -178], [60, 22, -20], 35), tex: [],
     scene: (cam) => harbour(cam, { time: 'night', pierZ: -176 }),
     air: (g, cam, A) => rain(g, cam, A, { n: 1.1, col: '#d0c4b4', light: 0.6, wind: 0.7 }),

@@ -101,7 +101,7 @@ export function fountain(g, x) {
   stroke(g, `M ${x + 33.6} -24 C ${x + 34} -20 ${x + 33} -16 ${x + 34} -12`, '#3a3a2a', 0.3, 0.6);
 }
 
-// Vanta's crowd barrier on the square, the families' photographs of the
+// Vorsa's crowd barrier on the square, the families' photographs of the
 // missing tied to it, carnations in the bars, candles on the slabs; the
 // order beside it
 export function vigil(g, x) {
@@ -200,7 +200,7 @@ export function tree(g, x, seed = 1) {
   for (let k2 = x - 8; k2 < x + 9; k2 += 2) fill(g, rect(k2, -0.8, k2 + 0.8, 0.4), '#3a3e44');
 }
 
-// Vanta's water-cannon truck, parked on the square (docs §10.15). Front to the left: a
+// Vorsa's water-cannon truck, parked on the square (docs §10.15). Front to the left: a
 // dozer blade over the bumper, an armoured cab-forward cab with its glass behind
 // hinged steel mesh, a light bar and spotlights and the small cannon on the cab roof;
 // behind it the tank body in armour plate, bolted, the big cannon in its turret on
@@ -312,11 +312,11 @@ export function truck(g, x) {
       stroke(g, L, BODY.k, 0.3, 0.8);
       cel(g, rect((lx0 + lx1) / 2 - 1.6, -21.4, (lx0 + lx1) / 2 + 1.6, -20.2), DARK, { sh: 0.2, hl: 0.3, lw: 0.16 });
     }
-    // the red stripe, VANTA, the mark, the number, the warning
+    // the red stripe, VORSA, the mark, the number, the warning
     fill(g, 'M 44 -24.6 L 149 -24.6 L 149 -22.8 L 44 -22.8 Z', '#b3232e');
     Bk.inside(rect(44, -24.6, 149, -22.8), () => Bk.line('M 44 -24.4 L 149 -24.4', 'rgba(255,170,160,0.4)', 0.2, 0.05));
     emblem(g, 80, -48.4, 5.0, '#f0f2f4');
-    letters(g, 'VANTA', 120, -45.0, 6.6, '#e8ecf0', { kind: 'print', align: 'center', jit: 0, track: 0.12 });
+    letters(g, 'VORSA', 120, -45.0, 6.6, '#e8ecf0', { kind: 'print', align: 'center', jit: 0, track: 0.12 });
     letters(g, 'SU-03', 120, -40.2, 2.8, '#c9ced6', { kind: 'print', align: 'center', jit: 0, track: 0.1 });
     fill(g, rect(98, -35, 116, -31.4), '#d8b43a', 0.9);
     letters(g, 'YAKLAŞMAYIN', 107, -32.2, 2.1, '#1a1a1a', { kind: 'print', align: 'center', jit: 0 });
@@ -531,7 +531,7 @@ export function buildMission3() {
   const floor = [];
 
   // A — the square (docs §10.7): slabs, the dry pool, the plane trees, the
-  // families' vigil on Vanta's barrier, a water-cannon truck parked ---------------------
+  // families' vigil on Vorsa's barrier, a water-cannon truck parked ---------------------
   for (const c of [30, 70, 110, 150]) flags.push(X(c));
   P('m3.coneA', [X(20) - 6, -12, X(20) + 8, 1], (g) => cone(g, X(20)), deco);
   addPlanter(44); conc('m3.concA', 76); addPlanter(96);
@@ -551,7 +551,7 @@ export function buildMission3() {
   P('m3.gateFrame', [X(214) - 76, -150, X(216) + 76, 1], (g) => gateFrame(g, X(214), X(216), 96, ['SEKRETERLİK', 'YETKİSİZ GİRİŞ YASAKTIR']), deco);
   lights.push([X(215), -118, 110, 0.6, [0.9, 0.95, 1]]);
   glows.push([X(215) - 30, -125, 4, 2, '#f2f6ff', 0.6], [X(215) + 30, -125, 4, 2, '#f2f6ff', 0.6]);
-  // C — the courtyard under the arcade; Vanta's walls here carry no mark of the cells ----------
+  // C — the courtyard under the arcade; Vorsa's walls here carry no mark of the cells ----------
   const cols = bays(X(226), X(346));
   for (const x of cols.slice(0, -1)) { const [lx, ly] = ARCH_LAMP(); glows.push([x + lx, ly + 0.6, 4, 2, '#e8f0ff', 0.45]); lights.push([x + lx, ly + 4, 40, 0.35, [0.88, 0.94, 1]]); }
   addPlanter(240); conc('m3.concC1', 266, { kor: false, label: 'S-03' }); addPlanter(292); conc('m3.concC2', 318, { kor: false, label: 'S-04' }); addPlanter(340);
@@ -583,7 +583,7 @@ export function buildMission3() {
     id: 'm3', level, props, front, deco, lamps, glows, lights, width: COLS * T,
     // the street up to the plaza, then the governor's office: its wings either side of the centre block
     floor,
-    // the square: Vanta's post, the shut municipality and the houses round it,
+    // the square: Vorsa's post, the shut municipality and the houses round it,
     // then the governor's office behind its railings; inside, its wings and
     // the centre block, placed so its door stands behind the ceremony
     facade: [

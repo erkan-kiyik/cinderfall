@@ -39,7 +39,7 @@ export const settings = {
     const action = (label, hint, btn, fn, kind = 'secondary') => row(label, hint, press(h(`button.btn.sm.${kind}.cut`, { type: 'button', onclick: fn }, btn)));
 
     function render() {
-      nav.replaceChildren(...TABS.map(([k, ic]) => press(h(`button${k === tab ? '.on' : ''}`, { type: 'button', onclick: () => { if (k !== tab) { tab = k; ui('tab'); render(); } } }, svg(ic), t(`set.${k}`)), { buzz: 'tick', sound: null })));
+      nav.replaceChildren(...TABS.map(([k, ic]) => press(h(`button${k === tab ? '.on' : ''}`, { type: 'button', onclick: () => { if (k !== tab) { tab = params.tab = k; ui('tab'); render(); } } }, svg(ic), t(`set.${k}`)), { buzz: 'tick', sound: null })));
       const st = S.d.settings;
       let rows = [];
       if (tab === 'graphics') {
@@ -76,7 +76,10 @@ export const settings = {
           action(t('set.prologue'), t('set.prologueHint'), t('set.watch'), () => ctx.playStory?.('prologue')),
         ];
       } else if (tab === 'lang') {
-        rows = [seg(t('set.language'), t('set.languageHint'), Object.entries(LANG_NAMES), () => st.lang, (s, v) => { s.settings.lang = v; })];
+        // ten languages: a grid of their own names, each set in its own script (docs §10.38)
+        const grid = h('div.lang-grid', ...Object.entries(LANG_NAMES).map(([v, l]) => press(h(`button.cut${st.lang === v ? '.on' : ''}`, { type: 'button', lang: v, dir: 'auto', 'aria-pressed': String(st.lang === v),
+          onclick: () => { if (st.lang === v) return; set((s) => { s.settings.lang = v; }); ui('tab'); } }, l), { sound: null, buzz: 'tick' })));
+        rows = [h('div.row.cut.lang-row', h('div.lbl', h('b', t('set.language')), h('small', t('set.languageHint'))), grid)];
       } else {
         rows = [
           action(t('set.privacy'), t('set.privacyHint'), t('set.open'), () => ctx.router.go('legal', { mode: 'manage' })),

@@ -13,11 +13,11 @@ respect each store's current length limits.
 - **App Store – Subtitle** (max 30 chars): `2D Tactical Shooter`
 
 ## Short description (Google Play, max 80 chars)
-- TR: `Vanta'nın tuttuğu şehirde beş kişilik bir hücre. Elle çizilmiş 2D nişancı.`
+- TR: `Vorsa'nın tuttuğu şehirde beş kişilik bir hücre. Elle çizilmiş 2D nişancı.`
 - EN: `Five people against the force that holds their city. A painted 2D shooter.`
 
 ## Promo text (App Store, max 170 chars — updatable without review)
-`The city is Vanta's. The night is ours. Five operators, a rain-soaked city and the first act of the Kor line campaign.`
+`The city is Vorsa's. The night is ours. Five operators, a rain-soaked city and the first two acts of the Kor line campaign.`
 
 ## Keywords (App Store, max 100 chars, comma-separated, no spaces)
 `shooter,tactical,2d,action,offline,story,operators,cover,campaign,squad,resistance`
@@ -31,12 +31,14 @@ respect each store's current length limits.
 
 ## Full description (Google Play max 4000 chars / App Store max 4000 chars)
 
-Copy-ready texts live in `store/play/` (`full-tr.txt`, `full-en.txt`,
-`short-tr.txt`, `short-en.txt`). The English text:
+Copy-ready texts live in `store/play/`: `short-<lang>.txt` and
+`full-<lang>.txt` for the ten interface languages (tr, en, zh, hi, es, fr,
+ar, bn, pt, ru; docs §10.38). Play Console language codes: tr-TR, en-US,
+zh-CN, hi-IN, es-ES (and es-419), fr-FR, ar, bn-BD, pt-BR, ru-RU. The English text:
 
-KOR — the city is Vanta's. The night is ours.
+KOR — the city is Vorsa's. The night is ours.
 
-The foundry's furnace has been cold for four years. Power, bread and curfew now come from Vanta: a private firm that took over the city's "temporary" security and gets its contract extended every time it runs out. The Kor line is five people: a welder, a firefighter, a signals analyst who walked out of Vanta, a former courier and a dock worker. All they have is each other.
+The foundry's furnace has been cold for four years. Power, bread and curfew now come from Vorsa: a private firm that took over the city's "temporary" security and gets its contract extended every time it runs out. The Kor line is five people: a furnaceman, a firefighter, a signals analyst who walked out of Vorsa, a former courier and a dock worker. All they have is each other.
 
 KOR is a 2D tactical shooter made for phones, painted by hand in look and feel.
 
@@ -47,16 +49,16 @@ FLINT, WARDEN, VESPER, SKYE and BULWARK, each with three abilities from the life
 The port gate, the morning market, the governor's square: rain, street lamps mirrored in wet asphalt, bare bulbs off a generator, fires in barrels.
 
 ■ TACTICAL COMBAT
-Take cover and pick your moment. Vanta troopers patrol, investigate noise and change cover; the shield man pushes forward.
+Take cover and pick your moment. Vorsa troopers patrol, investigate noise and change cover; the shield man pushes forward.
 
 ■ CAMPAIGN AND ENDLESS MODE
-The first act of the Kor line campaign: three missions with story scenes. Endless mode with Secretary Gall every fifth wave. New tasks every day.
+The first two acts of the Kor line campaign: seven missions with story scenes. Endless mode with Secretary Gall every fifth wave. New tasks every day.
 
 ■ WEAPONS, CRATES, HAWK
-Twelve weapons; weapon finishes in crates seized from Vanta; trade with HAWK, the oldest dealer in the market.
+Twelve weapons; weapon finishes in crates seized from Vorsa; trade with HAWK, the oldest dealer in the market.
 
 ■ OFFLINE
-Single player; no connection needed. Turkish and English.
+Single player; no connection needed. 10 languages; the game opens in the phone's language.
 
 KOR is a work of fiction. All characters, companies and places are fictional.
 
@@ -65,7 +67,7 @@ KOR is a work of fiction. All characters, companies and places are fictional.
 ## What's New (release notes — 2.0)
 ```
 Cinderfall is now KOR: a new game in the same app.
-• A city held by Vanta, five operators of the Kor line
+• A city held by Vorsa, five operators of the Kor line
 • The first act of the campaign: the port gate, the market, the governor's square
 • Endless mode, daily tasks, crates, HAWK's trades
 • Plays fully offline
@@ -90,3 +92,14 @@ Progress from Cinderfall does not carry over.
   consent flow and the ads SDK stay in the app).
 - Fill in the content rating questionnaire again for KOR.
 - Upload the new AAB (versionName 2.0.x, same upload key).
+
+---
+
+## Localised graphics (docs §10.38)
+
+- Feature graphic, 1024×500, RGB: `store/feature-graphic.png` (Turkish, the
+  default listing) and one per language in `store/feature/feature-<lang>.png`
+  (the tagline in that language).
+- Screenshots, 1920×1080: `store/screenshots/` (Turkish) and
+  `store/screenshots/en/` (English), taken from the current build.
+

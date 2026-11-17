@@ -8,7 +8,7 @@
 //   WARDEN  (hale)    wall, Yangın Kapısı: a steel fire door (real cover: solid tiles) for 10 s
 //                     mine, Tüp Tuzağı: a pressure cylinder on a trigger, blows and slows
 //                     turret (ult), Yangın Monitörü: a water monitor on a tripod for 20 s
-//   VESPER  (morrow)  smoke, Duman Kutusu: Vanta's own canister, a cloud nobody sees through
+//   VESPER  (morrow)  smoke, Duman Kutusu: Vorsa's own canister, a cloud nobody sees through
 //                     slow, Parazit: a jammer that drags troops to 60 % speed
 //                     blackout (ult), Karartma: every trooper's visor dark for 4 s
 //   SKYE    (kite)    drone, Hurda Dron: the scrap drone goes up, marks enemies for 8 s
@@ -353,7 +353,7 @@ export class Abilities {
         B.draw(white, o.x, o.y, 0.9, 2.6, (o.age || 0) * 14, a('#b8462e'));
         B.draw(white, o.x, o.y, 0.5, 2.3, (o.age || 0) * 14, a('#d9744a'));
       } else if (o.type === 'smoke') {
-        // the canister on the ground, grey with Vanta's band
+        // the canister on the ground, grey with Vorsa's band
         const gy = o.y + 30;
         B.draw(white, o.x, gy - 3, 2.2, 3.2, 0, ink);
         B.draw(white, o.x, gy - 3, 1.8, 2.9, 0, a('#5e6266'));

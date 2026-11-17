@@ -55,6 +55,6 @@ export const M = {
   white: tone('#ffffff', '#e6ebf0', '#b9c3ce', '#6e7987'),
   // coated optics: dark glass with a cold sheen, no light of their own
   lens: tone('#9fb4c4', '#3c5566', '#1d2a35', '#0a1016'),
-  // Vanta's red, as paint: a band, a stripe, a stencil
+  // Vorsa's red, as paint: a band, a stripe, a stencil
   visor: tone('#c8505a', '#a8232d', '#7a1820', '#3a0a10'),
 };

@@ -160,8 +160,8 @@ export function duct(g, x0, x1, yTop, yBot) {
   letters(g, 'ALÇAK GEÇİT', px + 7, py + 4.9, 2.2, '#1a1810', { kind: 'print', align: 'center', jit: 0 });
 }
 
-// A Vanta checkpoint barricade (docs §10.2): steel-framed panels of
-// blue-grey polymer, each with the white ring-and-bar mark, the number, a
+// A Vorsa checkpoint barricade (docs §10.2): steel-framed panels of
+// blue-grey polymer, each with the white ring-and-chevron mark, the number, a
 // rubber kick strip and splayed feet, a steel capping rail along the top. No
 // light of its own: it is lit by the street.
 const VPOLY = mat(tone('#b3c4d3', '#8499ad', '#5c7186', '#243342'), 'paint', 0.25);

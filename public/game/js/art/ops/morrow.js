@@ -1,4 +1,4 @@
-// VESPER — control. Thirty-three; six years a signal analyst in Vanta's
+// VESPER — control. Thirty-three; six years a signal analyst in Vorsa's
 // listening room, until the Söndürme records crossed his desk and he walked
 // out with what he knew (docs/KOR_STORY_CINEMATIC.md §9.2). Now the voice on
 // the radio. Built from scratch as a man (docs §10.37): lean, a long face with

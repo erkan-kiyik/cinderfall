@@ -94,7 +94,7 @@ docs/
 ## 6. Mağaza (store/)
 
 - `listing.md`, `play/short-*.txt`, `play/full-*.txt`: KOR'un metinleri
-  (TR, EN): hikâye (Vanta'nın tuttuğu şehir, ocak, beş hücre), görevler,
+  (TR, EN): hikâye (Vorsa'nın tuttuğu şehir, ocak, beş hücre), görevler,
   operatörler ve yetenekler, silahlar, sandıklar, gerçekçi çizim, çevrimdışı.
 - `screenshots/`: KOR'dan 1920×1080 görüntüler (Play en-boy oranını 2:1 ile
   sınırlar): lobi, kapı, pazar, valilik, operatörler, kampanya, sandıklar,

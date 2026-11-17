@@ -1,11 +1,12 @@
-// A seized Vanta crate, painted (docs §10.3 "el konmuş Vanta sandıkları",
+// A seized Vorsa crate, painted (docs §10.3 "el konmuş Vorsa sandıkları",
 // §11): a hard polymer case seen from above and to the right, its lid
-// latched, the tier's colour band round its waist, Vanta's stencils on it and
-// the ember sprayed over Vanta's mark. Lit by one lamp above and in front;
+// latched, the tier's colour band round its waist, Vorsa's stencils on it and
+// the ember sprayed over Vorsa's mark. Lit by one lamp above and in front;
 // dust on the lid, scuffs on every edge, its shadow on the floor.
 // Soft-brush painting (paint.js) in a 100 × 100 frame.
 import { Brush, rnd } from './paint.js';
 import { texture } from './tex.js';
+import { emblem } from './enemies/syndicate.js';
 
 // faces: front, top (lid), right side; corners rounded a little
 const FRONT = 'M 16 41 L 76 41 Q 78 41 78 43 L 78 77 Q 78 79 76 79 L 16 79 Q 14 79 14 77 L 14 43 Q 14 41 16 41 Z';
@@ -48,9 +49,9 @@ export function paintCrate(g, size, tier = {}) {
     B.fill('M 14 59 L 78 59 L 78 64 L 14 64 Z', band, 0.15, 0.9);
     B.fill('M 14 59 L 78 59 L 78 59.8 L 14 59.8 Z', 'rgba(255,255,255,0.25)', 0.2);
     B.fill('M 14 63.2 L 78 63.2 L 78 64 L 14 64 Z', 'rgba(0,0,0,0.35)', 0.2);
-    // Vanta's stencils: the ring-and-bar mark, the store code
-    g.save(); g.globalAlpha = 0.6; g.strokeStyle = '#dfe4ea'; g.lineWidth = 1.3; g.beginPath(); g.arc(46, 55, 3.8, 0, Math.PI * 2); g.stroke(); g.fillStyle = '#dfe4ea'; g.fillRect(40.4, 54.4, 11.2, 1.3); g.restore();
-    stencil(g, tier.label || 'VANTA · LOJİSTİK', 17, 74.6, 3.0, 0.5);
+    // Vorsa's stencils: the ring-and-chevron mark, the store code
+    g.save(); g.globalAlpha = 0.6; emblem(g, 46, 55, 4.8, '#dfe4ea'); g.restore();
+    stencil(g, tier.label || 'VORSA · LOJİSTİK', 17, 74.6, 3.0, 0.5);
     stencil(g, `SN ${(4100 + (band.charCodeAt(1) * 7) % 900)}-${band.charCodeAt(2) % 9}`, 68.4, 47.4, 1.7, 0.45);
     // the ember sprayed over the mark, running
     B.fill('M 41.4 53.6 L 44 50.6 L 48.4 51 L 50.4 54.2 L 48.2 57.8 L 43.6 57.6 Z', 'rgba(226,105,47,0.88)', 0.35);

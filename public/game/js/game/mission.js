@@ -33,7 +33,7 @@ import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
 import { haptic } from '../ui/kit.js';
 
-export const BAKE_VERSION = 'd4-64';
+export const BAKE_VERSION = 'd4-65';
 // Endless: the market from mission 2, walled off at both ends; squads come in
 // waves, every fifth one with Gall.
 function buildEndless() {
@@ -49,7 +49,7 @@ export const MISSION_IDS = Object.keys(BUILD);
 
 // What the lobby shows (docs §10.28): the basement, the operators with every
 // weapon, the effects and small items. A first start paints these first and
-// opens the lobby; the street, the buildings, the missions' pieces and Vanta
+// opens the lobby; the street, the buildings, the missions' pieces and Vorsa
 // paint behind it.
 const LOBBY = new RegExp(`^(h|w|fx|i|${M2.OPERATORS.join('|')})\\.`);
 export const forLobby = (e) => LOBBY.test(e.name);

@@ -12,7 +12,7 @@
 //         catching (the plate lit and the plate dark, between them)
 //  11.2   the alley: steam off the grate in the sodium light, rain
 //  14.4   the coals, close: breathing (the plate hot and the plate cooler),
-//         sparks going up; KOR in their light
+//         sparks going up; the title card (KOR) set over them by the page
 //
 // Between shots a short dip through black. The last shot holds until the
 // game hands off. Same interface as a shot: init, update, draw, post.
@@ -165,18 +165,7 @@ class Coals extends PlateShot {
         g.strokeStyle = p.k > 0.85 ? '#fff0c8' : '#ffa048'; g.beginPath(); g.moveTo(a1[0], a1[1]); g.lineTo(a0[0], a0[1]); g.stroke();
       }
       g.restore(); }
-    const W = this.cam.W, H = this.cam.H, ta = smooth(KOR_AT - OPEN_CUTS[4], KOR_AT - OPEN_CUTS[4] + 1.4, t);
-    if (ta > 0) {
-      // a little dark under the type, so it reads off the coals
-      const sh = g.createRadialGradient(W / 2, H * 0.44, H * 0.05, W / 2, H * 0.44, H * 0.5);
-      sh.addColorStop(0, `rgba(0,0,0,${0.45 * ta})`); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, H);
-      const fs = Math.round(H * 0.17);
-      g.save(); g.font = `800 ${fs}px 'Big Shoulders Stencil', Rajdhani, 'Arial Narrow', sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-      if ('letterSpacing' in g) g.letterSpacing = `${Math.round(fs * 0.38)}px`;
-      g.shadowColor = `rgba(255,120,40,${0.5 * ta})`; g.shadowBlur = H * 0.04;
-      g.fillStyle = `rgba(242,230,214,${ta})`; g.fillText('KOR', W / 2 + fs * 0.27, H * 0.42);
-      g.restore();
-    }
+    // KOR itself is set over the picture by the page (ui/titlecard.js), sharp and in the player's language
   }
   post() { return { grain: 0.09, halation: 0.6, lift: [4, 3, 2], warm: 0.03, vignette: 0.65, dirt: 0.25 }; }
 }

@@ -43,7 +43,7 @@ if (what === 'op') {
 if (what === 'crate') {
   const { paintCrate } = await import('../js/art/crate.js');
   const r = row();
-  for (const [band, label] of [['#a39b8f', 'VANTA · ERZAK'], ['#6aa6d6', 'VANTA · MÜHİMMAT'], ['#e6a93c', 'VANTA · KOMUTA']]) { const c = document.createElement('canvas'); c.width = c.height = 420; c.style.background = '#1a1612'; paintCrate(c.getContext('2d'), 420, { band, label }); r.appendChild(c); }
+  for (const [band, label] of [['#a39b8f', 'VORSA · ERZAK'], ['#6aa6d6', 'VORSA · MÜHİMMAT'], ['#e6a93c', 'VORSA · KOMUTA']]) { const c = document.createElement('canvas'); c.width = c.height = 420; c.style.background = '#1a1612'; paintCrate(c.getContext('2d'), 420, { band, label }); r.appendChild(c); }
 }
 if (what === 'hawk') {
   const { paintHawk } = await import('../js/art/hawk.js');
@@ -290,7 +290,7 @@ if (what === 'board-faces') {
   });
 }
 if (what === 'board-arms') {
-  const g = board(2400, 1240, 'SİLAHLAR VE DÜŞMANLAR', 'fabrika görünümü · metal açık çelik, polimer koyu, turuncu vurgu · VANTA SYNDICATE soğuk mavi + kırmızı vizör');
+  const g = board(2400, 1240, 'SİLAHLAR VE DÜŞMANLAR', 'fabrika görünümü · metal açık çelik, polimer koyu, turuncu vurgu · VORSA SYNDICATE soğuk mavi + kırmızı vizör');
   const list = [['wren9', 'TABANCA · hızlı, isabetli yan silah'], ['kestrel', 'TÜFEK · tam otomatik, kırmızı nokta'], ['ramrod', 'POMPALI · yan saddle fişek, pompa'], ['marksman', 'KESKİN NİŞANCI · dürbün, susturucu, bipod']];
   let y = 150;
   for (const [id, desc] of list) {

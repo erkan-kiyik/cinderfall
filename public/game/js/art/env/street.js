@@ -42,7 +42,7 @@ function sky(g) {
 
 function farCity(g) {
   // sodium glow on the cloud over the town, white haze over the port where
-  // Vanta's floodlights are; no fires: the furnace has been cold four years
+  // Vorsa's floodlights are; no fires: the furnace has been cold four years
   fill(g, rect(-10, -96, 610, -58), '#4a3a40', 0.32);
   fill(g, rect(-10, -80, 610, -58), '#7a5238', 0.22);
   fill(g, ell(540, -70, 110, 22), '#c9d6ec', 0.07);
@@ -56,7 +56,7 @@ function farCity(g) {
   for (let k = 0; k < 9; k++) { const t = k / 9; stroke(g, `M ${80 + t * 46} ${-146 + t * 86} L ${84 + t * 46} ${-140 + t * 86}`, W, 0.4); }
   fill(g, poly([[100, -60], [102, -164], [106, -164], [108, -60]]), W);
   for (let y = -160; y > -166; y -= 2) fill(g, rect(101.6, y, 106.4, y + 0.6), '#232a38');
-  // the port: two gantry cranes over the quay, Vanta's floodlight masts
+  // the port: two gantry cranes over the quay, Vorsa's floodlight masts
   for (const cx of [492, 556]) {
     stroke(g, `M ${cx - 10} -60 L ${cx - 6} -122 M ${cx + 10} -60 L ${cx + 6} -122 M ${cx - 9} -90 L ${cx + 9} -90`, W, 1.4);
     fill(g, rect(cx - 8, -128, cx + 8, -120), W);
@@ -100,7 +100,7 @@ function farCity(g) {
 
 function midIndustry(g) {
   // the shut works: sawtooth roofs with their glass gone, two cold stacks
-  // (Vanta's searchlight on one), the rolling mill's long shed, a Syndicate billboard
+  // (Vorsa's searchlight on one), the rolling mill's long shed, a Syndicate billboard
   const Y = -42;
   fill(g, poly([[-10, Y], [-10, Y - 52], [20, Y - 66], [20, Y - 52], [50, Y - 66], [50, Y - 52], [80, Y - 66], [80, Y - 52], [110, Y - 66], [110, Y]]), MID);
   for (const x of [-10, 20, 50, 80]) for (let k = 0; k < 4; k++) fill(g, poly([[x + 4 + k * 6.4, Y - 52.6], [x + 9 + k * 6.4, Y - 52.6], [x + 9 + k * 6.4, Y - 56.6 - k * 2.6], [x + 4 + k * 6.4, Y - 54.4 - k * 2.6]]), '#1e2532', 0.8);
@@ -121,7 +121,7 @@ function midIndustry(g) {
   fill(g, rect(320, B - 10, 408, B - 6), '#8e2330', 0.9);
   emblem(g, 340, B - 22, 8, '#e8d9d9');
   g.font = '700 10px Rajdhani'; g.fillStyle = '#e8d9d9'; g.textBaseline = 'alphabetic';
-  g.fillText('VANTA SYNDICATE', 354, B - 20);
+  g.fillText('VORSA SYNDICATE', 354, B - 20);
   g.font = '600 6px Rajdhani'; g.fillStyle = '#c9a9ae'; g.fillText('DÜZEN · GÜVENLİK · İTAAT', 354, B - 12);
   // a real hoarding: printed in panels, the seams showing; two floodlights on
   // arms under it washing the face from below, brightest at the bottom; the
@@ -146,7 +146,7 @@ function midIndustry(g) {
 // docs §10.5: interlocking pavers on the pavement, a granite kerb with the
 // ghost of the council's white paint, patched asphalt with the works' old
 // line sunk in it, cast manholes and drains, puddles holding the sodium
-// light, tracks of Vanta's armour, the leaflets their drones drop
+// light, tracks of Vorsa's armour, the leaflets their drones drop
 function ground(g) {
   const r = rng(77);
   // the pavement: pavers in running bond, grey with a red one here and there,
@@ -195,7 +195,7 @@ function ground(g) {
   }
   // the lane line, worn to a ghost
   for (let x = 0; x < 610; x += 40) { fill(g, rect(x, 26.6, x + 20, 27.8), '#5d6373', 0.55); fill(g, rect(x + 4 + r() * 10, 26.6, x + 7 + r() * 10, 27.8), '#23262e', 0.8); }
-  // the tracks of Vanta's armour, a long smear of tread
+  // the tracks of Vorsa's armour, a long smear of tread
   for (const y of [33.6, 38.2]) { fill(g, rect(-10, y, 610, y + 1.6), '#1b1d23', 0.6); for (let x = -8; x < 610; x += 2.2) fill(g, rect(x, y + 0.2, x + 0.8, y + 1.4), '#15171c', 0.5); }
   // manholes cast with the council's ring, oil, puddles holding the sodium light
   for (const x of [150, 470]) {
@@ -209,7 +209,7 @@ function ground(g) {
     fill(g, ell(x - w * 0.2, y - 0.2, w * 0.5, 0.5), '#ffb060', 0.2);
     fill(g, ell(x + w * 0.3, y + 0.3, w * 0.25, 0.3), '#8a96b0', 0.16);
   }
-  // Vanta's leaflets, dropped from the drones, trodden into the wet
+  // Vorsa's leaflets, dropped from the drones, trodden into the wet
   for (let i = 0; i < 16; i++) {
     const x = r() * 600, y = r() < 0.3 ? 0.6 + r() * 3 : 9 + r() * 30, a = r() * 3;
     g.save(); g.translate(x, y); g.scale(1, 0.4); g.rotate(a);
@@ -221,7 +221,7 @@ function ground(g) {
 
 // --- props (outlined play layer) ---------------------------------------------
 // docs §10.2: the street's things are old and used; the cells' are made by
-// hand; Vanta's are new, the same, clean.
+// hand; Vorsa's are new, the same, clean.
 const WOOD = mat(tone('#b38a5e', '#8c6741', '#634629', '#2e1f11'), 'wood', 0.8);
 const CONC = mat(tone('#b7b7b0', '#8e8e87', '#676761', '#2f2f2b'), 'concrete', 0.7);
 const POLY = mat(tone('#b3c4d3', '#8499ad', '#5c7186', '#243342'), 'paint', 0.25);
@@ -259,7 +259,7 @@ export function crate(g, x, w = 18, h = 16) {
     cel(g, rect(x, -h, x + f, 0), WOOD, { sh: 0.4, hl: 0.3, lw: 0.2 });
     cel(g, rect(x + w - f, -h, x + w, 0), WOOD, { sh: 0.4, hl: 0.2, lw: 0.2 });
     cel(g, poly([[x + f, -f - 1.6], [x + f + 1.6, -f], [x + w - f, -h + f + 1.6], [x + w - f - 1.6, -h + f]]), WOOD, { sh: 0.4, hl: 0.3, lw: 0.2 });
-    // stencils: the lot, and the cells' ember sprayed over a Vanta seal
+    // stencils: the lot, and the cells' ember sprayed over a Vorsa seal
     g.font = '700 2.2px sans-serif'; g.fillStyle = 'rgba(30,20,12,0.65)'; g.fillText('LOT 07', x + f + 1.2, -h + f + 3.0);
     emblem(g, x + w * 0.62, -h * 0.5, 2.4, 'rgba(236,240,244,0.55)');
     korMark(g, x + w * 0.66, -h * 0.46, 2.2, 0.8);
@@ -275,7 +275,7 @@ export function crate(g, x, w = 18, h = 16) {
   }
 }
 
-// a Vanta jersey barrier: blue-grey polymer, filled with water, the ring-and-bar
+// a Vorsa jersey barrier: blue-grey polymer, filled with water, the ring-and-chevron
 // mark and the number in white, a steel capping rail along the top
 export function barrier(g, x, w = 34) {
   const B = poly([[x, 0], [x + 4, -6], [x + 6, -16], [x + w - 6, -16], [x + w - 4, -6], [x + w, 0]]);
@@ -310,7 +310,7 @@ export function barrier(g, x, w = 34) {
 }
 
 // an old council lamp: a tapered steel pole, a swan-neck arm, a sodium head;
-// Vanta's loudspeaker strapped on for the curfew, its cable taped down the pole
+// Vorsa's loudspeaker strapped on for the curfew, its cable taped down the pole
 export function lampPost(g, x, h = 82) {
   const P = mat(tone('#646c69', '#434a48', '#2d3331', '#121514'), 'paint', 0.6);
   cel(g, poly([[x - 1.5, 0], [x - 0.9, -h], [x + 0.9, -h], [x + 1.5, 0]]), P, { sh: 0.8, hl: 0.3 });
@@ -328,7 +328,7 @@ export function lampPost(g, x, h = 82) {
   cel(g, H, P, { sh: 0.6, hl: 0.4 });
   fill(g, `M ${x + 9.4} ${-h + 2.2} Q ${x + 15} ${-h + 4.6} ${x + 21} ${-h + 2.2} Z`, '#ffc27a');
   fill(g, `M ${x + 11} ${-h + 2.3} Q ${x + 15} ${-h + 3.6} ${x + 19} ${-h + 2.3} Z`, '#fff0d2');
-  // Vanta's horn, facing the street, and its cable taped down the pole
+  // Vorsa's horn, facing the street, and its cable taped down the pole
   fill(g, rect(x - 1.6, -62.2, x + 1.6, -60.8), '#16181c');
   const S = mat(tone('#c9ced6', '#9aa2ae', '#6c7480', '#24282e'), 'paint', 0.3);
   cel(g, poly([[x - 1.6, -63.4], [x - 7.4, -66.2], [x - 7.4, -56.6], [x - 1.6, -59.4]]), S, { sh: 0.5, hl: 0.3, lw: 0.3 });

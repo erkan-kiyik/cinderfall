@@ -9,24 +9,24 @@ and the like: look the number up in the index,
 ## The game in one paragraph
 
 A 2D tactical shooter for phones. In a nameless port city built around a
-steelworks, a private military company, **Vanta**, took over "temporarily"
+steelworks, a private military company, **Vorsa**, took over "temporarily"
 four years ago, the night the blast furnace was put out (*the Quench*: 37
 detained, 6 never seen again). Five people who stayed call themselves **KOR**
 (*embers*: "the furnace goes out, the embers stay"). The player is their
 Operator, on the radio. Ten missions in three acts; act 1 ends with the fall
-of Gall, Vanta's Secretary in the city, and the "Ash Plan" found on his desk;
+of Gall, Vorsa's Secretary in the city, and the "Ash Plan" found on his desk;
 act 2 with the blast furnace lit again. Acts 1 and 2 (missions 1–7) are playable.
 
 | Operator | Age | Who | Role |
 | --- | --- | --- | --- |
 | FLINT | 29 | Third-generation furnace man; his father vanished in the Quench | Assault |
 | WARDEN | 41 | Last crew captain of the closed fire station | Defence |
-| VESPER | 33 | Vanta's former signal analyst, the voice on the radio | Control |
+| VESPER | 33 | Vorsa's former signal analyst, the voice on the radio | Control |
 | SKYE | 22 | Former courier, builds drones from scrap | Recon |
 | BULWARK | 47 | Harbour crane driver | Heavy |
 
 HAWK (60s) is the smuggler who sells to everyone; GALL (50s) is the act 1
-boss; VASQUEZ, Vanta's commander in the tower, is the final one.
+boss; VASQUEZ, Vorsa's commander in the tower, is the final one.
 
 ## How it looks and why
 
@@ -64,7 +64,7 @@ boss; VASQUEZ, Vanta's commander in the tower, is the final one.
 | [`design/1-hikaye.md`](design/1-hikaye.md) | Story bible (§1): world, timeline, characters, the ten missions, writing rules |
 | [`design/2-sinematik.md`](design/2-sinematik.md) | Prologue, opening and mission films; the cinematic rig; acceptance rules; the still series (§2–§8) |
 | [`design/3-karakterler.md`](design/3-karakterler.md) | Character design and every revision of characters, faces and heads (§9, §10.1, §10.10–11, §10.14–16, §10.21–25, §10.29, §10.34–37) |
-| [`design/4-dunya-ve-gorevler.md`](design/4-dunya-ve-gorevler.md) | Obstacles, interface, city, places, missions, the lobby, the realism pass, weapons, act 2, character separation, flat missions (§10.2–9, §10.12–13, §10.30–33) |
+| [`design/4-dunya-ve-gorevler.md`](design/4-dunya-ve-gorevler.md) | Obstacles, interface, city, places, missions, the lobby, the realism pass, weapons, act 2, character separation, flat missions, cover, lobby, ten languages, IP review (§10.2–9, §10.12–13, §10.30–33, §10.38) |
 | [`design/5-teknik-ve-performans.md`](design/5-teknik-ve-performans.md) | Phone performance, frame pacing, quality, ragdolls, measurements (§10.17–20, §10.26–28 and later technical sections) |
 | [`KOR_YAPI.md`](KOR_YAPI.md) | How KOR replaced Cinderfall in this repository and on the store |
 | [`RELEASE.md`](RELEASE.md) | Store release: signing (§5a: the lost upload key), store forms, assets |

@@ -23,7 +23,8 @@ const PORTUGUESE = ['PT', 'BR', 'AO', 'MZ', 'CV', 'GW', 'ST', 'TL'];
 const GERMAN = ['DE', 'AT', 'LI', 'CH', 'LU'];
 const RUSSIAN = ['RU', 'BY', 'KZ', 'KG'];
 
-export const DOC_LANGS = ['en', 'tr', 'de', 'es', 'fr', 'pt', 'ru', 'ar', 'hi'];
+export const DOC_LANGS = ['en', 'tr', 'de', 'es', 'fr', 'pt', 'ru', 'ar', 'hi', 'zh', 'bn'];
+const CHINESE = ['CN', 'TW', 'HK', 'MO', 'SG'];
 
 // regime id -> base profile
 const REGIMES = {
@@ -86,7 +87,9 @@ export function docLangsFor(country) {
   if (PORTUGUESE.includes(c)) out.push('pt');
   if (RUSSIAN.includes(c)) out.push('ru');
   if (MENA.includes(c)) out.push('ar');
-  if (c === 'IN') out.push('hi');
+  if (c === 'IN') out.push('hi', 'bn');
+  if (c === 'BD') out.push('bn');
+  if (CHINESE.includes(c)) out.push('zh');
   if (!out.includes('en')) out.push('en');
   // the remaining languages stay selectable, after the local ones
   for (const l of DOC_LANGS) if (!out.includes(l)) out.push(l);
@@ -106,6 +109,7 @@ const TZ_COUNTRY = {
   'America/Argentina/Buenos_Aires': 'AR', 'America/Bogota': 'CO', 'America/Santiago': 'CL', 'America/Lima': 'PE',
   'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR', 'Asia/Kolkata': 'IN', 'Asia/Calcutta': 'IN', 'Asia/Shanghai': 'CN',
   'Asia/Riyadh': 'SA', 'Asia/Dubai': 'AE', 'Asia/Qatar': 'QA', 'Africa/Cairo': 'EG', 'Africa/Johannesburg': 'ZA',
+  'Asia/Dhaka': 'BD', 'Asia/Hong_Kong': 'HK', 'Asia/Taipei': 'TW', 'Asia/Singapore': 'SG',
   'Australia/Sydney': 'AU', 'Australia/Melbourne': 'AU', 'Australia/Perth': 'AU', 'Asia/Baku': 'AZ',
 };
 export function guessCountry() {

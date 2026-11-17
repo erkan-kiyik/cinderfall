@@ -141,7 +141,7 @@ export class M2Scene {
 
   // light flicker by kind (docs §10.4): bulbs on a generator wobble and now
   // and then dip, a television jumps from scene to scene, fires breathe;
-  // Vanta's lamps (no kind) hold steady. Each building on its own phase.
+  // Vorsa's lamps (no kind) hold steady. Each building on its own phase.
   flicker(kind, seed = 0) {
     const t = this.t + seed * 0.013;
     if (kind === 'bulb') return (t % 9.7) > 9.45 ? 0.62 : 0.93 + Math.sin(t * 2.3 + seed) * 0.04 + Math.sin(t * 7.1 + seed * 0.7) * 0.03;

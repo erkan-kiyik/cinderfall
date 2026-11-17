@@ -52,7 +52,7 @@ export function prismX(cx, cy, cz, r, w, n = 12) {
 }
 
 // m3: the governor's building at night, from across the wet square.
-// A portico of six fluted columns on a flight of twelve steps; the Vanta's
+// A portico of six fluted columns on a flight of twelve steps; the Vorsa's
 // banners hanging in the bays; floodlights at the foot of each column
 // throwing their light up the shafts and into the rain; one window lit,
 // over the door; lamps on the cheek walls; iron bollards; dark wings with

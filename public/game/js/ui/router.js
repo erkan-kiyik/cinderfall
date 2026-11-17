@@ -25,7 +25,8 @@ export class Router {
   }
 
   // push (or replace the top with) a screen
-  go(id, params, { replace = false, root = false } = {}) {
+  // (params is kept with the screen: a language change rebuilds it from them)
+  go(id, params = {}, { replace = false, root = false } = {}) {
     const prev = this.top;
     const inst = this.mount(id, params);
     this.root.appendChild(inst.el);

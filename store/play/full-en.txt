@@ -1,6 +1,6 @@
-KOR — the city is Vanta's. The night is ours.
+KOR — the city is Vorsa's. The night is ours.
 
-The foundry's furnace has been cold for four years. Power, bread and curfew now come from Vanta: a private firm that took over the city's "temporary" security and gets its contract extended every time it runs out. The Kor line is five people: a welder, a firefighter, a signals analyst who walked out of Vanta, a former courier and a dock worker. All they have is each other.
+The foundry's furnace has been cold for four years. Power, bread and curfew now come from Vorsa: a private firm that took over the city's "temporary" security and gets its contract extended every time it runs out. The Kor line is five people: a furnaceman, a firefighter, a signals analyst who walked out of Vorsa, a former courier and a dock worker. All they have is each other.
 
 KOR is a 2D tactical shooter made for phones, painted by hand in look and feel.
 
@@ -8,16 +8,16 @@ KOR is a 2D tactical shooter made for phones, painted by hand in look and feel.
 FLINT, WARDEN, VESPER, SKYE and BULWARK, each with three abilities from the life they had before: a fire door, a smoke canister, a radio jammer, a drone made from scrap, a shield cut from a container door… Pick your operator, build your loadout.
 
 ■ A CITY THAT LIVES
-The port gate, the morning market, the governor's square. Rain, street lamps mirrored in wet asphalt, bare bulbs off a generator, fires in barrels. The people's yellow light against Vanta's clean white.
+The port gate, the morning market, the governor's square, the foundry, the old metro, the blast furnace. Rain, street lamps mirrored in wet asphalt, bare bulbs off a generator, fires in barrels. The people's yellow light against Vorsa's clean white.
 
 ■ TACTICAL COMBAT
-Take cover and pick your moment. Vanta troopers patrol, investigate noise and change cover; the shield man pushes forward. Play reckless and you fall fast.
+Take cover and pick your moment. Vorsa troopers patrol, investigate noise and change cover; the shield man pushes forward. Play reckless and you fall fast.
 
 ■ CAMPAIGN AND ENDLESS MODE
-The first act of the Kor line campaign: three missions, each with story scenes before and after. In endless mode the waves get harder and every fifth brings Secretary Gall. New tasks every day.
+The first two acts of the Kor line campaign: seven missions, each with story scenes before and after. In endless mode the waves get harder and every fifth brings Secretary Gall. New tasks every day.
 
 ■ WEAPONS, CRATES, HAWK
-Twelve weapons, from pistols and shotguns to marksman rifles and machine guns. Weapon finishes in crates seized from Vanta; trade with HAWK, the oldest dealer in the market.
+Twelve weapons, from pistols and shotguns to marksman rifles and machine guns. Weapon finishes in crates seized from Vorsa; trade with HAWK, the oldest dealer in the market.
 
 ■ OFFLINE
-Single player; no connection needed. Turkish and English.
+Single player; no connection needed. 10 languages: Turkish, English, Chinese, Hindi, Spanish, French, Arabic, Bengali, Portuguese and Russian. The game opens in your phone's language.

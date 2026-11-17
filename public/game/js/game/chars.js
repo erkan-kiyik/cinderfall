@@ -20,5 +20,5 @@ export const CHARS = {
   kal: { op: KALKANLI, weapon: null, skip: ['front'], extras: { shield }, enemy: true, hp: 150, freeArms: KALKANLI.pose,
     shield: { x0: 6.4, x1: 15.6, y0: -58.4, y1: -13.6 } },
 };
-// syn: Vanta's issue; p: the primer the player's finishes are laid over
+// syn: Vorsa's issue; p: the primer the player's finishes are laid over
 export const WEAPON_MATS = { syn: SYN_MAT, p: PRIMER };

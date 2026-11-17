@@ -1,6 +1,6 @@
 # KOR
 
-**A 2D tactical shooter for phones.** The city is held by Vanta, a private
+**A 2D tactical shooter for phones.** The city is held by Vorsa, a private
 security firm whose "temporary" contract never ends; the Kor line is five
 people working against it from a basement under the market. Painted, not
 drawn: every character, building and prop is painted in code, lit at night

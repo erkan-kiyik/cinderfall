@@ -8,7 +8,7 @@
 // Real materials, no glow: phosphated steel, anodised aluminium, black
 // polymer, walnut; captured guns in tan or olive furniture. The crew's mark
 // is a strip of faded cloth tape, not a colour. A material set passed in as
-// `m` restyles a gun: Vanta's issue is new, blue-black and stencilled.
+// `m` restyles a gun: Vorsa's issue is new, blue-black and stencilled.
 import { cel, fill, stroke, clip } from '../kit.js';
 import { M, tone, mat } from '../style.js';
 
@@ -40,7 +40,7 @@ export const MAT = {
   glass: M.lens,
   shell: tone('#c25a4e', '#93332a', '#64201a', '#2e0d0a'),
   brass: M.brass,
-  // white stencil on a Vanta gun (null: none)
+  // white stencil on a Vorsa gun (null: none)
   serial: null,
 };
 // older callers (items) still ask for an accent
@@ -151,7 +151,7 @@ function wrap(g, m, x0, x1, y0, y1) {
   // the loose end
   fill(g, poly([[x1 - 0.05, y1 - H * 0.35], [x1 + 0.4, y1 + 0.05], [x1 + 0.12, y1 + 0.3], [x1 - 0.1, y1 + 0.12]]), t.d, 0.95);
 }
-// Vanta's white stencil, when the material set carries one
+// Vorsa's white stencil, when the material set carries one
 function stencil(g, m, x, y, txt, size = 0.62) {
   if (m.serial) letter(g, txt, x, y, size, m.serial, 0.62, 700);
 }
@@ -271,7 +271,7 @@ function kestrel(g, m = MAT, part = null) {
   clip(g, rr(-16.75, -4.95, -15.95, 1.95, 0.25), () => { for (let y = -4.6; y < 1.8; y += 0.5) stroke(g, `M -16.8 ${y} L -15.9 ${y}`, m.dark.k, 0.12, 0.6); });
   cel(g, poly([[-11.6, -1.25], [-10.3, -1.25], [-10.1, -0.85], [-11.4, -0.75]]), m.poly, { sh: 0.2, hl: 0.15 });
   swivel(g, m.steel, -14.6, 1.05, 0.45);
-  stencil(g, m, -14.9, -0.2, 'VANTA', 0.7);
+  stencil(g, m, -14.9, -0.2, 'VORSA', 0.7);
   // lower receiver: grip, trigger guard, flared magazine well, pins
   grip(g, m.poly, -1.4, 0.2, 6.2, 2.4, 0.36);
   const LOWER = 'M -5.8 -1.8 L 6.5 -1.8 L 6.5 -1.05 L 6.2 0.75 L 6.5 1.12 L 2.85 1.12 L 2.95 0.4 L 2.7 -0.2 L -0.5 -0.2 Q -0.9 -0.2 -1.2 0.25 L -2.2 0.15 L -4.7 -0.25 Q -5.6 -0.45 -5.8 -1.0 Z';
@@ -491,7 +491,7 @@ function marksman(g, m = MAT, part = null) {
   });
   // a variable scope
   scope(g, m, { x0: -1.4, x1: 8.0, y: -6.95, r: 0.72, eye: 1.25, obj: 1.65, rings: [-0.2, 5.6], ringY: -4.6 });
-  stencil(g, m, -18.2, -0.6, 'VANTA', 0.7);
+  stencil(g, m, -18.2, -0.6, 'VORSA', 0.7);
 }
 function marksmanMag(g, m = MAT) {
   const MAG = 'M 3.85 -0.8 L 7.25 -0.8 L 7.3 0.4 L 7.75 5.55 L 4.45 5.85 L 3.9 0.4 Z';
@@ -734,7 +734,7 @@ function bastion(g, m = MAT, part = null) {
   const FH = rr(24.4, -3.55, 27.6, -1.65, 0.3);
   cel(g, FH, m.steel, { sh: 0.25, hl: 0.2, ao: 0.5, gloss: 0.25 });
   clip(g, FH, () => { for (const y of [-3.15, -2.45]) fill(g, rr(25.1, y - 0.18, 27.3, y + 0.18, 0.15), m.steel.k); });
-  stencil(g, m, -15.2, -0.9, 'VANTA', 0.7);
+  stencil(g, m, -15.2, -0.9, 'VORSA', 0.7);
 }
 
 // TESTERE-20 — magazine-fed automatic shotgun on a rifle's action ------------

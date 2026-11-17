@@ -1,10 +1,10 @@
 // KOR — the buildings: the street-side facades as separate
 // pieces, laid out along a level so the street never repeats itself.
 //
-// docs §10.4: the furnace has been cold for four years and Vanta rations the
+// docs §10.4: the furnace has been cold for four years and Vorsa rations the
 // power, so the street is lit the way such a street is lit: bare bulbs off a
 // generator, a gas lamp behind a curtain, a fire in a ruin, the old sodium
-// lamps; and Vanta's own lamps, white, clean and steady. The neon is from
+// lamps; and Vorsa's own lamps, white, clean and steady. The neon is from
 // before and all of it is dead: glass and tin and nothing in it. Signs are
 // painted tin and wood, faded, bolted on a little crooked, lit at night by a
 // lamp on an arm; nothing on the street glows by itself.
@@ -13,7 +13,7 @@
 // pavement at y = 0, the roofline at y = -h, roof clutter above it. They sit
 // in the background (no outline, saturation held low), so the play layer
 // always reads first; the detail is in the shapes and the wear: brick,
-// render, corrugated sheet and Vanta's clean cladding, each with its grain,
+// render, corrugated sheet and Vorsa's clean cladding, each with its grain,
 // soot from the roof down, rain streaks, dirt from the pavement up. Lights
 // and glows each building throws are listed with it and placed by the scene.
 import { fill, stroke, clip, rng, weatherOver } from '../kit.js';
@@ -165,7 +165,7 @@ function oldNeon(g, chars, pos, size, broken = -1) {
   g.restore();
 }
 
-// Vanta's sign: an enamelled steel plate in a steel frame, the ring-and-bar
+// Vorsa's sign: an enamelled steel plate in a steel frame, the ring-and-chevron
 // mark, the name, a red band; not lit from inside, only by the lamps round it
 export function lightbox(g, x0, y0, x1, y1, text) {
   const h = y1 - y0;
@@ -181,7 +181,7 @@ export function lightbox(g, x0, y0, x1, y1, text) {
   clip(g, rect(x0, y0, x1, y1), () => weatherOver(g, [x0, y0, x1, y1], (x0 * 7) | 0, { foot: 0.2, stain: 1.4, rain: 3, big: 0.4 }));
 }
 
-// Vanta's notice board: a white steel plate, stencilled in black under a red
+// Vorsa's notice board: a white steel plate, stencilled in black under a red
 // band, bolted to the wall; rust weeps from the bolts. lines: [text, y, size]
 export function ledBoard(g, x0, y0, x1, y1, lines) {
   fill(g, rect(x0 - 0.9, y0 - 0.9, x1 + 0.9, y1 + 0.9), '#262a30');
@@ -196,7 +196,7 @@ export function ledBoard(g, x0, y0, x1, y1, lines) {
   for (const [x, y] of [[x0 + 1, y0 + 1], [x1 - 1, y0 + 1], [x0 + 1, y1 - 1], [x1 - 1, y1 - 1]]) fill(g, ell(x, y, 0.32, 0.32), '#4a4e54');
 }
 
-// a pasted notice: Vanta's (white, red band, a stamp) or a paper (kind 'kayip':
+// a pasted notice: Vorsa's (white, red band, a stamp) or a paper (kind 'kayip':
 // a missing person, a photo and lines of type); torn: bite off a corner
 export function notice(g, x, y, w, h, kind, title, seed = 1, torn = false) {
   const r = rng(seed);
@@ -312,7 +312,7 @@ function chimney(g, x, top, smoking = true, seed = 1) {
   if (smoking) smoke(g, x + 3.5, top - 18, seed);
 }
 
-// the cells' mark and their word, sprayed over whatever Vanta put up
+// the cells' mark and their word, sprayed over whatever Vorsa put up
 function korSpray(g, x, y, s = 1) {
   korMark(g, x, y, 3.4 * s, 0.8);
 }
@@ -404,7 +404,7 @@ function sheetWall(g, x0, x1, top, seed) {
   });
 }
 
-// Vanta's cladding: big composite panels, bolted, new; the only clean wall in town
+// Vorsa's cladding: big composite panels, bolted, new; the only clean wall in town
 function cladWall(g, x0, x1, y0, y1) {
   const W = rect(x0, y0, x1, y1);
   fill(g, W, P.clad);
@@ -759,7 +759,7 @@ function crow(g) {
   swanLamp(g, 45, -86, 1); swanLamp(g, 117, -86, -1);
   // the chalkboard: what he has today
   chalkboard(g, 139, -46, 156, -20, [['BUGÜN', 147.5, -41.6, 3.2, 'center'], ['UN', 140.6, -37.2, 2.5], ['40', 155, -37.2, 2.5, 'right'], ['YAĞ', 140.6, -33.6, 2.5], ['90', 155, -33.6, 2.5, 'right'], ['PİL', 140.6, -30, 2.5], ['15', 155, -30, 2.5, 'right'], ['İLAÇ', 140.6, -26.4, 2.5], ['SOR', 155, -26.4, 2.5, 'right'], ['MERMİ', 140.6, -22.8, 2.5], ['SOR', 155, -22.8, 2.5, 'right']]);
-  // Vanta's notice, half torn off
+  // Vorsa's notice, half torn off
   notice(g, 14, -42, 13, 16, 'vanta', 'KAYITSIZ TİCARET YASAKTIR', 6, true);
   // the generator and its cans on the pavement
   fill(g, rect(1, -10, 17, 0), P.deep);
@@ -784,8 +784,8 @@ function crow(g) {
   waterTank(g, 118, L); antenna(g, 150, L, 16);
 }
 
-// the steelworks' depot: corrugated sheet, the company's faded stencil, Vanta's
-// seizure plate on the door, a chain and seal, Vanta's white floodlight
+// the steelworks' depot: corrugated sheet, the company's faded stencil, Vorsa's
+// seizure plate on the door, a chain and seal, Vorsa's white floodlight
 function warehouse(g) {
   const w = 164, h = 88;
   sheetWall(g, 0, w, -h, 9);
@@ -798,19 +798,19 @@ function warehouse(g) {
   fill(g, rect(28, -60, 112, 0), P.trim);
   shutter(g, 30, 110, -57, 0);
   clip(g, rect(30, -62, 110, -57), () => { fill(g, rect(30, -62, 110, -57), '#a8873a'); for (let x = 20; x < 120; x += 6) fill(g, poly([[x, -57], [x + 3, -57], [x + 9, -62], [x + 6, -62]]), '#1a1916'); fill(g, rect(30, -62, 110, -57), '#000', 0.35); });
-  // Vanta's plate: EL KONULMUŞTUR
+  // Vorsa's plate: EL KONULMUŞTUR
   fill(g, rect(52, -52, 88, -42), '#e4e3df');
   fill(g, rect(52, -52, 88, -49.6), '#a8232d');
   emblem(g, 56, -45.4, 2.2, '#1d2129');
   letters(g, 'EL KONULMUŞTUR', 71, -44.2, 3.4, '#1d2129', { kind: 'print', align: 'center', jit: 0 });
   for (const [bx, by] of [[53.2, -50.8], [86.8, -50.8], [53.2, -43.2], [86.8, -43.2]]) fill(g, ell(bx, by, 0.3, 0.3), '#5a5a5a');
-  // chain through the handles, a padlock with Vanta's seal tag
+  // chain through the handles, a padlock with Vorsa's seal tag
   for (const x of [62, 78]) fill(g, ell(x, -12, 0.9, 0.9), '#1a1916');
   for (let t = 0; t <= 1; t += 0.08) { const x = 62 + 16 * t, y = -12 + Math.sin(t * Math.PI) * 3; stroke(g, ell(x, y, 0.55, 0.35), '#8a8780', 0.22); }
   fill(g, rect(68.8, -9.4, 71.2, -6.6), '#8a7a4a'); stroke(g, 'M 69.4 -9.4 Q 70 -11 70.6 -9.4', '#8a8780', 0.3);
   fill(g, rect(71.6, -8.8, 74.6, -5.4), '#c9c6bd'); fill(g, rect(71.6, -8.8, 74.6, -8), '#a8232d');
   fill(g, rect(26, -4, 30, 0), '#a8873a', 0.7); fill(g, rect(110, -4, 114, 0), '#a8873a', 0.7);
-  // a vent box, the floodlight Vanta bolted to the eaves
+  // a vent box, the floodlight Vorsa bolted to the eaves
   fill(g, rect(144, -84, 160, -74), '#2e3234'); for (let k = 1; k < 5; k++) stroke(g, `M 145 ${-84 + k * 2} L 159 ${-84 + k * 2}`, '#4a4f52', 0.5);
   fill(g, rect(70, -86, 71, -80), P.deep);
   fill(g, poly([[65, -82], [76, -82], [74, -78], [67, -78]]), '#3a3f47');
@@ -823,7 +823,7 @@ function warehouse(g) {
   weather(g, 0, w, -h, 9);
 }
 
-// a Vanta post: an old building with new cladding bolted over it; the banner,
+// a Vorsa post: an old building with new cladding bolted over it; the banner,
 // a lightbox, the curfew board, a camera, razor wire, their posters in a row
 function synBlock(g) {
   const w = 150, h = 104;
@@ -1012,7 +1012,7 @@ function alley(g) {
 }
 
 // the union hall, shut: the raised letters over the door painted over in
-// Vanta grey and still legible in their shadows, the chained doors and the
+// Vorsa grey and still legible in their shadows, the chained doors and the
 // seal, candles on the step under the photos of the six who never came back
 function union(g) {
   const w = 140, h = 108;
@@ -1025,7 +1025,7 @@ function union(g) {
   for (const x of [0, 44, 90, 134]) { fill(g, rect(x, -h + 20, x + 6, -6), '#58544c'); fill(g, rect(x + 5, -h + 20, x + 6, -6), '#000', 0.25); clip(g, rect(x, -h + 20, x + 6, -6), () => texture(g, 'concrete', 0.6, 3)); }
   fill(g, rect(-1, -6, w + 1, 0), '#3f3c37');
   cornice(g, 0, w, -h - 3, 3);
-  // the entablature: Vanta's grey over the union's name, the letters still there in relief
+  // the entablature: Vorsa's grey over the union's name, the letters still there in relief
   fill(g, rect(0, -h, w, -h + 20), '#57534c');
   const PAINT = '#62646a';
   fill(g, rect(6, -105, 134, -91), PAINT);
@@ -1109,7 +1109,7 @@ function teahouse(g) {
 }
 
 // --- the market (mission 2) ---------------------------------------------------------------
-// Docs §10.6: the street market, the city's own economy against Vanta's
+// Docs §10.6: the street market, the city's own economy against Vorsa's
 // rations. It lives on the pavement in front of the shops (nothing in the
 // road): tarps on poles out from the wall, crates and sacks, prices in marker
 // on cardboard, a hanging scale, bulbs off a generator.
@@ -1331,7 +1331,7 @@ function hal(g) {
   fill(g, `M 62 0 L 62 -42 A 38 38 0 0 1 138 -42 L 138 0 Z`, '#3a3632');
   const D = `M 66 0 L 66 -42 A 34 34 0 0 1 134 -42 L 134 0 Z`;
   clip(g, D, () => { shutter(g, 66, 134, -78, 0); fill(g, rect(66, -78, 134, -42), '#000', 0.25); });
-  // Vanta's seal tape across it, red and white
+  // Vorsa's seal tape across it, red and white
   for (const d of ['M 66 -44 L 134 -6', 'M 134 -44 L 66 -6']) { stroke(g, d, '#e8e4dc', 1.4); g.save(); g.setLineDash([2.4, 2.4]); stroke(g, d, '#a8232d', 1.4); g.restore(); }
   notice(g, 93, -36, 14, 12, 'vanta', 'KAPATILMIŞTIR', 103);
   // pulses in sacks under a red-striped tarp
@@ -1360,7 +1360,7 @@ function hal(g) {
 // --- the governor's office (mission 3) -----------------------------------------------
 // Docs §10.5: the city's old governor's office, now the Secretariat. Cut
 // stone and tall arched windows; the only building in town with its lights on
-// (cold, behind blinds), the only one kept clean. Vanta's banners, LEDs,
+// (cold, behind blinds), the only one kept clean. Vorsa's banners, LEDs,
 // floodlights and cameras on it. A wing repeats along the plaza; the centre
 // block has the carved name, the stopped clock and the door.
 function archWin(g, x, y, w, h, lit = true, seed = 1) {
@@ -1400,7 +1400,7 @@ function valCommon(g, w, h, seed) {
   cornice(g, 0, w, -32, 2.4);
   cornice(g, 0, w, -h - 4, 4);
   for (let x = 1; x < w; x += 3.2) fill(g, rect(x, -h, x + 1.6, -h + 2), '#3a362f');
-  // Vanta's steel trim bolted under the cornice
+  // Vorsa's steel trim bolted under the cornice
   fill(g, rect(0, -h + 3, w, -h + 4.2), '#3a3f47'); fill(g, rect(0, -h + 3, w, -h + 3.35), '#6b727c');
 }
 
@@ -1438,7 +1438,7 @@ function valilik(g) {
   letters(g, 'VALİLİK', 110.5, -h + 14.5, 12, '#000', { align: 'center', jit: 0, track: 0.3, a: 0.45 });
   letters(g, 'VALİLİK', 109.7, -h + 13.7, 12, '#fff', { align: 'center', jit: 0, track: 0.3, a: 0.12 });
   letters(g, 'VALİLİK', 110, -h + 14, 12, '#625c4f', { align: 'center', jit: 0, track: 0.3 });
-  // the attic, Vanta's lit sign bolted to it
+  // the attic, Vorsa's lit sign bolted to it
   fill(g, rect(78, -h - 22, 142, -h - 4), '#5c574c'); cornice(g, 78, 142, -h - 25, 3);
   lightbox(g, 81, -h - 19, 139, -h - 8, 'SEKRETERLİK');
   // flags on the roof
@@ -1495,7 +1495,7 @@ function valilik(g) {
 
 // the municipality on the square, shut since the council was suspended:
 // stone gone grey with soot, dark windows, the doors chained under the
-// notice, a Vanta banner over the old balcony; its clock tower, the clock
+// notice, a Vorsa banner over the old balcony; its clock tower, the clock
 // stopped at ten
 function belediye(g) {
   const w = 240, h = 116;
@@ -1525,7 +1525,7 @@ function belediye(g) {
   // the council hall windows, dark, one broken; the ground floor
   for (const [x, k] of [[14, false], [44, false], [168, false], [200, false]]) archWin(g, x, -98, 20, 40, k, x);
   for (const x of [14, 44, 168, 200]) win(g, x + 1, -24, 18, 14, 'dark');
-  // the balcony with Vanta's banner draped over it
+  // the balcony with Vorsa's banner draped over it
   fill(g, rect(TX - 6, -84, TX + TW + 6, -80.6), '#6a645a');
   for (let x = TX - 4; x < TX + TW + 5; x += 3.2) fill(g, ell(x + 0.8, -87.4, 0.9, 3.2), '#5e584f');
   fill(g, rect(TX - 6, -91.4, TX + TW + 6, -90), '#6a645a');
@@ -1565,7 +1565,7 @@ function valFence(g) {
 
 // --- the port side of the gate (mission 1) -------------------------------------------------
 // Docs §10.8: outside the gate the road runs along the port: warehouses,
-// the old customs house, containers stacked three high; at the gate Vanta's
+// the old customs house, containers stacked three high; at the gate Vorsa's
 // wall of containers shuts the city.
 
 // a container seen from the side, flat: ribs, rails, corner castings, the
@@ -1608,7 +1608,7 @@ function boxSide(g, x0, y0, x1, y1, c, code = '', seed = 1, doorRight = true) {
 }
 
 // a long, low bonded warehouse: numbered loading doors on a dock, the port
-// authority's name faded on the band, Vanta's seizure plate on one door
+// authority's name faded on the band, Vorsa's seizure plate on one door
 function antrepo(g) {
   const w = 180, h = 78;
   fill(g, poly([[0, -h], [w / 2, -h - 12], [w, -h], [w, 0], [0, 0]]), '#4a4842');
@@ -1686,7 +1686,7 @@ function stack(g) {
   weather(g, 0, w, -90, 191, 0.4);
 }
 
-// Vanta's wall of containers that shuts the city, painted over grey, the zone
+// Vorsa's wall of containers that shuts the city, painted over grey, the zone
 // stencilled on, wire and a light on top
 function wallC(g) {
   const w = 160, H = 32;
@@ -1702,7 +1702,7 @@ function wallC(g) {
 }
 
 // --- old exports kept for the set pieces ----------------------------------------------
-// a steel trim along a path (where Vanta once ran its LED strips): a dark
+// a steel trim along a path (where Vorsa once ran its LED strips): a dark
 // channel with its lit top edge
 export function ledStrip(g, d, w = 0.9) {
   stroke(g, d, '#1a1c20', w * 1.6);
@@ -1714,7 +1714,7 @@ export function ledStrip(g, d, w = 0.9) {
 // w: width, top: highest point (for the bake box); lights: [x, y, radius,
 // intensity, [r,g,b], flicker?]; glows: emissive sprites [x, y, sx, sy,
 // colour, alpha, flicker?]. Flicker: 'bulb' (a generator's bulbs, a slow
-// wobble and now and then a dip), 'fire'; none for Vanta's lamps, which never
+// wobble and now and then a dip), 'fire'; none for Vorsa's lamps, which never
 // flicker.
 const WARM = [1, 0.72, 0.42], BULB = '#ffe2b0';
 export const BUILDINGS = {
@@ -1805,7 +1805,7 @@ export function facadeLayout(x0, x1, seed = 1, first = ['walkup', 'crow', 'alley
 
 // Fewer buildings behind the fight (docs §10.32): the places the story is
 // about stay (HAWK's shop, the governor's, the town hall, the market hall, the
-// customs house, the union's hall, Vanta's container wall); of the ordinary
+// customs house, the union's hall, Vorsa's container wall); of the ordinary
 // houses, sheds and shops along a street every other one goes, and the
 // alleys between them, so the street has gaps where the dark town shows.
 const LANDMARK = new Set(['crow', 'wallC', 'valilik', 'valFence', 'valWing', 'belediye', 'hal', 'gumruk', 'union']);

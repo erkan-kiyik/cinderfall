@@ -20,9 +20,11 @@ import { Opening } from '../cine/opening.js';
 import { Post, ASPECT } from '../cine/post.js';
 import { canvas } from '../cine/noise.js';
 import { t } from './i18n.js';
+import { titleCard } from './titlecard.js';
+import { KOR_AT } from '../cine/opening.js';
 
 const MIN_RUN = 17.6, FADE = 0.6, SKIP_AFTER = 0.45, TAG_AT = 16.2;
-const TEXT = { loading: () => t('intro.loading'), ready: () => t('intro.ready'), skip: () => t('intro.skip'), tag: () => t('story.tagline') };
+const TEXT = { loading: () => t('intro.loading'), ready: () => t('intro.ready'), skip: () => t('intro.skip') };
 const ss = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 
 export class Intro {
@@ -35,6 +37,8 @@ export class Intro {
     this.tagAt = this.reduce ? 0.8 : TAG_AT;
     this.post = new Post(); this.post.reduce = this.reduce;
     this.shot = null; this.buf = null;
+    // the title card is set in the page over the canvas (ui/titlecard.js)
+    this.card = titleCard(); document.body.appendChild(this.card.el);
     // a skip jumps to the coals (the last shot), already past the title
     this._skip = () => { if (this.t > SKIP_AFTER && !this.handed && this.t < this.min) { this.t = this.min; this.skipped = true; this.fit(true); } };
     addEventListener('pointerdown', this._skip, { passive: true });
@@ -59,7 +63,7 @@ export class Intro {
         try { this.draw(); } catch (e) { console.error(e); this.done = true; }
         if (this.done) {
           removeEventListener('pointerdown', this._skip); removeEventListener('keydown', this._skip);
-          this.cv.remove(); resolve(); return;
+          this.cv.remove(); this.card.el.remove(); resolve(); return;
         }
         requestAnimationFrame(tick);
       };
@@ -86,7 +90,7 @@ export class Intro {
     this.t += dt;
     if (this.shot) this.shot.update(dt, this.t);
     if (this.t >= this.min && this.ready && !this.manual) {
-      if (!this.handed) { this.handed = true; this.onHandoff?.(); }
+      if (!this.handed) { this.handed = true; this.onHandoff?.(); this.card.out(); }
       this.fadeT += dt;
       if (this.fadeT >= FADE) this.done = true;
     }
@@ -101,17 +105,10 @@ export class Intro {
     // up from black at the start, down to black at the hand-off
     p.fade = Math.max(1 - ss(0, 0.9, t), ss(0, FADE, this.fadeT));
     this.post.apply(g, W, H, this.buf, t, p);
-    // the line under the title, and the loading line at the foot of the frame
+    // the title card (KOR, then the line under it), and the loading line at the foot of the frame
+    if (t >= this.tagAt) this.card.tag(); else if (t >= (this.reduce ? 0.2 : KOR_AT)) this.card.on();
     const k = (1 - ss(0, FADE * 0.7, this.fadeT));
     g.save(); g.textAlign = 'center'; g.textBaseline = 'middle';
-    const ta = ss(this.tagAt, this.tagAt + 0.9, t) * k;
-    if (ta > 0) {
-      g.font = `400 ${Math.round(12 * dpr)}px Barlow, system-ui, sans-serif`;
-      if ('letterSpacing' in g) g.letterSpacing = `${(1.7 * dpr).toFixed(1)}px`;
-      g.fillStyle = `rgba(236,226,210,${(0.9 * ta).toFixed(3)})`; g.shadowColor = 'rgba(0,0,0,0.9)'; g.shadowBlur = 8 * dpr;
-      g.fillText(TEXT.tag(), W / 2, R.y + R.h * 0.62); g.shadowBlur = 0;
-      if ('letterSpacing' in g) g.letterSpacing = '0px';
-    }
     const kl = ss(0.6, 1.2, t) * k;
     if (kl > 0) {
       const bw = Math.min(R.w * 0.22, 220 * dpr), bx = W / 2 - bw / 2, by = R.y + R.h - 26 * dpr;

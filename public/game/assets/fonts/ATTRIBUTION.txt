@@ -16,3 +16,16 @@ metrics or names were modified beyond format conversion.
 
 The KOR fonts above are the Fontsource (latin + latin-ext) woff2 cuts of the
 Google Fonts releases, loaded with matching unicode-range declarations.
+
+Display cuts for the other interface languages (docs §10.38), SIL Open Font
+License 1.1 (OFL.txt), the Fontsource woff2 subsets of the Google Fonts releases:
+- Oswald (Cyrillic) — Copyright 2016 The Oswald Project Authors
+  (https://github.com/googlefonts/OswaldFont)
+- Teko (Devanagari) — Copyright 2023 The Teko Project Authors
+  (https://www.github.com/googlefonts/teko)
+- Hind Siliguri (Bengali) — Copyright (c) 2015 Indian Type Foundry
+  (info@indiantypefoundry.com)
+- Cairo (Arabic) — Copyright 2009 The Cairo Project Authors
+  (https://github.com/Gue3bara/Cairo)
+Chinese, and body text in Devanagari, Bengali and Arabic, use the device's own
+system fonts; nothing of theirs is bundled.

@@ -39,7 +39,7 @@ export function concrete(g, x0, x1, h, o = {}) {
     fill(g, rect(x0 - 1, -6, x1 + 1, 0), CONC.d, 0.55);
     stroke(g, `M ${x0 - 1} -6 L ${x1 + 1} -6`, CONC.k, 0.3, 0.8);
     stroke(g, `M ${(x0 + x1) / 2} ${-h + 4} L ${(x0 + x1) / 2} -6`, CONC.d, 0.4, 0.8);
-    // Vanta's stencil: the mark and the wall's number, white
+    // Vorsa's stencil: the mark and the wall's number, white
     emblem(g, (x0 + x1) / 2, -h + 10, Math.min(3.2, (x1 - x0) * 0.2), 'rgba(240,242,244,0.85)');
     fill(g, ell(x0 + 5, -h + 4.4, 1.5, 1.5), CONC.k);
     fill(g, ell(x0 + 5, -h + 4.0, 1.5, 1.1), '#0f1116');
@@ -157,7 +157,7 @@ export function gateFrame(g, x0, x1, h, sign = ['KONTROL NOKTASI', 'DUR · KİML
   fill(g, rect(cx - 0.6, -h - 32, cx + 0.6, -h - 26), '#2a2f36'); fill(g, poly([[cx - 4, -h - 34], [cx + 5, -h - 34.6], [cx + 5, -h - 30.6], [cx - 4, -h - 31]]), '#c9ced6'); fill(g, ell(cx - 3.4, -h - 32.4, 0.6, 0.6), '#14181d'); fill(g, ell(cx + 4, -h - 33.6, 0.4, 0.4), '#4a2226');
 }
 
-// Docs §10.8: the gate itself, in Vanta's wall of containers: the steel posts
+// Docs §10.8: the gate itself, in Vorsa's wall of containers: the steel posts
 // round the opening (x0..x1, height h), containers stacked three high either
 // side under razor wire, the lit sign across, one floodlight mast. No camera:
 // "only eyes".
@@ -274,7 +274,7 @@ export function apron(g) {
 }
 
 // The old council sign on the way in, HOŞ GELDİNİZ; the name of the city
-// under it hidden by Vanta's sticker
+// under it hidden by Vorsa's sticker
 export function welcomeSign(g, x) {
   const S = tone('#8a929a', '#646c74', '#474e55', '#181b1f');
   for (const px of [x - 14, x + 13]) cel(g, rect(px, -36, px + 1.4, 0), S, { sh: 0.3, hl: 0.2, lw: 0.3 });
@@ -290,7 +290,7 @@ export function welcomeSign(g, x) {
   });
 }
 
-// Vanta's road sign: white, red border, three short lines
+// Vorsa's road sign: white, red border, three short lines
 export function roadSign(g, x, lines) {
   const S = tone('#8a929a', '#646c74', '#474e55', '#181b1f');
   cel(g, rect(x - 0.7, -30, x + 0.7, 0), S, { sh: 0.3, hl: 0.2, lw: 0.3 });
@@ -410,7 +410,7 @@ export function buildMission1() {
   return {
     id: 'm1', level, props, front, deco, lamps, glows, lights, floor, width: COLS * T, par: 300,
     // docs §10.8: the port road outside (warehouses, the customs house,
-    // containers), Vanta's container wall to the gate; inside, the city
+    // containers), Vorsa's container wall to the gate; inside, the city
     facade: [
       ['antrepo', -10], ['gumruk', 170], ['warehouse', 310], ['stack', 474], ['synBlock', 594], ['antrepo', 744], ['stack', 924],
       ['stack', 1044], ['antrepo', 1164], ['stack', 1344], ['warehouse', 1464], ['stack', 1628],

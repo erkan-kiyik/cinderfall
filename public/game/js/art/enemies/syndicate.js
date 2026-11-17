@@ -1,7 +1,7 @@
-// VANTA — the security firm that holds the city (docs/KOR_STORY_CINEMATIC.md
+// VORSA — the security firm that holds the city (docs/KOR_STORY_CINEMATIC.md
 // §9.3, painted per §10.1). Everything the cells are not: one issue, clean,
 // new, repeated. Blue-grey polymer armour over a navy uniform, a full-face
-// helmet with one thin slit of smoked glass, the white ring-and-bar mark on
+// helmet with one thin slit of smoked glass, the white ring-and-chevron mark on
 // the left shoulder. The shield man carries more plate and a smoked riot
 // shield; the rusher a gas mask with two dark lenses and a red unit band; and Gall,
 // the Secretary, is no soldier at all: a long belted coat, a peaked cap, an
@@ -28,16 +28,19 @@ const PAL = {
 };
 const DUST = 'rgba(40,46,56,0.3)';
 
-// Vanta's guns: new from the depot, blue-black polymer furniture (the pump gun
+// Vorsa's guns: new from the depot, blue-black polymer furniture (the pump gun
 // too, no walnut), clean steel, no crew tape, a white stencilled number.
 const SYN_POLY = mat(tone('#4a525e', '#2c323b', '#1d2128', '#0a0c0f'), 'rubber', 0.25);
 export const SYN_MAT = { ...MAT, poly: SYN_POLY, wood: SYN_POLY, tan: SYN_POLY, olive: SYN_POLY, tape: null, serial: '#dfe3e6', accent: M.visor };
 
-// Vanta's mark: a ring crossed by a bar that runs past it.
+// Vorsa's mark: a ring with a chevron in it, point down — the same mark as on
+// the films' posters and walls. (It used to be a ring crossed by a bar, which
+// came too close to a real transit network's emblem: docs §10.38.)
 export function emblem(g, x, y, r, c) {
   g.save();
-  g.strokeStyle = c; g.lineWidth = r * 0.26; g.beginPath(); g.arc(x, y, r * 0.78, 0, Math.PI * 2); g.stroke();
-  g.fillStyle = c; g.fillRect(x - r * 1.18, y - r * 0.13, r * 2.36, r * 0.26);
+  g.strokeStyle = c; g.lineWidth = r * 0.24; g.beginPath(); g.arc(x, y, r * 0.8, 0, Math.PI * 2); g.stroke();
+  g.lineJoin = 'miter'; g.lineCap = 'butt'; g.lineWidth = r * 0.25;
+  g.beginPath(); g.moveTo(x - r * 0.5, y - r * 0.2); g.lineTo(x, y + r * 0.32); g.lineTo(x + r * 0.5, y - r * 0.2); g.stroke();
   g.restore();
 }
 
@@ -65,7 +68,7 @@ function neck(g, t) {
   cel(g, 'M -2.0 1.3 L 2.4 1.1 L 2.3 -2.6 L 0.6 -3.8 L -2.1 -4.6 Z', t, { sh: 1.2, hl: 0.25 });
 }
 // --- the head (docs §10.24): a navy balaclava under it all; a moulded face shell sized to
-// the face (Vanta grey over the brow and cheeks, one slit of smoked glass with the red deep
+// the face (Vorsa grey over the brow and cheeks, one slit of smoked glass with the red deep
 // in it, the black mandible guard over the jaw with its vents); the high-cut ballistic
 // helmet over the skull, cut above the ear: rails down its sides, the night-vision shroud at
 // the brow, velcro and the unit tape, the mark; the comms cup over the ear on the rail; the
@@ -133,7 +136,7 @@ function helmet(g) {
 // --- the issue's kit (docs §10.21) -----------------------------------------------------------
 // What every trooper carries over the uniform, each piece big enough to read at
 // street distance: the radio on the back with its whip antenna up past the
-// helmet, the body camera on the chest with its red light on (Vanta films the
+// helmet, the body camera on the chest with its red light on (Vorsa films the
 // street), the battle belt and what hangs on it, the pistol in a drop-leg
 // holster, elbow pads, the ID patch on the sleeve.
 const disc = (x, y, r) => `M ${x - r} ${y} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0 Z`;
@@ -367,7 +370,7 @@ function foot(g, ctx) { boot(g, ctx, PAL.boot, PAL.sole, { toe: PAL.boot }); }
 const PARTS = { torso, chest, head: helmet, upper, fore, hand, thigh, shin, foot };
 
 export const TETIKCI = {
-  id: 'tetikci', name: 'TETİKÇİ', role: 'VANTA', pal: PAL,
+  id: 'tetikci', name: 'TETİKÇİ', role: 'VORSA', pal: PAL,
   pose: {
     nThigh: 0.2, nShin: 0.06, fThigh: -0.26, fShin: -0.04, head: 0.02,
     gun: { w: WEAPONS.kestrel, at: [6.4, -41.4], ang: 0.4, k: 0.96, mat: SYN_MAT },
@@ -383,7 +386,7 @@ function shieldFront(g, ctx) {
   g.restore();
 }
 // Riot shield in root space (feet at the origin), as carried in the idle pose:
-// smoked polycarbonate, the viewing window, VANTA and the mark in white.
+// smoked polycarbonate, the viewing window, VORSA and the mark in white.
 export function shield(g) {
   const S = 'M 6.4 -57.6 Q 6.4 -58.6 7.4 -58.4 L 14.6 -56.8 Q 15.6 -56.6 15.6 -55.6 L 15.6 -16.6 Q 15.6 -15.6 14.6 -15.4 L 7.4 -13.8 Q 6.4 -13.6 6.4 -14.6 Z';
   const POLY = tone('#6d7a88', '#45505e', '#2c3540', '#0f141a');
@@ -460,7 +463,7 @@ function heavyThigh(g, ctx) {
 }
 
 export const KALKANLI = {
-  id: 'kalkanli', name: 'KALKANLI', role: 'VANTA', pal: PAL,
+  id: 'kalkanli', name: 'KALKANLI', role: 'VORSA', pal: PAL,
   pose: { nUpper: -0.35, nFore: -1.45, nHand: -0.2, fUpper: -0.1, fFore: -0.4, fHand: -0.2, nThigh: 0.26, nShin: 0.06, fThigh: -0.3, fShin: -0.04, head: 0.04 },
   parts: { ...PARTS, torso: heavyTorso, upper: heavyUpper, fore: heavyFore, thigh: heavyThigh, front: shieldFront },
 };
@@ -470,7 +473,7 @@ const RED = mat(tone('#e85a55', '#c4302c', '#8c1f1c', '#3e0a09'), 'canvas', 0.5)
 function maskHead(g) {
   // docs §10.24: a black balaclava; a modern full-face respirator in black rubber, one wide
   // curved visor (the street's light across it as a band, red deep inside), the voice
-  // emitter at the mouth, a Vanta-grey filter screwed into the cheek port, the five-strap
+  // emitter at the mouth, a Vorsa-grey filter screwed into the cheek port, the five-strap
   // harness back over the hood; the low riot shell over the crown with the mark on it
   const A = PAL.armor, B = brush(g), K = PAL.black;
   const RUB = mat(tone('#4a4f57', '#2e3238', '#1d2025', '#08090b'), 'rubber', 0.4);
@@ -539,7 +542,7 @@ function lightChest(g) {
 }
 
 export const HUCUMCU = {
-  id: 'hucumcu', name: 'HÜCUMCU', role: 'VANTA', pal: PAL,
+  id: 'hucumcu', name: 'HÜCUMCU', role: 'VORSA', pal: PAL,
   pose: {
     nThigh: 0.24, nShin: 0.08, fThigh: -0.3, fShin: -0.05, head: 0.02,
     gun: { w: WEAPONS.ramrod, at: [6.0, -40.6], ang: 0.35, k: 0.96, mat: SYN_MAT },
@@ -921,7 +924,7 @@ function gallHead(g) {
 }
 
 export const GALL = {
-  id: 'gall', name: 'GALL', role: 'VANTA', pal: G,
+  id: 'gall', name: 'GALL', role: 'VORSA', pal: G,
   pose: {
     nThigh: 0.2, nShin: 0.06, fThigh: -0.26, fShin: -0.04, head: 0.02,
     gun: { w: WEAPONS.kestrel, at: [6.4, -41.4], ang: 0.4, k: 0.96, mat: SYN_MAT },

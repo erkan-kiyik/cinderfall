@@ -12,11 +12,13 @@ import pt from './text/pt.js';
 import ru from './text/ru.js';
 import ar from './text/ar.js';
 import hi from './text/hi.js';
+import zh from './text/zh.js';
+import bn from './text/bn.js';
 
-export const TEXTS = { en, tr, de, es, fr, pt, ru, ar, hi };
+export const TEXTS = { en, tr, de, es, fr, pt, ru, ar, hi, zh, bn };
 export const LANG_NAMES = {
   en: 'English', tr: 'Türkçe', de: 'Deutsch', es: 'Español', fr: 'Français',
-  pt: 'Português', ru: 'Русский', ar: 'العربية', hi: 'हिन्दी',
+  pt: 'Português', ru: 'Русский', ar: 'العربية', hi: 'हिन्दी', zh: '中文', bn: 'বাংলা',
 };
 
 export function textsFor(lang) { return TEXTS[lang] || en; }

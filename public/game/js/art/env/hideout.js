@@ -2,7 +2,7 @@
 //
 // The room from the prologue (shots 7 and 9): one enamel lamp swinging over
 // the map table, the radio in its corner, the stove, the stairs up to the
-// alley door, the pegboard and bench, Vanta's seized crates, the ember mark
+// alley door, the pegboard and bench, Vorsa's seized crates, the ember mark
 // and the furnace men's saying on the wall. Painted flat at background
 // density in three pieces (x 80..980, an atlas page is only so wide), the
 // floor in three more; the lamp is its own sprite so the scene can swing it.
@@ -234,7 +234,7 @@ function room(g) {
   korMark(g, 760, -112, 15, 0.85);
   letters(g, 'OCAK SÖNER', 760, -82, 8, '#d8d0bc', { align: 'center', jit: 0.08, seed: 41, a: 0.85 });
   letters(g, 'KOR KALIR', 760, -70, 8, '#e2692f', { align: 'center', jit: 0.08, seed: 42, a: 0.9 });
-  // Vanta's crates, taken: stacked, one prised open, straw spilling
+  // Vorsa's crates, taken: stacked, one prised open, straw spilling
   const CR = (x, y, w, h, open) => {
     // painted planks over a frame: the lid's edge catching the lamp, each plank
     // its own shade, the paint worn to the wood on the corners, rope handles,

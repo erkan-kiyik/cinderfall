@@ -23,7 +23,28 @@ html, body { background: var(--n0); touch-action: none; user-select: none; -webk
 .intro-film.out { opacity: 0; pointer-events: none; }
 .intro-film video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; opacity: 0; transition: opacity .4s; }
 .intro-film video.on { opacity: 1; }
-.intro-film .tag { position: absolute; left: 0; right: 0; top: calc(50% + var(--picH) * 0.12); transform: translateY(-50%); text-align: center; opacity: 0; font: 400 12px/1 Barlow, system-ui, sans-serif; letter-spacing: 1.7px; color: rgba(236,226,210,.9); text-shadow: 0 0 8px rgba(0,0,0,.9); pointer-events: none; }
+/* the title card over the opening's last shot (ui/titlecard.js): sized off the picture's height */
+.title-card { --picH: min(100vh, calc(100vw / 2.39)); --u: calc(var(--picH) / 100); position: fixed; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: calc(var(--u) * 5); pointer-events: none; transition: opacity .42s ease; }
+.title-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse calc(var(--u) * 80) calc(var(--u) * 42) at 50% 46%, rgba(5,3,2,0.8), rgba(5,3,2,0.52) 45%, rgba(5,3,2,0) 100%); opacity: 0; transition: opacity 1.2s ease; }
+.title-card.on::before { opacity: 1; }
+.tc-word { position: relative; display: flex; font: 800 calc(var(--u) * 34)/0.8 'Big Shoulders Stencil', 'Big Shoulders', Rajdhani, sans-serif; }
+.tc-word span { display: block; margin: 0 calc(var(--u) * 2.2); color: #f4ebdd; background: linear-gradient(180deg, #fbf4ea 0%, #f1e4cf 56%, #f3a564 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 calc(var(--u) * 2.4) rgba(255,122,40,0.45)) drop-shadow(0 calc(var(--u) * 0.5) calc(var(--u) * 0.8) rgba(0,0,0,0.85)); opacity: 0; transform: translateY(calc(var(--u) * 4)) scale(1.04); transition: opacity .9s ease, transform 1.4s cubic-bezier(.2,.8,.2,1); }
+.title-card.on .tc-word span { opacity: 1; transform: none; }
+.title-card.on .tc-word span:nth-child(2) { transition-delay: .12s; }
+.title-card.on .tc-word span:nth-child(3) { transition-delay: .24s; }
+.tc-rule { position: relative; display: flex; align-items: center; gap: calc(var(--u) * 2.4); margin-top: calc(var(--u) * 3.4); width: calc(var(--u) * 76); }
+.tc-rule i { flex: 1; height: max(1px, calc(var(--u) * 0.32)); background: rgba(236,226,210,0.45); transform: scaleX(0); transition: transform 1s cubic-bezier(.2,.8,.2,1) .45s; }
+.tc-rule i:first-child { transform-origin: right; }
+.tc-rule i:last-child { transform-origin: left; }
+.title-card.on .tc-rule i { transform: none; }
+.tc-ember { width: calc(var(--u) * 9); height: auto; flex: none; opacity: 0; transform: scale(0.6) rotate(-12deg); filter: drop-shadow(0 0 calc(var(--u) * 1.6) rgba(255,110,30,0.6)); transition: opacity .6s ease .35s, transform .9s cubic-bezier(.2,1.4,.3,1) .35s; }
+.title-card.on .tc-ember { opacity: 1; transform: none; animation: emberBreath 3.2s ease-in-out 1.3s infinite; }
+@keyframes emberBreath { 50% { filter: drop-shadow(0 0 calc(var(--u) * 3.2) rgba(255,140,50,0.95)); } }
+.tc-tag { position: relative; margin-top: calc(var(--u) * 3.8); font: 600 calc(var(--u) * 4.4)/1.25 'Barlow Condensed', Barlow, system-ui, sans-serif; letter-spacing: 0.3em; margin-right: -0.3em; text-transform: uppercase; color: rgba(242,232,216,0.92); text-shadow: 0 1px 6px rgba(0,0,0,0.95); white-space: nowrap; opacity: 0; transform: translateY(calc(var(--u) * 1.2)); transition: opacity .9s ease, transform .9s ease; }
+.title-card.tag .tc-tag { opacity: 1; transform: none; }
+.title-card.out { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .title-card *, .title-card::before { transition: none !important; animation: none !important; } }
 .intro-film .load { position: absolute; left: 50%; top: calc(50% + var(--picH) / 2 - 26px); width: min(calc(var(--picW) * 0.22), 220px); transform: translateX(-50%); opacity: 0; pointer-events: none; }
 .intro-film .load i { display: block; height: 1px; background: rgba(236,226,210,.12); }
 .intro-film .load b { display: block; height: 1px; width: 0; background: rgba(255,150,80,.75); }

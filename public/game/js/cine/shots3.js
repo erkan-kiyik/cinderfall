@@ -215,7 +215,7 @@ export class Plan extends Basement {
     // the letterhead: the Syndicate's ring and chevron, a reference number
     g.strokeStyle = '#2a2a2a'; g.lineWidth = 3; g.beginPath(); g.arc(w * 0.12, h * 0.07, 18, 0, TAU); g.stroke();
     g.beginPath(); g.moveTo(w * 0.12 - 12, h * 0.07 - 6); g.lineTo(w * 0.12, h * 0.07 + 10); g.lineTo(w * 0.12 + 12, h * 0.07 - 6); g.stroke();
-    g.fillStyle = '#2a2a2a'; g.font = '500 14px "Courier New", monospace'; g.fillText('VANTA SENDİKASI — KAMU DÜZENİ DAİRESİ', w * 0.2, h * 0.065); g.fillText('Sayı: VS/KD-0417          Tarih: 03.11', w * 0.2, h * 0.09);
+    g.fillStyle = '#2a2a2a'; g.font = '500 14px "Courier New", monospace'; g.fillText('VORSA SENDİKASI — KAMU DÜZENİ DAİRESİ', w * 0.2, h * 0.065); g.fillText('Sayı: VS/KD-0417          Tarih: 03.11', w * 0.2, h * 0.09);
     g.font = '700 46px "Courier New", monospace'; g.fillText('KÜL PLANI', w * 0.1, h * 0.19);
     g.font = '500 15px "Courier New", monospace';
     const lines = ['Konu: 3 No\'lu Yüksek Fırın ve Liman Sahası', '', '1. Çelikhane tesisleri, ekli sözleşme ile', '   Sendika iştiraklerine devredilmiştir.', '2. Fırınların yeniden yakılması yasaktır.', '3. Liman rıhtımı 1 Aralık\'tan itibaren', '   kamuya kapatılacaktır.', '4. Eski işçilerin mahalledeki toplanma', '   yerleri tespit edilecek ve...', '', '   (devamı ekte)'];

@@ -1,6 +1,6 @@
-KOR — şehir Vanta'nın. Gece bizim.
+KOR — şehir Vorsa'nın. Gece bizim.
 
-Dökümhanenin ocağı dört yıldır soğuk. Elektriği, ekmeği ve sokağa çıkma saatini artık Vanta veriyor: kentin "geçici" güvenliğini üstlenen, her sözleşmede bir kez daha uzatılan özel bir şirket. Kor Hattı beş kişiden ibaret: bir kaynakçı, bir itfaiyeci, Vanta'dan kaçmış bir sinyal analisti, eski bir kurye ve bir liman işçisi. Ellerindeki tek şey birbirleri.
+Dökümhanenin ocağı dört yıldır soğuk. Elektriği, ekmeği ve sokağa çıkma saatini artık Vorsa veriyor: kentin "geçici" güvenliğini üstlenen, her sözleşmede bir kez daha uzatılan özel bir şirket. Kor Hattı beş kişiden ibaret: bir ocakçı, bir itfaiyeci, Vorsa'dan kaçmış bir sinyal analisti, eski bir kurye ve bir liman işçisi. Ellerindeki tek şey birbirleri.
 
 KOR, telefon için yapılmış, elle boyanmış gibi görünen bir 2D taktik nişancı oyunu.
 
@@ -8,16 +8,16 @@ KOR, telefon için yapılmış, elle boyanmış gibi görünen bir 2D taktik ni�
 FLINT, WARDEN, VESPER, SKYE ve BULWARK. Her birinin geçmişinden gelen üç yeteneği var: yangın kapısı, sis kutusu, telsiz paraziti, hurdadan dron, konteyner sacından kalkan… Ekibini seç, kadronu kur.
 
 ■ YAŞAYAN BİR ŞEHİR
-Liman kapısı, sabah pazarı, valilik meydanı. Yağmur, ıslak asfaltta yansıyan sokak lambaları, jeneratörden yanan çıplak ampuller, varil ateşleri. Vanta'nın temiz beyaz ışığına karşı halkın sarı ışığı.
+Liman kapısı, sabah pazarı, valilik meydanı, dökümhane, eski metro, yüksek fırın. Yağmur, ıslak asfaltta yansıyan sokak lambaları, jeneratörden yanan çıplak ampuller, varil ateşleri. Vorsa'nın temiz beyaz ışığına karşı halkın sarı ışığı.
 
 ■ TAKTİK ÇATIŞMA
-Siper al, kafayı kaldırma zamanını seç. Vanta askerleri devriye gezer, sesi araştırır, siper değiştirir, kalkanlı asker öne çıkar. Pervasız oynayan çabuk düşer.
+Siper al, kafayı kaldırma zamanını seç. Vorsa askerleri devriye gezer, sesi araştırır, siper değiştirir, kalkanlı asker öne çıkar. Pervasız oynayan çabuk düşer.
 
 ■ KAMPANYA VE SONSUZ MOD
-Kor Hattı kampanyasının ilk perdesi: üç görev, her birinin önünde ve sonunda hikâye sahneleri. Sonsuz modda dalgalar sertleşir, her beşincide Sekreter Gall çıkar. Her gün yeni görevler.
+Kor Hattı kampanyasının ilk iki perdesi: yedi görev, her birinin önünde ve sonunda hikâye sahneleri. Sonsuz modda dalgalar sertleşir, her beşincide Sekreter Gall çıkar. Her gün yeni görevler.
 
 ■ SİLAHLAR, SANDIKLAR, HAWK
-On iki silah: tabancadan pompalıya, keskin nişancı tüfeğinden makineliye. Vanta'dan ele geçirilen sandıklarda silah kaplamaları; pazarın en eski satıcısı HAWK'tan takas.
+On iki silah: tabancadan pompalıya, keskin nişancı tüfeğinden makineliye. Vorsa'dan ele geçirilen sandıklarda silah kaplamaları; pazarın en eski satıcısı HAWK'tan takas.
 
 ■ İNTERNETSİZ
-Tek oyunculu; bağlantı gerekmez. Türkçe ve İngilizce.
+Tek oyunculu; bağlantı gerekmez. 10 dil: Türkçe, İngilizce, Çince, Hintçe, İspanyolca, Fransızca, Arapça, Bengalce, Portekizce ve Rusça. Oyun telefonunun dilinde açılır.

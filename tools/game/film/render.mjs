@@ -47,7 +47,8 @@ async function render(id, { from = 0, to = null, file = id } = {}) {
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
   page.on('pageerror', (e) => console.error(id, e.message));
   await page.goto(`http://localhost:${port}/dev/film.html?scene=${id}&w=${W}&fps=${FPS}${to ? `&dur=${to}` : ''}&grain=${opt.grain ?? '0'}${opt.weave ? `&weave=${opt.weave}` : ''}`);
-  await page.waitForFunction(() => window.__film, null, { timeout: 120000 });
+  // a scene paints its cast first (the heads are heavy now): give it time
+  await page.waitForFunction(() => window.__film, null, { timeout: 900000, polling: 1000 });
   const { dur, H } = await page.evaluate(() => ({ dur: window.__film.dur, H: window.__film.H }));
   const end = to ?? dur;
   if (from > 0) await page.evaluate((s) => window.__skip(s), from);

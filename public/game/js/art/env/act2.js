@@ -176,7 +176,7 @@ export function tunnelMouth(g, x0, x1) {
 }
 
 // --- m6: the drone factory -------------------------------------------------------
-// Vanta's drones on a steel rack, three shelves of quadcopters with their
+// Vorsa's drones on a steel rack, three shelves of quadcopters with their
 // arms folded, a charge light at each; a stencilled rack number
 export function droneRack(g, x) {
   const W = 46, S = mat(tone('#5a6270', '#424a56', '#2e343e', '#0e1116'), 'steel', 0.5);
@@ -486,7 +486,7 @@ export function buildMission5() {
 }
 
 // --- mission 6 ------------------------------------------------------------------------
-//   A  the depot road  past Vanta's post into the north depots
+//   A  the depot road  past Vorsa's post into the north depots
 //   B  the yard        containers and the gantry crane at the back, crates → checkpoint 2
 //   C  the factory     hack the factory gate; its guard comes out
 //   D  the line        hold the drone line while Skye's charges burn it out:
@@ -495,7 +495,7 @@ export function buildMission5() {
 export function buildMission6() {
   const K = kit('m6'), { block, P, bar, conc, scrap, addCrate, deco, lights, glows, lamps } = K;
   // A
-  P('m6.sign', [X(16) - 12, -46, X(16) + 12, 1], (g) => roadSign(g, X(16), ['KUZEY', 'DEPOLARI', 'VANTA']), deco);
+  P('m6.sign', [X(16) - 12, -46, X(16) + 12, 1], (g) => roadSign(g, X(16), ['KUZEY', 'DEPOLARI', 'VORSA']), deco);
   addCrate(30);
   bar('m6.barA', 46, 49);
   P('m6.burn', [X(58) - 2, -16, X(58) + 14, 1], (g) => burnBarrel(g, X(58)), deco);
@@ -514,7 +514,7 @@ export function buildMission6() {
   conc('m6.concC', 192);
   P('m6.term', [X(206) - 9, -28, X(206) + 18, 1], (g) => terminal(g, X(206)));
   block(218, 219, 1, 12);
-  P('m6.gate', [X(218) - 78, -150, X(220) + 78, 1], (g) => gateFrame(g, X(218), X(220), 96, ['VANTA · ÜRETİM', 'DRON HATTI']), deco);
+  P('m6.gate', [X(218) - 78, -150, X(220) + 78, 1], (g) => gateFrame(g, X(218), X(220), 96, ['VORSA · ÜRETİM', 'DRON HATTI']), deco);
   lights.push([X(219), -110, 90, 0.55, [0.85, 0.92, 1]]);
   // D — the line: conveyors to fight from, racks along the back
   block(236, 247, 1, 2); P('m6.convA', [X(236) - 2, -24, X(248) + 2, 1], (g) => conveyor(g, X(236), X(248)));
@@ -645,7 +645,7 @@ export function buildMission7() {
       E('tet', X(196), 0, [X(184), X(202)], { patrol: [X(188), X(200)] }),
       // the cast house's guard, when the gate goes up
       E('tet', X(226), 0, HZ, { wave: 1 }), E('kal', X(244), 0, HZ, { wave: 1 }), E('huc', X(262), 0, HZ, { wave: 1 }),
-      // D — Vanta comes for the furnace
+      // D — Vorsa comes for the furnace
       E('tet', X(306), 0, HZ, { wave: 2 }), E('huc', X(302), 0, HZ, { wave: 2 }),
       E('kal', X(306), 0, HZ, { wave: 3 }), E('tet', X(300), 0, HZ, { wave: 3 }), E('tet', X(210), 0, HZ, { wave: 3, facing: 1 }),
       E('huc', X(304), 0, HZ, { wave: 4 }), E('tet', X(298), 0, HZ, { wave: 4 }), E('huc', X(212), 0, HZ, { wave: 4, facing: 1 }),

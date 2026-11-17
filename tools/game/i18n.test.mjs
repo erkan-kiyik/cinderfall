@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tr from '../../public/game/js/ui/lang/tr.js';
 import en from '../../public/game/js/ui/lang/en.js';
+import { LANGS, LANG_NAMES } from '../../public/game/js/ui/i18n.js';
 import { OPS, WEAPON_LIST, MISSIONS, CRATES } from '../../public/game/js/ui/data.js';
 import { HUD_KEYS } from '../../public/game/js/ui/screens/hudedit.js';
 import { SKINS, TASKS } from '../../public/game/js/core/economy.js';
@@ -17,7 +18,7 @@ let fails = 0, passes = 0;
 const ok = (c, msg) => { if (c) passes++; else { fails++; console.log('FAIL', msg); } };
 
 // 1. static keys in the sources
-const files = [path.join(ROOT, 'app.js')];
+const files = [path.join(ROOT, 'app.js'), path.join(ROOT, 'boot.js')];
 const walk = (d) => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) { if (f !== 'lang') walk(p); } else if (f.endsWith('.js')) files.push(p); } };
 walk(path.join(ROOT, 'ui'));
 walk(path.join(ROOT, 'game'));
@@ -67,11 +68,15 @@ for (const k of achs) { add(`ach.${k}`); add(`ach.${k}.d`); }
 const FAMILIES = /^(role|op|ab|cls|wpn|mission|camp\.act|crate|rar|diff|mode|att|prof|set|ach|hud|skin|daily|trader\.kind)[.$]/;
 for (const d of dynamic) ok(FAMILIES.test(d), `dynamic key family known: ${d}`);
 
-// 3. every key in every language, with matching placeholders
+// 3. every key in every language (ten of them, docs §10.38), with matching placeholders
 const holes = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
-for (const [name, L] of Object.entries({ tr, en })) {
+ok(Object.keys(LANGS).length === 10 && Object.keys(LANGS).every((l) => LANG_NAMES[l]), `ten languages, each named: ${Object.keys(LANGS).join(' ')}`);
+for (const [name, L] of Object.entries(LANGS)) {
   const missing = [...used].filter((k) => typeof L[k] !== 'string' || !L[k].trim());
   ok(missing.length === 0, `${name}: missing ${missing.join(' ')}`);
+  const stray = Object.keys(L).filter((k) => !(k in en));
+  ok(stray.length === 0, `${name}: keys not in en: ${stray.join(' ')}`);
+  for (const k of Object.keys(L)) if (k in en) ok(holes(L[k]) === holes(en[k]), `${name}: placeholders match for ${k}: ${holes(L[k])} vs ${holes(en[k])}`);
 }
 const extra = Object.keys(en).filter((k) => !(k in tr));
 ok(extra.length === 0, `en keys not in tr: ${extra.join(' ')}`);

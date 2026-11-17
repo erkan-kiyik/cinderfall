@@ -1,7 +1,7 @@
 // Lobby: the cells' basement. The live operator on the left (the showcase
 // draws it) with the radio's chatter for the next job under their name, the
 // play panel on the right.
-import { h, svg, press, popIn, ui, spring, reduced } from '../kit.js';
+import { h, svg, press, popIn, ui, spring, reduced, fitText } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, stars } from './common.js';
 import { dailyDone, traderStock, traderSold } from '../../core/economy.js';
@@ -36,9 +36,10 @@ export const lobby = {
       } }, avatar(o.id, 46)), { buzz: 'tick' }));
     }
     const best = d.campaign[next.id];
+    const word = h('b', t('lobby.play'));
     const play = press(h('button.play-cta.cut', { type: 'button', onclick: () => { ui('confirm'); ctx.router.go('play'); } },
       h('div.eyebrow', t('lobby.campaign', { act: next.act })),
-      h('b', t('lobby.play')),
+      word,
       h('span', t('lobby.next', { n: next.id.slice(1), name: t(`mission.${next.id}`) }), best ? ' · ' : '', best ? stars(best.stars, 12) : null),
       svg('arrow')), { scale: 0.97, sound: null, buzz: 'soft' });
     const done = dailyDone(d), rec = d.records.endless;
@@ -65,6 +66,7 @@ export const lobby = {
       let n = 0;
       typing = setInterval(() => { body.textContent = txt.slice(0, ++n); if (n >= txt.length) clearInterval(typing); }, 32);
     };
+    let unfit = null;
     const quiet = () => { clearInterval(cycle); clearInterval(typing); };
     let hub = hubbar(ctx, 'lobby');
     const el = h('div',
@@ -75,8 +77,10 @@ export const lobby = {
     return {
       el,
       hide: quiet,
-      dispose: quiet,
+      dispose() { quiet(); unfit?.(); },
       show() {
+        // GÖREVE ÇIK on one line, whatever the language and the screen
+        unfit?.(); unfit = fitText(word);
         // the operator under the lamp, their boots clear of the photos
         ctx.showcase.frame(0.32, 128, 28);
         if (radio) { quiet(); li = 0; say(); cycle = setInterval(say, 6500); }

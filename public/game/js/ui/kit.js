@@ -182,6 +182,25 @@ export function popIn(nodes, { delay = 0, step = 35, from = 14 } = {}) {
     n.animate([{ opacity: 0, transform: `translateY(${from}px) scale(0.98)` }, { opacity: 1, transform: 'none' }], { duration: 420, delay: delay + i * step, easing: spring(), fill: 'backwards' });
   });
 }
+// a one-line heading shrunk until it fits its box (long words in other languages);
+// kept fitted as the box changes size. Returns a function that stops watching.
+export function fitText(el, { min = 0.45 } = {}) {
+  const fit = () => {
+    if (!el.isConnected) return;
+    el.style.fontSize = '';
+    const w = el.clientWidth, sw = el.scrollWidth;
+    if (!w || sw <= w + 0.5) return;
+    const fs = parseFloat(getComputedStyle(el).fontSize);
+    el.style.fontSize = `${(fs * Math.max(min, (w - 1) / sw)).toFixed(2)}px`;
+  };
+  fit();
+  document.fonts?.ready?.then(fit);
+  if (typeof ResizeObserver === 'undefined') return () => {};
+  let last = -1;
+  const ro = new ResizeObserver(() => { const w = el.clientWidth; if (w !== last) { last = w; fit(); } });
+  ro.observe(el);
+  return () => ro.disconnect();
+}
 // counts a number up in an element
 export function countUp(el, from, to, { ms = 900, fmt = (v) => String(Math.round(v)) } = {}) {
   if (reduced() || from === to) { el.textContent = fmt(to); return; }

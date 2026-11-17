@@ -1,6 +1,6 @@
 # KOR — Karakterler
 
-> Character design from the story: shared rules, the operators, Vanta, HAWK; the visual language v3 for characters; files, abilities and names; faces and heads through every revision.
+> Character design from the story: shared rules, the operators, Vorsa, HAWK; the visual language v3 for characters; files, abilities and names; faces and heads through every revision.
 >
 > Bölüm numaraları (§) ana belgedekiyle aynı; dizin: [`../KOR_STORY_CINEMATIC.md`](../KOR_STORY_CINEMATIC.md). English summary: [`../README.md`](../README.md).
 
@@ -18,11 +18,11 @@ Bu bölüm çizimden önce yazıldı; kodlar (`public/game/js/art/ops/*.js`,
   (FLINT'in atkısı, WARDEN'in kaskı, VESPER'in sırt telsizi, SKYE'ın kulaklığı,
   BULWARK'ın turuncusu); gerisi is, pas, kömür, lacivert.
 - **Takım işareti:** sol üst kolda aynı yerde, aynı boyda kor bandı: koyu
-  kumaş üstünde turuncu bir kor lekesi. Vanta'dan ayıran ortak öğe.
+  kumaş üstünde turuncu bir kor lekesi. Vorsa'dan ayıran ortak öğe.
 - **Yüzler kapalı, ama işten gelen bir şeyle:** kaynak gözlüğü ve atkı,
   itfaiye kaskının vizörü, tel çerçeveli gözlük ve telsiz kulaklığı,
   boyundaki kulaklık, baret ve gaz maskesi (yüzler §10.25'ten beri açık). Lens ışıkları (portre ve intro) bu camlardan.
-- **Vanta tek tip ve temizdir:** mavi-gri polimer zırh, lacivert üniforma,
+- **Vorsa tek tip ve temizdir:** mavi-gri polimer zırh, lacivert üniforma,
   beyaz halka-şerit arması, kırmızı vizör yarığı. Takımın yamalı, eskimiş
   görünüşünün tersi: yeni, aynı, tekrarlanan.
 
@@ -31,18 +31,18 @@ Bu bölüm çizimden önce yazıldı; kodlar (`public/game/js/art/ops/*.js`,
 |---|---|---|---|---|---|---|
 | **FLINT** (saldırı) | 29, üçüncü kuşak ocakçı | yuvarlak kaynak gözlüğü, örgü bere, uçuşan uzun kırmızı atkı, kalın deri ceket | siyah örgü bere; deri çerçeveli yuvarlak yeşil kaynak gözlüğü; babasının atkısı burnun üstüne çekili | yanık kahve deri ocakçı ceketi (yamalı, kıvılcım lekeli); önünde ocak çeliğinden kesilmiş paslı plaka, "3" şablonu, iki deri kayış | uzun deri kaynak eldiveni; is grisi kanvas pantolon, dizde deri yama; çelik burunlu ocakçı botu | is siyahı, yanık kahve, kül grisi, pas; **sendika kırmızısı** atkı |
 | **WARDEN** (savunma) | 41, kapatılan itfaiyenin son ekip amiri | yuvarlak itfaiye kaskı, inik altın vizör, dizüstü itfaiye ceketi, sırtta halligan | **beyaz amir kaskı** (isli, siyah şerit), altın vizör, gri yanmaz başlık | kömür grisi itfaiye ceketi, göğüste ve etekte sarı-gümüş-sarı yansıtıcı bant, göğüs cebinde telsiz | sarı-kahve itfaiye eldiveni; aynı kumaştan pantolon, dizde bant; siyah itfaiye çizmesi | kömür, kum, yansıtıcı gümüş/sarı; **kask beyazı** |
-| **VESPER** (kontrol) | 33, eski Vanta sinyal analisti | uzun boylu, ince; başı açık, sakallı; kalçaya kadar kemerli mumlu ceket; sırtta eski bir **sırt telsizi**, şerit anteni ağırlığıyla geriye eğik | koyu saç: yanlar ve ense kısa, üstü uzun ve ayrımdan geriye taranmış, şakakta birkaç beyaz tel; kısa kesilmiş koyu sakal ve bıyık; ince **dikdörtgen çelik çerçeveli gözlük**; saçın üstünden tek kulaklı telsiz kulaklığı, mikrofonu ağzın köşesinde | koyu orman yeşili **mumlu pamuk ceket** (kırışıklarında mumu aşınıp açılmış; kahverengi kadife yaka yassı yatar; pirinç çıtçıtlar, göğüs ve kalça cepleri, aynı kumaştan kemer, pirinç toka); yakasından dinleme odasından kalma **siyah balıkçı yaka**; omuzlarda telsizin haki kayışları, göğüs kayışında spiral kablolu **ahize**; kemerde evrak çantası | parmakları kesik siyah deri eldiven (kadranlar için), sade çelik kol saati; düz düşen gri iş pantolonu, siyah deri bağcıklı bot | orman yeşili, kadife kahvesi, pirinç, gri; telsizin zeytini; **üstünde ışık saçan hiçbir şey yok** |
+| **VESPER** (kontrol) | 33, eski Vorsa sinyal analisti | uzun boylu, ince; başı açık, sakallı; kalçaya kadar kemerli mumlu ceket; sırtta eski bir **sırt telsizi**, şerit anteni ağırlığıyla geriye eğik | koyu saç: yanlar ve ense kısa, üstü uzun ve ayrımdan geriye taranmış, şakakta birkaç beyaz tel; kısa kesilmiş koyu sakal ve bıyık; ince **dikdörtgen çelik çerçeveli gözlük**; saçın üstünden tek kulaklı telsiz kulaklığı, mikrofonu ağzın köşesinde | koyu orman yeşili **mumlu pamuk ceket** (kırışıklarında mumu aşınıp açılmış; kahverengi kadife yaka yassı yatar; pirinç çıtçıtlar, göğüs ve kalça cepleri, aynı kumaştan kemer, pirinç toka); yakasından dinleme odasından kalma **siyah balıkçı yaka**; omuzlarda telsizin haki kayışları, göğüs kayışında spiral kablolu **ahize**; kemerde evrak çantası | parmakları kesik siyah deri eldiven (kadranlar için), sade çelik kol saati; düz düşen gri iş pantolonu, siyah deri bağcıklı bot | orman yeşili, kadife kahvesi, pirinç, gri; telsizin zeytini; **üstünde ışık saçan hiçbir şey yok** |
 | **SKYE** (keşif) | 22, eski kurye; dron yapar | orta boy, hafif ve çevik; başı açık, üstte kısa twistler; açık renk şişme yelek, çapraz postacı çantası; yanında hurda dron | koyu kahve ten; üstte kısa **twistler**, yanlar ve ense deriye kadar inen fade, şakakta keskin çizgi; ince bıyık, çenede kısa sakal; bir kaşta tıraşla açılmış çentik; boynunda beyaz, kapları **gök mavisi** büyük kulaklık | taş grisi **şişme yelek** (yatay dikişli dilimler, isli; sırtında yarısı soyulmuş yansıtıcı şerit, bantla yamanmış yırtık); altında **gök mavisi** uzun kollu üst, eteği yeleğin altından görünür; yamalı kanvas postacı çantası, arkasında eski bisiklet lambası | kollar dirseğe kadar sıvanmış, çıplak ön kol, bilekte düğümlü ip; parmaksız bisiklet eldiveni; yanında açık şerit olan siyah eşofman altı, bilekte lastikli paça; grileşmiş beyaz bilekli spor ayakkabı | taş grisi, siyah, krem; **gök mavisi** |
 | **BULWARK** (ağır) | 47, liman vinç operatörü | en iri; baret, iki filtreli yarım maske, kalın turuncu iş ceketi, konteyner sacından göğüs ve omuz plakaları | soluk sarı baret, kafa lambası; koyu güvenlik gözlüğü; iki **magenta filtreli** yarım yüz maske | soluk **güvenlik turuncusu** iş ceketi, iki yansıtıcı bant, yağ lekeleri; üstünde konteyner kapısından kesilmiş oluklu mavi plaka, beyaz şablon kod | omuzlarda oluklu sac; kalın deri iş eldiveni; lacivert iş tulumu, dizde yansıtıcı; büyük çelik burunlu bot | güvenlik turuncusu, konteyner mavisi, gri; magenta filtre |
 
 Arayüz renkleri (yetenek HUD'u, listeler) imza renginden: FLINT `#d9533a`,
 WARDEN `#e6c25c`, VESPER `#a3ad7f`, SKYE `#7ec8ff`, BULWARK `#e2782f`.
 
-### 9.3 Vanta
+### 9.3 Vorsa
 | | Ne | Ayırt edici |
 |---|---|---|
 | **TETİKÇİ** | standart asker | tam yüz kask, tek ince kırmızı vizör yarığı; mavi-gri göğüs/omuz/diz plakaları; lacivert üniforma; sol omuzda beyaz arma; temiz |
-| **KALKANLI** | kalkanlı asker | daha ağır plakalar (kollar dahil); duman renkli polikarbon çevik kuvvet kalkanı, üstünde beyaz VANTA ve arma, gözetleme penceresi |
+| **KALKANLI** | kalkanlı asker | daha ağır plakalar (kollar dahil); duman renkli polikarbon çevik kuvvet kalkanı, üstünde beyaz VORSA ve arma, gözetleme penceresi |
 | **HÜCUMCU** | yakın dövüş | hafif zırh; gaz maskeli kask, iki yuvarlak kırmızı lens ve tek filtre; kırmızı birlik kol bandı; pompalı |
 | **GALL** | Sekreter, perde 1 sonu | asker değil bürokrat: diz altı kruvaze lacivert-siyah resmî palto, kemerli; altında ince zırh yeleği; siperli subay şapkası (kırmızı şerit, gümüş arma); deri eldiven; yüz açık: 50'ler, kısa kır saç, sinekkaydı tıraş, ince dudak, soğuk gri gözler |
 
@@ -73,7 +73,7 @@ kurar; kodlar buna uyar.
 Beşinin giysisi §9.2'de. Bu bölüm onları oyunun geri kalanına hikâyeden
 bağlar: Operatörler ekranındaki kişi dosyası, görevdeki yetenekleri ve
 çizimdeki ayrıntılar. Önceki hâlinde dosyalar genel övgüydü ("hızlı, keskin,
-hep önde"), Vanta'ya hâlâ "Syndicate" deniyordu; yetenekler herhangi bir
+hep önde"), Vorsa'ya hâlâ "Syndicate" deniyordu; yetenekler herhangi bir
 nişancı oyunundan gelmişti: enerji siperi, taret, mor yavaşlatma halkası,
 parlayan auralar. İkisi de bu şehre ait değil.
 
@@ -92,7 +92,7 @@ yanında taşıdığı · kendi ağzından bir söz (konuşma biçimiyle, §1.4)
 |---|---|---|---|---|---|
 | FLINT | 29 | Ocakçı, üçüncü kuşak | Fırının başındaydı. Babası Halil Usta'yı o gece götürdüler. | Babasının sendika atkısı | "Sonra konuşuruz." |
 | WARDEN | 41 | İtfaiye ekip amiri, 4. istasyon | Ekip çağrıldı, kapıdan çevrildi. İstasyon bir ay sonra mühürlendi. | Halligan, istasyonun anahtarı | "Beş dakika, fazlası olmaz." |
-| VESPER | 33 | Vanta sinyal analisti | Nöbette değildi. Kayıtlar dört yıl sonra masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle. | Dinleme odasından kalma balıkçı yaka kazak | "Doksan saniye. Sonra yeniden tararlar." |
+| VESPER | 33 | Vorsa sinyal analisti | Nöbette değildi. Kayıtlar dört yıl sonra masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle. | Dinleme odasından kalma balıkçı yaka kazak | "Doksan saniye. Sonra yeniden tararlar." |
 | SKYE | 22 | Kurye | On sekiz yaşındaydı. Bacadan duman kesilince ilk o fark etti, bir çatıdan. | Hurdadan yaptığı dron | "Çatıdan iki dakika, sokaktan beş. Gidelim mi?" |
 | BULWARK | 47 | Liman vinç operatörü | Limanın kapandığı sabah vinçten indi. Bir daha binmedi. | Konteyner kapısından kesilmiş göğüs sacı | "Bu kadar." |
 
@@ -102,7 +102,7 @@ yanında taşıdığı · kendi ağzından bir söz (konuşma biçimiyle, §1.4)
 |---|---|---|---|
 | FLINT · ocakçı | **Kor Atılımı:** kısa hasarsız atılım, arkasında kıvılcım | **Ateşleme Fişeği:** ocak fişeği; patlayınca bakanları kör eder (magnezyum beyazı) | **Ocak Başı:** babasının yeri; 8 sn ateş hızı ve hareket +%30, atkıdan kor dökülür |
 | WARDEN · itfaiyeci | **Yangın Kapısı:** katlanır çelik kapı, 10 sn gerçek siper (kırmızı boya, şablon yazı) | **Tüp Tuzağı:** tetiğe bağlı basınçlı tüp; patlar, şok dalgası yavaşlatır | **Yangın Monitörü:** tripodda pirinç lüle ve hortum; 20 sn tazyikli su vurur ve iter |
-| VESPER · sinyalci | **Duman Kutusu:** Vanta'nın kendi kutusu, depodan; içinden görülmez (gri duman) | **Parazit:** yere bırakılan karıştırıcı; telsizler cızırdar, alandakiler %40 yavaş | **Karartma:** Vanta'nın vizör ağına eski şifresiyle girer; 4 sn herkes kör |
+| VESPER · sinyalci | **Duman Kutusu:** Vorsa'nın kendi kutusu, depodan; içinden görülmez (gri duman) | **Parazit:** yere bırakılan karıştırıcı; telsizler cızırdar, alandakiler %40 yavaş | **Karartma:** Vorsa'nın vizör ağına eski şifresiyle girer; 4 sn herkes kör |
 | SKYE · kurye | **Hurda Dron:** gerçek dron havalanır, tarar, 8 sn işaretler | **Termal Kamera:** dronun kamerası; 5 sn duvar arkası | **Çatı Gözcüsü:** bildiği en yüksek çatıdan; 10 sn herkes işaretli, kafa vuruşu +%25 |
 | BULWARK · vinççi | **Omuz Darbesi:** sac omuzla yüklenir, devirir (toz, kıvılcım) | **Konteyner Sacı:** göğse ikinci sac; 60 puan zırh, sağlık çubuğunda mavi | **Son Söz:** 6 sn hasar %70 az, ateş hızı artar; her adımda toz |
 
@@ -119,7 +119,7 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 - **KOR, Kor Hattı, Ocak Başı, Söndürme:** ocakçıların sözünden; hikâyenin kendisi.
 - **FLINT, WARDEN, VESPER, SKYE, BULWARK:** kod adları; telsizde kısa,
   karışmaz, oyuncunun seçtiği hâliyle duruyor.
-- **HAWK, Gall, Vasquez, VANTA SYNDICATE:** kişi ve şirket adları.
+- **HAWK, Gall, Vasquez, VORSA SYNDICATE:** kişi ve şirket adları.
 - **Görevler** (Sızma, Pazar Baskını, Sekreter Gall, Dökümhane, Metro, Dron
   Fabrikası, Ocak, Kule Baskını, İhanet, Vasquez) ve yerleri: işlevle anılır,
   semt adı yok.
@@ -141,7 +141,7 @@ Kimlikler (`id`) değişmedi; kayıtlar ve atlaslar etkilenmez.
 | Sürgülü | LONGBOW | KARTAL | Uzağı gören |
 | Hafif makineli | ANVIL LMG | ÖRS LMG | Anvil = örs; ocakçının aleti |
 | Bombaatar | THUMPER GL | TOKMAK GL | Thumper = tokmak |
-| Sandık | Standart / Takviyeli / Doğan | Erzak / Mühimmat / Komuta | Bunlar el konmuş Vanta sandıkları; adları Vanta'nın lojistiğinden |
+| Sandık | Standart / Takviyeli / Doğan | Erzak / Mühimmat / Komuta | Bunlar el konmuş Vorsa sandıkları; adları Vorsa'nın lojistiğinden |
 | Görünüm | Neon Buz | Su Verme | Şehirde neon yok; ocakta çeliğe su verilir |
 | Sonsuz mod | Her 5 bölümde boss | Her 5 dalgada Gall gelir | Gelen bir "boss" değil, Sekreter Gall |
 | Ayar | HUD düzenleyici | Düğme düzeni | Oyuncu düğmeleri taşır; kısaltma yok |
@@ -172,10 +172,10 @@ bloğu, alttan vuran korku feneri ışığı.
 **Pazardaki tezgâh kaldırıldı.** HAWK'ın pazarın ortasındaki tezgâhı (branda
 çatı, raflar, tezgâh, HAWK'ın kendisi, tabela ve ampuller) oyundan çıktı;
 HAWK yalnız tüccar ekranında ve lobideki kartta, portresiyle görünür. Görev 2
-artık *Pazar Baskını*: Vanta pazarı basar, ekip pazarın ortasını üç dalgaya
+artık *Pazar Baskını*: Vorsa pazarı basar, ekip pazarın ortasını üç dalgaya
 karşı tutar; tezgâhın yerinde siper olarak iki sandık durur.
 
-### 10.15 Yüzler, kafalar ve Vanta'nın su aracı
+### 10.15 Yüzler, kafalar ve Vorsa'nın su aracı
 FLINT ve HAWK dışında herkesin kafası yeniden boyandı; HAWK'ın portresindeki
 yöntemle: önce düzlemler, sonra tenin bölgelerdeki rengi, en son ayrıntılar;
 çizgi yok, her kenar ışığa karşı karanlık. Ortak araçlar `body.js`'te:
@@ -223,12 +223,12 @@ yöntemle: önce düzlemler, sonra tenin bölgelerdeki rengi, en son ayrıntıla
 - **Hücumcu:** siyah kauçuk gaz maskesi: sızdırmazlık kenarı, burun kabı,
   önde konuşma diyaframı; çelik çemberli koyu camlar, ışık camda halka değil
   bant olarak; yanakta dişli, delikli, boyası aşınmış filtre kutusu; kafa
-  kayışları ve tokaları; üstte Vanta grisi alçak kask.
+  kayışları ve tokaları; üstte Vorsa grisi alçak kask.
 - **Yazı yok:** karakterler bir kez sağa bakarken pişirilir, sola bakınca
-  aynalanır. Düşmanlar çoğunlukla sola baktığı için Vanta teçhizatında harf
+  aynalanır. Düşmanlar çoğunlukla sola baktığı için Vorsa teçhizatında harf
   kalmadı (kalkanda büyük amblem ve reflektif bant, kaskta birim bandı).
 
-**Vanta'nın su aracı (m3).** Kutudan gerçek bir TOMA'ya: önde sarı-siyah
+**Vorsa'nın su aracı (m3).** Kutudan gerçek bir TOMA'ya: önde sarı-siyah
 şeritli barikat küreği ve kafesli far; zırhlı kabin, ön cam ve kapı camı
 menteşeli çelik ızgara arkasında, kapı, menteşeler, sarkan basamaklar,
 uzun kollu ayna; kabin tavanında ışık barı, projektörler ve küçük su topu.
@@ -245,7 +245,7 @@ küçük yapraklı, üstü ışıkta budanmış şimşir.
 
 ### 10.16 Kafalar: yüz yok
 §10.15'teki kafalar beğenilmedi; görünen yüz denemesi de istenmedi. Karar:
-**hiçbir operatörün yüzü görünmez** (göz, burun, ağız yok); Vanta ve Gall
+**hiçbir operatörün yüzü görünmez** (göz, burun, ağız yok); Vorsa ve Gall
 §10.15'teki hallerinde kaldı (aşağıda). Kafalar sıfırdan,
 FLINT'in kafasının diliyle çizildi: birkaç büyük biçim, malzemesi içinde
 (örgü, kanvas, kauçuk, boya), tek parlak şey, az çizgi. Görünen ten en çok bir
@@ -268,7 +268,7 @@ kumaş ya da maske. Operatörlerin başlıkları da yenilendi:
 - **VESPER:** zeytin yeşili kapüşon, içi karanlık; boğazlık burnun üstünde;
   iri, kalın çerçeveli yuvarlak füme kahverengi gözlük; tek kulaklık ve
   mikrofon kolu.
-- **Vanta (Tetikçi, Kalkanlı, Hücumcu) ve Gall:** bu turda yeniden çizilen
+- **Vorsa (Tetikçi, Kalkanlı, Hücumcu) ve Gall:** bu turda yeniden çizilen
   sade kask, gaz maskesi ve Gall'ın gözlük ve boyunluklu yüzsüz kafası
   beğenilmedi. Üçü de §10.15'teki haline döndü: ray ve montaj plakalı kask,
   füme kırmızı yarık, havalandırmalı çene plakası, kulakta telsiz ve kısa
@@ -291,13 +291,13 @@ kutu ve altındaki boss çubuğu ekranın üstünü dolduruyordu.
   arayüz ölçeği hâlâ çalışıyor).
 - 800×360'lık telefon ekranında hedef kutusu 194×45 pikselden 181×21'e indi.
 
-**Vanta muhafızları.** Karakterler atlasa birim başına 3,6–7 piksel boyanıyor
+**Vorsa muhafızları.** Karakterler atlasa birim başına 3,6–7 piksel boyanıyor
 (64 birimlik bir figür 230–450 piksel); bir birimin altındaki işler (dikiş,
 çizik) telefonda kayboluyor. Bu yüzden eklenenler oyun mesafesinden okunan
-parçalar, hepsi Vanta'nın "temiz, yeni, tek tip" teçhizatında:
+parçalar, hepsi Vorsa'nın "temiz, yeni, tek tip" teçhizatında:
 - Sırtta telsiz kesesi ve miğferin arkasından yükselen kamçı anten
   (silüette görünen ilk şey).
-- Göğüs plakasında yaka kamerası, kırmızı kayıt ışığı yanık: Vanta sokağı
+- Göğüs plakasında yaka kamerası, kırmızı kayıt ışığı yanık: Vorsa sokağı
   filme alıyor.
 - Plakanın kenarı dokuma kayışla çevrili; plaka kabuk değil taşıyıcı gibi.
 - Taktik kemer: ilmek sıraları, kobra toka; arkada rulo yapılmış boş şarjör
@@ -375,7 +375,7 @@ eklendi.
   ekiplerinin değiş tokuş ettiği çıkartmalar (yeşil artı, mavi kare, yarısı
   yırtılmış sarı-siyah şerit; yazı yok, figür aynalanıyor); siperde
   yağmur damlaları.
-- **Vanta kaskı (Tetikçi, Kalkanlı):** kabuğun arkasında cırtla tutturulmuş
+- **Vorsa kaskı (Tetikçi, Kalkanlı):** kabuğun arkasında cırtla tutturulmuş
   siyah stroboskop; yarığın derinindeki kırmızı camın çerçevesini
   aydınlatıyor, camda ince bir tarama çizgisi.
 - **Gall:** gözün altından çeneye doğru inen eski bir yara izi: soluk,
@@ -442,7 +442,7 @@ sert parıltı).
   iş gözlüğü; baretin yuvasına takılı turuncu kulaklık; tam siperli soluk
   sarı baret, sırt nervürü, fener bandı ve feneri, banda sıkışmış marangoz
   kalemi, çıkartmalar, çizikler, damlalar; arkada turuncu ense bezi.
-- **Vanta (Tetikçi, Kalkanlı):** lacivert örgü balaklava; yüze göre
+- **Vorsa (Tetikçi, Kalkanlı):** lacivert örgü balaklava; yüze göre
   kalıplanmış yüz kabuğu (gri, tek füme cam yarık, derinde kırmızı ve
   çerçeveyi aydınlatan ışığı, tarama çizgisi) ve havalandırma oluklu siyah
   çene koruması; kulağın üstünden kesik balistik kask: yan raylar, alında
@@ -450,7 +450,7 @@ sert parıltı).
   amblem; raya takılı iletişim kulaklığı ve kablosu; arkada stroboskop.
 - **Hücumcu:** siyah balaklava; modern tam yüz maskesi: siyah kauçuk, gri
   çerçevede tek geniş kavisli vizör (ışık bant halinde, içte kırmızı),
-  ağızda konuşma diyaframı, yanak yuvasına vidalı Vanta grisi filtre, beş
+  ağızda konuşma diyaframı, yanak yuvasına vidalı Vorsa grisi filtre, beş
   kayışlı kafa bağı ve çelik tokaları; tepede amblemli alçak çevik kuvvet
   kaskı.
 - **Gall** değişmedi.
@@ -465,7 +465,7 @@ biraz üstünde (cam yarıçapı 0,76 birim). İlk açılış süresi değişmed
 (gözlük, maske, kumaş) oyunda insan yüzü gibi okunmuyordu; lobideki
 fotoğraflarda yanlarındaki HAWK portresinin yanında maskeli küçük kafalar
 kalıyordu. Karar değişti: **operatörlerin yüzü açık** (§10.16'nın yerine).
-Vanta muhafızları maskeli kalır (yüzsüz bir güç; Gall onların tek yüzü).
+Vorsa muhafızları maskeli kalır (yüzsüz bir güç; Gall onların tek yüzü).
 
 **Ortak yüz (`realhead.js`, `face`):** Gall'ın yüzü parametreli hale geldi:
 ten düzlemler ve bölgelerle (`skin`); burun (ışıkta sırt, yarı ışıkta yan
@@ -496,7 +496,7 @@ kulak göz hizasıyla burun tabanı arasında.
   kır kaşlar, derin kaz ayaklı açık mavi göz; yarım maske boynunda
   sarkıyor; iş gözlüğü baretin siperinde; kulaklık takılı; baret, kalem,
   çıkartmalar, ense bezi.
-- **Vanta:** yüz kabuğu ve çene koruması yüze yaklaştırıldı (öne çıkıntı
+- **Vorsa:** yüz kabuğu ve çene koruması yüze yaklaştırıldı (öne çıkıntı
   yarıya indi).
 
 **Lobi fotoğrafları:** çerçeve yüze alındı (kare 14 birim, kafanın ortası
@@ -543,7 +543,7 @@ burnunu, ağzını ve yalnız ona ait izleri taşıyor.
 - **Yapı** (`art/ops/realhead.js` → `face`): ten, ışık düzlemleri ve profil
   bükümü ortak; göz, kaş, burun, kırışıklar, ağız ve izler değiştirilebilir
   parçalar (`paint: { eye, brow, nose, folds, mouth, marks }`). Verilmeyen
-  parça standart olanla çiziliyor (Vanta ve Hücumcu gibi). Parçalar yüzün
+  parça standart olanla çiziliyor (Vorsa ve Hücumcu gibi). Parçalar yüzün
   bükümünü izleyen fırçayla çiziyor, böylece yerlerine oturuyorlar.
 - **Göz** (`art/ops/faces.js` → `eyeOf`): göz kapaklarının açıklığı, alt
   kapağın yüksekliği (kısık bakış), dış köşenin düşüklüğü (yorgun göz),

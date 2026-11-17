@@ -963,7 +963,7 @@ export class Street {
     q.font = `700 ${Math.round(h * 0.07)}px Rajdhani, "Arial Narrow", sans-serif`;
     q.fillText('DÜZEN · GÜVENLİK · İTAAT', w * 0.5, h * 0.8);
     q.font = `500 ${Math.round(h * 0.026)}px Rajdhani, sans-serif`; q.fillStyle = 'rgba(236,231,218,0.6)';
-    q.fillText('VANTA SENDİKASI  ·  KAMU DÜZENİ DAİRESİ', w * 0.5, h * 0.9);
+    q.fillText('VORSA SENDİKASI  ·  KAMU DÜZENİ DAİRESİ', w * 0.5, h * 0.9);
     // the rain has had it: blotches, a sag, the paste showing at the seams
     q.globalCompositeOperation = 'multiply'; for (let i = 0; i < 30; i++) { const x = r() * w, y = r() * h, rr = 5 + r() * 30; const gg = q.createRadialGradient(x, y, 0, x, y, rr); gg.addColorStop(0, 'rgba(120,110,95,0.4)'); gg.addColorStop(1, 'rgba(255,255,255,0)'); q.fillStyle = gg; q.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
     q.globalCompositeOperation = 'source-over';

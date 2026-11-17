@@ -2,7 +2,7 @@
 // twenty years (docs/KOR_STORY_CINEMATIC.md §9.2, painted per §10.1). The
 // biggest of them: a faded safety-orange work jacket with two reflective
 // bands, oil on it; over the chest and on the near shoulder, corrugated plate
-// cut from the door of one of Vanta's own containers, its blue paint and white
+// cut from the door of one of Vorsa's own containers, its blue paint and white
 // code stencils still on it, held on with yellow ratchet straps; navy work
 // coveralls with reflective at the knee; thick buff leather gloves; big
 // steel-toed boots. A faded yellow hard hat with a headlamp, smoked safety

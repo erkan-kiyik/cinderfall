@@ -18,7 +18,7 @@ import { Controls, bindKeyboard, bindTouch } from './game/input.js';
 import { PerfOverlay } from './ui/perf.js';
 import { Save } from './core/save.js';
 import { Sfx } from './audio/sfx.js';
-import { setLang } from './ui/i18n.js';
+import { setLang, detectLang, t } from './ui/i18n.js';
 import { App } from './app.js';
 import { opName } from './ui/data.js';
 import { Intro } from './ui/intro.js';
@@ -67,13 +67,18 @@ function bakeQuality(quality) {
 }
 
 async function main() {
-  const canvas = $('#game');
-  const gl = createGL(canvas);
-  if (!gl) { $('#boot').classList.add('fail'); $('#boot .msg').textContent = 'Bu cihaz WebGL2 desteklemiyor.'; return; }
-  // the app (menus) unless a dev scene is asked for: ?scene=m1|m2|m3|mission
+  // the dev scenes have no save; the app's first start takes the phone's language (docs §10.38)
   const DEV = { m1: M1, m2: M2, m3: M3, mission: M4 }[params.get('scene')] || null;
   const save = DEV ? null : new Save();
-  if (save) setLang(save.d.settings.lang);
+  if (save && save.fresh) save.set((d) => { d.settings.lang = detectLang(); });
+  setLang(save ? save.d.settings.lang : (params.get('lang') || 'tr')); // dev scenes: ?lang=
+  // a new player's callsign in their own language (OPERATÖR, OPERATOR, 干员…)
+  if (save && save.fresh) save.set((d) => { d.profile.name = t('lobby.operator').toLocaleUpperCase(document.documentElement.lang).slice(0, 14); });
+  { const m = $('#boot .msg'); if (m) m.textContent = t('app.boot'); }
+  const canvas = $('#game');
+  const gl = createGL(canvas);
+  if (!gl) { $('#boot').classList.add('fail'); $('#boot .msg').textContent = t('app.noGL'); return; }
+  // the app (menus) unless a dev scene is asked for: ?scene=m1|m2|m3|mission
   const savedQ = save && save.d.settings.quality !== 'auto' ? save.d.settings.quality : null;
   const GPU = gpuName(gl), autoQ = lower(autoQuality(GPU), store.get(AUTOQ));
   const quality = params.get('q') || savedQ || (DEV && store.get('kor-lab-q')) || autoQ;
@@ -219,6 +224,6 @@ async function main() {
 main().catch((err) => {
   console.error(err);
   logError(err?.message || err, 'boot', err?.stack);
-  const m = $('#boot .msg'); if (m) m.textContent = 'Hata: ' + err.message;
+  const m = $('#boot .msg'); if (m) m.textContent = t('app.error', { e: err.message });
   $('#boot').classList.add('fail');
 });

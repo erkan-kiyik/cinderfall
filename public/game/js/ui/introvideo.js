@@ -4,13 +4,16 @@
 // shots as cine/opening.js) and the coals with KOR over them as a seamless
 // loop (opening_loop.mp4) for as long as the sprites are still baking. The
 // phone only decodes video while the bake has the processor to itself. The
-// tagline, the loading line and the skip hint are DOM over the picture.
+// title card (KOR, the ember, the tagline: ui/titlecard.js), the loading line
+// and the skip hint are DOM over the picture.
 //
 // Same interface as Intro (ui/intro.js): run(), setProgress(), assetsDone(),
 // onHandoff. If the video does not start, the live Intro takes over.
 import { Intro } from './intro.js';
 import { filmSrc, filmGrain } from '../cine/film.js';
 import { t } from './i18n.js';
+import { titleCard } from './titlecard.js';
+import { KOR_AT } from '../cine/opening.js';
 
 const MIN_RUN = 17.6, FADE = 0.6, SKIP_AFTER = 0.45, TAG_AT = 16.2;
 const ss = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
@@ -32,13 +35,13 @@ export class IntroVideo {
     el.innerHTML = '<video class="a" muted playsinline preload="auto" disablepictureinpicture></video>'
       + '<video class="b" muted playsinline loop preload="auto" disablepictureinpicture></video>'
       + (this.reduce ? '' : '<div class="film-grain"></div>')
-      + '<div class="tag"></div><div class="load"><i><b></b></i><span></span></div><div class="skip"></div>';
+      + '<div class="load"><i><b></b></i><span></span></div><div class="skip"></div>';
     document.body.appendChild(el);
     if (!this.reduce) filmGrain();
     this.a = el.querySelector('.a'); this.b = el.querySelector('.b');
     for (const v of [this.a, this.b]) { v.muted = true; v.playsInline = true; v.setAttribute('webkit-playsinline', ''); }
     this.a.src = filmSrc('opening'); this.b.src = filmSrc('opening_loop');
-    this.tagEl = el.querySelector('.tag'); this.tagEl.textContent = t('story.tagline');
+    this.card = titleCard(); el.insertBefore(this.card.el, el.querySelector('.load'));
     this.loadEl = el.querySelector('.load'); this.fillEl = el.querySelector('.load b'); this.labEl = el.querySelector('.load span');
     this.skipEl = el.querySelector('.skip'); this.skipEl.textContent = t('intro.skip');
   }
@@ -86,16 +89,18 @@ export class IntroVideo {
 
   frame() {
     const tt = this.now(), el = this.el;
-    // hand off once the bake is done and the film has run its minimum (or was skipped)
-    if (!this.handed && this.ready && (tt >= this.min || (this.loopT0 >= 0 && !this.reduce))) {
+    // hand off once the bake is done and the film has run its minimum (or was skipped);
+    // window.__introHold (test harnesses) keeps the title card up
+    if (!this.handed && this.ready && !window.__introHold && (tt >= this.min || (this.loopT0 >= 0 && !this.reduce))) {
       this.handed = true; this.fadeT0 = performance.now();
       this.onHandoff?.();
       el.classList.add('out');
       setTimeout(() => this.end(), FADE * 1000 + 50);
     }
     const k = this.fadeT0 >= 0 ? 1 - ss(0, FADE * 0.7, (performance.now() - this.fadeT0) / 1000) : 1;
-    const ta = (this.loopT0 >= 0 && !this.reduce ? 1 : ss(this.tagAt, this.tagAt + 0.9, tt)) * k;
-    this.tagEl.style.opacity = ta.toFixed(3);
+    // KOR comes up over the coals, then the line under it (at once after a skip)
+    if (this.loopT0 >= 0 || tt >= this.tagAt) this.card.tag();
+    else if (tt >= (this.reduce ? 0.2 : KOR_AT)) this.card.on();
     const kl = ss(0.6, 1.2, tt) * k;
     this.loadEl.style.opacity = kl.toFixed(3);
     this.fillEl.style.width = `${(this.ready ? 100 : this.progress * 100).toFixed(1)}%`;
