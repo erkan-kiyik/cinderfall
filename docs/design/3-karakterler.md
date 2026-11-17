@@ -721,11 +721,12 @@ Karakter tasarımları beğenilmedi; karar: **oyun dışında karakterler öne
   Kenarlar kararır, eski baskı gibi grenli. Lobideki seçim, üst çubuk,
   operatör listesi ve dosya, hazırlık ekranı ve profil bunu kullanıyor.
   (İlk deneme harfli rozetti; polisiye hava için siluet seçildi.)
-- HAWK'ın iskeleti yok: silueti elle çizildi (kasket, sakal, yaka, sigara,
-  dumanı), levhası M-01 (muhbir).
-- Tüccar ekranında HAWK'ın yüzü yerine tezgâh: çıplak ampulün altında
-  duvara vuran ışıkta HAWK'ın silueti, sigarasının dumanı, sağında
-  istiflenmiş üç sandık (`stallPic`).
+- HAWK menülerde çizimle değil, **gerçekçi bir görüntüyle** temsil
+  ediliyor: pazarın üstündeki neon tabelası, "A" harfi yıllardır yanmıyor,
+  yağmurda (dizi karesi 16, ışın izlendi: `assets/stills/hawk.webp`, kare
+  kırpımı `hawk_sq.webp`). Tüccar ekranının resmi ve lobideki HAWK kartı bu.
+  (Önce elle çizilmiş bir siluet ve arkasında yuvarlak bir ışık denendi;
+  fazla geometrik bulundu.)
 - Mağaza kapağında beş operatör siyah siluet, arkalarındaki fırının kor
   ışığıyla çevrelenmiş (ayrıntı görünmüyor). Lobi ve operatörler ekran
   görüntüleri yeniden alındı; görev görüntüleri oyun içi olduğu için kaldı.

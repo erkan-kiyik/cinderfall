@@ -30,41 +30,11 @@ function copy(src, cssW, cssH) {
 // lineup wall with its height lines, one hard lamp from above, the case
 // number on a board and a strip of their colour. The painted faces are
 // still here (facePortrait) for the dev sheets.
-const FILE = { vex: ['K-03', '#d9533a'], hale: ['K-04', '#e6c25c'], morrow: ['K-05', '#a3ad7f'], kite: ['K-06', '#7ec8ff'], brick: ['K-07', '#e2782f'], hawk: ['M-01', '#e0a24a'] };
+const FILE = { vex: ['K-03', '#d9533a'], hale: ['K-04', '#e6c25c'], morrow: ['K-05', '#a3ad7f'], kite: ['K-06', '#7ec8ff'], brick: ['K-07', '#e2782f'] };
 export function avatar(id, px = 44) {
   const key = `m:${id}:${px}:${dpr()}`;
   if (!cache.has(key)) cache.set(key, paintMugshot(id, Math.round(px * dpr())));
   return copy(cache.get(key), px, px);
-}
-// HAWK has no rig: his outline drawn by hand, facing right, in a 1 × 1 box —
-// the flat cap, the beard, the coat's collar, the cigarette
-function hawkShape(g, x, y, s) {
-  const P = (u, v) => [x + u * s, y + v * s];
-  g.beginPath(); g.moveTo(...P(0.1, 1.02));
-  g.lineTo(...P(0.12, 0.86));
-  g.bezierCurveTo(...P(0.14, 0.78), ...P(0.22, 0.74), ...P(0.3, 0.72));
-  g.bezierCurveTo(...P(0.3, 0.66), ...P(0.27, 0.6), ...P(0.27, 0.54));
-  g.bezierCurveTo(...P(0.26, 0.46), ...P(0.27, 0.4), ...P(0.29, 0.36));
-  g.bezierCurveTo(...P(0.3, 0.27), ...P(0.42, 0.23), ...P(0.56, 0.25));
-  g.bezierCurveTo(...P(0.66, 0.27), ...P(0.72, 0.31), ...P(0.74, 0.35));
-  g.lineTo(...P(0.85, 0.385)); g.lineTo(...P(0.845, 0.405)); g.lineTo(...P(0.71, 0.405));
-  g.bezierCurveTo(...P(0.71, 0.44), ...P(0.715, 0.47), ...P(0.73, 0.5));
-  g.lineTo(...P(0.775, 0.556)); g.lineTo(...P(0.738, 0.575));
-  g.bezierCurveTo(...P(0.745, 0.6), ...P(0.75, 0.625), ...P(0.735, 0.645));
-  g.bezierCurveTo(...P(0.725, 0.69), ...P(0.685, 0.72), ...P(0.625, 0.735));
-  g.bezierCurveTo(...P(0.6, 0.76), ...P(0.6, 0.79), ...P(0.64, 0.82));
-  g.bezierCurveTo(...P(0.74, 0.85), ...P(0.86, 0.9), ...P(0.92, 1.02));
-  g.closePath(); g.fill();
-  // the cigarette
-  g.save(); g.lineCap = 'round'; g.lineWidth = s * 0.016; g.strokeStyle = g.fillStyle;
-  g.beginPath(); g.moveTo(...P(0.735, 0.622)); g.lineTo(...P(0.805, 0.636)); g.stroke(); g.restore();
-}
-function hawkSmoke(g, x, y, s) {
-  const P = (u, v) => [x + u * s, y + v * s];
-  g.save(); g.fillStyle = 'rgba(255,120,50,0.95)'; g.beginPath(); g.arc(...P(0.81, 0.637), s * 0.011, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = 'rgba(225,230,235,0.32)'; g.lineWidth = s * 0.012; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(...P(0.81, 0.625)); g.bezierCurveTo(...P(0.85, 0.56), ...P(0.78, 0.5), ...P(0.83, 0.43)); g.bezierCurveTo(...P(0.87, 0.37), ...P(0.82, 0.31), ...P(0.86, 0.25)); g.stroke();
-  g.restore();
 }
 function paintMugshot(id, size) {
   const [no, color] = FILE[id] || ['K-00', '#a39b8f'];
@@ -84,8 +54,7 @@ function paintMugshot(id, size) {
   }
   // the figure's shape: head and shoulders, from the operator's own rig
   const fig = canvas(size, size), fg = fig.getContext('2d');
-  if (id === 'hawk') { fg.fillStyle = '#000'; hawkShape(fg, size * 0.02, size * 0.1, size * 0.96); }
-  else {
+  {
     const op = OPS[id], pose = op.pose, z = size / 18, J = solve(pose), [nx, ny] = J.neck;
     fg.translate(size * 0.5 - (nx + 1.2) * z, size * 0.6 - (ny - 4.2) * z); fg.scale(z, z);
     drawFigure(fg, op, pose);
@@ -98,7 +67,6 @@ function paintMugshot(id, size) {
   const r = Math.max(1, size * 0.016), rim = ink(fig, 'rgba(232,238,244,0.6)');
   g.drawImage(rim, -r * 0.25, -r);
   g.drawImage(sil, 0, 0);
-  if (id === 'hawk') hawkSmoke(g, size * 0.02, size * 0.1, size * 0.96);
   // the board with the case number, the strip of colour under it
   if (size >= 60) {
     const bw = size * 0.46, bh = size * 0.15, bx = size * 0.5 - bw / 2, by = size * 0.8;
@@ -206,40 +174,17 @@ export function crateArt(color, px = 96) {
 }
 
 // HAWK at his stall, `px` CSS pixels square
-// HAWK's stall for the trader screen (no face, docs §10.39): his outline
-// behind seized crates stacked under a bare bulb, the market's dark behind
-export function stallPic(px = 360) {
-  const key = `s:${px}:${dpr()}`;
-  if (!cache.has(key)) {
-    // wide, like the card it sits in; HAWK under the bulb, his crates to the right
-    const W = Math.round(px * dpr()), H = Math.round(W * 0.56), c = canvas(W, H), g = c.getContext('2d');
-    const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#120e0c'); bg.addColorStop(1, '#261b13');
-    g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    const bx = W * 0.47, by = H * 0.12;
-    const bulb = g.createRadialGradient(bx, by, 0, bx, by, W * 0.55);
-    bulb.addColorStop(0, 'rgba(255,196,120,0.5)'); bulb.addColorStop(0.35, 'rgba(255,150,70,0.15)'); bulb.addColorStop(1, 'rgba(255,150,70,0)');
-    g.fillStyle = bulb; g.fillRect(0, 0, W, H);
-    g.strokeStyle = 'rgba(30,24,20,0.9)'; g.lineWidth = Math.max(1, W * 0.004); g.beginPath(); g.moveTo(bx, 0); g.lineTo(bx, by - W * 0.02); g.stroke();
-    g.fillStyle = '#ffe2b0'; g.beginPath(); g.ellipse(bx, by, W * 0.013, W * 0.018, 0, 0, Math.PI * 2); g.fill();
-    // HAWK himself, an outline behind his goods, the bulb rimming his cap and shoulder
-    { const hs = H * 0.94, hx = W * 0.08, hy = H * 0.1, o = canvas(W, H), og = o.getContext('2d');
-      // the bulb's pool on the wall behind him, so his outline reads against it
-      const pool = g.createRadialGradient(hx + hs * 0.55, hy + hs * 0.42, 0, hx + hs * 0.55, hy + hs * 0.42, hs * 0.62);
-      pool.addColorStop(0, 'rgba(196,170,138,0.62)'); pool.addColorStop(0.6, 'rgba(150,120,90,0.25)'); pool.addColorStop(1, 'rgba(150,120,90,0)');
-      g.fillStyle = pool; g.fillRect(0, 0, W, H);
-      og.fillStyle = 'rgba(255,200,140,0.8)'; hawkShape(og, hx + W * 0.008, hy - W * 0.006, hs);
-      og.fillStyle = '#0a0807'; hawkShape(og, hx, hy, hs); g.drawImage(o, 0, 0); hawkSmoke(g, hx, hy, hs); }
-    // three seized crates: two on the floor, one on top
-    const crate = (band, x, y, k) => { const m = Math.round(W * k), cc = canvas(m, m); paintCrate(cc.getContext('2d'), m, { band, label: CRATE_LABEL[band] }); g.drawImage(cc, x * W - m / 2, y * H - m / 2); };
-    crate('#a39b8f', 0.67, 0.7, 0.3); crate('#6aa6d6', 0.89, 0.72, 0.28); crate('#e6a93c', 0.79, 0.47, 0.27);
-    cache.set(key, c);
-  }
-  const c = cache.get(key);
-  return copy(c, px, Math.round(px * c.height / c.width));
+// HAWK in the menus is no drawing: his sign over the market, the A that has
+// not lit for years, ray-traced (tools/game/series shot 16) and shipped as a
+// still (docs §10.39). `px`: a square crop of that size; none: it fills its box.
+const STILL = new URL('../../assets/stills/hawk.webp', import.meta.url).href;
+const STILL_SQ = new URL('../../assets/stills/hawk_sq.webp', import.meta.url).href;
+export function hawkPic(px = 0) {
+  const im = new Image(); im.src = px ? STILL_SQ : STILL; im.alt = ''; im.decoding = 'async'; im.draggable = false;
+  im.className = 'still';
+  if (px) Object.assign(im.style, { width: `${px}px`, height: `${px}px` });
+  return im;
 }
-// HAWK in the menus: a badge like the operators' (docs §10.39); the painted
-// face stays for the dev sheets (hawkFace)
-export function hawkPic(px = 64) { return avatar('hawk', px); }
 export function hawkFace(px = 64) {
   const key = `h:${px}:${dpr()}`;
   if (!cache.has(key)) { const n = Math.round(px * dpr()), c = canvas(n, n); paintHawk(c.getContext('2d'), n, 1); cache.set(key, c); }
