@@ -712,11 +712,19 @@ Karakter tasarımları beğenilmedi; karar: **oyun dışında karakterler öne
   (`game/showcase.js hidePlayer`): lamba, harita, soba görünür. Seçilen
   operatör yalnız kameranın işareti olarak duruyor; lobiye girişte
   operatörün düşüşü, toz bulutu ve sarsıntı da yok.
-- Yüz resimleri yerine rozet (`ui/portraits.js avatar`): koyu bir plaka
-  üstünde çağrı adının ilk harfi (F, W, V, S, B; HAWK için H), altta
-  operatörün rengi. Lobideki seçim, üst çubuk, operatör listesi ve dosya,
-  hazırlık ekranı ve profil bu rozeti kullanıyor.
+- Yüz resimleri yerine **polis kayıt fotoğrafı** (`ui/portraits.js avatar`):
+  operatörün kendi kafa ve omuz silueti (kendi iskeletinden, kask, bere,
+  saç profilden tanınır) simsiyah, arkada boy çizgili sıralama duvarı
+  (150–190), tepeden tek sert lamba, duvara düşen yumuşak gölge, siluetin
+  üst kenarında soğuk bir ışık çizgisi; göğüste dosya numaralı levha (K-03…
+  K-07, operatör dosyalarındaki numaralar) ve üstünde operatörün rengi.
+  Kenarlar kararır, eski baskı gibi grenli. Lobideki seçim, üst çubuk,
+  operatör listesi ve dosya, hazırlık ekranı ve profil bunu kullanıyor.
+  (İlk deneme harfli rozetti; polisiye hava için siluet seçildi.)
+- HAWK'ın iskeleti yok: silueti elle çizildi (kasket, sakal, yaka, sigara,
+  dumanı), levhası M-01 (muhbir).
 - Tüccar ekranında HAWK'ın yüzü yerine tezgâh: çıplak ampulün altında
+  duvara vuran ışıkta HAWK'ın silueti, sigarasının dumanı, sağında
   istiflenmiş üç sandık (`stallPic`).
 - Mağaza kapağında beş operatör siyah siluet, arkalarındaki fırının kor
   ışığıyla çevrelenmiş (ayrıntı görünmüyor). Lobi ve operatörler ekran
