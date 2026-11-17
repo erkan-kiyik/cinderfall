@@ -702,3 +702,24 @@ Geliştirici kısayolu: `index.html?scene=mission&m=m2&op=kite` görevi
 seçilen operatörle açar.
 
 Çizim sürümü `d4-64`.
+
+### 10.39 Menülerde karakter yok
+
+Karakter tasarımları beğenilmedi; karar: **oyun dışında karakterler öne
+çıkmaz.** Görevlerde ve filmlerde her şey aynı kalır.
+
+- Lobi ve öbür menülerin arkasındaki bodrum sahnesi operatörü çizmiyor
+  (`game/showcase.js hidePlayer`): lamba, harita, soba görünür. Seçilen
+  operatör yalnız kameranın işareti olarak duruyor; lobiye girişte
+  operatörün düşüşü, toz bulutu ve sarsıntı da yok.
+- Yüz resimleri yerine rozet (`ui/portraits.js avatar`): koyu bir plaka
+  üstünde çağrı adının ilk harfi (F, W, V, S, B; HAWK için H), altta
+  operatörün rengi. Lobideki seçim, üst çubuk, operatör listesi ve dosya,
+  hazırlık ekranı ve profil bu rozeti kullanıyor.
+- Tüccar ekranında HAWK'ın yüzü yerine tezgâh: çıplak ampulün altında
+  istiflenmiş üç sandık (`stallPic`).
+- Mağaza kapağında beş operatör siyah siluet, arkalarındaki fırının kor
+  ışığıyla çevrelenmiş (ayrıntı görünmüyor). Lobi ve operatörler ekran
+  görüntüleri yeniden alındı; görev görüntüleri oyun içi olduğu için kaldı.
+- Boyanmış yüzler silinmedi: `facePortrait` ve `hawkFace` geliştirici
+  sayfalarında (`dev/_avatars.html`, `sheet.html?what=avatars`) duruyor.

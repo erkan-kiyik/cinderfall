@@ -4,7 +4,7 @@
 import { h, svg, press, popIn, ui, deny, toast } from '../kit.js';
 import { t, num } from '../i18n.js';
 import { hubbar, refreshCur } from './common.js';
-import { weaponPic, hawkPic, crateArt } from '../portraits.js';
+import { weaponPic, stallPic, crateArt } from '../portraits.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 import { CRATES } from '../data.js';
 import { SKIN, traderStock, traderBuy, traderSold, owns, hasSkin } from '../../core/economy.js';
@@ -12,7 +12,7 @@ import { SKIN, traderStock, traderBuy, traderSold, owns, hasSkin } from '../../c
 export const trader = {
   mount(ctx) {
     const left = h('div.card.cut.hawk-card',
-      h('div.portrait', hawkPic(360), h('div.h1', 'HAWK')),
+      h('div.portrait', stallPic(360), h('div.h1', 'HAWK')),
       h('div.eyebrow.accent', h('span.dot'), t('trader.k')),
       h('p.body.typed', { style: { margin: 0, fontSize: '12px' } }, t('trader.bio')),
       h('div.quote', t('trader.line')));

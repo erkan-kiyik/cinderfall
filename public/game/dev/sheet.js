@@ -206,7 +206,7 @@ if (what === 'valilik') {
 }
 if (what === 'avatars') {
   // the menu portraits at the sizes the menus use, and large
-  const { avatar } = await import('../js/ui/portraits.js');
+  const { facePortrait: avatar } = await import('../js/ui/portraits.js');
   for (const px of [30, 46, 64, 160]) { const r = row(); for (const id of ['vex', 'hale', 'morrow', 'kite', 'brick']) r.appendChild(avatar(id, px)); }
 }
 if (what === 'weapons') {

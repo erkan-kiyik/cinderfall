@@ -204,7 +204,8 @@ export class M2Scene {
     const chars = this._chars || (this._chars = []);
     chars.length = 0;
     for (const c of this.enemies) if (!this.offView(c.rag ? c.rx : c.m.x, 130)) chars.push(c);
-    chars.push(this.player);
+    // the menus' backdrop keeps its operator out of the picture (docs §10.39)
+    if (!this.hidePlayer) chars.push(this.player);
     for (const c of chars) c.prepare(alpha);
     this.cr.begin(chars);
     // lights
@@ -242,7 +243,7 @@ export class M2Scene {
     if (out) {
       this.life.step(t, cam);
       // boots coming down on the wet street splash
-      for (const c of [...this.enemies, this.player]) if (c && c.anim.plant) { this.life.kick(c.rx + c.facing * (c.anim.plant === 1 ? -1.5 : 2.5), c.ry); c.anim.plant = 0; }
+      for (const c of [...this.enemies, this.hidePlayer ? null : this.player]) if (c && c.anim.plant) { this.life.kick(c.rx + c.facing * (c.anim.plant === 1 ? -1.5 : 2.5), c.ry); c.anim.plant = 0; }
       layer('sky', this.viewFor('sky', PLX.sky, cam.x));
       const vFar = this.viewFor('far', PLX.far, 300);
       layer('far', vFar);

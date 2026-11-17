@@ -1,6 +1,6 @@
-// KOR — small painted pictures for the menus: operator avatars
-// (head and shoulders, lit like the opening) and weapon side views, painted
-// once and cached.
+// KOR — small painted pictures for the menus: operator badges (the painted
+// faces are kept for the dev sheets: docs §10.39) and weapon side views,
+// painted once and cached.
 import { outlined, setRoot, canvas, rng, cel, fill, stroke, clip, metalOver } from '../art/kit.js';
 import { tone, mat } from '../art/style.js';
 import { drawFigure, solve } from '../art/figure.js';
@@ -25,11 +25,43 @@ function copy(src, cssW, cssH) {
   return c;
 }
 
-// head and shoulders of an operator, `px` CSS pixels square
+// The menus show no faces (docs §10.39): an operator is a badge, the
+// callsign's first letter stencilled on a dark plate with a stripe of their
+// colour. The painted faces are still here (facePortrait) for the dev sheets.
+const BADGE = { vex: ['F', '#d9533a'], hale: ['W', '#e6c25c'], morrow: ['V', '#a3ad7f'], kite: ['S', '#7ec8ff'], brick: ['B', '#e2782f'], hawk: ['H', '#e0a24a'] };
 export function avatar(id, px = 44) {
+  const key = `b:${id}:${px}:${dpr()}`;
+  if (!cache.has(key)) cache.set(key, paintBadge(...(BADGE[id] || ['?', '#a39b8f']), Math.round(px * dpr())));
+  return copy(cache.get(key), px, px);
+}
+// head and shoulders of an operator, as painted for the menus before §10.39
+export function facePortrait(id, px = 44) {
   const key = `a:${id}:${px}:${dpr()}`;
   if (!cache.has(key)) cache.set(key, paintAvatar(id, Math.round(px * dpr())));
   return copy(cache.get(key), px, px);
+}
+function paintBadge(letter, color, size) {
+  const c = canvas(size, size), g = c.getContext('2d');
+  // a soot-dark plate, warmer toward the bottom, a little light from above
+  const bg = g.createLinearGradient(0, 0, 0, size);
+  bg.addColorStop(0, '#221b16'); bg.addColorStop(1, '#100c0a');
+  g.fillStyle = bg; g.fillRect(0, 0, size, size);
+  const lit = g.createRadialGradient(size * 0.5, -size * 0.2, 0, size * 0.5, -size * 0.2, size * 1.1);
+  lit.addColorStop(0, 'rgba(255,214,170,0.14)'); lit.addColorStop(1, 'rgba(255,214,170,0)');
+  g.fillStyle = lit; g.fillRect(0, 0, size, size);
+  // the stripe of the operator's colour along the foot
+  g.fillStyle = color; g.fillRect(0, size * 0.84, size, size * 0.16);
+  g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, size * 0.84, size, Math.max(1, size * 0.02));
+  // the letter, stencilled
+  g.fillStyle = '#efe6d6'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = `800 ${Math.round(size * 0.62)}px 'Big Shoulders Stencil', 'Big Shoulders', sans-serif`;
+  g.shadowColor = 'rgba(0,0,0,0.6)'; g.shadowBlur = size * 0.04; g.shadowOffsetY = size * 0.02;
+  g.fillText(letter, size * 0.5, size * 0.44);
+  g.shadowColor = 'transparent';
+  // grain, so it sits with the paper and paint around it
+  const r = rng(letter.charCodeAt(0) * 97 + size);
+  for (let i = 0; i < size * size * 0.02; i++) { g.fillStyle = r() < 0.5 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.08)'; g.fillRect(r() * size, r() * size, 1, 1); }
+  return c;
 }
 
 // Lit like the opening: the burning city behind, the fires low on the right,
@@ -115,7 +147,33 @@ export function crateArt(color, px = 96) {
 }
 
 // HAWK at his stall, `px` CSS pixels square
-export function hawkPic(px = 64) {
+// HAWK's stall for the trader screen (no face, docs §10.39): seized crates
+// stacked under a bare bulb, the market's dark behind
+export function stallPic(px = 360) {
+  const key = `s:${px}:${dpr()}`;
+  if (!cache.has(key)) {
+    // wide, like the card it sits in; the crates to the right, clear of the name
+    const W = Math.round(px * dpr()), H = Math.round(W * 0.56), c = canvas(W, H), g = c.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#120e0c'); bg.addColorStop(1, '#261b13');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const bx = W * 0.7, by = H * 0.14;
+    const bulb = g.createRadialGradient(bx, by, 0, bx, by, W * 0.55);
+    bulb.addColorStop(0, 'rgba(255,196,120,0.5)'); bulb.addColorStop(0.35, 'rgba(255,150,70,0.15)'); bulb.addColorStop(1, 'rgba(255,150,70,0)');
+    g.fillStyle = bulb; g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(30,24,20,0.9)'; g.lineWidth = Math.max(1, W * 0.004); g.beginPath(); g.moveTo(bx, 0); g.lineTo(bx, by - W * 0.02); g.stroke();
+    g.fillStyle = '#ffe2b0'; g.beginPath(); g.ellipse(bx, by, W * 0.013, W * 0.018, 0, 0, Math.PI * 2); g.fill();
+    // three seized crates: two on the floor, one on top
+    const crate = (band, x, y, k) => { const m = Math.round(W * k), cc = canvas(m, m); paintCrate(cc.getContext('2d'), m, { band, label: CRATE_LABEL[band] }); g.drawImage(cc, x * W - m / 2, y * H - m / 2); };
+    crate('#a39b8f', 0.56, 0.66, 0.36); crate('#6aa6d6', 0.84, 0.68, 0.34); crate('#e6a93c', 0.7, 0.4, 0.32);
+    cache.set(key, c);
+  }
+  const c = cache.get(key);
+  return copy(c, px, Math.round(px * c.height / c.width));
+}
+// HAWK in the menus: a badge like the operators' (docs §10.39); the painted
+// face stays for the dev sheets (hawkFace)
+export function hawkPic(px = 64) { return avatar('hawk', px); }
+export function hawkFace(px = 64) {
   const key = `h:${px}:${dpr()}`;
   if (!cache.has(key)) { const n = Math.round(px * dpr()), c = canvas(n, n); paintHawk(c.getContext('2d'), n, 1); cache.set(key, c); }
   return copy(cache.get(key), px, px);

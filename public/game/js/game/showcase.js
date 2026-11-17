@@ -1,10 +1,10 @@
 // KOR — the live backdrop behind the menus.
 //
 // The cells' basement (docs §10.9): the lamp swinging over the map table,
-// the stove, the radio's light; a slow camera drift, and the selected
-// operator standing at low ready with their loadout, breathing and glancing
-// around. Switching operators drops the new one in with a landing; the menus
-// only say where on screen the operator should stand (focus) and how close.
+// the stove, the radio's light; a slow camera drift. The selected operator
+// is kept as the camera's mark but not drawn: outside the missions the
+// menus show the room, not the characters (docs §10.39). The menus only say
+// where on screen that mark should sit (focus) and how close.
 import { M2Scene } from '../test/m2scene.js';
 import { Level, T } from '../phys/level.js';
 import { Mover } from '../phys/mover.js';
@@ -39,6 +39,7 @@ export class Showcase extends M2Scene {
     // dust turning in the lamp's light; the lamp swings, harder after a knock
     this.motes = new ParticleSystem(eng.gl, eng.atlas, eng.atlas.get('fx.dot'), 160, { additive: true });
     this.swing = 0.24;
+    this.hidePlayer = true;
     this.setOperator('vex', null);
   }
 
@@ -51,8 +52,7 @@ export class Showcase extends M2Scene {
     this.opId = id; this.landed = false; this.look = 0;
   }
 
-  // after the opening: start wide and high so the camera settles in as the
-  // operator (set next) drops from above the frame
+  // after the opening: start wide and high so the camera settles into the room
   entrance() { this.e.camera.viewH = 168; this.cam.y -= 30; this.swing = 0.5; }
 
   // the lamp: its angle and the bulb's place (the pivot at the ceiling)
@@ -79,7 +79,7 @@ export class Showcase extends M2Scene {
     P.preStep();
     m.step(dt, { moveX: 0, face: 1 });
     P.postStep(dt, this.L);
-    if (m.ev.land && !this.landed) { const hard = m.ev.land > 320; this.landed = true; this.puff(m.x, m.y, hard ? 14 : 8, hard ? 1.3 : 0.9); this.e.camera.addShake(hard ? 0.18 : 0.08); }
+    if (m.ev.land && !this.landed) { const hard = m.ev.land > 320; this.landed = true; if (!this.hidePlayer) { this.puff(m.x, m.y, hard ? 14 : 8, hard ? 1.3 : 0.9); this.e.camera.addShake(hard ? 0.18 : 0.08); } }
     this.swing += (0.24 - this.swing) * Math.min(1, dt * 0.25);
     // dust in the lamp's cone, the cigarette's smoke off the ashtray
     const [lx, ly] = this.lampAt();
