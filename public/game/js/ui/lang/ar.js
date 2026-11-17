@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'مهام اليوم', 'daily.claimed': 'تم الاستلام', 'daily.rules': 'تتجدد المهام كل منتصف ليل. يأتي التقدم من المهام والنمط اللانهائي.',
   'daily.kills': 'أسقط {n} أعداء', 'daily.heads': 'أصب {n} طلقات في الرأس', 'daily.mission': 'أنهِ مهمة من الحملة', 'daily.stars': 'اكسب {n} نجوم في المهام',
   'daily.endless': 'اجتز {n} موجات في النمط اللانهائي', 'daily.shots': 'أطلق {n} طلقة',
+  'login.title': 'المكافأة اليومية', 'login.kicker': 'بطاقة الحضور · الأسبوع {n}', 'login.day': 'اليوم {n}', 'login.claim': 'استلم',
+  'login.stock': 'أُضيف صندوق {c} إلى مخزونك', 'login.rules': 'مرّ كل يوم وخانة ذلك اليوم لك. في اليوم السابع صندوق {c}. إن فاتك يوم لا تُمحى البطاقة؛ تكمل من حيث توقفت.', 'login.tomorrow': 'الخانة التالية غدًا',
   'camp.title': 'خط الجمر', 'camp.kicker': 'الحملة', 'camp.act': 'الفصل {n}', 'camp.mission': 'المهمة {n}',
   'camp.act1': 'الدخول', 'camp.act2': 'العمق', 'camp.act3': 'الانهيار',
   'camp.prepare': 'التجهيز', 'camp.best': 'أفضل وقت', 'camp.diff': 'الصعوبة',

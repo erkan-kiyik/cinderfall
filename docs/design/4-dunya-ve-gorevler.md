@@ -642,3 +642,40 @@ dilin hepsinde eksik anahtarı ve yer tutucuyu yakalar.
   oyunun kopyası değil.
 
 Çizim sürümü `d4-65` (telefonlar yeniden boyar).
+
+### 10.40 Cephanelik simgesi, günlük ödül
+
+**Cephanelik simgesi.** Üst menüdeki simge köşeli bir tabancaydı; küçük
+boyda bir blok gibi okunuyordu. Yerine yandan bir tüfek silueti geldi
+(dipçik, gövde, nişangâh rayı, el kundağı, namlu, arpacık, kabza, şarjör);
+16 ve 24 pikselde de tüfek olarak okunur (`kit.js ICONS.gun`; Cephanelik
+ekranındaki "Kuşan" düğmesi de aynı simgeyi kullanır).
+
+**Günlük ödül: yoklama kartı.** Kraft kâğıttan bir kart, yedi kutu; her gün
+oyuna gelen o günün kutusunu alır, kutunun üstüne kırmızı "ALINDI" damgası
+iner.
+
+| Gün | Ödül |
+| --- | --- |
+| 1 | 100 Parça |
+| 2 | 150 Parça |
+| 3 | Erzak sandığı |
+| 4 | 250 Parça |
+| 5 | Mühimmat sandığı |
+| 6 | 400 Parça |
+| 7 | Komuta sandığı + 300 Parça |
+
+- Bir hafta: 1.200 Parça ve üç sandık (satış değeri 2.650 Parça). Sandıklar
+  stoğa girer, Sandıklar ekranında "Stoktan aç" ile bedava açılır.
+- Bir gün kaçırmak kartı silmez: bir sonraki gelişte sıradaki kutu alınır.
+  Yedinci kutudan sonra yeni kart başlar (2. hafta, 3. hafta…).
+- Gün telefonun yerel tarihidir (gece yarısı yenilenir, görevlerle aynı).
+- Lobi kartı günde bir kez kendisi açar: açılış, film ya da başka bir
+  pencere bitince. Kapatılırsa ödül kaybolmaz: lobideki Görevler notunda
+  kırmızı hediye etiketi yanıp söner, Görevler ekranının solunda kart ve
+  "Ödülü al" düğmesi durur. Alınınca "Sıradaki kutu yarın" yazar.
+- Kural `core/economy.js` (`LOGIN`, `loginCard`, `claimLogin`), kayıt
+  `login: { day, n }` (eski kayıtlara boş kart eklenir), görünüş
+  `ui/login.js`. Testi `tools/game/login.test.mjs`: yedi gün üst üste,
+  aynı gün ikinci alma, boşluklu günler, yeni hafta, eski kayıt.
+- Metinler on dilde.

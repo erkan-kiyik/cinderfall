@@ -4,7 +4,8 @@
 import { h, svg, press, popIn, ui, spring, reduced, fitText } from '../kit.js';
 import { t } from '../i18n.js';
 import { hubbar, stars } from './common.js';
-import { dailyDone, traderStock, traderSold } from '../../core/economy.js';
+import { dailyDone, traderStock, traderSold, loginReady } from '../../core/economy.js';
+import { offerLogin } from '../login.js';
 import { avatar, hawkPic } from '../portraits.js';
 import { OPS, MISSIONS, opName } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
@@ -43,9 +44,11 @@ export const lobby = {
       h('span', t('lobby.next', { n: next.id.slice(1), name: t(`mission.${next.id}`) }), best ? ' · ' : '', best ? stars(best.stars, 12) : null),
       svg('arrow')), { scale: 0.97, sound: null, buzz: 'soft' });
     const done = dailyDone(d), rec = d.records.endless;
+    // a red tab on the tasks note while today's reward box waits (docs §10.40)
+    let ping = loginReady(d) ? h('span.ping', { title: t('login.title') }, svg('gift')) : null;
     const tiles = h('div.side-grid',
       press(h('button.tile.note', { type: 'button', onclick: () => { ui('confirm'); ctx.router.go('daily'); } },
-        h('div.eyebrow', t('mode.daily')), h('div.big', String(done), h('small', ' / 3')), h('div.meter.cyan', h('i', { style: { width: `${Math.round((done / 3) * 100)}%` } }))), { sound: null, buzz: 'soft' }),
+        ping, h('div.eyebrow', t('mode.daily')), h('div.big', String(done), h('small', ' / 3')), h('div.meter.cyan', h('i', { style: { width: `${Math.round((done / 3) * 100)}%` } }))), { sound: null, buzz: 'soft' }),
       press(h('button.tile.cut', { type: 'button', onclick: () => { ui('confirm'); ctx.router.go('prep', { mission: 'endless' }); } },
         h('div.eyebrow', t('mode.endless')), h('div.big', rec ? String(rec) : '—', h('small', ' ', t('lobby.record'))), h('div.eyebrow', { style: { color: 'var(--n5)' } }, t('lobby.boss5'))), { sound: null, buzz: 'soft' }));
     const st = traderStock(d), left = [...st.daily, st.weekly].filter((it) => !traderSold(d, it)).length;
@@ -68,6 +71,16 @@ export const lobby = {
     };
     let unfit = null;
     const quiet = () => { clearInterval(cycle); clearInterval(typing); };
+    // today's reward card, once the lobby is clear: not over the opening, a film or another dialog
+    let offerT = 0;
+    const offer = (ms) => {
+      clearTimeout(offerT);
+      offerT = setTimeout(() => {
+        if (!el.isConnected || el.style.display === 'none') return;
+        if (document.querySelector('#intro, .cine-tap, .cine, .scrim')) return offer(1200);
+        offerLogin(ctx.save, { onTaken: () => { ping?.remove(); ping = null; } });
+      }, ms);
+    };
     let hub = hubbar(ctx, 'lobby');
     const el = h('div',
       hub,
@@ -76,8 +89,8 @@ export const lobby = {
         h('section.lobby-side.veil-r', play, tiles, crow)));
     return {
       el,
-      hide: quiet,
-      dispose() { quiet(); unfit?.(); },
+      hide() { quiet(); clearTimeout(offerT); },
+      dispose() { quiet(); clearTimeout(offerT); unfit?.(); },
       show() {
         // GÖREVE ÇIK on one line, whatever the language and the screen
         unfit?.(); unfit = fitText(word);
@@ -86,6 +99,7 @@ export const lobby = {
         if (radio) { quiet(); li = 0; say(); cycle = setInterval(say, 6500); }
         // after the opening: the camera pushes in, the operator drops onto the street and the panels slide in
         const first = params.entrance && !reduced();
+        if (loginReady(ctx.save.d)) offer(params.entrance ? 1600 : 450);
         if (first) ctx.showcase.entrance();
         renderOp();
         if (first) {

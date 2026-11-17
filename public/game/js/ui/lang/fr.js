@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'Tâches du jour', 'daily.claimed': 'Récupérée', 'daily.rules': 'Les tâches se renouvellent chaque nuit à minuit. La progression vient des missions et du mode infini.',
   'daily.kills': 'Neutralise {n} ennemis', 'daily.heads': 'Réussis {n} tirs à la tête', 'daily.mission': 'Termine une mission de campagne', 'daily.stars': 'Gagne {n} étoiles en mission',
   'daily.endless': 'Passe {n} vagues en mode infini', 'daily.shots': 'Tire {n} fois',
+  'login.title': 'Récompense du jour', 'login.kicker': 'Carte d’appel · semaine {n}', 'login.day': 'Jour {n}', 'login.claim': 'Récupérer',
+  'login.stock': 'Caisse de {c} ajoutée au stock', 'login.rules': 'Passe chaque jour et la case du jour est à toi. Le septième jour, une caisse de {c}. Un jour manqué n’efface pas la carte : tu reprends où tu en étais.', 'login.tomorrow': 'Prochaine case demain',
   'camp.title': 'Ligne Braise', 'camp.kicker': 'Campagne', 'camp.act': 'Acte {n}', 'camp.mission': 'Mission {n}',
   'camp.act1': 'Entrée', 'camp.act2': 'Profondeur', 'camp.act3': 'Effondrement',
   'camp.prepare': 'Préparer', 'camp.best': 'Meilleur temps', 'camp.diff': 'Difficulté',

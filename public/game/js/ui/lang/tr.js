@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'Bugünün görevleri', 'daily.claimed': 'Alındı', 'daily.rules': 'Görevler her gece yarısı yenilenir. İlerleme görevlerden ve sonsuz moddan gelir.',
   'daily.kills': '{n} düşman etkisiz hale getir', 'daily.heads': '{n} kafadan vuruş yap', 'daily.mission': 'Bir kampanya görevini bitir', 'daily.stars': 'Görevlerde {n} yıldız topla',
   'daily.endless': 'Sonsuz modda {n} dalga temizle', 'daily.shots': '{n} el ateş et',
+  'login.title': 'Günlük ödül', 'login.kicker': 'Yoklama kartı · {n}. hafta', 'login.day': '{n}. gün', 'login.claim': 'Ödülü al',
+  'login.stock': '{c} sandığı stoğa eklendi', 'login.rules': 'Her gün uğra, o günün kutusu senin. Yedinci gün {c} sandığı. Bir gün kaçırırsan kart silinmez; kaldığın yerden devam edersin.', 'login.tomorrow': 'Sıradaki kutu yarın',
   'camp.title': 'Kor Hattı', 'camp.kicker': 'Kampanya', 'camp.act': 'Perde {n}', 'camp.mission': 'Görev {n}',
   'camp.act1': 'Giriş', 'camp.act2': 'Derinlik', 'camp.act3': 'Çöküş',
   'camp.prepare': 'Hazırlık', 'camp.best': 'En iyi süre', 'camp.diff': 'Zorluk',

@@ -66,6 +66,8 @@ export default {
   'daily.kicker': '今日任务', 'daily.claimed': '已领取', 'daily.rules': '任务每天午夜刷新。进度来自战役任务和无尽模式。',
   'daily.kills': '击倒 {n} 名敌人', 'daily.heads': '命中 {n} 次爆头', 'daily.mission': '完成一个战役任务', 'daily.stars': '在任务中获得 {n} 颗星',
   'daily.endless': '在无尽模式中通过 {n} 波', 'daily.shots': '开火 {n} 次',
+  'login.title': '每日奖励', 'login.kicker': '点名卡 · 第{n}周', 'login.day': '第{n}天', 'login.claim': '领取',
+  'login.stock': '{c}箱已放入库存', 'login.rules': '每天来一次，当天的格子就归你。第七天是{c}箱。漏掉一天卡片也不会清空，从上次停下的地方继续。', 'login.tomorrow': '下一格明天开放',
   'camp.title': '余烬线', 'camp.kicker': '战役', 'camp.act': '第 {n} 幕', 'camp.mission': '任务 {n}',
   'camp.act1': '潜入', 'camp.act2': '深入', 'camp.act3': '崩塌',
   'camp.prepare': '准备', 'camp.best': '最佳时间', 'camp.diff': '难度',

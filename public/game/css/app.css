@@ -174,6 +174,7 @@
 .m-title { margin: 0; font: 800 26px/1 var(--f-stencil); letter-spacing: 0.06em; color: var(--ink); text-transform: uppercase; }
 .m-body { font: 400 14px/1.5 var(--f-type); color: #33281d; }
 .m-body p { margin: 0 0 8px; }
+.modal .eyebrow.accent { color: var(--union); }
 .m-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 4px; }
 .modal .btn.ghost, .modal .btn.secondary { background: rgba(42,32,24,0.08); box-shadow: inset 0 0 0 1px rgba(42,32,24,0.4); color: var(--ink); }
 .toasts { position: fixed; top: 62px; left: 50%; transform: translateX(-50%); z-index: 30; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; zoom: var(--zoom, 1); }
@@ -532,7 +533,8 @@ button.skin { flex: none; padding: 0; cursor: pointer; }
 .ware.sold { opacity: 0.6; }
 .quote { padding: 8px 10px; background: rgba(12,10,9,0.5); border-left: 3px solid var(--ember); font: 400 12.5px/1.45 var(--f-type); color: var(--n7); margin-top: auto; }
 /* today's work orders */
-.daily-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px 40%; }
+.daily-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; align-items: start; padding: 16px 14px 12px; overflow: auto; }
+.daily-tasks { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tasks { display: flex; flex-direction: column; gap: 10px; }
 .task { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 12px 10px 16px; color: var(--ink);
   background: var(--fibre), linear-gradient(172deg, #efe6cf, #d9caa6) !important; box-shadow: 0 6px 12px rgba(0,0,0,0.45) !important; }
@@ -546,6 +548,50 @@ button.skin { flex: none; padding: 0; cursor: pointer; }
 .task .btn.secondary { background: rgba(42,32,24,0.85); color: var(--kraft-hi); }
 .task.done { opacity: 0.6; }
 .task.done b { text-decoration: line-through; text-decoration-color: var(--union); text-decoration-thickness: 2px; }
+/* the daily reward (docs §10.40): a roll-call card, seven boxes, a red stamp on each one taken */
+.modal.wide { width: min(780px, 94%); }
+.lcard { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lrow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) minmax(0, 1.45fr); gap: 6px; }
+.lbox { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 3px; min-width: 0; min-height: 96px; padding: 7px 3px 8px;
+  color: var(--ink); text-align: center; background: rgba(255,248,230,0.3); box-shadow: inset 0 0 0 1px rgba(42,32,24,0.35); }
+.lbox .d { font: 700 10px/1 var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; color: #6b5840; white-space: nowrap; }
+.lbox .art { flex: 1; min-height: 30px; display: grid; place-items: center; }
+.lbox .art .ic { width: 28px; height: 28px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35)); }
+.lbox .art canvas { max-width: 100%; height: auto !important; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.4)); }
+.lbox .nm { max-width: 100%; font: 700 10px/1.1 var(--f-display); letter-spacing: 0.04em; text-transform: uppercase; color: #4a3a28; overflow-wrap: anywhere; }
+.lbox b { font: 800 15px/1 var(--f-num); color: var(--ink); letter-spacing: 0.02em; }
+.lbox.d7 { background: linear-gradient(180deg, rgba(230,169,60,0.38), rgba(230,169,60,0.12)); box-shadow: inset 0 0 0 1px rgba(140,90,20,0.6); }
+.lbox.d7 .d { color: #8a5a14; }
+.lbox.today { background: rgba(226,105,47,0.2); box-shadow: inset 0 0 0 2px var(--ember), 0 0 12px rgba(226,105,47,0.45); animation: lday 1.6s ease-in-out infinite; }
+.lbox.later { opacity: 0.8; }
+.lbox.taken > :not(.stamp) { opacity: 0.38; filter: grayscale(0.8); }
+.lbox .stamp { position: absolute; left: 50%; top: 54%; transform: translate(-50%, -50%) rotate(-14deg); padding: 3px 5px 2px; border: 2px solid #b0302a; border-radius: 3px;
+  color: #b0302a; font: 800 11px/1.05 var(--f-stencil); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; max-width: 94%; width: max-content; opacity: 0; pointer-events: none; mix-blend-mode: multiply; }
+.lbox.taken .stamp { opacity: 0.9; }
+@keyframes lday { 50% { box-shadow: inset 0 0 0 2px var(--ember-hi), 0 0 20px rgba(226,105,47,0.75); } }
+.lrules { margin: 0; font: 400 12px/1.4 var(--f-type); color: #4a3a28; }
+/* on the tasks screen: the card on the left, four boxes to a row, the seventh twice as wide */
+.lcard.paper { padding: 16px 12px 12px; transform: rotate(-0.6deg); }
+.lcard.paper .lrow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lcard.paper { gap: 7px; }
+.lcard.paper .lbox { min-height: 64px; padding: 5px 2px 6px; gap: 2px; }
+.lcard.paper .lbox .art { min-height: 22px; }
+.lcard.paper .lbox .art .ic { width: 22px; height: 22px; }
+.lcard.paper .lbox .art canvas { width: auto !important; max-height: 30px; }
+.lcard.paper .lbox b { font-size: 13px; }
+.lcard.paper .lrules { font-size: 11px; line-height: 1.35; }
+.lcard.paper .lbox.d7 { grid-column: span 2; }
+.lhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lhead .h3 { margin-top: 3px; }
+.lfoot { flex: none; display: flex; justify-content: flex-end; align-items: center; }
+.lfoot .eyebrow { display: inline-flex; gap: 6px; align-items: center; }
+.lfoot .eyebrow .ic { width: 14px; height: 14px; }
+/* the lobby's tasks note wears a red tab while today's box waits */
+.side-grid .tile .ping { position: absolute; top: 4px; right: 30px; width: 22px; height: 22px; display: grid; place-items: center; background: #b8352b; color: #fff3e0;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.4); animation: lping 1.4s ease-in-out infinite; }
+.side-grid .tile .ping .ic { width: 14px; height: 14px; }
+@keyframes lping { 50% { transform: scale(1.14); } }
+@media (prefers-reduced-motion: reduce) { .lbox.today, .side-grid .tile .ping { animation: none; } }
 /* the price of a weapon you do not own sits by its name */
 .tile .lockbadge.price { top: auto; bottom: 8px; right: 8px; color: var(--ember-hi); font: 800 13px/1 var(--f-num); }
 .tile.locked > b { padding-right: 52px; }

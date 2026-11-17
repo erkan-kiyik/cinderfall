@@ -175,3 +175,36 @@ export function claimDaily(save, i) {
   return pay;
 }
 export const dailyDone = (d) => (d.daily.day === dayKey() ? d.daily.tasks.filter((k) => k.n >= TASKS[k.id].goal).length : 0);
+
+// --- the daily reward: a card of seven boxes, one a day (docs §10.40) ----------------------
+// Come by on a day and that day's box is yours: PARÇA, or a crate into the stock;
+// the seventh is a Komuta crate with PARÇA on top. A missed day does not wipe the
+// card: the next visit takes the next box. After the seventh a new card starts.
+export const LOGIN = [
+  { parca: 100 },
+  { parca: 150 },
+  { crate: 'std' },
+  { parca: 250 },
+  { crate: 'plus' },
+  { parca: 400 },
+  { crate: 'crow', parca: 300 },
+];
+export const loginReady = (d, now = new Date()) => d.login.day !== dayKey(now);
+// what the card shows: the week it is on, how many boxes are stamped, and the box
+// of the day (the one to take, or the one taken today)
+export function loginCard(d, now = new Date()) {
+  const n = d.login.n || 0, ready = loginReady(d, now);
+  if (ready) return { ready, week: Math.floor(n / 7) + 1, stamped: n % 7, today: n % 7 };
+  return { ready, week: Math.floor((n - 1) / 7) + 1, stamped: ((n - 1) % 7) + 1, today: (n - 1) % 7 };
+}
+// take today's box: returns { i, parca, crate } or null when it was taken already
+export function claimLogin(save, now = new Date()) {
+  if (!loginReady(save.d, now)) return null;
+  const i = (save.d.login.n || 0) % 7, r = LOGIN[i];
+  save.set((d) => {
+    d.login.day = dayKey(now); d.login.n = (d.login.n || 0) + 1;
+    if (r.parca) d.profile.parca += r.parca;
+    if (r.crate) d.inv.crates[r.crate] = (d.inv.crates[r.crate] || 0) + 1;
+  });
+  return { i, ...r };
+}

@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'Tarefas de hoje', 'daily.claimed': 'Resgatada', 'daily.rules': 'As tarefas renovam toda meia-noite. O progresso vem das missões e do modo infinito.',
   'daily.kills': 'Derrube {n} inimigos', 'daily.heads': 'Acerte {n} tiros na cabeça', 'daily.mission': 'Conclua uma missão da campanha', 'daily.stars': 'Ganhe {n} estrelas em missões',
   'daily.endless': 'Vença {n} ondas no modo infinito', 'daily.shots': 'Dispare {n} tiros',
+  'login.title': 'Recompensa diária', 'login.kicker': 'Cartão de presença · semana {n}', 'login.day': 'Dia {n}', 'login.claim': 'Resgatar',
+  'login.stock': 'Caixa de {c} adicionada ao estoque', 'login.rules': 'Passe aqui todo dia e a casa do dia é sua. No sétimo dia, uma caixa de {c}. Se perder um dia, o cartão não é apagado: você continua de onde parou.', 'login.tomorrow': 'Próxima casa amanhã',
   'camp.title': 'Linha Brasa', 'camp.kicker': 'Campanha', 'camp.act': 'Ato {n}', 'camp.mission': 'Missão {n}',
   'camp.act1': 'Entrada', 'camp.act2': 'Fundo', 'camp.act3': 'Colapso',
   'camp.prepare': 'Preparar', 'camp.best': 'Melhor tempo', 'camp.diff': 'Dificuldade',

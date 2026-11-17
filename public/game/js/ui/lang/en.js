@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'Today’s tasks', 'daily.claimed': 'Claimed', 'daily.rules': 'Tasks renew every midnight. Progress comes from missions and endless runs.',
   'daily.kills': 'Take down {n} enemies', 'daily.heads': 'Land {n} headshots', 'daily.mission': 'Finish a campaign mission', 'daily.stars': 'Earn {n} stars in missions',
   'daily.endless': 'Clear {n} waves in endless mode', 'daily.shots': 'Fire {n} shots',
+  'login.title': 'Daily reward', 'login.kicker': 'Roll call · week {n}', 'login.day': 'Day {n}', 'login.claim': 'Claim',
+  'login.stock': '{c} crate added to your stock', 'login.rules': 'Drop by every day and that day’s box is yours. Day seven holds a {c} crate. Miss a day and the card is not wiped: you pick up where you left off.', 'login.tomorrow': 'Next box tomorrow',
   'camp.title': 'Ember Line', 'camp.kicker': 'Campaign', 'camp.act': 'Act {n}', 'camp.mission': 'Mission {n}',
   'camp.act1': 'Entry', 'camp.act2': 'Depth', 'camp.act3': 'Collapse',
   'camp.prepare': 'Prepare', 'camp.best': 'Best time', 'camp.diff': 'Difficulty',

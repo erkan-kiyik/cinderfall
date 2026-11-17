@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'आज के काम', 'daily.claimed': 'ले लिया', 'daily.rules': 'काम हर आधी रात को नए होते हैं। प्रगति मिशनों और अंतहीन मोड से मिलती है।',
   'daily.kills': '{n} दुश्मनों को गिराओ', 'daily.heads': '{n} हेडशॉट लगाओ', 'daily.mission': 'एक अभियान मिशन पूरा करो', 'daily.stars': 'मिशनों में {n} सितारे कमाओ',
   'daily.endless': 'अंतहीन मोड में {n} लहरें पार करो', 'daily.shots': '{n} गोलियाँ चलाओ',
+  'login.title': 'दैनिक इनाम', 'login.kicker': 'हाज़िरी कार्ड · सप्ताह {n}', 'login.day': 'दिन {n}', 'login.claim': 'इनाम लें',
+  'login.stock': '{c} बक्सा स्टॉक में जुड़ गया', 'login.rules': 'हर दिन आओ, उस दिन का डिब्बा तुम्हारा। सातवें दिन {c} बक्सा। एक दिन छूट जाए तो कार्ड मिटता नहीं; जहाँ छोड़ा था वहीं से आगे बढ़ो।', 'login.tomorrow': 'अगला डिब्बा कल',
   'camp.title': 'अंगार लाइन', 'camp.kicker': 'अभियान', 'camp.act': 'अंक {n}', 'camp.mission': 'मिशन {n}',
   'camp.act1': 'प्रवेश', 'camp.act2': 'गहराई', 'camp.act3': 'ढहना',
   'camp.prepare': 'तैयारी', 'camp.best': 'सबसे अच्छा समय', 'camp.diff': 'कठिनाई',

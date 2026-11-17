@@ -27,6 +27,7 @@ export function freshSave() {
     inv: { crates: { std: 0, plus: 0, crow: 0 }, opened: 0, pity: 0 },
     trader: { day: '', sold: [] },
     daily: { day: '', tasks: [] },
+    login: { day: '', n: 0 }, // the daily reward card: the last day a box was taken, boxes taken in all
     records: { endless: 0, endlessKills: 0 },
     stats: { missions: 0, kills: 0, heads: 0, shots: 0, hits: 0, deaths: 0, time: 0, byWeapon: {}, byOp: {} },
     settings: {

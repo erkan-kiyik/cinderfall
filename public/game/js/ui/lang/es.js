@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'Tareas de hoy', 'daily.claimed': 'Reclamada', 'daily.rules': 'Las tareas se renuevan cada medianoche. El progreso viene de las misiones y del modo infinito.',
   'daily.kills': 'Abate a {n} enemigos', 'daily.heads': 'Consigue {n} disparos a la cabeza', 'daily.mission': 'Termina una misión de campaña', 'daily.stars': 'Gana {n} estrellas en misiones',
   'daily.endless': 'Supera {n} oleadas en el modo infinito', 'daily.shots': 'Dispara {n} veces',
+  'login.title': 'Recompensa diaria', 'login.kicker': 'Lista de presencia · semana {n}', 'login.day': 'Día {n}', 'login.claim': 'Reclamar',
+  'login.stock': 'Caja de {c} añadida a tu reserva', 'login.rules': 'Pásate cada día y la casilla de ese día es tuya. El séptimo día trae una caja de {c}. Si faltas un día, la tarjeta no se borra: sigues donde lo dejaste.', 'login.tomorrow': 'La próxima casilla, mañana',
   'camp.title': 'Línea Brasa', 'camp.kicker': 'Campaña', 'camp.act': 'Acto {n}', 'camp.mission': 'Misión {n}',
   'camp.act1': 'Entrada', 'camp.act2': 'Profundidad', 'camp.act3': 'Derrumbe',
   'camp.prepare': 'Preparar', 'camp.best': 'Mejor tiempo', 'camp.diff': 'Dificultad',

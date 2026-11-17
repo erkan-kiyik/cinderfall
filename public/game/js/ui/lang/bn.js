@@ -66,6 +66,8 @@ export default {
   'daily.kicker': 'আজকের কাজ', 'daily.claimed': 'নেওয়া হয়েছে', 'daily.rules': 'প্রতি মধ্যরাতে কাজ নতুন হয়। অগ্রগতি আসে মিশন আর অসীম মোড থেকে।',
   'daily.kills': '{n} জন শত্রুকে ফেলে দাও', 'daily.heads': '{n}টি হেডশট লাগাও', 'daily.mission': 'একটা অভিযান মিশন শেষ করো', 'daily.stars': 'মিশনে {n}টি তারা জেতো',
   'daily.endless': 'অসীম মোডে {n}টি ঢেউ পার করো', 'daily.shots': '{n}টি গুলি ছোড়ো',
+  'login.title': 'দৈনিক পুরস্কার', 'login.kicker': 'হাজিরা কার্ড · সপ্তাহ {n}', 'login.day': 'দিন {n}', 'login.claim': 'নাও',
+  'login.stock': '{c} বাক্স স্টকে যোগ হয়েছে', 'login.rules': 'প্রতিদিন এসো, সেই দিনের ঘর তোমার। সপ্তম দিনে {c} বাক্স। একদিন বাদ গেলে কার্ড মুছে যায় না; যেখানে থেমেছিলে সেখান থেকে চলবে।', 'login.tomorrow': 'পরের ঘর আগামীকাল',
   'camp.title': 'অঙ্গার লাইন', 'camp.kicker': 'অভিযান', 'camp.act': 'অঙ্ক {n}', 'camp.mission': 'মিশন {n}',
   'camp.act1': 'প্রবেশ', 'camp.act2': 'গভীরে', 'camp.act3': 'পতন',
   'camp.prepare': 'প্রস্তুতি', 'camp.best': 'সেরা সময়', 'camp.diff': 'কাঠিন্য',

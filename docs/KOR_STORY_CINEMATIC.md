@@ -78,6 +78,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.37 | Vesper ve Skye: erkek, sıfırdan | [3-karakterler](design/3-karakterler.md#1037-vesper-ve-skye-erkek-sıfırdan) |
 | 10.38 | Kapak, lobi, on dil, telif taraması | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1038-kapak-lobi-on-dil-telif-taraması) |
 | 10.39 | Menülerde karakter yok | [3-karakterler](design/3-karakterler.md#1039-menülerde-karakter-yok) |
+| 10.40 | Cephanelik simgesi, günlük ödül | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1040-cephanelik-simgesi-günlük-ödül) |
 
 Giriş notu (eski belgenin başı):
 

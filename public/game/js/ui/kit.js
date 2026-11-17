@@ -74,11 +74,13 @@ export const ICONS = {
   user: P('M12 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm-8 18c.6-4.4 3.8-7 8-7s7.4 2.6 8 7Z'),
   target: S('M12 3v4M12 17v4M3 12h4M17 12h4M12 7.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z', 2.2),
   map: P('M3 5.5 8.5 3l7 2.5L21 3v15.5L15.5 21l-7-2.5L3 21Zm6 .4v10.6l6 2.1V7.9Z'),
+  // a parcel: two halves of lid and box, the ribbon the gap between them
+  gift: P('M3 8.4h7.9v4H3Zm10.1 0H21v4h-7.9ZM4.4 13.6h6.5V21H4.4Zm8.7 0h6.5V21h-6.5ZM11.3 7.4C9.6 4.5 7.6 3.5 6.4 4.2c-1.3.8-.6 2.8 1.7 3.2Zm1.4 0c1.7-2.9 3.7-3.9 4.9-3.2 1.3.8.6 2.8-1.7 3.2Z'),
   daily: P('M6 3h2v2h8V3h2v2h3v16H3V5h3Zm-1 7v9h14v-9Zm2 2h4v4H7Z'),
   infinite: S('M7.5 8.5C4.5 8.5 3 10.2 3 12s1.5 3.5 4.5 3.5c3.8 0 5.2-7 9-7 3 0 4.5 1.7 4.5 3.5s-1.5 3.5-4.5 3.5c-3.8 0-5.2-7-9-7Z', 2.2),
   crate: P('M3 7.5 12 3l9 4.5v9L12 21l-9-4.5Zm2.4 1.6v6.2l5.4 2.7v-6.2Zm13.2 0-5.4 2.7v6.2l5.4-2.7ZM12 5.4 6.8 8 12 10.6 17.2 8Z'),
   shop: P('M4 4h16l1 5a3 3 0 0 1-5 2.2 3 3 0 0 1-4 0 3 3 0 0 1-4 0A3 3 0 0 1 3 9Zm1 9.4c1.3.6 2.8.5 4-.2a5 5 0 0 0 6 0c1.2.7 2.7.8 4 .2V21H5Zm6 2.6v5h2v-5Z'),
-  gun: P('M2 9h15l1.5-1.5H22v4h-3v1.5l-3 .8V16h-3.4l-1.2 4.5H7.5L9 14H2Z'),
+  gun: P('M1 9.3 5.4 8.6v4.8L3 15.3H1.7q-.7 0-.7-.7ZM5.4 8.4h10.2V12.6H5.4ZM7 6.8h6v1.6H7ZM15.6 8.7h4.6v3.1h-4.6ZM20.2 9.6H23v1.4h-2.8ZM18.4 7.1h1.2v1.6h-1.2ZM8.5 12.6H11l-1.1 4.6q-.1.4-.5.4H7.8ZM12.4 12.6h2.7q.3 2.2 1.1 4.1l-2.5.9q-.9-2.3-1.3-5Z'),
   ops: P('M8 4.5a3.3 3.3 0 1 1 0 6.6 3.3 3.3 0 0 1 0-6.6Zm8.5 1a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6ZM2 19.5c.4-3.6 2.8-6 6-6s5.6 2.4 6 6Zm13-6c3 0 5.1 2 5.6 5.5h-4.4c-.3-2-1-3.8-2.3-5.1.4-.3.7-.4 1.1-.4Z'),
   trophy: P('M7 3h10v2h4c0 3.8-2 6-4.6 6.5A5 5 0 0 1 13 14.8V17h3.5v4h-9v-4H11v-2.2a5 5 0 0 1-3.4-3.3C5 11 3 8.8 3 5h4Zm-2 4c.3 1.6 1.1 2.6 2 3V7Zm14 0h-2v3c.9-.4 1.7-1.4 2-3Z'),
   chart: P('M3 20V4h2.4v13.6H21V20Zm4.5-4.5v-5h3v5Zm4.8 0V7h3v8.5Zm4.8 0v-3h3v3Z'),
@@ -228,17 +230,17 @@ export function toast(text, { kind = 'info', ms = 1800 } = {}) {
 }
 
 // modal({ title, body: Node|string, actions: [{ label, kind, fn }] }) → close()
-export function modal({ title, kicker, body, actions = [], dismiss = true }) {
+export function modal({ title, kicker, body, actions = [], dismiss = true, cls = '' }) {
   const close = () => {
     document.removeEventListener('keydown', onKey);
     if (reduced() || !box.animate) return wrap.remove();
     box.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.97)' }], { duration: 140, easing: EASE }).onfinish = () => wrap.remove();
   };
   const btns = actions.map((a) => press(h(`button.btn.${a.kind || 'secondary'}.cut`, { type: 'button', onclick: () => { if (a.fn) a.fn(close); else close(); } }, a.label)));
-  const box = h('div.modal.cut', { role: 'dialog', 'aria-modal': 'true' },
+  const box = h(`div.modal.cut${cls ? '.' + cls : ''}`, { role: 'dialog', 'aria-modal': 'true' },
     kicker && h('div.eyebrow.accent', kicker), title && h('h2.m-title', title),
     h('div.m-body', typeof body === 'string' ? h('p', body) : body),
-    btns.length && h('div.m-actions', btns));
+    btns.length ? h('div.m-actions', btns) : null);
   const wrap = h('div.scrim', { onclick: (e) => { if (dismiss && e.target === wrap) { ui('back'); close(); } } }, box);
   const onKey = (e) => { if (e.key === 'Escape' && dismiss) close(); };
   document.addEventListener('keydown', onKey);
