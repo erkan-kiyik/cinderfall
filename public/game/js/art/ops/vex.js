@@ -64,7 +64,7 @@ function backFar(g) {
   clip(g, TAIL_A, () => {
     stroke(g, curve([[-3, -22.0], [-8, -21.8], [-13, -20.4], [-18, -19.6]]), PAL.scarf.d, 0.3);
     stroke(g, curve([[-4, -22.9], [-9, -22.9], [-14, -21.5]]), PAL.scarf.l, 0.18, 0.6);
-    // the two thin cream bands near the end, the city banner's colours
+    // the two thin cream bands near the end, as on the works' old scarves
     for (const x of [-17.6, -16.6]) fill(g, `M ${x} -22 L ${x + 0.45} -22 L ${x + 0.75} -17.6 L ${x + 0.3} -17.6 Z`, '#d9cdb4', 0.75);
   });
   darn(g, -11.2, -20.3, PAL.scarf);
@@ -303,7 +303,7 @@ function foot(g, ctx) {
 // --- head (docs §10.25): Flint's face, open. Twenty-nine, a furnace man's face: olive skin
 // gone dark with soot in its creases, a straight nose, a hard jaw under three days of
 // stubble, brown eyes deep under heavy brows (an old burn through the near one). The watch
-// cap fitted to the skull, its cuff ribbed, the masters' guild pin on it; the welding goggles pushed
+// cap fitted to the skull, its cuff ribbed, the Ocaksan pin on it; the welding goggles pushed
 // up onto the cap; his father's scarf pulled down round the neck to the jaw.
 const FCAP = 'M -4.2 -5.0 C -4.6 -6.8 -4.4 -8.6 -3.4 -10.0 C -2.2 -11.3 -0.2 -11.6 1.6 -11.3 C 3.1 -11.0 4.1 -10.0 4.4 -8.7 C 4.5 -8.3 4.5 -7.95 4.42 -7.7 C 3.0 -7.62 1.8 -7.5 0.8 -7.1 C -0.2 -6.7 -0.9 -6.3 -1.5 -6.0 C -2.4 -5.6 -3.3 -5.2 -4.2 -5.0 Z';
 const FCUFF = 'M -4.3 -5.0 C -3.3 -5.2 -2.4 -5.6 -1.5 -6.0 C -0.9 -6.3 -0.2 -6.7 0.8 -7.1 C 1.8 -7.5 3.0 -7.62 4.42 -7.7 C 4.5 -8.15 4.5 -8.6 4.4 -9.05 C 2.8 -9.1 1.4 -8.9 0.2 -8.4 C -1.0 -7.9 -2.0 -7.2 -3.0 -6.7 C -3.5 -6.5 -4.0 -6.4 -4.5 -6.4 Z';
@@ -332,7 +332,7 @@ function head(g) {
   clothFolds(g, COL, [[[4.6, -1.2], [2.6, -0.8], [0.4, -1.4], [-2.4, -2.2]], [[4.8, 0.2], [2.4, 0.6], [-0.4, 0.2], [-3.4, -0.8]]], R);
   B.line(FS.w('M 4.75 -1.95 C 3.6 -1.45 2.0 -1.65 0.6 -2.45 C -0.6 -3.05 -2.0 -3.45 -3.4 -3.25'), R.l, 0.1, 0.04, 0.6);
   B.fill(ell(2.4, -0.4, 0.36, 0.26), 'rgba(140,40,34,0.55)', 0.05);
-  // the cap: knitted rows over the crown, the cuff ribbed and turned up, the guild's pin
+  // the cap: knitted rows over the crown, the cuff ribbed and turned up, the company pin
   cel(g, FCAP, C, { sh: 1.2, hl: 0.5 });
   knit(g, FCAP, C, { step: 0.36, bend: 0.5, box: [-5, -12, 5, -6] });
   B.inside(FCAP, () => { B.dab(1.6, -10.6, 2.2, 0.8, 'rgba(150,140,130,0.25)'); B.dab(-3.0, -7.0, 1.6, 2.0, 'rgba(0,0,0,0.35)'); });

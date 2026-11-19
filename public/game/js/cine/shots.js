@@ -838,7 +838,7 @@ export class Rooftop {
 // puddle, looking down into it. At the top of the frame, the real street:
 // the far kerb, the bottom of a wall. Most of the frame is the puddle, and
 // in it the same street upside down: the wall and on it a torn poster,
-// SÖZLEŞME · GÜVENLİK · İTAAT, with KOR sprayed across it; the patrol has just
+// KAYIT · DENETİM · İTAAT, with KOR sprayed across it; the patrol has just
 // gone by. The rain rings the water. Focus starts on the rings and pulls
 // into the reflection.
 const WALL_Z = 10.5, KERB_Z = 7.4, PPM_WALL = 190;
@@ -960,13 +960,13 @@ export class Street {
       q.globalCompositeOperation = 'overlay'; for (let yy = h * 0.2; yy < h * 0.72; yy += 3) for (let xx = w * 0.06; xx < w * 0.94; xx += 3) { q.fillStyle = ((xx + yy) / 3) % 2 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)'; q.fillRect(xx, yy, 1.5, 1.5); } q.globalCompositeOperation = 'source-over'; }
     // the slogan
     q.fillStyle = '#ece7da'; q.textAlign = 'center'; q.textBaseline = 'middle';
-    const slogan = 'SÖZLEŞME · GÜVENLİK · İTAAT';
+    const slogan = 'KAYIT · DENETİM · İTAAT';
     q.font = `700 ${Math.round(h * 0.07)}px Rajdhani, "Arial Narrow", sans-serif`;
     const sw = q.measureText(slogan).width;
     if (sw > w * 0.84) q.font = `700 ${Math.floor(h * 0.07 * (w * 0.84) / sw)}px Rajdhani, "Arial Narrow", sans-serif`;
     q.fillText(slogan, w * 0.5, h * 0.8);
     q.font = `500 ${Math.round(h * 0.026)}px Rajdhani, sans-serif`; q.fillStyle = 'rgba(236,231,218,0.6)';
-    q.fillText('VORSA SYNDICATE  ·  SÖZLEŞMELİ GÜVENLİK DAİRESİ', w * 0.5, h * 0.9);
+    q.fillText('VORSA SYNDICATE  ·  KAMU DÜZENİ DAİRESİ', w * 0.5, h * 0.9);
     // the rain has had it: blotches, a sag, the paste showing at the seams
     q.globalCompositeOperation = 'multiply'; for (let i = 0; i < 30; i++) { const x = r() * w, y = r() * h, rr = 5 + r() * 30; const gg = q.createRadialGradient(x, y, 0, x, y, rr); gg.addColorStop(0, 'rgba(120,110,95,0.4)'); gg.addColorStop(1, 'rgba(255,255,255,0)'); q.fillStyle = gg; q.fillRect(x - rr, y - rr, rr * 2, rr * 2); }
     q.globalCompositeOperation = 'source-over';

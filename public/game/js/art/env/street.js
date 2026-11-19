@@ -122,7 +122,7 @@ function midIndustry(g) {
   emblem(g, 340, B - 22, 8, '#e8d9d9');
   g.font = '700 10px Rajdhani'; g.fillStyle = '#e8d9d9'; g.textBaseline = 'alphabetic';
   g.fillText('VORSA SYNDICATE', 354, B - 20);
-  g.font = '600 6px Rajdhani'; g.fillStyle = '#c9a9ae'; g.fillText('SÖZLEŞME · GÜVENLİK · İTAAT', 354, B - 12);
+  g.font = '600 6px Rajdhani'; g.fillStyle = '#c9a9ae'; g.fillText('KAYIT · DENETİM · İTAAT', 354, B - 12);
   // a real hoarding: printed in panels, the seams showing; two floodlights on
   // arms under it washing the face from below, brightest at the bottom; the
   // rain's grime run down from the top edge; a service catwalk along its foot

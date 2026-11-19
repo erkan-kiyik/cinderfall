@@ -697,7 +697,7 @@ button.skin { width: 36px; height: 36px; }
 .finale p { margin: 0; font: 400 16px/1.45 var(--f-type); color: #e6dccb; opacity: 0; transform: translateY(6px); transition: opacity .9s, transform .9s; }
 .finale p.on, .finale .btn.on { opacity: 1; transform: none; }
 .finale .btn { margin-top: 12px; opacity: 0; transition: opacity .6s; }
-/* the city's banner going up over the lines (docs §10.42) */
+/* Ocaksan's flag going back up over the lines (docs §10.43) */
 .finale .flag { width: 90px; height: 150px; margin-bottom: -4px; opacity: 0; transform: translateY(40px); transition: opacity 1.2s, transform 2.4s cubic-bezier(.2,.7,.2,1); filter: drop-shadow(0 0 18px rgba(255,120,50,0.18)); }
 .finale .flag.on { opacity: 1; transform: none; }
 @media (max-height: 460px) { .finale .flag { width: 48px; height: 80px; } .finale h1 { font-size: 44px; margin-bottom: 0; } .finale .box { gap: 6px; padding: 12px 24px; } .finale p { font-size: 14px; line-height: 1.35; } .finale .btn { margin-top: 6px; } }

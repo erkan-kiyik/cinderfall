@@ -8,27 +8,27 @@ and the like: look the number up in the index,
 
 ## The game in one paragraph
 
-A 2D tactical shooter for phones. In a nameless port city built around a
-steelworks its grandfathers lit in 1891, a hired private military company,
-**Vorsa**, took over "temporarily" four years ago, the night the blast furnace
-was put out (*the Quench*: 37 detained, 6 never seen again), on a contract
-signed at midnight that suspended the elected council. Five people who stayed
-call themselves **KOR** (*embers*: "the furnace goes out, the embers stay").
-The story is told from the right (§10.42): home town, family and the
-generations, duty, tradition, property and lawful order; the team restores
-the city's own order rather than overthrowing one. The player is their
-Operator, on the radio. Ten missions in three acts; act 1 ends with the fall
-of Gall, Vorsa's Secretary in the city, and the "Ash Plan" found on his desk;
-act 2 with the blast furnace lit again; act 3 with the city's banner over the
-governor's office and the council meeting again. All ten missions are playable.
+A 2D tactical shooter for phones. A nameless port city grew round the
+steelworks of **Ocaksan A.Ş.**, which lit its first furnace in 1891 and pays
+most of the town's wages. Four years ago **Vorsa**, an armed cartel hired as
+"temporary security", seized the company's works by decree, the night the
+blast furnace was put out (*the Quench*: 37 detained, 6 never seen again).
+Five Ocaksan people who stayed call themselves **KOR** (*embers*: "the furnace
+goes out, the embers stay"). The story is pro-company (§10.43): enterprise,
+jobs, property and contracts against seizure, controls and an armed racket.
+The player is their Operator, on the radio. Ten missions in three acts; act 1
+ends with the fall of Gall, Vorsa's Secretary in the city, and the "Ash Plan"
+found on his desk; act 2 with the blast furnace lit again; act 3 with
+Ocaksan's flag back on its tower and a hiring notice on the works gate. All
+ten missions are playable.
 
 | Operator | Age | Who | Role |
 | --- | --- | --- | --- |
-| FLINT | 29 | Third-generation furnace master; his father would not hand the furnace over and vanished in the Quench | Assault |
-| WARDEN | 41 | Last crew captain of the closed fire station; served with the combat engineers | Defence |
-| VESPER | 33 | Vorsa's former signal analyst who chose his city over his pay; the voice on the radio | Control |
-| SKYE | 22 | Courier for his father's grocery, sealed by Vorsa; builds drones from scrap | Recon |
-| BULWARK | 47 | Harbour crane driver, coast guard veteran, father of three | Heavy |
+| FLINT | 29 | Ocaksan's third-generation furnace master; his father, the production manager, would not give Vorsa the keys and vanished in the Quench | Assault |
+| WARDEN | 41 | Chief of the Ocaksan works fire brigade | Defence |
+| VESPER | 33 | Vorsa's former signal analyst who took Ocaksan's better offer; the voice on the radio | Control |
+| SKYE | 22 | Founded a drone delivery company at nineteen; Vorsa revoked the licence | Recon |
+| BULWARK | 47 | Crane operator at the Ocaksan port terminal | Heavy |
 
 HAWK (60s) is the smuggler who sells to everyone; GALL (50s) is the act 1
 boss; BRANDT, keeper of the drone works, ends act 2; VASQUEZ, Vorsa's commander in the tower, is the final one.

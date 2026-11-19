@@ -22,7 +22,7 @@ import { Music } from './audio/music.js';
 import { CinePlayer } from './cine/player.js';
 import { FilmPlayer } from './cine/film.js';
 import { PROLOGUE, STORY } from './cine/scenes.js';
-import { sancak } from './art/env/sancak.js';
+import { companyFlag } from './art/env/flag.js';
 
 const MARKS = { yellow: [1, 0.86, 0.12, 1], blue: [0.2, 0.62, 1, 1], magenta: [1, 0.25, 0.85, 1] };
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -298,14 +298,14 @@ export class App {
     this.router.go('result', { r, gain }, { root: true });
   }
 
-  // The end of the campaign: the city's banner going up (docs §10.42), five
+  // The end of the campaign: Ocaksan's flag going back up (docs §10.43), five
   // lines on black, one after another, then on.
   finale(then) {
     this.save.set((d) => { d.story.seen.act3 = true; });
     const lines = [t('finale.l1'), t('finale.l2'), t('finale.flag'), t('finale.l3'), t('finale.l4')].map((x) => h('p', x));
     const go = h('button.btn.primary.cut', { type: 'button' }, t('finale.go'));
     const flag = h('canvas.flag', { width: 180, height: 300, 'aria-hidden': 'true' });
-    try { const g = flag.getContext('2d'); g.scale(2, 2); sancak(g, 45, 34, 42, 98, { light: -1, tex: false, wall: false }); } catch (e) { console.warn('banner', e); }
+    try { const g = flag.getContext('2d'); g.scale(2, 2); companyFlag(g, 45, 34, 42, 96, { light: -1, tex: false, wall: false }); } catch (e) { console.warn('flag', e); }
     const el = h('div.finale', h('div.box', flag, h('div.eyebrow.accent', t('finale.kicker')), h('h1', t('finale.title')), ...lines, go));
     document.body.appendChild(el);
     const reduce = this.save.d.settings.reduceMotion;

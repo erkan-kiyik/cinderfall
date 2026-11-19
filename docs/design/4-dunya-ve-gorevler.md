@@ -55,8 +55,8 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
 - **Tabelalar:** boyalı sac ve tahta; fırça yazısı ya da şablon harf; solmuş
   boya, pas akıntısı, cıvata, eğik asılmış. Geceleri tabelayı kuğu boyunlu
   lamba aydınlatır. Esnafın dili Türkçe ve sade: BAKKAL, BERBER, OTO TAMİR,
-  ÇAY OCAĞI, OTEL, LONCA. Vorsa'nınki tek tip ve basılı: VORSA SYNDICATE ·
-  SÖZLEŞME · GÜVENLİK · İTAAT.
+  ÇAY OCAĞI, OTEL, OCAKSAN. Vorsa'nınki tek tip ve basılı: VORSA SYNDICATE ·
+  KAYIT · DENETİM · İTAAT.
 - **Binalar:**
   - *İşçi lojmanı:* isli tuğla, yangın merdiveni, pencereden çıkan soba
     boruları ve üstlerindeki kurum, çamaşır ipi, saksı; altta kapalı berber
@@ -73,7 +73,7 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
     üstünde tek ampul, kartonda *ODA VAR*.
   - *Oto tamir:* boyalı sac *OTO TAMİR*, duvarda *LASTİK*, içeride beyaz
     floresan iş lambası, liftte araç.
-  - *Lonca binası (yeni; §10.42'den önce sendika binasıydı):* alınlıktaki kabartma *OCAK USTALARI LONCASI*
+  - *Ocaksan'ın eski idare binası (yeni; önce sendika, §10.42'de lonca binasıydı):* alınlıktaki kabartma *OCAKSAN A.Ş. İDARE BİNASI*
     yazısının üstü gri boyayla kapatılmış, harfler gölgeden okunur; kapıda
     zincir ve Vorsa mührü (*MÜHÜRLENMİŞTİR*); kapının önünde mumlar ve
     Söndürme gecesi kaybolanların fotoğraflı *KAYIP* ilanları; duvarda sprey:
@@ -94,7 +94,7 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
   yaşar. Çatıda tahta güvercinlik. Görev 2'deki pazar tezgâhında aynı tahta
   tabela, aynı ampuller.
 - **Duvar yazıları ve kâğıtlar:** Vorsa afişleri; üstlerine kor işareti ve
-  *KOR* spreyi; *KAYIP* ilanları; lonca bildirisinin yırtık kalıntısı.
+  *KOR* spreyi; *KAYIP* ilanları; Ocaksan duyurusunun yırtık kalıntısı.
 - **Renk ve doku:** is siyahı, pas, tuğla, kirli sıva; tuğla, beton, sac,
   tahta ve boya dokusu bina ölçeğinde. Sıcak ışık yalnız ampul ve ateşten,
   soğuk ışık yalnız Vorsa'dan. Doygun pembe, camgöbeği, mor yok.
@@ -546,7 +546,7 @@ karakterler olduğu gibi.
 
 **Daha az bina** (`art/env/city.js` → `sparseFacade`): hikâyenin geçtiği
 yerler duruyor (HAWK'ın dükkânı, valilik ve kanatları, belediye, hal,
-gümrük, ustalar loncası, Vorsa'nın konteyner duvarı); sıradan ev, depo ve
+gümrük, Ocaksan'ın idare binası, Vorsa'nın konteyner duvarı); sıradan ev, depo ve
 dükkânlardan biri kalıyor biri gidiyor, aralarındaki ara sokaklar kalkıyor.
 Sokakta boşluklar var, arkadan karanlık şehir görünüyor.
 
@@ -801,6 +801,8 @@ eski kayıt). Metinler on dilde.
 Çizim sürümü `d4-67` (telefonlar yeniden boyar).
 
 ### 10.42 Sağ çerçeve: memleket, aile, gelenek, meşru düzen
+> §10.43 ile değişti: hikâye artık şirket yanlısı. Aşağıdaki kayıt tarihçe için duruyor.
+
 Hikâye artık sağ, muhafazakâr bir yerden anlatılıyor (§1.7). Olay örgüsü,
 görevler ve oynanış aynı; değişen, ekibin neyi savunduğu. Önceki metin bir
 sendika ve grev çizgisindeydi; şimdi ekip, gasp edilmiş meşru düzeni geri
@@ -835,3 +837,39 @@ ne memleketi olan, sözleşmeyle kiralanmış bir güç; suçu el koymak, satmak
   sözleşmesi.
 
 Çizim sürümü `d4-69` (telefonlar yeniden boyar).
+
+### 10.43 Şirket yanlısı çerçeve: Ocaksan A.Ş.
+§10.42'deki sağ çerçevenin yerine hikâye artık şirket yanlısı (§1.7). Olay
+örgüsü, görevler ve oynanış yine aynı. Şehri kuran ve doyuran **Ocaksan
+A.Ş.**: 1891'de ilk fırını yaktı, limanı ve genel müdürlük kulesini kurdu.
+Vorsa artık "ne sicili ne vergisi olan" silahlı bir kartel; suçu Ocaksan'ın
+tesislerine kararnameyle bedelsiz el koymak, hesapları dondurmak, ruhsat iptal
+etmek, özel teşebbüsü "askıya" almak. KOR, şirketin şehirden gitmeyen beş
+çalışanı.
+
+- **Metinler (on dil):** FLINT Ocaksan'ın ocak ustası, babası üretim müdürü,
+  anahtarları Vorsa'ya vermedi; sözü *"Fırın yanarsa şehir maaş alır."*
+  WARDEN tesis itfaiyesinin amiri, kazasız gün panosu 1.412'de durdu. VESPER
+  Ocaksan'ın daha iyi teklifini aldı. SKYE on dokuzunda kendi dron teslimat
+  şirketini kurdu, Vorsa ruhsatını iptal etti. BULWARK Ocaksan liman
+  terminalinin vinççisi, sicilinde tek kaza yok. Gall'da Ocaksan'a el koyan
+  kararname var; kule Ocaksan'ın genel müdürlüğüydü (*Ocaksan kulesi*);
+  fırın Ocaksan'ın. Perde 1 sonu: *"Satamazlar. Tapusu bizde."* Profil kartı:
+  *Ocaksan · Personel kartı*.
+- **Ocaksan bayrağı** (`art/env/flag.js`, şehir sancağının yerine): kömür
+  rengi bez, turuncu logo (halka içinde fırın alevi), krem *OCAKSAN*,
+  *KURULUŞ 1891*, ağırlıklı etekte turuncu şerit. Sığınakta haritanın
+  yanında (lobide görünür); kapanış kartında yükselir. Kapanış satırı: sabah
+  kulenin direğine Ocaksan'ın bayrağı çekilir, fabrika kapısına ilan asılır:
+  1.200 kişi alınacak.
+- **Sokak:** lonca binası *OCAKSAN A.Ş. İDARE BİNASI* oldu; Vorsa'nın sloganı
+  *KAYIT · DENETİM · İTAAT*; valilik panosunda *ÖZEL TEŞEBBÜS ASKIYA
+  ALINMIŞTIR*.
+- **Filmler:** Kül Planı (Ocaksan'ın çelikhane ve liman tesislerine bedelsiz
+  el konmuş; Ocaksan'ın adı ve logosu yasak; hissedarların ve esnafın
+  hesapları dondurulacak) ve prologdaki afiş yeniden yazıldı; `act1.mp4` ve
+  `prologue.mp4` yeniden işlendi.
+- **Sınırlar:** gerçek şirket, marka, parti ya da siyasetçi yok; hiçbir etnik
+  ya da dinî grup düşman değil.
+
+Çizim sürümü `d4-70` (telefonlar yeniden boyar).
