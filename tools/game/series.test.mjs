@@ -3,6 +3,9 @@
 // is somewhere sensible, the lines under them are written. Run: node tools/game/series.test.mjs
 import { compile } from './plate/trace.js';
 import { SHOTS } from './series/shots.js';
+import { OPEN } from './series/opening.js';
+import { PLATES, plateCam } from '../../public/game/js/cine/plates.js';
+import fs from 'node:fs';
 
 let fails = 0, passes = 0;
 const ok = (c, msg) => { if (c) passes++; else { fails++; console.log('FAIL', msg); } };
@@ -23,6 +26,21 @@ for (const s of SHOTS) {
   ok(built, `${s.id}: the tracer takes it`);
   ok(Number.isFinite(s.cam.yaw) && Number.isFinite(s.cam.pitch) && Math.abs(s.cam.pitch) < 1.2 && s.cam.mm >= 14 && s.cam.mm <= 100, `${s.id}: a sensible camera`);
   ok(s.name && s.cap && s.cap.length <= 72, `${s.id}: a name and a line under it`);
+}
+
+// the films' plates (series/opening.js): each has a camera, builds, and is baked
+for (const [k, o] of Object.entries(OPEN)) {
+  ok(!!PLATES[k], `plate ${k}: a camera in plates.js`);
+  if (!PLATES[k]) continue;
+  const cam = { ...plateCam(k, 1), W: 96, H: 44, cx: 48, cy: 22 }; cam.f = (PLATES[k].mm / 36) * 96;
+  const spec = o.scene(cam), matOf = (q) => (typeof q.m === 'string' ? spec.mats[q.m] : q.m);
+  ok(spec.prims.every((q) => (q.box || q.cyl || q.sph || q.cap || q.ell || q.hull) && matOf(q)), `plate ${k}: every prim has a shape and a material`);
+  const want = new Set(spec.prims.map((q) => ({ ...matOf(q), ...(q.o || {}) }).tex).filter(Boolean));
+  ok([...want].every((t) => (o.tex || []).includes(t)), `plate ${k}: its pictures are painted (${[...want].join(', ') || 'none'})`);
+  const tex = Object.fromEntries((o.tex || []).map((t) => [t, { w: 1, h: 1, data: new Float32Array(4) }]));
+  let built = true; try { compile({ ...spec, textures: tex }); } catch (e) { built = false; console.log(e.message); }
+  ok(built, `plate ${k}: the tracer takes it`);
+  ok(fs.existsSync(new URL(`../../public/game/assets/plates/${k}.webp`, import.meta.url)), `plate ${k}: baked`);
 }
 
 console.log(`series: ${passes} passed, ${fails} failed`);

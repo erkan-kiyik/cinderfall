@@ -220,7 +220,7 @@ const LIST = [
     post: { grain: 0.08, halation: 0.4, lift: [6, 7, 8], cool: 0.04, vignette: 0.55, dirt: 0.25 },
   },
   {
-    id: '08', name: 'Afiş', cap: 'DÜZEN · GÜVENLİK · İTAAT. Üstüne gece biri KOR yazmış.',
+    id: '08', name: 'Afiş', cap: 'KAYIT · DENETİM · İTAAT. Üstüne gece biri KOR yazmış.',
     cam: look([0.35, 0.45, -2.6], [-0.4, 1.35, 0], 28), tex: ['posterVanta', 'sealNotice'],
     scene: (cam) => posterWall(cam, {}),
     air: (g, cam, A) => rain(g, cam, A, { n: 1.0, col: '#c8d0d8', light: 0.6, wind: 0.3, box: [5, 5, 0.4, 12] }),

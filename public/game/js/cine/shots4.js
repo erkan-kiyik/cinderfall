@@ -20,7 +20,7 @@ import { Plate, PLATES } from './plates.js';
 const TAU = Math.PI * 2;
 
 // a plate shot: the plate (and a variant to go over to), its camera, a slow push
-class PlateShot {
+export class PlateShot {
   constructor(name, { alt = null, hand = 0.3, seed = 401, push = 0.06, dur = 16 } = {}) { this.name = name; this.o = { alt, hand, seed, push, dur }; }
   init(W, H, env) {
     this.W = W; this.H = H; this.env = env;
@@ -43,7 +43,7 @@ class PlateShot {
 }
 
 // fine dust in a box of air, drifting; brighter where lit(p) says
-class Dust {
+export class Dust {
   constructor(box, { n = 420, seed = 11, col = '235,236,238', size = 1.2, lit = () => 0.5 } = {}) {
     const r = rng(seed); this.box = box; this.col = col; this.size = size; this.lit = lit;
     this.p = Array.from({ length: n }, () => ({ x: box[0] + r() * (box[3] - box[0]), y: box[1] + r() * (box[4] - box[1]), z: box[2] + r() * (box[5] - box[2]), ph: r() * 10, a: 0.3 + r() * 0.7 }));
@@ -64,7 +64,7 @@ class Dust {
 }
 
 // drops falling from points overhead, each on its own beat, a splash where they land
-function drips(g, cam, t, pts, ground, col = 'rgba(210,222,235,0.6)') {
+export function drips(g, cam, t, pts, ground, col = 'rgba(210,222,235,0.6)') {
   const a = [0, 0, 0, 0], b = [0, 0, 0, 0];
   g.save(); g.lineCap = 'round';
   for (const [x, y, z, per, ph] of pts) {

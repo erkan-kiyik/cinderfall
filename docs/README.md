@@ -20,7 +20,11 @@ The player is their Operator, on the radio. Ten missions in three acts; act 1
 ends with the fall of Gall, Vorsa's Secretary in the city, and the "Ash Plan"
 found on his desk; act 2 with the blast furnace lit again; act 3 with
 Ocaksan's flag back on its tower and a hiring notice on the works gate. All
-ten missions are playable.
+ten missions are playable, and each has a short film before it; act 3's films
+(§10.44) are new ray-traced places: the boardroom on the tower's 42nd floor,
+the loading bay where HAWK's truck stands empty, the roof and its broadcast
+mast in a storm, and the morning after (the flag going up, the works gate
+open, the safety board turned back to day one).
 
 | Operator | Age | Who | Role |
 | --- | --- | --- | --- |

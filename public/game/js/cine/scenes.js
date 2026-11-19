@@ -4,6 +4,7 @@
 import * as S from './shots.js';
 import * as M from './shots3.js';
 import * as A2 from './shots4.js';
+import * as A3 from './shots5.js';
 
 const shot = (at, dur, make) => ({ at, dur, make });
 
@@ -144,4 +145,40 @@ export const STORY = {
   ], [{ at: 2.6, name: 'hiss', o: { dur: 4 } }, { at: 5.8, name: 'boom', o: { vol: 0.7 } }, { at: 6.2, name: 'crackle', o: { dur: 5, n: 24 } }],
   [{ at: 0, name: 'rain', level: 0.5, sec: 1 }, { at: 2.5, name: 'furnace', level: 0.65, sec: 6 }, { at: 9, name: 'rain', level: 0.2, sec: 4 }, { at: 16.6, name: 'furnace', level: 0, sec: 1.4 }, { at: 16.6, name: 'rain', level: 0, sec: 1.4 }],
   [{ at: 15.8, to: 18.6, key: 'story.a2.cap', pos: 'title' }]),
+  // act 3 (docs §10.44): new places, the same one shot under the radio
+  m8: one('m8', 16, () => new A3.Boardroom(), [
+    { at: 1.4, to: 5.2, who: 'VESPER', key: 'story.m8.1', radio: true },
+    { at: 6.2, to: 9.8, who: 'WARDEN', key: 'story.m8.2', radio: true },
+    { at: 11.0, to: 13.4, who: 'FLINT', key: 'story.m8.3' },
+  ], [{ at: 1.3, name: 'radio' }, { at: 6.1, name: 'radio', o: { vol: 0.6 } }, { at: 4.2, name: 'uav', o: { vol: 0.3 } }],
+  [{ at: 0, name: 'rain', level: 0.3, sec: 1.5 }, { at: 0, name: 'hum', level: 0.16, sec: 2 }, { at: 0, name: 'city', level: 0.15, sec: 2 }, { at: 14.8, name: 'rain', level: 0, sec: 1.2 }, { at: 14.8, name: 'hum', level: 0, sec: 1.2 }, { at: 14.8, name: 'city', level: 0, sec: 1.2 }]),
+  // the lamps cut at 11.8 s: two clacks of the breaker, then steps
+  m9: one('m9', 16, () => new A3.Bay(), [
+    { at: 1.4, to: 4.8, who: 'SKYE', key: 'story.m9.1', radio: true },
+    { at: 5.6, to: 9.6, who: 'VESPER', key: 'story.m9.2', radio: true },
+    { at: 13.0, to: 14.6, who: 'BULWARK', key: 'story.m9.3' },
+  ], [{ at: 1.3, name: 'radio' }, { at: 5.5, name: 'radio', o: { vol: 0.6 } }, { at: 11.8, name: 'clack' }, { at: 12.1, name: 'clack', o: { vol: 0.6 } }, { at: 12.7, name: 'step', o: { vol: 0.5 } }, { at: 13.2, name: 'step', o: { vol: 0.45 } }, { at: 13.7, name: 'step', o: { vol: 0.4 } }],
+  [{ at: 0, name: 'hum', level: 0.35, sec: 1.5 }, { at: 0, name: 'city', level: 0.1, sec: 2 }, { at: 11.8, name: 'hum', level: 0, sec: 0.05 }, { at: 14.8, name: 'city', level: 0, sec: 1.2 }]),
+  // thunder after each stroke of lightning (3.6, 9.8, 13.9 s), the flag cracking
+  m10: one('m10', 16, () => new A3.Roof(), [
+    { at: 1.4, to: 5.2, who: 'VESPER', key: 'story.m10.1', radio: true },
+    { at: 6.2, to: 9.6, who: 'SKYE', key: 'story.m10.2', radio: true },
+    { at: 11.4, to: 13.2, who: 'FLINT', key: 'story.m10.3' },
+  ], [{ at: 1.3, name: 'radio' }, { at: 6.1, name: 'radio', o: { vol: 0.6 } }, { at: 4.3, name: 'boom', o: { vol: 0.55 } }, { at: 10.2, name: 'boom', o: { vol: 1 } }, { at: 10.3, name: 'crackle', o: { dur: 2, n: 14 } }, { at: 14.5, name: 'boom', o: { vol: 0.45 } }, { at: 2.2, name: 'cloth', o: { vol: 0.7 } }, { at: 7.6, name: 'cloth', o: { vol: 0.7 } }, { at: 12.4, name: 'cloth', o: { vol: 0.6 } }],
+  [{ at: 0, name: 'rain', level: 0.8, sec: 1, tin: 0.04 }, { at: 0, name: 'city', level: 0.2, sec: 2 }, { at: 14.8, name: 'rain', level: 0, sec: 1.2 }, { at: 14.8, name: 'city', level: 0, sec: 1.2 }]),
+  // the end of act 3, before the closing card: Ocaksan's flag up the pole at dawn, the works'
+  // gate open with the hiring banner, the safety board's plate going over to 1
+  act3: {
+    id: 'act3', dur: 20,
+    shots: [shot(0, 7, () => new A3.RoofDawn()), shot(7, 6.5, () => new A3.WorksGate()), shot(13.5, 6.5, () => new A3.WorksBoard())],
+    fades: [{ at: 6.8, dur: 0.4 }, { at: 13.3, dur: 0.4 }, { at: 19.4, dur: 1.2 }],
+    caps: [{ at: 17.4, to: 20.4, key: 'story.a3.cap', pos: 'title' }],
+    subs: [
+      { at: 1.2, to: 4.8, who: 'VESPER', key: 'story.a3.1', radio: true },
+      { at: 8.0, to: 11.6, who: 'FLINT', key: 'story.a3.2' },
+      { at: 14.2, to: 17.2, who: 'WARDEN', key: 'story.a3.3' },
+    ],
+    beds: [{ at: 0, name: 'city', level: 0.18, sec: 2 }, { at: 0, name: 'drone', level: 0.22, sec: 3 }, { at: 6.9, name: 'furnace', level: 0.45, sec: 1 }, { at: 13.4, name: 'furnace', level: 0.2, sec: 1 }, { at: 18.6, name: 'drone', level: 0, sec: 1.4 }, { at: 18.6, name: 'furnace', level: 0, sec: 1.4 }, { at: 18.6, name: 'city', level: 0, sec: 1.4 }],
+    cues: [{ at: 0.8, name: 'cloth', o: { vol: 0.5 } }, { at: 1.1, name: 'radio' }, { at: 2.6, name: 'cloth', o: { vol: 0.45 } }, { at: 4.4, name: 'cloth', o: { vol: 0.4 } }, { at: 15.1, name: 'clack', o: { vol: 0.7 } }],
+  },
 };

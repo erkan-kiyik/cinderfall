@@ -89,13 +89,13 @@ P.chainlink = { w: 512, h: 512, draw(g, w, h) {
   }
 } };
 
-// the syndicate's poster: DÜZEN · GÜVENLİK · İTAAT; rained on, torn, KOR sprayed over it
+// the syndicate's poster: KAYIT · DENETİM · İTAAT (docs §10.43); rained on, torn, KOR sprayed over it
 P.posterVanta = { w: 600, h: 860, draw(g, w, h, r) {
   g.fillStyle = '#1c2630'; g.fillRect(0, 0, w, h);
   const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(70,90,110,0.5)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
   mark(g, w / 2, 250, 130, '#b8bec4', 22);
   g.fillStyle = '#e6e2d8'; g.textAlign = 'center'; g.font = '800 64px "Arial Narrow", Arial, sans-serif';
-  g.fillText('DÜZEN', w / 2, 500); g.fillText('GÜVENLİK', w / 2, 575); g.fillStyle = '#c23a2c'; g.fillText('İTAAT', w / 2, 650);
+  g.fillText('KAYIT', w / 2, 500); g.fillText('DENETİM', w / 2, 575); g.fillStyle = '#c23a2c'; g.fillText('İTAAT', w / 2, 650);
   g.fillStyle = '#9aa4ac'; g.font = '600 20px Arial, sans-serif'; g.fillText('VORSA SENDİKASI · KAMU DÜZENİ DAİRESİ', w / 2, 720);
   g.fillStyle = '#e6e2d8'; g.fillRect(40, 750, w - 80, 2); g.font = '700 24px Arial, sans-serif'; g.fillText('SOKAĞA ÇIKMA YASAĞI 22:00 — 05:00', w / 2, 792);
   g.font = '400 14px Arial, sans-serif'; g.fillStyle = '#7d878f'; g.fillText('İhlaller Geçici Güvenlik Sözleşmesi Md. 4 uyarınca işlem görür.', w / 2, 822);
@@ -272,4 +272,119 @@ P.checkSign = { w: 640, h: 200, draw(g, w, h, r) {
   g.font = '600 26px Arial, sans-serif'; g.fillStyle = '#c23a2c'; g.fillText('DUR · KİMLİK HAZIR', 182, h / 2 + 38);
   for (const [x, y] of [[22, 22], [w - 22, 22], [22, h - 22], [w - 22, h - 22]]) { g.fillStyle = '#8a8a84'; g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fill(); }
   grime(g, w, h, r, 0.3, '60,40,24');
+} };
+
+// --- act 3 (docs §10.44) --------------------------------------------------------------------
+// Ocaksan's mark (art/env/flag.js, ocaksanLogo): a ring, the furnace flame standing in it, a bar
+function ocLogo(g, cx, cy, R, c = '#e2692f', hi = '#ffc07a') {
+  g.save(); g.strokeStyle = c; g.lineWidth = R * 0.2; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+  const f = (k, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(cx, cy - R * 0.62 * k); g.bezierCurveTo(cx + R * 0.48 * k, cy - R * 0.12 * k, cx + R * 0.36 * k, cy + R * 0.34, cx, cy + R * 0.38); g.bezierCurveTo(cx - R * 0.36 * k, cy + R * 0.34, cx - R * 0.48 * k, cy - R * 0.12 * k, cx, cy - R * 0.62 * k); g.fill(); };
+  f(1, c); if (hi) f(0.55, hi);
+  g.fillStyle = c; g.fillRect(cx - R * 0.42, cy + R * 0.48, R * 0.84, R * 0.12);
+  g.restore();
+}
+// set a line to fit a width: the biggest size (down from px) that does
+function fit(g, txt, x, y, maxW, px, font) { let s = px; do { g.font = font.replace('#', s); s -= 2; } while (g.measureText(txt).width > maxW && s > 8); g.fillText(txt, x, y); }
+// boards of a wood wall, upright, each its own tone, the grain running up them
+function woodWall(g, w, h, r, rgb, board = 80) {
+  for (let x = 0; x < w; x += board) {
+    const k = 0.88 + r() * 0.2; g.fillStyle = `rgb(${rgb.map((v) => Math.round(v * k)).join(',')})`; g.fillRect(x, 0, board, h);
+    for (let i = 0; i < 26; i++) { const gx = x + r() * board, a = 0.04 + r() * 0.08; g.strokeStyle = `rgba(30,18,10,${a.toFixed(3)})`; g.lineWidth = 0.6 + r() * 1.6; g.beginPath(); g.moveTo(gx, 0); for (let y = 0; y <= h; y += 32) g.lineTo(gx + Math.sin(y * 0.013 + i) * 3 + (r() - 0.5) * 1.5, y); g.stroke(); }
+    g.fillStyle = 'rgba(12,8,5,0.55)'; g.fillRect(x, 0, 2, h);
+  }
+}
+// the boardroom wall where Ocaksan's brass mark hung for forty years: the walnut round it gone
+// pale in the window light, the wood under it still dark and red; the screw holes; the pry marks
+P.ocaksanGhost = { w: 640, h: 640, draw(g, w, h, r) {
+  woodWall(g, w, h, r, [104, 76, 54], 80);
+  g.save(); g.globalCompositeOperation = 'multiply';
+  ocLogo(g, w / 2, h * 0.38, w * 0.27, 'rgba(150,88,58,0.9)', null);
+  g.fillStyle = 'rgba(150,88,58,0.9)'; g.textAlign = 'center'; g.textBaseline = 'middle'; fit(g, 'OCAKSAN', w / 2, h * 0.82, w * 0.86, 120, '800 #px "Arial Narrow", Arial, sans-serif');
+  g.restore();
+  // the holes the screws came out of, a little splintered
+  const holes = []; for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2 + 0.2; holes.push([w / 2 + Math.cos(a) * w * 0.29, h * 0.38 + Math.sin(a) * w * 0.29]); }
+  for (let k = 0; k < 7; k++) holes.push([w * 0.1 + k * w * 0.133, h * 0.82 + (k % 2 ? -1 : 1) * h * 0.06]);
+  for (const [x, y] of holes) { g.fillStyle = 'rgba(14,8,4,0.95)'; g.beginPath(); g.arc(x, y, 5, 0, Math.PI * 2); g.fill(); g.strokeStyle = 'rgba(200,170,130,0.35)'; g.lineWidth = 1.5; g.beginPath(); g.arc(x + 1, y + 1, 8, 0.5, 2.2); g.stroke(); }
+  // where a bar went in behind the ring
+  for (let k = 0; k < 5; k++) { const x = w * (0.18 + r() * 0.64), y = h * (0.12 + r() * 0.5); g.strokeStyle = 'rgba(220,190,150,0.35)'; g.lineWidth = 2 + r() * 2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 60, y + (r() - 0.5) * 18); g.stroke(); }
+  grime(g, w, h, r, 0.12, '40,26,16');
+} };
+// a dock's number, painted on the concrete over the door and on the column: yellow on black
+for (const n of [1, 2, 3]) P[`bay${n}`] = { w: 256, h: 320, draw(g, w, h, r) {
+  g.fillStyle = '#6d6a64'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#121212'; g.fillRect(14, 14, w - 28, h - 28);
+  g.strokeStyle = '#d9a81e'; g.lineWidth = 6; g.strokeRect(24, 24, w - 48, h - 48);
+  g.fillStyle = '#e0b021'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = '700 34px "Arial Narrow", Arial, sans-serif'; g.fillText('RAMPA', w / 2, 62);
+  g.font = '800 200px "Arial Narrow", Arial, sans-serif'; g.fillText(String(n), w / 2, h * 0.6);
+  grime(g, w, h, r, 0.35, '30,26,20');
+} };
+// the helipad on the tower's roof: the yellow ring and the H, nothing else (clear: the deck shows)
+P.helipad = { w: 512, h: 512, draw(g, w, h) {
+  g.clearRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(214,170,40,1)'; g.lineWidth = 26; g.beginPath(); g.arc(w / 2, h / 2, w * 0.42, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = 'rgba(226,224,216,1)'; const u = w / 512;
+  g.fillRect(170 * u, 140 * u, 46 * u, 232 * u); g.fillRect(296 * u, 140 * u, 46 * u, 232 * u); g.fillRect(170 * u, 233 * u, 172 * u, 46 * u);
+} };
+// the works' gate: Ocaksan's name on the steel over it, scraped clean of Vorsa's grey this morning
+P.gateSign = { w: 1024, h: 168, draw(g, w, h, r) {
+  g.fillStyle = '#2b2623'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#e6dcc4'; g.lineWidth = 4; g.strokeRect(10, 10, w - 20, h - 20);
+  ocLogo(g, 92, h / 2, 52);
+  g.fillStyle = '#e6dcc4'; g.textBaseline = 'middle'; g.textAlign = 'left'; fit(g, 'OCAKSAN A.Ş.', 170, h / 2 + 4, 600, 120, '800 #px "Arial Narrow", Arial, sans-serif');
+  g.textAlign = 'right'; g.font = '600 30px "Arial Narrow", Arial, sans-serif'; g.fillText('KURULUŞ 1891', w - 34, h / 2 + 4);
+  // what is left of the grey: in the corners, along the rivets, a run down from the top
+  for (let i = 0; i < 22; i++) { const x = r() < 0.5 ? r() * w * 0.06 : w - r() * w * 0.035, y = r() * h, s = 6 + r() * 18; g.fillStyle = `rgba(116,122,126,${(0.55 + r() * 0.35).toFixed(2)})`; g.beginPath(); g.ellipse(x, y, s, s * (0.3 + r() * 0.5), r() * 3, 0, Math.PI * 2); g.fill(); }
+  for (let i = 0; i < 40; i++) { g.strokeStyle = 'rgba(200,200,196,0.18)'; g.lineWidth = 1; const x = r() * w, y = r() * h; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 30 + r() * 80, y + (r() - 0.5) * 6); g.stroke(); }
+  for (let x = 30; x < w; x += 140) for (const y of [22, h - 22]) { g.fillStyle = '#5a524c'; g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fill(); }
+  grime(g, w, h, r, 0.2, '30,24,18');
+} };
+// the banner on the works' wall: the hiring notice, cloth, lettered by hand-brush
+P.hiringBanner = { w: 1024, h: 190, draw(g, w, h, r) {
+  g.fillStyle = '#ece3cc'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#e2692f'; g.fillRect(0, 0, 196, h); ocLogo(g, 98, h / 2 - 6, 54, '#2b2623', '#fff1dc');
+  g.fillStyle = '#2b2623'; g.font = '700 22px "Arial Narrow", Arial, sans-serif'; g.textAlign = 'center'; g.fillText('OCAKSAN', 98, h - 18);
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.fillStyle = '#7a3a1c'; g.font = '700 26px "Arial Narrow", Arial, sans-serif'; g.fillText('OCAKSAN A.Ş.  ·  İŞ İLANI', 222, 40);
+  g.fillStyle = '#1e1a17'; fit(g, '1.200 KİŞİ ALINACAK', 220, 128, w - 250, 96, '800 #px "Arial Narrow", Arial, sans-serif');
+  g.fillStyle = '#3a332e'; g.font = '600 24px "Arial Narrow", Arial, sans-serif'; g.fillText('Ocak · Döküm · Liman · Bakım  —  Başvuru: 1 No’lu Kapı, 08.00', 222, 168);
+  // the cloth: weave, a sag between the ties, the eyelets
+  for (let y = 0; y < h; y += 3) { g.fillStyle = `rgba(80,60,40,${(0.02 + r() * 0.03).toFixed(3)})`; g.fillRect(0, y, w, 1); }
+  for (const x of [14, w / 2, w - 14]) for (const y of [12, h - 12]) { g.fillStyle = '#8a8378'; g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fill(); g.fillStyle = '#3a3630'; g.beginPath(); g.arc(x, y, 3, 0, Math.PI * 2); g.fill(); }
+  grime(g, w, h, r, 0.06, '90,70,50');
+} };
+// the safety board at the gate: green enamel, the day count on flip plates. It stopped at 1.412
+// the night the works were taken; this morning the plates read 0001
+P.safetyBoard = { w: 640, h: 440, draw(g, w, h, r) {
+  g.fillStyle = '#e8e4d8'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#1d6b3c'; g.fillRect(12, 12, w - 24, h - 24);
+  g.fillStyle = '#f2efe6'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  fit(g, 'İŞ KAZASIZ GEÇEN GÜN', w / 2, 62, w - 80, 50, '800 #px "Arial Narrow", Arial, sans-serif');
+  const digits = '0001', cw = 104, ch = 168, x0 = w / 2 - (cw * 4 + 14 * 3) / 2;
+  for (let i = 0; i < 4; i++) {
+    const x = x0 + i * (cw + 14), y = 104;
+    g.fillStyle = '#111312'; g.fillRect(x, y, cw, ch); g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(x, y, cw, ch / 2);
+    g.fillStyle = i === 3 ? '#ffffff' : '#e9e6dc'; g.font = '800 150px "Arial Narrow", Arial, sans-serif'; g.fillText(digits[i], x + cw / 2, y + ch / 2 + 6);
+    g.fillStyle = '#050605'; g.fillRect(x, y + ch / 2 - 1, cw, 3);
+  }
+  g.fillStyle = '#f2efe6'; g.font = '600 30px "Arial Narrow", Arial, sans-serif'; g.fillText('ÖNCEKİ REKOR: 1.412 GÜN', w / 2, 320);
+  ocLogo(g, 70, h - 62, 26, '#f2efe6', null);
+  g.textAlign = 'left'; g.font = '700 24px "Arial Narrow", Arial, sans-serif'; g.fillText('OCAKSAN A.Ş.  ·  İŞ SAĞLIĞI VE GÜVENLİĞİ', 112, h - 60);
+  for (const [x, y] of [[26, 26], [w - 26, 26], [26, h - 26], [w - 26, h - 26]]) { g.fillStyle = '#7a6a58'; g.beginPath(); g.arc(x, y, 8, 0, Math.PI * 2); g.fill(); g.fillStyle = 'rgba(120,60,20,0.5)'; g.fillRect(x - 2, y + 6, 4, 20 + r() * 26); }
+  grime(g, w, h, r, 0.14, '40,34,20');
+} };
+// a photograph on the boardroom's other wall: the works in 1891, sepia, the first furnace smoking
+P.oldWorks = { w: 520, h: 400, draw(g, w, h, r) {
+  g.fillStyle = '#2a1c12'; g.fillRect(0, 0, w, h); g.fillStyle = '#e9e1cf'; g.fillRect(22, 22, w - 44, h - 44);
+  const x0 = 46, y0 = 46, pw = w - 92, ph = h - 132;
+  const sk = g.createLinearGradient(0, y0, 0, y0 + ph); sk.addColorStop(0, '#d8c3a0'); sk.addColorStop(1, '#a88c66'); g.fillStyle = sk; g.fillRect(x0, y0, pw, ph);
+  g.fillStyle = '#4a3624';
+  g.fillRect(x0, y0 + ph * 0.78, pw, ph * 0.22);
+  g.beginPath(); g.moveTo(x0 + pw * 0.38, y0 + ph * 0.8); g.lineTo(x0 + pw * 0.42, y0 + ph * 0.2); g.lineTo(x0 + pw * 0.52, y0 + ph * 0.2); g.lineTo(x0 + pw * 0.56, y0 + ph * 0.8); g.fill();
+  for (const [x, top] of [[0.14, 0.12], [0.2, 0.18], [0.72, 0.06]]) g.fillRect(x0 + pw * x, y0 + ph * top, pw * 0.035, ph * (0.8 - top));
+  g.fillRect(x0 + pw * 0.6, y0 + ph * 0.5, pw * 0.3, ph * 0.3);
+  for (let i = 0; i < 30; i++) { const k = i / 30; g.fillStyle = `rgba(90,70,52,${(0.18 * (1 - k)).toFixed(3)})`; g.beginPath(); g.arc(x0 + pw * (0.47 + k * 0.3), y0 + ph * (0.18 - k * 0.15), 10 + k * 34, 0, Math.PI * 2); g.fill(); }
+  const vg = g.createRadialGradient(w / 2, y0 + ph / 2, ph * 0.3, w / 2, y0 + ph / 2, ph * 0.9); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,40,20,0.45)'); g.fillStyle = vg; g.fillRect(x0, y0, pw, ph);
+  g.fillStyle = 'rgba(50,40,90,0.8)'; g.font = 'italic 26px "Segoe Print", "Comic Sans MS", cursive'; g.textAlign = 'center'; g.fillText('3 No’lu Fırın · 1891', w / 2, h - 52);
+  grime(g, w, h, r, 0.1, '120,90,50');
 } };

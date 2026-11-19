@@ -293,8 +293,8 @@ export class App {
     if (r.id === 'm3' && gain.firstClear && !this.save.d.story.seen.act1) { this.playStory('act1', { then: () => this.router.go('result', { r, gain }, { root: true }) }); return; }
     // and of the second, the first time the furnace is lit again (docs §10.31)
     if (r.id === 'm7' && gain.firstClear && !this.save.d.story.seen.act2) { this.playStory('act2', { then: () => this.router.go('result', { r, gain }, { root: true }) }); return; }
-    // and of the third, the first time the tower falls: the closing card (docs §10.41)
-    if (r.id === 'm10' && gain.firstClear && !this.save.d.story.seen.act3) { this.finale(() => this.router.go('result', { r, gain }, { root: true })); return; }
+    // and of the third, the first time the tower falls: its film (docs §10.44), then the closing card (§10.41)
+    if (r.id === 'm10' && gain.firstClear && !this.save.d.story.seen.act3) { this.playStory('act3', { then: () => this.finale(() => this.router.go('result', { r, gain }, { root: true })) }); return; }
     this.router.go('result', { r, gain }, { root: true });
   }
 

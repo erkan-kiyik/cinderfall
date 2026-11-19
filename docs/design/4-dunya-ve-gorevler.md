@@ -873,3 +873,52 @@ etmek, özel teşebbüsü "askıya" almak. KOR, şirketin şehirden gitmeyen be�
   ya da dinî grup düşman değil.
 
 Çizim sürümü `d4-70` (telefonlar yeniden boyar).
+
+### 10.44 Perde 3'ün filmleri: yeni mekânlar, ışın izlemeli
+Perde 3'ün görevlerinden önce film yoktu; artık her birinin önünde, bir de
+kapanış kartından önce birer film var. Hepsi yeni mekânlar: ışın izlenmiş
+plakalar (`tools/game/series/scenes/act3.js`, kameralar
+`js/cine/plates.js`), üstünde canlı çizilen hareket (`js/cine/shots5.js`).
+Filmlerde kimse görünmez; telsiz ve altyazı (on dil) taşır.
+
+- **m8 — Yönetim katı:** kulenin kırk ikinci katı, Ocaksan'ın eski yönetim
+  odası. Uzun masada Vorsa'nın dizüstüleri, duvarda pirinç logonun söküldüğü
+  yerde kırk yılda solmamış ceviz (logonun izi, vida delikleri, tablo lambası
+  hâlâ üstünde), yanında Vorsa işareti; karşı duvarda kasa ve 1891 fotoğrafı.
+  Pencerede şehir ve uzakta yeniden yanan fırın, dumanıyla. Canlı: camda
+  yağmur damlaları, odayı soldan sağa geçen projektör, ekranların titremesi.
+  *VESPER: "Kırk ikinci kat. Planın aslı kasada." · WARDEN: "Bu binanın
+  yangın planını da ben yazdım." · FLINT: "Babam bu masada otururdu."*
+- **m9 — Yük rampası:** kulenin altındaki rampa; üç kapı, üçüncüsü yarı açık
+  ve içi ışıklı. HAWK'ın kamyonu arka kapıları açık, içi boş. Canlı: flaşörler
+  (ıslak zeminde yansımalarıyla), egzoz, dönen kırmızı lamba. 11,8. saniyede
+  ışıklar kesilir (plaka sodyum lambalarsız haline geçer, iki "klak" ile),
+  uzak kapılardan fenerler girer. *SKYE: "Üçüncü rampa. Kamyon yerinde." ·
+  VESPER: "Kapılar açık, içi boş. HAWK açmıyor." · BULWARK: "Pusu."*
+- **m10 — Çatı, fırtına:** yayın direği (üç ayaklı kafes, çanaklar, kırmızı
+  lambalar, gergi halatları), verici kulübesi, helikopter pisti, bayrak
+  direğinde Vorsa'nın bayrağı. Canlı: sağanak, yanıp sönen kırmızı lambalar,
+  üç şimşek (plaka şimşek ışığında çekilmiş haline birkaç kare geçer; ikincide
+  gökte çatallı yıldırım) ve gök gürültüsü, dalgalanan bayrak. *VESPER:
+  "Verici çatıda. Plan oradan okunacak." · SKYE: "Vasquez direğin dibinde.
+  Yalnız değil." · FLINT: "Çıkıyoruz."*
+- **Perde 3 sonu (üç çekim, 20 sn), kapanış kartından önce:**
+  1. *Şafak, çatı:* aynı bayrak direğine Ocaksan'ın bayrağı çekilir (logo,
+     *OCAKSAN*, *KURULUŞ 1891*; bez canlı dalgalanır), kuşlar. *VESPER: "Kule
+     bizim. Bayrak direkte."*
+  2. *Fabrika kapısı, sabah:* tuğla ayaklar, üstte *OCAKSAN A.Ş. — KURULUŞ
+     1891* (Vorsa'nın gri boyası kazınmış), kapılar açık, duvarda pankart
+     *1.200 KİŞİ ALINACAK*; arkada fırın buharıyla. *FLINT: "Fırın yanarsa
+     şehir maaş alır."*
+  3. *Kazasız gün panosu:* *İŞ KAZASIZ GEÇEN GÜN*; son kart 0'dan 1'e döner
+     (*ÖNCEKİ REKOR: 1.412 GÜN*). *WARDEN: "Pano sıfırlandı. Kazasız gün:
+     bir."* Sonra *Perde 3 sonu* ve kapanış kartı.
+- **Oyun:** m8–m10'a ilk girişte film oynar (kampanyada "Sahne" düğmesiyle
+  yeniden izlenir); m10 ilk kez bitince Perde 3 filmi, ardından kapanış kartı.
+- **Düzeltme:** Vorsa afişinin dokusunda eski slogan kalmıştı (*DÜZEN ·
+  GÜVENLİK · İTAAT*); *KAYIT · DENETİM · İTAAT* yapıldı, afişi gösteren
+  plakalar (`open_poster`, `open_poster_off`, `metro`) ve açılış filmi ile m5
+  filmi yeniden işlendi.
+
+Yeni dosyalar: `assets/plates/{boardroom,bay,bay_dark,roof,roof_flash,roof_dawn,works_gate,works_board}.webp`,
+`assets/film/{m8,m9,m10,act3}.mp4`.

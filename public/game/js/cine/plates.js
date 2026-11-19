@@ -8,6 +8,8 @@
 // PLATES: each plate's camera. `core` is the width (px) the lens is reckoned
 // on; W×H is the image, the core plus a margin all round for the moves.
 
+// a camera at p looking at q (yaw, pitch), the plate a little bigger than the frame
+function look(p, q) { const d = [q[0] - p[0], q[1] - p[1], q[2] - p[2]]; return { pos: p, yaw: Math.atan2(d[0], d[2]), pitch: Math.atan2(d[1], Math.hypot(d[0], d[2])), core: 1280, W: 1376, H: 632 }; }
 const OPEN = {
   furnace: { mm: 50, pos: [-60, 1.8, -250], yaw: 0.1974, pitch: 0.0946, core: 1280, W: 1376, H: 632 },
   roof: { mm: 35, pos: [-1.2, 25.7, 5.2], yaw: 0.0385, pitch: -0.0448, core: 1280, W: 1376, H: 632 },
@@ -29,6 +31,17 @@ export const PLATES = {
   metro: { mm: 24, pos: [1.4, 2.55, -1], yaw: -0.0311, pitch: -0.0057, core: 1280, W: 1376, H: 632 },
   drones: { mm: 28, pos: [-6.5, 2.6, 1], yaw: 0.1776, pitch: -0.0353, core: 1280, W: 1376, H: 632 },
   open_furnace_relit: OPEN.furnace,
+  // act 3's films (docs §10.44; tools/game/series/scenes/act3.js): the boardroom on the
+  // forty-second floor, the loading bay (and with its lamps cut), the roof by night (and lit
+  // by lightning), the flagpole at dawn, the works' gate and its safety board that morning
+  boardroom: { mm: 20, ...look([2.4, 1.55, -1.6], [-4.2, 1.15, 14]) },
+  bay: { mm: 28, ...look([-2.6, 1.55, -3.5], [1.2, 1.7, 8]) },
+  bay_dark: { mm: 28, ...look([-2.6, 1.55, -3.5], [1.2, 1.7, 8]) },
+  roof: { mm: 18, ...look([-4.5, 1.1, -12], [0.6, 12.5, 14]) },
+  roof_flash: { mm: 18, ...look([-4.5, 1.1, -12], [0.6, 12.5, 14]) },
+  roof_dawn: { mm: 35, ...look([2.4, 1.5, -9], [7.6, 10.2, 1.5]) },
+  works_gate: { mm: 28, ...look([-30.5, 1.65, -182], [-25.5, 7.4, -100]) },
+  works_board: { mm: 50, ...look([-34.6, 2.0, -165.5], [-32.7, 2.6, -160.76]) },
 };
 
 // the camera a plate is traced from (ss: supersampling)

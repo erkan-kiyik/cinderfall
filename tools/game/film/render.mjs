@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../public/game');
 const OUT = path.join(ROOT, 'assets/film');
 const args = process.argv.slice(2), opt = Object.fromEntries(args.filter((a) => a.startsWith('--')).map((a) => a.slice(2).split('=')));
-const ALL = ['opening', 'opening_loop', 'prologue', 'm1', 'm2', 'm3', 'act1', 'm4', 'm5', 'm6', 'm7', 'act2'];
+const ALL = ['opening', 'opening_loop', 'prologue', 'm1', 'm2', 'm3', 'act1', 'm4', 'm5', 'm6', 'm7', 'act2', 'm8', 'm9', 'm10', 'act3'];
 // the launch film's last shot (the coals, KOR over them) as a seamless loop
 // for as long as the game is still loading: LOOP s of it, the last FADE s
 // crossfaded into its own start
