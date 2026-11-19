@@ -732,3 +732,22 @@ Karakter tasarımları beğenilmedi; karar: **oyun dışında karakterler öne
   görüntüleri yeniden alındı; görev görüntüleri oyun içi olduğu için kaldı.
 - Boyanmış yüzler silinmedi: `facePortrait` ve `hawkFace` geliştirici
   sayfalarında (`dev/_avatars.html`, `sheet.html?what=avatars`) duruyor.
+
+### 10.45 Canlı renkler: figürler kağıt gibi durmasın
+Oyunda karakterler kâğıttan kesilmiş gibi duruyordu: mat üç ton, kanvas
+dokusu, sokağın gece rengi (doygunluk 0,84) altında solan renkler ve
+etraflarında koyu bir hale. Ortama dokunmadan yalnız figürler değişti:
+
+- **Boyada** (`art/kit.js`, figür boyanırken; yumuşak işaretler açıkken):
+  her ton grisinden uzaklaştırılır (açık, orta, gölge; `vivid()`), düz
+  dolgular da biraz; ışık bandı daha geniş (0,45 → 0,6); her parçanın aydınlık
+  kenarında ince bir parlama; malzeme dokusu yarı güçte. Kumaş, deri ve çelik
+  kâğıt değil, malzeme gibi okunur.
+- **Sahneye konurken** (`gfx/charrender.js`): renk daha da açılır (soluk
+  renkler en çok), orta tonlarda kontrast; anahtar ışığın kenarında daha
+  parlak ve geniş bir kenar ışığı, öbür kenarda sokak lambalarının sıcak
+  "kicker"ı; dıştaki koyu hale daha hafif ve dar (kesik kâğıt görüntüsü bu
+  haleden geliyordu).
+- Ortamın rengi, ışığı ve sokağın gece ayarı aynı kaldı.
+
+Çizim sürümü `d4-72` (telefonlar karakterleri bir kez yeniden boyar).

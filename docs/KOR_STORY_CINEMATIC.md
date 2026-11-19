@@ -83,6 +83,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.42 | Sağ çerçeve (§10.43 ile değişti) | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1042-sağ-çerçeve-memleket-aile-gelenek-meşru-düzen) |
 | 10.43 | Şirket yanlısı çerçeve: Ocaksan A.Ş., şirket bayrağı | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1043-şirket-yanlısı-çerçeve-ocaksan-aş) |
 | 10.44 | Perde 3'ün filmleri: yönetim katı, yük rampası, çatı, şafak | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1044-perde-3ün-filmleri-yeni-mekânlar-ışın-izlemeli) |
+| 10.45 | Canlı renkler: figürler kağıt gibi durmasın | [3-karakterler](design/3-karakterler.md#1045-canlı-renkler-figürler-kağıt-gibi-durmasın) |
 
 Giriş notu (eski belgenin başı):
 

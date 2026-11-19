@@ -41,7 +41,30 @@ function dark(c) {
   return v < 0.16;
 }
 
+// Figures are painted richer than the places they stand in (docs §10.45): in a
+// figure's paint (soft marks on) every flat colour and every tone is pushed out
+// from its grey, so cloth, leather and steel keep their colour under the
+// street's night grade instead of going the dull matte of paper.
+const VIV = new Map();
+export function vivid(c, k = 1.16, lift = 0) {
+  if (typeof c !== 'string' || c[0] !== '#' || (c.length !== 7 && c.length !== 4)) return c;
+  const key = c + k + lift; let v = VIV.get(key);
+  if (v) return v;
+  const h = c.length === 4 ? c.slice(1).split('').map((x) => parseInt(x + x, 16)) : [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+  const l = h[0] * 0.299 + h[1] * 0.587 + h[2] * 0.114;
+  const o = h.map((x) => { let y = l + (x - l) * k; y = lift >= 0 ? y + (255 - y) * lift : y * (1 + lift); return Math.round(Math.max(0, Math.min(255, y))); });
+  v = '#' + o.map((x) => x.toString(16).padStart(2, '0')).join('');
+  VIV.set(key, v); return v;
+}
+const VT = new WeakMap();
+function vtone(t) {
+  let v = VT.get(t);
+  if (!v) { v = { ...t, l: vivid(t.l, 1.28, 0.06), m: vivid(t.m, 1.28), d: vivid(t.d, 1.22, -0.08) }; VT.set(t, v); }
+  return v;
+}
+
 export function fill(g, d, c, a = 1) {
+  if (SOFT) c = vivid(c);
   g.globalAlpha = a; g.fillStyle = c;
   const b = SOFT && dark(c) ? 0.07 * ppu(g) : 0, f0 = b > 0.5 ? g.filter : null;
   if (f0 !== null) g.filter = `blur(${b.toFixed(2)}px)`;
@@ -115,7 +138,10 @@ function soft(g, p, dx, dy, color, blur, inv = false) {
 //   o.gloss  a tight specular glint on the lit edge (leather, rubber, steel)
 export function cel(g, d, t, o = {}) {
   const p = P(d);
-  const sh = o.sh ?? 1.0, hl = o.hl ?? 0.45, k = ppu(g);
+  // a figure (soft marks on): richer tones, a wider light band, a glint on every
+  // part and the material's weave fainter, so it reads as stuff, not paper (§10.45)
+  if (SOFT) t = vtone(t);
+  const sh = o.sh ?? 1.0, hl = o.hl ?? (SOFT ? 0.6 : 0.45), k = ppu(g), gloss = o.gloss ?? (SOFT ? 0.14 : 0);
   g.save();
   g.clip(p);
   g.fillStyle = t.m; g.fillRect(-BIG, -BIG, 2 * BIG, 2 * BIG);
@@ -134,15 +160,15 @@ export function cel(g, d, t, o = {}) {
     const [hx, hy] = localVec(g, -LIGHT.x * hl, -LIGHT.y * hl);
     soft(g, p, hx, hy, t.l, Math.min(10, hl * 0.9 * k), true);
   }
-  if (o.gloss) {
+  if (gloss) {
     const [gx, gy] = localVec(g, -LIGHT.x * 0.35, -LIGHT.y * 0.35);
-    g.globalAlpha = o.gloss; soft(g, p, gx * 0.6, gy * 0.6, '#fffaf0', Math.min(4, 0.35 * k), true);
+    g.globalAlpha = gloss; soft(g, p, gx * 0.6, gy * 0.6, '#fffaf0', Math.min(4, 0.35 * k), true);
     g.globalAlpha = 1;
     // and take most of it back off the inside so only the rim glints
-    g.globalAlpha = o.gloss * 0.9; soft(g, p, gx * 0.25, gy * 0.25, t.l, Math.min(5, 0.5 * k), true); g.globalAlpha = 1;
+    g.globalAlpha = gloss * 0.9; soft(g, p, gx * 0.25, gy * 0.25, t.l, Math.min(5, 0.5 * k), true); g.globalAlpha = 1;
   }
   const tx = o.tex ?? t.tex;
-  if (tx) texture(g, tx, t.ta ?? 0.55);
+  if (tx) texture(g, tx, (t.ta ?? 0.55) * (SOFT ? 0.5 : 1));
   g.restore();
   if (o.line === true) stroke(g, p, t.k, (o.lw ?? 0.32) * LINE, 0.6);
 }
