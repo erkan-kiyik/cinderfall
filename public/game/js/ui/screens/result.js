@@ -11,6 +11,7 @@ export const result = {
     const acc = r.shots ? Math.round((r.hits / r.shots) * 100) : 0;
     const xpNum = h('b.num', '0'), coinNum = h('b.num', '0');
     const lvl = h('div.eyebrow.accent', t('hub.level', { n: d.profile.level }));
+    const lvlPay = h('div.eyebrow.lvlpay');
     const xpBar = h('div.meter.ember', h('i', { style: { width: `${Math.round((d.profile.xp / xpFor(d.profile.level)) * 100)}%` } }));
     const tiles = [
       [clock(r.time), t('res.time')], [r.kills, t('prof.kills')], [`%${acc}`, t('prof.acc')], [r.heads, t('prof.heads')], [r.deaths, t('prof.deaths')],
@@ -28,7 +29,7 @@ export const result = {
           : h('div.tag', stars(r.stars, 26), h('div.eyebrow', { style: { marginTop: '4px' } }, t('res.why', { t: clock(r.par || 300) })))),
       h('div.res-tiles', tiles),
       h('div.reward',
-        h('div.tile.cut', h('span.eyebrow', t('res.xp')), xpNum, lvl, xpBar),
+        h('div.tile.cut', h('span.eyebrow', t('res.xp')), xpNum, lvl, xpBar, lvlPay),
         h('div.tile.cut', h('span.eyebrow', t('hub.parca')), h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px' } }, svg('coin'), coinNum), g.newStars ? h('span.eyebrow', t('res.newStars', { n: g.newStars })) : null)),
       h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'flex-end' } }, again, cont));
     const el = h('div', h('div.sbody.veil', { style: { alignItems: 'center' } }, box));
@@ -39,7 +40,12 @@ export const result = {
         popIn([box], { from: 18 });
         popIn(tiles, { delay: 160, step: 50 });
         setTimeout(() => { countUp(xpNum, 0, g.xp, { fmt: (v) => `+${num(Math.round(v))}` }); countUp(coinNum, 0, g.parca, { fmt: (v) => `+${num(Math.round(v))}` }); ui('reward'); haptic('success'); }, 380);
-        if (g.levelUps) setTimeout(() => { ui('levelup'); haptic('heavy'); lvl.textContent = `${t('hub.level', { n: d.profile.level })} · ${t('res.levelUp')}`; }, 1300);
+        if (g.levelUps) setTimeout(() => {
+          ui('levelup'); haptic('heavy'); lvl.textContent = `${t('hub.level', { n: d.profile.level })} · ${t('res.levelUp')}`;
+          // what the new level paid (docs §10.41): PARÇA, and crates into the stock
+          const pay = (g.levelPay || []).reduce((a, x) => a + x.parca, 0), crates = (g.levelPay || []).filter((x) => x.crate).map((x) => t(`crate.${x.crate}`));
+          if (pay) { lvlPay.textContent = [t('res.levelPay', { n: num(pay) }), ...crates].join(' · '); lvlPay.classList.add('on'); }
+        }, 1300);
       },
       back: () => { back(); return true; },
     };

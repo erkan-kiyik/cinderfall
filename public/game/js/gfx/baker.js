@@ -203,7 +203,8 @@ export async function bakeAll(atlas, entries, { key, onProgress, onRest, workers
     let last = performance.now();
     for (let k = from; k < total; k++) {
       if (k === nFirst) { await gate; last = performance.now(); }
-      addAll(atlas, paintEntry(entries[order[k]]), k >= nFirst);
+      // one sprite that will not paint or fit is logged and left out; the rest still bake
+      try { addAll(atlas, paintEntry(entries[order[k]]), k >= nFirst); } catch (e) { console.error('bake', entries[order[k]].name, e); logError(`${entries[order[k]].name}: ${e?.message || e}`, 'bake', e?.stack); }
       onAdded(k + 1);
       // in the background (the lobby is running) in short slices
       if (performance.now() - last > (k + 1 > nFirst ? 8 : 30)) { await frame(); last = performance.now(); }

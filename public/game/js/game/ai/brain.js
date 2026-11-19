@@ -6,14 +6,17 @@
 //   guard   stands or patrols, glancing around; builds awareness from what it
 //           sees (cone in front, range, line of sight) and hears (shots)
 //   search  walks to the last known position, looks both ways, gives up
-//   combat  per type: the rifleman takes cover and peeks to fire bursts, the
-//           assault rushes in with the shotgun, the shield trooper pushes
-//           forward and bashes
+//   combat  per type: the rifleman takes cover and peeks to fire bursts (and so
+//           do the marksman, the grenadier, the heavy gunner and the bosses,
+//           each at its own range and rhythm), the assault rushes in with the
+//           shotgun, the shield trooper pushes forward and bashes
 // Fairness: a squad hands out fire tokens (at most N shooting at once),
 // reaction time and aim error come from the difficulty.
 import { rayTiles } from '../ballistics.js';
 
 export const DIFF = {
+  // easy (docs §10.41): slower to react, wider misses, one shooter at a time, a third of normal's sting
+  easy: { reaction: 1.0, errMax: 0.17, errMin: 0.07, settle: 0.012, tokens: 1, dmg: 0.2, burst: 0.75 },
   normal: { reaction: 0.65, errMax: 0.12, errMin: 0.04, settle: 0.02, tokens: 2, dmg: 0.32, burst: 1 },
   hard: { reaction: 0.4, errMax: 0.09, errMin: 0.022, settle: 0.03, tokens: 3, dmg: 0.55, burst: 1.3 },
 };
@@ -24,7 +27,19 @@ const KIND = {
   kal: { sight: 360, cone: 0.85, walk: 0.3, prefer: [0, 30], burst: [0, 0], pause: [1.4, 1.4] },
   // the boss: sees far, long bursts, holds the middle distance
   gall: { sight: 520, cone: 1, walk: 0.3, prefer: [140, 320], burst: [6, 10], pause: [0.7, 1.2] },
+  // docs §10.41: the marksman holds far back, one heavy shot at a time behind a laser;
+  // the grenadier keeps the middle and lobs grenades (the scene throws them); the heavy
+  // gunner walks slowly behind long bursts
+  nis: { sight: 640, cone: 0.9, walk: 0.25, prefer: [280, 520], burst: [1, 1], pause: [2.0, 2.8] },
+  bom: { sight: 420, cone: 0.85, walk: 0.34, prefer: [120, 280], burst: [3, 6], pause: [0.9, 1.5] },
+  agr: { sight: 460, cone: 0.85, walk: 0.2, prefer: [140, 300], burst: [9, 15], pause: [1.3, 2.0] },
+  // act 2's boss, Brandt: the machine gun from the middle distance, very long bursts
+  brandt: { sight: 520, cone: 1, walk: 0.22, prefer: [120, 300], burst: [12, 20], pause: [1.0, 1.6] },
+  // the last one, Vasquez: quick, short bursts; the scene adds the dash and the flash
+  vasq: { sight: 560, cone: 1, walk: 0.34, prefer: [140, 320], burst: [4, 7], pause: [0.6, 1.0] },
 };
+// the kinds that fight from cover with a rifle-like gun
+const RIFLE = new Set(['tet', 'gall', 'nis', 'bom', 'agr', 'brandt', 'vasq']);
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -170,7 +185,7 @@ export class Brain {
     else {
       if (this.lostT > 5) { this.enter('search'); world.squad.release(this); }
       face = this.lx < m.x ? -1 : 1;
-      if (this.kind === 'tet' || this.kind === 'gall') ({ trigger, pressed } = this.rifleman(dt, world, dist));
+      if (RIFLE.has(this.kind)) ({ trigger, pressed } = this.rifleman(dt, world, dist));
       else if (this.kind === 'huc') ({ trigger, pressed } = this.assault(dt, world, dist));
       else this.shield(dt, world, dist);
     }

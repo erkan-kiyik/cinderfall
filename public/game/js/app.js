@@ -13,9 +13,9 @@ import { hudLayout } from './ui/screens/hudedit.js';
 import { Showcase } from './game/showcase.js';
 import { MissionScene } from './game/mission.js';
 import { Bench, reportText } from './game/bench.js';
-import { bindKeyboard, bindTouch } from './game/input.js';
+import { bindKeyboard, bindTouch, pollPad, KEYS_DEFAULT } from './game/input.js';
 import { applyMission } from './core/save.js';
-import { syncTints, ensureDaily } from './core/economy.js';
+import { syncTints, ensureDaily, ensureWeekly, costumeOf } from './core/economy.js';
 import { refreshCur } from './ui/screens/common.js';
 import { needsAcceptance } from './legal/consent.js';
 import { Music } from './audio/music.js';
@@ -44,7 +44,7 @@ export class App {
     this.rest = rest; // after a first start, the street and the missions still painting (docs §10.28)
     grain();
     // the economy: the hub's coin counter, the finishes the guns are drawn with, today's tasks
-    refreshCur.save = save; syncTints(save.d); ensureDaily(save);
+    refreshCur.save = save; syncTints(save.d); ensureDaily(save); ensureWeekly(save);
     bindKeyboard(controls, eng.renderer.canvas);
     this.uiRoot = document.querySelector('#ui');
     this.showcase = new Showcase(eng);
@@ -56,6 +56,7 @@ export class App {
       hasStory: (id) => !!STORY[id],
       applySettings: () => this.applySettings(),
       runBench: () => this.runBench(),
+      controls: this.controls,
       copyText,
     };
     this.router = this.ctx.router = new Router(this.uiRoot, this.ctx, SCREENS);
@@ -64,7 +65,11 @@ export class App {
     history.pushState({ g: 1 }, '');
     addEventListener('popstate', () => this.onBack());
     addEventListener('resize', () => this.fit());
-    addEventListener('keydown', (e) => { if (e.code === 'Escape') { if (this.scene !== this.showcase) this.scene.pause?.(); else if (!document.querySelector('.scrim')) this.router.back(); } });
+    addEventListener('keydown', (e) => {
+      if (e.code !== 'Escape' || this.controls.capture) return;
+      if (this.gameSettings) this.router.back();
+      else if (this.scene !== this.showcase) { if (this.scene.paused) this.scene.resume?.(); else this.scene.pause?.(); } else if (!document.querySelector('.scrim')) this.router.back();
+    });
     // the first touch starts the audio
     const unlock = () => eng.sfx.unlock();
     // music: the lobby track until a mission starts; quiet while the app is in the background
@@ -120,6 +125,8 @@ export class App {
     if (this.e.loop) this.e.loop.cap = st.fpsCap ?? 60;
     if (this.perf && this.perf.visible !== st.fps) this.perf.toggle();
     this.e.sfx.setVolumes(st.vol);
+    this.controls.keys = { ...KEYS_DEFAULT, ...(st.keys || {}) };
+    this.controls.aimAssist = st.aimAssist; this.controls.aimSens = st.aimSens;
     configureKit({ haptics: st.haptics, reduce: st.reduceMotion, sfx: this.e.sfx });
     this.ctx.reduceMotion = st.reduceMotion;
     this.e.reduceMotion = st.reduceMotion;
@@ -174,11 +181,13 @@ export class App {
   onBack() {
     if (this.exitArmed) return; // the second press leaves the app (nothing re-armed)
     history.pushState({ g: 1 }, '');
+    if (this.gameSettings) { if (document.querySelector('.scrim')) document.querySelector('.scrim').click(); else this.router.back(); return; }
     if (this.scene !== this.showcase) { this.scene.pause?.(); return; }
     if (document.querySelector('.scrim')) { document.querySelector('.scrim').click(); return; }
     this.router.back();
   }
   rootBack() {
+    if (this.gameSettings) { this.closeGameSettings(); return; }
     const top = this.router.top;
     if (top && top.id !== 'lobby' && top.id !== 'legal') { uiSound('back'); this.router.go('lobby', {}, { root: true }); return; }
     // press back again within two seconds to leave
@@ -226,18 +235,50 @@ export class App {
     const d = this.save.d, op = d.roster.op, lo = d.roster.loadout[op];
     this.router.clear();
     document.body.classList.add('ui-hidden');
-    const coarse = matchMedia('(pointer: coarse)').matches || new URLSearchParams(location.search).has('touch');
-    this.touch = coarse ? bindTouch(this.controls, document.querySelector('#hud'), { layout: hudLayout(this.save), fireRing: d.settings.fireRing }) : null;
-    const scene = new MissionScene(this.e, this.controls, { id, diff, op, loadout: lo, brief: false, onExit: (r) => this.exitMission(r) });
+    // the tips walk a first player through the controls, in the first mission they play (docs §10.41)
+    const coach = !d.tutorial && id !== 'endless';
+    this.bindMissionTouch(coach || !d.campaign.m1?.done);
+    const scene = new MissionScene(this.e, this.controls, { id, diff, op, loadout: lo, costume: costumeOf(d, op).tint, hud: hudLayout(this.save), coach,
+      brief: false, onExit: (r) => this.exitMission(r), onSettings: () => this.openGameSettings(),
+      onCoachDone: () => this.save.set((s) => { s.tutorial = true; }) });
     this.inkFor(scene);
     this.scene = scene;
     this.e.camera.viewH = 192;
     this.music.setIntensity(0); this.music.play('mission');
   }
+  // the touch controls for a mission (again after the settings changed them)
+  bindMissionTouch(hints) {
+    if (this.touch) { this.touch.remove(); this.touch = null; }
+    const coarse = matchMedia('(pointer: coarse)').matches || new URLSearchParams(location.search).has('touch');
+    const d = this.save.d;
+    this.touch = coarse ? bindTouch(this.controls, document.querySelector('#hud'), { layout: hudLayout(this.save), fireRing: d.settings.fireRing, hints, onPause: () => this.scene.pause?.() }) : null;
+  }
+
+  // the settings from the pause card, over the paused mission; back returns to the card
+  openGameSettings() {
+    this.gameSettings = true;
+    document.body.classList.remove('ui-hidden');
+    document.body.classList.add('in-game');
+    this.router.go('settings', { tab: 'controls', inGame: true }, { root: true });
+  }
+  closeGameSettings() {
+    this.gameSettings = false;
+    this.router.clear();
+    document.body.classList.add('ui-hidden');
+    document.body.classList.remove('in-game');
+    const S = this.scene;
+    if (S === this.showcase) return;
+    // the layout and the fire ring may have changed
+    this.bindMissionTouch(this.touch?.classList.contains('hints'));
+    S.abHud?.layout(hudLayout(this.save));
+    this.inkFor(S);
+    if (S.paused && !S.done) S.pauseCard();
+  }
 
   exitMission(r) {
     const scene = this.scene;
     if (scene === this.showcase) return;
+    if (this.gameSettings) { this.gameSettings = false; document.body.classList.remove('in-game'); }
     scene.dispose();
     if (this.touch) { this.touch.remove(); this.touch = null; }
     Object.assign(this.controls, { moveX: 0, up: false, down: false, jump: false, sprint: false, crouch: false, fire: false, touchFire: false, aimHeld: false });
@@ -251,11 +292,36 @@ export class App {
     if (r.id === 'm3' && gain.firstClear && !this.save.d.story.seen.act1) { this.playStory('act1', { then: () => this.router.go('result', { r, gain }, { root: true }) }); return; }
     // and of the second, the first time the furnace is lit again (docs §10.31)
     if (r.id === 'm7' && gain.firstClear && !this.save.d.story.seen.act2) { this.playStory('act2', { then: () => this.router.go('result', { r, gain }, { root: true }) }); return; }
+    // and of the third, the first time the tower falls: the closing card (docs §10.41)
+    if (r.id === 'm10' && gain.firstClear && !this.save.d.story.seen.act3) { this.finale(() => this.router.go('result', { r, gain }, { root: true })); return; }
     this.router.go('result', { r, gain }, { root: true });
+  }
+
+  // The end of the campaign: four lines on black, one after another, then on.
+  finale(then) {
+    this.save.set((d) => { d.story.seen.act3 = true; });
+    const lines = [t('finale.l1'), t('finale.l2'), t('finale.l3'), t('finale.l4')].map((x) => h('p', x));
+    const go = h('button.btn.primary.cut', { type: 'button' }, t('finale.go'));
+    const el = h('div.finale', h('div.box', h('div.eyebrow.accent', t('finale.kicker')), h('h1', t('finale.title')), ...lines, go));
+    document.body.appendChild(el);
+    const reduce = this.save.d.settings.reduceMotion;
+    requestAnimationFrame(() => el.classList.add('on'));
+    [...lines, go].forEach((n, i) => setTimeout(() => n.classList.add('on'), reduce ? 0 : 900 + i * 1500));
+    this.music.play(null);
+    go.addEventListener('click', () => { uiSound('confirm'); el.classList.remove('on'); setTimeout(() => { el.remove(); this.music.play('lobby'); then(); }, 500); });
   }
 
   update(dt) {
     if (this.bench) this.bench.step(dt);
+    // a gamepad: polled in missions; Start pauses and resumes, A takes the card's first button
+    if (this.scene !== this.showcase) {
+      this.pad = pollPad(this.controls, this.pad);
+      if (this.controls.pausePressed) {
+        this.controls.pausePressed = false;
+        if (!this.gameSettings) { if (this.scene.paused) this.scene.resume?.(); else this.scene.pause?.(); }
+      }
+      if (this.pad.a && this.scene.paused && !this.gameSettings) { document.querySelector('.mcard:not(.hide) .box button')?.click(); this.controls.jumpPressed = false; }
+    }
     this.scene.update(dt);
     // the fight drives the music: share of enemies in combat, eased
     if (this.scene !== this.showcase && this.scene.brains) {

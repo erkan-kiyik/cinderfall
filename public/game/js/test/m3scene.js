@@ -154,7 +154,7 @@ export class M3Scene extends M2.M2Scene {
     const fx = this.fx, sfx = this.sfx, W = ch.W, mx = ch.m.x, my = ch.m.y - 40;
     for (const e of ch.ev) {
       switch (e.type) {
-        case 'fire': if (ch === this.player && ch.gun) ch.gun.cd *= this.fireK(); this.shoot(ch, e); break;
+        case 'fire': if (ch === this.player && ch.gun) ch.gun.cd *= this.fireK(); else if (ch.overdrive && ch.gun) ch.gun.cd *= 0.65; this.shoot(ch, e); break;
         case 'eject': this.eject(ch); break;
         case 'magOut': {
           sfx.play('magOut', mx, my);

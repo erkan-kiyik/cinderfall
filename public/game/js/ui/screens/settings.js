@@ -5,6 +5,7 @@ import { h, svg, press, popIn, ui, modal, toast, haptic } from '../kit.js';
 import { t, LANG_NAMES } from '../i18n.js';
 import { shead } from './common.js';
 import { errors, errorsText, clearErrors } from '../../core/errlog.js';
+import { KEYS_DEFAULT, KEY_ACTIONS, keyName } from '../../game/input.js';
 
 export const settings = {
   mount(ctx, params) {
@@ -13,7 +14,9 @@ export const settings = {
     const set = (fn) => { S.set(fn); ctx.applySettings(); };
     const nav = h('nav.set-tabs');
     const body = h('div.rows.scroll', { style: { minHeight: 0 } });
-    const TABS = [['graphics', 'eye'], ['sound', 'sound'], ['controls', 'pad'], ['access', 'user'], ['lang', 'globe'], ['legal', 'shield']];
+    // from a paused mission: what can change mid-mission, nothing that leaves it (docs §10.41)
+    const inGame = !!params.inGame;
+    const TABS = [['graphics', 'eye'], ['sound', 'sound'], ['controls', 'pad'], ['access', 'user'], ['lang', 'globe'], ['legal', 'shield']].filter(([k]) => !inGame || k !== 'legal');
 
     const row = (label, hint, ...ctrl) => h('div.row.cut', h('div.lbl', h('b', label), hint && h('small', hint)), ...ctrl);
     const toggle = (label, hint, get, put) => {
@@ -50,7 +53,7 @@ export const settings = {
           toggle(t('set.bloom'), t('set.bloomHint'), () => st.bloom, (s, v) => { s.settings.bloom = v; }),
           toggle(t('set.lights'), t('set.lightsHint'), () => st.lights, (s, v) => { s.settings.lights = v; }),
           toggle(t('set.fps'), t('set.fpsHint'), () => st.fps, (s, v) => { s.settings.fps = v; }),
-          action(t('set.bench'), t('set.benchHint'), t('set.benchRun'), () => modal({ kicker: t('bench.kicker'), title: t('set.bench'), body: t('bench.confirm'),
+          !inGame && action(t('set.bench'), t('set.benchHint'), t('set.benchRun'), () => modal({ kicker: t('bench.kicker'), title: t('set.bench'), body: t('bench.confirm'),
             actions: [{ label: t('ui.cancel'), kind: 'ghost' }, { label: t('set.benchRun'), kind: 'primary', fn: (close) => { close(); ctx.runBench(); } }] })),
         ];
       } else if (tab === 'sound') {
@@ -64,8 +67,12 @@ export const settings = {
         rows = [
           action(t('set.hud'), t('set.hudHint'), t('set.hudOpen'), () => ctx.router.go('hudedit')),
           range(t('set.fireRing'), t('set.fireRingHint'), 0.55, 0.95, 0.01, () => st.fireRing, (s, v) => { s.settings.fireRing = v; }),
+          seg(t('set.assist'), t('set.assistHint'), [['off', t('set.off')], ['low', t('set.assistLow')], ['high', t('set.assistHigh')]], () => st.aimAssist, (s, v) => { s.settings.aimAssist = v; }),
+          range(t('set.sens'), t('set.sensHint'), 0.5, 2, 0.1, () => st.aimSens, (s, v) => { s.settings.aimSens = v; }, (v) => `×${v.toFixed(1)}`),
           toggle(t('set.haptics'), t('set.hapticsHint'), () => st.haptics, (s, v) => { s.settings.haptics = v; }),
-          row(t('set.keys'), t('set.keysHint')),
+          action(t('set.keys'), t('set.keysHint'), t('set.keysEdit'), keysModal),
+          row(t('set.pad'), t('set.padHint')),
+          action(t('set.coach'), t('set.coachHint'), t('set.coachAgain'), () => { S.set((s) => { s.tutorial = false; }); toast(t('set.coachDone')); }),
         ];
       } else if (tab === 'access') {
         rows = [
@@ -73,7 +80,7 @@ export const settings = {
           seg(t('set.enemyMark'), t('set.enemyMarkHint'), [['off', t('set.off')], ['yellow', t('set.yellow')], ['blue', t('set.blue')], ['magenta', t('set.magenta')]], () => st.enemyMark, (s, v) => { s.settings.enemyMark = v; }),
           range(t('set.shake'), t('set.shakeHint'), 0, 1, 0.1, () => st.shake, (s, v) => { s.settings.shake = v; }),
           toggle(t('set.reduce'), t('set.reduceHint'), () => st.reduceMotion, (s, v) => { s.settings.reduceMotion = v; }),
-          action(t('set.prologue'), t('set.prologueHint'), t('set.watch'), () => ctx.playStory?.('prologue')),
+          !inGame && action(t('set.prologue'), t('set.prologueHint'), t('set.watch'), () => ctx.playStory?.('prologue')),
         ];
       } else if (tab === 'lang') {
         // ten languages: a grid of their own names, each set in its own script (docs §10.38)
@@ -99,11 +106,43 @@ export const settings = {
           row(t('set.engine'), t('set.engineHint')),
         ];
       }
+      rows = rows.filter(Boolean);
       body.replaceChildren(...rows);
       popIn(rows, { step: 25, from: 8 });
     }
+    // the keyboard's keys: tap an action, press the key; a key taken by another action swaps with it
+    function keysModal() {
+      const ctl = ctx.controls;
+      const list = h('div.keys');
+      const draw = () => {
+        const K = { ...KEYS_DEFAULT, ...(S.d.settings.keys || {}) };
+        list.replaceChildren(...KEY_ACTIONS.map((a) => {
+          const b = press(h('button.btn.sm.secondary.cut.key', { type: 'button', onclick: () => {
+            if (!ctl) return;
+            b.textContent = t('set.keyPress'); b.classList.add('wait');
+            ctl.capture = (code) => {
+              if (code !== 'Escape') {
+                set((s) => {
+                  const k = { ...KEYS_DEFAULT, ...(s.settings.keys || {}) };
+                  const other = KEY_ACTIONS.find((x) => x !== a && k[x] === code);
+                  if (other) k[other] = k[a];
+                  k[a] = code;
+                  s.settings.keys = k;
+                });
+                ui('tab');
+              }
+              draw();
+            };
+          } }, keyName(K[a])), { sound: 'tap' });
+          return h('div.keyrow', h('span', t(`key.${a}`)), b);
+        }));
+      };
+      draw();
+      modal({ kicker: t('set.controls'), title: t('set.keys'), body: list, cls: 'wide',
+        actions: [{ label: t('set.keysReset'), kind: 'ghost', fn: () => { set((s) => { s.settings.keys = null; }); draw(); } }, { label: t('ui.ok'), kind: 'primary', fn: (close) => { if (ctl) ctl.capture = null; close(); } }] });
+    }
     render();
-    const el = h('div', shead(ctx, t('set.title'), null), h('div.set-body.veil', nav, body));
+    const el = h('div', shead(ctx, t('set.title'), inGame ? t('game.paused') : null), h('div.set-body.veil', nav, body));
     return { el, show() { ctx.showcase.frame(0.5, 170); }, refresh: render };
   },
 };

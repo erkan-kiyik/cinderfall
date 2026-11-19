@@ -4,20 +4,47 @@ import { h, svg, press, popIn, ui, modal, toast } from '../kit.js';
 import { t, num, clock } from '../i18n.js';
 import { shead, stars } from './common.js';
 import { avatar } from '../portraits.js';
-import { MISSIONS, OPS, opName } from '../data.js';
+import { MISSIONS, OPS, opName, WEAPON_LIST } from '../data.js';
+import { masteryOf, SKIN, COSTUMES, hasCostume } from '../../core/economy.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 import { xpFor } from '../../core/save.js';
 
-// a first set of achievements, measured from the save (40 arrive with M7)
+// achievements (docs §10.41), measured from the save: [id, (d) → [progress, goal]]
+const camp = (d, id) => !!(d.campaign[id] && d.campaign[id].done);
+const C = (d) => Object.values(d.campaign);
 const ACH = [
-  ['first', (d) => [d.campaign.m1 && d.campaign.m1.done ? 1 : 0, 1]],
-  ['stars', (d) => [Math.max(0, ...Object.values(d.campaign).map((c) => c.stars.filter(Boolean).length)), 3]],
+  ['first', (d) => [camp(d, 'm1') ? 1 : 0, 1]],
+  ['act1', (d) => [camp(d, 'm3') ? 1 : 0, 1]],
+  ['act2', (d) => [camp(d, 'm7') ? 1 : 0, 1]],
+  ['act3', (d) => [camp(d, 'm10') ? 1 : 0, 1]],
+  ['stars', (d) => [Math.max(0, ...C(d).map((c) => c.stars.filter(Boolean).length)), 3]],
+  ['allStars', (d) => [C(d).reduce((a, c) => a + c.stars.filter(Boolean).length, 0), 30]],
+  ['par5', (d) => [C(d).filter((c) => c.stars[1]).length, 5]],
+  ['nodeath', (d) => [C(d).some((c) => c.stars[2]) ? 1 : 0, 1]],
+  ['hard', (d) => [C(d).some((c) => c.hard) ? 1 : 0, 1]],
+  ['hardAll', (d) => [C(d).filter((c) => c.hard).length, 10]],
+  ['bosses', (d) => [d.stats.bosses || 0, 3]],
   ['kills50', (d) => [d.stats.kills, 50]],
+  ['kills500', (d) => [d.stats.kills, 500]],
+  ['kills2000', (d) => [d.stats.kills, 2000]],
   ['heads25', (d) => [d.stats.heads, 25]],
+  ['heads250', (d) => [d.stats.heads, 250]],
   ['shots', (d) => [d.stats.shots, 1000]],
-  ['nodeath', (d) => [Object.values(d.campaign).some((c) => c.stars[2]) ? 1 : 0, 1]],
-  ['hard', (d) => [Object.values(d.campaign).some((c) => c.hard) ? 1 : 0, 1]],
+  ['shots10k', (d) => [d.stats.shots, 10000]],
   ['squad', (d) => [Object.values(d.stats.byOp).filter((o) => o.missions > 0).length, 5]],
+  ['mastery', (d) => [Math.max(0, ...OPS.map((o) => masteryOf(d, o.id).lvl)), 4]],
+  ['endless10', (d) => [d.records.endless, 10]],
+  ['endless25', (d) => [d.records.endless, 25]],
+  ['crates10', (d) => [d.inv.opened || 0, 10]],
+  ['crates50', (d) => [d.inv.opened || 0, 50]],
+  ['arsenal', (d) => [d.arsenal.owned.length, WEAPON_LIST.length]],
+  ['rareSkin', (d) => [Object.values(d.arsenal.skins).some((l) => l.some((k) => ['mythic', 'ultra'].includes(SKIN[k]?.rar))) ? 1 : 0, 1]],
+  ['costume', (d) => [Object.values(d.roster.costumes || {}).some((l) => l.length) ? 1 : 0, 1]],
+  ['level10', (d) => [d.profile.level, 10]],
+  ['level25', (d) => [d.profile.level, 25]],
+  ['login7', (d) => [d.login.n || 0, 7]],
+  ['tasks10', (d) => [d.stats.tasks || 0, 10]],
+  ['week', (d) => [d.stats.weeks || 0, 1]],
 ];
 
 export const profile = {
@@ -50,15 +77,24 @@ export const profile = {
             h('td.n', c && c.best !== null ? clock(c.best) : '—'),
             h('td.n', c ? String(c.plays) : '0')); }))));
       } else if (tab === 'collection') {
-        body.replaceChildren(h('div.empty.cut', { style: { height: '100%' } }, svg('crate'), h('b', t('prof.collEmpty')), h('span', t('prof.collHint'))));
+        // what crates, HAWK and the crew's stock have brought: finishes per weapon, costumes per operator
+        const skins = Object.entries(d.arsenal.skins).filter(([w, l]) => WEAPONS[w] && l.length);
+        const costumes = OPS.map((o) => [o, COSTUMES.filter((c) => c.id !== 'std' && hasCostume(d, o.id, c.id))]).filter(([, l]) => l.length);
+        if (!skins.length && !costumes.length) body.replaceChildren(h('div.empty.cut', { style: { height: '100%' } }, svg('crate'), h('b', t('prof.collEmpty')), h('span', t('prof.collHint'))));
+        else body.replaceChildren(
+          skins.length ? h('div.grp', t('ars.skins')) : null,
+          ...skins.map(([w, l]) => h('div.row.cut', h('div.lbl', h('b', WEAPONS[w].name)), h('div.coll', l.map((k) => SKIN[k] && h(`span.skin.cut${SKIN[k].pat ? `.p${SKIN[k].pat}` : ''}`, { title: t(`skin.${k}`), style: { '--rar': `var(--r-${SKIN[k].rar})`, '--tint': SKIN[k].tint } }, h('i.sw')))))),
+          costumes.length ? h('div.grp', t('ops.costumes')) : null,
+          ...costumes.map(([o, l]) => h('div.row.cut', h('div.lbl', h('b', opName(o.id))), h('div.coll', l.map((c) => h('span.eyebrow', t(`cost.${c.id}`)))))));
       } else if (tab === 'achievements') {
-        body.replaceChildren(h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' } }, ACH.map(([id, f]) => {
+        const got = ACH.filter(([, f]) => { const [c, m] = f(d); return c >= m; }).length;
+        body.replaceChildren(h('div.grp', t('prof.achCount', { n: got, m: ACH.length })), h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' } }, ACH.map(([id, f]) => {
           const [c, m] = f(d), done = c >= m;
           return h(`div.row.cut`, { style: done ? { borderColor: 'var(--gold)' } : null },
             h('span', { style: { color: done ? 'var(--gold)' : 'var(--n5)', display: 'flex' } }, svg('trophy')),
             h('div.lbl', h('b', t(`ach.${id}`)), h('small', t(`ach.${id}.d`)), h('div.meter', { style: { marginTop: '5px' } }, h('i', { style: { width: `${Math.min(100, (c / m) * 100)}%`, background: done ? 'var(--gold)' : 'var(--n6)' } }))),
             h('div.val', `${Math.min(c, m)}/${m}`));
-        })), h('p.muted', { style: { font: '600 11px/1.4 var(--f-body)', margin: '8px 2px' } }, t('prof.achMore')));
+        })));
       } else {
         const wrows = Object.entries(S.byWeapon).filter(([w]) => WEAPONS[w]);
         body.replaceChildren(

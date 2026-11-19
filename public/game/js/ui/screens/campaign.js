@@ -7,7 +7,9 @@ import { MISSIONS } from '../data.js';
 
 // the missions that have a photograph of their place (the cinematics' plates)
 const plate = (n) => new URL(`../../../assets/plates/${n}.webp`, import.meta.url).href;
-const PHOTO = { m1: plate('gate'), m2: plate('market'), m3: plate('governor'), m4: plate('foundry'), m5: plate('metro'), m6: plate('drones'), m7: plate('open_furnace') };
+// act 3: the street under the tower's posters, the alley where the route was sold, the roofs below its top
+const PHOTO = { m1: plate('gate'), m2: plate('market'), m3: plate('governor'), m4: plate('foundry'), m5: plate('metro'), m6: plate('drones'), m7: plate('open_furnace'),
+  m8: plate('open_poster'), m9: plate('open_alley'), m10: plate('open_roof') };
 
 export const campaign = {
   mount(ctx, params) {
@@ -29,7 +31,7 @@ export const campaign = {
       lines.appendChild(l);
     }
     map.appendChild(lines);
-    for (const [act, x] of [[1, 0.04], [2, 0.42], [3, 0.78]]) map.appendChild(h('div.act-label', { style: { left: `${x * 100}%`, top: '8%' } }, t('camp.act', { n: act }), ' · ', t(`camp.act${act}`)));
+    for (const [act, x] of [[1, 0.065], [2, 0.42], [3, 0.78]]) map.appendChild(h('div.act-label', { style: { left: `${x * 100}%`, top: '8%' } }, t('camp.act', { n: act }), ' · ', t(`camp.act${act}`)));
     // a mission opens once the one before it is done
     const open = (m) => { const i = MISSIONS.indexOf(m); return m.ready && (i === 0 || !!(d.campaign[MISSIONS[i - 1].id] && d.campaign[MISSIONS[i - 1].id].done)); };
     const nodes = MISSIONS.map((m) => {
@@ -48,16 +50,16 @@ export const campaign = {
       return n;
     });
     const side = h('aside.mdetail');
-    let diff = d.settings.diff;
     function render() {
       for (const n of nodes) n.classList.toggle('on', n.dataset.id === sel);
       const m = MISSIONS.find((x) => x.id === sel), c = d.campaign[m.id];
-      const seg = h('div.seg', ['normal', 'hard'].map((k) => press(h(`button${diff === k ? '.on' : ''}`, { type: 'button', onclick: () => { diff = k; ctx.save.set((s) => { s.settings.diff = k; }); render(); } }, t(`diff.${k}`)), { buzz: 'tick', sound: 'tab' })));
       const ok = open(m);
       const go = press(h('button.btn.primary.lg.cut', {
         type: 'button', 'aria-disabled': ok ? 'false' : 'true',
-        onclick: (e) => { if (!ok) return deny(e.currentTarget); ui('confirm'); ctx.router.go('prep', { mission: m.id, diff }); },
+        onclick: (e) => { if (!ok) return deny(e.currentTarget); ui('confirm'); ctx.router.go('prep', { mission: m.id }); },
       }, ok ? t('camp.prepare') : m.ready ? t('camp.locked') : t('ui.soon'), svg('arrow')), { sound: null, buzz: ok ? 'soft' : null });
+      // the mission's scene to watch again, beside the way in (difficulty is picked in preparation)
+      const scene = ok && ctx.hasStory?.(m.id) && press(h('button.btn.ghost.cut.scene-btn', { type: 'button', 'aria-label': t('camp.scene'), onclick: () => ctx.playStory(m.id) }, svg('play'), h('span', t('camp.scene'))), { sound: 'tap' });
       side.replaceChildren(...[
         h('div.stamp', t('camp.stamp')),
         h('div.eyebrow.accent', t('camp.act', { n: m.act }), ' · ', t('camp.mission', { n: m.id.slice(1) })),
@@ -72,10 +74,7 @@ export const campaign = {
             : h('div.empty.cut', { style: { marginTop: '8px' } }, svg('lock'), h('b', t('camp.locked')), h('span', t('camp.lockedHint')))),
         m.ready && !ok && h('div.empty.cut', { style: { marginTop: '4px' } }, svg('lock'), h('span', t('camp.needPrev'))),
         c && h('div.wide-row', stars(c.stars, 18), h('div.tag', h('div.eyebrow', t('camp.best')), h('div.h3', c.best !== null ? clock(c.best) : '—'))),
-        // the difficulty and, beside it, the mission's scene to watch again
-        ok && h('div.diff-row', h('div.eyebrow', t('camp.diff')), seg,
-          ctx.hasStory?.(m.id) && press(h('button.btn.ghost.sm.cut.scene-btn', { type: 'button', onclick: () => ctx.playStory(m.id) }, svg('play'), t('camp.scene')), { sound: 'tap' })),
-        go].filter(Boolean));
+        h('div.go-row', scene, go)].filter(Boolean));
     }
     render();
     const el = h('div', shead(ctx, t('camp.title'), t('camp.kicker')), h('div.camp-body.veil', map, side));

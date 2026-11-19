@@ -46,7 +46,8 @@ Ekip ona telsizden "Operatör" der. Seslendirme yok; her şey altyazı.
 | BULWARK | 47 | Liman vinç operatörü. Liman kapanınca konuşmayı da bıraktı. | Neredeyse hiç konuşmaz. Konuşunca son sözü o söyler. | Ağır |
 | HAWK | 60'lar | Kaçakçı, tezgâhçı. Şehir dışında bir kızı var. | "Her şeyin bir fiyatı var, evlat." | Tüccar |
 | GALL | 50'ler | Vorsa'nın Sekreteri. Eski asker, şimdi bürokrat: yasakları imzalar, silahı en son çeker. | Resmî, kibar, soğuk. | Perde 1 boss |
-| VASQUEZ | — | Vorsa bölge komutanı, kulede. | Görülmez, sadece emirleri. | Final boss |
+| BRANDT | 40'lar | Vorsa'nın kuzey depolarının şefi; dron hattının başında. | Az konuşur; makineliyle konuşur. | Perde 2 boss (6. görev) |
+| VASQUEZ | — | Vorsa bölge komutanı, kulede. | Görülmez, sadece emirleri; yüzü son görevde bile kask altında. | Final boss |
 
 ### 1.5 Perdeler (10 görev)
 - **Perde 1 — Giriş.** (1) *Sızma*: şehre kapıdan girilir. (2) *Pazar Baskını*:
@@ -54,8 +55,9 @@ Ekip ona telsizden "Operatör" der. Seslendirme yok; her şey altyazı.
   **"Kül Planı"** bulunur: Vorsa çelikhane arazisini ve limanı satmaktadır.
 - **Perde 2 — Derinlik.** (4) *Dökümhane*: kaybolanların kayıtları. (5) *Metro*.
   (6) *Dron Fabrikası*. (7) *Ocak*: yüksek fırın dört yıl sonra yeniden yakılır.
-- **Perde 3 — Çöküş.** (8) *Kule Baskını*. (9) *İhanet*: rotayı HAWK satmıştır
-  (kızını şehirden çıkarmanın bedeli). (10) *Vasquez*.
+- **Perde 3 — Çöküş.** (8) *Kule Baskını*: kulenin meydanı ve lobisi. (9) *İhanet*:
+  rotayı HAWK satmıştır (kızını şehirden çıkarmanın bedeli); yük rampasında pusu.
+  (10) *Vasquez*: çatı, yayın direği; şehir Kül Planı'nı radyodan duyar.
 - Perde 1'de ihanetin tohumu atılır: HAWK'ın repliği, Gall'ın masasında çalan
   telefonda arayanın adı.
 

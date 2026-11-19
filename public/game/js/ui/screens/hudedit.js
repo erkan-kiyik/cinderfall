@@ -5,15 +5,22 @@
 import { h, svg, press, ui, haptic, toast } from '../kit.js';
 import { t } from '../i18n.js';
 
+// the thumb's arc in the corner: jump, crouch, reload, knife; swap low by the
+// weapon readout; the abilities above, out of the aim stick's way (docs §10.41)
 export const HUD_DEFAULT = {
-  jump: { r: 20, b: 22, s: 74 },
-  crouch: { r: 108, b: 14, s: 62 },
-  reload: { r: 26, b: 108, s: 60 },
-  knife: { r: 100, b: 90, s: 56 },
-  swap: { r: 30, b: 182, s: 52 },
+  jump: { r: 20, b: 20, s: 72 },
+  crouch: { r: 102, b: 12, s: 58 },
+  reload: { r: 20, b: 104, s: 56 },
+  knife: { r: 92, b: 84, s: 52 },
+  swap: { r: 170, b: 10, s: 48 },
+  ult: { r: 20, b: 176, s: 58 },
+  ab1: { r: 84, b: 158, s: 50 },
+  ab2: { r: 34, b: 246, s: 50 },
 };
-export const HUD_KEYS = { jump: 'hud.jump', crouch: 'hud.crouch', reload: 'hud.reload', knife: 'hud.knife', swap: 'hud.swap' };
+export const HUD_KEYS = { jump: 'hud.jump', crouch: 'hud.crouch', reload: 'hud.reload', knife: 'hud.knife', swap: 'hud.swap', ab1: 'hud.ab1', ab2: 'hud.ab2', ult: 'hud.ult' };
 
+// the layout in use: the player's, over the defaults; a layout saved before the
+// abilities could be moved keeps its buttons, and the abilities take their places
 export function hudLayout(save) {
   const L = save.d.hud.layout || {};
   const out = {};

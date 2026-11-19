@@ -27,10 +27,12 @@ export class Character {
   constructor(id, atlas, mover, opts = {}) {
     this.id = id; this.spec = CHARS[id]; this.m = mover;
     this.P = new Pose(); this.J = new Joints(); this.anim = new Animator(this.spec);
-    const g = (n) => atlas.get(`${id}.${n}`) || null;
+    // a kind may wear another's sprites (spec.art) without some of them (spec.drop)
+    const art = this.spec.art || id, g = (n) => atlas.get(`${art}.${n}`) || null;
     this.R = { backFar: g('backFar'), torso: g('torso'), chest: g('chest'), front: g('front'), head: g('head') };
     for (const k of LIMBS) { this.R[k + 'N'] = g(`${k}.n`); this.R[k + 'F'] = g(`${k}.f`); }
     this.R.scarf = g('scarf'); this.R.drone = g('drone'); this.R.shield = g('shield');
+    for (const k of this.spec.drop || []) this.R[k] = null;
     this.R.knife = atlas.get('i.knife'); this.R.holster = atlas.get('i.holster'); this.R.shell = atlas.get('i.casing.shell');
     // guns and their sprites
     const mat = this.spec.mat ? '.' + this.spec.mat : '';
@@ -47,6 +49,9 @@ export class Character {
       this.WR[w] = regions(`w.${w}${mat}`);
       if (!mat) { const p = regions(`w.${w}.p`); if (p.body) this.WRp[w] = p; }
     }
+    // a costume: a dye over the clothes (docs §10.41)
+    const dye = opts.costume || this.spec.dye;
+    this.dye = dye && dye !== '#ffffff' ? rgba(dye) : 0xffffffff;
     this.slot = 0; this.gun = this.guns[0] || null; this.anim.gun = this.gun;
     this.swapT = -1; this.swapTo = 0;
     this.win = { trigger: false, pressed: false, reload: false, swap: false, melee: false };
@@ -274,14 +279,14 @@ export class Character {
   // their finish, the finish's colour over the primer
   gunSet(id) {
     const sk = this.team === 0 ? TINTS[id] : null, p = sk && this.WRp[id];
-    return p ? { WR: p, tint: sk.rgba ??= rgba(sk.tint) } : { WR: this.WR[id], tint: 0xffffffff };
+    return p ? { WR: p, tint: sk.rgba ??= rgba(sk.tint), pat: sk.pat || 0 } : { WR: this.WR[id], tint: 0xffffffff, pat: 0 };
   }
 
   // draw a gun (body + moving parts) at weapon transform (x, y, k, a)
   drawGun(B, id, x, y, k, a, parts = true) {
-    const { WR, tint } = this.gunSet(id), W = WEAPONS[id], V = this.anim.vis, live = parts && id === this.weaponId;
+    const { WR, tint, pat } = this.gunSet(id), W = WEAPONS[id], V = this.anim.vis, live = parts && id === this.weaponId;
     const c = Math.cos(a), s = Math.sin(a);
-    const at = (r, ox, oy) => { if (r) B.draw(r, x + (ox * c - oy * s) * k, y + (ox * s + oy * c) * k, k, k, a, tint); };
+    const at = (r, ox, oy) => { if (r) B.draw(r, x + (ox * c - oy * s) * k, y + (ox * s + oy * c) * k, k, k, a, tint, 1, pat); };
     if (WR.mag && (!live || V.mag === 'in')) { const d = live ? V.magOff : 0; at(WR.mag, W.magAxis[0] * d, W.magAxis[1] * d); }
     at(WR.body, 0, 0);
     if (WR.slide) at(WR.slide, live ? -V.slide * W.slide : 0, 0);
@@ -289,8 +294,10 @@ export class Character {
   }
 
   drawParts(B) {
-    const R = this.R, J = this.J, A = J.a, P = this.P, f = this.facing, V = this.anim.vis;
+    const R = this.R, J = this.J, A = J.a, P = this.P, f = this.facing, V = this.anim.vis, dye = this.dye;
     const d = (r, p, a) => { if (r) B.draw(r, p[0], p[1], 1, 1, a); };
+    // clothes: the costume's dye over them (the head, hands and boots stay as painted)
+    const cl = (r, p, a) => { if (r) B.draw(r, p[0], p[1], 1, 1, a, dye); };
     // scarf tails behind everything (world points → local)
     if (R.scarf) {
       for (const { t, c } of this.chains) {
@@ -313,21 +320,21 @@ export class Character {
       const c = Math.cos(A.torso), s = Math.sin(A.torso);
       this.drawGun(B, id, J.hip[0] + -4 * c + 12 * s, J.hip[1] + -4 * s - 12 * c, 0.9, A.torso - 1.25, false);
     }
-    d(R.backFar, J.hip, A.torso);
-    d(R.upperF, J.fSh, A.fUpper); d(R.foreF, J.fElb, A.fFore); d(R.handF, J.fWr, A.fFore + A.fHand);
+    cl(R.backFar, J.hip, A.torso);
+    cl(R.upperF, J.fSh, A.fUpper); cl(R.foreF, J.fElb, A.fFore); d(R.handF, J.fWr, A.fFore + A.fHand);
     // things in the support hand: knife, a fresh magazine, a shotgun shell
     if (V.knife || V.mag === 'hand' || V.shell) {
       const pal = this._w, ha = this.farPalm(pal);
       if (V.knife && R.knife) B.draw(R.knife, pal[0], pal[1], 1, 1, ha + Math.PI / 2 - 0.25);
       if (V.mag === 'hand' && P.gun) {
-        const W = this.W, { WR, tint } = this.gunSet(this.weaponId), k = P.gk, a = P.ga + 0.25, c = Math.cos(a), s = Math.sin(a);
+        const W = this.W, { WR, tint, pat } = this.gunSet(this.weaponId), k = P.gk, a = P.ga + 0.25, c = Math.cos(a), s = Math.sin(a);
         const gx = W.magGrab[0], gy = W.magGrab[1];
-        if (WR.mag) B.draw(WR.mag, pal[0] - (gx * c - gy * s) * k, pal[1] - (gx * s + gy * c) * k, k, k, a, tint);
+        if (WR.mag) B.draw(WR.mag, pal[0] - (gx * c - gy * s) * k, pal[1] - (gx * s + gy * c) * k, k, k, a, tint, 1, pat);
       }
       if (V.shell && R.shell) B.draw(R.shell, pal[0], pal[1], 0.75, 0.75, ha + Math.PI / 2);
     }
-    d(R.thighF, J.fHip, A.fThigh); d(R.shinF, J.fKnee, A.fShin); d(R.footF, J.fAnkle, A.fFoot);
-    d(R.thighN, J.nHip, A.nThigh); d(R.shinN, J.nKnee, A.nShin); d(R.footN, J.nAnkle, A.nFoot);
+    cl(R.thighF, J.fHip, A.fThigh); cl(R.shinF, J.fKnee, A.fShin); d(R.footF, J.fAnkle, A.fFoot);
+    cl(R.thighN, J.nHip, A.nThigh); cl(R.shinN, J.nKnee, A.nShin); d(R.footN, J.nAnkle, A.nFoot);
     if (holstered) {
       // grip up at the hip, muzzle down along the thigh
       const a = A.nThigh + Math.PI / 2, c = Math.cos(a), s = Math.sin(a);
@@ -335,11 +342,11 @@ export class Character {
       this.drawGun(B, holstered, x, y, 0.95, a, false);
       if (R.holster) B.draw(R.holster, x, y, 0.95, 0.95, a);
     }
-    d(R.torso, J.hip, A.torso);
+    cl(R.torso, J.hip, A.torso);
     d(R.head, J.neck, A.head);
-    d(R.chest, J.hip, A.torso);
+    cl(R.chest, J.hip, A.torso);
     if (P.gun && cur) this.drawGun(B, cur, P.gx, P.gy, P.gk, P.ga);
-    d(R.upperN, J.nSh, A.nUpper); d(R.foreN, J.nElb, A.nFore); d(R.handN, J.nWr, A.nFore + A.nHand);
+    cl(R.upperN, J.nSh, A.nUpper); cl(R.foreN, J.nElb, A.nFore); d(R.handN, J.nWr, A.nFore + A.nHand);
     d(R.front, J.hip, A.torso);
     if (R.shield && this.alive) B.draw(R.shield, J.hip[0], J.hip[1] + 31.3, 1, 1, 0); // follows the hips
     if (R.drone && this.alive) B.draw(R.drone, (this.drone.x - this.rx) * f, this.drone.y - this.ry, 1, 1, Math.sin(this.t * 3) * 0.06);

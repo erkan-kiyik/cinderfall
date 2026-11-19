@@ -4,22 +4,30 @@
 //
 // A finish is a colour multiplied over the gun in primer, in the menus (the
 // weapon pictures) and in the game (the sprites): one primer bake per gun
-// serves every finish (docs §10.13). Crates roll a rarity from the odds on
+// serves every finish (docs §10.13); some lay a pattern over the colour. Crates roll a rarity from the odds on
 // the crate, then a finish of that rarity for one of your weapons; one you
 // already have pays PARÇA back.
-import { WEAPON_LIST, CRATES } from '../ui/data.js';
+import { WEAPON_LIST, CRATES, MISSIONS } from '../ui/data.js';
 
+// pat: a pattern over the finish's colour (the sprite batcher draws it, docs §10.41):
+// 1 camouflage, 2 stripes, 3 Damascus steel
+export const PATTERNS = { camo: 1, stripe: 2, damascus: 3 };
 export const SKINS = [
   { id: 'factory', rar: 'common', tint: '#ffffff' },
   { id: 'sand', rar: 'common', tint: '#f2dcae' },
   { id: 'olive', rar: 'common', tint: '#bccb94' },
   { id: 'arctic', rar: 'rare', tint: '#d4ecff' },
   { id: 'cobalt', rar: 'rare', tint: '#7c9ef0' },
+  { id: 'urban', rar: 'rare', tint: '#cfd3da', pat: 1 },
   { id: 'crimson', rar: 'epic', tint: '#e8726a' },
   { id: 'violet', rar: 'epic', tint: '#ae8ce6' },
+  { id: 'woodland', rar: 'epic', tint: '#b2c08a', pat: 1 },
+  { id: 'tiger', rar: 'epic', tint: '#e8a868', pat: 2 },
   { id: 'gold', rar: 'legendary', tint: '#f0c65e' },
+  { id: 'damascus', rar: 'legendary', tint: '#cdd3dc', pat: 3 },
   { id: 'ember', rar: 'mythic', tint: '#ff9a5c' },
-  { id: 'kor', rar: 'ultra', tint: '#d2b08a' },
+  { id: 'slag', rar: 'mythic', tint: '#ff8a50', pat: 2 },
+  { id: 'kor', rar: 'ultra', tint: '#d2b08a', pat: 3 },
 ];
 export const SKIN = Object.fromEntries(SKINS.map((s) => [s.id, s]));
 export const RARITIES = ['common', 'rare', 'epic', 'legendary', 'mythic', 'ultra'];
@@ -59,6 +67,41 @@ export function equipSkin(save, w, sk) {
   if (!hasSkin(save.d, w, sk)) return false;
   save.set((d) => { d.arsenal.skin[w] = sk; });
   syncTints(save.d);
+  return true;
+}
+
+// --- costumes and mastery (docs §10.41) --------------------------------------------
+// A costume is a dye over the operator's clothes (torso, arms, legs; never the
+// face or hands), multiplied over the painted kit the way a finish is over a
+// gun. The standard issue is everyone's; two are bought from the crew's stock,
+// the last is earned: it comes with the operator's third mastery rank.
+export const COSTUMES = [
+  { id: 'std', rar: 'common', tint: '#ffffff' },
+  { id: 'night', rar: 'rare', tint: '#a9b6d2', price: 1500 },
+  { id: 'ash', rar: 'epic', tint: '#cfc6b8', price: 3000 },
+  { id: 'ember', rar: 'legendary', tint: '#f2a27c', mastery: 3 },
+];
+export const COSTUME = Object.fromEntries(COSTUMES.map((c) => [c.id, c]));
+// mastery: missions done with the operator weigh 20, takedowns 1
+export const MASTERY = [0, 60, 180, 400, 800];
+export function masteryOf(d, op) {
+  const s = d.stats.byOp[op] || { missions: 0, kills: 0 }, pts = s.missions * 20 + s.kills;
+  let lvl = 0;
+  while (lvl < MASTERY.length - 1 && pts >= MASTERY[lvl + 1]) lvl++;
+  const lo = MASTERY[lvl], hi = MASTERY[lvl + 1];
+  return { lvl, pts, next: hi ?? null, k: hi ? (pts - lo) / (hi - lo) : 1 };
+}
+export const hasCostume = (d, op, c) => c === 'std' || (d.roster.costumes[op] || []).includes(c)
+  || (COSTUME[c] && COSTUME[c].mastery && masteryOf(d, op).lvl >= COSTUME[c].mastery);
+export const costumeOf = (d, op) => COSTUME[d.roster.costume[op]] || COSTUME.std;
+// buy (or, for an earned one, take) a costume and put it on
+export function takeCostume(save, op, c) {
+  const C = COSTUME[c];
+  if (!C) return false;
+  if (!hasCostume(save.d, op, c)) {
+    if (!C.price || !spend(save, C.price, (d) => { (d.roster.costumes[op] ||= []).push(c); })) return false;
+  }
+  save.set((d) => { d.roster.costume[op] = c; });
   return true;
 }
 
@@ -141,7 +184,7 @@ export function traderBuy(save, item) {
 }
 export const traderSold = (d, item) => d.trader.day === dayKey() && d.trader.sold.includes(item.key);
 
-// three tasks a day; progress comes from mission results
+// three tasks a day; progress comes from mission results (and the week's three, below)
 export const TASKS = {
   kills: { goal: 25, reward: 180 },
   heads: { goal: 8, reward: 200 },
@@ -157,22 +200,68 @@ export function ensureDaily(save) {
   while (tasks.length < 3) { const id = pick(r, ids); if (!tasks.some((x) => x.id === id)) tasks.push({ id, n: 0, claimed: false }); }
   save.set((d) => { d.daily = { day, tasks }; });
 }
-// fold a mission / endless result into today's tasks
-export function progressDaily(d, r) {
-  if (d.daily.day !== dayKey()) return;
-  for (const k of d.daily.tasks) {
-    const add = k.id === 'kills' ? r.kills : k.id === 'heads' ? r.heads : k.id === 'shots' ? r.shots
-      : k.id === 'mission' ? (r.done && !r.endless ? 1 : 0) : k.id === 'stars' ? (r.done ? r.stars.filter(Boolean).length : 0)
-        : k.id === 'endless' ? (r.endless ? r.wave : 0) : 0;
-    k.n = Math.min(TASKS[k.id].goal, k.n + (add || 0));
+// what a result adds to a task of kind id
+const BOSS = new Set(MISSIONS.filter((m) => m.boss).map((m) => m.id));
+function taskAdd(id, r) {
+  switch (id) {
+    case 'kills': case 'wkills': return r.kills;
+    case 'heads': case 'wheads': return r.heads;
+    case 'shots': return r.shots;
+    case 'mission': case 'wmissions': return r.done && !r.endless ? 1 : 0;
+    case 'stars': case 'wstars': return r.done ? r.stars.filter(Boolean).length : 0;
+    case 'endless': case 'wendless': return r.endless ? r.wave : 0;
+    case 'wboss': return r.done && BOSS.has(r.id) ? 1 : 0;
+    case 'whard': return r.done && !r.endless && r.diff === 'hard' ? 1 : 0;
+    default: return 0;
   }
+}
+// fold a mission / endless result into today's and this week's tasks
+export function progressDaily(d, r) {
+  if (d.daily.day === dayKey()) for (const k of d.daily.tasks) k.n = Math.min(TASKS[k.id].goal, k.n + (taskAdd(k.id, r) || 0));
+  if (d.weekly && d.weekly.week === weekKey()) for (const k of d.weekly.tasks) k.n = Math.min(WEEKLY[k.id].goal, k.n + (taskAdd(k.id, r) || 0));
 }
 export function claimDaily(save, i) {
   const k = save.d.daily.tasks[i];
   if (!k || k.claimed || k.n < TASKS[k.id].goal) return 0;
   const pay = TASKS[k.id].reward;
-  save.set((d) => { d.daily.tasks[i].claimed = true; d.profile.parca += pay; });
+  save.set((d) => { d.daily.tasks[i].claimed = true; d.profile.parca += pay; d.stats.tasks = (d.stats.tasks || 0) + 1; });
   return pay;
+}
+
+// --- the week's three big jobs (docs §10.41): the same for everyone that week, bigger
+// goals and pay; the third one claimed brings a Gelişmiş crate on top
+export const WEEKLY = {
+  wkills: { goal: 200, reward: 900 },
+  wheads: { goal: 60, reward: 900 },
+  wmissions: { goal: 6, reward: 1000 },
+  wstars: { goal: 15, reward: 1100 },
+  wendless: { goal: 25, reward: 1000 },
+  wboss: { goal: 2, reward: 1200 },
+  whard: { goal: 2, reward: 1300 },
+};
+export function ensureWeekly(save) {
+  const week = weekKey();
+  if (save.d.weekly && save.d.weekly.week === week && save.d.weekly.tasks.length) return;
+  const r = seeded('weekly' + week), ids = Object.keys(WEEKLY), tasks = [];
+  while (tasks.length < 3) { const id = pick(r, ids); if (!tasks.some((x) => x.id === id)) tasks.push({ id, n: 0, claimed: false }); }
+  save.set((d) => { d.weekly = { week, tasks }; });
+}
+// returns { parca, crate } or null
+export function claimWeekly(save, i) {
+  const k = save.d.weekly.tasks[i];
+  if (!k || k.claimed || k.n < WEEKLY[k.id].goal) return null;
+  const pay = WEEKLY[k.id].reward;
+  let crate = null;
+  save.set((d) => {
+    d.weekly.tasks[i].claimed = true; d.profile.parca += pay;
+    if (d.weekly.tasks.every((x) => x.claimed)) { crate = 'plus'; d.inv.crates.plus = (d.inv.crates.plus || 0) + 1; d.stats.weeks = (d.stats.weeks || 0) + 1; }
+  });
+  return { parca: pay, crate };
+}
+
+// --- levels (docs §10.41): every level pays PARÇA, every fifth a crate too, every tenth a better one
+export function levelReward(n) {
+  return { parca: 100 + 25 * n, crate: n % 10 === 0 ? 'plus' : n % 5 === 0 ? 'std' : null };
 }
 export const dailyDone = (d) => (d.daily.day === dayKey() ? d.daily.tasks.filter((k) => k.n >= TASKS[k.id].goal).length : 0);
 

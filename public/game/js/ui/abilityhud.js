@@ -1,16 +1,17 @@
-// KOR — ability buttons in a mission: two skills and the ultimate, in an
-// arc over the right-hand touch cluster. A dark sweep shows the cooldown, the
+// KOR — ability buttons in a mission: two skills and the ultimate, above the
+// right-hand touch cluster where the HUD editor puts them. A dark sweep shows the cooldown, the
 // ultimate fills a ring as it charges and pulses when ready. On a keyboard
-// the keys are E, G and X (the buttons also take clicks).
+// the player's keys (E, G and X out of the box; the buttons also take clicks).
 import { svg, haptic } from './kit.js';
 import { t } from './i18n.js';
 import { OPS } from './data.js';
+import { keyName } from '../game/input.js';
 
 const SLOTS = ['ab1', 'ab2', 'ult'];
-const KEYS = ['E', 'G', 'X'];
 
 export class AbilityHud {
-  constructor(root, ab, ctl) {
+  // layout: { ab1|ab2|ult: { r, b, s } } from the HUD editor (px from the bottom-right corner)
+  constructor(root, ab, ctl, layout = null) {
     this.ab = ab; this.ctl = ctl;
     const op = OPS.find((o) => o.id === ab.op) || OPS[0];
     this.el = document.createElement('div');
@@ -25,7 +26,8 @@ export class AbilityHud {
       const cd = document.createElement('i'); cd.className = 'cd';
       const n = document.createElement('b'); n.className = 'n';
       b.append(cd, n);
-      if (!coarse) { const k = document.createElement('kbd'); k.textContent = KEYS[i]; b.append(k); }
+      if (!coarse) { const k = document.createElement('kbd'); k.textContent = keyName(ctl.keys ? ctl.keys[slot] : ''); b.append(k); }
+
       b.addEventListener('pointerdown', (e) => {
         e.stopPropagation(); e.preventDefault();
         this.ctl[slot === 'ult' ? 'ultPressed' : slot + 'Pressed'] = true;
@@ -37,6 +39,12 @@ export class AbilityHud {
       return { b, cd, n, last: '' };
     });
     root.appendChild(this.el);
+    this.layout(layout);
+  }
+  // place the buttons where the HUD editor put them (px from the bottom-right corner)
+  layout(L) {
+    if (!L) return;
+    SLOTS.forEach((slot, i) => { const P = L[slot]; if (P) Object.assign(this.btns[i].b.style, { right: `${P.r}px`, bottom: `${P.b}px`, width: `${P.s}px`, height: `${P.s}px` }); });
   }
 
   // cheap: only touches the DOM when what is shown changes

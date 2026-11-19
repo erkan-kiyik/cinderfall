@@ -79,6 +79,7 @@ Bu dosya eskiden tek parça bir belgeydi (1.449 satır). Konularına göre beş 
 | 10.38 | Kapak, lobi, on dil, telif taraması | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1038-kapak-lobi-on-dil-telif-taraması) |
 | 10.39 | Menülerde karakter yok | [3-karakterler](design/3-karakterler.md#1039-menülerde-karakter-yok) |
 | 10.40 | Cephanelik simgesi, günlük ödül | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1040-cephanelik-simgesi-günlük-ödül) |
+| 10.41 | İnceleme düzeltmeleri: arayüz, kontroller, ilerleme, düşmanlar, Perde 3 | [4-dunya-ve-gorevler](design/4-dunya-ve-gorevler.md#1041-i̇nceleme-düzeltmeleri-arayüz-kontroller-i̇lerleme-düşmanlar-perde-3) |
 
 Giriş notu (eski belgenin başı):
 

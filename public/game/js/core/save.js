@@ -5,7 +5,7 @@
 // corrupt main copy falls back to the backup, then to a fresh save. Writes
 // are debounced so a burst of setting changes costs one write.
 
-import { progressDaily } from './economy.js';
+import { progressDaily, levelReward } from './economy.js';
 
 export const SAVE_VERSION = 1;
 const KEY = 'kor.lab.save', BAK = 'kor.lab.save.bak';
@@ -20,22 +20,25 @@ export function freshSave() {
     v: SAVE_VERSION,
     created: Date.now(),
     profile: { name: 'OPERATÖR', level: 1, xp: 0, parca: 0 },
-    roster: { op: 'vex', loadout },
+    roster: { op: 'vex', loadout, costume: {}, costumes: {} }, // costume worn per operator, costumes bought per operator
     campaign: {},          // missionId -> { done, stars: [bool×3], best, plays }
     // weapons owned, finishes owned per weapon, the finish in use per weapon
     arsenal: { owned: ['wren9', 'kestrel', 'ramrod', 'marksman'], skins: {}, skin: {} },
     inv: { crates: { std: 0, plus: 0, crow: 0 }, opened: 0, pity: 0 },
     trader: { day: '', sold: [] },
     daily: { day: '', tasks: [] },
+    weekly: { week: '', tasks: [] },
     login: { day: '', n: 0 }, // the daily reward card: the last day a box was taken, boxes taken in all
     records: { endless: 0, endlessKills: 0 },
-    stats: { missions: 0, kills: 0, heads: 0, shots: 0, hits: 0, deaths: 0, time: 0, byWeapon: {}, byOp: {} },
+    stats: { missions: 0, kills: 0, heads: 0, shots: 0, hits: 0, deaths: 0, time: 0, byWeapon: {}, byOp: {}, bosses: 0, tasks: 0, weeks: 0 },
     settings: {
       quality: 'auto', dynRes: true, bloom: true, lights: true, fps: false, fpsCap: 60,
       vol: { master: 0.8, sfx: 1, ui: 0.7, music: 0.6 },
       haptics: true, uiScale: 1, uiScaleBy: 'auto', enemyMark: 'off', reduceMotion: false, shake: 1,
       lang: 'tr', fireRing: 0.78, diff: 'normal',
+      aimAssist: 'low', aimSens: 1, keys: null, // touch and pad aim help, aim speed; the keyboard's keys (null: the defaults)
     },
+    tutorial: false, // the first mission's control tips were seen through
     hud: { layout: null },  // touch button positions (HUD editor)
     story: { prologue: false, seen: {} }, // cinematics watched (prologue, m1 … m7, act1, act2)
   };
@@ -113,7 +116,7 @@ export const xpFor = (n) => 400 + (n - 1) * 150;
 
 // Apply a finished mission's result to the save; returns what was earned.
 export function applyMission(save, id, r) {
-  const out = { xp: 0, parca: 0, levelUps: 0, newStars: 0, firstClear: false, record: false };
+  const out = { xp: 0, parca: 0, levelUps: 0, levelPay: [], newStars: 0, firstClear: false, record: false };
   if (r.endless) return applyEndless(save, r, out);
   save.set((d) => {
     const c = d.campaign[id] || (d.campaign[id] = { done: false, stars: [false, false, false], best: null, plays: 0 });
@@ -128,6 +131,7 @@ export function applyMission(save, id, r) {
     const S = d.stats;
     S.missions += r.done ? 1 : 0; S.kills += r.kills; S.heads += r.heads; S.shots += r.shots; S.hits += r.hits;
     S.deaths += r.deaths; S.time += r.time;
+    S.bosses = (S.bosses || 0) + (r.bosses || 0);
     const o = S.byOp[r.op] || (S.byOp[r.op] = { missions: 0, kills: 0 });
     o.missions += r.done ? 1 : 0; o.kills += r.kills;
     for (const [w, ws] of Object.entries(r.byWeapon || {})) {
@@ -143,9 +147,16 @@ export function applyMission(save, id, r) {
   });
   return out;
 }
+// a level reached pays out at once: PARÇA, and on every fifth a crate into the stock
 function levelUp(d, out) {
   let xp = d.profile.xp + out.xp;
-  while (xp >= xpFor(d.profile.level)) { xp -= xpFor(d.profile.level); d.profile.level++; out.levelUps++; }
+  while (xp >= xpFor(d.profile.level)) {
+    xp -= xpFor(d.profile.level); d.profile.level++; out.levelUps++;
+    const R = levelReward(d.profile.level);
+    d.profile.parca += R.parca;
+    if (R.crate) d.inv.crates[R.crate] = (d.inv.crates[R.crate] || 0) + 1;
+    (out.levelPay ||= []).push({ level: d.profile.level, ...R });
+  }
   d.profile.xp = xp;
 }
 // an endless run: the record, kills into the totals, pay by waves cleared
@@ -153,6 +164,7 @@ function applyEndless(save, r, out) {
   save.set((d) => {
     const S = d.stats;
     S.kills += r.kills; S.heads += r.heads; S.shots += r.shots; S.hits += r.hits; S.deaths += r.deaths; S.time += r.time;
+    S.bosses = (S.bosses || 0) + (r.bosses || 0);
     const o = S.byOp[r.op] || (S.byOp[r.op] = { missions: 0, kills: 0 });
     o.kills += r.kills;
     for (const [w, ws] of Object.entries(r.byWeapon || {})) {

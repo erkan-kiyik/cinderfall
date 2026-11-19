@@ -931,3 +931,13 @@ export const GALL = {
   },
   parts: { ...PARTS, head: gallHead, torso: gallTorso, chest: gallChest, upper: gallUpper, fore: gallFore, hand: gallHand, thigh: gallThigh, shin: gallShin, foot: gallFoot },
 };
+
+// --- VASQUEZ: Vorsa's regional commander, the one nobody in the city has seen (docs §10.41).
+// The Secretary's long belted greatcoat (the same issue, as officers wear it), and over the
+// face the troopers' full helmet with its one slit of red: he never shows it, even at the top
+// of his tower. His coat is dyed darker in the game (chars.js).
+export const VASQUEZ = {
+  id: 'vasquez', name: 'VASQUEZ', role: 'VORSA', pal: G,
+  pose: { ...GALL.pose, gun: { w: WEAPONS.bastion, at: [6.4, -41.4], ang: 0.4, k: 0.96, mat: SYN_MAT } },
+  parts: { ...GALL.parts, head: helmet },
+};

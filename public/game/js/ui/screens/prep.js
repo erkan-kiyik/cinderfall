@@ -1,12 +1,15 @@
 // Preparation: operator, primary, sidearm and difficulty for a mission.
-// The operator stands on the left with the chosen loadout (showcase).
+// On the left the squad's file photos, what the mission asks for and what
+// the chosen operator brings; on the right the kit on the bench.
 import { h, svg, press, popIn, ui } from '../kit.js';
-import { t } from '../i18n.js';
-import { shead, statBar } from './common.js';
+import { t, clock } from '../i18n.js';
+import { shead, statBar, stars } from './common.js';
 import { avatar, weaponPic } from '../portraits.js';
-import { OPS, WEAPON_LIST, gunBars, opName } from '../data.js';
+import { OPS, WEAPON_LIST, gunBars, opName, dmgText, parOf } from '../data.js';
 import { owns, skinOf } from '../../core/economy.js';
 import { WEAPONS } from '../../art/weapons/index.js';
+
+const DIFFS = ['easy', 'normal', 'hard'];
 
 export const prep = {
   mount(ctx, params) {
@@ -36,21 +39,31 @@ export const prep = {
             render();
           },
           'aria-label': `${t(`cls.${WEAPON_LIST.find((x) => x.id === w).cls}`)} · ${WEAPONS[w].name}`,
-        }, weaponPic(w, mini ? 64 : 110, mini ? 22 : 26, skinOf(d, w).tint), h('b', WEAPONS[w].name)), { buzz: 'tick', sound: null });
+        }, weaponPic(w, mini ? 64 : 110, mini ? 22 : 26, skinOf(d, w)), h('b', WEAPONS[w].name)), { buzz: 'tick', sound: null });
       };
       const b = gunBars(lo.primary);
       // what you own: any weapon as the primary, pistols as the sidearm
       const mine = WEAPON_LIST.filter((w) => owns(d, w.id));
       const sides = mine.filter((w) => w.slot === 'side' && w.id !== lo.primary).map((w) => w.id);
       const sideOK = sides.length > 0;
-      stage.replaceChildren(opRow, h('div.op-tag', h('div.name', opName(id)), h('div.role', t(`role.${OPS.find((o) => o.id === id).role}`))));
+      // the brief: the mission's objectives (or the endless record), then the operator's three abilities
+      const mid = params.mission || 'm1', endless = mid === 'endless', c = d.campaign[mid], op = OPS.find((o) => o.id === id);
+      const brief = h('div.prep-brief.card.cut',
+        endless
+          ? h('div', h('div.eyebrow.accent', t('mode.endless.kicker')), h('p.body', t('mode.endless.desc')), h('div.eyebrow', t('res.best'), ' · ', h('b', String(d.records.endless))))
+          : h('div', h('div.eyebrow.accent', t('camp.mission', { n: mid.slice(1) }), ' · ', t(`mission.${mid}.where`)),
+            h('ol.obj', [1, 2, 3, 4].map((i) => h('li', t(`mission.${mid}.o${i}`)))),
+            h('div.prep-rec', c ? stars(c.stars, 13) : null, h('span.eyebrow', t('res.why', { t: clock(parOf(mid)) })))),
+        h('div.eyebrow', t('ops.abilities')),
+        h('div.prep-abil', op.abil.map(([k, icon], i) => h('div.pa', h(`span.hex${i === 2 ? '.ult' : ''}`, svg(icon)), h('b', t(`ab.${id}.${k}`))))));
+      stage.replaceChildren(opRow, brief, h('div.op-tag', h('div.name', opName(id)), h('div.role', t(`role.${op.role}`))));
       side.replaceChildren(
         h('div.eyebrow', t('prep.primary')),
         h('div.slotrow.scroll', mine.map((w) => wtile(w.id, 'primary'))),
-        h('div.statgrid', statBar(t('stat.damage'), b.damage, b.damage), statBar(t('stat.rate'), t('stat.rpm', { n: b.rpm }), b.rate), statBar(t('stat.range'), b.range, b.range), statBar(t('stat.control'), b.control, b.control)),
+        h('div.statgrid', statBar(t('stat.damage'), dmgText(lo.primary), b.damage), statBar(t('stat.rate'), t('stat.rpm', { n: b.rpm }), b.rate), statBar(t('stat.range'), b.range, b.range), statBar(t('stat.control'), b.control, b.control)),
         h('div.prep-pair',
           h('div', h('div.eyebrow', t('prep.sidearm')), sideOK ? h('div.slotrow', sides.map((w) => wtile(w, 'side'))) : h('div.muted.note', t('prep.noSidearm'))),
-          h('div', h('div.eyebrow', t('camp.diff')), h('div.seg', ['normal', 'hard'].map((k) => press(h(`button${diff === k ? '.on' : ''}`, { type: 'button', onclick: () => { diff = k; S.set((s) => { s.settings.diff = k; }); render(); } }, t(`diff.${k}`)), { buzz: 'tick', sound: 'tab' }))))),
+          h('div', h('div.eyebrow', t('camp.diff')), h('div.seg', DIFFS.map((k) => press(h(`button${diff === k ? '.on' : ''}`, { type: 'button', onclick: () => { diff = k; S.set((s) => { s.settings.diff = k; }); render(); } }, t(`diff.${k}`)), { buzz: 'tick', sound: 'tab' }))))),
         press(h('button.btn.primary.lg.cut.go', { type: 'button', onclick: () => { ui('confirm'); ctx.startMission(params.mission || 'm1', { diff }); } }, svg('play'), t(params.mission === 'endless' ? 'prep.startEndless' : 'prep.start')), { sound: null, buzz: 'heavy' }));
     }
     render();

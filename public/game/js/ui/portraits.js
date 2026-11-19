@@ -193,20 +193,49 @@ export function hawkFace(px = 64) {
 
 // a weapon in profile, scaled to `h` CSS pixels tall at most (and `w` wide)
 // tint: a finish, its colour multiplied over the primer (as the game draws it)
-export function weaponPic(id, w = 120, h = 40, tint = null) {
+// The finish's pattern, the same sums the sprite batcher's shader does (gfx/batch.js),
+// at (x, y) in the gun's own units: the share of the colour left there.
+const fr = (x) => x - Math.floor(x);
+const h1 = (x, y) => fr(Math.sin(x * 127.1 + y * 311.7) * 43758.5453);
+function n1(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y); let fx = x - ix, fy = y - iy;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+  const a = h1(ix, iy), b = h1(ix + 1, iy), c = h1(ix, iy + 1), d = h1(ix + 1, iy + 1);
+  return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fy;
+}
+export function patternK(pat, x, y) {
+  if (pat === 1) { const v = n1(x * 0.22, y * 0.22) * 0.65 + n1(x * 0.55 + 7, y * 0.55 + 7) * 0.35; return v < 0.42 ? 0.42 : v < 0.6 ? 0.72 : 1; }
+  if (pat === 2) return Math.sin(x * 0.9 + y * 1.7 + n1(x * 0.3, y * 0.3) * 4) > 0.5 ? 0.32 : 1;
+  if (pat === 3) return 0.68 + 0.32 * Math.sin(y * 2.6 + Math.sin(x * 0.35) * 2.2 + n1(x * 0.25, y * 0.25) * 3);
+  return 1;
+}
+
+// fin: a finish ({ tint, pat } from SKINS) or just its colour
+export function weaponPic(id, w = 120, h = 40, fin = null) {
   const W0 = WEAPONS[id];
   if (!W0) return null;
-  const key = `w:${id}:${w}:${h}:${dpr()}:${tint || ''}`;
+  const tint = fin && typeof fin === 'object' ? fin.tint : fin, pat = fin && typeof fin === 'object' ? fin.pat || 0 : 0;
+  const key = `w:${id}:${w}:${h}:${dpr()}:${tint || ''}:${pat}`;
   const [x0, y0, x1, y1] = W0.box;
   const s = Math.min(w / (x1 - x0 + 3), h / (y1 - y0 + 3)) * dpr();
   if (!cache.has(key)) {
     const cw = Math.round((x1 - x0 + 3) * s), ch = Math.round((y1 - y0 + 3) * s);
-    const fin = tint && tint !== '#ffffff';
-    let src = outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g, fin ? PRIMER : undefined); metalOver(g, W0.box, id.length * 7 + id.charCodeAt(0)); }, 0.55);
-    if (fin) {
+    const tinted = tint && tint !== '#ffffff';
+    let src = outlined(cw, ch, s, (-x0 + 1.5) * s, (-y0 + 1.5) * s, (g) => { setRoot(g); W0.paint(g, tinted ? PRIMER : undefined); metalOver(g, W0.box, id.length * 7 + id.charCodeAt(0)); }, 0.55);
+    if (tinted) {
       const c = canvas(src.width, src.height), g = c.getContext('2d');
       g.drawImage(src, 0, 0);
       g.globalCompositeOperation = 'multiply'; g.fillStyle = tint; g.fillRect(0, 0, c.width, c.height);
+      if (pat) {
+        // the pattern as a grey layer, multiplied over (in the gun's units, from its box's corner)
+        const pc = canvas(c.width, c.height), pg = pc.getContext('2d'), im = pg.createImageData(c.width, c.height), D = im.data;
+        for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+          const v = Math.round(255 * patternK(pat, x / s - 1.5, y / s - 1.5)), i = (y * c.width + x) * 4;
+          D[i] = D[i + 1] = D[i + 2] = v; D[i + 3] = 255;
+        }
+        pg.putImageData(im, 0, 0);
+        g.drawImage(pc, 0, 0);
+      }
       g.globalCompositeOperation = 'destination-in'; g.drawImage(src, 0, 0);
       src = c;
     }

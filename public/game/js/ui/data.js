@@ -29,6 +29,14 @@ export const WEAPON_LIST = [
   { id: 'thumper', cls: 'explosive', ready: true, slot: 'primary', price: 3000 },
 ];
 
+// the damage a weapon does, as the arsenal and the preparation show it:
+// one bullet, pellets × damage, or the launcher round's blast
+export function dmgText(id) {
+  const s = GUNS[id];
+  if (!s) return '—';
+  return s.launcher ? String(s.launcher.dmg) : s.pellets > 1 ? `${s.dmg}×${s.pellets}` : String(s.dmg);
+}
+
 // 0..100 bars for the stat panel, from the gun data
 export function gunBars(id) {
   const s = GUNS[id];
@@ -46,21 +54,23 @@ export function gunBars(id) {
   };
 }
 
-// The campaign map: three acts, ten missions; acts 1 and 2 (missions 1–7) are
-// playable, each one opens when the one before it is done.
+// The campaign map: three acts, ten missions, each one opens when the one
+// before it is done. par: the time for the second star.
 export const MISSIONS = [
-  { id: 'm1', act: 1, x: 0.10, y: 0.62, ready: true },
-  { id: 'm2', act: 1, x: 0.21, y: 0.36, ready: true },
-  { id: 'm3', act: 1, x: 0.32, y: 0.66, boss: true, ready: true },
-  { id: 'm4', act: 2, x: 0.44, y: 0.40, ready: true },
-  { id: 'm5', act: 2, x: 0.53, y: 0.70, ready: true },
-  { id: 'm6', act: 2, x: 0.62, y: 0.34, ready: true },
+  { id: 'm1', act: 1, x: 0.10, y: 0.62, ready: true, par: 300 },
+  { id: 'm2', act: 1, x: 0.21, y: 0.36, ready: true, par: 330 },
+  { id: 'm3', act: 1, x: 0.32, y: 0.66, boss: true, ready: true, par: 360 },
+  { id: 'm4', act: 2, x: 0.44, y: 0.40, ready: true, par: 330 },
+  { id: 'm5', act: 2, x: 0.53, y: 0.70, ready: true, par: 300 },
+  // the drone factory's keeper stands at the end of the line (docs §10.41)
+  { id: 'm6', act: 2, x: 0.62, y: 0.34, boss: true, ready: true, par: 390 },
   // act 2 ends at the furnace: no boss, a stand while it is lit (docs §10.30)
-  { id: 'm7', act: 2, x: 0.71, y: 0.62, ready: true },
-  { id: 'm8', act: 3, x: 0.80, y: 0.36 },
-  { id: 'm9', act: 3, x: 0.88, y: 0.64 },
-  { id: 'm10', act: 3, x: 0.95, y: 0.30, boss: true },
+  { id: 'm7', act: 2, x: 0.71, y: 0.62, ready: true, par: 380 },
+  { id: 'm8', act: 3, x: 0.80, y: 0.36, ready: true, par: 360 },
+  { id: 'm9', act: 3, x: 0.88, y: 0.64, ready: true, par: 390 },
+  { id: 'm10', act: 3, x: 0.95, y: 0.30, boss: true, ready: true, par: 420 },
 ];
+export const parOf = (id) => (MISSIONS.find((m) => m.id === id) || {}).par || 300;
 
 export const CRATES = [
   { id: 'std', color: '#a39b8f', price: 300, odds: [['common', 62], ['rare', 28], ['epic', 8.5], ['legendary', 1.4], ['mythic', 0.1]] },

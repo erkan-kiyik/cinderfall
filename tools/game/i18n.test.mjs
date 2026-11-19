@@ -11,7 +11,8 @@ import en from '../../public/game/js/ui/lang/en.js';
 import { LANGS, LANG_NAMES } from '../../public/game/js/ui/i18n.js';
 import { OPS, WEAPON_LIST, MISSIONS, CRATES } from '../../public/game/js/ui/data.js';
 import { HUD_KEYS } from '../../public/game/js/ui/screens/hudedit.js';
-import { SKINS, TASKS } from '../../public/game/js/core/economy.js';
+import { SKINS, TASKS, WEEKLY, COSTUMES } from '../../public/game/js/core/economy.js';
+import { KEY_ACTIONS } from '../../public/game/js/game/input.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/game/js');
 let fails = 0, passes = 0;
@@ -24,7 +25,7 @@ walk(path.join(ROOT, 'ui'));
 walk(path.join(ROOT, 'game'));
 walk(path.join(ROOT, 'cine'));
 const used = new Set(), dynamic = [];
-const NS = /(?<!h\()'((?:ui|app|nav|hub|lobby|play|camp|prep|stat|ops|ars|att|trader|prof|res|set|hud|game|story|cine)\.[\w.]+)'/g;
+const NS = /(?<!h\()'((?:ui|app|nav|hub|lobby|play|camp|prep|stat|ops|ars|att|trader|prof|res|set|hud|game|story|cine|daily)\.[\w.]+)'/g;
 const src = {};
 for (const f of files) {
   const s = src[f] = fs.readFileSync(f, 'utf8').replace(/^\s*\/\/.*$/gm, '');
@@ -43,7 +44,7 @@ for (const o of OPS) {
 }
 for (const w of WEAPON_LIST) { add(`cls.${w.cls}`); add(`wpn.${w.id}`); }
 for (const s of SKINS) add(`skin.${s.id}`);
-for (const k of Object.keys(TASKS)) add(`daily.${k}`);
+for (const k of [...Object.keys(TASKS), ...Object.keys(WEEKLY)]) add(`daily.${k}`);
 for (const k of ['weapon', 'skin', 'crate']) add(`trader.kind.${k}`);
 for (const m of MISSIONS) {
   add(`mission.${m.id}`); add(`mission.${m.id}.where`); add(`camp.act${m.act}`);
@@ -51,7 +52,10 @@ for (const m of MISSIONS) {
 }
 for (const c of CRATES) { add(`crate.${c.id}`); add(`crate.${c.id}.k`); for (const [r] of c.odds) add(`rar.${r}`); }
 for (const k of Object.values(HUD_KEYS)) add(k);
-for (const k of ['normal', 'hard']) add(`diff.${k}`);
+for (const k of ['easy', 'normal', 'hard']) add(`diff.${k}`);
+for (const c of COSTUMES) add(`cost.${c.id}`);
+for (const b of ['gall', 'brandt', 'vasq']) add(`boss.${b}`);
+for (const a of KEY_ACTIONS) add(`key.${a}`);
 for (const k of ['semi', 'auto', 'pump']) add(`mode.fire.${k}`);
 for (const k of ['sight', 'barrel', 'mag', 'under']) add(`att.${k}`);
 for (const k of ['campaign', 'daily', 'endless']) { add(`mode.${k}`); add(`mode.${k}.kicker`); add(`mode.${k}.desc`); }
@@ -59,13 +63,13 @@ const list = (file, re) => [...(src[path.join(ROOT, 'ui/screens', file)].match(r
 const profTabs = list('profile.js', /TABS = \[([^\]]+)\]/);
 const setTabs = [...src[path.join(ROOT, 'ui/screens/settings.js')].matchAll(/\['(\w+)', '\w+'\]/g)].map((m) => m[1]);
 const achs = [...src[path.join(ROOT, 'ui/screens/profile.js')].matchAll(/\['(\w+)', \(/g)].map((m) => m[1]);
-ok(profTabs.length === 5 && setTabs.length === 6 && achs.length === 8, `families: ${profTabs.length} profile tabs, ${setTabs.length} settings tabs, ${achs.length} achievements`);
+ok(profTabs.length === 5 && setTabs.length === 6 && achs.length >= 30, `families: ${profTabs.length} profile tabs, ${setTabs.length} settings tabs, ${achs.length} achievements`);
 for (const k of profTabs) add(`prof.${k}`);
 for (const k of setTabs) add(`set.${k}`);
 for (const k of achs) { add(`ach.${k}`); add(`ach.${k}.d`); }
 
 // every dynamic template must be one of the families above
-const FAMILIES = /^(role|op|ab|cls|wpn|mission|camp\.act|crate|rar|diff|mode|att|prof|set|ach|hud|skin|daily|trader\.kind)[.$]/;
+const FAMILIES = /^(role|op|ab|cls|wpn|mission|camp\.act|crate|rar|diff|mode|att|prof|set|ach|hud|skin|daily|trader\.kind|cost|key|boss)[.$]/;
 for (const d of dynamic) ok(FAMILIES.test(d), `dynamic key family known: ${d}`);
 
 // 3. every key in every language (ten of them, docs §10.38), with matching placeholders

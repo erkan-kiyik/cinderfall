@@ -26,7 +26,7 @@ export const trader = {
       const name = it.kind === 'weapon' ? WEAPONS[it.weapon].name : it.kind === 'skin' ? `${t(`skin.${it.skin}`)} · ${WEAPONS[it.weapon].name}` : t(`crate.${it.id}`);
       const pic = it.kind === 'crate'
         ? crateArt(CRATES.find((c) => c.id === it.id).color, weekly ? 56 : 44)
-        : weaponPic(it.weapon, weekly ? 220 : 120, weekly ? 44 : 30, it.kind === 'skin' ? SKIN[it.skin].tint : null);
+        : weaponPic(it.weapon, weekly ? 220 : 120, weekly ? 44 : 30, it.kind === 'skin' ? SKIN[it.skin] : null);
       const buy = press(h(`button.btn.${sold ? 'secondary' : 'primary'}.cut.sm`, {
         type: 'button', 'aria-disabled': sold ? 'true' : 'false',
         onclick: (e) => {

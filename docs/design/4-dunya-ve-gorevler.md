@@ -679,3 +679,123 @@ iner.
   `ui/login.js`. Testi `tools/game/login.test.mjs`: yedi gün üst üste,
   aynı gün ikinci alma, boşluklu günler, yeni hafta, eski kayıt.
 - Metinler on dilde.
+
+### 10.41 İnceleme düzeltmeleri: arayüz, kontroller, ilerleme, düşmanlar, Perde 3
+
+Oyunun baştan sona incelemesinde bulunan oynanış (B) ve arayüz (C) eksikleri.
+
+**Menüler.**
+- Hazırlık: hasar artık silahın gerçek hasarı (Cephanelik ile aynı:
+  tek mermi, saçma × hasar ya da roketin patlaması; `data.js dmgText`). Sol
+  yarıda görevin dört hedefi, süre yıldızının süresi ve seçili operatörün üç
+  yeteneği durur; sonsuz modda mod açıklaması ve rekor. Zorluk üçlü: Kolay,
+  Normal, Zor.
+- Görevlerin süre yıldızı tek tabloda (`data.js MISSIONS[].par`); hem
+  Hazırlık hem görev oradan okur.
+- Operatörler: sağ sütunda iki sekme, Yetenekler (açılışta, kaydırmadan
+  görünür) ve Kostümler; altında ustalık çubuğu ve görev/etkisiz sayısı.
+- Cephanelik: sınıf şeridi sıkıştırıldı; sığmayınca kenarı kararır ve bir ok
+  belirir, ok şeridi kaydırır.
+- Kampanya: zorluk seçimi Hazırlık'a taşındı, görev açıklaması için yer
+  açıldı; sahne düğmesi "Hazırlık"ın yanında. Haritanın köşe bandı "Perde
+  1"i örtmüyor. Perde 3'ün görevlerinin fotoğrafları önsözün plakalarından.
+- Yasal ekran: kutular kayar, "Kabul et ve devam et" altta sabit, telefonda
+  hep görünür.
+
+**Görev ekranı.**
+- Sol üstte duraklat düğmesi (iPhone'da geri tuşu yok). Duraklatma
+  kartında Ayarlar: ses, grafik, kontroller, düğme düzeni, dil; görevden
+  çıkmadan. Geri tuşu ya da Esc karta döner. Oyun içinden Yasal sekmesi,
+  performans testi ve önsöz açılmaz.
+- Düğmeler yeniden dizildi (`hudedit.js HUD_DEFAULT`): köşede Zıpla, Çömel,
+  Doldur, Bıçak; Silah altta silah yazısının yanında; üç yetenek düğmesi
+  üstte, nişan çubuğunun yolundan çekildi. Yetenek düğmeleri de düğme
+  düzenleyicide taşınır ve boyutlanır.
+- Hedef yönü artık ekran kenarındaki ok değil, üstteki hedef şeridinde ok ve
+  metre (`▸ 17 m`): hiçbir düğmenin üstüne binmez.
+- Çubuklar dinlenirken soluk halkalar olarak görünür (başparmağın genelde
+  indiği yerde); ilk görevlerde altlarında ne işe yaradıkları yazar.
+
+**Kontroller.** Ayarlar › Kontroller:
+- Nişan yardımı (Kapalı, Az, Çok): dokunmatik ve kolda nişan, düşmanın
+  göğsüne birkaç derece yakınsa ona doğru bükülür. Fare etkilenmez.
+- Nişan hızı (×0,5–×2): nişanın başparmağı izleme hızı; ×2 anında.
+- Tuşlar: her eylemin klavye tuşu değiştirilir; başka eylemin tuşu seçilirse
+  ikisi yer değiştirir. Ok tuşları her zaman yürütür, Esc duraklatır.
+- Oyun kumandası (standart dizilim): sol çubuk yürü, sağ çubuk nişan, RT
+  ateş, A zıpla, B çömel, X doldur, Y silah, RB bıçak, LB/LT yetenekler, R3
+  ulti, Start duraklat; duraklatma kartında A ilk düğme.
+- Kontrol ipuçları yeniden gösterilebilir.
+
+**İlk görev ipuçları** (`ui/coach.js`). Oyuncunun ilk görevinde hedef
+şeridinin altında tek satır: yürü, nişan al ve ateş et, zıpla, doldur,
+yetenek, hedef şeridi. Her satır oyuncu onu yapınca yeşil tik alıp gider;
+söz edilen düğme nabız gibi parlar. "Geç" hepsini kapatır.
+
+**Kolay zorluk** (`brain.js DIFF.easy`): daha geç tepki, daha geniş
+ıskalar, aynı anda tek ateş eden, Normal'in üçte ikisi kadar hasar.
+
+**İlerleme.**
+- Haftalık görevler: pazartesi yenilenen üç büyük görev (200 etkisiz, 60
+  kafa vuruşu, 6 görev, 15 yıldız, 25 sonsuz dalga, 2 boss görevi, Zor'da 2
+  görev arasından), 900–1.300 Parça; üçü de alınınca bir Mühimmat sandığı.
+  Görevler ekranında Bugün / Bu hafta sekmeleri. "Günlük · haftalık"
+  yazısı artık doğru; açıklama yeniden yazıldı.
+- Seviye ödülü: her seviye 100 + 25×seviye Parça; her beşincide Erzak,
+  her onuncuda Mühimmat sandığı. Sonuç ekranında gösterilir.
+- Başarımlar 8'den 32'ye: üç perde, otuz yıldız, beş süre yıldızı, on görev
+  Zor'da, üç boss, 500/2.000 etkisiz, 250 kafa, 10.000 mermi, ustalık,
+  sonsuz 10/25, 10/50 sandık, bütün silahlar, mitik görünüm, kostüm,
+  seviye 10/25, 7 günlük ödül, 10 günlük görev, bir tam hafta.
+- Kostümler: elbiseye çarpılan bir boya (yüz, eller, botlar boyanmaz):
+  Standart, Gece Devriyesi (1.500 Parça), Kül (3.000 Parça), Kor (ustalık
+  3 ile kazanılır). Ustalık: operatörle bitirilen görev 20, etkisiz 1 puan;
+  60/180/400/800'de bir seviye.
+- Desenli görünümler: kamuflaj, kaplan çizgisi, şam çeliği. Desen sprite
+  çizicinin gölgelendiricisinde hesaplanır (`batch.js`, örnek başına bir sayı
+  daha); yeni çizim yok, bellek artmaz. Menüdeki silah resmi aynı formülle
+  çizilir. Yeni görünümler: Şehir Kamuflajı, Orman Kamuflajı, Kaplan Çizgisi,
+  Şam Çeliği, Cüruf; KOR görünümü artık şam çeliği desenli.
+- Profil › Koleksiyon: sahip olunan görünümler ve kostümler.
+
+**Düşmanlar.** Yeni türler başka bir türün çizimlerini giyer (yalnız
+silahları çizilir) ve elbise boyasıyla ayrılır:
+- Nişancı (`nis`): uzak durur, tek ağır atış; kırmızı lazeri ateşten hemen
+  önce parlar.
+- Bombacı (`bom`): makineli tabanca, 5–8 saniyede bir el bombası.
+- Ağır (`agr`): kalkanlının zırhı, kalkansız; hafif makineli, uzun seriler,
+  gövdeye gelen hasarın %70'i geçer.
+- Görevlere dağılım (`mission.js MIX`): 1. görev sade kalır; sonrakilerde
+  bazı tüfekçiler bu türlere döner (Ağır'lar dalgalarla gelir).
+- Perde 2'nin boss'u: Depo Şefi Brandt (6. görevin sonunda, arka avluda):
+  ağır zırh, makineli, el bombası, iki destek dalgası.
+- Son boss: Komutan Vasquez (10. görev): Gall'ın paltosu, yüzü kask
+  altında (hiç görünmez). El bombası ile flaş bombası sırayla; flaş ekranı
+  beyaza boyar ve nişanı sarsar; nişan üstündeyken yana atılır (kısa
+  dokunulmazlık); canı yarının altına inince daha hızlı ateş eder.
+- Sonsuz mod: her beşinci dalgada sırayla Gall, Brandt, Vasquez; yeni türler
+  3., 5. ve 6. dalgadan itibaren katılır.
+- Doğuş noktası bir sandığın kenarına denk gelen düşman en yakın boş yere
+  kayar (`openSpot`).
+
+**Perde 3 — Çöküş** (`art/env/act3.js`), hikâye kutsal kitabındaki gibi:
+- 8 Kule Baskını: bulvar, meydan (saksılar, bayraklar, Vorsa afişleri),
+  lobi kapısı (hack), Vesper kulenin ağına girerken ön avluyu tutmak, servis
+  girişi. Arkada kulenin ayağı: füme cam, katlar, üç kat boyunda işaret,
+  kırmızı çizgili saçak.
+- 9 İhanet: kulenin yük rampası. HAWK'ın kamyonu 3. rampada, kapıları açık,
+  içi boş: pusu iki uçtan gelir; sonra servis asansörünün kapısı (hack),
+  asansör.
+- 10 Vasquez: çatı. Yayın direğini ele geçir (şehir, Kül Planı'nı kendi
+  radyosundan duyar), helipad kapısı açılır, Vasquez gelir; sonra helipad.
+- İlk bitirişte kapanış kartı: dört satır, siyah üstüne, sırayla.
+- Çatı korkuluğu tek parça çizilemezdi (atlas sayfasından geniş): kısa bir
+  parça uç uca dizilir. Bir parça boyanamazsa çizim hazırlığı artık durmaz,
+  o parça atlanıp hata kaydına yazılır.
+
+**Testler.** `tools/game/missions.test.mjs` (on görevin düzeni: boş zemin,
+dalgalar, boss, kapı, sayfaya sığma), `tools/game/progress.test.mjs`
+(haftalık görev, seviye ödülü, kostüm, ustalık, desenler, kolay zorluk,
+eski kayıt). Metinler on dilde.
+
+Çizim sürümü `d4-67` (telefonlar yeniden boyar).

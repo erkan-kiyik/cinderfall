@@ -1,7 +1,9 @@
 // KOR — instanced sprite batcher.
 //
-// Every sprite is one instance of a 4-vertex strip: 52 bytes of per-instance
-// data (position, size, anchor, rotation, UV rect, atlas layer, tint). The
+// Every sprite is one instance of a 4-vertex strip: 56 bytes of per-instance
+// data (position, size, anchor, rotation, UV rect, atlas layer, tint, pattern).
+// A pattern (a weapon finish: camouflage, stripes, Damascus steel; docs §10.41)
+// shades the tint across the sprite in its own units, so it rides with the gun. The
 // atlas pages are layers of a few texture arrays, so the batch flushes only
 // when the array or the blend mode changes (or the buffer is full): a whole
 // frame is a few draw calls. No allocation happens while drawing.
@@ -14,10 +16,13 @@ layout(location=1) in vec3 aAR;     // anchor x, anchor y, rotation
 layout(location=2) in vec4 aUV;     // u0, v0, u1, v1
 layout(location=3) in vec4 aTint;   // premultiplied rgba
 layout(location=4) in float aLayer; // atlas page
+layout(location=5) in float aPat;   // 0: none, else a finish's pattern (PATTERNS)
 uniform mat3 uView;
 out vec2 vUV;
 out vec4 vTint;
+out vec2 vLoc;
 flat out float vLayer;
+flat out float vPat;
 void main() {
   vec2 c = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1));
   vec2 p = (c - aAR.xy) * aRect.zw;
@@ -27,6 +32,8 @@ void main() {
   vUV = mix(aUV.xy, aUV.zw, c);
   vTint = aTint;
   vLayer = aLayer;
+  vPat = aPat;
+  vLoc = c * abs(aRect.zw);
 }`;
 
 const FS = `#version 300 es
@@ -35,11 +42,26 @@ precision mediump sampler2DArray;
 uniform sampler2DArray uTex;
 in vec2 vUV;
 in vec4 vTint;
+in vec2 vLoc;
 flat in float vLayer;
+flat in float vPat;
 out vec4 o;
-void main() { o = texture(uTex, vec3(vUV, vLayer)) * vTint; }`;
+float h1(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float n1(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h1(i), h1(i + vec2(1.0, 0.0)), f.x), mix(h1(i + vec2(0.0, 1.0)), h1(i + vec2(1.0, 1.0)), f.x), f.y); }
+void main() {
+  vec4 s = texture(uTex, vec3(vUV, vLayer));
+  float k = 1.0;
+  if (vPat > 0.5) {
+    vec2 q = vLoc;
+    if (vPat < 1.5) { float v = n1(q * 0.22) * 0.65 + n1(q * 0.55 + 7.0) * 0.35; k = v < 0.42 ? 0.42 : v < 0.6 ? 0.72 : 1.0; }
+    else if (vPat < 2.5) { float v = sin(q.x * 0.9 + q.y * 1.7 + n1(q * 0.3) * 4.0); k = v > 0.5 ? 0.32 : 1.0; }
+    else { float v = sin(q.y * 2.6 + sin(q.x * 0.35) * 2.2 + n1(q * 0.25) * 3.0); k = 0.68 + 0.32 * v; }
+  }
+  o = s * vec4(vTint.rgb * k, vTint.a);
+}`;
 
-const FLOATS = 13, BYTES = FLOATS * 4;
+const FLOATS = 14, BYTES = FLOATS * 4;
 
 export class SpriteBatch {
   constructor(gl, atlas, capacity = 16384) {
@@ -65,6 +87,7 @@ export class SpriteBatch {
     attr(2, 4, gl.FLOAT, false, 28);
     attr(3, 4, gl.UNSIGNED_BYTE, true, 44);
     attr(4, 1, gl.FLOAT, false, 48);
+    attr(5, 1, gl.FLOAT, false, 52);
     gl.bindVertexArray(null);
     this.view = new Float32Array(9);
     this.bounds = null;
@@ -82,8 +105,10 @@ export class SpriteBatch {
   }
 
   // Draw region r with its anchor at (x, y). sx/sy scale (negative flips),
-  // rot in radians, tint as 0xAABBGGRR premultiplied by the caller or by alpha.
-  draw(r, x, y, sx = 1, sy = 1, rot = 0, rgba = 0xffffffff, alpha = 1) {
+  // rot in radians, tint as 0xAABBGGRR premultiplied by the caller or by alpha,
+  // pat a finish's pattern (0 none).
+  draw(r, x, y, sx = 1, sy = 1, rot = 0, rgba = 0xffffffff, alpha = 1, pat = 0) {
+    if (!r) return; // a sprite the bake left out: nothing, rather than a broken frame
     const grp = (r.page / GROUP) | 0;
     if (grp !== this.group) { this.flush(); this.group = grp; }
     if (this.n === this.cap) this.flush();
@@ -93,6 +118,7 @@ export class SpriteBatch {
     f[i + 7] = r.u0; f[i + 8] = r.v0; f[i + 9] = r.u1; f[i + 10] = r.v1;
     this.u[i + 11] = alpha === 1 ? rgba : premul(rgba, alpha);
     f[i + 12] = r.page - grp * GROUP;
+    f[i + 13] = pat;
     this.n++;
     if (this.bounds) this.grow(x, y, r.w * sx, r.h * sy, r.ax, r.ay, rot);
   }

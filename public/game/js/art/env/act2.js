@@ -491,7 +491,8 @@ export function buildMission5() {
 //   C  the factory     hack the factory gate; its guard comes out
 //   D  the line        hold the drone line while Skye's charges burn it out:
 //                      three squads, the shield men with them
-//   E  extraction      out the back through the scrap
+//   E  the back yard   Brandt, keeper of the works, comes out with his machine gun
+//                      and two squads behind him (docs §10.41); the way out is past him
 export function buildMission6() {
   const K = kit('m6'), { block, P, bar, conc, scrap, addCrate, deco, lights, glows, lamps } = K;
   // A
@@ -543,7 +544,7 @@ export function buildMission6() {
       { type: 'reach', x: X(160) },
       { type: 'hack' },
       { type: 'hold', x0: X(244), x1: X(276), time: 50, waves: [[2, 2], [17, 3], [33, 4]] },
-      { type: 'reach', x: X(384) },
+      { type: 'boss', boss: { id: 'brandt', x: X(380), zone: [X(306), X(398)] }, phases: [[0.66, 5], [0.33, 6]] },
     ],
     enemies: [
       // A
@@ -568,6 +569,9 @@ export function buildMission6() {
       E('huc', X(350), 0, [X(320), X(380)]),
       E('tet', X(368), 0, [X(352), X(384)]),
       E('tet', X(386), 0, [X(366), X(396)]),
+      // Brandt's two squads, as his health drops
+      E('bom', X(392), 0, [X(306), X(398)], { wave: 5 }), E('tet', X(396), 0, [X(306), X(398)], { wave: 5 }),
+      E('huc', X(310), 0, [X(306), X(398)], { wave: 6, facing: 1 }), E('agr', X(394), 0, [X(306), X(398)], { wave: 6 }),
     ],
   });
 }
@@ -657,3 +661,6 @@ export function buildMission7() {
     ],
   });
 }
+
+// act 3 is built with the same kit (art/env/act3.js)
+export { kit, strip, X, E, rust };

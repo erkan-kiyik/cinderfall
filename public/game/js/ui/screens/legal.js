@@ -102,11 +102,13 @@ export const legal = {
         const lobby = () => ctx.router.go('lobby', { entrance: true }, { root: true });
         if (manage) ctx.router.back(); else if (ctx.playStory && !ctx.save.d.story.prologue) ctx.playStory('prologue', { then: lobby }); else lobby();
       } }, U[manage ? 'save' : 'accept']), { sound: null });
-      const actions = h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' } }, accept,
+      const actions = h('div.legal-go', accept,
         manage && press(h('button.btn.danger.sm.cut', { type: 'button', onclick: () => modal({ title: U.deleteData, body: U.deleteConfirm,
           actions: [{ label: U.close, kind: 'ghost' }, { label: U.deleteData, kind: 'danger', fn: () => { deleteAllData(); location.reload(); } }] }) }, U.deleteData)));
-      const right = h('section.scroll', { style: { display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 } }, checks, ads, actions,
-        h('p.muted', { style: { margin: '4px 0 0', font: '400 10px/1.45 var(--f-body)' } }, U.footer));
+      // the boxes scroll; the button to go on stays in sight under them on every screen
+      const right = h('section.legal-right',
+        h('div.scroll.legal-list', checks, ads, h('p.muted', { style: { margin: '4px 0 0', font: '400 10px/1.45 var(--f-body)' } }, U.footer)),
+        actions);
       const head = manage
         ? h('header.shead', press(h('button.btn.icon.secondary.cut', { type: 'button', 'aria-label': U.back, onclick: () => { ui('back'); ctx.router.back(); } }, svg('back')), { sound: null }), h('div.ttl', h('div.eyebrow.accent', CONTROLLER.game), h('h1.h2', U.manage)))
         : h('header.shead', h('div.ttl', h('div.eyebrow.accent', `${CONTROLLER.game} · ${U.manage}`), h('h1.h2', U.title)));

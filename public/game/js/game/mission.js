@@ -18,6 +18,7 @@ import { buildMission2 } from '../art/env/mission2.js';
 import { concrete } from '../art/env/mission1.js';
 import { buildMission3 } from '../art/env/mission3.js';
 import { buildMission4, buildMission5, buildMission6, buildMission7 } from '../art/env/act2.js';
+import { buildMission8, buildMission9, buildMission10 } from '../art/env/act3.js';
 import { itemBakeList, charBakeList } from './bakechars.js';
 import { Character } from './character.js';
 import { Mover } from '../phys/mover.js';
@@ -31,9 +32,11 @@ import { rgba } from '../gfx/batch.js';
 import { col } from '../gfx/particles.js';
 import { Abilities } from './abilities.js';
 import { AbilityHud } from '../ui/abilityhud.js';
+import { Coach } from '../ui/coach.js';
 import { haptic } from '../ui/kit.js';
+import { parOf } from '../ui/data.js';
 
-export const BAKE_VERSION = 'd4-65';
+export const BAKE_VERSION = 'd4-67';
 // Endless: the market from mission 2, walled off at both ends; squads come in
 // waves, every fifth one with Gall.
 function buildEndless() {
@@ -44,7 +47,7 @@ function buildEndless() {
   }
   return Object.assign(M, { id: 'endless', objectives: [{ type: 'endless' }], enemies: [], checkpoints: [], spawn: [X(170), 0], arena: [X(110), X(240)], extract: null, par: 0 });
 }
-const BUILD = { m1: buildMission1, m2: buildMission2, m3: buildMission3, m4: buildMission4, m5: buildMission5, m6: buildMission6, m7: buildMission7, endless: buildEndless };
+const BUILD = { m1: buildMission1, m2: buildMission2, m3: buildMission3, m4: buildMission4, m5: buildMission5, m6: buildMission6, m7: buildMission7, m8: buildMission8, m9: buildMission9, m10: buildMission10, endless: buildEndless };
 export const MISSION_IDS = Object.keys(BUILD);
 
 // What the lobby shows (docs §10.28): the basement, the operators with every
@@ -76,7 +79,7 @@ export function bakeList(quality) {
     ...E,
     // the lobby's basement (docs §10.9)
     ...hideoutBakeList(DENS[quality][0]),
-    ...charBakeList(['huc', 'gall'], ch),
+    ...charBakeList(['huc', 'gall', 'vasq', 'nis', 'bom', 'agr', 'brandt'], ch),
     ...itemBakeList(ch, fx),
     // both gates are the same size
     { name: 'm.gateLeaf', box: [-1, -97, 17, 1], scale: ch, outline: 0.85, paint: (gg) => gateLeaf(gg, 16, 96) },
@@ -85,20 +88,54 @@ export function bakeList(quality) {
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+// aim help for the sticks (docs §10.41): within `cone` radians of an enemy's chest the
+// aim bends `k` of the way onto it
+const ASSIST = { off: null, low: { cone: 0.1, k: 0.45 }, high: { cone: 0.18, k: 0.75 } };
+// docs §10.41: how many of a mission's riflemen are, instead, a marksman, a grenadier or a
+// heavy gunner (spread along the level, the heavy ones from the squads that come in waves).
+// Mission 1 stays as it is: the first fight is the plain one.
+const MIX = {
+  m2: { nis: 1 }, m3: { nis: 1, bom: 1 }, m4: { nis: 1, bom: 1, agr: 1 }, m5: { nis: 2, bom: 1, agr: 1 },
+  m6: { nis: 1, bom: 2, agr: 1 }, m7: { nis: 2, bom: 2, agr: 2 }, m8: { nis: 2, bom: 2, agr: 1 }, m9: { nis: 2, bom: 2, agr: 2 }, m10: { nis: 1, bom: 2, agr: 2 },
+};
+// the nearest x to x0 (within three tiles) where a body stands clear of solid tiles
+export function openSpot(L, x0, y) {
+  for (let k = 0; k < 9; k++) {
+    const x = x0 + (k % 2 ? -1 : 1) * Math.ceil(k / 2) * 6;
+    if (!L.solidBox(x - 1, y - 30, x + 1, y - 2)) return x;
+  }
+  return x0;
+}
+function mixIn(M, id) {
+  const mix = MIX[id];
+  if (!mix) return;
+  const tets = M.enemies.filter((e) => e.id === 'tet' && !e.boss);
+  const waves = tets.filter((e) => e.wave), still = tets.filter((e) => !e.wave);
+  const take = (pool, n, k) => { for (let i = 0; i < n && pool.length; i++) { const e = pool.splice(Math.floor(((i + 0.5) / n) * pool.length) % pool.length, 1)[0]; e.id = e.kind = k; } };
+  take(waves.length ? waves : still, mix.agr || 0, 'agr');
+  take(still, mix.nis || 0, 'nis');
+  take(still.length ? still : waves, mix.bom || 0, 'bom');
+}
+// the bosses: their names, how often they throw, what else they do
+const BOSSES = { gall: { nade: [4.5, 6.5] }, brandt: { nade: [5, 7] }, vasq: { nade: [3.8, 5.2], flash: true, dash: true } };
 
 export class MissionScene extends M3.M3Scene {
-  // opts: id (m1 … m7, endless), diff, op + loadout (from preparation), brief (show
-  // the briefing card), onExit(result) (back to the menus; without it the card reloads)
-  constructor(eng, controls, { id = 'm1', diff = 'normal', op = null, loadout = null, brief = true, onExit = null } = {}) {
+  // opts: id (m1 … m10, endless), diff, op + loadout + costume (from preparation), hud (the
+  // touch layout, for the ability buttons), coach (the first-mission tips), brief (show the
+  // briefing card), onExit(result) (back to the menus; without it the card reloads),
+  // onSettings() (the pause card's settings)
+  constructor(eng, controls, { id = 'm1', diff = 'normal', op = null, loadout = null, costume = null, hud = null, coach = false, brief = true, onExit = null, onSettings = null, onCoachDone = null } = {}) {
     // each run gets a fresh level (gates and walls change its tiles)
     const M = (BUILD[id] || BUILD.m1)();
+    mixIn(M, id);
     super(eng, controls, M);
     this.id = BUILD[id] ? id : 'm1';
-    this.onExit = onExit; this.diff = diff;
+    this.onExit = onExit; this.onSettings = onSettings; this.diff = diff;
     if (op) {
-      this.opId = op; this.loadout = loadout;
+      this.opId = op; this.loadout = loadout; this.costume = costume;
       this.opIndex = Math.max(0, M2.OPERATORS.indexOf(op));
-      this.player = new Character(op, eng.atlas, this.mover, loadout ? { weapon: loadout.primary, sidearm: loadout.sidearm } : {});
+      this.player = new Character(op, eng.atlas, this.mover, this.kit());
     }
     this.M = M; this.D = DIFF[diff] || DIFF.normal;
     // the gate's sign and girder over the opening are solid: a shut gate cannot be
@@ -121,28 +158,44 @@ export class MissionScene extends M3.M3Scene {
     };
     this.mhud = new MissionHud(document.querySelector('#hud'));
     this.obj = 0; this.hack = 0; this.gateK = 0; this.gateOpen = false; this.waveIn = false;
-    this.holdT = 0; this.waveIdx = 0; this.phase = 0; this.nades = []; this.nadeT = 4;
+    this.holdT = 0; this.waveIdx = 0; this.phase = 0; this.nades = [];
     this.endless = this.id === 'endless'; this.wave = 0; this.cleared = 0; this.breakT = 2.5;
     this.cp = -1; this.deaths = 0; this.clockT = 0; this.done = false; this.started = false;
     this.pickups = [];
     this.ab = new Abilities(this, this.opId || M2.OPERATORS[this.opIndex]);
-    this.abHud = new AbilityHud(document.querySelector('#hud'), this.ab, this.ctl);
+    this.abHud = new AbilityHud(document.querySelector('#hud'), this.ab, this.ctl, hud);
     this.hud.update(0, this.player);
     if (brief) this.briefing(); else this.begin(diff);
+    if (coach) this.coach = new Coach(document.querySelector('#hud'), this, { touch: document.querySelector('#hud .touch'), onDone: onCoachDone });
     // the app going to the background pauses the mission
     this._vis = () => { if (document.hidden) this.pause(); };
     document.addEventListener('visibilitychange', this._vis);
   }
 
+  // what the player's character is made with: the loadout from preparation, the costume
+  kit() {
+    const lo = this.loadout;
+    return { ...(lo ? { weapon: lo.primary, sidearm: lo.sidearm } : {}), costume: this.costume };
+  }
+
   get title() { return this.endless ? t('mode.endless') : `${t('camp.mission', { n: this.id.slice(1) })} · ${t(`mission.${this.id}`)}`; }
-  get par() { return this.M.par || 300; }
+  get par() { return this.endless ? 0 : parOf(this.id); }
 
   pause() {
     if (!this.started || this.done || this.paused) return;
     this.paused = true;
+    this.pauseCard();
+  }
+  resume() {
+    if (!this.paused || this.done || !this.started) return;
+    this.mhud.hide(); this.paused = false; this.sfx.unlock();
+  }
+  // the pause card: resume, the settings (sound, controls, the HUD layout: docs §10.41), restart, quit
+  pauseCard() {
     this.mhud.show(`<div class="kick">${this.title}</div><h1>${t('game.paused')}</h1>
       <p>${t('game.status', { o: this.objective ? this.objText(this.obj) : '—', t: fmt(this.clockT) })}</p>`,
-    [{ label: t('game.resume'), fn: () => { this.mhud.hide(); this.paused = false; this.sfx.unlock(); } },
+    [{ label: t('game.resume'), fn: () => this.resume() },
+      ...(this.onSettings ? [{ label: t('game.settings'), ghost: true, fn: () => { this.mhud.hide(); this.onSettings(); } }] : []),
       ...(this.onExit
         ? [{ label: t('game.restart'), ghost: true, fn: () => this.onExit({ ...this.result(false), retry: true }) },
           { label: t('game.quit'), ghost: true, fn: () => this.onExit({ ...this.result(false), abandoned: true }) }]
@@ -150,7 +203,9 @@ export class MissionScene extends M3.M3Scene {
   }
 
   spawnEnemy(d) {
-    const m = new Mover(this.L, d.x, d.y); m.facing = d.facing || -1;
+    // a spawn point on the edge of a crate or a wall moves to the nearest open spot
+    const x = openSpot(this.L, d.x, d.y);
+    const m = new Mover(this.L, x, d.y); m.facing = d.facing || -1;
     const ch = new Character(d.id, this.e.atlas, m);
     const b = new Brain(ch, { kind: d.kind || d.id, zone: d.zone, patrol: d.patrol, diff: this.D });
     if (d.boss) { b.boss = true; this.boss = b; }
@@ -211,13 +266,13 @@ export class MissionScene extends M3.M3Scene {
     const s = this.stats;
     if (this.endless) {
       return { id: 'endless', endless: true, wave: this.cleared, done: false, diff: this.diff || 'normal', op: this.opId || M2.OPERATORS[this.opIndex], stars: [false, false, false],
-        time: this.clockT, kills: s.kills, heads: s.heads, shots: s.shots, hits: s.hits, deaths: this.deaths, byWeapon: s.byWeapon };
+        time: this.clockT, kills: s.kills, heads: s.heads, shots: s.shots, hits: s.hits, deaths: this.deaths, byWeapon: s.byWeapon, bosses: this.bossKills || 0 };
     }
     return {
       id: this.id, done, diff: this.diff || 'normal', op: this.opId || M2.OPERATORS[this.opIndex],
       stars: done ? [true, this.clockT <= this.par, this.deaths === 0] : [false, false, false],
       time: this.clockT, kills: s.kills, heads: s.heads, shots: s.shots, hits: s.hits, deaths: this.deaths,
-      byWeapon: s.byWeapon, par: this.par,
+      byWeapon: s.byWeapon, par: this.par, bosses: this.bossKills || 0,
     };
   }
 
@@ -225,8 +280,8 @@ export class MissionScene extends M3.M3Scene {
   dispose() {
     document.removeEventListener('visibilitychange', this._vis);
     const H = this.hud, MH = this.mhud;
-    for (const n of [H.el, H.hurtEl, H.dirL, H.dirR, H.deadEl, MH.obj, MH.time, MH.arrow, MH.toastEl, MH.card, MH.bossEl]) n && n.remove();
-    this.abHud.remove(); this.ab.dispose();
+    for (const n of [H.el, H.hurtEl, H.dirL, H.dirR, H.deadEl, MH.obj, MH.time, MH.toastEl, MH.card, MH.bossEl]) n && n.remove();
+    this.abHud.remove(); this.ab.dispose(); this.coach?.remove();
   }
 
   get objective() { return this.M.objectives[this.obj] || null; }
@@ -237,13 +292,59 @@ export class MissionScene extends M3.M3Scene {
     this.sfx.play('kill', null, null, { vol: 0.5, rate: 0.8 });
     if (!this.objective) { this.debrief(); return; }
     this.holdT = 0; this.waveIdx = 0; this.phase = 0;
+    const o = this.objective;
+    // a boss that walks in when its objective comes up (Brandt, Vasquez: docs §10.41)
+    if (o.type === 'boss' && o.boss && !(this.boss && this.boss.ch.alive)) {
+      const b = this.spawnEnemy({ ...o.boss, kind: o.boss.id, y: 0, facing: o.boss.facing || -1, boss: true });
+      b.alarm(this.mover.x, this.mover.y, 1);
+      this.mhud.toast(t('game.bossIn', { n: this.bossName(b) }), 2);
+      this.sfx.play('charge', null, null, { vol: 0.9, rate: 0.45 }); this.e.camera.addShake(0.2);
+      return;
+    }
     this.mhud.toast(t('game.objUpdated'), 1.4);
   }
+  bossName(b) { return t(`boss.${(b || this.boss || {}).kind || 'gall'}`); }
 
   // --- simulation -----------------------------------------------------------------------------
   update(dt) {
     if (this.paused) { this.mhud.update(dt); return; }
+    this.stepDt = dt;
     super.update(dt);
+    this.coach?.update(dt);
+  }
+
+  // The sticks (touch, a pad) aim by direction: the aim turns toward the stick at the
+  // player's speed and, with aim help on, bends onto an enemy close to where it points.
+  // The mouse aims at a point, untouched.
+  aimPoint() {
+    const c = this.ctl;
+    if (this.aimWorld || c.aimMode === 'point') {
+      const p = super.aimPoint();
+      if (this.flashT > 0 && !this.aimWorld) { const k = Math.min(1, this.flashT) * 26; return [p[0] + Math.sin(this.t * 19) * k, p[1] + Math.cos(this.t * 23) * k]; }
+      return p;
+    }
+    const m = this.mover, sx = m.x, sy = m.y - 48;
+    let dx = c.aimDX, dy = c.aimDY;
+    if (!c.aimHeld && Math.abs(c.moveX) > 0.2) { dx = Math.sign(c.moveX); dy = 0; }
+    let a = Math.atan2(dy, dx);
+    const help = c.aimHeld ? ASSIST[c.aimAssist || 'low'] : null;
+    if (help) {
+      let best = null, bd = help.cone;
+      for (const b of this.brains) {
+        const e = b.ch;
+        if (!e.alive || this.offView(e.m.x, -8)) continue;
+        const ex = e.m.x - sx, ey = e.m.y - 40 - sy;
+        if (ex * ex + ey * ey > 420 * 420) continue;
+        const da = Math.abs(wrapA(Math.atan2(ey, ex) - a));
+        if (da < bd) { bd = da; best = Math.atan2(ey, ex); }
+      }
+      if (best !== null) a += wrapA(best - a) * help.k;
+    }
+    if (this.flashT > 0) a += Math.sin(this.t * 21) * 0.14 * Math.min(1, this.flashT);
+    const sens = c.aimSens || 1;
+    if (this.aimA === undefined || sens >= 2 || !c.aimHeld) this.aimA = a;
+    else this.aimA += wrapA(a - this.aimA) * (1 - Math.exp(-(this.stepDt || 1 / 120) * 40 * sens));
+    return [sx + Math.cos(this.aimA) * 200, sy + Math.sin(this.aimA) * 200];
   }
 
   updateEnemies(dt) {
@@ -300,7 +401,8 @@ export class MissionScene extends M3.M3Scene {
     // the squad nearby hears it; sometimes an ammo box drops
     for (const b of this.brains) if (b.ch !== dead && b.ch.alive && Math.abs(b.ch.m.x - dead.m.x) < 300) b.alarm(by.m.x, by.m.y, 0.8);
     if (dead.team === 1 && Math.random() < 0.7) this.pickups.push({ x: dead.m.x, y: dead.m.y - 30, vy: -120, t: 0 });
-    if (this.boss && dead === this.boss.ch) { this.e.camera.addShake(0.5); this.sfx.play('boom', dead.m.x, dead.m.y - 30, { vol: 1, rate: 0.8 }); this.mhud.toast(t('game.bossDown'), 2); }
+    if (dead.team === 1 && this.brains.some((b) => b.boss && b.ch === dead)) this.bossKills = (this.bossKills || 0) + 1;
+    if (this.boss && dead === this.boss.ch) { this.e.camera.addShake(0.5); this.sfx.play('boom', dead.m.x, dead.m.y - 30, { vol: 1, rate: 0.8 }); this.mhud.toast(t('game.bossDown', { n: this.bossName() }), 2); }
     if (dead === this.player) this.onPlayerDown();
   }
   onPlayerDown() { this.deaths++; this.deadT = 0; }
@@ -310,7 +412,11 @@ export class MissionScene extends M3.M3Scene {
     super.beforePlayerStep(dt, inp);
     if (this.started && !this.done) this.ab.input(this.ctl);
   }
-  dealtK(who, zone) { return this.ab.dmgK(who, zone); }
+  // plate on the heavy kinds takes a share off body hits; a dashing Vasquez is not there to hit
+  dealtK(who, zone) {
+    const A = who.spec.armor && zone !== 'head' ? who.spec.armor : 1;
+    return this.ab.dmgK(who, zone) * A * (who.dashT > 0 ? 0.1 : 1);
+  }
   takenK(dmg) { return this.ab.taken(dmg); }
   fireK() { return this.ab.fireK; }
   onHit(by, who, dmg, dead) {
@@ -334,23 +440,28 @@ export class MissionScene extends M3.M3Scene {
     this.mhud.toast(t('game.runOver', { n: this.cleared }), 1.8);
     if (this.onExit) setTimeout(() => this.onExit(this.result(false)), 1800);
   }
-  // wave n: more of them, tougher kinds as it goes; every fifth, Gall
+  // wave n: more of them, tougher kinds as it goes (the marksman from the third, the
+  // grenadier from the fifth, the heavy gunner from the sixth); every fifth a boss, in
+  // turn Gall, Brandt, Vasquez (docs §10.41)
   spawnEndlessWave() {
-    const n = ++this.wave, [a0, a1] = this.M.arena, X = (c) => c * TILE;
+    const n = ++this.wave, [a0, a1] = this.M.arena;
     // clear the bodies of earlier waves (keeps the frame cheap)
     for (let i = this.enemies.length - 1; i >= 0; i--) if (!this.enemies[i].alive) { this.enemies.splice(i, 1); this.brains.splice(i, 1); }
     this.enemyDmg = this.D.dmg * (1 + 0.05 * (n - 1)); this.squad.max = this.D.tokens + Math.floor(n / 4);
     const list = [], count = Math.min(3 + n, 11);
-    for (let i = 0; i < count; i++) list.push(n >= 4 && i % 5 === 4 ? 'kal' : n >= 2 && i % 3 === 2 ? 'huc' : 'tet');
-    if (n % 5 === 0) list.unshift('gall');
+    for (let i = 0; i < count; i++) {
+      list.push(n >= 6 && i % 7 === 6 ? 'agr' : n >= 5 && i % 6 === 5 ? 'bom' : n >= 3 && i % 5 === 3 ? 'nis' : n >= 4 && i % 5 === 4 ? 'kal' : n >= 2 && i % 3 === 2 ? 'huc' : 'tet');
+    }
+    const boss = n % 5 === 0 ? ['gall', 'brandt', 'vasq'][(n / 5 - 1) % 3] : null;
+    if (boss) list.unshift(boss);
     list.forEach((id, i) => {
       const left = i % 2 === 1;
       const x = left ? a0 + 6 + (i % 3) * 10 : a1 - 6 - (i % 3) * 10;
-      const b = this.spawnEnemy({ id, kind: id, x, y: 0, zone: [a0, a1], facing: left ? 1 : -1, boss: id === 'gall' });
-      if (id === 'gall') { b.ch.hpMax = b.ch.hp = 500 + n * 120; }
+      const b = this.spawnEnemy({ id, kind: id, x, y: 0, zone: [a0, a1], facing: left ? 1 : -1, boss: id === boss });
+      if (id === boss) { b.ch.hpMax = b.ch.hp = { gall: 500, brandt: 600, vasq: 700 }[id] + n * 120; }
       b.D = this.D; b.alarm(this.mover.x, this.mover.y, 1);
     });
-    this.mhud.toast(n % 5 === 0 ? t('game.bossWave', { n }) : t('game.wave', { n }), 1.6);
+    this.mhud.toast(boss ? t('game.bossWave', { n, b: t(`boss.${boss}`) }) : t('game.wave', { n }), 1.6);
     this.sfx.play('charge', null, null, { vol: 0.9, rate: 0.55 });
   }
   updateEndless(dt) {
@@ -362,15 +473,14 @@ export class MissionScene extends M3.M3Scene {
     }
     if (left === 0) { this.breakT -= dt; if (this.breakT <= 0) { this.spawnEndlessWave(); this.breakT = 0; } }
     this.mhud.objective(1, 1, this.wave ? t('game.left', { n: left }) : t('game.ready'), null, t('game.wave', { n: Math.max(1, this.wave) }));
-    if (this.boss && this.boss.ch.alive) this.bossNades(dt, this.boss);
+    if (this.boss && this.boss.ch.alive) this.bossSkills(dt, this.boss);
   }
 
   respawnPlayer() {
     const cp = this.M.checkpoints[this.cp];
     const x = cp ? cp.x : this.M.spawn[0];
     this.mover = new Mover(this.L, x, -2);
-    const lo = this.loadout;
-    this.player = new Character(this.opId || M2.OPERATORS[this.opIndex], this.e.atlas, this.mover, lo ? { weapon: lo.primary, sidearm: lo.sidearm } : {});
+    this.player = new Character(this.opId || M2.OPERATORS[this.opIndex], this.e.atlas, this.mover, this.kit());
     this.player.hpMax = this.player.hp = 100;
     this.deadT = 0;
     this.ab.onRespawn();
@@ -430,16 +540,19 @@ export class MissionScene extends M3.M3Scene {
         // as the fight turns, Gall calls squads in
         while (this.phase < o.phases.length && k < o.phases[this.phase][0]) {
           this.spawnWave(o.phases[this.phase][1]); this.phase++;
-          this.mhud.toast(t('game.bossCall'), 1.8); this.sfx.play('charge', null, null, { vol: 0.9, rate: 0.5 });
+          this.mhud.toast(t('game.bossCall', { n: this.bossName() }), 1.8); this.sfx.play('charge', null, null, { vol: 0.9, rate: 0.5 });
         }
-        this.bossNades(dt, B);
+        this.bossSkills(dt, B);
       }
     }
     this.updateNades(dt);
     this.relightStep(dt);
     if (o && o.type === 'hack') prog = this.hack / MS.terminal.time;
     else if (o && o.type === 'hold') prog = this.holdT / o.time;
-    this.mhud.boss((this.endless || (o && o.type === 'boss')) && this.boss && this.boss.ch.alive ? t('boss.gall') : null, this.boss ? this.boss.ch.hp / this.boss.ch.hpMax : 0);
+    this.mhud.boss((this.endless || (o && o.type === 'boss')) && this.boss && this.boss.ch.alive ? this.bossName() : null, this.boss ? this.boss.ch.hp / this.boss.ch.hpMax : 0);
+    // grenadiers lob theirs; the player blinded by a flash sees white for a moment
+    for (const b of this.brains) if (b.kind === 'bom' && b.ch.alive) this.lob(dt, b, [5.5, 8], 'frag', 0.7);
+    this.flashStep(dt);
     // the gate rises, the squad behind it comes through
     if (this.gateOpen && this.gateK < 1) {
       this.gateK = Math.min(1, this.gateK + dt / 2.4);
@@ -470,16 +583,54 @@ export class MissionScene extends M3.M3Scene {
     this.pointTo();
   }
 
-  // the boss lobs a grenade at the player every few seconds while it can see them
-  bossNades(dt, B) {
+  // What a boss does besides shooting (docs §10.41): every boss lobs grenades; Vasquez,
+  // who has read the files on the five, also throws flashes, dashes out of the aim
+  // and, under half his health, fires faster.
+  bossSkills(dt, B) {
+    const S = BOSSES[B.kind] || BOSSES.gall, e = B.ch, P = this.player;
+    // Vasquez: a flash, then a frag, in turn
+    if (this.lob(dt, B, S.nade, S.flash && B.flashNext ? 'flash' : 'frag')) B.flashNext = !!S.flash && !B.flashNext;
+    if (S.dash) {
+      e.dashT = Math.max(0, (e.dashT || 0) - dt);
+      B.dashCd = (B.dashCd ?? 3) - dt;
+      if (B.dashCd <= 0 && P.alive && B.see) {
+        // the player's aim on him: he is gone sideways in a burst of sparks
+        const sh = P.shoulder(this._a), a = Math.atan2(e.m.y - 36 - sh[1], e.m.x - sh[0]), pa = Math.atan2(P.aimY - sh[1], P.aimX - sh[0]);
+        if (Math.abs(Math.atan2(Math.sin(a - pa), Math.cos(a - pa))) < 0.14) {
+          const away = Math.sign(e.m.x - P.m.x) || 1, dir = Math.random() < 0.6 ? away : -away;
+          e.m.vx = dir * 430; e.dashT = 0.35; B.dashCd = rand(4.5, 6.5);
+          for (let k = 0; k < 8; k++) this.fx.impact(e.m.x, e.m.y - 4, -dir * Math.random(), -0.4, -dir, -0.2, 0.6);
+          this.sfx.play('charge', e.m.x, e.m.y - 30, { vol: 0.7, rate: 1.4 });
+        }
+      }
+      e.overdrive = e.hp < e.hpMax * 0.5;
+    }
+  }
+  bossNades(dt, B) { this.lob(dt, B, (BOSSES[B.kind] || BOSSES.gall).nade); }
+  // a grenade lobbed at the player from brain B every so often while it can see them;
+  // kind 'frag' (k: its damage share) or 'flash' (blinds, no damage)
+  lob(dt, B, [lo, hi], kind = 'frag', k = 1) {
     const P = this.player;
-    this.nadeT -= dt * (B.blindT > 0 ? 0 : 1);
-    if (this.nadeT > 0 || !P.alive || !B.see || B.state !== 'combat') return;
-    this.nadeT = rand(4.5, 6.5);
+    B.nadeT = (B.nadeT ?? rand(lo, hi) * 0.6) - dt * (B.blindT > 0 ? 0 : 1);
+    if (B.nadeT > 0 || !P.alive || !B.see || B.state !== 'combat') return false;
+    B.nadeT = rand(lo, hi);
     const e = B.ch, sx = e.m.x + e.facing * 6, sy = e.m.y - 52, T = 0.95, G = 700;
     const tx = P.m.x + P.m.vx * 0.4, ty = P.m.y - 4;
-    this.nades.push({ x: sx, y: sy, vx: (tx - sx) / T, vy: (ty - sy - 0.5 * G * T * T) / T, t: 0, life: T + 0.35, tx, ty });
+    this.nades.push({ x: sx, y: sy, vx: (tx - sx) / T, vy: (ty - sy - 0.5 * G * T * T) / T, t: 0, life: T + 0.35, tx, ty, kind, k });
     this.sfx.play('knife', sx, sy, { rate: 0.6 });
+    return true;
+  }
+  // a flash: the screen white, fading; aim is shaken while it lasts
+  blind(sec) {
+    this.flashT = Math.max(this.flashT || 0, sec);
+    if (!this.flashEl) { this.flashEl = document.createElement('div'); this.flashEl.className = 'flashbang'; document.querySelector('#hud').appendChild(this.flashEl); }
+    haptic('heavy');
+  }
+  flashStep(dt) {
+    if (!this.flashEl) return;
+    this.flashT = Math.max(0, (this.flashT || 0) - dt);
+    const v = Math.min(1, this.flashT / 0.9);
+    if (Math.abs(v - (this.flashV || 0)) > 0.02 || (v === 0 && this.flashV)) { this.flashV = v; this.flashEl.style.opacity = v.toFixed(2); }
   }
   updateNades(dt) {
     const P = this.player;
@@ -488,7 +639,16 @@ export class MissionScene extends M3.M3Scene {
       n.vy += 700 * dt;
       const nx = n.x + n.vx * dt, ny = n.y + n.vy * dt;
       if (this.L.solidBox(nx - 1.5, ny - 1.5, nx + 1.5, ny + 1.5)) { n.vx *= 0.25; n.vy = n.vy > 0 ? -n.vy * 0.25 : n.vy * 0.25; } else { n.x = nx; n.y = ny; }
-      if (n.t >= n.life) {
+      if (n.t >= n.life && n.kind === 'flash') {
+        // a flash: a white burst, the player blinded if they saw it (no damage)
+        n.dead = true;
+        this.ab.flashes = this.ab.flashes || []; this.ab.flashes.push({ x: n.x, y: n.y, t: 0.4 });
+        this.sfx.play('boom', n.x, n.y, { vol: 0.7, rate: 1.6 }); this.e.camera.addShake(0.15);
+        if (P.alive) {
+          const dx = P.m.x - n.x, dy = P.m.y - 40 - n.y, d = Math.hypot(dx, dy);
+          if (d < 170 && rayTiles(this.L, n.x, n.y - 2, dx / (d || 1), dy / (d || 1), d, this._n) >= d - 3) this.blind(1.8 * (1 - d / 220));
+        }
+      } else if (n.t >= n.life) {
         n.dead = true;
         this.ab.flashes = this.ab.flashes || []; this.ab.flashes.push({ x: n.x, y: n.y, t: 0.4, boom: true });
         for (let k = 0; k < 6; k++) this.fx.impact(n.x, n.y, (Math.random() - 0.5) * 2, -1, (Math.random() - 0.5) * 2, -1, 1);
@@ -497,7 +657,7 @@ export class MissionScene extends M3.M3Scene {
         if (P.alive) {
           const dx = P.m.x - n.x, dy = P.m.y - 30 - n.y, d = Math.hypot(dx, dy);
           if (d < 56 && rayTiles(this.L, n.x, n.y - 2, dx / (d || 1), dy / (d || 1), d, this._n) >= d - 3) {
-            const dmg = this.takenK(46 * (1 - d / 90) * (this.D.dmg / DIFF.normal.dmg));
+            const dmg = this.takenK(46 * (n.k ?? 1) * (1 - d / 90) * (this.D.dmg / DIFF.normal.dmg));
             if (dmg > 0) {
               P.damage(dmg, 'body', Math.sign(dx) || 1, -0.6, P.m.x, P.m.y - 30);
               this.hud.hit(dmg, -Math.sign(dx)); haptic('soft');
@@ -525,7 +685,7 @@ export class MissionScene extends M3.M3Scene {
     if (o.type === 'hold') return [(o.x0 + o.x1) / 2, -30];
     if (o.type === 'boss') return this.boss && this.boss.ch.alive ? [this.boss.ch.m.x, this.boss.ch.m.y - 40] : null;
     if (o.type === 'endless') return null;
-    if (o === MS.objectives[MS.objectives.length - 1]) return [MS.extract.x, -34];
+    if (o === MS.objectives[MS.objectives.length - 1] && MS.extract) return [MS.extract.x, -34];
     return [o.x, -30];
   }
 
@@ -596,7 +756,7 @@ export class MissionScene extends M3.M3Scene {
     MS.checkpoints.forEach((c, i) => { if (i <= this.cp) R.addLight(c.x, -20, 18, 0.5, [1, 0.8, 0.55]); });
     const o = this.objective;
     for (const n of this.nades) R.addLight(n.x, n.y, 16, (n.t * 6) % 1 < 0.5 ? 0.5 : 0.15, [1, 0.6, 0.3]);
-    if (o === MS.objectives[MS.objectives.length - 1] && MS.extract) {
+    if (o === MS.objectives[MS.objectives.length - 1] && MS.extract && o.type !== 'boss') {
       const f = 0.8 + Math.sin(t * 17) * 0.1 + Math.sin(t * 6.1) * 0.1;
       R.addLight(MS.extract.x, -28, 90, 1.5 * f, [1, 0.35, 0.25]);
       if (Math.random() < 0.3) this.fx.smoke.emit(this.fx.t, MS.extract.x + rand(-1, 1), -27, rand(-6, 6), rand(-30, -18), rand(1.2, 2), 2, 9, col('#d06a5a', 0.3), col('#d06a5a', 0), -10, 0.6, rand(0, 6), rand(-1, 1));
@@ -647,10 +807,20 @@ export class MissionScene extends M3.M3Scene {
       B.draw(glow, n.tx, n.ty + 3, 24 * k + 8, 2.4, 0, rgba('#c24a3a', 0.1 + 0.18 * k));
     }
     // extraction flare
-    if (o === MS.objectives[MS.objectives.length - 1] && MS.extract && !this.endless) {
+    if (o === MS.objectives[MS.objectives.length - 1] && MS.extract && !this.endless && o.type !== 'boss') {
       const f = 0.8 + Math.sin(t * 17) * 0.1;
       B.draw(glow, MS.extract.x, -28, 20 * f, 20 * f, 0, rgba('#ff5a40', 0.6));
       B.draw(white, MS.extract.x, -28, 1.2, 1.2, 0, rgba('#fff2dc', 1));
+    }
+    // the marksman's laser: faint while he watches, bright just before the shot (docs §10.41)
+    for (const b of this.brains) {
+      const e = b.ch;
+      if (b.kind !== 'nis' || !e.alive || b.state !== 'combat' || !b.see || !e.gun || this.offView(e.m.x, 40)) continue;
+      const mz = e.muzzle(this._b), dx = e.aimX - mz[0], dy = e.aimY - mz[1], d = Math.hypot(dx, dy) || 1;
+      const L = rayTiles(this.L, mz[0], mz[1], dx / d, dy / d, 700, this._n), ex = mz[0] + (dx / d) * L, ey = mz[1] + (dy / d) * L;
+      const hot = b.burst > 0 || b.pause < 0.7, a = hot ? 0.55 + 0.25 * Math.sin(t * 40) : 0.2;
+      B.line(white, mz[0], mz[1], ex, ey, hot ? 0.5 : 0.3, rgba('#ff3a26', a));
+      B.draw(glow, ex, ey, hot ? 5 : 3, hot ? 5 : 3, 0, rgba('#ff4a30', a));
     }
     // objective marker: a diamond bobbing over the target
     const p = this.objectivePoint();

@@ -6,7 +6,7 @@ import { t, num } from '../i18n.js';
 import { hubbar, statBar, refreshCur } from './common.js';
 import { SKINS, owns, hasSkin, skinOf, buyWeapon, equipSkin } from '../../core/economy.js';
 import { weaponPic } from '../portraits.js';
-import { WEAPON_LIST, gunBars, opName } from '../data.js';
+import { WEAPON_LIST, gunBars, opName, dmgText } from '../data.js';
 import { WEAPONS } from '../../art/weapons/index.js';
 import { GUNS } from '../../game/guns.js';
 
@@ -19,9 +19,15 @@ export const arsenal = {
     const chips = h('div.seg.strip', { onwheel: (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { chips.scrollLeft += e.deltaY; e.preventDefault(); } } });
     const grid = h('div.wgrid-ui.scroll');
     const detail = h('section.wdetail.card.cut');
-    const left = h('section', { style: { display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 } }, chips, grid);
+    // when the classes do not all fit, the strip fades at the edge with an arrow that scrolls it on
+    const more = press(h('button.strip-more', { type: 'button', 'aria-label': t('ars.more'), onclick: () => { chips.scrollBy({ left: chips.clientWidth * 0.7, behavior: 'smooth' }); } }, svg('arrow')), { buzz: 'tick', sound: null });
+    const wrap = h('div.strip-wrap', chips, more);
+    const edge = () => { const over = chips.scrollWidth - chips.clientWidth; wrap.classList.toggle('more-r', over > 2 && chips.scrollLeft < over - 2); wrap.classList.toggle('more-l', chips.scrollLeft > 2); };
+    chips.addEventListener('scroll', edge, { passive: true });
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(edge).observe(chips);
+    const left = h('section', { style: { display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 } }, wrap, grid);
     function renderList() {
-      chips.replaceChildren(...CLASSES.map((c) => press(h(`button${filter === c ? '.on' : ''}`, { type: 'button', onclick: () => { filter = c; ui('tab'); renderList(); } }, t(c === 'all' ? 'ars.all' : `cls.${c}`)), { buzz: 'tick', sound: null })));
+      chips.replaceChildren(...CLASSES.map((c) => press(h(`button${filter === c ? '.on' : ''}`, { type: 'button', onclick: () => { filter = c; ui('tab'); renderList(); chips.children[CLASSES.indexOf(c)]?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' }); } }, t(c === 'all' ? 'ars.all' : `cls.${c}`)), { buzz: 'tick', sound: null })));
       const items = WEAPON_LIST.filter((w) => filter === 'all' || w.cls === filter);
       const d = ctx.save.d;
       grid.replaceChildren(...items.map((w) => {
@@ -32,7 +38,7 @@ export const arsenal = {
         },
         !have && h('span.lockbadge.price', svg('coin'), num(w.price || 0)),
         h('div.eyebrow', t(`cls.${w.cls}`)),
-        weaponPic(w.id, 120, 28, have ? sk.tint : null),
+        weaponPic(w.id, 120, 28, have ? sk : null),
         h('b', WEAPONS[w.id].name)), { buzz: 'tick', sound: null });
       }));
     }
@@ -41,21 +47,21 @@ export const arsenal = {
       const have = owns(d, w.id), sk = skinOf(d, w.id);
       const b = gunBars(w.id), g = GUNS[w.id];
       const equipped = lo.primary === w.id || lo.sidearm === w.id;
-      const big = weaponPic(w.id, 330, 74, have ? sk.tint : null);
+      const big = weaponPic(w.id, 330, 74, have ? sk : null);
       Object.assign(big.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', objectFit: 'contain' });
       detail.replaceChildren(
         h('div.wide-row', { style: { minHeight: 0 } },
           h('div', { style: { minWidth: 0 } }, h('div.eyebrow', t(`cls.${w.cls}`), ' · ', t(`mode.fire.${g.mode}`)), h('div.h1', { style: { fontSize: '26px' } }, WEAPONS[w.id].name)),
           h('div.tag', h('div.eyebrow', t('ars.mag')), h('div.h3', `${g.mag}`))),
         h('div.gun', big),
-        h('div.statgrid', statBar(t('stat.damage'), g.pellets > 1 ? `${g.dmg}×${g.pellets}` : g.dmg, b.damage), statBar(t('stat.rate'), t('stat.rpm', { n: g.rpm }), b.rate), statBar(t('stat.range'), b.range, b.range), statBar(t('stat.control'), b.control, b.control)),
+        h('div.statgrid', statBar(t('stat.damage'), dmgText(w.id), b.damage), statBar(t('stat.rate'), t('stat.rpm', { n: g.rpm }), b.rate), statBar(t('stat.range'), b.range, b.range), statBar(t('stat.control'), b.control, b.control)),
         h('p.body', { style: { margin: 0, fontSize: '11.5px' } }, t(`wpn.${w.id}`)),
         h('div.custom',
           // finishes: the ones you have are buttons, the rest show their rarity, locked
           h('div', h('div.eyebrow', t('ars.skins'), ' · ', t(`skin.${sk.id}`)),
             h('div.skinrow.scroll', SKINS.map((s) => {
               const mine = have && hasSkin(d, w.id, s.id), on = mine && sk.id === s.id;
-              return press(h(`button.skin.cut${on ? '.on' : ''}${mine ? '' : '.locked'}`, {
+              return press(h(`button.skin.cut${on ? '.on' : ''}${mine ? '' : '.locked'}${s.pat ? `.p${s.pat}` : ''}`, {
                 type: 'button', style: { '--rar': `var(--r-${s.rar})`, '--tint': s.tint }, title: `${t(`skin.${s.id}`)} · ${t(`rar.${s.rar}`)}`,
                 onclick: (e) => { if (!mine) return deny(e.currentTarget); ui('tab'); equipSkin(ctx.save, w.id, s.id); renderList(); renderDetail(); ctx.showcase.setOperator(op, ctx.save.d.roster.loadout[op]); },
               }, on ? svg('check') : mine ? h('i.sw') : svg('lock')), { buzz: 'tick', sound: null });

@@ -30,7 +30,8 @@ export function charBakeList(ids, scale, extra = []) {
   const E = [], weapons = new Set(extra);
   for (const id of ids) {
     const s = CHARS[id];
-    E.push(...charEntries(id, s, scale));
+    // a kind that wears another's sprites brings only its guns
+    if (!s.art) E.push(...charEntries(id, s, scale));
     for (const w of [s.weapon, s.sidearm]) if (w) weapons.add(s.mat ? `${w}.${s.mat}` : w);
   }
   // the crew's guns once more in primer, for the finishes (docs §10.13)

@@ -17,7 +17,7 @@ export function reveal(res, crate) {
     h('div.cr-res', { hidden: true },
       h('div.eyebrow', { style: { color: col } }, t(`rar.${res.rar}`)),
       h('div.h2', t(`skin.${sk.id}`)),
-      h('div.cr-gun', weaponPic(res.weapon, 260, 64, sk.tint)),
+      h('div.cr-gun', weaponPic(res.weapon, 260, 64, sk)),
       h('div.eyebrow', WEAPONS[res.weapon].name),
       res.dup ? h('div.cr-dup', svg('coin'), t('crate.dup', { n: num(res.refund) })) : h('div.cr-new', t('crate.new'))));
   const close = modal({ kicker: t(`crate.${crate.id}`), body: box, actions: [{ label: t('ui.ok'), kind: 'primary' }] });
