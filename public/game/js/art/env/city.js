@@ -224,7 +224,7 @@ export function notice(g, x, y, w, h, kind, title, seed = 1, torn = false) {
   fill(g, ell(x + w / 2, y + 0.5, 0.25, 0.25), '#5a5650');
 }
 
-// a propaganda poster, pasted three to a wall: DÜZEN · GÜVENLİK · İTAAT
+// a propaganda poster, pasted three to a wall: SÖZLEŞME · GÜVENLİK · İTAAT
 function vposter(g, x, y, w, h, seed = 1) {
   const r = rng(seed), N = poly([[x, y], [x + w, y + r() * 0.4], [x + w - r() * 0.4, y + h], [x + r() * 0.3, y + h]]);
   fill(g, N, '#8e2330');
@@ -1011,7 +1011,7 @@ function alley(g) {
   fill(g, 'M 23 -13 C 22.6 -15 23 -17 24 -17.6 L 24.4 -19 L 25.2 -18 L 26 -18.2 L 26.4 -19 L 26.8 -17.6 C 27.6 -16.6 27.6 -14.6 27 -13 Z M 27 -13.4 C 29 -13.6 29.6 -15 29 -16.4', '#0c0b0a');
 }
 
-// the union hall, shut: the raised letters over the door painted over in
+// the furnace masters' guild hall, shut: the raised letters over the door painted over in
 // Vorsa grey and still legible in their shadows, the chained doors and the
 // seal, candles on the step under the photos of the six who never came back
 function union(g) {
@@ -1025,12 +1025,12 @@ function union(g) {
   for (const x of [0, 44, 90, 134]) { fill(g, rect(x, -h + 20, x + 6, -6), '#58544c'); fill(g, rect(x + 5, -h + 20, x + 6, -6), '#000', 0.25); clip(g, rect(x, -h + 20, x + 6, -6), () => texture(g, 'concrete', 0.6, 3)); }
   fill(g, rect(-1, -6, w + 1, 0), '#3f3c37');
   cornice(g, 0, w, -h - 3, 3);
-  // the entablature: Vorsa's grey over the union's name, the letters still there in relief
+  // the entablature: Vorsa's grey over the guild's name, the letters still there in relief
   fill(g, rect(0, -h, w, -h + 20), '#57534c');
   const PAINT = '#62646a';
   fill(g, rect(6, -105, 134, -91), PAINT);
   clip(g, rect(6, -105, 134, -91), () => { for (let y = -105; y < -91; y += 2.2) fill(g, rect(6, y, 134, y + 1), '#000', 0.05); texture(g, 'paint', 0.4, 2.4); });
-  const name = 'OCAK İŞÇİLERİ SENDİKASI';
+  const name = 'OCAK USTALARI LONCASI';
   letters(g, name, 70.4, -94.6, 7.6, '#000', { align: 'center', jit: 0, track: 0.08, a: 0.5 });
   letters(g, name, 69.7, -95.3, 7.6, '#fff', { align: 'center', jit: 0, track: 0.08, a: 0.16 });
   letters(g, name, 70, -95, 7.6, PAINT, { align: 'center', jit: 0, track: 0.08 });
@@ -1484,7 +1484,7 @@ function valilik(g) {
   fill(g, rect(132, -44, 152, -24), '#2a2f36');
   notice(g, 133, -43, 9, 9, 'vanta', 'MECLİS ASKIYA ALINMIŞTIR', 81);
   notice(g, 143, -43, 8.4, 9, 'vanta', 'SOKAĞA ÇIKMA YASAĞI', 82);
-  notice(g, 133, -33.4, 18.4, 8.6, 'vanta', 'TOPLANMA YASAKTIR', 83);
+  notice(g, 133, -33.4, 18.4, 8.6, 'vanta', 'SANCAK ASMAK YASAKTIR', 83);
   // floodlights on the frieze washing the front
   for (const x of [52, 168]) {
     fill(g, rect(x - 1, -h + 18, x + 1, -h + 22), '#2a2f36'); fill(g, poly([[x - 4, -h + 22], [x + 4, -h + 22], [x + 3, -h + 25], [x - 3, -h + 25]]), '#3a3f47'); fill(g, rect(x - 3, -h + 24.6, x + 3, -h + 25.4), '#f2f6ff');
@@ -1805,7 +1805,7 @@ export function facadeLayout(x0, x1, seed = 1, first = ['walkup', 'crow', 'alley
 
 // Fewer buildings behind the fight (docs §10.32): the places the story is
 // about stay (HAWK's shop, the governor's, the town hall, the market hall, the
-// customs house, the union's hall, Vorsa's container wall); of the ordinary
+// customs house, the masters' guild hall, Vorsa's container wall); of the ordinary
 // houses, sheds and shops along a street every other one goes, and the
 // alleys between them, so the street has gaps where the dark town shows.
 const LANDMARK = new Set(['crow', 'wallC', 'valilik', 'valFence', 'valWing', 'belediye', 'hal', 'gumruk', 'union']);

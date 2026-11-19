@@ -3,7 +3,8 @@
 // The room from the prologue (shots 7 and 9): one enamel lamp swinging over
 // the map table, the radio in its corner, the stove, the stairs up to the
 // alley door, the pegboard and bench, Vorsa's seized crates, the ember mark
-// and the furnace men's saying on the wall. Painted flat at background
+// and the furnace men's saying on the wall, and beside the map the city's
+// banner, kept down here since Vorsa banned it (docs §10.42). Painted flat at background
 // density in three pieces (x 80..980, an atlas page is only so wide), the
 // floor in three more; the lamp is its own sprite so the scene can swing it.
 // The floor is at y = 0, the ceiling at y = -150.
@@ -12,6 +13,7 @@ import { texture } from '../tex.js';
 import { emblem } from '../enemies/syndicate.js';
 import { letters, notice } from './city.js';
 import { korMark } from './street.js';
+import { sancak } from './sancak.js';
 
 const rect = (x0, y0, x1, y1) => `M ${x0} ${y0} L ${x1} ${y0} L ${x1} ${y1} L ${x0} ${y1} Z`;
 const poly = (pts) => 'M ' + pts.map((p) => p.join(' ')).join(' L ') + ' Z';
@@ -154,6 +156,9 @@ function room(g) {
   stroke(g, `M 432 -102 L 462 -90 L 490 -104 L 532 -94 M 462 -90 L 448 -64 L 508 -62 L 532 -94`, '#a8232d', 0.35);
   for (const [t, x, y] of PLACES) { fill(g, ell(x, y, 1.2, 1.2), '#b3232e'); fill(g, ell(x - 0.3, y - 0.3, 0.4, 0.4), '#fff', 0.6); letters(g, t, x + 2, y - 2, 3, '#2a2016', { kind: 'type', jit: 0.05, seed: x }); }
   fill(g, ell(532, -94, 3, 3), '#a8232d', 0.25); stroke(g, ell(532, -94, 3.6, 3.6), '#a8232d', 0.4);
+
+  // the city's banner between the map and the pegboard, the lamp to its left
+  sancak(g, 557, -84, 19, 46, { light: -1, seed: 17 });
 
   // the pegboard and the bench: tools, the halligan, the hard hat, drone parts
   const PB = rect(570, -118, 690, -50);

@@ -19,7 +19,7 @@ Menüler direnişin sığınağındaki duvar ve tezgâhtır; Vorsa'nın soğuk
 mavi-grisi yalnızca Vorsa'ya ait şeylerde görünür.
 - **Malzemeler:** is siyahı zemin (beton/sıva dokusu), kraft kâğıt, maskeleme
   bandı, boyalı sac plaka, tebeşir beyazı yazı, kor turuncusu (tek vurgu),
-  sendika kırmızısı damga.
+  mühür kırmızısı damga.
 - **Yazı:** başlıklar Big Shoulders Stencil (çelikhane şablon harfi), etiket
   ve düğmeler Barlow Condensed, metin Barlow, dosya/brifing/alıntılar
   Special Elite (daktilo). Hepsi OFL, uygulamanın içinde.
@@ -31,7 +31,7 @@ mavi-grisi yalnızca Vorsa'ya ait şeylerde görünür.
   görev fotoğrafları); Operatörler = kişi dosyaları (ataşlı fotoğraf, rol
   damgası, daktilo özgeçmiş); Cephanelik = delikli pano ve tezgâh; Sandıklar =
   el konmuş Vorsa sandıkları; Tüccar = HAWK'ın tezgâhı ve portresi; Profil =
-  sendika üye kartı; Görevler = panoya iğnelenmiş iş emirleri; Ayarlar = sade
+  Kor Hattı üye kartı; Görevler = panoya iğnelenmiş iş emirleri; Ayarlar = sade
   sac panel; HUD = şablon rakamlar, kor turuncusu, ince ve okunur.
 
 ### 10.4 Şehir: binalar, tabelalar, ışık
@@ -55,8 +55,8 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
 - **Tabelalar:** boyalı sac ve tahta; fırça yazısı ya da şablon harf; solmuş
   boya, pas akıntısı, cıvata, eğik asılmış. Geceleri tabelayı kuğu boyunlu
   lamba aydınlatır. Esnafın dili Türkçe ve sade: BAKKAL, BERBER, OTO TAMİR,
-  ÇAY OCAĞI, OTEL, SENDİKA. Vorsa'nınki tek tip ve basılı: VORSA SYNDICATE ·
-  DÜZEN · GÜVENLİK · İTAAT.
+  ÇAY OCAĞI, OTEL, LONCA. Vorsa'nınki tek tip ve basılı: VORSA SYNDICATE ·
+  SÖZLEŞME · GÜVENLİK · İTAAT.
 - **Binalar:**
   - *İşçi lojmanı:* isli tuğla, yangın merdiveni, pencereden çıkan soba
     boruları ve üstlerindeki kurum, çamaşır ipi, saksı; altta kapalı berber
@@ -73,7 +73,7 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
     üstünde tek ampul, kartonda *ODA VAR*.
   - *Oto tamir:* boyalı sac *OTO TAMİR*, duvarda *LASTİK*, içeride beyaz
     floresan iş lambası, liftte araç.
-  - *Sendika binası (yeni):* alınlıktaki kabartma *OCAK İŞÇİLERİ SENDİKASI*
+  - *Lonca binası (yeni; §10.42'den önce sendika binasıydı):* alınlıktaki kabartma *OCAK USTALARI LONCASI*
     yazısının üstü gri boyayla kapatılmış, harfler gölgeden okunur; kapıda
     zincir ve Vorsa mührü (*MÜHÜRLENMİŞTİR*); kapının önünde mumlar ve
     Söndürme gecesi kaybolanların fotoğraflı *KAYIP* ilanları; duvarda sprey:
@@ -94,7 +94,7 @@ tutuyor ve karneyle veriyor. Şehir, ışığın kimde olduğundan yeniden kurul
   yaşar. Çatıda tahta güvercinlik. Görev 2'deki pazar tezgâhında aynı tahta
   tabela, aynı ampuller.
 - **Duvar yazıları ve kâğıtlar:** Vorsa afişleri; üstlerine kor işareti ve
-  *KOR* spreyi; *KAYIP* ilanları; sendika bildirisinin yırtık kalıntısı.
+  *KOR* spreyi; *KAYIP* ilanları; lonca bildirisinin yırtık kalıntısı.
 - **Renk ve doku:** is siyahı, pas, tuğla, kirli sıva; tuğla, beton, sac,
   tahta ve boya dokusu bina ölçeğinde. Sıcak ışık yalnız ampul ve ateşten,
   soğuk ışık yalnız Vorsa'dan. Doygun pembe, camgöbeği, mor yok.
@@ -546,7 +546,7 @@ karakterler olduğu gibi.
 
 **Daha az bina** (`art/env/city.js` → `sparseFacade`): hikâyenin geçtiği
 yerler duruyor (HAWK'ın dükkânı, valilik ve kanatları, belediye, hal,
-gümrük, sendika, Vorsa'nın konteyner duvarı); sıradan ev, depo ve
+gümrük, ustalar loncası, Vorsa'nın konteyner duvarı); sıradan ev, depo ve
 dükkânlardan biri kalıyor biri gidiyor, aralarındaki ara sokaklar kalkıyor.
 Sokakta boşluklar var, arkadan karanlık şehir görünüyor.
 
@@ -799,3 +799,39 @@ dalgalar, boss, kapı, sayfaya sığma), `tools/game/progress.test.mjs`
 eski kayıt). Metinler on dilde.
 
 Çizim sürümü `d4-67` (telefonlar yeniden boyar).
+
+### 10.42 Sağ çerçeve: memleket, aile, gelenek, meşru düzen
+Hikâye artık sağ, muhafazakâr bir yerden anlatılıyor (§1.7). Olay örgüsü,
+görevler ve oynanış aynı; değişen, ekibin neyi savunduğu. Önceki metin bir
+sendika ve grev çizgisindeydi; şimdi ekip, gasp edilmiş meşru düzeni geri
+getirenler: ocağı dedeleri yakmış ustalar, istasyonuna yemin etmiş itfaiyeci,
+dükkânı mühürlenmiş esnafın oğlu, üç çocuk büyütmüş vinççi. Vorsa ne bayrağı
+ne memleketi olan, sözleşmeyle kiralanmış bir güç; suçu el koymak, satmak ve
+şehrin meclisini gece yarısı imzalanan bir kâğıtla askıya almak.
+
+- **Metinler (on dil):** operatör dosyaları (FLINT ocak ustası, babası ocağı
+  teslim etmedi, sözü *"Ocak dedemden kaldı. Satılmaz."*; WARDEN istihkâmda
+  askerlik, istasyonun katlanmış sancağı; VESPER "maaşı Vorsa'dan, nüfus
+  kâğıdı bu şehirden"; SKYE babasının bakkalı, mühürlü dükkân; BULWARK sahil
+  güvenlik, üç çocuk). Pazar baskınında Vorsa esnafın tezgâhlarına el koyar;
+  Gall'da meclisi askıya alan sözleşmenin aslı vardır; fırını dedelerimiz
+  yaktı. Perde 1 sonu: *"Satamazlar. Bu memleket bizim."*
+- **Şehrin sancağı** (`art/env/sancak.js`): koyu kırmızı yün, krem kenar,
+  yüksek fırın ve alevi, altında 1891; çatal kuyruk, altın saçak, tornalı
+  sırık ve kordon. Sığınağın duvarında haritanın yanında asılı (lobide
+  görünür); kapanış kartında yükselir. Kapanışa bir satır eklendi: sabah
+  valiliğin direğine şehrin sancağı çekilir, meclis dört yıl sonra ilk kez
+  toplanır.
+- **Sokak:** sendika binası *OCAK USTALARI LONCASI* oldu; Vorsa'nın sloganı
+  *DÜZEN · GÜVENLİK · İTAAT* yerine *SÖZLEŞME · GÜVENLİK · İTAAT* (düzen
+  şehrin kendisinin, Vorsa'nınki sözleşme); valilik panosunda
+  *SANCAK ASMAK YASAKTIR*.
+- **Filmler:** Perde 1 sonundaki Kül Planı belgesi yeniden yazıldı (çelikhane
+  ve liman dış alıcılara satılmış; şehir sancağı ve ocak bayramı yasak;
+  ustaların evleri ve esnafın dükkânları kayda geçirilecek); prologdaki afiş
+  yeni sloganla. İkisi de yeniden işlendi (`act1.mp4`, `prologue.mp4`).
+- **Sınırlar:** gerçek parti, siyasetçi, ülke bayrağı ya da sembol yok;
+  hiçbir etnik ya da dinî grup düşman değil. Düşman bir şirket ve onun
+  sözleşmesi.
+
+Çizim sürümü `d4-69` (telefonlar yeniden boyar).

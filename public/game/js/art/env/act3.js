@@ -76,7 +76,7 @@ export function towerFoot(g, x, w = 180) {
 }
 
 // Vorsa's poster on a hoarding: the soldier's helmet, the order of the day
-export function hoarding(g, x, line = 'DÜZEN · GÜVENLİK · İTAAT') {
+export function hoarding(g, x, line = 'SÖZLEŞME · GÜVENLİK · İTAAT') {
   const W = 64, B = rect(x, -58, x + W, -18);
   for (const px of [x + 6, x + W - 8]) cel(g, rect(px, -18, px + 2, 0), STEEL, { sh: 0.3, hl: 0.2, lw: 0.3 });
   cel(g, B, mat(tone('#2a3140', '#1e2430', '#151a22', '#06080b'), 'paint', 0.4), { sh: 0.5, hl: 0.3 });

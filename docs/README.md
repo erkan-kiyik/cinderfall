@@ -9,21 +9,26 @@ and the like: look the number up in the index,
 ## The game in one paragraph
 
 A 2D tactical shooter for phones. In a nameless port city built around a
-steelworks, a private military company, **Vorsa**, took over "temporarily"
-four years ago, the night the blast furnace was put out (*the Quench*: 37
-detained, 6 never seen again). Five people who stayed call themselves **KOR**
-(*embers*: "the furnace goes out, the embers stay"). The player is their
+steelworks its grandfathers lit in 1891, a hired private military company,
+**Vorsa**, took over "temporarily" four years ago, the night the blast furnace
+was put out (*the Quench*: 37 detained, 6 never seen again), on a contract
+signed at midnight that suspended the elected council. Five people who stayed
+call themselves **KOR** (*embers*: "the furnace goes out, the embers stay").
+The story is told from the right (§10.42): home town, family and the
+generations, duty, tradition, property and lawful order; the team restores
+the city's own order rather than overthrowing one. The player is their
 Operator, on the radio. Ten missions in three acts; act 1 ends with the fall
 of Gall, Vorsa's Secretary in the city, and the "Ash Plan" found on his desk;
-act 2 with the blast furnace lit again. Acts 1 and 2 (missions 1–7) are playable.
+act 2 with the blast furnace lit again; act 3 with the city's banner over the
+governor's office and the council meeting again. All ten missions are playable.
 
 | Operator | Age | Who | Role |
 | --- | --- | --- | --- |
-| FLINT | 29 | Third-generation furnace man; his father vanished in the Quench | Assault |
-| WARDEN | 41 | Last crew captain of the closed fire station | Defence |
-| VESPER | 33 | Vorsa's former signal analyst, the voice on the radio | Control |
-| SKYE | 22 | Former courier, builds drones from scrap | Recon |
-| BULWARK | 47 | Harbour crane driver | Heavy |
+| FLINT | 29 | Third-generation furnace master; his father would not hand the furnace over and vanished in the Quench | Assault |
+| WARDEN | 41 | Last crew captain of the closed fire station; served with the combat engineers | Defence |
+| VESPER | 33 | Vorsa's former signal analyst who chose his city over his pay; the voice on the radio | Control |
+| SKYE | 22 | Courier for his father's grocery, sealed by Vorsa; builds drones from scrap | Recon |
+| BULWARK | 47 | Harbour crane driver, coast guard veteran, father of three | Heavy |
 
 HAWK (60s) is the smuggler who sells to everyone; GALL (50s) is the act 1
 boss; BRANDT, keeper of the drone works, ends act 2; VASQUEZ, Vorsa's commander in the tower, is the final one.
@@ -61,7 +66,7 @@ boss; BRANDT, keeper of the drone works, ends act 2; VASQUEZ, Vorsa's commander 
 | File | What |
 | --- | --- |
 | [`KOR_STORY_CINEMATIC.md`](KOR_STORY_CINEMATIC.md) | Index of the design sections (§1–§10.x) and where each lives |
-| [`design/1-hikaye.md`](design/1-hikaye.md) | Story bible (§1): world, timeline, characters, the ten missions, writing rules |
+| [`design/1-hikaye.md`](design/1-hikaye.md) | Story bible (§1): world, timeline, characters, the ten missions, writing rules, the values the story stands on (§1.7) |
 | [`design/2-sinematik.md`](design/2-sinematik.md) | Prologue, opening and mission films; the cinematic rig; acceptance rules; the still series (§2–§8) |
 | [`design/3-karakterler.md`](design/3-karakterler.md) | Character design and every revision of characters, faces and heads (§9, §10.1, §10.10–11, §10.14–16, §10.21–25, §10.29, §10.34–37, §10.39) |
 | [`design/4-dunya-ve-gorevler.md`](design/4-dunya-ve-gorevler.md) | Obstacles, interface, city, places, missions, the lobby, the realism pass, weapons, act 2, character separation, flat missions, cover, lobby, ten languages, IP review, Arsenal icon, daily reward, the review fixes: pause, controls, tips, progression, new enemies, act 3 (§10.2–9, §10.12–13, §10.30–33, §10.38, §10.40–41) |

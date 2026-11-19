@@ -29,7 +29,7 @@ Bu bölüm çizimden önce yazıldı; kodlar (`public/game/js/art/ops/*.js`,
 ### 9.2 Operatörler
 | | Kim | Silüet | Baş | Gövde | Kollar / bacaklar | Renkler |
 |---|---|---|---|---|---|---|
-| **FLINT** (saldırı) | 29, üçüncü kuşak ocakçı | yuvarlak kaynak gözlüğü, örgü bere, uçuşan uzun kırmızı atkı, kalın deri ceket | siyah örgü bere; deri çerçeveli yuvarlak yeşil kaynak gözlüğü; babasının atkısı burnun üstüne çekili | yanık kahve deri ocakçı ceketi (yamalı, kıvılcım lekeli); önünde ocak çeliğinden kesilmiş paslı plaka, "3" şablonu, iki deri kayış | uzun deri kaynak eldiveni; is grisi kanvas pantolon, dizde deri yama; çelik burunlu ocakçı botu | is siyahı, yanık kahve, kül grisi, pas; **sendika kırmızısı** atkı |
+| **FLINT** (saldırı) | 29, üçüncü kuşak ocak ustası | yuvarlak kaynak gözlüğü, örgü bere, uçuşan uzun kırmızı atkı, kalın deri ceket | siyah örgü bere; deri çerçeveli yuvarlak yeşil kaynak gözlüğü; babasının atkısı burnun üstüne çekili | yanık kahve deri ocakçı ceketi (yamalı, kıvılcım lekeli); önünde ocak çeliğinden kesilmiş paslı plaka, "3" şablonu, iki deri kayış | uzun deri kaynak eldiveni; is grisi kanvas pantolon, dizde deri yama; çelik burunlu ocakçı botu | is siyahı, yanık kahve, kül grisi, pas; **sendika kırmızısı** atkı |
 | **WARDEN** (savunma) | 41, kapatılan itfaiyenin son ekip amiri | yuvarlak itfaiye kaskı, inik altın vizör, dizüstü itfaiye ceketi, sırtta halligan | **beyaz amir kaskı** (isli, siyah şerit), altın vizör, gri yanmaz başlık | kömür grisi itfaiye ceketi, göğüste ve etekte sarı-gümüş-sarı yansıtıcı bant, göğüs cebinde telsiz | sarı-kahve itfaiye eldiveni; aynı kumaştan pantolon, dizde bant; siyah itfaiye çizmesi | kömür, kum, yansıtıcı gümüş/sarı; **kask beyazı** |
 | **VESPER** (kontrol) | 33, eski Vorsa sinyal analisti | uzun boylu, ince; başı açık, sakallı; kalçaya kadar kemerli mumlu ceket; sırtta eski bir **sırt telsizi**, şerit anteni ağırlığıyla geriye eğik | koyu saç: yanlar ve ense kısa, üstü uzun ve ayrımdan geriye taranmış, şakakta birkaç beyaz tel; kısa kesilmiş koyu sakal ve bıyık; ince **dikdörtgen çelik çerçeveli gözlük**; saçın üstünden tek kulaklı telsiz kulaklığı, mikrofonu ağzın köşesinde | koyu orman yeşili **mumlu pamuk ceket** (kırışıklarında mumu aşınıp açılmış; kahverengi kadife yaka yassı yatar; pirinç çıtçıtlar, göğüs ve kalça cepleri, aynı kumaştan kemer, pirinç toka); yakasından dinleme odasından kalma **siyah balıkçı yaka**; omuzlarda telsizin haki kayışları, göğüs kayışında spiral kablolu **ahize**; kemerde evrak çantası | parmakları kesik siyah deri eldiven (kadranlar için), sade çelik kol saati; düz düşen gri iş pantolonu, siyah deri bağcıklı bot | orman yeşili, kadife kahvesi, pirinç, gri; telsizin zeytini; **üstünde ışık saçan hiçbir şey yok** |
 | **SKYE** (keşif) | 22, eski kurye; dron yapar | orta boy, hafif ve çevik; başı açık, üstte kısa twistler; açık renk şişme yelek, çapraz postacı çantası; yanında hurda dron | koyu kahve ten; üstte kısa **twistler**, yanlar ve ense deriye kadar inen fade, şakakta keskin çizgi; ince bıyık, çenede kısa sakal; bir kaşta tıraşla açılmış çentik; boynunda beyaz, kapları **gök mavisi** büyük kulaklık | taş grisi **şişme yelek** (yatay dikişli dilimler, isli; sırtında yarısı soyulmuş yansıtıcı şerit, bantla yamanmış yırtık); altında **gök mavisi** uzun kollu üst, eteği yeleğin altından görünür; yamalı kanvas postacı çantası, arkasında eski bisiklet lambası | kollar dirseğe kadar sıvanmış, çıplak ön kol, bilekte düğümlü ip; parmaksız bisiklet eldiveni; yanında açık şerit olan siyah eşofman altı, bilekte lastikli paça; grileşmiş beyaz bilekli spor ayakkabı | taş grisi, siyah, krem; **gök mavisi** |
@@ -90,10 +90,10 @@ yanında taşıdığı · kendi ağzından bir söz (konuşma biçimiyle, §1.4)
 
 | | Yaş | Eski iş | Söndürme gecesi | Taşıdığı | Sözü |
 |---|---|---|---|---|---|
-| FLINT | 29 | Ocakçı, üçüncü kuşak | Fırının başındaydı. Babası Halil Usta'yı o gece götürdüler. | Babasının sendika atkısı | "Sonra konuşuruz." |
-| WARDEN | 41 | İtfaiye ekip amiri, 4. istasyon | Ekip çağrıldı, kapıdan çevrildi. İstasyon bir ay sonra mühürlendi. | Halligan, istasyonun anahtarı | "Beş dakika, fazlası olmaz." |
-| VESPER | 33 | Vorsa sinyal analisti | Nöbette değildi. Kayıtlar dört yıl sonra masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle. | Dinleme odasından kalma balıkçı yaka kazak | "Doksan saniye. Sonra yeniden tararlar." |
-| SKYE | 22 | Kurye | On sekiz yaşındaydı. Bacadan duman kesilince ilk o fark etti, bir çatıdan. | Hurdadan yaptığı dron | "Çatıdan iki dakika, sokaktan beş. Gidelim mi?" |
+| FLINT | 29 | Ocak ustası, üçüncü kuşak | Fırının başında nöbetteydi. Babası Halil Usta ocağı teslim etmedi; onu o gece götürdüler. | Babasının atkısı ve ustalık belgesi | "Ocak dedemden kaldı. Satılmaz." |
+| WARDEN | 41 | İtfaiye ekip amiri, 4. istasyon | Ekip yangına çağrıldı, Vorsa kapıdan çevirdi. Yirmi yıl hizmet ettiği istasyon bir ay sonra mühürlendi. | Halligan ve istasyonun katlanmış sancağı | "Beş dakika, fazlası olmaz." |
+| VESPER | 33 | Vorsa sinyal analisti | Nöbette değildi. Kayıtlar dört yıl sonra masasına düştü: otuz yedi gözaltı, altı kayıp, hepsi saatiyle. Biri kendi sokağındandı. | Dinleme odasından kalma balıkçı yaka kazak | "Doksan saniye. Sonra yeniden tararlar." |
+| SKYE | 22 | Kurye, babasının bakkalında | On sekiz yaşındaydı, bir çatıda. Bacadan dumanın kesildiğini ilk o fark etti. Bir hafta sonra babasının dükkânı mühürlendi. | Hurdadan yaptığı dron | "Çatıdan iki dakika, sokaktan beş. Gidelim mi?" |
 | BULWARK | 47 | Liman vinç operatörü | Limanın kapandığı sabah vinçten indi. Bir daha binmedi. | Konteyner kapısından kesilmiş göğüs sacı | "Bu kadar." |
 
 **Yetenekler** (mekanik aynı, ad ve görünüş eski işten):
@@ -357,7 +357,7 @@ görünen ten (kulak, şakak, ense) ayrıntılandı; Gall'ın açık yüzüne bi
 eklendi.
 
 - **Flint:** beresinin kıvrık kenarı örgü nervürlü (her nervürün üstü
-  ışıkta); kenarda sendikanın rozeti: bakır çemberde emaye kor, boyası
+  ışıkta); kenarda ustalar loncasının rozeti: bakır çemberde emaye kor, boyası
   kırık; kulağın önünde kısa, uçları kıvılcımdan yanık favori; gözlük
   kayışının kulağın arkasında çelik tokası.
 - **Warden:** kaskın kenarının altından çenenin altına inen çene kayışı ve
@@ -407,7 +407,7 @@ teller, kır karışabilir); örgü dokusu (sıra ya da nervür); kayış; cam
 sert parıltı).
 
 - **Flint:** kafaya oturan örgü bere: tepede örgü sıraları, kıvrık nervürlü
-  kenar kulakların üstüne iner, sendikanın emaye kor rozeti; gerçek boyda
+  kenar kulakların üstüne iner, loncanın emaye kor rozeti; gerçek boyda
   kaynak gözlüğü: deri yuvalarda iki yuvarlak bakır çerçeve, şişe yeşili
   cam, burun köprüsü, berenin üstünden dolanan lastik kayış ve tokası;
   kaşlar yuvaların üstünde çatık, yakın kaşta eski yanık izi; kulak, zeytin

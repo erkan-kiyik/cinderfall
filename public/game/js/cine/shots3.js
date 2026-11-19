@@ -215,10 +215,10 @@ export class Plan extends Basement {
     // the letterhead: the Syndicate's ring and chevron, a reference number
     g.strokeStyle = '#2a2a2a'; g.lineWidth = 3; g.beginPath(); g.arc(w * 0.12, h * 0.07, 18, 0, TAU); g.stroke();
     g.beginPath(); g.moveTo(w * 0.12 - 12, h * 0.07 - 6); g.lineTo(w * 0.12, h * 0.07 + 10); g.lineTo(w * 0.12 + 12, h * 0.07 - 6); g.stroke();
-    g.fillStyle = '#2a2a2a'; g.font = '500 14px "Courier New", monospace'; g.fillText('VORSA SENDİKASI — KAMU DÜZENİ DAİRESİ', w * 0.2, h * 0.065); g.fillText('Sayı: VS/KD-0417          Tarih: 03.11', w * 0.2, h * 0.09);
+    g.fillStyle = '#2a2a2a'; g.font = '500 14px "Courier New", monospace'; g.fillText('VORSA SYNDICATE — SÖZLEŞMELİ GÜVENLİK DAİRESİ', w * 0.2, h * 0.065); g.fillText('Sayı: VS/KD-0417          Tarih: 03.11', w * 0.2, h * 0.09);
     g.font = '700 46px "Courier New", monospace'; g.fillText('KÜL PLANI', w * 0.1, h * 0.19);
     g.font = '500 15px "Courier New", monospace';
-    const lines = ['Konu: 3 No\'lu Yüksek Fırın ve Liman Sahası', '', '1. Çelikhane tesisleri, ekli sözleşme ile', '   Sendika iştiraklerine devredilmiştir.', '2. Fırınların yeniden yakılması yasaktır.', '3. Liman rıhtımı 1 Aralık\'tan itibaren', '   kamuya kapatılacaktır.', '4. Eski işçilerin mahalledeki toplanma', '   yerleri tespit edilecek ve...', '', '   (devamı ekte)'];
+    const lines = ['Konu: 3 No\'lu Yüksek Fırın ve Liman Sahası', '', '1. Çelikhane tesisleri ve liman, ekli', '   sözleşme ile dış alıcılara satılmıştır.', '2. Fırınların yeniden yakılması yasaktır.', '3. Şehir sancağı ve ocak bayramı', '   1 Aralık\'tan itibaren yasaktır.', '4. Ustaların evleri ve esnafın dükkânları', '   kayda geçirilecek ve...', '', '   (devamı ekte)'];
     lines.forEach((l, i) => g.fillText(l, w * 0.1, h * 0.27 + i * 24));
     // a signature and a red stamp, a little crooked
     g.strokeStyle = 'rgba(20,30,80,0.8)'; g.lineWidth = 2; g.beginPath(); g.moveTo(w * 0.55, h * 0.86); g.bezierCurveTo(w * 0.6, h * 0.8, w * 0.66, h * 0.92, w * 0.72, h * 0.84); g.bezierCurveTo(w * 0.76, h * 0.8, w * 0.8, h * 0.88, w * 0.86, h * 0.85); g.stroke();
